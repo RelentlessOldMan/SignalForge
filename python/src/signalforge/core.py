@@ -8,7 +8,7 @@ from types import MappingProxyType
 from typing import Any
 
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 
 
 @dataclass(frozen=True, eq=False)
@@ -20,7 +20,7 @@ class Signal:
     ohms and only meaningful for voltage units. See docs/conventions.md.
     """
 
-    samples: np.ndarray
+    samples: NDArray[Any]
     sample_rate: float
     center_frequency: float = 0.0
     time_origin: float = 0.0
@@ -58,7 +58,7 @@ class Signal:
         """Number of samples divided by the sample rate, in seconds."""
         return len(self) / self.sample_rate
 
-    def times(self) -> np.ndarray:
+    def times(self) -> NDArray[np.float64]:
         """Time of each sample: ``time_origin + n / sample_rate``."""
         return self.time_origin + np.arange(len(self)) / self.sample_rate
 

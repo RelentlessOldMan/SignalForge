@@ -42,6 +42,8 @@ packaging and publishing.
   limit commercial shipping. A GPL label on a compiler runtime with the GCC exception does not.
 - 2026-11-12: Check build tools' licenses too: hatchling and mypy both pull in pathspec (MPL-2.0).
   flit_core is clean. Whether a tool is shipped decides which licenses it may use (ADR 0005).
+- 2026-11-12: NumPy's type stubs differ by version: Python 3.10 gets NumPy 2.2, which rejects a bare
+  `np.ndarray` under strict mypy. Annotate with `NDArray[dtype]` and run mypy on both Pythons.
 - 2026-11-12: Binary wheels can bundle libraries under other licenses; read the wheel's own
   `LICENSE.txt`, not just the project's top-level license.
 - 2026-11-12: The `dotnet new xunit` template is xunit v2; there is no `xunit3` template in the SDK.

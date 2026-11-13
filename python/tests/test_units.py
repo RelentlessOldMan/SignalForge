@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 import numpy as np
 import pytest
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 
 from signalforge import units
 
@@ -26,7 +26,7 @@ def test_amplitude_db_is_twice_power_db() -> None:
 
 
 @pytest.mark.parametrize("f", [units.lin_to_db, units.amp_to_db, units.w_to_dbm])
-def test_negative_and_nan_raise(f: Callable[[ArrayLike], np.ndarray | float]) -> None:
+def test_negative_and_nan_raise(f: Callable[[ArrayLike], NDArray[np.float64] | float]) -> None:
     with pytest.raises(ValueError):
         f([1.0, -1.0])
     with pytest.raises(ValueError):

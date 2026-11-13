@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 
 #: ITU-T O.150 PRBS polynomials ``x^m + x^k + 1`` as ``order -> k``.
 PRBS_TAPS: dict[int, int] = {7: 6, 9: 5, 11: 9, 15: 14, 20: 3, 23: 18, 31: 28}
@@ -16,7 +17,7 @@ def tone(
     phase: float = 0.0,
     *,
     complex: bool = True,
-) -> np.ndarray:
+) -> NDArray[np.complex128] | NDArray[np.float64]:
     """``amplitude * exp(j(2*pi*f*n/fs + phase))``, or ``amplitude * cos(...)`` when not complex.
 
     ``amplitude`` is the peak amplitude and ``phase`` is in radians.
@@ -27,11 +28,13 @@ def tone(
         raise ValueError("num_samples must be non-negative")
     arg = 2.0 * np.pi * frequency * (np.arange(num_samples) / sample_rate) + phase
     if complex:
-        return amplitude * np.exp(1j * arg)
-    return amplitude * np.cos(arg)
+        return np.asarray(amplitude * np.exp(1j * arg), dtype=np.complex128)
+    return np.asarray(amplitude * np.cos(arg), dtype=np.float64)
 
 
-def prbs(order: int, num_bits: int, *, seed: int | None = None, invert: bool = False) -> np.ndarray:
+def prbs(
+    order: int, num_bits: int, *, seed: int | None = None, invert: bool = False
+) -> NDArray[np.uint8]:
     """Maximal-length PRBS bits (``uint8``) for the O.150 polynomial of the given order.
 
     The sequence satisfies ``a[i] = a[i-m] XOR a[i-k]`` for ``x^m + x^k + 1``. ``seed`` gives the
