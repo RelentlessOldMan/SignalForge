@@ -4,12 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Least-squares FIR design**: `fir_least_squares(num_taps, bands, desired, sample_rate,
-   weights=None)`, symmetric taps minimizing the weighted integral squared error over the bands
-   with a desired gain that is linear across each band (given at both edges); conventions first
-   (the integral, not a grid; how the linear system is solved; even `num_taps`), expected values
-   from closed-form integrals in a stdlib generator.
-2. **Welch options**: `detrend` ("constant", "linear" or none) per segment and median averaging
+1. **Welch options**: `detrend` ("constant", "linear" or none) per segment and median averaging
    (with its bias correction), in `welch` and the spectrogram where it applies; conventions first.
 
 ## Built
@@ -362,10 +357,19 @@ Updated with every chunk of work. Dates are absolute.
   delay, six errors. Tests: both agree with a numerical phase derivative, sections add, linear
   phase taps give `(N − 1)/2`, and the Bessel low-pass delay is flat to 1% up to half the cutoff
   where the Butterworth's varies by 30% and more.
+- 2026-11-13: least-squares FIR design (conventions: FIR filters, Least-squares design; ADR 0029):
+  `fir_least_squares(num_taps, bands, desired, sample_rate, weights=None)`, symmetric taps (odd
+  or even) minimizing the exact weighted integral squared error, `desired` given at both edges of
+  each band and linear between. The normal equations are built from closed-form integrals and
+  solved directly. Vectors: five by hand (orthogonal cosines over `[0, fs/2]`), seven from a
+  stdlib generator that checks the integrals by Simpson quadrature and solves exactly in
+  rational arithmetic (up to 101 taps), nine errors. Tests: symmetric perturbations only raise the
+  error, lower error energy than the equiripple design, type II zero at `fs/2`, a sloped band
+  followed.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc and equiripple (least squares, arbitrary-magnitude bands), spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

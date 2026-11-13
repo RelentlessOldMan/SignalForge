@@ -30,6 +30,7 @@ from .dsp import (
     fir_equiripple,
     fir_group_delay,
     fir_highpass,
+    fir_least_squares,
     fir_lowpass,
     fir_response,
     interpolate,
@@ -78,7 +79,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.44"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.45"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -136,6 +137,7 @@ __all__ = [
     "fir_equiripple",
     "fir_group_delay",
     "fir_highpass",
+    "fir_least_squares",
     "fir_lowpass",
     "fir_response",
     "frequency_offset",

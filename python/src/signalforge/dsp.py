@@ -467,6 +467,75 @@ def _taps(taps: ArrayLike) -> NDArray[np.float64]:
     return h
 
 
+def fir_least_squares(
+    num_taps: int,
+    bands: ArrayLike,
+    desired: ArrayLike,
+    sample_rate: float,
+    weights: ArrayLike | None = None,
+) -> NDArray[np.float64]:
+    """Symmetric taps minimizing the weighted integral squared error over ``bands`` (edge pairs in
+    Hz), the desired gain linear across each band from its two ``desired`` edge values
+    (conventions: FIR filters, Least-squares design)."""
+    n = count(num_taps, "num_taps")
+    if not 1 <= n <= 1001:
+        raise ValueError("num_taps must be in [1, 1001]")
+    fs = _rate(sample_rate)
+    b = np.asarray(bands, dtype=np.float64)
+    if b.ndim != 1 or b.size < 2 or b.size % 2 or not np.all(np.isfinite(b)):
+        raise ValueError("bands must be a finite 1-D array of edge pairs")
+    if b[0] < 0 or b[-1] > fs / 2 or np.any(np.diff(b) <= 0):
+        raise ValueError("band edges must increase strictly from >= 0 to <= sample_rate/2")
+    nb = b.size // 2
+    d = np.asarray(desired, dtype=np.float64)
+    if d.shape != (2 * nb,) or not np.all(np.isfinite(d)):
+        raise ValueError("desired must have two finite values per band (its edge gains)")
+    w = np.ones(nb) if weights is None else np.asarray(weights, dtype=np.float64)
+    if w.shape != (nb,) or not np.all(np.isfinite(w)) or np.any(w <= 0):
+        raise ValueError("weights must have one positive finite value per band")
+    odd = n % 2 == 1
+    big_l = (n + 1) // 2 if odd else n // 2
+    t = np.arange(big_l, dtype=np.float64) + (0.0 if odd else 0.5)
+    diff = t[:, None] - t[None, :]
+    summ = t[:, None] + t[None, :]
+    g = np.zeros((big_l, big_l))
+    p = np.zeros(big_l)
+    for j in range(nb):
+        lo, hi = b[2 * j] / fs, b[2 * j + 1] / fs
+        slope = (d[2 * j + 1] - d[2 * j]) / (hi - lo)
+        g += w[j] * (_cos_integral(diff, lo, hi) + _cos_integral(summ, lo, hi)) / 2
+        level = d[2 * j] - slope * lo  # D(nu) = level + slope * nu
+        p += w[j] * (level * _cos_integral(t, lo, hi) + slope * _nu_cos_integral(t, lo, hi))
+    a = np.linalg.solve(g, p)
+    h = np.zeros(n)
+    if odd:
+        c = (n - 1) // 2
+        h[c] = a[0]
+        h[c + 1 :] = a[1:] / 2
+        h[:c] = a[:0:-1] / 2
+    else:
+        h[n // 2 :] = a / 2
+        h[: n // 2] = a[::-1] / 2
+    return h
+
+
+def _cos_integral(u: NDArray[np.float64], lo: float, hi: float) -> NDArray[np.float64]:
+    """``C(u)``: the integral of ``cos(2 pi u nu)`` over ``[lo, hi]`` (conventions)."""
+    k = 2 * np.pi * np.where(u == 0, 1.0, u)
+    out = (np.sin(k * hi) - np.sin(k * lo)) / k
+    return np.asarray(np.where(u == 0, hi - lo, out), dtype=np.float64)
+
+
+def _nu_cos_integral(u: NDArray[np.float64], lo: float, hi: float) -> NDArray[np.float64]:
+    """``S(u)``: the integral of ``nu cos(2 pi u nu)`` over ``[lo, hi]`` (conventions)."""
+    k = 2 * np.pi * np.where(u == 0, 1.0, u)
+
+    def f(v: float) -> NDArray[np.float64]:
+        return np.asarray(v * np.sin(k * v) / k + np.cos(k * v) / k**2, dtype=np.float64)
+
+    return np.asarray(np.where(u == 0, (hi * hi - lo * lo) / 2, f(hi) - f(lo)), dtype=np.float64)
+
+
 def fir_response(
     taps: ArrayLike, frequencies: ArrayLike, sample_rate: float
 ) -> NDArray[np.complex128]:

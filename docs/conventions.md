@@ -415,7 +415,29 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     `h[c + m] = −h[c − m] = a_m/2`, `h[c] = 0`. Type IV: `A = Σ_{m=1}^{L} b_m sin(2π(m − ½)ν)` with
     `b_1 = c_0 − c_1/2`, `b_m = (c_{m−1} − c_m)/2` (`c_L = 0`), and
     `h[N/2 − 1 + m] = −h[N/2 − m] = b_m/2`.
-- **Frequency response** (`fir_response(taps, frequencies, sample_rate)`): the complex
+- **Least-squares design** (`fir_least_squares(num_taps, bands, desired, sample_rate,
+  weights=None)`, [ADR 0029](adr/0029-least-squares-fir.md)): the symmetric taps whose zero-phase
+  gain `A` (as above) minimizes the weighted integral squared error
+  `E = Σ_j W_j ∫_{band j} (A(ν) − D_j(ν))² dν` over normalized frequency `ν = f/fs`, **an exact
+  integral, not a grid**.
+  - Arguments: `bands` as for equiripple design (edge pairs in Hz, strictly increasing, from `≥ 0`
+    to `≤ fs/2`); `desired` has **two values per band**, the gain at its lower and upper edge, and
+    `D_j` is linear between them; `weights` one positive finite value per band (default all 1).
+    `1 ≤ num_taps ≤ 1001`. Even `num_taps` is type II: `A(fs/2) = 0` whatever `desired` says
+    there (it is only part of the error).
+  - Basis: `A(ν) = Σ_{k<L} a_k cos(2π t_k ν)` with `t_k = k`, `L = (N + 1)/2` (odd `N`), or
+    `t_k = k + ½`, `L = N/2` (even `N`). Taps: odd `N`, `h[c] = a_0` and
+    `h[c + k] = h[c − k] = a_k/2` (`c = (N − 1)/2`); even `N`, `h[N/2 + k] = h[N/2 − 1 − k] = a_k/2`.
+  - The normal equations `G·a = p`, `G_kl = Σ_j W_j ∫ cos(2π t_k ν) cos(2π t_l ν) dν`,
+    `p_k = Σ_j W_j ∫ D_j(ν) cos(2π t_k ν) dν`, in closed form with
+    `C(u) = ∫_α^β cos(2πuν) dν` (`= β − α` at `u = 0`, else
+    `(sin 2πuβ − sin 2πuα)/(2πu)`) and `S(u) = ∫_α^β ν cos(2πuν) dν` (`= (β² − α²)/2` at `u = 0`,
+    else `[ν sin(2πuν)/(2πu) + cos(2πuν)/(2πu)²]_α^β`): `G_kl = Σ_j W_j (C(t_k − t_l) +
+    C(t_k + t_l))/2`, and with slope `s_j = (D_hi − D_lo)/(β − α)`,
+    `p_k = Σ_j W_j ((D_lo − s_j α)·C(t_k) + s_j·S(t_k))`. `G` is symmetric positive definite (the
+    cosines are independent on any interval); each language solves it in its own way, so taps
+    agree to rounding times the condition of `G`.
+
   `H(f) = Σ h[n]·e^(−j2π·f·n/fs)` at each frequency (`n` from 0, so it includes the delay).
   Real taps, non-empty and finite; frequencies finite.
 - **Group delay** (`fir_group_delay(taps, frequencies, sample_rate)`,

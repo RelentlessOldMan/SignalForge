@@ -77,6 +77,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "fir_equiripple": dsp.fir_equiripple,
     "kaiser_parameters": dsp.kaiser_parameters,
     "fir_group_delay": dsp.fir_group_delay,
+    "fir_least_squares": dsp.fir_least_squares,
     "fir_response": dsp.fir_response,
     "resample": dsp.resample,
     "resample_taps": dsp.resample_taps,
