@@ -4,9 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **8-PSK through the link**: `power_frequency_offset(·, Rs, 8)` gives the coarse frequency; it
-   still needs an eighth-power block phase estimate (`psk8_block_phases`, π/4 ambiguity, resolved
-   by the preamble), then `"psk8"` as a value of the `modulation` field (ADR 0050).
+Nothing queued; pick from Not built.
 
 ## Built
 
@@ -524,6 +522,12 @@ Updated with every chunk of work. Dates are absolute.
   π/2 resolution are shared. Link configs `qam16_8db` (20000 symbols: 744 bit errors in Python,
   765 in C#, theory 740) and `qam16_noiseless` (0 errors in both). Python 2169 passed, 2 skipped;
   .NET 1734 passed.
+- 2026-11-13: 8-PSK in the link (conventions: Synchronization, QPSK link; ADR 0051):
+  `psk8_phase_offset` and `psk8_block_phases` (eighth power, π/4 ambiguity, 10 vectors), and
+  `"psk8"` as a `modulation` value: coarse frequency from `power_frequency_offset(·, Rs, 8)`, the
+  preamble rounds to π/4. Link configs `psk8_10db` (20000 symbols: 56 bit errors in Python, 62 in
+  C#, theory 61) and `psk8_noiseless` (0 errors in both). Python 2200 passed, 2 skipped; .NET
+  1759 passed.
 
 ## Not built
 

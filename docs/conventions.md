@@ -947,6 +947,13 @@ multiplies the block by the power of two that brings its largest real or imagina
   rounding half to even. Returns one value per block. `block_symbols ≥ 1`, at least one symbol.
   On `z_k = a_k·e^{j(θ + ωk)}` each block gives the phase at its middle, `θ + ω·(first + last)/2`,
   as long as consecutive blocks differ by less than π/4. **(implemented)**
+- **8-PSK phase offset and block phases** (`psk8_phase_offset(symbols)`,
+  `psk8_block_phases(symbols, block_symbols)`, [ADR 0051](adr/0051-psk8-link.md)): the same with
+  the eighth power. 8-PSK points are at multiples of π/4, so `z⁸` of each is 1: `φ = arg(Σ z⁸)/8`
+  in `(−π/8, π/8]`, `z⁸` computed as `((z²)²)²` after the exact scaling above; the true phase is
+  `φ + m·π/4`. The block phases unwrap in steps of π/4:
+  `φ_b = θ_b + (π/4)·round((φ_{b−1} − θ_b)/(π/4))`, half to even; each block gives the phase at
+  its middle as long as consecutive blocks differ by less than π/8. **(implemented)**
 
 ## EVM and BER
 
@@ -989,14 +996,16 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   noise], `symbol_rate` [1000] Hz, `samples_per_symbol` [4] (≥ 2), `rolloff` [0.35],
   `span_symbols` [10], `delay_samples` [0], `frequency_offset_hz` [0], `phase` [0] rad,
   `preamble_symbols` [32] (1 to `num_symbols`), `phase_block_symbols` [32] (≥ 1), `prbs_order`
-  [15], `seed` [0], `modulation` [`"qpsk"`] (`"qpsk"` or `"qam16"`,
+  [15], `seed` [0], `modulation` [`"qpsk"`] (`"qpsk"`, `"qam16"` or `"psk8"`,
+  [ADR 0051](adr/0051-psk8-link.md),
   [ADR 0050](adr/0050-link-modulation.md)), `phase_noise_linewidth_hz` [0] (`≥ 0`,
   [ADR 0047](adr/0047-link-phase-noise.md)), `clock_offset_ppm` [0] (`|·| ≤ 1e5`),
   `timing_loop_gains` [none] and
   `carrier_loop_gains` [none], each none or a pair `[kp, ki]` of numbers `≥ 0`
   ([ADR 0046](adr/0046-link-tracking-loops.md)). Numbers must be finite. **(implemented)**
-- **Transmitter:** with `k` bits per symbol (2 for QPSK, 4 for 16-QAM),
-  `bits = prbs(prbs_order, k·num_symbols)`, `a = qpsk_map(bits)` or `qam16_map(bits)`,
+- **Transmitter:** with `k` bits per symbol (2 for QPSK, 4 for 16-QAM, 3 for 8-PSK),
+  `bits = prbs(prbs_order, k·num_symbols)`, `a = qpsk_map(bits)`, `qam16_map(bits)` or
+  `psk8_map(bits)`,
   `h = rrc_taps(rolloff, sps, span_symbols)`, `tx` = `delay_samples` zeros followed by
   `pulse_shape(a, h, sps)`. **(implemented)**
 - **Channel:** `frequency_offset(tx, frequency_offset_hz, symbol_rate·sps, phase)`, then, with
@@ -1013,7 +1022,8 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
      `power_frequency_offset(r, symbol_rate, 4)` ([ADR 0049](adr/0049-power-frequency-offset.md));
      `c = frequency_offset(r, −f₁, symbol_rate)`. Steps 4–6 are the same for 16-QAM: its `E[s⁴]`
      is a negative real (−0.68) as QPSK's is (−1), so the block phases and their π/2 ambiguity are
-     the same.
+     the same. For 8-PSK, `f₁ = power_frequency_offset(r, symbol_rate, 8)`, step 4 uses
+     `psk8_block_phases`, and step 6 rounds to multiples of π/4 instead of π/2.
   3. Frame start `k₀`: the first `k` in `0 … len(r) − N` that maximizes
      `|Σ_{i<P} conj(a[i])·c[k+i]|`.
   4. `z = frequency_offset(r[k₀ : k₀+N], −f₁, symbol_rate)`; `φ_b = qpsk_block_phases(z, B)` at
@@ -1025,17 +1035,19 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
      `f = f₁ + s·symbol_rate/(2π)`.
   7. The symbols are `frequency_offset(r[k₀ : k₀+N], −f, symbol_rate, −φ)`. With
      `carrier_loop_gains = [kp, ki]` they are instead `qpsk_carrier_tracking(w, kp, ki,
-     phase=φ_p).symbols` (`qam16_carrier_tracking` for 16-QAM) with `w = frequency_offset(r[k₀ : k₀+N], −f, symbol_rate)` and
+     phase=φ_p).symbols` (`qam16_carrier_tracking` for 16-QAM, `psk8_carrier_tracking` for
+     8-PSK) with `w = frequency_offset(r[k₀ : k₀+N], −f, symbol_rate)` and
      `φ_p = arg(Σ_{i<P} conj(a[i])·w[i])`, the preamble's own phase (no π/2 ambiguity, and local
      to the frame start). Either way they are compared with
-     `a` by `evm` and, after `qpsk_demap_hard` (`qam16_demap_hard`), with `bits` by `bit_errors`.
+     `a` by `evm` and, after `qpsk_demap_hard` (`qam16_demap_hard`, `psk8_demap_hard`), with `bits` by `bit_errors`.
      The preamble counts.
   **(implemented)**
 - **Report** (`QpskLinkReport`): `config`, `timing_offset` (τ, samples; the loop's start when it
   runs), `frame_start` (`k₀`,
   symbols into `r`), `frequency_offset_hz` (`f`), `phase_offset` (`φ`, rad: the carrier phase at the
   frame's first symbol), `evm` (an EVM record), `bit_errors` (an error-count record), `ber_theory`
-  (`qpsk_ber_theory(eb_n0_db)` or `qam16_ber_theory(eb_n0_db)`, or none without noise). **(implemented)**
+  (`qpsk_ber_theory`, `qam16_ber_theory` or `psk8_ber_theory` of `eb_n0_db`, or none without
+  noise). **(implemented)**
 - **JSON** (`to_json()` / `ToJson()`): an object with exactly those field names, nested records as
   objects, none as `null`, integers as integers, and non-finite numbers as the strings `"inf"`,
   `"-inf"`, `"nan"`. Compare reports as JSON values, not text. **(implemented)**

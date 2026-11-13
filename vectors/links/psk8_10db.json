@@ -1,0 +1,10 @@
+{
+  "num_symbols": 20000,
+  "eb_n0_db": 10.0,
+  "modulation": "psk8",
+  "frequency_offset_hz": -22.0,
+  "phase": 0.6,
+  "delay_samples": 3,
+  "preamble_symbols": 64,
+  "seed": 8
+}

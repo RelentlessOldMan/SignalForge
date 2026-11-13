@@ -147,6 +147,33 @@ def qpsk_block_phases(symbols: ArrayLike, block_symbols: int) -> NDArray[np.floa
     return out
 
 
+def psk8_phase_offset(symbols: ArrayLike) -> float:
+    """Carrier phase of 8-PSK symbols in radians, in ``(-pi/8, pi/8]``, modulo pi/4."""
+    z = _complex(symbols, "symbols", 1)
+    z2 = z * z
+    z4 = z2 * z2
+    return _arg(complex(np.sum(z4 * z4))) / 8
+
+
+def psk8_block_phases(symbols: ArrayLike, block_symbols: int) -> NDArray[np.float64]:
+    """8-PSK carrier phase of each block of ``block_symbols`` symbols, unwrapped in steps of pi/4.
+
+    The first block's phase is in ``(-pi/8, pi/8]``; each later one is moved by a multiple of pi/4
+    to within pi/8 of the one before. A last, shorter block is included.
+    """
+    b = count(block_symbols, "block_symbols")
+    if b < 1:
+        raise ValueError("block_symbols must be at least 1")
+    z = _complex(symbols, "symbols", 1)
+    out = np.empty((z.size + b - 1) // b)
+    for i in range(out.size):
+        phi = psk8_phase_offset(z[i * b : (i + 1) * b])
+        if i > 0:
+            phi += (math.pi / 4) * round((out[i - 1] - phi) / (math.pi / 4))
+        out[i] = phi
+    return out
+
+
 def pi_loop_gains(
     loop_bandwidth: float, damping: float, detector_gain: float
 ) -> tuple[float, float]:

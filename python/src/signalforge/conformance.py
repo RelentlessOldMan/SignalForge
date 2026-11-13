@@ -146,6 +146,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "power_frequency_offset": sync.power_frequency_offset,
     "qpsk_phase_offset": sync.qpsk_phase_offset,
     "qpsk_block_phases": sync.qpsk_block_phases,
+    "psk8_phase_offset": sync.psk8_phase_offset,
+    "psk8_block_phases": sync.psk8_block_phases,
     "qpsk_link": lambda **kw: link.qpsk_link(link.QpskLinkConfig(**kw)),
     "encode_samples": lambda x, datatype: files.encode_samples(x, datatype).hex(),
     "decode_samples": lambda data, datatype: files.decode_samples(_hex(data), datatype),

@@ -108,7 +108,7 @@ def test_non_finite_numbers_are_strings() -> None:
         {"num_symbols": 50, "timing_loop_gains": (0.1, -0.01)},
         {"num_symbols": 50, "carrier_loop_gains": (0.1, math.nan)},
         {"num_symbols": 50, "carrier_loop_gains": "ab"},
-        {"num_symbols": 50, "modulation": "psk8"},
+        {"num_symbols": 50, "modulation": "8psk"},
         {"num_symbols": 50, "modulation": 4},
     ],
 )
@@ -264,3 +264,54 @@ def test_modulation_default_is_qpsk() -> None:
     cfg = QpskLinkConfig(num_symbols=300, eb_n0_db=6.0, frequency_offset_hz=5.0, seed=1)
     assert qpsk_link(cfg) == qpsk_link(dataclasses.replace(cfg, modulation="qpsk"))
     assert qpsk_link(cfg).bit_errors.compared == 600
+
+
+@pytest.mark.parametrize(
+    ("df", "phase", "delay"), [(41.0, -2.2, 5), (-55.0, 0.7, 2), (0.0, 0.0, 0)]
+)
+def test_psk8_noiseless_has_no_errors(df: float, phase: float, delay: int) -> None:
+    r = qpsk_link(
+        QpskLinkConfig(
+            num_symbols=400,
+            modulation="psk8",
+            frequency_offset_hz=df,
+            phase=phase,
+            delay_samples=delay,
+        )
+    )
+    assert r.bit_errors.compared == 1200
+    assert r.bit_errors.errors == 0
+
+
+def test_psk8_ber_near_theory() -> None:
+    cfg = QpskLinkConfig(
+        num_symbols=20000,
+        eb_n0_db=10.0,
+        modulation="psk8",
+        frequency_offset_hz=-22.0,
+        phase=0.6,
+        delay_samples=3,
+        preamble_symbols=64,
+        seed=8,
+    )
+    r = qpsk_link(cfg)
+    assert r.ber_theory is not None
+    expected = r.ber_theory * r.bit_errors.compared  # about 61
+    assert 0.6 * expected < r.bit_errors.errors < 1.5 * expected
+    assert abs(r.frequency_offset_hz + 22.0) < 0.05
+
+
+def test_psk8_carrier_loop() -> None:
+    gains = pi_loop_gains(0.01, 1 / math.sqrt(2), 1.0)
+    r = qpsk_link(
+        QpskLinkConfig(
+            num_symbols=2000,
+            eb_n0_db=14.0,
+            modulation="psk8",
+            frequency_offset_hz=-12.0,
+            phase=1.0,
+            carrier_loop_gains=gains,
+            seed=2,
+        )
+    )
+    assert r.bit_errors.errors <= 3

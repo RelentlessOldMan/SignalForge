@@ -16,11 +16,28 @@ import numpy as np
 from ._checks import count, real
 from .channel import awgn, clock_offset, frequency_offset, phase_noise
 from .dsp import convolve, pulse_shape, rrc_taps
-from .metrics import ErrorCount, Evm, bit_errors, evm, qam16_ber_theory, qpsk_ber_theory
-from .modulation import qam16_demap_hard, qam16_map, qpsk_demap_hard, qpsk_map
+from .metrics import (
+    ErrorCount,
+    Evm,
+    bit_errors,
+    evm,
+    psk8_ber_theory,
+    qam16_ber_theory,
+    qpsk_ber_theory,
+)
+from .modulation import (
+    psk8_demap_hard,
+    psk8_map,
+    qam16_demap_hard,
+    qam16_map,
+    qpsk_demap_hard,
+    qpsk_map,
+)
 from .sync import (
     gardner_timing,
     power_frequency_offset,
+    psk8_block_phases,
+    psk8_carrier_tracking,
     qam16_carrier_tracking,
     qpsk_block_phases,
     qpsk_carrier_tracking,
@@ -91,10 +108,43 @@ def _wrap(phi: float) -> float:
     return math.pi if phi <= -math.pi else phi
 
 
-# bits per symbol, mapper, demapper, carrier loop, theory
-_MODULATIONS: dict[str, tuple[int, Any, Any, Any, Any]] = {
-    "qpsk": (2, qpsk_map, qpsk_demap_hard, qpsk_carrier_tracking, qpsk_ber_theory),
-    "qam16": (4, qam16_map, qam16_demap_hard, qam16_carrier_tracking, qam16_ber_theory),
+def _coarse(power: int) -> Any:
+    return lambda r, rs: power_frequency_offset(r, rs, power)
+
+
+# bits per symbol, mapper, demapper, carrier loop, theory, coarse frequency, block phases,
+# phase ambiguity
+_MODULATIONS: dict[str, tuple[int, Any, Any, Any, Any, Any, Any, float]] = {
+    "qpsk": (
+        2,
+        qpsk_map,
+        qpsk_demap_hard,
+        qpsk_carrier_tracking,
+        qpsk_ber_theory,
+        qpsk_frequency_offset,
+        qpsk_block_phases,
+        math.pi / 2,
+    ),
+    "qam16": (
+        4,
+        qam16_map,
+        qam16_demap_hard,
+        qam16_carrier_tracking,
+        qam16_ber_theory,
+        _coarse(4),
+        qpsk_block_phases,
+        math.pi / 2,
+    ),
+    "psk8": (
+        3,
+        psk8_map,
+        psk8_demap_hard,
+        psk8_carrier_tracking,
+        psk8_ber_theory,
+        _coarse(8),
+        psk8_block_phases,
+        math.pi / 4,
+    ),
 }
 
 
@@ -133,7 +183,9 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         raise ValueError("symbol_rate must be positive")
     if not isinstance(config.modulation, str) or config.modulation not in _MODULATIONS:
         raise ValueError(f"modulation must be one of {sorted(_MODULATIONS)}")
-    bps, mapper, demap, carrier_loop, theory = _MODULATIONS[config.modulation]
+    bps, mapper, demap, carrier_loop, theory, coarse, block_phases, step = _MODULATIONS[
+        config.modulation
+    ]
     lw = real(config.phase_noise_linewidth_hz, "phase_noise_linewidth_hz")
     if lw < 0:
         raise ValueError("phase_noise_linewidth_hz must not be negative")
@@ -184,10 +236,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         z_raw = y[round(tau) % sps :: sps]
     else:
         z_raw = gardner_timing(y, sps, *c.timing_loop_gains, start=tau).symbols
-    if c.modulation == "qpsk":
-        f_hat = qpsk_frequency_offset(z_raw, rs)
-    else:
-        f_hat = power_frequency_offset(z_raw, rs, 4)
+    f_hat = coarse(z_raw, rs)
     # frame start: the first maximum of the preamble correlation
     ref = np.conj(a[:pre])
     zc = frequency_offset(z_raw, -f_hat, rs)
@@ -196,7 +245,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     )
     # fine frequency and phase: a line through the unwrapped block phases at each block's middle
     z = frequency_offset(z_raw[k0 : k0 + n], -f_hat, rs)
-    ph = qpsk_block_phases(z, blk)
+    ph = block_phases(z, blk)
     starts = np.arange(ph.size) * blk
     x = (starts + np.minimum(starts + blk, n) - 1) / 2
     slope, phi = 0.0, float(ph[0])
@@ -205,9 +254,9 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         slope = float(np.sum((x - xm) * (ph - ym)) / np.sum((x - xm) ** 2))
         phi = ym - slope * xm
     f_hat += slope * rs / (2 * math.pi)
-    # the preamble resolves the pi/2 ambiguity
+    # the preamble resolves the pi/2 (8-PSK: pi/4) ambiguity
     c_pre = complex(np.sum(ref * frequency_offset(z[:pre], -slope * rs / (2 * math.pi), rs, -phi)))
-    phi = _wrap(phi + (math.pi / 2) * round(math.atan2(c_pre.imag, c_pre.real) / (math.pi / 2)))
+    phi = _wrap(phi + step * round(math.atan2(c_pre.imag, c_pre.real) / step))
     if c.carrier_loop_gains is None:
         z = frequency_offset(z_raw[k0 : k0 + n], -f_hat, rs, -phi)
     else:

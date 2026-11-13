@@ -352,6 +352,8 @@ public static class Conformance
             "power_frequency_offset" => Bind((Complexes(a.Get("symbols")), a.D("symbol_rate"), a.I("power")), t => Sync.PowerFrequencyOffset(t.Item1, t.Item2, t.Item3)),
             "qpsk_phase_offset" => Bind(Complexes(a.Get("symbols")), s => Sync.QpskPhaseOffset(s)),
             "qpsk_block_phases" => Bind((Complexes(a.Get("symbols")), a.I("block_symbols")), t => Sync.QpskBlockPhases(t.Item1, t.Item2)),
+            "psk8_phase_offset" => Bind(Complexes(a.Get("symbols")), s => Sync.Psk8PhaseOffset(s)),
+            "psk8_block_phases" => Bind((Complexes(a.Get("symbols")), a.I("block_symbols")), t => Sync.Psk8BlockPhases(t.Item1, t.Item2)),
             "qpsk_link" => Bind(LinkConfig(a), Link.QpskLink),
             _ => throw new InvalidDataException($"unknown op {op}"),
         };

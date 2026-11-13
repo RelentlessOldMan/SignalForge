@@ -1,0 +1,7 @@
+{
+  "num_symbols": 400,
+  "modulation": "psk8",
+  "frequency_offset_hz": 41.0,
+  "phase": -2.2,
+  "delay_samples": 5
+}

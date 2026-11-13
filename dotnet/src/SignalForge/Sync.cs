@@ -300,6 +300,42 @@ public static class Sync
         return phases;
     }
 
+    /// <summary>Carrier phase of 8-PSK symbols in radians, in (−π/8, π/8]; the true phase is this
+    /// plus a multiple of π/4 (conventions: Synchronization; ADR 0051).</summary>
+    /// <param name="symbols">One complex value per symbol, at least one, all finite.</param>
+    public static double Psk8PhaseOffset(ReadOnlySpan<Complex> symbols)
+    {
+        double scale = CheckFinite(symbols, 1, nameof(symbols));
+        Complex s = Complex.Zero;
+        foreach (var z in symbols)
+        {
+            Complex z4 = Fourth(z * scale);
+            s += z4 * z4;
+        }
+        return Arg(s) / 8;
+    }
+
+    /// <summary>8-PSK carrier phase of each block of <paramref name="blockSymbols"/> symbols,
+    /// unwrapped in steps of π/4: the first is in (−π/8, π/8], each later one within π/8 of the one
+    /// before. A last, shorter block is included.</summary>
+    /// <param name="symbols">One complex value per symbol, at least one, all finite.</param>
+    /// <param name="blockSymbols">Symbols per block, at least 1.</param>
+    public static double[] Psk8BlockPhases(ReadOnlySpan<Complex> symbols, int blockSymbols)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(blockSymbols, 1);
+        CheckFinite(symbols, 1, nameof(symbols));
+        var phases = new double[(symbols.Length + blockSymbols - 1) / blockSymbols];
+        for (int b = 0; b < phases.Length; b++)
+        {
+            int start = b * blockSymbols;
+            double phi = Psk8PhaseOffset(symbols.Slice(start, Math.Min(blockSymbols, symbols.Length - start)));
+            if (b > 0)
+                phi += Math.PI / 4 * Math.Round((phases[b - 1] - phi) / (Math.PI / 4));
+            phases[b] = phi;
+        }
+        return phases;
+    }
+
     private static Complex Fourth(Complex z)
     {
         Complex z2 = z * z;
