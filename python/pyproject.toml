@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "signalforge"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Signal generation, processing and measurement for RF and communications."
 readme = "README.md"
 license = "MIT"

@@ -65,7 +65,18 @@ repo docs disagree, the repo docs win.
 - Commit each finished chunk with `docs/status.md` updated in the same commit, then push.
 - The repo doesn't take issues or pull requests (see README).
 
+## Versioning
+
+One date-based version for the whole repo, `YYYY.M.D.N`, in `VERSION` at the root: see
+[docs/versioning.md](docs/versioning.md). `build.ps1` is the build: every run bumps the version, then
+runs every check below in both languages. Commit the bumped `VERSION` and the stamped
+`python/src/signalforge/__init__.py` with the work they built. Never type a version anywhere else;
+CI never bumps.
+
 ## Commands
+
+The build, from the repo root: `./build.ps1` (Windows PowerShell or pwsh; `-Jobs N` limits .NET
+parallelism, `-NoBump` re-runs without a new version). The steps it runs, one by one:
 
 From the repo root. The Python venv lives at `.venv` in the repo root (gitignored).
 
@@ -90,7 +101,8 @@ dotnet format SignalForge.slnx --verify-no-changes
 Measured 2026-11-12, restricted to one core:
 
 - Python `pytest`: about 2 s.
-- .NET `dotnet test` (incremental build + 77 tests): about 6 s. A clean build with restore takes
+- .NET `dotnet test` (incremental build + 149 tests): about 6 s.
+- `build.ps1 -Jobs 1` (everything, incremental): about 40 s. A clean build with restore takes
   longer (not yet timed).
 
 Memory not measured yet; nothing holds more than a few MB of samples. No job uses the GPU.
@@ -104,6 +116,7 @@ Memory not measured yet; nothing holds more than a few MB of samples. No job use
 | `docs/architecture.md` | Modules, the signal type, measurement results, naming. |
 | `docs/dependencies.md` | Every dependency, its license and how it was checked; rejected list; open questions. |
 | `docs/testing.md` | Test layers, where expected values come from, tolerances. |
+| `docs/versioning.md`, `VERSION`, `build.ps1` | Version scheme, the version, the build. |
 | `docs/adr/` | Architecture decision records. |
 | `vectors/README.md`, `vectors/cases/` | Shared vector format and cases. |
 | `python/src/signalforge/` | Python package; `conformance.py` runs the vectors. |

@@ -16,7 +16,7 @@ Updated with every chunk of work. Dates are absolute.
 - 2026-11-12: repo, license (MIT), README, this brain (`CLAUDE.md`, `docs/status.md`), CI.
 - 2026-11-12: research and architecture docs: conventions, architecture, testing, dependencies with
   license verification, ADRs 0001–0005 (0006 below).
-- 2026-11-12: Python package `signalforge` 0.1.0 and C# library `SignalForge` 0.1.0, each with:
+- 2026-11-12: Python package `signalforge` and C# library `SignalForge` (then 0.1.0), each with:
   `Signal` with metadata; units (dB, dBm, Vrms at an impedance); complex and real tones; PRBS
   (O.150 polynomials, orders 7–31); power stats (mean, RMS, peak, PAPR, DC); QPSK Gray map and hard
   demap; bit error count.
@@ -30,6 +30,9 @@ Updated with every chunk of work. Dates are absolute.
   radix-2 plus Bluestein, no dependency), frequency axes, seven windows with coherent gain and ENBW,
   Welch PSD (one- and two-sided), occupied bandwidth (β/2), channel power. 59 new vectors (105 in
   all). Python 153 passed, 2 skipped (mypy clean on 3.10 and 3.12); .NET 148 passed.
+- 2026-11-13: date-based versioning (`YYYY.M.D.N`, docs/versioning.md): `VERSION` at the root is the
+  one source; .NET reads it at build time, `build.ps1` bumps it and stamps Python's `__version__`;
+  tests in both languages check they agree. Was 0.1.0; first build 2026.11.13.0.
 
 ## Not built
 
@@ -50,6 +53,8 @@ packaging and publishing.
 - 2026-11-12: Binary wheels can bundle libraries under other licenses; read the wheel's own
   `LICENSE.txt`, not just the project's top-level license.
 - 2026-11-12: The `dotnet new xunit` template is xunit v2; there is no `xunit3` template in the SDK.
+- 2026-11-13: Windows PowerShell 5.1 splits a splatted `-m:1` into `- m : 1` for native commands;
+  pass MSBuild switches as `/m:1`.
 - 2026-11-13: Git Bash mangles backslash paths passed through `cmd /c`; run cmd invocations from
   the PowerShell tool instead.
 - 2026-11-12: Avoid long bash heredocs with quotes in JSON or C#; write such files directly.
