@@ -330,22 +330,43 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
   - `A > 0`, `0 < transition_width < fs/2`, all finite; a `num_taps` above 2³¹ − 1 raises. For a
     high-pass, round `num_taps` up to odd.
 - **Equiripple design** (`fir_equiripple(num_taps, bands, desired, sample_rate, weights=None,
-  grid_density=16)`, [ADR 0024](adr/0024-equiripple-fir.md)): the symmetric taps whose zero-phase
-  gain `A(f)` (as above) minimizes the largest weighted error `max |W_j·(A(f) − D_j)|` over the
-  bands, **on the grid defined here** (the discrete optimum; it is unique).
+  grid_density=16, kind="filter")`, [ADR 0024](adr/0024-equiripple-fir.md),
+  [ADR 0026](adr/0026-antisymmetric-equiripple.md)): the taps whose amplitude `A(f)` minimizes
+  the largest weighted error `max |W(f)·(A(f) − T(f))|` over the bands, **on the grid defined
+  here** (the discrete optimum; it is unique). `kind` is one of:
+  - `"filter"` (the default): symmetric taps, `h[n] = h[N−1−n]`; `A` is the zero-phase gain
+    (as above), the target `T = D_j` and the weight `W = W_j` on band `j`.
+  - `"hilbert"` and `"differentiator"`: antisymmetric taps, `h[n] = −h[N−1−n]` (so
+    `h[(N−1)/2] = 0` for odd `N`). With `c = (N−1)/2`,
+    `H(f) = −j·e^(−j2πfc/fs)·A(f)` and `A(f) = Σ_m 2·h[c + m]·sin(2πmf/fs)` over the offsets
+    `m = 1, 2, …, c` (odd `N`) or `½, 3/2, …, c` (even `N`), with `h[c + m]` the tap `m` after the
+    centre.
+  - `"hilbert"`: `T = D_j`, `W = W_j`. `desired` 1 is the Hilbert transformer: `H = −j` times the
+    delay at positive frequencies, which turns `cos` into `sin`.
+  - `"differentiator"`: `T(f) = −2π(f/fs)·D_j`, so `H ≈ j·2π(f/fs)·D_j` times the delay, and
+    `desired` 1 is the derivative per sample. The error is relative to the slope where
+    `D_j ≠ 0`: `W(f) = W_j/(2πf/fs)`; `W = W_j` where `D_j = 0`.
+  - Any other `kind` is `invalid_argument`.
   - `bands` is a flat list of edges in Hz, `[b_0, b_1, b_2, b_3, …]`, band `j` being
     `[b_2j, b_2j+1]`; at least one band; `0 ≤ b_0 < b_1 < b_2 < … ≤ fs/2`, finite (bands do not
     touch). `desired` has one finite value per band; `weights` one positive finite value per band
-    (default all 1). `1 ≤ num_taps ≤ 1001`; `grid_density` an integer, `1 ≤ grid_density ≤ 64`.
-  - `N = num_taps`. Odd `N` (type I): `L = (N + 1)/2` cosine terms, `Q(f) = 1`. Even `N`
-    (type II): `L = N/2`, `Q(f) = cos(πf/fs)`, since every such `A` has the factor `Q`; a band that
-    ends at `fs/2` must then have `desired` 0, else `invalid_argument`.
+    (default all 1). `1 ≤ num_taps ≤ 1001` (`2 ≤` for the antisymmetric kinds); `grid_density` an
+    integer, `1 ≤ grid_density ≤ 64`.
+  - `N = num_taps`; every such `A` has the factor `Q`, and `P = A/Q` is a cosine sum of `L`
+    terms. Symmetric, odd `N` (type I): `L = (N + 1)/2`, `Q(f) = 1`. Symmetric, even `N`
+    (type II): `L = N/2`, `Q(f) = cos(πf/fs)`. Antisymmetric, odd `N` (type III):
+    `L = (N − 1)/2`, `Q(f) = sin(2πf/fs)`. Antisymmetric, even `N` (type IV): `L = N/2`,
+    `Q(f) = sin(πf/fs)`. Where `Q = 0` on a band (`fs/2` for types II and III, `0` for types III
+    and IV), the target there must be 0, else `invalid_argument` (a differentiator's is 0 at 0).
   - **Grid**, in `ν = f/fs`: `Δ = 0.5/(grid_density·L)`. Band `j` with `ν_lo = b_2j/fs`,
     `ν_hi = b_2j+1/fs` gets `m = ⌈(ν_hi − ν_lo)/Δ⌉` intervals and the points
-    `ν_lo + (ν_hi − ν_lo)·i/m` for `i = 0 … m − 1`, then `ν_hi` exactly. Type II drops the point
-    `ν = 0.5` if present. Fewer than `L + 1` points in all is `invalid_argument`.
+    `ν_lo + (ν_hi − ν_lo)·i/m` for `i = 0 … m − 1`, then `ν_hi` exactly. The points where `Q = 0`
+    are dropped (`ν = 0.5` for types II and III, `ν = 0` for types III and IV). Fewer than
+    `L + 1` points in all is `invalid_argument`.
   - The problem is then: find `P(ν) = Σ_{k<L} c_k cos(2πkν)` minimizing
-    `max |W'(ν)(D'(ν) − P(ν))|` over the grid, with `D' = D/Q`, `W' = W·Q`; and `A = Q·P`.
+    `max |W'(ν)(D'(ν) − P(ν))|` over the grid, with `D' = T/Q`, `W' = W·Q`; and `A = Q·P`. Below,
+    `S` is the largest `|W·T|` over the grid, which is `max_j |W_j·D_j|` over the bands with grid
+    points (for a differentiator too, since there `|W·T| = W_j·|D_j|`).
   - **Algorithm** (Remez exchange; any method reaching the same optimum agrees). The first
     extremal set, by **reference scaling**: for `L ≤ 16`, the grid indices `⌊i·(G − 1)/L⌋`,
     `i = 0 … L`, of the `G` points. For `L > 16`, first design the same bands with
@@ -368,20 +389,20 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     equals); while there are more than `L + 1`: if one too many, drop whichever end has the
     smaller `|E|` (the first, if equal), else drop the smallest `|E|` (the first, if equal) and
     merge again. It stops when the set does not change, or when the largest grid `|E|` is at
-    most `|δ|·(1 + 1e-9) + 1e-12·max_j |W_j·D_j|` (an optimum with more than `L + 1` equal
+    most `|δ|·(1 + 1e-9) + 1e-12·S` (an optimum with more than `L + 1` equal
     extrema would otherwise swap between equally good sets). 250 iterations without stopping is
     `invalid_argument`: the design is beyond double precision. (This happens with ripples near
     rounding, and occasionally with many taps and wide gaps between bands, where the first set's
     `δ` can be below rounding and the exchange never leaves the noise; reference scaling makes
     that rarer, since the smaller design's set is already near the extrema.)
-  - If every `desired` value is 0, or `N` is odd and all are equal, the taps are exact
-    (`D·[n = (N−1)/2]`) and there is no iteration.
+  - If every `desired` value is 0, or the kind is a filter, `N` is odd and all are equal, the taps
+    are exact (`D·[n = (N−1)/2]`) and there is no iteration.
   - **Taps**: `c_0 … c_{L−1}` (and `δ` again) from the `(L+1)×(L+1)` linear system
     `Σ_k c_k cos(2πkν_i) + (−1)^i δ/W'_i = D'_i` at the final set, solved with partial pivoting.
     (Sampling `P` uniformly and inverting a DFT would read `P` in the gaps between bands, where
     interpolation from the band points magnifies rounding enormously.) The taps are then
     checked: the largest grid `|W'(D' − P)|` with these `c_k` must be at most
-    `|δ|·(1 + 1e-3) + 1e-10·max_j |W_j·D_j|`, else `invalid_argument` (beyond double precision).
+    `|δ|·(1 + 1e-3) + 1e-10·S`, else `invalid_argument` (beyond double precision).
     The excess is the rounding of `P`, about `ε·max W'·Σ|c_k|`; it fails when the ripple is near
     or below 1e-13, or when gaps between bands are so wide that the optimum needs huge
     coefficients (its response in the gaps then reaches 1e6 or more, and its taps are
@@ -389,7 +410,11 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     differ in whether a design raises, but anything returned meets the bound. Type I:
     `h[(N−1)/2] = c_0`, `h[(N−1)/2 ± k] = c_k/2`. Type II: `A = Σ_{k=1}^{L} β_k cos(2π(k − ½)ν)`
     with `β_1 = c_0 + c_1/2`, `β_k = (c_{k−1} + c_k)/2`, `β_L = c_{L−1}/2` (`β_1 = c_0` if
-    `L = 1`), and `h[N/2 − 1 + k] = h[N/2 − k] = β_k/2`.
+    `L = 1`), and `h[N/2 − 1 + k] = h[N/2 − k] = β_k/2`. Type III: `A = Σ_{m=1}^{L} a_m sin(2πmν)`
+    with `a_1 = c_0 − c_2/2`, `a_m = (c_{m−1} − c_{m+1})/2` (`c_k = 0` for `k ≥ L`), and
+    `h[c + m] = −h[c − m] = a_m/2`, `h[c] = 0`. Type IV: `A = Σ_{m=1}^{L} b_m sin(2π(m − ½)ν)` with
+    `b_1 = c_0 − c_1/2`, `b_m = (c_{m−1} − c_m)/2` (`c_L = 0`), and
+    `h[N/2 − 1 + m] = −h[N/2 − m] = b_m/2`.
 - **Frequency response** (`fir_response(taps, frequencies, sample_rate)`): the complex
   `H(f) = Σ h[n]·e^(−j2π·f·n/fs)` at each frequency (`n` from 0, so it includes the delay).
   Real taps, non-empty and finite; frequencies finite.

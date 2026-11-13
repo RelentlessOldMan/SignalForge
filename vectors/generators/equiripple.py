@@ -58,10 +58,14 @@ def dec_cos(x):
         total += term
 
 
-def grid(n, bands, desired, fs, weights, density):
+def dec_sin(x):
+    return dec_cos(x - PI / 2)
+
+
+def grid(n, bands, desired, fs, weights, density, kind="filter"):
     """The grid points, in float exactly as the conventions define them."""
-    odd = n % 2 == 1
-    big_l = (n + 1) // 2 if odd else n // 2
+    odd, anti = n % 2 == 1, kind != "filter"
+    big_l = (n - 1) // 2 if anti and odd else (n + 1) // 2 if odd else n // 2
     step = 0.5 / (density * big_l)
     pts = []
     for j in range(len(desired)):
@@ -69,8 +73,8 @@ def grid(n, bands, desired, fs, weights, density):
         m = math.ceil((hi - lo) / step)
         for i in range(m + 1):
             v = hi if i == m else lo + (hi - lo) * i / m
-            if not odd and v == 0.5:
-                continue
+            if (v == 0.5 and odd == anti) or (v == 0 and anti):
+                continue  # Q = 0 there
             pts.append((v, desired[j], weights[j], j))
     return big_l, pts
 
@@ -108,16 +112,23 @@ def chebyshev_row(x, n):
     return row[:n]
 
 
-def remez(n, bands, desired, fs, weights=None, density=16):
+def remez(n, bands, desired, fs, weights=None, density=16, kind="filter"):
     weights = weights or [1.0] * len(desired)
-    big_l, pts = grid(n, bands, desired, fs, weights, density)
-    odd = n % 2 == 1
+    big_l, pts = grid(n, bands, desired, fs, weights, density, kind)
+    odd, anti = n % 2 == 1, kind != "filter"
     x, dp, wp, band = [], [], [], []
     for v, d, w, j in pts:
-        q = Decimal(1) if odd else dec_cos(PI * Decimal(v))
-        x.append(dec_cos(2 * PI * Decimal(v)))
-        dp.append(Decimal(d) / q)
-        wp.append(Decimal(w) * q)
+        nu = Decimal(v)
+        if anti:
+            q = dec_sin((2 if odd else 1) * PI * nu)
+        else:
+            q = Decimal(1) if odd else dec_cos(PI * nu)
+        t, wt = Decimal(d), Decimal(w)
+        if kind == "differentiator" and d != 0:  # target -2 pi nu D, error relative to the slope
+            t, wt = -2 * PI * nu * t, wt / (2 * PI * nu)
+        x.append(dec_cos(2 * PI * nu))
+        dp.append(t / q)
+        wp.append(wt * q)
         band.append(j)
     g = len(x)
     ext = [(i * (g - 1)) // big_l for i in range(big_l + 1)]
@@ -161,8 +172,20 @@ def remez(n, bands, desired, fs, weights=None, density=16):
     assert all(signs[i] != signs[i + 1] for i in range(big_l)), "no alternation"
     assert all(abs(abs(e[k]) - d) <= d * Decimal(10) ** -25 for k in ext), "not level"
     assert max(abs(v) for v in e) <= d * (1 + Decimal(10) ** -25), "not optimal"
-    taps = taps_from(n, [float(v) for v in c])
+    taps = (anti_taps if anti else taps_from)(n, [float(v) for v in c])
     return taps, float(d), big_l + 1
+
+
+def anti_taps(n, c):
+    """Types III and IV: taps from the cosine coefficients of P, A = Q P expanded in sines
+    (sin(w) cos(kw) and sin(w/2) cos(kw) by the product formulas; conventions)."""
+    big_l = len(c)
+    z = [*c, 0.0, 0.0]
+    if n % 2:
+        a = [c[0] - z[2] / 2] + [(z[m - 1] - z[m + 1]) / 2 for m in range(2, big_l + 1)]
+        return [-v / 2 for v in a[::-1]] + [0.0] + [v / 2 for v in a]
+    b = [c[0] - z[1] / 2] + [(z[m - 1] - z[m]) / 2 for m in range(2, big_l + 1)]
+    return [-v / 2 for v in b[::-1]] + [v / 2 for v in b]
 
 
 def taps_from(n, c):
@@ -185,6 +208,7 @@ def certified(case_id, args, tol=TOL, note=""):
         args["sample_rate"],
         args.get("weights"),
         args.get("grid_density", 16),
+        args.get("kind", "filter"),
     )
     return {
         "id": case_id,
@@ -220,6 +244,76 @@ s3 = 1 / (1 + c5)
 h2 = 1 / (2 * (math.cos(math.pi / 10) + math.cos(2 * math.pi / 5)))
 h2w = 1 / (2 * (math.cos(math.pi / 10) + 10 * math.cos(2 * math.pi / 5)))
 
+# Antisymmetric, L = 1: A = a sin(2 pi nu) (N = 3) or a sin(pi nu) (N = 2), one free value.
+hil3 = 2 / (math.sin(0.2 * math.pi) + 1)
+hil2 = 2 / (math.sin(0.1 * math.pi) + 1)
+dif3 = -2 / (math.sin(math.pi / 16) / (math.pi / 16) + 2 / math.pi)
+ANTI_HAND = [
+    hand(
+        "fir_equiripple.hilbert_3_by_hand",
+        {"num_taps": 3, "bands": [0.1, 0.4], "desired": [1], "sample_rate": 1,
+         "kind": "hilbert"},
+        [-hil3 / 2, 0.0, hil3 / 2],
+        "by hand: type III, L = 1, A = a sin(2 pi nu) with a = 2 h[2]; the error 1 - a sin is "
+        "largest at the band ends (sin(0.2 pi)) and at 0.25 (sin = 1, a grid point), so the "
+        "optimum levels them: a = 2/(sin(0.2 pi) + 1)",
+    ),  # fmt: skip
+    hand(
+        "fir_equiripple.hilbert_2_by_hand",
+        {"num_taps": 2, "bands": [0.1, 0.5], "desired": [1], "sample_rate": 1,
+         "kind": "hilbert"},
+        [-hil2 / 2, hil2 / 2],
+        "by hand: type IV, L = 1, A = a sin(pi nu) with a = 2 h[1], which keeps nu = 0.5 "
+        "(sin = 1); levelling 1 - a sin at 0.1 and 0.5: a = 2/(sin(0.1 pi) + 1)",
+    ),  # fmt: skip
+    hand(
+        "fir_equiripple.differentiator_3_by_hand",
+        {"num_taps": 3, "bands": [0, 0.25], "desired": [1], "sample_rate": 1,
+         "kind": "differentiator"},
+        [-dif3 / 2, 0.0, dif3 / 2],
+        "by hand: type III, L = 1, grid 1/32 apart with nu = 0 dropped; target -2 pi nu, "
+        "relative error -1 - a sin(w)/w (w = 2 pi nu), sin(w)/w falling from sin(pi/16)/(pi/16) "
+        "at nu = 1/32 to 2/pi at 0.25; levelled: a = -2/(sin(pi/16)/(pi/16) + 2/pi), "
+        "h[2] = a/2",
+    ),  # fmt: skip
+    hand(
+        "fir_equiripple.hilbert_all_zero_exact",
+        {"num_taps": 6, "bands": [0, 0.2, 0.3, 0.5], "desired": [0, 0], "sample_rate": 1,
+         "kind": "hilbert"},
+        [0.0] * 6,
+        "conventions: every desired value 0 gives zero taps, without iteration",
+    ),  # fmt: skip
+]
+
+
+def anti(case_id, args, note=""):
+    return certified(case_id, {"sample_rate": 1, **args}, note=note)
+
+
+ANTI = [
+    anti("fir_equiripple.hilbert_31",
+         {"num_taps": 31, "bands": [0.05, 0.45], "desired": [1], "kind": "hilbert"}),
+    anti("fir_equiripple.hilbert_30",
+         {"num_taps": 30, "bands": [0.05, 0.5], "desired": [1], "kind": "hilbert"}),
+    anti("fir_equiripple.hilbert_101",
+         {"num_taps": 101, "bands": [0.02, 0.48], "desired": [1], "kind": "hilbert"},
+         "; L = 50, so the library starts from the L = 25 design (reference scaling)"),
+    anti("fir_equiripple.hilbert_stopbands",
+         {"num_taps": 41, "bands": [0, 0.05, 0.1, 0.4, 0.45, 0.5], "desired": [0, 1, 0],
+          "weights": [10, 1, 10], "kind": "hilbert"}),
+    anti("fir_equiripple.differentiator_31",
+         {"num_taps": 31, "bands": [0, 0.4], "desired": [1], "kind": "differentiator"}),
+    anti("fir_equiripple.differentiator_32_full_band",
+         {"num_taps": 32, "bands": [0, 0.5], "desired": [1], "kind": "differentiator"}),
+    anti("fir_equiripple.differentiator_stopband_hz",
+         {"num_taps": 40, "bands": [0, 1600, 2400, 4000], "desired": [2.5, 0],
+          "weights": [1, 10], "sample_rate": 8000, "kind": "differentiator"}),
+    anti("fir_equiripple.differentiator_61_density_8",
+         {"num_taps": 61, "bands": [0.02, 0.47], "desired": [1], "kind": "differentiator",
+          "grid_density": 8}),
+    anti("fir_equiripple.filter_kind_explicit",
+         {"num_taps": 21, "bands": [0, 0.1, 0.2, 0.5], "desired": [1, 0], "kind": "filter"}),
+]  # fmt: skip
 
 cases = [
     hand(
@@ -459,7 +553,19 @@ cases = [
         "conventions: step 0.5/(16*51); two intervals per band gives 6 points, "
         "fewer than L + 1 = 52",
     ),
-]
+    *ANTI_HAND,
+    *ANTI,
+    err("fir_equiripple.kind_unknown", {"kind": "bandpass"}, "conventions: unknown kind"),
+    err("fir_equiripple.hilbert_one_tap", {"num_taps": 1, "bands": [0.1, 0.4], "desired": [1],
+        "kind": "hilbert"}, "conventions: 2 <= num_taps for the antisymmetric kinds"),
+    err("fir_equiripple.hilbert_gain_at_zero", {"bands": [0, 0.4], "desired": [1],
+        "kind": "hilbert"}, "conventions: antisymmetric A(0) = 0, so the target there must be 0"),
+    err("fir_equiripple.hilbert_odd_gain_at_nyquist", {"bands": [0.1, 0.5], "desired": [1],
+        "kind": "hilbert"}, "conventions: type III has A(fs/2) = 0"),
+    err("fir_equiripple.differentiator_odd_to_nyquist", {"bands": [0, 0.5], "desired": [1],
+        "kind": "differentiator"}, "conventions: type III has A(fs/2) = 0, but the target "
+        "there is -pi"),
+]  # fmt: skip
 
 doc = {
     "schema": 1,
@@ -507,4 +613,10 @@ for c in cases[:5]:
     assert all(abs(g - e) < 1e-14 for g, e in zip(got, c["expected"], strict=True)), c[
         "id"
     ]
+for c in ANTI_HAND[:3]:
+    a = c["args"]
+    got = remez(
+        a["num_taps"], a["bands"], a["desired"], a["sample_rate"], None, 16, a["kind"]
+    )[0]
+    assert all(abs(g - e) < 1e-14 for g, e in zip(got, c["expected"], strict=True)), c["id"]
 print(f"wrote {out} ({len(cases)} cases)")

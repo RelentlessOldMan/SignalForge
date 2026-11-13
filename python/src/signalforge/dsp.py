@@ -184,6 +184,9 @@ def kaiser_parameters(
     return order + 1, beta
 
 
+EQUIRIPPLE_KINDS = ("filter", "hilbert", "differentiator")
+
+
 def _equiripple_grid(
     num_taps: int,
     bands: ArrayLike,
@@ -191,11 +194,16 @@ def _equiripple_grid(
     sample_rate: float,
     weights: ArrayLike | None,
     grid_density: int,
+    kind: str,
 ) -> tuple[int, NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.int64]]:
-    """Checked arguments as ``(L, nu, D, W, band index)`` on the grid (conventions)."""
+    """Checked arguments as ``(L, nu, T, W, band index)`` on the grid (conventions): the target
+    amplitude and the error weight at each point."""
+    if kind not in EQUIRIPPLE_KINDS:
+        raise ValueError(f"unknown kind {kind!r}; known: {', '.join(EQUIRIPPLE_KINDS)}")
+    anti = kind != "filter"
     n = count(num_taps, "num_taps")
-    if not 1 <= n <= 1001:
-        raise ValueError("num_taps must be in [1, 1001]")
+    if not (2 if anti else 1) <= n <= 1001:
+        raise ValueError(f"num_taps must be in [{2 if anti else 1}, 1001] for kind {kind!r}")
     density = count(grid_density, "grid_density")
     if not 1 <= density <= 64:
         raise ValueError("grid_density must be in [1, 64]")
@@ -213,9 +221,12 @@ def _equiripple_grid(
     if w.shape != (nb,) or not np.all(np.isfinite(w)) or np.any(w <= 0):
         raise ValueError("weights must have one positive finite value per band")
     odd = n % 2 == 1
-    if not odd and b[-1] == fs / 2 and d[-1] != 0:
-        raise ValueError("an even num_taps has zero gain at sample_rate/2: desired must be 0 there")
-    big_l = (n + 1) // 2 if odd else n // 2
+    # Q = 0 at 0.5 for types II and III, at 0 for III and IV: the target must be 0 there.
+    if odd == anti and b[-1] == fs / 2 and d[-1] != 0:
+        raise ValueError("num_taps and kind give zero gain at sample_rate/2: desired must be 0")
+    if kind == "hilbert" and b[0] == 0 and d[0] != 0:
+        raise ValueError("a Hilbert transformer has zero gain at 0: desired must be 0 there")
+    big_l = (n - 1) // 2 if anti and odd else (n + 1) // 2 if odd else n // 2
     step = 0.5 / (density * big_l)
     nu: list[float] = []
     dd: list[float] = []
@@ -226,11 +237,15 @@ def _equiripple_grid(
         m = math.ceil((hi - lo) / step)
         for i in range(m + 1):
             v = hi if i == m else lo + (hi - lo) * i / m
-            if not odd and v == 0.5:
+            if (v == 0.5 and odd == anti) or (v == 0 and anti):
                 continue
             nu.append(v)
-            dd.append(float(d[j]))
-            ww.append(float(w[j]))
+            if kind == "differentiator" and d[j] != 0:
+                dd.append(-2 * math.pi * v * float(d[j]))
+                ww.append(float(w[j]) / (2 * math.pi * v))
+            else:
+                dd.append(float(d[j]))
+                ww.append(float(w[j]))
             bi.append(j)
     if len(nu) < big_l + 1:
         raise ValueError("the bands are too narrow for num_taps: too few grid points")
@@ -306,22 +321,41 @@ def fir_equiripple(
     sample_rate: float,
     weights: ArrayLike | None = None,
     grid_density: int = 16,
+    kind: str = "filter",
 ) -> NDArray[np.float64]:
-    """Parks-McClellan (Remez exchange) symmetric taps: the minimax weighted error over ``bands``
-    (edge pairs in Hz) with piecewise-constant ``desired`` gains, on the conventions' grid."""
-    _, _, dd, _, _ = _equiripple_grid(num_taps, bands, desired, sample_rate, weights, grid_density)
+    """Parks-McClellan (Remez exchange) taps: the minimax weighted error over ``bands`` (edge pairs
+    in Hz) with piecewise-constant ``desired`` values, on the conventions' grid. ``kind`` is
+    ``"filter"`` (symmetric taps, ``desired`` gains), ``"hilbert"`` (antisymmetric, ``desired`` 1
+    is the Hilbert transformer) or ``"differentiator"`` (antisymmetric, ``desired`` 1 is the
+    derivative per sample, the error relative to it)."""
+    _, _, dd, _, _ = _equiripple_grid(
+        num_taps, bands, desired, sample_rate, weights, grid_density, kind
+    )
     n = int(num_taps)
-    if np.all(dd == 0) or (n % 2 == 1 and np.all(dd == dd[0])):
+    if np.all(dd == 0) or (kind == "filter" and n % 2 == 1 and np.all(dd == dd[0])):
         h = np.zeros(n)
         h[(n - 1) // 2] = dd[0]  # exact: only reached for odd n unless every value is 0
         return h
-    done = _remez(n, bands, desired, sample_rate, weights, grid_density)
+    done = _remez(n, bands, desired, sample_rate, weights, grid_density, kind)
     if done is None:
         raise ValueError(
             "the equiripple design is beyond double precision: its ripple is too small, or its "
             "gaps between bands too wide, for double taps to reach"
         )
     return done[0]
+
+
+def _antisymmetric_taps(c: NDArray[np.float64], odd: bool) -> NDArray[np.float64]:
+    """Types III and IV: the taps from the cosine coefficients of ``P`` (conventions)."""
+    big_l = c.size
+    z = np.concatenate((c, [0.0, 0.0]))
+    if odd:
+        a = (z[:big_l] - z[2 : big_l + 2]) / 2  # a_m, m = 1 … L
+        a[0] = c[0] - z[2] / 2
+        return np.concatenate((-a[::-1] / 2, [0.0], a / 2))
+    b = (z[:big_l] - z[1 : big_l + 1]) / 2  # b_m, m = 1 … L
+    b[0] = c[0] - z[1] / 2
+    return np.concatenate((-b[::-1] / 2, b / 2))
 
 
 def _scaled_start(
@@ -350,20 +384,30 @@ def _remez(
     sample_rate: float,
     weights: ArrayLike | None,
     grid_density: int,
+    kind: str,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]] | None:
     """The exchange (conventions: Equiripple design): the taps and the final set's frequencies,
     or None if the design is beyond double precision."""
     big_l, nu, dd, ww, band = _equiripple_grid(
-        n, bands, desired, sample_rate, weights, grid_density
+        n, bands, desired, sample_rate, weights, grid_density, kind
     )
-    odd = n % 2 == 1
-    q = np.ones_like(nu) if odd else np.cos(np.pi * nu)
+    odd, anti = n % 2 == 1, kind != "filter"
+    if anti:
+        q = np.sin(2 * np.pi * nu) if odd else np.sin(np.pi * nu)
+    else:
+        q = np.ones_like(nu) if odd else np.cos(np.pi * nu)
     dp, wp, x = dd / q, ww * q, np.cos(2 * np.pi * nu)
     g = nu.size
     prior = None
     if big_l > 16:
         smaller = _remez(
-            n - 2 * (big_l - (big_l + 1) // 2), bands, desired, sample_rate, weights, grid_density
+            n - 2 * (big_l - (big_l + 1) // 2),
+            bands,
+            desired,
+            sample_rate,
+            weights,
+            grid_density,
+            kind,
         )
         prior = None if smaller is None else smaller[1]
     ext = _scaled_start(big_l, nu, band, prior)
@@ -399,6 +443,8 @@ def _remez(
                 worst = max(worst, float(np.max(np.abs(wp[s : s + 1024] * (dp[s : s + 1024] - p)))))
             if worst > abs(delta) * (1 + 1e-3) + 100 * slack:
                 break
+            if anti:
+                return _antisymmetric_taps(c, odd), nu[ext]
             if odd:
                 return np.concatenate((c[:0:-1] / 2, c[:1], c[1:] / 2)), nu[ext]
             beta = np.empty(big_l)

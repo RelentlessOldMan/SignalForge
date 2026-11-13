@@ -179,6 +179,37 @@ def test_equiripple_wide_gaps_start_from_a_smaller_design() -> None:
     assert 6e-7 < min(errs) and max(errs) < 1.3 * min(errs)
 
 
+def test_hilbert_transformer_turns_cosine_into_sine() -> None:
+    h = fir_equiripple(101, [0.02, 0.48], [1], 1, kind="hilbert")
+    assert np.array_equal(h, -h[::-1])
+    n = np.arange(600)
+    y = convolve(np.cos(2 * np.pi * 0.13 * n), h)[200:600]
+    want = np.sin(2 * np.pi * 0.13 * (n[200:600] - 50))  # delayed by (N - 1)/2
+    assert np.max(np.abs(y - want)) < 1e-3  # the ripple is 6.3e-4
+
+
+def test_differentiator_gives_the_derivative_per_sample() -> None:
+    for taps in (31, 32):
+        h = fir_equiripple(taps, [0, 0.4], [2], 1, kind="differentiator")
+        assert np.array_equal(h, -h[::-1])
+        n = np.arange(400)
+        y = convolve(np.sin(2 * np.pi * 0.1 * n), h)[100:400]
+        c = (taps - 1) / 2
+        want = 2 * 2 * np.pi * 0.1 * np.cos(2 * np.pi * 0.1 * (n[100:400] - c))
+        assert np.max(np.abs(y - want)) < 1e-3 * np.max(np.abs(want))
+
+
+def test_equiripple_antisymmetric_bad_arguments() -> None:
+    with pytest.raises(ValueError):
+        fir_equiripple(21, [0.1, 0.4], [1], 1, kind="bandpass")
+    with pytest.raises(ValueError):
+        fir_equiripple(1, [0.1, 0.4], [1], 1, kind="hilbert")
+    with pytest.raises(ValueError):
+        fir_equiripple(21, [0, 0.4], [1], 1, kind="hilbert")  # A(0) = 0
+    with pytest.raises(ValueError):
+        fir_equiripple(21, [0, 0.5], [1], 1, kind="differentiator")  # type III: A(fs/2) = 0
+
+
 def test_equiripple_bad_arguments() -> None:
     with pytest.raises(ValueError):
         fir_equiripple(21, [0, 0.1, np.nan, 0.5], [1, 0], 1)

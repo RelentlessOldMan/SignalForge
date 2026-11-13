@@ -1,33 +1,52 @@
 namespace SignalForge;
 
+/// <summary>What an equiripple design approximates (conventions: Equiripple design; ADR 0026).</summary>
+public enum EquirippleKind
+{
+    /// <summary>Symmetric taps; desired is the gain in each band.</summary>
+    Filter,
+
+    /// <summary>Antisymmetric taps; desired 1 is the Hilbert transformer (−j times the delay at
+    /// positive frequencies).</summary>
+    Hilbert,
+
+    /// <summary>Antisymmetric taps; desired 1 is the derivative per sample, the error relative to
+    /// the slope where desired is not 0.</summary>
+    Differentiator,
+}
+
 public static partial class Dsp
 {
-    /// <summary>Parks–McClellan (Remez exchange) symmetric FIR taps: the minimax weighted error
-    /// over the bands with a constant desired gain in each, on the grid the conventions define
-    /// (conventions: FIR filters, Equiripple design; ADR 0024).</summary>
-    /// <param name="numTaps">Number of taps, 1 to 1001; odd is type I, even type II.</param>
+    /// <summary>Parks–McClellan (Remez exchange) FIR taps: the minimax weighted error over the
+    /// bands with a constant desired value in each, on the grid the conventions define
+    /// (conventions: FIR filters, Equiripple design; ADR 0024, ADR 0026).</summary>
+    /// <param name="numTaps">Number of taps, 1 to 1001 (2 to 1001 for the antisymmetric kinds);
+    /// odd is type I or III, even type II or IV.</param>
     /// <param name="bands">Band edges in Hz as pairs [b0, b1, b2, b3, …], strictly increasing,
     /// from 0 or above to sampleRate/2 or below.</param>
     /// <param name="desired">Desired gain in each band, finite.</param>
     /// <param name="sampleRate">Sample rate in Hz.</param>
     /// <param name="weights">Positive weight for each band; all 1 if null.</param>
     /// <param name="gridDensity">Grid points per extremum, 1 to 64.</param>
+    /// <param name="kind">A filter (symmetric), a Hilbert transformer or a differentiator
+    /// (antisymmetric).</param>
     /// <exception cref="ArgumentException">Bad arguments, or a design whose ripple is beyond
     /// double precision (it does not converge).</exception>
     public static double[] FirEquiripple(int numTaps, IReadOnlyList<double> bands, IReadOnlyList<double> desired,
-        double sampleRate, IReadOnlyList<double>? weights = null, int gridDensity = 16)
+        double sampleRate, IReadOnlyList<double>? weights = null, int gridDensity = 16,
+        EquirippleKind kind = EquirippleKind.Filter)
     {
         ArgumentNullException.ThrowIfNull(bands);
         ArgumentNullException.ThrowIfNull(desired);
-        var (_, _, dd, _, _) = EquirippleGrid(numTaps, bands, desired, sampleRate, weights, gridDensity);
+        var (_, _, dd, _, _) = EquirippleGrid(numTaps, bands, desired, sampleRate, weights, gridDensity, kind);
         int n = numTaps;
-        if (dd.All(v => v == 0) || (n % 2 == 1 && dd.All(v => v == dd[0])))
+        if (dd.All(v => v == 0) || (kind == EquirippleKind.Filter && n % 2 == 1 && dd.All(v => v == dd[0])))
         {
             var exact = new double[n];
             exact[(n - 1) / 2] = dd[0];
             return exact;
         }
-        return Remez(n, bands, desired, sampleRate, weights, gridDensity)?.Taps
+        return Remez(n, bands, desired, sampleRate, weights, gridDensity, kind)?.Taps
             ?? throw new ArgumentException("the equiripple design is beyond double precision: its ripple is too small, or its gaps between bands too wide, for double taps to reach", nameof(numTaps));
     }
 
@@ -83,23 +102,23 @@ public static partial class Dsp
     // The exchange (conventions: Equiripple design): the taps and the final set's frequencies, or
     // null if the design is beyond double precision.
     private static (double[] Taps, double[] Nu)? Remez(int n, IReadOnlyList<double> bands, IReadOnlyList<double> desired,
-        double sampleRate, IReadOnlyList<double>? weights, int gridDensity)
+        double sampleRate, IReadOnlyList<double>? weights, int gridDensity, EquirippleKind kind)
     {
-        var (l, nu, dd, ww, band) = EquirippleGrid(n, bands, desired, sampleRate, weights, gridDensity);
-        bool odd = n % 2 == 1;
+        var (l, nu, dd, ww, band) = EquirippleGrid(n, bands, desired, sampleRate, weights, gridDensity, kind);
+        bool odd = n % 2 == 1, anti = kind != EquirippleKind.Filter;
         int g = nu.Length;
         double[] dp = new double[g], wp = new double[g], x = new double[g];
         double slack = 0;
         for (int i = 0; i < g; i++)
         {
-            double q = odd ? 1 : Math.Cos(Math.PI * nu[i]);
+            double q = anti ? Math.Sin((odd ? 2 : 1) * Math.PI * nu[i]) : odd ? 1 : Math.Cos(Math.PI * nu[i]);
             dp[i] = dd[i] / q;
             wp[i] = ww[i] * q;
             x[i] = Math.Cos(2 * Math.PI * nu[i]);
             slack = Math.Max(slack, Math.Abs(ww[i] * dd[i]));
         }
         slack *= 1e-12;
-        double[]? prior = l > 16 ? Remez(n - 2 * (l - (l + 1) / 2), bands, desired, sampleRate, weights, gridDensity)?.Nu : null;
+        double[]? prior = l > 16 ? Remez(n - 2 * (l - (l + 1) / 2), bands, desired, sampleRate, weights, gridDensity, kind)?.Nu : null;
         int[] ext = ScaledStart(l, nu, band, prior);
         double[] gamma = new double[l + 1], logs = new double[l + 1], values = new double[l + 1];
         double[] bary = new double[l], e = new double[g];
@@ -152,7 +171,7 @@ public static partial class Dsp
                     worst = Math.Max(worst, Math.Abs(wp[k] * (dp[k] - Clenshaw(c, x[k]))));
                 if (worst > Math.Abs(delta) * (1 + 1e-3) + 100 * slack)
                     break;
-                return (EquirippleTaps(n, c), [.. ext.Select(i => nu[i])]);
+                return (anti ? AntisymmetricTaps(n, c) : EquirippleTaps(n, c), [.. ext.Select(i => nu[i])]);
             }
             next.CopyTo(ext);
         }
@@ -291,6 +310,25 @@ public static partial class Dsp
         return h;
     }
 
+    /// <summary>Types III and IV: taps from the cosine coefficients (conventions: Equiripple
+    /// design, Taps).</summary>
+    private static double[] AntisymmetricTaps(int n, double[] c)
+    {
+        int l = c.Length;
+        double C(int k) => k < l ? c[k] : 0;
+        var h = new double[n];
+        bool odd = n % 2 == 1;
+        for (int m = 1; m <= l; m++)
+        {
+            double a = odd ? (m == 1 ? c[0] - C(2) / 2 : (C(m - 1) - C(m + 1)) / 2)
+                : m == 1 ? c[0] - C(1) / 2 : (C(m - 1) - C(m)) / 2;
+            int right = odd ? (n - 1) / 2 + m : n / 2 - 1 + m;
+            h[right] = a / 2;
+            h[n - 1 - right] = -a / 2;
+        }
+        return h;
+    }
+
     /// <summary>Gaussian elimination with partial pivoting; overwrites its arguments.</summary>
     private static double[] Solve(double[,] a, double[] b)
     {
@@ -332,10 +370,13 @@ public static partial class Dsp
 
     private static (int L, double[] Nu, double[] D, double[] W, int[] Band) EquirippleGrid(int numTaps,
         IReadOnlyList<double> bands, IReadOnlyList<double> desired, double sampleRate,
-        IReadOnlyList<double>? weights, int gridDensity)
+        IReadOnlyList<double>? weights, int gridDensity, EquirippleKind kind)
     {
-        if (numTaps < 1 || numTaps > 1001)
-            throw new ArgumentOutOfRangeException(nameof(numTaps), numTaps, "must be in [1, 1001]");
+        if (!Enum.IsDefined(kind))
+            throw new ArgumentOutOfRangeException(nameof(kind), kind, "unknown kind");
+        bool anti = kind != EquirippleKind.Filter;
+        if (numTaps < (anti ? 2 : 1) || numTaps > 1001)
+            throw new ArgumentOutOfRangeException(nameof(numTaps), numTaps, anti ? "must be in [2, 1001] for this kind" : "must be in [1, 1001]");
         if (gridDensity < 1 || gridDensity > 64)
             throw new ArgumentOutOfRangeException(nameof(gridDensity), gridDensity, "must be in [1, 64]");
         double fs = Check.PositiveFinite(sampleRate, nameof(sampleRate));
@@ -349,9 +390,12 @@ public static partial class Dsp
         if (weights is not null && (weights.Count != nb || weights.Any(v => !double.IsFinite(v) || v <= 0)))
             throw new ArgumentException("weights must have one positive finite value per band", nameof(weights));
         bool odd = numTaps % 2 == 1;
-        if (!odd && bands[^1] == fs / 2 && desired[^1] != 0)
-            throw new ArgumentException("an even numTaps has zero gain at sampleRate/2: desired must be 0 there", nameof(desired));
-        int l = odd ? (numTaps + 1) / 2 : numTaps / 2;
+        // Q = 0 at 0.5 for types II and III, at 0 for III and IV: the target must be 0 there.
+        if (odd == anti && bands[^1] == fs / 2 && desired[^1] != 0)
+            throw new ArgumentException("numTaps and kind give zero gain at sampleRate/2: desired must be 0", nameof(desired));
+        if (kind == EquirippleKind.Hilbert && bands[0] == 0 && desired[0] != 0)
+            throw new ArgumentException("a Hilbert transformer has zero gain at 0: desired must be 0 there", nameof(desired));
+        int l = anti && odd ? (numTaps - 1) / 2 : odd ? (numTaps + 1) / 2 : numTaps / 2;
         double step = 0.5 / (gridDensity * l);
         List<double> nu = [], dd = [], ww = [];
         List<int> bi = [];
@@ -362,11 +406,20 @@ public static partial class Dsp
             for (int i = 0; i <= m; i++)
             {
                 double v = i == m ? hi : lo + (hi - lo) * i / m;
-                if (!odd && v == 0.5)
+                if ((v == 0.5 && odd == anti) || (v == 0 && anti))
                     continue;
                 nu.Add(v);
-                dd.Add(desired[j]);
-                ww.Add(weights?[j] ?? 1.0);
+                double w = weights?[j] ?? 1.0;
+                if (kind == EquirippleKind.Differentiator && desired[j] != 0)
+                {
+                    dd.Add(-2 * Math.PI * v * desired[j]);
+                    ww.Add(w / (2 * Math.PI * v));
+                }
+                else
+                {
+                    dd.Add(desired[j]);
+                    ww.Add(w);
+                }
                 bi.Add(j);
             }
         }

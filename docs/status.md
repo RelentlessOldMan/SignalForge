@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Hilbert transformers and differentiators** (equiripple types III and IV, odd symmetry):
-   conventions and an ADR first (the weighting for a differentiator, which types are allowed for
-   each); expected values from the 50-digit exchange in `vectors/generators/equiripple.py`.
-2. **Streaming resampling**: a stateful `Resampler` (like `FirFilter`) whose chunked output
+1. **Streaming resampling**: a stateful `Resampler` (like `FirFilter`) whose chunked output
    equals `resample` of the whole input; conventions first (where the output grid starts, what a
    chunk boundary does to the polyphase phase).
+2. **Group delay**: `group_delay` of FIR taps and of second-order sections, in samples, computed
+   per section in closed form (no phase unwrapping); conventions first (sign, what happens at a
+   zero on the unit circle). It also checks the Bessel designs' flat delay directly.
 
 ## Built
 
@@ -335,10 +335,19 @@ Updated with every chunk of work. Dates are absolute.
   large that their cancellation leaves no digits). Where both languages design, ordinary ripples
   agree to 4 digits or better; taps differ only in designs whose taps reach 1e3 to 1e10, where
   they are determined only to rounding times their size.
+- 2026-11-13: Hilbert transformers and differentiators (conventions: Equiripple design,
+  ADR 0026): `fir_equiripple(..., kind="hilbert" | "differentiator")`, C# `EquirippleKind`.
+  Antisymmetric taps (types III and IV) through the same exchange with `Q = sin(2πν)` or
+  `sin(πν)`; `desired` 1 is the ideal (Hilbert `H = −j`, differentiator the derivative per
+  sample), a differentiator's error relative to the slope where `desired ≠ 0`; a target that
+  cannot be met where `Q = 0` raises. Vectors: three hand designs with `L = 1`, nine certified by
+  the 50-digit generator (extended to types III and IV), five errors. Tests: a Hilbert
+  transformer turns cos into sin, a differentiator gives the derivative, taps exactly
+  antisymmetric.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc and equiripple (differentiators, Hilbert transformers), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc and equiripple (least squares, arbitrary-magnitude bands), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
