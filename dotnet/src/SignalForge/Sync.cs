@@ -8,6 +8,12 @@ namespace SignalForge;
 /// <param name="Errors">The timing detector's output at each symbol, 0 for the first.</param>
 public sealed record TimingRecovery(Complex[] Symbols, double[] Positions, double[] Errors);
 
+/// <summary>What a carrier loop gave (conventions: Synchronization, Tracking loops).</summary>
+/// <param name="Symbols">The corrected symbols.</param>
+/// <param name="Phases">The phase removed from each symbol, in radians, not wrapped.</param>
+/// <param name="Errors">The phase detector's output at each symbol.</param>
+public sealed record CarrierRecovery(Complex[] Symbols, double[] Phases, double[] Errors);
+
 /// <summary>Synchronization: block estimators of symbol timing, QPSK carrier frequency and phase,
 /// and tracking loops. Definitions in docs/conventions.md (Synchronization).</summary>
 public static class Sync
@@ -69,6 +75,42 @@ public static class Sync
             tau += step;
         }
         return new TimingRecovery([.. symbols], [.. positions], [.. errors]);
+    }
+
+    /// <summary>Decision-directed QPSK carrier loop: a PI loop on the phase, one update per symbol
+    /// (conventions: Synchronization, Tracking loops).</summary>
+    /// <param name="symbols">QPSK symbols, all finite.</param>
+    /// <param name="kp">Proportional gain, finite, not negative.</param>
+    /// <param name="ki">Integral gain, finite, not negative.</param>
+    /// <param name="phase">Phase removed from the first symbol, in radians, finite.</param>
+    public static CarrierRecovery QpskCarrierTracking(ReadOnlySpan<Complex> symbols, double kp, double ki, double phase = 0)
+    {
+        foreach (Complex z in symbols)
+            if (!double.IsFinite(z.Real) || !double.IsFinite(z.Imaginary))
+                throw new ArgumentException("must be finite", nameof(symbols));
+        NotNegativeFinite(kp, nameof(kp));
+        NotNegativeFinite(ki, nameof(ki));
+        if (!double.IsFinite(phase))
+            throw new ArgumentOutOfRangeException(nameof(phase), phase, "must be finite");
+        var output = new Complex[symbols.Length];
+        var phases = new double[symbols.Length];
+        var errors = new double[symbols.Length];
+        double phi = phase, v = 0;
+        for (int k = 0; k < symbols.Length; k++)
+        {
+            Complex z = symbols[k];
+            double c = Math.Cos(phi), s = Math.Sin(phi);
+            double re = z.Real * c + z.Imaginary * s;
+            double im = z.Imaginary * c - z.Real * s;
+            double dre = re >= 0 ? 1 : -1, dim = im >= 0 ? 1 : -1;
+            double e = dre * im - dim * re;
+            output[k] = new Complex(re, im);
+            phases[k] = phi;
+            errors[k] = e;
+            v += ki * e;
+            phi = phi + kp * e + v;
+        }
+        return new CarrierRecovery(output, phases, errors);
     }
 
     private static void NotNegativeFinite(double x, string name)

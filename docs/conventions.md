@@ -846,7 +846,7 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
 ## Synchronization
 
 Decided in [ADR 0008](adr/0008-block-synchronization.md). Python: `signalforge.sync`; C#:
-`SignalForge.Sync`. All but the tracking loops at the end are block estimators over finite complex
+`SignalForge.Sync`. All but the tracking loops are block estimators over finite complex
 samples; they estimate, they do not correct. Where a sum below is exactly zero there is no information and the estimate is 0. `arg`
 is in `(−π, π]`. The timing sum uses `e^{−j2π(n mod sps)/sps}`, the same value with a small
 argument. The estimates do not depend on the input's scale: each implementation first
@@ -862,8 +862,8 @@ multiplies the block by the power of two that brings its largest real or imagina
 - **QPSK frequency offset** (`qpsk_frequency_offset(symbols, symbol_rate)`): with `w = z⁴`,
   `S = Σₖ₌₁ w[k]·conj(w[k−1])`, `Δf = arg(S)·symbol_rate / (8π)`, in `(−Rs/8, Rs/8]`. At least two
   symbols. Correct with `frequency_offset(symbols, −Δf, symbol_rate)`. **(implemented)**
-- **Tracking loops** ([ADR 0043](adr/0043-gardner-timing.md)). These take the samples as given (no
-  scaling).
+- **Tracking loops** ([ADR 0043](adr/0043-gardner-timing.md),
+  [ADR 0044](adr/0044-qpsk-carrier-loop.md)). These take the samples as given (no scaling).
   - `pi_loop_gains(loop_bandwidth, damping, detector_gain)` returns `(kp, ki)` for a
     proportional-plus-integral loop whose detector has slope `Kd = detector_gain`, with
     `Bn = loop_bandwidth` the one-sided noise bandwidth per update and `ζ = damping`:
@@ -883,6 +883,19 @@ multiplies the block by the power of two that brings its largest real or imagina
     and `≥ 0`, `half_width` an integer `≥ 1`. In the linear model (`e = Kd·(τ − t)`) a clock
     whose symbols arrive every `sps·(1 + δ)` samples leaves a lag of `−sps·δ/(kp·Kd)` with
     `ki = 0`, and none with `ki > 0`. **(implemented)**
+  - `qpsk_carrier_tracking(symbols, kp, ki, *, phase=0.0)`: a decision-directed phase-locked loop
+    on QPSK symbols `z` (finite, the constellation at odd multiples of π/4). With `φ₀ = phase` and
+    `v = 0`, for each `k`: `c = cos φₖ`, `s = sin φₖ`, the corrected symbol `rₖ = zₖ·e^(−jφₖ)`
+    computed as `r.re = z.re·c + z.im·s`, `r.im = z.im·c − z.re·s`; the decision
+    `d = sgn(r.re) + j·sgn(r.im)` with `sgn(x) = +1` for `x ≥ 0`, else `−1`; the detector
+    `eₖ = d.re·r.im − d.im·r.re` (positive when the carrier is ahead of `φₖ`); then
+    `v ← v + ki·eₖ` and `φₖ₊₁ = φₖ + kp·eₖ + v`, not wrapped. The result has `symbols` (`rₖ`),
+    `phases` (`φₖ`) and `errors` (`eₖ`), one each per symbol. `kp`, `ki` finite and `≥ 0`,
+    `phase` finite. Near lock the detector's slope is `Kd = √2·|z|`. For noise-free symbols of
+    magnitude `A` it is exactly `√2·A·sin(θ − φ)`, so a carrier advancing `ω` per symbol leaves
+    `θ − φ = asin(ω/(√2·A·kp))` with `ki = 0` (if that is below π/4), and none with `ki > 0`.
+    The loop locks to the nearest multiple of π/2 to its start; resolving that is the
+    caller's. **(implemented)**
 - **QPSK phase offset** (`qpsk_phase_offset(symbols)`): `φ = arg(−Σ z⁴) / 4`, in `(−π/4, π/4]`;
   the true phase is `φ + m·π/2`. Correct by multiplying by `e^{−jφ}`
   (`frequency_offset(symbols, 0, 1, −φ)`). At least one symbol. **(implemented)**

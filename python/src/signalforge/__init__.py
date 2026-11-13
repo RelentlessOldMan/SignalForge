@@ -102,10 +102,12 @@ from .spectral import (
     window_stats,
 )
 from .sync import (
+    CarrierRecovery,
     TimingRecovery,
     gardner_timing,
     pi_loop_gains,
     qpsk_block_phases,
+    qpsk_carrier_tracking,
     qpsk_frequency_offset,
     qpsk_phase_offset,
     timing_offset,
@@ -122,10 +124,11 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.65"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.66"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
+    "CarrierRecovery",
     "ErrorCount",
     "Evm",
     "FirFilter",
@@ -221,6 +224,7 @@ __all__ = [
     "qpsk_ber_rayleigh_theory",
     "qpsk_ber_theory",
     "qpsk_block_phases",
+    "qpsk_carrier_tracking",
     "qpsk_demap_hard",
     "qpsk_demap_llr",
     "qpsk_frequency_offset",

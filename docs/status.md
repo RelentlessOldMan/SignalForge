@@ -4,11 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **QPSK carrier tracking loop**: a decision-directed phase-locked loop on symbols (the
-   fourth-power or sign-based QPSK phase detector, a PI loop filter from `pi_loop_gains`) with
-   its conventions, ADR and vectors; checks: lock to a static phase and a small residual
-   frequency offset, the steady-state phase error with and without the integrator against the
-   linear model, and BER after `gardner_timing` plus the carrier loop on a full impaired link.
+1. **Tracking loops in `qpsk_link`**: a receiver option that runs `gardner_timing` and
+   `qpsk_carrier_tracking` in place of the block estimators, with a config in `vectors/links/`
+   run in both languages and compared (statistics, since the noise streams differ); checks:
+   BER near theory with a clock offset and a carrier offset the block estimators cannot follow.
 
 ## Built
 
@@ -473,12 +472,21 @@ Updated with every chunk of work. Dates are absolute.
   theory); on an analytic raised-cosine burst whose clock is slow by 1e-3, the
   proportional-only lag matches `−sps·δ/(kp·Kd)` within 25 % and the PI loop removes it.
   Python 2050 passed, 2 skipped; .NET 1645 passed.
+- 2026-11-13: QPSK carrier tracking (conventions: Synchronization, Tracking loops; ADR 0044):
+  `qpsk_carrier_tracking(symbols, kp, ki, *, phase)` returns a `CarrierRecovery` (corrected
+  symbols, unwrapped phases, detector output); decision-directed, `Im{conj(d)·r}` with signed
+  decisions, PI loop from `pi_loop_gains`. 12 vectors from `vectors/generators/carrier_loop.py`
+  (stdlib). Tests: the proportional loop's lag on a rotating constellation is exactly
+  `asin(ω/(√2·kp))` (to 1e-9), the PI loop removes it and its phase steps by `ω`; a full link
+  (2.3-sample delay, carrier offset 1e-4 cycles per sample, Eb/N0 4 dB) through
+  `gardner_timing` then the carrier loop recovers the offset within 5 % and the BER within
+  30 % of theory. Python 2072 passed, 2 skipped; .NET 1662 passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay and block fading, carrier tracking loops, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay and block fading, tracking loops for other modulations, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

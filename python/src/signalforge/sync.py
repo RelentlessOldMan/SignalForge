@@ -172,3 +172,53 @@ def gardner_timing(
         np.array(positions, dtype=np.float64),
         np.array(errors, dtype=np.float64),
     )
+
+
+@dataclass(frozen=True)
+class CarrierRecovery:
+    """What a carrier loop gave: the corrected symbols, the phase used for each, the detector
+    output."""
+
+    symbols: NDArray[np.complex128]
+    phases: NDArray[np.float64]
+    errors: NDArray[np.float64]
+
+
+def qpsk_carrier_tracking(
+    symbols: ArrayLike, kp: float, ki: float, *, phase: float = 0.0
+) -> CarrierRecovery:
+    """Decision-directed QPSK carrier loop: a PI loop on the phase, one update per symbol
+    (conventions: Synchronization, Tracking loops)."""
+    z = np.asarray(symbols)
+    if z.ndim != 1:
+        raise ValueError("symbols must be one-dimensional")
+    z = np.asarray(z, dtype=np.complex128)
+    if not np.all(np.isfinite(z)):
+        raise ValueError("symbols must be finite")
+    p = real(kp, "kp")
+    i = real(ki, "ki")
+    phi = real(phase, "phase")
+    if p < 0 or i < 0:
+        raise ValueError("kp and ki must not be negative")
+    out: list[complex] = []
+    phases: list[float] = []
+    errors: list[float] = []
+    v = 0.0
+    for x in z.tolist():
+        c = math.cos(phi)
+        s = math.sin(phi)
+        re = x.real * c + x.imag * s
+        im = x.imag * c - x.real * s
+        dre = 1.0 if re >= 0 else -1.0
+        dim = 1.0 if im >= 0 else -1.0
+        e = dre * im - dim * re
+        out.append(complex(re, im))
+        phases.append(phi)
+        errors.append(e)
+        v += i * e
+        phi = phi + p * e + v
+    return CarrierRecovery(
+        np.array(out, dtype=np.complex128),
+        np.array(phases, dtype=np.float64),
+        np.array(errors, dtype=np.float64),
+    )
