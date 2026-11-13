@@ -1,9 +1,10 @@
 # Dependencies and licenses
 
 SignalForge may only depend on software under MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0 or ISC.
-Anything else, including other permissive licenses (PSF-2.0, Zlib, 0BSD, CC0, Unlicense), needs the
-user's explicit approval, recorded below with a date. Copyleft and reciprocal licenses (GPL, LGPL,
-AGPL, MPL, EPL, CDDL, SSPL), source-available licenses and unlicensed code are not allowed. The rule
+PSF-2.0 is also approved (ADR 0005). Anything else, including other permissive licenses (Zlib, 0BSD,
+CC0, Unlicense), needs the user's explicit approval, recorded below with a date. Copyleft and reciprocal licenses (GPL, LGPL,
+AGPL, MPL, EPL, CDDL, SSPL), source-available licenses and unlicensed code are not allowed, with one
+exception: MPL-2.0 for development tools that are never shipped (ADR 0005). The rule
 covers runtime, build, test, native, transitive, optional and copied code alike.
 
 The point of the rule: **SignalForge must always be shippable commercially, under MIT, with no
@@ -41,6 +42,13 @@ the source repositories.
 | ↳ pygments | 2.21.0 | test (transitive) | BSD-2-Clause | wheel metadata | |
 | ↳ colorama | 0.4.6 | test (transitive, Windows) | BSD-3-Clause | classifier + upstream LICENSE | |
 | ruff | 0.17.5 | lint/format | MIT | wheel metadata | single binary, no Python deps |
+| mypy | 2.4.1 | type check (dev only) | MIT; a few files PSF-2.0 | `dist-info/licenses/LICENSE` | ADR 0005 |
+| ↳ typing_extensions | 4.16.0 | dev (transitive) | PSF-2.0 | wheel `License-Expression` | |
+| ↳ mypy_extensions | 1.2.0 | dev (transitive) | MIT | wheel metadata | |
+| ↳ pathspec | 1.1.1 | dev (transitive) | MPL-2.0 | classifier + `dist-info/licenses/LICENSE` | dev-only MPL exception, ADR 0005 |
+| ↳ librt | 0.16.0 | dev (transitive) | MIT; `getargsfast.c` PSF-2.0 | `dist-info/licenses/LICENSE` | mypyc runtime |
+| ↳ ast_serialize | 0.13.1 | dev (transitive) | MIT (bundled Ruff crates MIT) | `dist-info/licenses/` | |
+| ↳ tomli | — | dev (transitive, Python < 3.11) | MIT | GitHub license API (hukkin/tomli) | |
 
 ### .NET
 
@@ -66,8 +74,7 @@ on GitHub's runners and are not distributed.
 
 | Candidate | Why |
 |---|---|
-| mypy 2.4.1 | Depends on **pathspec** (MPL-2.0) and **typing_extensions** (PSF-2.0). No Python type checker in CI until a clean option is approved. Type hints are still written. |
-| hatchling | Depends on pathspec (MPL-2.0). flit_core is used instead. |
+| hatchling | Depends on pathspec (MPL-2.0), and a build backend is not a dev-only tool. flit_core is used instead. |
 | sigmf-python | LGPL-3.0. SigMF support will be written from the format description. |
 | FFTW | GPL-2.0 (commercial licence sold separately). |
 
@@ -86,7 +93,7 @@ Researched 2026-11-12. None is in use; each needs the full check above before it
 | FftSharp | C# | FFT, windows, PSD helpers | MIT | Small and simple; less general than Math.NET. Fallback if Math.NET's FFT is unsuitable. |
 | NWaves | C# | filters, filter design, resampling, windows, audio-oriented DSP | MIT | Last pushed 2022-09: unmaintained. Mine for ideas and test comparisons; do not depend on it. |
 | KISS FFT | C | small mixed-radix FFT | BSD-3-Clause (SPDX header in COPYING) | Only if a native FFT is ever needed. |
-| scikit-dsp-comm | Py | comms helpers: pulse shaping, synchronizers, BER sims | BSD-2-Clause | Depends on matplotlib (PSF-based license) and scipy. Use as an **independent reference** in tests only, if approved. |
+| scikit-dsp-comm | Py | comms helpers: pulse shaping, synchronizers, BER sims | BSD-2-Clause | Depends on matplotlib (PSF-based license; check its exact terms) and scipy. Use as an **independent reference** in tests only, if approved. |
 | CommPy | Py | modulation, channel coding, channels | BSD-3-Clause | Last pushed 2023-05. Reference only. |
 
 ## Approvals
@@ -96,8 +103,9 @@ Licenses and cases outside the allowed list that the user has approved.
 | Date | What | Scope | Record |
 |---|---|---|---|
 | 2026-11-12 | GCC runtime (GPL-3.0-or-later WITH GCC-exception-3.1) bundled inside NumPy's wheels | NumPy as a runtime dependency only; not a general approval of GPL code | [ADR 0004](adr/0004-numpy-gcc-runtime-exception.md) |
+| 2026-11-12 | PSF-2.0 | general, like the allowed list | [ADR 0005](adr/0005-psf-and-dev-only-mpl.md) |
+| 2026-11-12 | MPL-2.0 | development tools only: never shipped, bundled, or needed at runtime; never build backends or copied code | [ADR 0005](adr/0005-psf-and-dev-only-mpl.md) |
 
 ## Open questions for the user
 
-1. **PSF-2.0** (typing_extensions) is permissive but not on the list. Approving it would let mypy in,
-   except mypy also needs pathspec (MPL-2.0), so mypy stays out regardless.
+None right now.

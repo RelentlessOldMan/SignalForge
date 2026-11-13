@@ -4,7 +4,7 @@ import pytest
 from signalforge import waveforms
 
 
-def test_tone_power_and_frequency():
+def test_tone_power_and_frequency() -> None:
     fs, n, f = 1000.0, 1000, 125.0
     x = waveforms.tone(fs, n, f, amplitude=3.0)
     assert np.mean(np.abs(x) ** 2) == pytest.approx(9.0)
@@ -12,7 +12,7 @@ def test_tone_power_and_frequency():
     assert k * fs / n == pytest.approx(f)
 
 
-def test_real_tone_is_real_part_of_complex():
+def test_real_tone_is_real_part_of_complex() -> None:
     c = waveforms.tone(48000, 64, 1000, 0.5, 0.3)
     r = waveforms.tone(48000, 64, 1000, 0.5, 0.3, complex=False)
     assert r.dtype == np.float64
@@ -20,7 +20,7 @@ def test_real_tone_is_real_part_of_complex():
 
 
 @pytest.mark.parametrize("order", sorted(waveforms.PRBS_TAPS))
-def test_prbs_is_maximal_length(order):
+def test_prbs_is_maximal_length(order: int) -> None:
     if order > 20:
         pytest.skip("full period too long for a unit test")
     period = 2**order - 1
@@ -32,13 +32,13 @@ def test_prbs_is_maximal_length(order):
     assert int(np.count_nonzero(run == order)) == 1
 
 
-def test_prbs_long_orders_start_with_seed():
+def test_prbs_long_orders_start_with_seed() -> None:
     for order in (23, 31):
         bits = waveforms.prbs(order, order + 5)
         assert bits[:order].all()
 
 
-def test_prbs_invert_and_seed():
+def test_prbs_invert_and_seed() -> None:
     a = waveforms.prbs(9, 100)
     np.testing.assert_array_equal(waveforms.prbs(9, 100, invert=True), 1 - a)
     with pytest.raises(ValueError):

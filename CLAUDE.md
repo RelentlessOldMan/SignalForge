@@ -38,8 +38,8 @@ repo docs disagree, the repo docs win.
 - **Licenses are strict.** SignalForge must always be shippable commercially under MIT with no
   restrictions; nothing may ever require our code to be GPL or otherwise copyleft. Only MIT,
   BSD-2-Clause, BSD-3-Clause, Apache-2.0 and ISC, including transitive dependencies and build
-  tools. Anything else needs the user's explicit approval first; approvals are listed in
-  `docs/dependencies.md`.
+  tools; PSF-2.0 too; MPL-2.0 only for dev tools that are never shipped. Anything else needs the
+  user's explicit approval first; approvals are listed in `docs/dependencies.md`.
   Check the license from the package's own metadata or license file, and record every dependency in
   `docs/dependencies.md` with how it was checked. Don't copy code or text from projects with other
   licenses (the SigMF spec is CC-BY-SA: implement from the description, don't copy it).
@@ -51,7 +51,7 @@ repo docs disagree, the repo docs win.
 - Names match across languages: `snake_case` in Python, `PascalCase` in C#, same meaning. A vector
   `op` is the Python name; the C# runner maps it.
 - Python: NumPy is the only runtime dependency. Type hints on public functions. `ruff check` and
-  `ruff format` clean (line length 100). No mypy (license; see `docs/dependencies.md`).
+  `ruff format` clean (line length 100). `mypy` clean (strict, `src` and `tests`).
 - C#: no package dependencies in the library. Warnings are errors, analyzers at latest-recommended,
   XML docs on every public member, `dotnet format` clean.
 - Bad arguments raise `ValueError` (Python) or `ArgumentException` and subclasses (C#); vectors call
@@ -75,6 +75,7 @@ python -m venv .venv
 
 cd python
 ../.venv/Scripts/ruff check . && ../.venv/Scripts/ruff format --check .
+../.venv/Scripts/mypy
 ../.venv/Scripts/pytest -q
 ../.venv/Scripts/python -m signalforge.conformance --report ../reports/python.json
 

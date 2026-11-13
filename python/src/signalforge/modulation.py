@@ -24,7 +24,8 @@ def qpsk_map(bits: ArrayLike) -> np.ndarray:
         raise ValueError("QPSK needs an even number of bits")
     i = 1.0 - 2.0 * b[0::2]
     q = 1.0 - 2.0 * b[1::2]
-    return (i + 1j * q) * _INV_SQRT2
+    symbols: np.ndarray = (i + 1j * q) * _INV_SQRT2
+    return symbols
 
 
 def qpsk_demap_hard(symbols: ArrayLike) -> np.ndarray:

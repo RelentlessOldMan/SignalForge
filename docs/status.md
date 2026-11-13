@@ -17,13 +17,15 @@ Updated with every chunk of work. Dates are absolute.
 
 - 2026-11-12: repo, license (MIT), README, this brain (`CLAUDE.md`, `docs/status.md`), CI.
 - 2026-11-12: research and architecture docs: conventions, architecture, testing, dependencies with
-  license verification, ADRs 0001–0004.
+  license verification, ADRs 0001–0005.
 - 2026-11-12: Python package `signalforge` 0.1.0 and C# library `SignalForge` 0.1.0, each with:
   `Signal` with metadata; units (dB, dBm, Vrms at an impedance); complex and real tones; PRBS
   (O.150 polynomials, orders 7–31); power stats (mean, RMS, peak, PAPR, DC); QPSK Gray map and hard
   demap; bit error count.
 - 2026-11-12: NumPy approved as the Python runtime dependency; its bundled GCC Fortran runtime
   (GCC runtime exception) puts no obligation on our code. ADR 0004.
+- 2026-11-12: PSF-2.0 approved, MPL-2.0 allowed for dev-only tools (ADR 0005); mypy strict added to
+  the Python checks and CI, tests annotated.
 - 2026-11-12: shared vectors, 46 cases across units, waveforms, PRBS, measurements and modulation.
   Python 79 passed, 2 skipped (PRBS 23 and 31 full-period checks, too slow); .NET 77 passed.
 
@@ -39,7 +41,7 @@ packaging and publishing.
 - 2026-11-12: The test for any dependency is whether it could ever force our code under the GPL or
   limit commercial shipping. A GPL label on a compiler runtime with the GCC exception does not.
 - 2026-11-12: Check build tools' licenses too: hatchling and mypy both pull in pathspec (MPL-2.0).
-  flit_core is clean.
+  flit_core is clean. Whether a tool is shipped decides which licenses it may use (ADR 0005).
 - 2026-11-12: Binary wheels can bundle libraries under other licenses; read the wheel's own
   `LICENSE.txt`, not just the project's top-level license.
 - 2026-11-12: The `dotnet new xunit` template is xunit v2; there is no `xunit3` template in the SDK.

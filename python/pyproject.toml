@@ -14,13 +14,17 @@ requires-python = ">=3.10"
 dependencies = ["numpy>=1.26"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=2.4"]
 
 [project.urls]
 Source = "https://github.com/RelentlessOldMan/SignalForge"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src", "tests"]
+strict = true
 
 [tool.ruff]
 line-length = 100
