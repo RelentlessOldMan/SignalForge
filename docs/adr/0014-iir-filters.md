@@ -36,5 +36,5 @@ to the FIR one.
   from the library (mapping each complex pole through the bilinear transform).
 - The Python filter runs a per-sample loop, slower than NumPy-vectorized code; fine for the sizes
   tests and measurements use today, revisit if profiling says so.
-- Band-pass and band-stop Butterworth (done: ADR 0016), Chebyshev and elliptic designs, zero-phase (forward-backward)
+- Band-pass and band-stop Butterworth (done: ADR 0016), Chebyshev (type I done: ADR 0018) and elliptic designs, zero-phase (forward-backward)
   filtering (done: ADR 0017) and setting the initial state are later work.

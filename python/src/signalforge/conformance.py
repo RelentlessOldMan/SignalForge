@@ -85,6 +85,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "butterworth_bandstop": dsp.butterworth_bandstop,
     "zero_phase_filter": dsp.zero_phase_filter,
     "butterworth_highpass": dsp.butterworth_highpass,
+    "chebyshev1_lowpass": dsp.chebyshev1_lowpass,
+    "chebyshev1_highpass": dsp.chebyshev1_highpass,
     "sos_response": dsp.sos_response,
     "iir_filter": lambda sos, samples, chunks: _chunked(dsp.IirFilter(sos), samples, chunks),
     "frequency_offset": channel.frequency_offset,

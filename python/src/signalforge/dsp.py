@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import cmath
 import math
+from collections.abc import Callable
 from typing import Any, cast
 
 import numpy as np
@@ -267,20 +268,56 @@ def _sos(sos: ArrayLike) -> NDArray[np.float64]:
     return np.asarray(s / s[:, 3:4], dtype=np.float64)
 
 
-def _butterworth(order: int, cutoff: float, sample_rate: float, high: bool) -> NDArray[np.float64]:
+def _order(order: int) -> int:
     n = count(order, "order")
     if n < 1:
         raise ValueError("order must be at least 1")
+    return n
+
+
+def _theta(i: int, n: int) -> float:
+    return math.pi / 2 + math.pi * (2 * i + 1) / (2 * n)
+
+
+def _butterworth(order: int, cutoff: float, sample_rate: float, high: bool) -> NDArray[np.float64]:
+    n = _order(order)
+    return _cascade(n, cutoff, sample_rate, high, lambda i: cmath.exp(1j * _theta(i, n)))
+
+
+def _chebyshev1(
+    order: int, ripple_db: float, cutoff: float, sample_rate: float, high: bool
+) -> NDArray[np.float64]:
+    n = _order(order)
+    r = real(ripple_db, "ripple_db")
+    if r <= 0:
+        raise ValueError("ripple_db must be positive")
+    mu = math.asinh(1 / math.sqrt(10 ** (r / 10) - 1)) / n
+    sh, ch = math.sinh(mu), math.cosh(mu)
+    rows = _cascade(
+        n,
+        cutoff,
+        sample_rate,
+        high,
+        lambda i: complex(sh * math.cos(_theta(i, n)), ch * math.sin(_theta(i, n))),
+    )
+    if n % 2 == 0:
+        rows[0, :3] *= 10 ** (-r / 20)  # the ripple's low point at DC (or fs/2)
+    return rows
+
+
+def _cascade(
+    n: int, cutoff: float, sample_rate: float, high: bool, prototype: Callable[[int], complex]
+) -> NDArray[np.float64]:
+    """Sections from the analog prototype poles (cutoff 1): low-pass or high-pass, prewarped
+    bilinear transform, Butterworth section order and unit gain at DC or fs/2."""
     fs = _rate(sample_rate)
     k = math.tan(math.pi * _band_edge(cutoff, fs, "cutoff"))
     zero = 1.0 if high else -1.0  # zeros at z = 1 (high-pass) or z = -1 (low-pass)
     rows: list[list[float]] = []
 
     def pole(i: int) -> complex:
-        """Analog pole ``k`` (cutoff 1 after prewarping by ``K``) through the bilinear transform."""
-        s = k * cmath.exp(1j * (math.pi / 2 + math.pi * (2 * i + 1) / (2 * n)))
-        if high:
-            s = k * k / s
+        """Prototype pole ``i`` scaled to the prewarped cutoff, through the bilinear transform."""
+        s = k / prototype(i) if high else k * prototype(i)
         return (1 + s) / (1 - s)
 
     if n % 2:
@@ -307,12 +344,26 @@ def butterworth_highpass(order: int, cutoff: float, sample_rate: float) -> NDArr
     return _butterworth(order, cutoff, sample_rate, high=True)
 
 
+def chebyshev1_lowpass(
+    order: int, ripple_db: float, cutoff: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Chebyshev type I low-pass by the bilinear transform, as second-order sections: pass-band
+    ripple ``ripple_db``, which ``cutoff`` ends (conventions: IIR filters)."""
+    return _chebyshev1(order, ripple_db, cutoff, sample_rate, high=False)
+
+
+def chebyshev1_highpass(
+    order: int, ripple_db: float, cutoff: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Chebyshev type I high-pass by the bilinear transform, as second-order sections: pass-band
+    ripple ``ripple_db``, which starts at ``cutoff`` (conventions: IIR filters)."""
+    return _chebyshev1(order, ripple_db, cutoff, sample_rate, high=True)
+
+
 def _butterworth_band(
     order: int, low: float, high: float, sample_rate: float, stop: bool
 ) -> NDArray[np.float64]:
-    n = count(order, "order")
-    if n < 1:
-        raise ValueError("order must be at least 1")
+    n = _order(order)
     fs = _rate(sample_rate)
     lo = math.tan(math.pi * _band_edge(low, fs, "low"))
     hi = math.tan(math.pi * _band_edge(high, fs, "high"))

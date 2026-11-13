@@ -388,19 +388,62 @@ public static class Dsp
         return s;
     }
 
+    /// <summary>Chebyshev type I low-pass by the bilinear transform, as second-order sections
+    /// <c>[b0, b1, b2, a0, a1, a2]</c> (conventions: IIR filters).</summary>
+    /// <param name="order">Filter order, at least 1.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, positive.</param>
+    /// <param name="cutoff">Pass-band edge in Hz (where the response is −rippleDb), between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] Chebyshev1Lowpass(int order, double rippleDb, double cutoff, double sampleRate) =>
+        Chebyshev1(order, rippleDb, cutoff, sampleRate, false);
+
+    /// <summary>Chebyshev type I high-pass by the bilinear transform, as second-order sections
+    /// <c>[b0, b1, b2, a0, a1, a2]</c> (conventions: IIR filters).</summary>
+    /// <param name="order">Filter order, at least 1.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, positive.</param>
+    /// <param name="cutoff">Pass-band edge in Hz (where the response is −rippleDb), between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] Chebyshev1Highpass(int order, double rippleDb, double cutoff, double sampleRate) =>
+        Chebyshev1(order, rippleDb, cutoff, sampleRate, true);
+
+    private static double Theta(int i, int n) => Math.PI / 2 + Math.PI * (2 * i + 1) / (2.0 * n);
+
     private static double[][] Butterworth(int order, double cutoff, double sampleRate, bool high)
     {
         if (order < 1)
             throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
+        return Cascade(order, cutoff, sampleRate, high, i => Complex.FromPolarCoordinates(1, Theta(i, order)));
+    }
+
+    private static double[][] Chebyshev1(int order, double rippleDb, double cutoff, double sampleRate, bool high)
+    {
+        if (order < 1)
+            throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
+        if (!(Check.Finite(rippleDb, nameof(rippleDb)) > 0))
+            throw new ArgumentOutOfRangeException(nameof(rippleDb), rippleDb, "must be positive");
+        double mu = Math.Asinh(1 / Math.Sqrt(Math.Pow(10, rippleDb / 10) - 1)) / order;
+        double sh = Math.Sinh(mu), ch = Math.Cosh(mu);
+        double[][] rows = Cascade(order, cutoff, sampleRate, high, i => new Complex(sh * Math.Cos(Theta(i, order)), ch * Math.Sin(Theta(i, order))));
+        if (order % 2 == 0)
+        {
+            double g = Math.Pow(10, -rippleDb / 20); // the ripple's low point at DC (or fs/2)
+            for (int j = 0; j < 3; j++)
+                rows[0][j] *= g;
+        }
+        return rows;
+    }
+
+    // Sections from the analog prototype poles (cutoff 1): low-pass or high-pass, prewarped bilinear
+    // transform, Butterworth section order and unit gain at DC or fs/2.
+    private static double[][] Cascade(int order, double cutoff, double sampleRate, bool high, Func<int, Complex> prototype)
+    {
         double k = Math.Tan(Math.PI * BandEdge(cutoff, Check.PositiveFinite(sampleRate, nameof(sampleRate)), nameof(cutoff)));
         double zero = high ? 1 : -1; // zeros at z = 1 (high-pass) or z = -1 (low-pass)
 
-        // Analog pole i (cutoff 1 after prewarping by K) through the bilinear transform.
+        // Prototype pole i scaled to the prewarped cutoff, through the bilinear transform.
         Complex Pole(int i)
         {
-            Complex s = k * Complex.FromPolarCoordinates(1, Math.PI / 2 + Math.PI * (2 * i + 1) / (2.0 * order));
-            if (high)
-                s = k * k / s;
+            Complex s = high ? k / prototype(i) : k * prototype(i);
             return (1 + s) / (1 - s);
         }
 

@@ -351,6 +351,24 @@ and `SignalForge.IirFilter`.
     `b = [1, −2, 1]/D`; the first-order low-pass is `b = K·[1, 1, 0]/(K + 1)`,
     `a = [1, (K − 1)/(K + 1), 0]`, the high-pass the same `a` with `b = [1, −1, 0]/(K + 1)`.
   - `order` is an integer `≥ 1`; `0 < cutoff < fs/2`, finite.
+- **Chebyshev type I design** (`chebyshev1_lowpass(order, ripple_db, cutoff, sample_rate)` and
+  `chebyshev1_highpass(...)`, [ADR 0018](adr/0018-chebyshev-type-1.md)): the analog Chebyshev
+  type I filter with pass-band ripple `ripple_db` (`R`), through the same prewarped bilinear
+  transform as Butterworth. With `ε = √(10^(R/10) − 1)`, `K = tan(π·f_c/fs)`, `t = tan(πf/fs)` and
+  `T_N` the Chebyshev polynomial of degree `N = order` (`cos(N·acos x)` for `|x| ≤ 1`,
+  `cosh(N·acosh x)` for `x > 1`, `T_N(−x) = (−1)^N·T_N(x)`):
+  `|H(f)|² = 1/(1 + ε²·T_N(t/K)²)` for the low-pass and `1/(1 + ε²·T_N(K/t)²)` for the high-pass.
+  So the pass band ripples between 1 and `1/(1 + ε²)` (−`R` dB), and the cutoff is the edge of
+  the pass band, where `|H|²` is `1/(1 + ε²)`, not −3 dB.
+  - Prototype poles (cutoff 1): with `μ = asinh(1/ε)/N` and `θ_k` as for Butterworth,
+    `p_k = sinh μ·cos θ_k + j·cosh μ·sin θ_k`. The low-pass maps `p_k` to `K·p_k`, the high-pass to
+    `K/p_k`, then through `z = (1 + s)/(1 − s)`.
+  - Sections in the Butterworth order (the real pole `k = (order − 1)/2` first for an odd order,
+    then pairs `k = ⌊order/2⌋ − 1` down to 0), with the same zeros, each with unit gain at DC
+    (low-pass) or `fs/2` (high-pass). Then, for an even order only, the first section's `b` is
+    multiplied by `10^(−R/20) = 1/√(1 + ε²)`: an even-order Chebyshev filter has its ripple's low
+    point at DC (low-pass) or `fs/2` (high-pass). An odd order has gain 1 there.
+  - `order` is an integer `≥ 1`; `ripple_db > 0`, finite; `0 < cutoff < fs/2`, finite.
 - **Band-pass and band-stop Butterworth** (`butterworth_bandpass(order, low, high, sample_rate)`,
   `butterworth_bandstop(...)`, [ADR 0016](adr/0016-band-butterworth.md)): the low-pass prototype
   of that `order` (cutoff 1, poles `p_k = e^(jθ_k)` as above) transformed to the band, through the

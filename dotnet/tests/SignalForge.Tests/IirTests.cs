@@ -253,4 +253,57 @@ public class IirTests
         Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter(flat, [Complex.One, new Complex(1, double.PositiveInfinity), Complex.One], 0));
         Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter([[2, 0, 0, 2, -2, 0]], ones, 0));
     }
+
+    private static double ChebT(int n, double x) =>
+        Math.Abs(x) <= 1 ? Math.Cos(n * Math.Acos(x)) : Math.Pow(Math.Sign(x), n) * Math.Cosh(n * Math.Acosh(Math.Abs(x)));
+
+    public static TheoryData<bool, int, double, double> Chebyshevs()
+    {
+        var data = new TheoryData<bool, int, double, double>();
+        foreach (bool high in new[] { false, true })
+            foreach (int order in new[] { 1, 2, 3, 6, 9 })
+                foreach (var (ripple, cutoff) in new[] { (0.1, 0.01), (1.0, 0.2), (3.0, 0.49), (0.5, 0.25) })
+                    data.Add(high, order, ripple, cutoff);
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(Chebyshevs))]
+    public void Chebyshev1MagnitudeHasTheClosedForm(bool high, int order, double ripple, double cutoff)
+    {
+        double[][] sos = high ? Dsp.Chebyshev1Highpass(order, ripple, cutoff * 1000, 1000)
+            : Dsp.Chebyshev1Lowpass(order, ripple, cutoff * 1000, 1000);
+        Assert.Equal((order + 1) / 2, sos.Length);
+        Assert.All(sos, r => Assert.True(Math.Abs(r[5]) < 1 && Math.Abs(r[4]) < 1 + r[5], "a pole outside the unit circle"));
+        double eps2 = Math.Pow(10, ripple / 10) - 1, k = Math.Tan(Math.PI * cutoff);
+        double[] f = [.. Enumerable.Range(0, 301).Select(i => (0.0001 + 0.4998 * i / 300) * 1000)];
+        Complex[] h = Dsp.SosResponse(sos, f, 1000);
+        for (int i = 0; i < f.Length; i++)
+        {
+            double t = Math.Tan(Math.PI * f[i] / 1000);
+            double expected = 1 / (1 + eps2 * Math.Pow(ChebT(order, high ? k / t : t / k), 2));
+            double got = h[i].Magnitude * h[i].Magnitude;
+            Assert.True(Math.Abs(got - expected) <= 1e-11 + 1e-9 * expected, $"f = {f[i]}: {got} vs {expected}");
+        }
+        double edge = Dsp.SosResponse(sos, [cutoff * 1000], 1000)[0].Magnitude;
+        Assert.Equal(1 / (1 + eps2), edge * edge, 1e-9);
+        double end = Dsp.SosResponse(sos, [high ? 500.0 : 0.0], 1000)[0].Magnitude;
+        Assert.Equal(order % 2 == 1 ? 1.0 : Math.Pow(10, -ripple / 20), end, 1e-12);
+    }
+
+    [Fact]
+    public void Chebyshev1RejectsBadArguments()
+    {
+        foreach (var design in new Func<int, double, double, double, double[][]>[] { Dsp.Chebyshev1Lowpass, Dsp.Chebyshev1Highpass })
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(0, 1, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, 0, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, -1, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, double.NaN, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, double.PositiveInfinity, 1, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 0, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 4, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 1, 0));
+        }
+    }
 }

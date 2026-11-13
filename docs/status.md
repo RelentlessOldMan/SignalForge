@@ -4,8 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Chebyshev type I** IIR design (low-pass, high-pass), ripple in dB, closed-form magnitude
-   vectors.
+1. **ACPR**: adjacent channel power ratio from a PSD, with the channel and offsets stated in
+   conventions, closed-form vectors from on-bin tones and flat noise.
+2. **Chebyshev type II** IIR design (low-pass, high-pass), stop-band attenuation in dB.
 
 ## Built
 
@@ -194,11 +195,17 @@ Updated with every chunk of work. Dates are absolute.
   prototype, independent of the pole algorithm. The C# runner rejects `2.0` for an integer
   argument. 26 more vectors (tone 9, iir 17); C# band tests match Python's 40 cases.
   Python 981 passed, 2 skipped (3.10 too); .NET 793 passed; conformance 549/549 in both.
+- 2026-11-13: Chebyshev type I low-pass and high-pass in both languages (`chebyshev1_lowpass`,
+  `chebyshev1_highpass` / `Dsp.Chebyshev1Lowpass`, `Chebyshev1Highpass`, ADR 0018): pass-band
+  ripple in dB, the cutoff the pass-band edge, sections shared with Butterworth's builder. 20 more
+  `iir.json` cases (two designs by hand, eight checked against the closed form, a response, a
+  filter run, eight errors).
+  Python 1061 passed, 2 skipped (3.10 too); .NET 854 passed; conformance 569/569 in both.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth (
-Chebyshev, elliptic), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth and
+Chebyshev type I (type II, elliptic, band Chebyshev), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

@@ -2,7 +2,9 @@
 
 It does not import NumPy or SignalForge. Butterworth sections come from the real biquad formulas of
 conventions: IIR filters (each pole pair's Q, prewarped K, bilinear transform), not from mapping
-complex poles as the library does. Band-pass and band-stop sections come from the quadratic formula
+complex poles as the library does. Chebyshev type I sections come from each analog pole pair's real
+quadratic through the bilinear transform, checked against the closed-form magnitude and for
+stability. Band-pass and band-stop sections come from the quadratic formula
 on each prototype pole's image, and every band design is checked here against the closed-form
 magnitude of conventions: IIR filters before it is written. Responses evaluate each section's rational function at
 e^(j 2 pi f / fs); filter outputs run each section's difference equation in direct form I, and
@@ -38,6 +40,56 @@ def butterworth(order, cutoff, fs, high):
         b = [1 / d, -2 / d, 1 / d] if high else [k * k / d, 2 * k * k / d, k * k / d]
         rows.append(b + a)
     return rows
+
+
+def cheb_t(n, x):
+    if abs(x) <= 1:
+        return math.cos(n * math.acos(x))
+    return (1 if x > 0 or n % 2 == 0 else -1) * math.cosh(n * math.acosh(abs(x)))
+
+
+def chebyshev1(order, ripple, cutoff, fs, high):
+    eps2 = 10 ** (ripple / 10) - 1
+    mu = math.asinh(1 / math.sqrt(eps2)) / order
+    k = math.tan(math.pi * cutoff / fs)
+    rows = []
+    if order % 2:
+        q = k * math.sinh(mu)  # low-pass pole -q; the high-pass pole is -k / sinh(mu)
+        if high:
+            q = k / math.sinh(mu)
+            rows.append([1 / (1 + q), -1 / (1 + q), 0.0, 1.0, (q - 1) / (q + 1), 0.0])
+        else:
+            rows.append([q / (1 + q), q / (1 + q), 0.0, 1.0, (q - 1) / (q + 1), 0.0])
+    for i in range(order // 2 - 1, -1, -1):
+        phi = math.pi * (2 * i + 1) / (2 * order)
+        sigma, omega = -math.sinh(mu) * math.sin(phi), math.cosh(mu) * math.cos(phi)
+        m = sigma * sigma + omega * omega
+        if high:  # s -> k/s: the pair's quadratic s^2 - 2 sigma' s + m' with
+            sigma, m = k * sigma / m, k * k / m
+        else:
+            sigma, m = k * sigma, k * k * m
+        a0 = 1 - 2 * sigma + m
+        b = [1 / a0, -2 / a0, 1 / a0] if high else [m / a0, 2 * m / a0, m / a0]
+        rows.append(b + [1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
+    if order % 2 == 0:
+        rows[0][:3] = [v * 10 ** (-ripple / 20) for v in rows[0][:3]]
+    for row in rows:
+        assert abs(row[5]) < 1 and abs(row[4]) < 1 + row[5], (order, ripple, cutoff, row)
+    freqs = [fs * j / 64 for j in range(1, 32)] + [cutoff]
+    for f, h in zip(freqs, response(rows, freqs, fs)):
+        t = math.tan(math.pi * f / fs)
+        want = 1 / (1 + eps2 * cheb_t(order, k / t if high else t / k) ** 2)
+        assert abs(abs(h) ** 2 - want) < 1e-12, (order, ripple, cutoff, high, f)
+    return rows
+
+
+def cheb_design(case_id, order, ripple, cutoff, fs, high, rows=None, src=None):
+    op = "chebyshev1_highpass" if high else "chebyshev1_lowpass"
+    return {"id": case_id, "op": op,
+            "args": {"order": order, "ripple_db": ripple, "cutoff": cutoff, "sample_rate": fs},
+            "expected": rows if rows is not None else chebyshev1(order, ripple, cutoff, fs, high),
+            "tol": TOL, "source": src or SRC + "each analog pole pair's real quadratic through the "
+            "bilinear transform, checked against the closed-form |H|^2 and for stability"}
 
 
 def pmul(p, q):
@@ -220,6 +272,9 @@ def err(case_id, op, args, why):
 
 
 r2 = math.sqrt(2)
+c2 = math.sqrt(r2 - 1)  # Chebyshev order 2, ripple 10 log10 2 dB (eps = 1), K = 1: s^2 + c2 s + 1/r2
+cd = 1 + c2 + 1 / r2
+ch3 = chebyshev1(3, 0.5, 0.1, 1.0, False)
 ramp = [float(i % 5) - 2 + 0.25 * math.sin(0.7 * i) for i in range(24)]
 chirp = [cmath.exp(1j * (0.3 * i + 0.02 * i * i)) * (1 + 0.1 * i) for i in range(20)]
 lp4 = butterworth(4, 1000.0, 8000.0, False)
@@ -276,6 +331,48 @@ cases = [
     band_design("butterworth.bandstop_2", 2, 0.2, 0.3, 1.0, True),
     band_design("butterworth.bandstop_3", 3, 50.0, 70.0, 1000.0, True),
     band_design("butterworth.bandstop_6", 6, 3000.0, 9000.0, 48000.0, True),
+    cheb_design("chebyshev1.lowpass_1_by_hand", 1, 10 * math.log10(1.25), 2.0, 8.0, False,
+                rows=[[2 / 3, 2 / 3, 0.0, 1.0, 1 / 3, 0.0]],
+                src="by hand: eps = 1/2, so the order-1 prototype pole is -sinh(asinh 2) = -2; K = "
+                "tan(pi/4) = 1, pole -2, H(s) = 2/(s + 2); s = (1 - z^-1)/(1 + z^-1) gives "
+                "(2/3)(1 + z^-1)/(1 + z^-1/3)"),
+    cheb_design("chebyshev1.lowpass_2_by_hand", 2, 10 * math.log10(2), 2.0, 8.0, False,
+                rows=[[0.5 / cd, 1 / cd, 0.5 / cd, 1.0, (2 / r2 - 2) / cd, (1 - c2 + 1 / r2) / cd]],
+                src="by hand: eps = 1, mu = asinh(1)/2, sinh^2 mu = (sqrt2 - 1)/2, cosh^2 mu = "
+                "(sqrt2 + 1)/2; the pole at 3pi/4 gives s^2 + sqrt(sqrt2 - 1) s + 1/sqrt2; DC gain "
+                "1/sqrt2 makes the numerator 1/2; K = 1 and the bilinear transform"),
+    cheb_design("chebyshev1.lowpass_3", 3, 0.5, 0.1, 1.0, False),
+    cheb_design("chebyshev1.lowpass_4", 4, 1.0, 1000.0, 8000.0, False),
+    cheb_design("chebyshev1.lowpass_7_narrow", 7, 0.1, 0.02, 1.0, False),
+    cheb_design("chebyshev1.lowpass_8_big_ripple", 8, 6.0, 12000.0, 48000.0, False),
+    cheb_design("chebyshev1.highpass_1", 1, 2.0, 300.0, 8000.0, True),
+    cheb_design("chebyshev1.highpass_2", 2, 0.25, 0.3, 1.0, True),
+    cheb_design("chebyshev1.highpass_5", 5, 1.0, 0.15, 1.0, True),
+    cheb_design("chebyshev1.highpass_6_wide", 6, 3.0, 0.45, 1.0, True),
+    err("chebyshev1.ripple_zero", "chebyshev1_lowpass",
+        {"order": 2, "ripple_db": 0.0, "cutoff": 1.0, "sample_rate": 8.0}, "ripple_db > 0 required"),
+    err("chebyshev1.ripple_negative", "chebyshev1_highpass",
+        {"order": 2, "ripple_db": -1.0, "cutoff": 1.0, "sample_rate": 8.0},
+        "ripple_db > 0 required"),
+    err("chebyshev1.ripple_nan", "chebyshev1_lowpass",
+        {"order": 2, "ripple_db": "nan", "cutoff": 1.0, "sample_rate": 8.0},
+        "ripple_db must be finite"),
+    err("chebyshev1.ripple_inf", "chebyshev1_highpass",
+        {"order": 2, "ripple_db": "inf", "cutoff": 1.0, "sample_rate": 8.0},
+        "ripple_db must be finite"),
+    err("chebyshev1.order_zero", "chebyshev1_lowpass",
+        {"order": 0, "ripple_db": 1.0, "cutoff": 1.0, "sample_rate": 8.0}, "order >= 1 required"),
+    err("chebyshev1.cutoff_nyquist", "chebyshev1_highpass",
+        {"order": 2, "ripple_db": 1.0, "cutoff": 4.0, "sample_rate": 8.0},
+        "0 < cutoff < sample_rate/2 required"),
+    err("chebyshev1.cutoff_zero", "chebyshev1_lowpass",
+        {"order": 2, "ripple_db": 1.0, "cutoff": 0.0, "sample_rate": 8.0},
+        "0 < cutoff < sample_rate/2 required"),
+    err("chebyshev1.rate_zero", "chebyshev1_lowpass",
+        {"order": 2, "ripple_db": 1.0, "cutoff": 1.0, "sample_rate": 0.0},
+        "sample_rate must be positive"),
+    resp("sos_response.chebyshev1_lowpass_3", ch3, [0.0, 0.05, 0.1, 0.2, 0.5], 1.0),
+    filt("iir_filter.chebyshev1_lowpass_chunks", ch3, ramp, [7, 17]),
     band_design("butterworth.bandstop_3_wide", 3, 0.02, 0.45, 1.0, True),
     err("butterworth.band_low_negative", "butterworth_bandstop",
         {"order": 2, "low": -1.0, "high": 2.0, "sample_rate": 8.0}, "0 < low required"),

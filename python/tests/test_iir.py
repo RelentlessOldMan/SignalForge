@@ -14,6 +14,8 @@ from signalforge import (
     butterworth_bandstop,
     butterworth_highpass,
     butterworth_lowpass,
+    chebyshev1_highpass,
+    chebyshev1_lowpass,
     sos_response,
     zero_phase_filter,
 )
@@ -243,3 +245,55 @@ def test_zero_phase_filter_keeps_the_kind_and_is_linear() -> None:
 def test_zero_phase_filter_rejects_bad_arguments(sos: Any, x: Any, pad: Any) -> None:
     with pytest.raises(ValueError):
         zero_phase_filter(sos, x, pad)
+
+
+def _cheb_t(n: int, x: np.ndarray) -> np.ndarray:
+    with np.errstate(invalid="ignore", over="ignore"):
+        inside = np.cos(n * np.arccos(np.clip(x, -1, 1)))
+        outside = np.sign(x) ** n * np.cosh(n * np.arccosh(np.maximum(np.abs(x), 1)))
+    return np.where(np.abs(x) <= 1, inside, outside)
+
+
+@pytest.mark.parametrize("high", [False, True])
+@pytest.mark.parametrize("order", [1, 2, 3, 6, 9])
+@pytest.mark.parametrize(("ripple", "cutoff"), [(0.1, 0.01), (1.0, 0.2), (3.0, 0.49), (0.5, 0.25)])
+def test_chebyshev1_magnitude_has_the_closed_form(
+    high: bool, order: int, ripple: float, cutoff: float
+) -> None:
+    design = chebyshev1_highpass if high else chebyshev1_lowpass
+    sos = design(order, ripple, cutoff * 1000, 1000.0)
+    assert sos.shape == ((order + 1) // 2, 6)
+    for row in sos:
+        assert np.all(np.abs(np.roots(row[3:])) < 1)
+    eps2 = 10 ** (ripple / 10) - 1
+    k = math.tan(math.pi * cutoff)
+    f = np.linspace(0.0001, 0.4999, 301) * 1000
+    t = np.tan(np.pi * f / 1000)
+    expected = 1 / (1 + eps2 * _cheb_t(order, k / t if high else t / k) ** 2)
+    got = np.abs(sos_response(sos, f, 1000.0)) ** 2
+    assert np.allclose(got, expected, rtol=1e-9, atol=1e-11)
+    edge = abs(sos_response(sos, [cutoff * 1000], 1000.0)[0]) ** 2
+    assert edge == pytest.approx(1 / (1 + eps2), rel=1e-9)
+    end = abs(sos_response(sos, [500.0 if high else 0.0], 1000.0)[0])
+    assert end == pytest.approx(1.0 if order % 2 else 10 ** (-ripple / 20), rel=1e-12)
+
+
+@pytest.mark.parametrize("design", [chebyshev1_lowpass, chebyshev1_highpass])
+@pytest.mark.parametrize(
+    "args",
+    [
+        (0, 1.0, 1.0, 8.0),
+        (2, 0.0, 1.0, 8.0),
+        (2, -1.0, 1.0, 8.0),
+        (2, math.nan, 1.0, 8.0),
+        (2, math.inf, 1.0, 8.0),
+        (2, True, 1.0, 8.0),
+        (2, 1.0, 0.0, 8.0),
+        (2, 1.0, 4.0, 8.0),
+        (2, 1.0, 1.0, 0.0),
+        (2.0, 1.0, 1.0, 8.0),
+    ],
+)
+def test_chebyshev1_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
+    with pytest.raises(ValueError):
+        design(*args)
