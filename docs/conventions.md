@@ -776,6 +776,17 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
 - **Frequency offset** (`frequency_offset(samples, offset_hz, sample_rate, phase=0)`):
   `y[n] = x[n]·e^{j(2π·Δf·n/fs + φ)}`; a positive offset moves the spectrum up (see Complex
   baseband). **(implemented)**
+- **IQ imbalance** (`iq_imbalance(samples, gain_db, phase)`, [ADR 0034](adr/0034-iq-impairments.md)):
+  the error is on the Q branch. With `g = 10^(gain_db/20)` and `φ` in radians,
+  `y = I + j·g·(Q·cos φ + I·sin φ)`: for `x = e^{jθ}` the output is `cos θ + j·g·sin(θ + φ)`,
+  so a positive `φ` advances the Q branch. Equivalently `y = μ·x + ν·x̄` with
+  `μ = (1 + g·e^{jφ})/2`, `ν = (1 − g·e^{−jφ})/2`: a tone at `+f` gets an image at `−f`. `gain_db`
+  and `φ` finite, `g` finite. **(implemented)**
+- **Image rejection** (`iq_image_rejection_db(gain_db, phase)`): `10·log10(|μ|²/|ν|²) =
+  10·log10((1 + g² + 2g·cos φ)/(1 + g² − 2g·cos φ))`, the tone-to-image power ratio of that
+  imbalance; `+inf` with no imbalance (`g = 1`, `φ = 0`). **(implemented)**
+- **DC offset** (`dc_offset(samples, offset)`): `y = x + offset`, `offset` a complex number (a real
+  one is `offset + 0j`), finite in both parts. **(implemented)**
 
 ## Synchronization
 

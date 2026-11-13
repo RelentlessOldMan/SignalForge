@@ -75,4 +75,56 @@ public static class Channel
             y[n] = samples[n] * Complex.FromPolarCoordinates(1, 2 * Math.PI * offsetHz * (n / sampleRate) + phase);
         return y;
     }
+
+    /// <summary>I + j·g·(Q·cos φ + I·sin φ), g = 10^(gainDb/20): the error on the Q branch
+    /// (conventions: Channel, IQ imbalance).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="gainDb">Q-branch gain relative to I in dB, finite.</param>
+    /// <param name="phase">Q-branch phase error in radians, finite; positive advances Q.</param>
+    public static Complex[] IqImbalance(ReadOnlySpan<Complex> samples, double gainDb, double phase)
+    {
+        double g = ImbalanceGain(gainDb, phase);
+        double c = g * Math.Cos(phase), s = g * Math.Sin(phase);
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = new Complex(samples[n].Real, samples[n].Imaginary * c + samples[n].Real * s);
+        return y;
+    }
+
+    /// <summary>Tone-to-image power ratio in dB of <see cref="IqImbalance"/> with these arguments;
+    /// +∞ with no imbalance (conventions: Channel, Image rejection).</summary>
+    /// <param name="gainDb">Q-branch gain relative to I in dB, finite.</param>
+    /// <param name="phase">Q-branch phase error in radians, finite.</param>
+    public static double IqImageRejectionDb(double gainDb, double phase)
+    {
+        double g = ImbalanceGain(gainDb, phase);
+        double num = 1 + g * g + 2 * g * Math.Cos(phase);
+        double den = 1 + g * g - 2 * g * Math.Cos(phase);
+        return den <= 0 ? double.PositiveInfinity : 10 * Math.Log10(num / den);
+    }
+
+    /// <summary>samples + offset (conventions: Channel, DC offset).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="offset">The constant added, finite in both parts.</param>
+    public static Complex[] DcOffset(ReadOnlySpan<Complex> samples, Complex offset)
+    {
+        if (!double.IsFinite(offset.Real) || !double.IsFinite(offset.Imaginary))
+            throw new ArgumentOutOfRangeException(nameof(offset), offset, "must be finite");
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = samples[n] + offset;
+        return y;
+    }
+
+    private static double ImbalanceGain(double gainDb, double phase)
+    {
+        if (!double.IsFinite(gainDb))
+            throw new ArgumentOutOfRangeException(nameof(gainDb), gainDb, "must be finite");
+        if (!double.IsFinite(phase))
+            throw new ArgumentOutOfRangeException(nameof(phase), phase, "must be finite");
+        double g = Math.Pow(10, gainDb / 20);
+        if (!(g > 0 && double.IsFinite(g)))
+            throw new ArgumentOutOfRangeException(nameof(gainDb), gainDb, "gain out of range");
+        return g;
+    }
 }

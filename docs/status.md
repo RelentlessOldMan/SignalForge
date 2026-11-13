@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **IQ impairments**: `iq_imbalance(samples, gain_db, phase)` and `dc_offset(samples, offset)`,
-   the imbalance's convention (which branch carries the error, the sign of the phase skew) and
-   the image-rejection ratio it implies written first; expected values by hand.
-2. **PSK and QAM beyond QPSK**: 8-PSK and 16-QAM mapping and hard-decision demapping with Gray
+1. **PSK and QAM beyond QPSK**: 8-PSK and 16-QAM mapping and hard-decision demapping with Gray
    codes, unit average symbol energy; the bit order and constellation in the conventions first,
    expected values by hand.
+2. **Phase noise**: a Wiener (random-walk) phase impairment set by its 3 dB linewidth, seeded;
+   the increment variance `2π·linewidth/fs` in the conventions first; cross-language checks on
+   the statistics (the variance of the phase difference over a lag).
 
 ## Built
 
@@ -398,12 +398,18 @@ Updated with every chunk of work. Dates are absolute.
   Tests: unit magnitude, monotone phase, the group delay integrating to the total phase, power
   kept through `IirFilter`. The planned "mixing" slice was dropped: `frequency_offset` already
   is it.
+- 2026-11-13: IQ imbalance and DC offset (conventions: Channel; ADR 0034):
+  `iq_imbalance(samples, gain_db, phase)` with the error on the Q branch
+  (`y = I + j·g·(Q·cos φ + I·sin φ)`), `iq_image_rejection_db(gain_db, phase)` and
+  `dc_offset(samples, offset)`. 17 vectors in `channel.json`: by hand, and from the widely
+  linear form `μx + νx̄` (independent of the branch form). Tests: a tone's DFT image matches the
+  image rejection, the Q branch is `g·sin(θ + φ)`, no other bin is touched.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
+beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance and DC offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

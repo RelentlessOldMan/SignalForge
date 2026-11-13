@@ -320,6 +320,9 @@ public static class Conformance
             "resample_taps" => Bind((a.I("up"), a.I("down")), t => Dsp.ResampleTaps(t.Item1, t.Item2)),
             "frequency_offset" => Bind((Complexes(a.Get("samples")), a.D("offset_hz"), a.D("sample_rate"), a.Opt("phase", 0)),
                 t => Channel.FrequencyOffset(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "iq_imbalance" => Bind((Complexes(a.Get("samples")), a.D("gain_db"), a.D("phase")), t => Channel.IqImbalance(t.Item1, t.Item2, t.Item3)),
+            "iq_image_rejection_db" => Bind((a.D("gain_db"), a.D("phase")), t => Channel.IqImageRejectionDb(t.Item1, t.Item2)),
+            "dc_offset" => Bind((Complexes(a.Get("samples")), ComplexScalar(a.Get("offset"))), t => Channel.DcOffset(t.Item1, t.Item2)),
             "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),
             "qpsk_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.QpskBerTheory),
             "timing_offset" => Bind((Complexes(a.Get("samples")), a.I("samples_per_symbol")), t => Sync.TimingOffset(t.Item1, t.Item2)),
@@ -615,6 +618,13 @@ public static class Conformance
     };
 
     private static double[] Reals(object? v) => v as double[] ?? throw new InvalidDataException("expected a real array");
+
+    private static Complex ComplexScalar(object? v) => v switch
+    {
+        Complex c => c,
+        double d => new Complex(d, 0),
+        _ => throw new InvalidDataException("expected a number"),
+    };
 
     private static Complex[] Complexes(object? v) =>
         v as Complex[] ?? Reals(v).Select(x => new Complex(x, 0)).ToArray();

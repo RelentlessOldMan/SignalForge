@@ -68,3 +68,48 @@ def frequency_offset(
         raise ValueError("offset_hz and phase must be finite")
     arg = 2.0 * np.pi * offset_hz * (np.arange(x.size) / sample_rate) + phase
     return np.asarray(x * np.exp(1j * arg), dtype=np.complex128)
+
+
+def _imbalance_gain(gain_db: float, phase: float) -> float:
+    if not (math.isfinite(gain_db) and math.isfinite(phase)):
+        raise ValueError("gain_db and phase must be finite")
+    try:
+        g = float(10.0 ** (gain_db / 20.0))
+    except OverflowError:
+        g = math.inf
+    if not 0 < g < math.inf:
+        raise ValueError("gain_db is out of range")
+    return g
+
+
+def iq_imbalance(samples: ArrayLike, gain_db: float, phase: float) -> NDArray[np.complex128]:
+    """``I + j*g*(Q*cos(phase) + I*sin(phase))``, ``g = 10**(gain_db/20)``: the error on the Q
+    branch (conventions: Channel, IQ imbalance)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    g = _imbalance_gain(gain_db, phase)
+    i, q = x.real.astype(np.float64), x.imag.astype(np.float64)
+    return np.asarray(
+        i + 1j * (q * (g * math.cos(phase)) + i * (g * math.sin(phase))), np.complex128
+    )
+
+
+def iq_image_rejection_db(gain_db: float, phase: float) -> float:
+    """Tone-to-image power ratio in dB of ``iq_imbalance(gain_db, phase)``; ``inf`` with no
+    imbalance (conventions: Channel, Image rejection)."""
+    g = _imbalance_gain(gain_db, phase)
+    num = 1 + g * g + 2 * g * math.cos(phase)
+    den = 1 + g * g - 2 * g * math.cos(phase)
+    return math.inf if den <= 0 else 10.0 * math.log10(num / den)
+
+
+def dc_offset(samples: ArrayLike, offset: complex) -> NDArray[np.complex128]:
+    """``samples + offset`` (conventions: Channel, DC offset)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    c = complex(offset)
+    if not (math.isfinite(c.real) and math.isfinite(c.imag)):
+        raise ValueError("offset must be finite")
+    return np.asarray(x + c, dtype=np.complex128)

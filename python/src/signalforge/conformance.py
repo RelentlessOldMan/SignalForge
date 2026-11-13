@@ -114,6 +114,9 @@ OPS: dict[str, Callable[..., Any]] = {
         dsp.Resampler(up, down, taps), samples, chunks
     ),
     "frequency_offset": channel.frequency_offset,
+    "iq_imbalance": channel.iq_imbalance,
+    "iq_image_rejection_db": channel.iq_image_rejection_db,
+    "dc_offset": channel.dc_offset,
     "evm": metrics.evm,
     "qpsk_ber_theory": metrics.qpsk_ber_theory,
     "timing_offset": sync.timing_offset,

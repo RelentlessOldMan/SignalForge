@@ -1,6 +1,6 @@
 """SignalForge: signal generation, processing and measurement. Conventions: docs/conventions.md."""
 
-from .channel import awgn, frequency_offset
+from .channel import awgn, dc_offset, frequency_offset, iq_image_rejection_db, iq_imbalance
 from .core import Signal
 from .dsp import (
     FirFilter,
@@ -83,7 +83,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.49"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.50"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -131,6 +131,7 @@ __all__ = [
     "db_to_lin",
     "dbm_to_vrms",
     "dbm_to_w",
+    "dc_offset",
     "decimate",
     "decode_samples",
     "elliptic_bandpass",
@@ -151,6 +152,8 @@ __all__ = [
     "frequency_offset",
     "ifft",
     "interpolate",
+    "iq_image_rejection_db",
+    "iq_imbalance",
     "kaiser_parameters",
     "lin_to_db",
     "multitone",
