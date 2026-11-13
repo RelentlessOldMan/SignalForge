@@ -4,11 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Error-rate theory for 8-PSK and 16-QAM**: exact Gray 16-QAM BER and SER, and 8-PSK SER by
-   its integral (with the usual nearest-neighbor BER), next to `qpsk_ber_theory`; expected values
-   from the closed forms by hand and an independent numerical integral; Monte-Carlo checks in
-   both suites.
-2. **Multipath**: a static tapped delay line, `multipath(samples, delays, gains)` with integer
+1. **Multipath**: a static tapped delay line, `multipath(samples, delays, gains)` with integer
    sample delays and complex gains, output as long as the input (the convention for the tail
    written first); expected values by hand.
 
@@ -416,6 +412,14 @@ Updated with every chunk of work. Dates are absolute.
   `2π·linewidth/fs`. Five vectors (zero linewidth, one sample, three errors); the random part is
   checked in each language against theory: the step variance, the variance over a lag, and
   `E[e^{jφ[n]}] = e^{−nσ²/2}` over 4000 runs.
+- 2026-11-13: error-rate theory (conventions: EVM and BER; ADR 0037): `qam16_ber_theory`,
+  `qam16_ser_theory` (closed forms), `psk8_ser_theory` and `psk8_ber_theory` (Pawula's phase-tail
+  integral by Simpson, 4096 panels), all exact for our Gray labelings; the 8-PSK BER is
+  `⅔·(T(π/8) + T(3π/8))`, not the `Ps/3` approximation the plan named. 36 vectors from
+  `vectors/generators/error_rates.py`, which checks the 16-QAM forms against integrating the
+  Gaussian over the decision intervals and gets 8-PSK from the phase density instead. Tests:
+  limits, monotone, the high-SNR approximations, and Monte-Carlo runs through map, AWGN and
+  demap at 8 dB (within 6 %). Python 1895 passed, 2 skipped; .NET 1519 passed.
 
 ## Not built
 

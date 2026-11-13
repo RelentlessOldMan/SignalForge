@@ -60,10 +60,63 @@ public static class Metrics
     }
 
     /// <summary>Bit error rate of Gray-coded QPSK in AWGN: ½·erfc(√(Eb/N0)), Eb/N0 in dB.</summary>
-    public static double QpskBerTheory(double ebN0Db)
+    /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
+    public static double QpskBerTheory(double ebN0Db) =>
+        0.5 * SpecialFunctions.Erfc(Math.Sqrt(EbN0(ebN0Db)));
+
+    /// <summary>Exact bit error rate of Gray 16-QAM in AWGN (conventions: EVM and BER).</summary>
+    /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
+    public static double Qam16BerTheory(double ebN0Db)
+    {
+        double r = Math.Sqrt(2 * EbN0(ebN0Db) / 5);
+        return (3 * SpecialFunctions.Erfc(r) + 2 * SpecialFunctions.Erfc(3 * r) - SpecialFunctions.Erfc(5 * r)) / 8;
+    }
+
+    /// <summary>Exact symbol error rate of 16-QAM in AWGN: p·(2 − p), p = ¾·erfc(r).</summary>
+    /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
+    public static double Qam16SerTheory(double ebN0Db)
+    {
+        double p = 0.75 * SpecialFunctions.Erfc(Math.Sqrt(2 * EbN0(ebN0Db) / 5));
+        return p * (2 - p);
+    }
+
+    /// <summary>Exact symbol error rate of 8-PSK in AWGN: 2·T(π/8) (conventions: EVM and BER).</summary>
+    /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
+    public static double Psk8SerTheory(double ebN0Db) => 2 * PhaseTail(Math.PI / 8, 3 * EbN0(ebN0Db));
+
+    /// <summary>Exact bit error rate of Gray 8-PSK in AWGN: ⅔·(T(π/8) + T(3π/8)).</summary>
+    /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
+    public static double Psk8BerTheory(double ebN0Db)
+    {
+        double esN0 = 3 * EbN0(ebN0Db);
+        return 2.0 / 3 * (PhaseTail(Math.PI / 8, esN0) + PhaseTail(3 * Math.PI / 8, esN0));
+    }
+
+    private static double EbN0(double ebN0Db)
     {
         if (double.IsNaN(ebN0Db))
             throw new ArgumentOutOfRangeException(nameof(ebN0Db), ebN0Db, "must not be NaN");
-        return 0.5 * SpecialFunctions.Erfc(Math.Sqrt(Math.Pow(10, ebN0Db / 10)));
+        return Math.Pow(10, ebN0Db / 10);
+    }
+
+    private const int TailPanels = 4096;
+
+    // P(received phase beyond psi on one side), Pawula's integral by Simpson's rule.
+    private static double PhaseTail(double psi, double esN0)
+    {
+        double k = esN0 * Math.Sin(psi) * Math.Sin(psi);
+        if (k == 0)
+            return (Math.PI - psi) / (2 * Math.PI);
+        if (double.IsPositiveInfinity(k))
+            return 0;
+        double h = (Math.PI - psi) / TailPanels;
+        double total = 0;
+        for (int i = 1; i < TailPanels; i++)
+        {
+            double s = Math.Sin(i * h);
+            total += (i % 2 == 1 ? 4 : 2) * Math.Exp(-k / (s * s));
+        }
+        total += Math.Exp(-esN0); // the theta = 0 end is 0
+        return total * h / 3 / (2 * Math.PI);
     }
 }

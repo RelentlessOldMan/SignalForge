@@ -58,7 +58,17 @@ from .dsp import (
 from .files import decode_samples, encode_samples, read_sigmf, write_sigmf
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import PowerStats, Sfdr, ToneMetrics, power_stats, sfdr, tone_metrics
-from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
+from .metrics import (
+    ErrorCount,
+    Evm,
+    bit_errors,
+    evm,
+    psk8_ber_theory,
+    psk8_ser_theory,
+    qam16_ber_theory,
+    qam16_ser_theory,
+    qpsk_ber_theory,
+)
 from .modulation import (
     psk8_demap_hard,
     psk8_map,
@@ -97,7 +107,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.53"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.54"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -176,12 +186,16 @@ __all__ = [
     "phase_noise",
     "power_stats",
     "prbs",
+    "psk8_ber_theory",
     "psk8_demap_hard",
     "psk8_map",
+    "psk8_ser_theory",
     "pulse_shape",
     "pulse_train",
+    "qam16_ber_theory",
     "qam16_demap_hard",
     "qam16_map",
+    "qam16_ser_theory",
     "qpsk_ber_theory",
     "qpsk_block_phases",
     "qpsk_demap_hard",

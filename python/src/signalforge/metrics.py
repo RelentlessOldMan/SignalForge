@@ -67,12 +67,56 @@ def evm(measured: ArrayLike, reference: ArrayLike) -> Evm:
     )
 
 
-def qpsk_ber_theory(eb_n0_db: float) -> float:
-    """Bit error rate of Gray-coded QPSK in AWGN: ``0.5 * erfc(sqrt(Eb/N0))``."""
+def _eb_n0(eb_n0_db: float) -> float:
     if math.isnan(eb_n0_db):
         raise ValueError("eb_n0_db must not be NaN")
     try:
-        eb_n0 = 10 ** (eb_n0_db / 10)
+        return float(10 ** (eb_n0_db / 10))
     except OverflowError:  # above about 3080 dB; C# gets infinity here
-        eb_n0 = math.inf
-    return 0.5 * math.erfc(math.sqrt(eb_n0))
+        return math.inf
+
+
+def qpsk_ber_theory(eb_n0_db: float) -> float:
+    """Bit error rate of Gray-coded QPSK in AWGN: ``0.5 * erfc(sqrt(Eb/N0))``."""
+    return 0.5 * math.erfc(math.sqrt(_eb_n0(eb_n0_db)))
+
+
+def qam16_ber_theory(eb_n0_db: float) -> float:
+    """Exact bit error rate of Gray 16-QAM in AWGN (conventions: EVM and BER)."""
+    r = math.sqrt(2 * _eb_n0(eb_n0_db) / 5)
+    return (3 * math.erfc(r) + 2 * math.erfc(3 * r) - math.erfc(5 * r)) / 8
+
+
+def qam16_ser_theory(eb_n0_db: float) -> float:
+    """Exact symbol error rate of 16-QAM in AWGN: ``p*(2 - p)``, ``p = 0.75*erfc(r)``."""
+    p = 0.75 * math.erfc(math.sqrt(2 * _eb_n0(eb_n0_db) / 5))
+    return p * (2 - p)
+
+
+_TAIL_PANELS = 4096
+
+
+def _phase_tail(psi: float, es_n0: float) -> float:
+    """P(received phase beyond psi on one side), Pawula's integral by Simpson's rule."""
+    k = es_n0 * math.sin(psi) ** 2
+    if k == 0:
+        return (math.pi - psi) / (2 * math.pi)
+    if math.isinf(k):
+        return 0.0
+    h = (math.pi - psi) / _TAIL_PANELS
+    theta = h * np.arange(1, _TAIL_PANELS)
+    inner = np.exp(-k / np.sin(theta) ** 2)
+    weights = np.where(np.arange(1, _TAIL_PANELS) % 2 == 1, 4.0, 2.0)
+    total = float(np.dot(weights, inner)) + math.exp(-es_n0)  # the theta = 0 end is 0
+    return total * h / 3 / (2 * math.pi)
+
+
+def psk8_ser_theory(eb_n0_db: float) -> float:
+    """Exact symbol error rate of 8-PSK in AWGN: ``2*T(pi/8)`` (conventions: EVM and BER)."""
+    return 2 * _phase_tail(math.pi / 8, 3 * _eb_n0(eb_n0_db))
+
+
+def psk8_ber_theory(eb_n0_db: float) -> float:
+    """Exact bit error rate of Gray 8-PSK in AWGN: ``(2/3)*(T(pi/8) + T(3*pi/8))``."""
+    es_n0 = 3 * _eb_n0(eb_n0_db)
+    return 2 / 3 * (_phase_tail(math.pi / 8, es_n0) + _phase_tail(3 * math.pi / 8, es_n0))

@@ -850,6 +850,19 @@ Python: `signalforge.metrics`; C#: `SignalForge.Metrics`.
   `Pb = ½·erfc(√(Eb/N0))`, Eb/N0 linear from dB; where that overflows (above about 3080 dB) it
   is infinite and `Pb = 0`. `−∞` dB gives ½, NaN is rejected. For QPSK `Es = 2·Eb`, so
   `Es/N0 [dB] = Eb/N0 [dB] + 10·log10(2)`. **(implemented)**
+- **16-QAM and 8-PSK error rates** ([ADR 0037](adr/0037-error-rate-theory.md)): Gray mapping as
+  in Bits and symbols, AWGN, hard decisions, Eb/N0 in dB taken as for QPSK (NaN rejected, `−∞`
+  gives the fair-guess rates, overflow is infinite and gives 0). `Es = k·Eb` with `k = 4` and 3.
+  - `qam16_ber_theory`: with `r = √(2·Eb/N0/5)`,
+    `Pb = (3·erfc(r) + 2·erfc(3r) − erfc(5r)) / 8`, exact for the Gray 4-PAM axes (a bit decided
+    wrongly two thresholds away counts once).
+  - `qam16_ser_theory`: `p = ¾·erfc(r)` per axis, `Ps = 1 − (1 − p)² = p·(2 − p)`.
+  - `psk8_ser_theory`: `Ps = 2·T(π/8)`, and `psk8_ber_theory`: `Pb = ⅔·(T(π/8) + T(3π/8))`,
+    exact for this Gray labeling (the mean bit distance is 1 to the next sector and 2 to each
+    one further). `T(ψ)` is the probability that the received phase lies beyond `ψ` on one side,
+    in Pawula's form `T(ψ) = (1/2π)·∫₀^{π−ψ} exp(−(Es/N0)·sin²ψ / sin²θ) dθ`, evaluated by
+    Simpson's rule on 4096 panels (relative error below 1e-12 against the phase density's
+    integral); `T(ψ) = (π − ψ)/2π` at `Es/N0 = 0` and 0 at infinity. **(implemented)**
 
 ## QPSK link
 
