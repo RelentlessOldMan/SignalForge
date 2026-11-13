@@ -4,10 +4,8 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Phase 3, the rest of the QPSK slice**, in both languages: timing and phase recovery (simplest
-   that works: a data-aided or Gardner timing estimate and a fourth-power phase/frequency
-   estimate), then an end-to-end link function that runs bits → shaping → channel → recovery →
-   EVM/BER and returns a machine-readable JSON report.
+1. **End-to-end QPSK link function**, in both languages: bits → shaping → channel → recovery
+   (the `sync` estimators) → EVM/BER, returning a machine-readable JSON report.
 2. **Cross-language compare tool**: C# conformance report (to match the Python
    `--report` output) and a small script that diffs the two reports.
 
@@ -67,6 +65,13 @@ Updated with every chunk of work. Dates are absolute.
   noise variance overflows (both languages), and BER theory returns 0 above about 3080 dB. CI's
   Python 3.10 mypy (NumPy 2.2 stubs) failed on two annotations; fixed and checked locally on 3.10.
   2 new vectors (182). Python 283 passed, 2 skipped (also on 3.10); .NET 261 passed.
+- 2026-11-13: block synchronization ([ADR 0008](adr/0008-block-synchronization.md)), new module
+  `sync` in both languages: Oerder–Meyr symbol timing (`timing_offset`), fourth-power QPSK carrier
+  frequency (`qpsk_frequency_offset`) and phase (`qpsk_phase_offset`), each a feed-forward block
+  estimate; correction reuses `frequency_offset`. 24 new vectors (206), built from clean signals
+  where each estimator is exact. Unit tests run a shaped QPSK link with delay, carrier offset, phase
+  and noise, recover it, and check BER against theory at 6 dB. Python 312 passed, 2 skipped; .NET
+  290 passed.
 
 ## Not built
 

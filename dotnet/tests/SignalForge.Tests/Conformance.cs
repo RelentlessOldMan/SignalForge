@@ -180,6 +180,9 @@ public static class Conformance
                 t => Channel.FrequencyOffset(t.Item1, t.Item2, t.Item3, t.Item4)),
             "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),
             "qpsk_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.QpskBerTheory),
+            "timing_offset" => Bind((Complexes(a.Get("samples")), a.I("samples_per_symbol")), t => Sync.TimingOffset(t.Item1, t.Item2)),
+            "qpsk_frequency_offset" => Bind((Complexes(a.Get("symbols")), a.D("symbol_rate")), t => Sync.QpskFrequencyOffset(t.Item1, t.Item2)),
+            "qpsk_phase_offset" => Bind(Complexes(a.Get("symbols")), s => Sync.QpskPhaseOffset(s)),
             _ => throw new InvalidDataException($"unknown op {op}"),
         };
         a.CheckAllUsed();

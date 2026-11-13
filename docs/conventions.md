@@ -195,6 +195,27 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   `y[n] = x[n]·e^{j(2π·Δf·n/fs + φ)}`; a positive offset moves the spectrum up (see Complex
   baseband). **(implemented)**
 
+## Synchronization
+
+Decided in [ADR 0008](adr/0008-block-synchronization.md). Python: `signalforge.sync`; C#:
+`SignalForge.Sync`. All are block estimators over finite complex samples; they estimate, they do
+not correct. Where a sum below is exactly zero there is no information and the estimate is 0. `arg`
+is in `(−π, π]`. The timing sum uses `e^{−j2π(n mod sps)/sps}`, the same value with a small
+argument.
+
+- **Timing offset** (`timing_offset(samples, samples_per_symbol)`), Oerder–Meyr: with
+  `S = Σₙ |y[n]|²·e^{−j2πn/sps}`, `τ = −sps·arg(S)/(2π)`, wrapped into `[0, sps)` (add `sps` if
+  negative; a result that rounds to `sps` is 0). The symbol instants are at `τ + m·sps`; for
+  `|y|² = A + B·cos(2π(n − τ)/sps)` over whole symbols and `sps ≥ 3` the estimate is exactly `τ`
+  (at `sps = 2` the line aliases onto its own image). `sps ≥ 2`, at least one sample.
+  **(implemented)**
+- **QPSK frequency offset** (`qpsk_frequency_offset(symbols, symbol_rate)`): with `w = z⁴`,
+  `S = Σₖ₌₁ w[k]·conj(w[k−1])`, `Δf = arg(S)·symbol_rate / (8π)`, in `(−Rs/8, Rs/8]`. At least two
+  symbols. Correct with `frequency_offset(symbols, −Δf, symbol_rate)`. **(implemented)**
+- **QPSK phase offset** (`qpsk_phase_offset(symbols)`): `φ = arg(−Σ z⁴) / 4`, in `(−π/4, π/4]`;
+  the true phase is `φ + m·π/2`. Correct by multiplying by `e^{−jφ}`
+  (`frequency_offset(symbols, 0, 1, −φ)`). At least one symbol. **(implemented)**
+
 ## EVM and BER
 
 Python: `signalforge.metrics`; C#: `SignalForge.Metrics`.

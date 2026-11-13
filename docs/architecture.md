@@ -37,6 +37,7 @@ module moves into its own project/package only when it brings a dependency the r
 | Spectral | `signalforge.spectral` | `SignalForge.Spectral` | FFT (C#: own radix-2 + Bluestein), frequency axes, windows, Welch PSD, occupied bandwidth, channel power ([ADR 0006](adr/0006-fft-windows-spectra.md)) | started |
 | DSP | `signalforge.dsp` | `SignalForge.Dsp` | convolution, upsampling, RRC taps and pulse shaping ([ADR 0007](adr/0007-pulse-shaping-channel-evm.md)); later FIR/IIR design, resampling, mixing | started |
 | Channel | `signalforge.channel` | `SignalForge.Channel` | AWGN at Es/N0, frequency offset; later phase noise, multipath | started |
+| Sync | `signalforge.sync` | `SignalForge.Sync` | block timing, QPSK frequency and phase estimates ([ADR 0008](adr/0008-block-synchronization.md)); later tracking loops | started |
 | IO | | | raw IQ files, SigMF, WAV, NumPy | planned |
 | Standards | | | one subpackage per standard, versioned, never mixed into generic code | planned |
 | Hardware | | | separate package, never a dependency of the core | planned |

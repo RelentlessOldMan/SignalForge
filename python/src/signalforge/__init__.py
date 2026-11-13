@@ -19,6 +19,7 @@ from .spectral import (
     window,
     window_stats,
 )
+from .sync import qpsk_frequency_offset, qpsk_phase_offset, timing_offset
 from .units import (
     amp_to_db,
     db_to_amp,
@@ -31,7 +32,7 @@ from .units import (
 )
 from .waveforms import prbs, tone
 
-__version__ = "2026.11.13.6"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.7"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
@@ -62,8 +63,11 @@ __all__ = [
     "pulse_shape",
     "qpsk_ber_theory",
     "qpsk_demap_hard",
+    "qpsk_frequency_offset",
     "qpsk_map",
+    "qpsk_phase_offset",
     "rrc_taps",
+    "timing_offset",
     "tone",
     "upsample",
     "vrms_to_dbm",
