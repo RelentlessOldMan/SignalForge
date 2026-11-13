@@ -57,6 +57,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "window": spectral.window,
     "window_stats": spectral.window_stats,
     "welch_psd": spectral.welch_psd,
+    "spectrogram": spectral.spectrogram,
     "occupied_bandwidth": spectral.occupied_bandwidth,
     "channel_power": spectral.channel_power,
     "convolve": dsp.convolve,
@@ -176,7 +177,7 @@ def encode(v: Any) -> Any:
                 "re": [encode(float(x)) for x in v.real],
                 "im": [encode(float(x)) for x in v.imag],
             }
-        return [encode(x.item()) for x in v]
+        return [encode(x) if x.ndim else encode(x.item()) for x in v]
     if isinstance(v, complex | np.complexfloating):
         return {"re": encode(float(v.real)), "im": encode(float(v.imag))}
     if isinstance(v, np.generic):
@@ -247,6 +248,8 @@ def compare(actual: Any, expected: Any, tol: dict[str, float], path: str = "") -
     if isinstance(expected, np.ndarray):
         if actual.shape != expected.shape:
             return [f"{where}: shape {actual.shape} != expected {expected.shape}"]
+        if expected.ndim > 1:  # rows of a 2-D result compare element by element, row-major
+            actual, expected = actual.ravel(), expected.ravel()
         bad = [i for i in range(expected.size) if not _close(actual[i], expected[i], tol)]
         if bad:
             i = bad[0]

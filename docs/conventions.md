@@ -118,6 +118,19 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
     `one_sided`, `bin_width = fs/N` and `enbw_hz = ENBW·fs/N` (the resolution bandwidth), and
     `span`: `(0, fs/2)` when one-sided, else none (see Bins as rectangles).
   **(implemented)**
+- **Spectrogram** (`spectrogram(samples, sample_rate, nperseg, noverlap=None, window="hann",
+  one_sided=None, beta=None)`): Welch's segments, each kept instead of averaged. `nperseg` is
+  required (`1 ≤ nperseg ≤ L`); `noverlap`, the window, the scaling, the sidedness and the
+  frequency axis are exactly as for the PSD above, so row `s` is `welch_psd` of segment `s` alone
+  and the mean of the rows is `welch_psd` of the whole input (to rounding).
+  - `psd` has one row per segment (`num_segments` rows of `len(frequencies)` bins): Python a 2-D
+    array, C# an array of rows.
+  - `times[s] = (s·step + nperseg/2) / fs`: the segment's center, in seconds from the first sample
+    (add the signal's `time_origin` for absolute time). For even `nperseg` it falls between two
+    samples.
+  - The result carries `frequencies`, `times`, `psd`, `sample_rate`, `nperseg`, `num_segments`,
+    `one_sided`, `bin_width`, `enbw_hz` and `span`, with the PSD's meanings.
+  **(implemented)**
 - **PSD units:** W/Hz when the samples are volts and an impedance is known (divide by the
   impedance), otherwise sample-units²/Hz. The functions above work in sample units. **(defined)**
 - **Bins as rectangles:** OBW and channel power treat PSD bin `k` (center `f_k`, uniform spacing

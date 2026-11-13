@@ -178,4 +178,46 @@ public class SpectralTests
         var w = Spectral.Window(WindowType.Kaiser, 16, beta: 6);
         Assert.Equal(Spectral.WindowStats(w).EnbwBins / 16, p.EnbwHz, 1e-14);
     }
+
+    [Theory]
+    [InlineData(false, 16, null, WindowType.Hann)]
+    [InlineData(false, 15, 3, WindowType.Blackman)]
+    [InlineData(true, 16, 0, WindowType.Kaiser)]
+    [InlineData(true, 9, 8, WindowType.Hann)]
+    public void SpectrogramRowsAverageToWelch(bool complexInput, int nperseg, int? noverlap, WindowType window)
+    {
+        var rng = new Random(nperseg);
+        double[] re = [.. Enumerable.Range(0, 200).Select(_ => rng.NextDouble() - 0.5)];
+        double? beta = window == WindowType.Kaiser ? 6.0 : null;
+        Spectrogram s;
+        SpectralDensity w;
+        if (complexInput)
+        {
+            Complex[] z = [.. re.Select(v => new Complex(v, rng.NextDouble() - 0.5))];
+            (s, w) = (Spectral.Spectrogram(z, 1e3, nperseg, noverlap, window, beta), Spectral.WelchPsd(z, 1e3, nperseg, noverlap, window, beta));
+        }
+        else
+            (s, w) = (Spectral.Spectrogram(re, 1e3, nperseg, noverlap, window, beta: beta), Spectral.WelchPsd(re, 1e3, nperseg, noverlap, window, beta: beta));
+        Assert.Equal(w.NumSegments, s.Psd.Length);
+        Assert.All(s.Psd, row => Assert.Equal(w.Frequencies.Length, row.Length));
+        for (int k = 0; k < w.Psd.Length; k++)
+        {
+            double mean = s.Psd.Average(row => row[k]);
+            Assert.True(Math.Abs(mean - w.Psd[k]) <= 1e-12 * w.Psd[k], $"bin {k}: {mean} vs {w.Psd[k]}");
+        }
+        Assert.Equal(w.Frequencies, s.Frequencies);
+        Assert.Equal((w.OneSided, w.BinWidth, w.EnbwHz, w.Span), (s.OneSided, s.BinWidth, s.EnbwHz, s.Span));
+        int step = nperseg - (noverlap ?? nperseg / 2);
+        Assert.Equal([.. Enumerable.Range(0, s.NumSegments).Select(i => (i * step + nperseg / 2.0) / 1e3)], s.Times);
+    }
+
+    [Fact]
+    public void SpectrogramTracksAFrequencyStep()
+    {
+        double[] x = [.. Enumerable.Range(0, 1024).Select(n => Math.Cos(2 * Math.PI * (n < 512 ? 125 : 250) * n / 1000.0))];
+        var s = Spectral.Spectrogram(x, 1000, 64, noverlap: 0);
+        double[] peaks = [.. s.Psd.Select(row => s.Frequencies[Array.IndexOf(row, row.Max())])];
+        Assert.All(peaks[..8], f => Assert.Equal(125, f));
+        Assert.All(peaks[8..], f => Assert.Equal(250, f));
+    }
 }

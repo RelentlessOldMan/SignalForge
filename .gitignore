@@ -27,3 +27,6 @@ TestResults/
 # Generated reports and scratch output
 reports/
 *.corpus/
+
+# Commit message scratch file (written at the root, removed after committing)
+commit-msg.tmp

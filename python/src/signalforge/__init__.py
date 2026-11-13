@@ -26,12 +26,14 @@ from .modulation import qpsk_demap_hard, qpsk_map
 from .spectral import (
     OccupiedBandwidth,
     SpectralDensity,
+    Spectrogram,
     WindowStats,
     channel_power,
     fft,
     fft_frequencies,
     ifft,
     occupied_bandwidth,
+    spectrogram,
     welch_psd,
     window,
     window_stats,
@@ -49,7 +51,7 @@ from .units import (
 )
 from .waveforms import prbs, tone
 
-__version__ = "2026.11.13.20"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.21"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
@@ -61,6 +63,7 @@ __all__ = [
     "QpskLinkReport",
     "Signal",
     "SpectralDensity",
+    "Spectrogram",
     "WindowStats",
     "amp_to_db",
     "awgn",
@@ -101,6 +104,7 @@ __all__ = [
     "resample",
     "resample_taps",
     "rrc_taps",
+    "spectrogram",
     "timing_offset",
     "tone",
     "upsample",

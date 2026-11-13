@@ -110,6 +110,7 @@ public static class Conformance
             ["im"] = new JsonArray([.. zs.Select(z => Encode(z.Imaginary))]),
         },
         double[] ds => new JsonArray([.. ds.Select(d => Encode(d))]),
+        double[][] rows => new JsonArray([.. rows.Select(r => Encode(r))]),
         Dictionary<string, object?> m => new JsonObject(m.Select(kv => KeyValuePair.Create(kv.Key, Encode(kv.Value)))),
         _ => throw new InvalidOperationException($"cannot encode {v.GetType()}"),
     };
@@ -225,6 +226,7 @@ public static class Conformance
                 t => Spectral.Window(t.Item1, t.Item2, t.Item3, t.Item4)),
             "window_stats" => Bind(Reals(a.Get("w")), w => Spectral.WindowStats(w)),
             "welch_psd" => Welch(a),
+            "spectrogram" => SpectrogramOp(a),
             "occupied_bandwidth" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Opt("fraction", 0.99), Span(a)),
                 t => Spectral.OccupiedBandwidth(t.Item1, t.Item2, t.Item3, t.Item4)),
             "channel_power" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.D("low"), a.D("high"), Span(a)),
@@ -334,6 +336,23 @@ public static class Conformance
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
         return () => Spectral.WelchPsd(x, fs, nperseg, noverlap, window, oneSided, beta);
+    }
+
+    private static Func<object?> SpectrogramOp(Args a)
+    {
+        object? samples = a.Get("samples");
+        var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.I("nperseg"), a.OptInt("noverlap"));
+        var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
+        double? beta = a.OptD("beta");
+        if (samples is Complex[] cs)
+        {
+            if (a.Flag("one_sided"))
+                throw new InvalidDataException("one_sided=true with complex samples has no C# form");
+            return () => Spectral.Spectrogram(cs, fs, nperseg, noverlap, window, beta);
+        }
+        double[] x = Reals(samples);
+        bool oneSided = a.Flag("one_sided", dflt: true);
+        return () => Spectral.Spectrogram(x, fs, nperseg, noverlap, window, oneSided, beta);
     }
 
     /// <summary>Real only when both inputs are real, as in NumPy.</summary>
@@ -490,6 +509,8 @@ public static class Conformance
                     var s => s,
                 };
             case JsonValueKind.Array:
+                if (v.GetArrayLength() > 0 && v[0].ValueKind == JsonValueKind.Array)
+                    return v.EnumerateArray().Select(e => (double[])Decode(e)!).ToArray(); // rows of a 2-D result
                 return v.EnumerateArray().Select(e => (double)Decode(e)!).ToArray();
             case JsonValueKind.Object:
                 var props = v.EnumerateObject().ToList();
@@ -515,7 +536,7 @@ public static class Conformance
     public static object? Canonical(object? v) => v switch
     {
         null => null,
-        double or Complex or Complex[] or double[] or bool or string => v,
+        double or Complex or Complex[] or double[] or double[][] or bool or string => v,
         long l => (double)l,
         Dictionary<string, object?> m => m.ToDictionary(kv => kv.Key, kv => Canonical(kv.Value)),
         int i => (double)i,
@@ -565,6 +586,13 @@ public static class Conformance
                     msgs.Add($"{where}: length {ad.Length} != expected {ed.Length}");
                 else if (Enumerable.Range(0, ed.Length).Where(i => !Close(ad[i], ed[i], abs, rel)).ToList() is [int i0, ..] bad)
                     msgs.Add($"{where}[{i0}]: {ad[i0]:R} != expected {ed[i0]:R} ({bad.Count} differ)");
+                return;
+            case double[][] er when actual is double[][] ar:
+                if (ar.Length != er.Length)
+                    msgs.Add($"{where}: {ar.Length} rows != expected {er.Length}");
+                else
+                    for (int r = 0; r < er.Length; r++)
+                        Compare(ar[r], er[r], abs, rel, $"{where}[{r}]", msgs);
                 return;
             case Complex[] ec when actual is Complex[] ac:
                 CompareArrays(ac, ec, abs, rel, where, msgs);

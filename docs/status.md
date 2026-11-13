@@ -4,10 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectrogram**: a short-time Fourier transform on the Welch machinery (frame, hop, window,
-   one- and two-sided, PSD scaling per frame), with conventions written first.
-2. **IIR filters**: biquad sections, a Butterworth design and a streaming `IirFilter`, matching
+1. **IIR filters**: biquad sections, a Butterworth design and a streaming `IirFilter`, matching
    the FIR filter's shape.
+2. **Waveforms**: multitone (with chosen or Newman phases), linear chirp and rectangular pulse
+   trains, with closed-form vectors.
 
 ## Built
 
@@ -135,10 +135,15 @@ Updated with every chunk of work. Dates are absolute.
   a complex value with an infinite part into NaN (Python) or failed to match it (C#); C# read JSON
   integers as doubles (a ternary promoted `long` to `double`).
   Python 585 passed, 2 skipped (3.10 too); .NET 515 passed; conformance 376/376 in both.
+- 2026-11-13: spectrogram in both languages (ADR 0013): Welch's segments kept one per row, same
+  windowing, scaling and sidedness, rows timed at segment centers; Welch now shares the segment
+  code. 13 vectors from `vectors/generators/spectrogram.py` (standard library, DFT summed term by
+  term) and a hand-derived tone; both runners now read and compare 2-D results.
+  Python 604 passed, 2 skipped (3.10 too); .NET 533 passed; conformance 389/389 in both.
 
 ## Not built
 
-Everything else in the brief: IIR filter design, FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectrograms and spectral options beyond Welch
+Everything else in the brief: IIR filter design, FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
 SFDR, phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

@@ -122,3 +122,60 @@ def test_counts_must_be_non_negative_integers(bad: float) -> None:
         spectral.window("hann", bad)  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         spectral.welch_psd(np.ones(8), 1.0, nperseg=bad)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("complex_input", "nperseg", "noverlap", "name"),
+    [
+        (False, 16, None, "hann"),
+        (False, 15, 3, "blackman"),
+        (True, 16, 0, "kaiser"),
+        (True, 9, 8, "hann"),
+    ],
+)
+def test_spectrogram_rows_average_to_welch(
+    complex_input: bool, nperseg: int, noverlap: int | None, name: str
+) -> None:
+    rng = np.random.default_rng(nperseg)
+    x = rng.standard_normal(200) + (1j * rng.standard_normal(200) if complex_input else 0)
+    beta = 6.0 if name == "kaiser" else None
+    kw = {"noverlap": noverlap, "window": name, "beta": beta}
+    s = spectral.spectrogram(x, 1e3, nperseg, **kw)  # type: ignore[arg-type]
+    w = spectral.welch_psd(x, 1e3, nperseg=nperseg, **kw)  # type: ignore[arg-type]
+    assert s.psd.shape == (w.num_segments, w.frequencies.size)
+    assert np.allclose(s.psd.mean(axis=0), w.psd, rtol=1e-12, atol=0)
+    assert np.array_equal(s.frequencies, w.frequencies)
+    assert (s.num_segments, s.one_sided, s.bin_width, s.enbw_hz, s.span) == (
+        w.num_segments,
+        w.one_sided,
+        w.bin_width,
+        w.enbw_hz,
+        w.span,
+    )
+    step = nperseg - (nperseg // 2 if noverlap is None else noverlap)
+    assert np.allclose(s.times, (np.arange(s.num_segments) * step + nperseg / 2) / 1e3)
+
+
+def test_spectrogram_tracks_a_frequency_step() -> None:
+    fs, n = 1000.0, 64
+    x = np.concatenate(
+        [
+            np.cos(2 * np.pi * 125 * np.arange(512) / fs),
+            np.cos(2 * np.pi * 250 * np.arange(512) / fs),
+        ]
+    )
+    s = spectral.spectrogram(x, fs, n, noverlap=0)
+    peaks = s.frequencies[np.argmax(s.psd, axis=1)]
+    assert np.all(peaks[:8] == 125) and np.all(peaks[8:] == 250)
+
+
+def test_spectrogram_rejects_bad_arguments() -> None:
+    x = np.ones(16)
+    with pytest.raises(ValueError):
+        spectral.spectrogram(x, 1.0, 4.5)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        spectral.spectrogram(x, 1.0, True)
+    with pytest.raises(ValueError):
+        spectral.spectrogram(x + 0j, 1.0, 4, one_sided=True)
+    with pytest.raises(ValueError):
+        spectral.spectrogram(x, 1.0, None)  # type: ignore[arg-type]
