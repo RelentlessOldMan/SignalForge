@@ -20,7 +20,8 @@ rule for code not written yet.
 
 - Sample rates and impedances must be positive and **finite**; NaN and infinity are rejected.
   **(implemented)**
-- Counts (`n`, `num_samples`, `num_bits`, `order`, `seed`, `nperseg`, `noverlap`) are integers ≥ 0.
+- Counts (`n`, `num_samples`, `num_bits`, `order`, `seed`, `nperseg`, `noverlap`, `factor`,
+  `samples_per_symbol`, `span_symbols`) are integers ≥ 0.
   Python accepts anything with `__index__` (so NumPy integers) and rejects floats, even whole ones
   like `3.0`; C# takes `int`. **(implemented)**
 - Measurements reject non-finite input where a NaN would otherwise pass through silently
@@ -155,6 +156,55 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   bit 0. **(implemented)**
 - Other constellations are normalized to unit average symbol energy unless a standard says otherwise.
   **(defined)**
+
+## Pulse shaping
+
+Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalforge.dsp`; C#:
+`SignalForge.Dsp`.
+
+- **Convolution** (`convolve(x, h)`): full linear convolution, `y[n] = Σₖ h[k]·x[n−k]`, length
+  `len(x) + len(h) − 1`; both non-empty. **(implemented)**
+- **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
+  has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
+- **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at
+  `t = (n − (N−1)/2) / sps` symbol periods, `n = 0 … N−1`, with
+  `h(t) = [sin(πt(1−β)) + 4βt·cos(πt(1+β))] / [πt(1 − (4βt)²)]`, and the limits
+  `h(0) = 1 − β + 4β/π` and, where `|4βt| = 1` (tested as `|4β|t| − 1| < 1e-9`),
+  `h = (β/√2)·[(1 + 2/π)·sin(π/(4β)) + (1 − 2/π)·cos(π/(4β))]`. Then scaled to **unit energy**,
+  `Σh² = 1`. `0 ≤ β ≤ 1`, `sps ≥ 1`, `span ≥ 2` and even (so the center tap is at `t = 0`).
+  **(implemented)**
+- **Pulse shaping** (`pulse_shape(symbols, taps, samples_per_symbol)`): `convolve(upsample(symbols,
+  sps), taps)`, length `len(symbols)·sps + N − 1`. Symbol `k` peaks at sample `k·sps + (N−1)/2`.
+  **(implemented)**
+- **Matched filter:** convolve with the same taps (RRC is real and symmetric). After shaping and
+  matched filtering, symbol `k` is at sample `k·sps + N − 1`, with unit gain (unit-energy taps).
+  **(implemented)**
+
+## Channel
+
+Python: `signalforge.channel`; C#: `SignalForge.Channel`.
+
+- **AWGN** (`awgn(samples, es_n0_db, samples_per_symbol=1, *, seed, signal_power=None)`): adds
+  circular complex Gaussian noise of total variance `σ² = P·sps / 10^(Es/N0 / 10)` (each of I and Q
+  gets `σ²/2`), where `P` is `signal_power` or, if not given, the measured mean `|x|²` of the
+  samples. So Es is the energy per symbol, `P·sps`, and N0 is the noise power per complex sample.
+  Complex samples only. The seed (an integer, or in Python a `numpy.random.Generator`; in C# an
+  integer or a `Random`) is required. **(implemented)**
+- **Frequency offset** (`frequency_offset(samples, offset_hz, sample_rate, phase=0)`):
+  `y[n] = x[n]·e^{j(2π·Δf·n/fs + φ)}`; a positive offset moves the spectrum up (see Complex
+  baseband). **(implemented)**
+
+## EVM and BER
+
+Python: `signalforge.metrics`; C#: `SignalForge.Metrics`.
+
+- **EVM** (`evm(measured, reference)`): with `e = measured − reference`,
+  `rms = √(Σ|e|² / Σ|reference|²)`, `rms_percent = 100·rms`, `rms_db = 20·log10(rms)` (−∞ for a
+  perfect match), `peak = max|e| / √(mean |reference|²)`, `peak_index` its first index, and
+  `num_symbols`. Equal non-zero lengths, finite values, reference power `> 0`. **(implemented)**
+- **QPSK BER theory** (`qpsk_ber_theory(eb_n0_db)`): Gray-coded QPSK in AWGN,
+  `Pb = ½·erfc(√(Eb/N0))`, Eb/N0 linear from dB. For QPSK `Es = 2·Eb`, so
+  `Es/N0 [dB] = Eb/N0 [dB] + 10·log10(2)`. **(implemented)**
 
 ## PRBS
 

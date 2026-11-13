@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "suite": "link_metrics",
+  "description": "EVM and QPSK BER theory (conventions: EVM and BER).",
+  "cases": [
+    {"id": "evm.single_error", "op": "evm", "args": {"measured": {"re": [1.1, 0, -1, 0], "im": [0, 1, 0, -1]}, "reference": {"re": [1, 0, -1, 0], "im": [0, 1, 0, -1]}}, "expected": {"rms": 0.05, "rms_percent": 5.0, "rms_db": -26.020599913279625, "peak": 0.1, "peak_index": 0, "num_symbols": 4}, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "by hand: |e|^2 sum 0.01, reference power sum 4: rms sqrt(0.01/4) = 0.05; peak 0.1 / sqrt(1)"},
+    {"id": "evm.perfect", "op": "evm", "args": {"measured": {"re": [1, 0, -1, 0], "im": [0, 1, 0, -1]}, "reference": {"re": [1, 0, -1, 0], "im": [0, 1, 0, -1]}}, "expected": {"rms": 0, "rms_percent": 0, "rms_db": "-inf", "peak": 0, "peak_index": 0, "num_symbols": 4}, "source": "identical symbols: zero error, -inf dB"},
+    {"id": "evm.scaled_reference", "op": "evm", "args": {"measured": {"re": [1.6142135623730949, -1.414213562373095], "im": [1.414213562373095, 1.1142135623730949]}, "reference": {"re": [1.414213562373095, -1.414213562373095], "im": [1.414213562373095, 1.414213562373095]}}, "expected": {"rms": 0.12747548783981963, "peak": 0.15, "peak_index": 1, "num_symbols": 2}, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "by hand: reference power 4 per symbol (sum 8); errors 0.2 and 0.3; peak 0.3 / sqrt(4)"},
+    {"id": "evm.length_mismatch", "op": "evm", "args": {"measured": {"re": [1], "im": [0]}, "reference": {"re": [1, 0, -1, 0], "im": [0, 1, 0, -1]}}, "error": "invalid_argument", "source": "lengths must match"},
+    {"id": "evm.zero_reference", "op": "evm", "args": {"measured": {"re": [1], "im": [0]}, "reference": {"re": [0], "im": [0]}}, "error": "invalid_argument", "source": "reference power must be positive"},
+    {"id": "evm.empty", "op": "evm", "args": {"measured": {"re": [], "im": []}, "reference": {"re": [], "im": []}}, "error": "invalid_argument", "source": "at least one symbol"},
+    {"id": "qpsk_ber_theory.-10db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": -10}, "expected": 0.3273604230092885, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.-3db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": -3}, "expected": 0.1583683188095979, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.0db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 0}, "expected": 0.07864960352514255, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.2db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 2}, "expected": 0.03750612835892598, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.4db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 4}, "expected": 0.012500818040737556, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.6db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 6}, "expected": 0.002388290780932807, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.8db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 8}, "expected": 0.00019090777407599314, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.9.6db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 9.6}, "expected": 9.7361760185786e-06, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.10db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 10}, "expected": 3.872108215522038e-06, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.12db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 12}, "expected": 9.006010350628754e-09, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.15db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 15}, "expected": 9.12395736262809e-16, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
+    {"id": "qpsk_ber_theory.minus_inf", "op": "qpsk_ber_theory", "args": {"eb_n0_db": "-inf"}, "expected": 0.5, "source": "no signal: erfc(0)/2 = 1/2"},
+    {"id": "qpsk_ber_theory.inf", "op": "qpsk_ber_theory", "args": {"eb_n0_db": "inf"}, "expected": 0, "source": "no noise: erfc(inf) = 0"},
+    {"id": "qpsk_ber_theory.nan", "op": "qpsk_ber_theory", "args": {"eb_n0_db": "nan"}, "error": "invalid_argument", "source": "NaN is rejected"}
+  ]
+}

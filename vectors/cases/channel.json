@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "suite": "channel",
+  "description": "Frequency offset (conventions: Channel). AWGN is random and tested by its statistics in the unit tests.",
+  "cases": [
+    {"id": "frequency_offset.ones_1000hz", "op": "frequency_offset", "args": {"samples": {"re": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "im": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, "offset_hz": 1000.0, "sample_rate": 8000.0, "phase": 0.0}, "expected": {"re": [1.0, 0.7071067811865476, 6.123233995736766e-17, -0.7071067811865475, -1.0, -0.7071067811865479, -1.8369701987210297e-16, 0.7071067811865474], "im": [0.0, 0.7071067811865476, 1.0, 0.7071067811865476, 1.2246467991473532e-16, -0.7071067811865471, -1.0, -0.7071067811865477]}, "tol": {"abs": 1e-13, "rel": 0}, "source": "definition: exp(j(2 pi df n / fs + phase)) from math.cos and math.sin"},
+    {"id": "frequency_offset.ones_-250hz", "op": "frequency_offset", "args": {"samples": {"re": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "im": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, "offset_hz": -250.0, "sample_rate": 1000.0, "phase": 0.5}, "expected": {"re": [0.8775825618903728, 0.47942553860420306, -0.8775825618903726, -0.47942553860420317, 0.8775825618903726, 0.47942553860420406], "im": [0.479425538604203, -0.8775825618903726, -0.4794255386042031, 0.8775825618903726, 0.4794255386042032, -0.8775825618903721]}, "tol": {"abs": 1e-13, "rel": 0}, "source": "definition: exp(j(2 pi df n / fs + phase)) from math.cos and math.sin"},
+    {"id": "frequency_offset.quarter_rate", "op": "frequency_offset", "args": {"samples": {"re": [1, 2, 0, 0], "im": [0, 0, 1, 0]}, "offset_hz": 1, "sample_rate": 4}, "expected": {"re": [1, 0, 0, 0], "im": [0, 2, -1, 0]}, "tol": {"abs": 1e-15, "rel": 0}, "source": "by hand: an offset of fs/4 multiplies sample n by j^n; x = [1, 2, j, 0] gives [1, 2j, -j, 0]"},
+    {"id": "frequency_offset.bad_rate", "op": "frequency_offset", "args": {"samples": {"re": [1], "im": [0]}, "offset_hz": 1, "sample_rate": 0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "frequency_offset.nan_offset", "op": "frequency_offset", "args": {"samples": {"re": [1], "im": [0]}, "offset_hz": "nan", "sample_rate": 1}, "error": "invalid_argument", "source": "offset must be finite"}
+  ]
+}

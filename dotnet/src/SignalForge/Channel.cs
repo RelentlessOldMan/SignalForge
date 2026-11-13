@@ -1,0 +1,75 @@
+using System.Numerics;
+
+namespace SignalForge;
+
+/// <summary>Channel impairments. Definitions in docs/conventions.md (Channel).</summary>
+public static class Channel
+{
+    /// <summary>
+    /// Adds circular complex Gaussian noise of total variance P·sps / 10^(Es/N0 / 10), where P is
+    /// <paramref name="signalPower"/> or, if null, the measured mean |x|².
+    /// </summary>
+    /// <param name="samples">Complex samples, at least one, all finite.</param>
+    /// <param name="esN0Db">Es/N0 in dB, finite.</param>
+    /// <param name="samplesPerSymbol">Samples per symbol, at least 1.</param>
+    /// <param name="seed">Seed for the noise; the stream differs from the Python one.</param>
+    /// <param name="signalPower">Reference power per sample, positive and finite; null to measure it.</param>
+    public static Complex[] Awgn(ReadOnlySpan<Complex> samples, double esN0Db, int samplesPerSymbol, int seed,
+        double? signalPower = null) =>
+        Awgn(samples, esN0Db, samplesPerSymbol, new Random(seed), signalPower);
+
+    /// <summary>As <see cref="Awgn(ReadOnlySpan{Complex}, double, int, int, double?)"/>, drawing from
+    /// <paramref name="rng"/>.</summary>
+    /// <param name="samples">Complex samples, at least one, all finite.</param>
+    /// <param name="esN0Db">Es/N0 in dB, finite.</param>
+    /// <param name="samplesPerSymbol">Samples per symbol, at least 1.</param>
+    /// <param name="rng">Source of the noise.</param>
+    /// <param name="signalPower">Reference power per sample, positive and finite; null to measure it.</param>
+    public static Complex[] Awgn(ReadOnlySpan<Complex> samples, double esN0Db, int samplesPerSymbol, Random rng,
+        double? signalPower = null)
+    {
+        ArgumentNullException.ThrowIfNull(rng);
+        if (samples.IsEmpty)
+            throw new ArgumentException("awgn needs at least one sample", nameof(samples));
+        if (!double.IsFinite(esN0Db))
+            throw new ArgumentOutOfRangeException(nameof(esN0Db), esN0Db, "must be finite");
+        ArgumentOutOfRangeException.ThrowIfLessThan(samplesPerSymbol, 1);
+        double sum = 0;
+        foreach (var x in samples)
+        {
+            if (!double.IsFinite(x.Real) || !double.IsFinite(x.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            sum += x.Real * x.Real + x.Imaginary * x.Imaginary;
+        }
+        double p = Check.PositiveFinite(signalPower ?? sum / samples.Length, nameof(signalPower));
+        double sigma = Math.Sqrt(p * samplesPerSymbol / Math.Pow(10, esN0Db / 10) / 2);
+        var y = new Complex[samples.Length];
+        for (int i = 0; i < y.Length; i++)
+        {
+            // Box–Muller: one pair of uniforms gives one complex Gaussian sample.
+            double r = Math.Sqrt(-2 * Math.Log(1 - rng.NextDouble()));
+            double phi = 2 * Math.PI * rng.NextDouble();
+            y[i] = samples[i] + new Complex(sigma * r * Math.Cos(phi), sigma * r * Math.Sin(phi));
+        }
+        return y;
+    }
+
+    /// <summary>x[n]·e^{j(2π·Δf·n/fs + φ)}; a positive offset moves the spectrum up.</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="offsetHz">Frequency offset in Hz, finite.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="phase">Starting phase in radians, finite.</param>
+    public static Complex[] FrequencyOffset(ReadOnlySpan<Complex> samples, double offsetHz, double sampleRate,
+        double phase = 0)
+    {
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        if (!double.IsFinite(offsetHz))
+            throw new ArgumentOutOfRangeException(nameof(offsetHz), offsetHz, "must be finite");
+        if (!double.IsFinite(phase))
+            throw new ArgumentOutOfRangeException(nameof(phase), phase, "must be finite");
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = samples[n] * Complex.FromPolarCoordinates(1, 2 * Math.PI * offsetHz * (n / sampleRate) + phase);
+        return y;
+    }
+}

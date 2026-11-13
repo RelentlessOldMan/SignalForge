@@ -1,8 +1,10 @@
 """SignalForge: signal generation, processing and measurement. Conventions: docs/conventions.md."""
 
+from .channel import awgn, frequency_offset
 from .core import Signal
+from .dsp import convolve, pulse_shape, rrc_taps, upsample
 from .measurements import PowerStats, power_stats
-from .metrics import ErrorCount, bit_errors
+from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
 from .modulation import qpsk_demap_hard, qpsk_map
 from .spectral import (
     OccupiedBandwidth,
@@ -29,32 +31,41 @@ from .units import (
 )
 from .waveforms import prbs, tone
 
-__version__ = "2026.11.13.3"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.4"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
+    "Evm",
     "OccupiedBandwidth",
     "PowerStats",
     "Signal",
     "SpectralDensity",
     "WindowStats",
     "amp_to_db",
+    "awgn",
     "bit_errors",
     "channel_power",
+    "convolve",
     "db_to_amp",
     "db_to_lin",
     "dbm_to_vrms",
     "dbm_to_w",
+    "evm",
     "fft",
     "fft_frequencies",
+    "frequency_offset",
     "ifft",
     "lin_to_db",
     "occupied_bandwidth",
     "power_stats",
     "prbs",
+    "pulse_shape",
+    "qpsk_ber_theory",
     "qpsk_demap_hard",
     "qpsk_map",
+    "rrc_taps",
     "tone",
+    "upsample",
     "vrms_to_dbm",
     "w_to_dbm",
     "welch_psd",

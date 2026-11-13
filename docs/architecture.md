@@ -32,10 +32,11 @@ module moves into its own project/package only when it brings a dependency the r
 | Waveforms | `signalforge.waveforms` | `SignalForge.Waveforms` | tones, PRBS; later multitone, chirp, pulse, noise | started |
 | Measurements | `signalforge.measurements` | `SignalForge.Measurements` | power statistics (mean, RMS, peak, PAPR, DC); later spectral and RF measurements | started |
 | Modulation | `signalforge.modulation` | `SignalForge.Modulation` | QPSK map and hard demap; later PSK/QAM, pulse shaping, demodulators | started |
-| Metrics | `signalforge.metrics` | `SignalForge.Metrics` | bit/symbol error counts; later EVM | started |
+| Metrics | `signalforge.metrics` | `SignalForge.Metrics` | bit error counts, EVM, QPSK BER theory ([ADR 0007](adr/0007-pulse-shaping-channel-evm.md)) | started |
 | Conformance | `signalforge.conformance` | test project | loads and runs `vectors/` cases | built |
 | Spectral | `signalforge.spectral` | `SignalForge.Spectral` | FFT (C#: own radix-2 + Bluestein), frequency axes, windows, Welch PSD, occupied bandwidth, channel power ([ADR 0006](adr/0006-fft-windows-spectra.md)) | started |
-| DSP | | | FIR/IIR, pulse shaping filters, resampling, mixing | next |
+| DSP | `signalforge.dsp` | `SignalForge.Dsp` | convolution, upsampling, RRC taps and pulse shaping ([ADR 0007](adr/0007-pulse-shaping-channel-evm.md)); later FIR/IIR design, resampling, mixing | started |
+| Channel | `signalforge.channel` | `SignalForge.Channel` | AWGN at Es/N0, frequency offset; later phase noise, multipath | started |
 | IO | | | raw IQ files, SigMF, WAV, NumPy | planned |
 | Standards | | | one subpackage per standard, versioned, never mixed into generic code | planned |
 | Hardware | | | separate package, never a dependency of the core | planned |

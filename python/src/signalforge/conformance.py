@@ -18,7 +18,7 @@ from typing import Any
 
 import numpy as np
 
-from . import measurements, metrics, modulation, spectral, units, waveforms
+from . import channel, dsp, measurements, metrics, modulation, spectral, units, waveforms
 
 DEFAULT_TOL = {"abs": 1e-12, "rel": 1e-12}
 
@@ -45,6 +45,13 @@ OPS: dict[str, Callable[..., Any]] = {
     "welch_psd": spectral.welch_psd,
     "occupied_bandwidth": spectral.occupied_bandwidth,
     "channel_power": spectral.channel_power,
+    "convolve": dsp.convolve,
+    "upsample": dsp.upsample,
+    "rrc_taps": dsp.rrc_taps,
+    "pulse_shape": dsp.pulse_shape,
+    "frequency_offset": channel.frequency_offset,
+    "evm": metrics.evm,
+    "qpsk_ber_theory": metrics.qpsk_ber_theory,
 }
 
 

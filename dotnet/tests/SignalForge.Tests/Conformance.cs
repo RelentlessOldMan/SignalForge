@@ -166,6 +166,20 @@ public static class Conformance
                 t => Spectral.OccupiedBandwidth(t.Item1, t.Item2, t.Item3, t.Item4)),
             "channel_power" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.D("low"), a.D("high"), Span(a)),
                 t => Spectral.ChannelPower(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "convolve" => Convolve(a),
+            "upsample" => a.Get("x") is Complex[] ux
+                ? Bind((ux, a.I("factor")), t => Dsp.Upsample(t.Item1, t.Item2))
+                : Bind((Reals(a.Get("x")), a.I("factor")), t => Dsp.Upsample(t.Item1, t.Item2)),
+            "rrc_taps" => Bind((a.D("beta"), a.I("samples_per_symbol"), a.I("span_symbols")),
+                t => Dsp.RrcTaps(t.Item1, t.Item2, t.Item3)),
+            "pulse_shape" => a.Get("symbols") is Complex[] ps
+                ? Bind((ps, Reals(a.Get("taps")), a.I("samples_per_symbol")), t => Dsp.PulseShape(t.Item1, t.Item2, t.Item3))
+                : Bind((Reals(a.Get("symbols")), Reals(a.Get("taps")), a.I("samples_per_symbol")),
+                    t => Dsp.PulseShape(t.Item1, t.Item2, t.Item3)),
+            "frequency_offset" => Bind((Complexes(a.Get("samples")), a.D("offset_hz"), a.D("sample_rate"), a.Opt("phase", 0)),
+                t => Channel.FrequencyOffset(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),
+            "qpsk_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.QpskBerTheory),
             _ => throw new InvalidDataException($"unknown op {op}"),
         };
         a.CheckAllUsed();
@@ -212,6 +226,18 @@ public static class Conformance
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
         return () => Spectral.WelchPsd(x, fs, nperseg, noverlap, window, oneSided, beta);
+    }
+
+    /// <summary>Real only when both inputs are real, as in NumPy.</summary>
+    private static Func<object?> Convolve(Args a)
+    {
+        object? x = a.Get("x"), h = a.Get("h");
+        if (x is Complex[] || h is Complex[])
+        {
+            Complex[] cx = Complexes(x);
+            return h is Complex[] ch ? () => Dsp.Convolve(cx, ch) : Bind(Reals(h), rh => Dsp.Convolve(cx, rh));
+        }
+        return Bind((Reals(x), Reals(h)), t => Dsp.Convolve(t.Item1, t.Item2));
     }
 
     private static (double Low, double High)? Span(Args a)

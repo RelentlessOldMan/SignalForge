@@ -4,10 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Phase 3, the QPSK vertical slice**, in both languages with shared vectors:
-   root-raised-cosine pulse shaping and matched filter; AWGN at a given Es/N0 (seeded); frequency
-   offset; timing and phase recovery (simplest that works); EVM (RMS, %, dB); BER against theory;
-   occupied bandwidth (now available); a machine-readable JSON report.
+1. **Phase 3, the rest of the QPSK slice**, in both languages: timing and phase recovery (simplest
+   that works: a data-aided or Gardner timing estimate and a fourth-power phase/frequency
+   estimate), then an end-to-end link function that runs bits → shaping → channel → recovery →
+   EVM/BER and returns a machine-readable JSON report.
 2. **Cross-language compare tool**: C# conformance report (to match the Python
    `--report` output) and a small script that diffs the two reports.
 
@@ -55,12 +55,19 @@ Updated with every chunk of work. Dates are absolute.
     REPO-SETUP form; NuGet metadata. Two license questions are open for the user (dependencies.md):
     libquadmath (LGPL) in NumPy's Linux wheels, and NumPy's vendored permissive parts.
   - Python 207 passed, 2 skipped; .NET 189 passed.
+- 2026-11-13: QPSK link building blocks in both languages (ADR 0007): modules `dsp` (convolution,
+  upsampling, unit-energy RRC taps, pulse shaping) and `channel` (seeded AWGN at Es/N0, frequency
+  offset); in `metrics`, EVM (RMS, %, dB, peak) and QPSK BER theory, with C#'s own erfc. 49 new
+  vectors (180 in all); RRC expected values come from the inverse Fourier transform of the
+  root-raised-cosine spectrum (Gauss–Legendre), not the closed form. Unit tests check AWGN
+  statistics, the matched filter's Nyquist property, and a shaped QPSK link's BER against theory
+  at 4 dB Eb/N0 in both languages. Python 278 passed, 2 skipped; .NET 259 passed.
 
 ## Not built
 
-Everything else in the brief: filters, resampling, spectrograms and spectral options beyond Welch
+Everything else in the brief: filter design (FIR/IIR beyond RRC), resampling, spectrograms and spectral options beyond Welch
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
-beyond QPSK, FSK, OFDM, analog), channels and impairments, synchronization, RF measurements (ACPR,
+beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, synchronization, RF measurements (ACPR,
 SFDR, phase noise, NF), standards waveforms, file formats (SigMF, WAV, raw IQ), plotting, CLI,
 packaging and publishing.
 
@@ -86,3 +93,7 @@ packaging and publishing.
 - 2026-11-13: NumPy wheels bundle different native libraries per platform (Linux ships
   libquadmath, Windows doesn't). Check the wheels for every platform CI or users install, not
   only the local one.
+- 2026-11-13: For a special function, check relative error over the whole range against the C
+  library before trusting it. The naive `exp(-x*x)` in erfc costs about 1e-13 near x = 25 from
+  the rounding of x²; splitting x into a short `z` plus a remainder fixes it. Below about 1e-308
+  results are subnormal and relative error stops meaning anything.
