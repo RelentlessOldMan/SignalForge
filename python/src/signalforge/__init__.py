@@ -6,6 +6,7 @@ from .channel import (
     frequency_offset,
     iq_image_rejection_db,
     iq_imbalance,
+    multipath,
     phase_noise,
 )
 from .core import Signal
@@ -107,7 +108,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.54"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.55"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -180,6 +181,7 @@ __all__ = [
     "iq_imbalance",
     "kaiser_parameters",
     "lin_to_db",
+    "multipath",
     "multitone",
     "newman_phases",
     "occupied_bandwidth",

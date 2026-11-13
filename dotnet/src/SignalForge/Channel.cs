@@ -153,6 +153,29 @@ public static class Channel
         return y;
     }
 
+    /// <summary>Static tapped delay line: y[n] = Σᵢ gains[i]·x[n − delays[i]], as long as the input
+    /// (conventions: Channel, Multipath).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="delays">Path delays in samples, each not negative.</param>
+    /// <param name="gains">Path gains, finite, as many as <paramref name="delays"/>.</param>
+    public static Complex[] Multipath(ReadOnlySpan<Complex> samples, ReadOnlySpan<int> delays, ReadOnlySpan<Complex> gains)
+    {
+        if (delays.Length == 0 || delays.Length != gains.Length)
+            throw new ArgumentException("delays and gains must have equal non-zero length", nameof(gains));
+        for (int i = 0; i < delays.Length; i++)
+        {
+            if (delays[i] < 0)
+                throw new ArgumentOutOfRangeException(nameof(delays), delays[i], "must not be negative");
+            if (!double.IsFinite(gains[i].Real) || !double.IsFinite(gains[i].Imaginary))
+                throw new ArgumentOutOfRangeException(nameof(gains), gains[i], "must be finite");
+        }
+        var y = new Complex[samples.Length];
+        for (int i = 0; i < delays.Length; i++)
+            for (int n = delays[i]; n < y.Length; n++)
+                y[n] += gains[i] * samples[n - delays[i]];
+        return y;
+    }
+
     private static double ImbalanceGain(double gainDb, double phase)
     {
         if (!double.IsFinite(gainDb))

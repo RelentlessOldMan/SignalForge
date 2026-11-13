@@ -97,6 +97,29 @@ def phase_noise(
     return np.asarray(x * np.exp(1j * phi), dtype=np.complex128)
 
 
+def multipath(samples: ArrayLike, delays: ArrayLike, gains: ArrayLike) -> NDArray[np.complex128]:
+    """Static tapped delay line: ``y[n] = sum_i gains[i] * x[n - delays[i]]``, as long as the
+    input (conventions: Channel, Multipath)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    d = np.asarray(delays)
+    g = np.asarray(gains)
+    if d.ndim != 1 or g.ndim != 1 or d.size != g.size or d.size == 0:
+        raise ValueError("delays and gains must be one-dimensional, of equal non-zero length")
+    lags = [count(v, "delays") for v in d.tolist()]
+    if not np.issubdtype(g.dtype, np.number) or g.dtype == np.bool_:
+        raise ValueError("gains must be numbers")
+    taps = g.astype(np.complex128)
+    if not np.all(np.isfinite(taps)):
+        raise ValueError("gains must be finite")
+    y = np.zeros(x.size, dtype=np.complex128)
+    for lag, tap in zip(lags, taps, strict=True):
+        if lag < x.size:
+            y[lag:] += tap * x[: x.size - lag]
+    return y
+
+
 def _imbalance_gain(gain_db: float, phase: float) -> float:
     if not (math.isfinite(gain_db) and math.isfinite(phase)):
         raise ValueError("gain_db and phase must be finite")

@@ -808,6 +808,13 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   **(implemented)**
 - **DC offset** (`dc_offset(samples, offset)`): `y = x + offset`, `offset` a complex number (a real
   one is `offset + 0j`), finite in both parts. **(implemented)**
+- **Multipath** (`multipath(samples, delays, gains)`, [ADR 0038](adr/0038-multipath.md)): a static
+  tapped delay line, `y[n] = Σᵢ gains[i]·x[n − delays[i]]` with `x[m] = 0` for `m < 0`, for
+  `n = 0 … N−1`: the output is as long as the input and the tail past the last sample is dropped
+  (as a receiver that keeps sampling the same window sees it). `delays` are integers `≥ 0` in
+  samples, `gains` complex and finite, the two of equal non-zero length; a repeated delay adds its
+  gains, and a delay `≥ N` contributes nothing. Paths are summed in the order given.
+  **(implemented)**
 
 ## Synchronization
 

@@ -327,6 +327,7 @@ public static class Conformance
             "iq_imbalance" => Bind((Complexes(a.Get("samples")), a.D("gain_db"), a.D("phase")), t => Channel.IqImbalance(t.Item1, t.Item2, t.Item3)),
             "iq_image_rejection_db" => Bind((a.D("gain_db"), a.D("phase")), t => Channel.IqImageRejectionDb(t.Item1, t.Item2)),
             "phase_noise" => Bind((Complexes(a.Get("samples")), a.D("linewidth_hz"), a.D("sample_rate"), a.I("seed")), t => Channel.PhaseNoise(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "multipath" => Bind((Complexes(a.Get("samples")), Ints(a.Get("delays")), Complexes(a.Get("gains"))), t => Channel.Multipath(t.Item1, t.Item2, t.Item3)),
             "dc_offset" => Bind((Complexes(a.Get("samples")), ComplexScalar(a.Get("offset"))), t => Channel.DcOffset(t.Item1, t.Item2)),
             "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),
             "qpsk_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.QpskBerTheory),
@@ -627,6 +628,11 @@ public static class Conformance
     };
 
     private static double[] Reals(object? v) => v as double[] ?? throw new InvalidDataException("expected a real array");
+
+    private static int[] Ints(object? v) => Reals(v).Select(x =>
+        x >= int.MinValue && x <= int.MaxValue && x == Math.Floor(x)
+            ? (int)x
+            : throw new InvalidDataException($"not representable as an int: {x}")).ToArray();
 
     private static Complex ComplexScalar(object? v) => v switch
     {

@@ -4,9 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Multipath**: a static tapped delay line, `multipath(samples, delays, gains)` with integer
-   sample delays and complex gains, output as long as the input (the convention for the tail
-   written first); expected values by hand.
+1. **Soft demapping**: max-log LLRs for QPSK, 8-PSK and 16-QAM (`qpsk_demap_llr` and the like,
+   given the noise variance), sign convention written first (positive means bit 0 is likelier);
+   expected values by hand from the nearest points of each bit set; tests that the hard decision
+   is the sign, and that the exact log-sum LLR agrees at high SNR.
+2. **Fractional-delay multipath**: per-path fractional delays through a windowed-sinc
+   interpolator, on top of the integer-delay `multipath`; expected values from the sinc sum.
 
 ## Built
 
@@ -420,12 +423,16 @@ Updated with every chunk of work. Dates are absolute.
   Gaussian over the decision intervals and gets 8-PSK from the phase density instead. Tests:
   limits, monotone, the high-SNR approximations, and Monte-Carlo runs through map, AWGN and
   demap at 8 dB (within 6 %). Python 1895 passed, 2 skipped; .NET 1519 passed.
+- 2026-11-13: static multipath (conventions: Channel; ADR 0038): `multipath(samples, delays,
+  gains)`, a tapped delay line with integer delays and complex gains, output as long as the input
+  (tail dropped), gains not normalized. 12 vectors by hand in `channel.json`; tests against a
+  dense convolution. Python 1919 passed, 2 skipped; .NET 1533 passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset and Wiener phase noise, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static integer-delay multipath, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.
