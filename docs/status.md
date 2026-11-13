@@ -4,8 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Review pass** over the elliptic band designs.
-2. **Equiripple (Parks–McClellan) FIR design**: conventions and an ADR first (band weights, grid
+1. **Equiripple (Parks–McClellan) FIR design**: conventions and an ADR first (band weights, grid
    density, convergence and failure reporting); expected values from analytic cases and
    independently computed extremal alternation checks.
 
@@ -282,6 +281,14 @@ Updated with every chunk of work. Dates are absolute.
   library matches it to 2e-15. A temporary sweep of 800 random band designs agreed in both
   languages to 1e-10. Python 1437 passed, 2 skipped; .NET 1123 passed; conformance 669/669 in
   both.
+- 2026-11-13: review of the band elliptics. Against the generator's theta-series R_N, 1005
+  designs (orders 1-30, ripple 1e-6 to 199 dB, bands from 1e-9·fs wide and edges from 1e-6·fs
+  to 0.4999·fs) match the closed-form |H|² to 3e-9 for ordinary bands; the worst errors (2e-2,
+  3e-2) need two limits at once (100 dB ripple in a 1e-9·fs band, order 30 with edges at
+  1e-6·fs), and order 1, which is Chebyshev I, shows the same loss, so it is the band transform's
+  conditioning already in the conventions. Both languages ran a 4032-design grid (orders to
+  1000, the same bands, ripple from 1e-9 dB): all agree to 1e-7 and accept and reject the same
+  designs. No defects found.
 
 ## Not built
 
