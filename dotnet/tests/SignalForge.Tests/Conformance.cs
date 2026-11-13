@@ -398,6 +398,7 @@ public static class Conformance
         var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
         double? beta = a.OptD("beta");
         var detrend = DetrendName(a);
+        int? nfft = a.OptInt("nfft");
         var average = a.Has("average") ? Str(a, "average") switch
         {
             "mean" => WelchAverage.Mean,
@@ -409,11 +410,11 @@ public static class Conformance
             // C# has no one-sided option for complex samples (Python raises for one_sided=True).
             if (a.Flag("one_sided"))
                 throw new InvalidDataException("one_sided=true with complex samples has no C# form");
-            return () => Spectral.WelchPsd(cs, fs, nperseg, noverlap, window, beta, detrend, average);
+            return () => Spectral.WelchPsd(cs, fs, nperseg, noverlap, window, beta, detrend, average, nfft);
         }
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
-        return () => Spectral.WelchPsd(x, fs, nperseg, noverlap, window, oneSided, beta, detrend, average);
+        return () => Spectral.WelchPsd(x, fs, nperseg, noverlap, window, oneSided, beta, detrend, average, nfft);
     }
 
     private static Detrend DetrendName(Args a) => a.Has("detrend") ? Str(a, "detrend") switch
@@ -457,15 +458,16 @@ public static class Conformance
         var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
         double? beta = a.OptD("beta");
         var detrend = DetrendName(a);
+        int? nfft = a.OptInt("nfft");
         if (samples is Complex[] cs)
         {
             if (a.Flag("one_sided"))
                 throw new InvalidDataException("one_sided=true with complex samples has no C# form");
-            return () => Spectral.Spectrogram(cs, fs, nperseg, noverlap, window, beta, detrend);
+            return () => Spectral.Spectrogram(cs, fs, nperseg, noverlap, window, beta, detrend, nfft);
         }
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
-        return () => Spectral.Spectrogram(x, fs, nperseg, noverlap, window, oneSided, beta, detrend);
+        return () => Spectral.Spectrogram(x, fs, nperseg, noverlap, window, oneSided, beta, detrend, nfft);
     }
 
     /// <summary>Real only when both inputs are real, as in NumPy.</summary>

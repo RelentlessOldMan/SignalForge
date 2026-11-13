@@ -125,6 +125,7 @@ class SpectralDensity:
     one_sided: bool
     bin_width: float
     enbw_hz: float
+    nfft: int
 
     @property
     def span(self) -> Span | None:
@@ -145,6 +146,7 @@ class Spectrogram:
     one_sided: bool
     bin_width: float
     enbw_hz: float
+    nfft: int
 
     @property
     def span(self) -> Span | None:
@@ -162,6 +164,7 @@ class _Segments:
     scale: float
     one_sided: bool
     detrend: str
+    nfft: int
 
     def power(self, s: int) -> NDArray[np.float64]:
         """``|FFT(w*detrended segment s)|^2``, unscaled, in FFT order."""
@@ -171,21 +174,21 @@ class _Segments:
             if self.detrend == "linear" and self.n > 1:
                 t = np.arange(self.n) - (self.n - 1) / 2
                 seg = seg - t * (np.sum(t * seg) / np.sum(t * t))
-        return np.abs(np.fft.fft(seg * self.w)) ** 2
+        return np.abs(np.fft.fft(seg * self.w, self.nfft)) ** 2
 
     def fold(self, p: NDArray[np.float64]) -> NDArray[np.float64]:
         """FFT-order power to the PSD's bins: one-sided (doubled) or shifted."""
         if not self.one_sided:
             return np.fft.fftshift(p)
-        m = self.n // 2 + 1
+        m = self.nfft // 2 + 1
         p = p[:m].copy()
-        p[1 : m - 1 if self.n % 2 == 0 else m] *= 2.0
+        p[1 : m - 1 if self.nfft % 2 == 0 else m] *= 2.0
         return p
 
     def frequencies(self, sample_rate: float) -> NDArray[np.float64]:
         if self.one_sided:
-            return np.arange(self.n // 2 + 1, dtype=np.float64) * (sample_rate / self.n)
-        return np.asarray(fft_frequencies(self.n, sample_rate, shifted=True), dtype=np.float64)
+            return np.arange(self.nfft // 2 + 1, dtype=np.float64) * (sample_rate / self.nfft)
+        return np.asarray(fft_frequencies(self.nfft, sample_rate, shifted=True), dtype=np.float64)
 
 
 def _segments(
@@ -197,6 +200,7 @@ def _segments(
     one_sided: bool | None,
     beta: float | None,
     detrend: str,
+    nfft: int | None,
 ) -> _Segments:
     x = _vector(samples, "samples")
     if detrend not in ("none", "constant", "linear"):
@@ -217,9 +221,12 @@ def _segments(
     if not overlap < n:
         raise ValueError("noverlap must satisfy 0 <= noverlap < nperseg")
     step = n - overlap
+    m = n if nfft is None else count(nfft, "nfft")
+    if m < n:
+        raise ValueError("nfft must be at least nperseg")
     w = _window_for_psd(window, n, beta)
     scale = 1.0 / (sample_rate * float(np.sum(w * w)))
-    return _Segments(x, n, step, (x.size - n) // step + 1, w, scale, bool(one_sided), detrend)
+    return _Segments(x, n, step, (x.size - n) // step + 1, w, scale, bool(one_sided), detrend, m)
 
 
 def welch_psd(
@@ -233,12 +240,13 @@ def welch_psd(
     beta: float | None = None,
     detrend: str = "none",
     average: str = "mean",
+    nfft: int | None = None,
 ) -> SpectralDensity:
     """Welch PSD: mean (or bias-corrected median) of ``|FFT(w*segment)|^2 / (fs*sum(w^2))`` over
-    overlapping, optionally detrended segments."""
-    g = _segments(samples, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend)
+    overlapping, optionally detrended and zero-padded segments."""
+    g = _segments(samples, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend, nfft)
     if average == "mean":
-        acc = np.zeros(g.n)
+        acc = np.zeros(g.nfft)
         for s in range(g.count):
             acc += g.power(s)
         two_sided = acc * (g.scale / g.count)
@@ -254,8 +262,9 @@ def welch_psd(
         nperseg=g.n,
         num_segments=g.count,
         one_sided=g.one_sided,
-        bin_width=sample_rate / g.n,
+        bin_width=sample_rate / g.nfft,
         enbw_hz=window_stats(g.w).enbw_bins * sample_rate / g.n,
+        nfft=g.nfft,
     )
 
 
@@ -269,11 +278,12 @@ def spectrogram(
     one_sided: bool | None = None,
     beta: float | None = None,
     detrend: str = "none",
+    nfft: int | None = None,
 ) -> Spectrogram:
     """Welch's segments kept, not averaged: row ``s`` is the PSD of segment ``s`` alone."""
     if nperseg is None:
         raise ValueError("nperseg is required")
-    g = _segments(samples, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend)
+    g = _segments(samples, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend, nfft)
     rows = [g.fold(g.power(s) * g.scale) for s in range(g.count)]
     return Spectrogram(
         frequencies=g.frequencies(sample_rate),
@@ -283,8 +293,9 @@ def spectrogram(
         nperseg=g.n,
         num_segments=g.count,
         one_sided=g.one_sided,
-        bin_width=sample_rate / g.n,
+        bin_width=sample_rate / g.nfft,
         enbw_hz=window_stats(g.w).enbw_bins * sample_rate / g.n,
+        nfft=g.nfft,
     )
 
 

@@ -2,7 +2,7 @@
 
 It does not import NumPy or SignalForge. Each segment is detrended by the conventions' formulas
 (the line fitted by solving the 2x2 normal equations directly), windowed, and transformed by the
-DFT summed term by term; the powers are averaged by the mean or by the median divided by b(K), the
+DFT summed term by term at length nfft (the padded zeros contribute nothing to the sums); the powers are averaged by the mean or by the median divided by b(K), the
 expected median of K unit-mean exponential values. b(K) is checked against a numerical integral
 of the order-statistic densities. Windows are the periodic cosine sums.
 
@@ -77,7 +77,9 @@ for _k in range(1, 9):
     assert abs(bias(_k) - exp_median_by_integral(_k)) < 1e-10, _k
 
 
-def rows(x, fs, n, noverlap, name, detrend):
+def rows(x, fs, n, noverlap, name, detrend, nfft=None):
+    """Two-sided powers per segment, FFT order, at transform length m = nfft (zeros appended)."""
+    m = n if nfft is None else nfft
     overlap = n // 2 if noverlap is None else noverlap
     step = n - overlap
     count = (len(x) - n) // step + 1
@@ -86,10 +88,10 @@ def rows(x, fs, n, noverlap, name, detrend):
     out = []
     for s in range(count):
         seg = detrended(list(x[s * step : s * step + n]), detrend)
-        seg = [w[i] * seg[i] for i in range(n)]
-        out.append([abs(sum(seg[i] * cmath.exp(-2j * math.pi * k * i / n) for i in range(n))) ** 2
-                    * scale for k in range(n)])  # fmt: skip
-    return out, step, w
+        seg = [w[i] * seg[i] for i in range(n)]  # the m - n padded zeros add nothing to the sum
+        out.append([abs(sum(seg[i] * cmath.exp(-2j * math.pi * k * i / m) for i in range(n))) ** 2
+                    * scale for k in range(m)])  # fmt: skip
+    return out, step, w, m
 
 
 def fold(p, n, one_sided):
@@ -106,35 +108,40 @@ def freqs(n, fs, one_sided):
     return [(i - n // 2) * fs / n for i in range(n)]
 
 
-def welch(x, fs, n, noverlap=None, window="hann", one_sided=None, detrend="none", average="mean"):
+def welch(x, fs, n, noverlap=None, window="hann", one_sided=None, detrend="none", average="mean",
+          nfft=None):  # fmt: skip
     if one_sided is None:
         one_sided = not any(isinstance(v, complex) for v in x)
-    r, _, w = rows(x, fs, n, noverlap, window, detrend)
+    r, _, w, m = rows(x, fs, n, noverlap, window, detrend, nfft)
     if average == "mean":
-        p = [math.fsum(row[k] for row in r) / len(r) for k in range(n)]
+        p = [math.fsum(row[k] for row in r) / len(r) for k in range(m)]
     else:
-        p = [statistics.median(row[k] for row in r) / bias(len(r)) for k in range(n)]
+        p = [statistics.median(row[k] for row in r) / bias(len(r)) for k in range(m)]
     s1, s2 = math.fsum(w), math.fsum(v * v for v in w)
     return {
-        "frequencies": freqs(n, fs, one_sided),
-        "psd": fold(p, n, one_sided),
+        "frequencies": freqs(m, fs, one_sided),
+        "psd": fold(p, m, one_sided),
         "sample_rate": fs,
         "nperseg": n,
+        "nfft": m,
         "num_segments": len(r),
         "one_sided": one_sided,
-        "bin_width": fs / n,
+        "bin_width": fs / m,
         "enbw_hz": n * s2 / s1**2 * fs / n,
     }
 
 
-def spectrogram(x, fs, n, noverlap=None, name="hann", detrend="none"):
-    r, step, w = rows(x, fs, n, noverlap, name, detrend)
+def spectrogram(x, fs, n, noverlap=None, name="hann", detrend="none", nfft=None):
+    r, step, w, m = rows(x, fs, n, noverlap, name, detrend, nfft)
     s1, s2 = math.fsum(w), math.fsum(v * v for v in w)
     return {
-        "frequencies": freqs(n, fs, True),
+        "frequencies": freqs(m, fs, True),
         "times": [(s * step + n / 2) / fs for s in range(len(r))],
-        "psd": [fold(row, n, True) for row in r],
+        "psd": [fold(row, m, True) for row in r],
+        "nperseg": n,
+        "nfft": m,
         "num_segments": len(r),
+        "bin_width": fs / m,
         "enbw_hz": n * s2 / s1**2 * fs / n,
     }
 
@@ -210,6 +217,21 @@ cases = [
               "window": "rectangular", "detrend": "constant"},
      "expected": spectrogram(noisy, 1.0, 7, 2, "rectangular", "constant"), "tol": TOL,
      "source": SRC},
+    hand("welch_psd.nfft_pads_two_samples", {"samples": [1.0, 1.0], "sample_rate": 1.0,
+         "nperseg": 2, "window": "rectangular", "nfft": 4}, [2, 2, 0],
+         "X[k] = 1 + e^(-j pi k/2) = 2, 1-j, 0, 1+j; |X|^2/(fs*sum w^2) = 2, 1, 0, 1; one-sided "
+         "doubles bin 1. Sum of two-sided * fs/M = 4/4 = 1 = mean power"),
+    gen("welch_psd.nfft_hann_real", noisy, 100.0, 12, nfft=32),
+    gen("welch_psd.nfft_odd_transform", noisy, 1.0, 8, noverlap=0, window="blackman", nfft=13),
+    gen("welch_psd.nfft_equal_is_no_padding", noisy, 1.0, 8, nfft=8),
+    gen("welch_psd.nfft_complex_median_linear", chirp, 1e3, 6, noverlap=1, nfft=16,
+        average="median", detrend="linear"),
+    gen("welch_psd.nfft_two_sided_real", noisy[:20], 5.0, 5, one_sided=False, nfft=9),
+    {"id": "spectrogram.nfft_padded", "op": "spectrogram",
+     "args": {"samples": noisy, "sample_rate": 4.0, "nperseg": 9, "noverlap": 4, "nfft": 20},
+     "expected": spectrogram(noisy, 4.0, 9, 4, nfft=20), "tol": TOL, "source": SRC},
+    err("welch_psd.nfft_below_nperseg", {"nfft": 1}, "nfft >= nperseg"),
+    err("spectrogram.nfft_below_nperseg", {"nfft": 1}, "nfft >= nperseg", op="spectrogram"),
     err("welch_psd.unknown_detrend", {"detrend": "quadratic"}, "detrend is none, constant, linear"),
     err("welch_psd.unknown_average", {"average": "max"}, "average is mean or median"),
     err("spectrogram.unknown_detrend", {"detrend": "cubic"}, "detrend is none, constant, linear",
@@ -217,17 +239,20 @@ cases = [
 ]  # fmt: skip
 
 # The hand values are also what the generator's sums give.
-for c in cases[:5]:
+for c in cases:
+    if not c["source"].startswith("by hand"):
+        continue
     a = c["args"]
     got = welch(a["samples"], a["sample_rate"], a["nperseg"], a.get("noverlap"),
-                a.get("window", "hann"), None, a.get("detrend", "none"), a.get("average", "mean"))  # fmt: skip
+                a.get("window", "hann"), None, a.get("detrend", "none"), a.get("average", "mean"),
+                a.get("nfft"))  # fmt: skip
     assert all(abs(x - y) < 1e-12 for x, y in zip(got["psd"], c["expected"]["psd"], strict=True))
 
 doc = {
     "schema": 1,
     "suite": "welch",
-    "description": "Welch options: per-segment detrending and median averaging (conventions: "
-    "Spectra, PSD and Spectrogram).",
+    "description": "Welch options: per-segment detrending, median averaging and zero padding "
+    "(conventions: Spectra, PSD and Spectrogram).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "welch.json"

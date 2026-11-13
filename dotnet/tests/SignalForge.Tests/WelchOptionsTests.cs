@@ -4,7 +4,7 @@ using Xunit;
 namespace SignalForge.Tests;
 
 /// <summary>Welch options: detrending is a projection, the median is unbiased for noise and resists
-/// bursts (conventions: Spectra, PSD).</summary>
+/// bursts, zero padding samples the same spectrum finer (conventions: Spectra, PSD).</summary>
 public class WelchOptionsTests
 {
     private static double[] Noise(int n, int seed)
@@ -90,6 +90,37 @@ public class WelchOptionsTests
         Close(avg, w, 1e-12, 1e-15);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PaddingSamplesTheSameSpectrumFiner(bool oneSided)
+    {
+        double[] x = Noise(100, 6);
+        var plain = Spectral.WelchPsd(x, 8, nperseg: 20, oneSided: oneSided);
+        var padded = Spectral.WelchPsd(x, 8, nperseg: 20, oneSided: oneSided, nfft: 80);
+        // Bin 4k of 80 is bin k of 20 (shifted order: both start at -fs/2).
+        Close([.. padded.Psd.Where((_, i) => i % 4 == 0)], plain.Psd, 1e-10, 1e-14);
+        Close([.. padded.Frequencies.Where((_, i) => i % 4 == 0)], plain.Frequencies, 0, 1e-12);
+        Assert.Equal(80, padded.Nfft);
+        Assert.Equal(20, plain.Nfft);
+        Assert.Equal(8.0 / 80, padded.BinWidth);
+        Assert.Equal(plain.EnbwHz, padded.EnbwHz);
+    }
+
+    [Fact]
+    public void PaddingKeepsTheTotalPower()
+    {
+        double[] re = Noise(64, 7), im = Noise(64, 8);
+        Complex[] x = [.. re.Select((v, i) => new Complex(v, im[i]))];
+        var baseline = Spectral.WelchPsd(x, 3, nperseg: 16);
+        foreach (int nfft in new[] { 16, 17, 50 })
+        {
+            var d = Spectral.WelchPsd(x, 3, nperseg: 16, nfft: nfft);
+            double ratio = d.Psd.Sum() * d.BinWidth / (baseline.Psd.Sum() * baseline.BinWidth);
+            Assert.True(Math.Abs(ratio - 1) < 1e-12, $"{nfft}: {ratio}");
+        }
+    }
+
     [Fact]
     public void BadOptionsThrow()
     {
@@ -97,5 +128,7 @@ public class WelchOptionsTests
         Assert.ThrowsAny<ArgumentException>(() => Spectral.WelchPsd(x, 1, 2, detrend: (Detrend)7));
         Assert.ThrowsAny<ArgumentException>(() => Spectral.WelchPsd(x, 1, 2, average: (WelchAverage)7));
         Assert.ThrowsAny<ArgumentException>(() => Spectral.Spectrogram(x, 1, 2, detrend: (Detrend)(-1)));
+        Assert.ThrowsAny<ArgumentException>(() => Spectral.WelchPsd(x, 1, 2, nfft: 1));
+        Assert.ThrowsAny<ArgumentException>(() => Spectral.Spectrogram(x, 1, 2, nfft: 1));
     }
 }

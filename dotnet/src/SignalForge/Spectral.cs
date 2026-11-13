@@ -59,11 +59,12 @@ public sealed record WindowStats(double CoherentGain, double EnbwBins);
 /// <param name="Frequencies">Bin frequencies in Hz, ascending.</param>
 /// <param name="Psd">Density at each bin, in sample-units²/Hz.</param>
 /// <param name="SampleRate">Sample rate in Hz.</param>
-/// <param name="Nperseg">Segment (FFT) length.</param>
+/// <param name="Nperseg">Segment length.</param>
 /// <param name="NumSegments">Number of segments averaged.</param>
 /// <param name="OneSided">True for a one-sided PSD of real input.</param>
-/// <param name="BinWidth">fs / nperseg, in Hz.</param>
+/// <param name="BinWidth">fs / nfft, the bin spacing in Hz.</param>
 /// <param name="EnbwHz">The window's equivalent noise bandwidth in Hz (resolution bandwidth).</param>
+/// <param name="Nfft">Transform length: nperseg plus the zero padding.</param>
 public sealed record SpectralDensity(
     double[] Frequencies,
     double[] Psd,
@@ -72,7 +73,8 @@ public sealed record SpectralDensity(
     int NumSegments,
     bool OneSided,
     double BinWidth,
-    double EnbwHz)
+    double EnbwHz,
+    int Nfft)
 {
     /// <summary>
     /// (0, fs/2) for a one-sided PSD, whose DC and Nyquist bins are half bins; null for two-sided. Pass
@@ -92,8 +94,9 @@ public sealed record SpectralDensity(
 /// <param name="Nperseg">Segment length.</param>
 /// <param name="NumSegments">Number of segments (rows).</param>
 /// <param name="OneSided">True for one-sided rows of real input.</param>
-/// <param name="BinWidth">fs / nperseg, in Hz.</param>
+/// <param name="BinWidth">fs / nfft, the bin spacing in Hz.</param>
 /// <param name="EnbwHz">The window's equivalent noise bandwidth in Hz (resolution bandwidth).</param>
+/// <param name="Nfft">Transform length: nperseg plus the zero padding.</param>
 public sealed record Spectrogram(
     double[] Frequencies,
     double[] Times,
@@ -103,7 +106,8 @@ public sealed record Spectrogram(
     int NumSegments,
     bool OneSided,
     double BinWidth,
-    double EnbwHz)
+    double EnbwHz,
+    int Nfft)
 {
     /// <summary>(0, fs/2) for one-sided rows, whose DC and Nyquist bins are half bins; null for two-sided.</summary>
     public (double Low, double High)? Span => OneSided ? (0.0, SampleRate / 2) : null;
@@ -258,8 +262,8 @@ public static class Spectral
     /// </summary>
     public static SpectralDensity WelchPsd(ReadOnlySpan<Complex> samples, double sampleRate,
         int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
-        Detrend detrend = Detrend.None, WelchAverage average = WelchAverage.Mean) =>
-        Welch(samples, sampleRate, nperseg, noverlap, window, beta, oneSided: false, detrend, average);
+        Detrend detrend = Detrend.None, WelchAverage average = WelchAverage.Mean, int? nfft = null) =>
+        Welch(samples, sampleRate, nperseg, noverlap, window, beta, oneSided: false, detrend, average, nfft);
 
     /// <summary>
     /// Welch PSD of real samples: one-sided (bins 0 … ⌊N/2⌋, all but DC and Nyquist doubled) unless
@@ -269,17 +273,19 @@ public static class Spectral
     /// </summary>
     public static SpectralDensity WelchPsd(ReadOnlySpan<double> samples, double sampleRate,
         int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, bool oneSided = true,
-        double? beta = null, Detrend detrend = Detrend.None, WelchAverage average = WelchAverage.Mean) =>
-        Welch(ToComplex(samples), sampleRate, nperseg, noverlap, window, beta, oneSided, detrend, average);
+        double? beta = null, Detrend detrend = Detrend.None, WelchAverage average = WelchAverage.Mean,
+        int? nfft = null) =>
+        Welch(ToComplex(samples), sampleRate, nperseg, noverlap, window, beta, oneSided, detrend, average, nfft);
 
     private static SpectralDensity Welch(ReadOnlySpan<Complex> x, double sampleRate, int? nperseg,
-        int? noverlap, WindowType window, double? beta, bool oneSided, Detrend detrend, WelchAverage average)
+        int? noverlap, WindowType window, double? beta, bool oneSided, Detrend detrend, WelchAverage average,
+        int? nfft)
     {
         if (average is not (WelchAverage.Mean or WelchAverage.Median))
             throw new ArgumentException($"unknown average {average}", nameof(average));
-        var g = Prepare(x, sampleRate, nperseg, noverlap, window, beta, detrend);
-        var buf = new Complex[g.N];
-        var acc = new double[g.N];
+        var g = Prepare(x, sampleRate, nperseg, noverlap, window, beta, detrend, nfft);
+        var buf = new Complex[g.Nfft];
+        var acc = new double[g.Nfft];
         double scale = g.Scale / g.Count;
         if (average == WelchAverage.Mean)
         {
@@ -290,10 +296,10 @@ public static class Spectral
         {
             var rows = new double[g.Count][];
             for (int s = 0; s < g.Count; s++)
-                g.AddPower(x, s, buf, rows[s] = new double[g.N]);
+                g.AddPower(x, s, buf, rows[s] = new double[g.Nfft]);
             var col = new double[g.Count];
             int mid = g.Count / 2;
-            for (int k = 0; k < g.N; k++)
+            for (int k = 0; k < g.Nfft; k++)
             {
                 for (int s = 0; s < g.Count; s++)
                     col[s] = rows[s][k];
@@ -303,7 +309,7 @@ public static class Spectral
             scale = g.Scale / MedianBias(g.Count);
         }
         return new SpectralDensity(g.Frequencies(oneSided), g.Fold(acc, scale, oneSided), sampleRate,
-            g.N, g.Count, oneSided, sampleRate / g.N, WindowStats(g.W).EnbwBins * sampleRate / g.N);
+            g.N, g.Count, oneSided, sampleRate / g.Nfft, WindowStats(g.W).EnbwBins * sampleRate / g.N, g.Nfft);
     }
 
     /// <summary>
@@ -312,8 +318,8 @@ public static class Spectral
     /// </summary>
     public static Spectrogram Spectrogram(ReadOnlySpan<Complex> samples, double sampleRate, int nperseg,
         int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
-        Detrend detrend = Detrend.None) =>
-        Frames(samples, sampleRate, nperseg, noverlap, window, beta, oneSided: false, detrend);
+        Detrend detrend = Detrend.None, int? nfft = null) =>
+        Frames(samples, sampleRate, nperseg, noverlap, window, beta, oneSided: false, detrend, nfft);
 
     /// <summary>
     /// Spectrogram of real samples: one-sided rows unless <paramref name="oneSided"/> is false, which
@@ -321,29 +327,29 @@ public static class Spectral
     /// </summary>
     public static Spectrogram Spectrogram(ReadOnlySpan<double> samples, double sampleRate, int nperseg,
         int? noverlap = null, WindowType window = WindowType.Hann, bool oneSided = true, double? beta = null,
-        Detrend detrend = Detrend.None) =>
-        Frames(ToComplex(samples), sampleRate, nperseg, noverlap, window, beta, oneSided, detrend);
+        Detrend detrend = Detrend.None, int? nfft = null) =>
+        Frames(ToComplex(samples), sampleRate, nperseg, noverlap, window, beta, oneSided, detrend, nfft);
 
     private static Spectrogram Frames(ReadOnlySpan<Complex> x, double sampleRate, int nperseg,
-        int? noverlap, WindowType window, double? beta, bool oneSided, Detrend detrend)
+        int? noverlap, WindowType window, double? beta, bool oneSided, Detrend detrend, int? nfft)
     {
-        var g = Prepare(x, sampleRate, nperseg, noverlap, window, beta, detrend);
+        var g = Prepare(x, sampleRate, nperseg, noverlap, window, beta, detrend, nfft);
         var rows = new double[g.Count][];
         var times = new double[g.Count];
-        var buf = new Complex[g.N];
+        var buf = new Complex[g.Nfft];
         for (int s = 0; s < g.Count; s++)
         {
-            var p = new double[g.N];
+            var p = new double[g.Nfft];
             g.AddPower(x, s, buf, p);
             rows[s] = g.Fold(p, g.Scale, oneSided);
             times[s] = (s * (double)g.Step + g.N / 2.0) / sampleRate;
         }
         return new Spectrogram(g.Frequencies(oneSided), times, rows, sampleRate, g.N, g.Count, oneSided,
-            sampleRate / g.N, WindowStats(g.W).EnbwBins * sampleRate / g.N);
+            sampleRate / g.Nfft, WindowStats(g.W).EnbwBins * sampleRate / g.N, g.Nfft);
     }
 
     private static Segments Prepare(ReadOnlySpan<Complex> x, double sampleRate, int? nperseg, int? noverlap,
-        WindowType window, double? beta, Detrend detrend)
+        WindowType window, double? beta, Detrend detrend, int? nfft)
     {
         Check.PositiveFinite(sampleRate, nameof(sampleRate));
         if (detrend is not (Detrend.None or Detrend.Constant or Detrend.Linear))
@@ -357,11 +363,14 @@ public static class Spectral
         if (overlap < 0 || overlap >= n)
             throw new ArgumentException("noverlap must satisfy 0 <= noverlap < nperseg", nameof(noverlap));
         int step = n - overlap;
+        int m = nfft ?? n;
+        if (m < n)
+            throw new ArgumentException("nfft must be at least nperseg", nameof(nfft));
         double[] w = Window(window, n, beta: beta);
         if (w.All(v => v == 0))
             throw new ArgumentException($"{window} window of length {n} is all zeros", nameof(window));
         return new Segments(n, step, (x.Length - n) / step + 1, w, sampleRate, 1.0 / (sampleRate * w.Sum(v => v * v)),
-            detrend);
+            detrend, m);
     }
 
     /// <summary>The expected median of <paramref name="k"/> independent unit-mean exponential values
@@ -376,7 +385,7 @@ public static class Spectral
 
     /// <summary>Welch's segmentation: length, step, count, window, the scale 1/(fs·Σw²), detrending.</summary>
     private sealed record Segments(int N, int Step, int Count, double[] W, double SampleRate, double Scale,
-        Detrend Detrend)
+        Detrend Detrend, int Nfft)
     {
         /// <summary>Adds |FFT(w·detrended segment s)|², unscaled and in FFT order, to <paramref name="acc"/>.</summary>
         public void AddPower(ReadOnlySpan<Complex> x, int s, Complex[] buf, double[] acc)
@@ -402,8 +411,9 @@ public static class Spectral
             }
             for (int i = 0; i < N; i++)
                 buf[i] = (seg[i] - mean - slope * (i - c)) * W[i];
+            Array.Clear(buf, N, Nfft - N);
             Transform(buf);
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < Nfft; i++)
                 acc[i] += buf[i].Real * buf[i].Real + buf[i].Imaginary * buf[i].Imaginary;
         }
 
@@ -412,21 +422,21 @@ public static class Spectral
         {
             if (oneSided)
             {
-                int m = N / 2 + 1, last = N % 2 == 0 ? m - 1 : m;
+                int m = Nfft / 2 + 1, last = Nfft % 2 == 0 ? m - 1 : m;
                 var one = new double[m];
                 for (int k = 0; k < m; k++)
                     one[k] = p[k] * scale * (k >= 1 && k < last ? 2.0 : 1.0);
                 return one;
             }
-            var two = new double[N];
-            for (int i = 0; i < N; i++)
-                two[i] = p[(i + (N + 1) / 2) % N] * scale; // fftshift: index i holds bin i − ⌊n/2⌋
+            var two = new double[Nfft];
+            for (int i = 0; i < Nfft; i++)
+                two[i] = p[(i + (Nfft + 1) / 2) % Nfft] * scale; // fftshift: index i holds bin i − ⌊n/2⌋
             return two;
         }
 
         public double[] Frequencies(bool oneSided) => oneSided
-            ? [.. Enumerable.Range(0, N / 2 + 1).Select(k => k * (SampleRate / N))]
-            : FftFrequencies(N, SampleRate, shifted: true);
+            ? [.. Enumerable.Range(0, Nfft / 2 + 1).Select(k => k * (SampleRate / Nfft))]
+            : FftFrequencies(Nfft, SampleRate, shifted: true);
     }
 
     /// <summary>

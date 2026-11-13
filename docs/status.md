@@ -4,12 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Zero padding** (`nfft >= nperseg`) for `welch_psd` and `spectrogram`: each windowed segment
-   padded with zeros to `nfft` before the transform, the frequency axis and the one-sided fold on
-   `nfft` bins, the scaling unchanged (`fs·Σw²`); `bin_width` becomes `fs/nfft` while `enbw_hz`
-   stays the window's (`ENBW·fs/nperseg`); conventions first.
-2. **Bessel band-pass and band-stop**, by the same low-pass-to-band transforms as the other
+1. **Bessel band-pass and band-stop**, by the same low-pass-to-band transforms as the other
    families; expected values from the analog prototype's roots transformed by hand formulas.
+2. **Mixing**: `mix(samples, frequency, sample_rate, phase=0)`, multiplying by
+   `e^(j(2π f n/fs + φ))` (complex output for real or complex input), the sign and phase
+   reference in the conventions first; expected values by hand and from exact rotations.
 
 ## Built
 
@@ -378,11 +377,17 @@ Updated with every chunk of work. Dates are absolute.
   normal equations and checks `b(K)` by integrating the order-statistic densities, three errors.
   Tests: detrending ignores an added constant or line (real and complex), the median is unbiased
   for white noise (odd and even `K`), resists a burst, and reads a steady tone `1/b(K)` high.
+- 2026-11-13: zero padding (conventions: Spectra, PSD; ADR 0031): `nfft >= nperseg` on
+  `welch_psd` and `spectrogram`, zeros after the windowed segment, the scale `1/(fs·Σw²)`
+  unchanged so power sums keep their meaning; `bin_width = fs/nfft`, `enbw_hz` still
+  `ENBW·fs/nperseg`; both results gain `nfft` (C#: `Nfft`, the last record member). Vectors in
+  `welch.json`: one by hand, six generated, two errors. Tests: every `nfft/nperseg`-th padded bin
+  is the unpadded bin (one- and two-sided), total power kept for odd and even `nfft`.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral options beyond Welch and the spectrogram
-(zero padding), the rest of modulation (PSK/QAM
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
+(multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,

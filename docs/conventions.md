@@ -121,20 +121,24 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `CG` times its amplitude); equivalent noise bandwidth in bins `ENBW = N·Σw² / (Σw)²`. Hann has
   CG 0.5 and ENBW exactly 1.5. **(implemented)**
 - **PSD** (`welch_psd(samples, sample_rate, nperseg=None, noverlap=None, window="hann",
-  one_sided=None, beta=None, detrend="none", average="mean")`), Welch's method (`beta` is the
-  Kaiser β):
+  one_sided=None, beta=None, detrend="none", average="mean", nfft=None)`), Welch's method (`beta`
+  is the Kaiser β). Below, `N = nperseg` and `M = nfft`:
   - `nperseg` defaults to the whole input; `noverlap` defaults to `⌊nperseg/2⌋`, `0 ≤ noverlap <
     nperseg`. Segments start at `0, step, 2·step, …` with `step = nperseg − noverlap`, as many as fit
-    whole: `num_segments = ⌊(L − nperseg)/step⌋ + 1`. No zero padding.
+    whole: `num_segments = ⌊(L − nperseg)/step⌋ + 1`.
+  - `nfft` defaults to `nperseg`; `nfft ≥ nperseg` (otherwise it raises). Each windowed segment is
+    padded with `M − N` zeros at its end and transformed at length `M`: the same spectrum sampled
+    on a finer grid, no new resolution.
   - `detrend` acts on each segment `x[0 … N−1]` before the window: `"none"` leaves it;
     `"constant"` subtracts its mean `m = Σx/N`; `"linear"` subtracts its least-squares line
     `m + b·(n − c)`, `c = (N−1)/2`, `b = Σ(n − c)·x[n] / Σ(n − c)²` (`b = 0` when `N = 1`). Complex
     segments use the same formulas on complex values (real and imaginary parts fitted apart).
     Anything else raises. C#: `Detrend.None`, `Detrend.Constant`, `Detrend.Linear`.
   - Each segment is multiplied by the window `w` (periodic, length `nperseg`) and transformed. The
-    two-sided PSD is the average over segments of `|X[k]|² / (fs·Σw²)`, in sample-units²/Hz. Its sum
-    times `fs/N` is the mean power of the windowed segments, equal to the signal's mean power for
-    the rectangular window and for noise in expectation.
+    two-sided PSD is the average over segments of `|X[k]|² / (fs·Σw²)`, in sample-units²/Hz (the
+    scale does not depend on `M`). Its sum times `fs/M` is the mean power of the windowed segments
+    (Parseval at length `M`), equal to the signal's mean power for the rectangular window and for
+    noise in expectation.
   - `average` is `"mean"` (the default) or `"median"`; anything else raises. The median is taken
     per bin over the `K` segments (for even `K`, the mean of the two middle values), then divided
     by `b(K)`, the expected median of `K` independent unit-mean exponential values, so that for
@@ -146,25 +150,27 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
     that power and the result reads `1/b(K)` too high (`1/ln 2 ≈ 1.44` for large `K`). C#:
     `WelchAverage.Mean`, `WelchAverage.Median`.
   - Complex input: two-sided, shifted order (frequencies from `fft_frequencies(shifted=True)`).
-    Real input: one-sided by default, bins `0 … ⌊N/2⌋` at `k·fs/N`, with every bin doubled except DC
-    and, for even `N`, Nyquist. Real input with `one_sided=False` gives the two-sided shifted PSD;
+    Real input: one-sided by default, bins `0 … ⌊M/2⌋` at `k·fs/M`, with every bin doubled except DC
+    and, for even `M`, Nyquist. Real input with `one_sided=False` gives the two-sided shifted PSD;
     complex input with `one_sided=True` raises.
-  - The result carries `frequencies`, `psd`, `sample_rate`, `nperseg`, `num_segments`,
-    `one_sided`, `bin_width = fs/N` and `enbw_hz = ENBW·fs/N` (the resolution bandwidth), and
-    `span`: `(0, fs/2)` when one-sided, else none (see Bins as rectangles).
+  - The result carries `frequencies`, `psd`, `sample_rate`, `nperseg`, `nfft`, `num_segments`,
+    `one_sided`, `bin_width = fs/M` (the bin spacing) and `enbw_hz = ENBW·fs/N` (the resolution
+    bandwidth, set by the window and `nperseg` alone), and `span`: `(0, fs/2)` when one-sided, else
+    none (see Bins as rectangles).
   **(implemented)**
 - **Spectrogram** (`spectrogram(samples, sample_rate, nperseg, noverlap=None, window="hann",
-  one_sided=None, beta=None, detrend="none")`): Welch's segments, each kept instead of averaged.
-  `nperseg` is required (`1 ≤ nperseg ≤ L`); `noverlap`, the detrending, the window, the scaling,
-  the sidedness and the frequency axis are exactly as for the PSD above, so row `s` is `welch_psd`
+  one_sided=None, beta=None, detrend="none", nfft=None)`): Welch's segments, each kept instead of
+  averaged. `nperseg` is required (`1 ≤ nperseg ≤ L`); `noverlap`, the detrending, the window, the
+  zero padding, the scaling, the sidedness and the frequency axis are exactly as for the PSD above,
+  so row `s` is `welch_psd`
   of segment `s` alone and the mean of the rows is `welch_psd` of the whole input (to rounding).
   - `psd` has one row per segment (`num_segments` rows of `len(frequencies)` bins): Python a 2-D
     array, C# an array of rows.
   - `times[s] = (s·step + nperseg/2) / fs`: the segment's center, in seconds from the first sample
     (add the signal's `time_origin` for absolute time). For even `nperseg` it falls between two
     samples.
-  - The result carries `frequencies`, `times`, `psd`, `sample_rate`, `nperseg`, `num_segments`,
-    `one_sided`, `bin_width`, `enbw_hz` and `span`, with the PSD's meanings.
+  - The result carries `frequencies`, `times`, `psd`, `sample_rate`, `nperseg`, `nfft`,
+    `num_segments`, `one_sided`, `bin_width`, `enbw_hz` and `span`, with the PSD's meanings.
   **(implemented)**
 - **PSD units:** W/Hz when the samples are volts and an impedance is known (divide by the
   impedance), otherwise sample-units²/Hz. The functions above work in sample units. **(defined)**

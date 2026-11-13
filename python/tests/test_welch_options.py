@@ -1,5 +1,5 @@
-"""Welch options: detrending is a projection, the median is unbiased for noise and resists bursts
-(conventions: Spectra, PSD)."""
+"""Welch options: detrending is a projection, the median is unbiased for noise and resists bursts,
+zero padding samples the same spectrum finer (conventions: Spectra, PSD)."""
 
 import numpy as np
 import pytest
@@ -77,3 +77,32 @@ def test_bad_options(detrend: str, average: str) -> None:
 def test_spectrogram_bad_detrend() -> None:
     with pytest.raises(ValueError):
         sf.spectrogram([1.0, 2.0, 3.0, 4.0], 1, 2, detrend="cubic")
+
+
+@pytest.mark.parametrize("one_sided", [True, False])
+def test_padding_samples_the_same_spectrum_finer(one_sided: bool) -> None:
+    rng = np.random.default_rng(6)
+    x = rng.standard_normal(100)
+    plain = sf.welch_psd(x, 8, nperseg=20, one_sided=one_sided)
+    padded = sf.welch_psd(x, 8, nperseg=20, one_sided=one_sided, nfft=80)
+    every_fourth = padded.psd[::4]  # bin 4k of 80 is bin k of 20 (shifted: both start at -fs/2)
+    assert np.allclose(every_fourth, plain.psd, rtol=1e-10, atol=1e-14)
+    assert np.allclose(padded.frequencies[::4], plain.frequencies, rtol=0, atol=1e-12)
+    assert padded.nfft == 80 and plain.nfft == 20
+    assert padded.bin_width == 8 / 80 and padded.enbw_hz == plain.enbw_hz
+
+
+def test_padding_keeps_the_total_power() -> None:
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal(64) + 1j * rng.standard_normal(64)
+    for nfft in (16, 17, 50):
+        d = sf.welch_psd(x, 3, nperseg=16, nfft=nfft)
+        base = sf.welch_psd(x, 3, nperseg=16)
+        assert abs(np.sum(d.psd) * d.bin_width / (np.sum(base.psd) * base.bin_width) - 1) < 1e-12
+
+
+def test_nfft_below_nperseg_raises() -> None:
+    with pytest.raises(ValueError):
+        sf.welch_psd(np.ones(8), 1, nperseg=4, nfft=3)
+    with pytest.raises(ValueError):
+        sf.spectrogram(np.ones(8), 1, 4, nfft=3)
