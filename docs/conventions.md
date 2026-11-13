@@ -846,8 +846,8 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
 ## Synchronization
 
 Decided in [ADR 0008](adr/0008-block-synchronization.md). Python: `signalforge.sync`; C#:
-`SignalForge.Sync`. All are block estimators over finite complex samples; they estimate, they do
-not correct. Where a sum below is exactly zero there is no information and the estimate is 0. `arg`
+`SignalForge.Sync`. All but the tracking loops at the end are block estimators over finite complex
+samples; they estimate, they do not correct. Where a sum below is exactly zero there is no information and the estimate is 0. `arg`
 is in `(−π, π]`. The timing sum uses `e^{−j2π(n mod sps)/sps}`, the same value with a small
 argument. The estimates do not depend on the input's scale: each implementation first
 multiplies the block by the power of two that brings its largest real or imaginary part into
@@ -862,6 +862,27 @@ multiplies the block by the power of two that brings its largest real or imagina
 - **QPSK frequency offset** (`qpsk_frequency_offset(symbols, symbol_rate)`): with `w = z⁴`,
   `S = Σₖ₌₁ w[k]·conj(w[k−1])`, `Δf = arg(S)·symbol_rate / (8π)`, in `(−Rs/8, Rs/8]`. At least two
   symbols. Correct with `frequency_offset(symbols, −Δf, symbol_rate)`. **(implemented)**
+- **Tracking loops** ([ADR 0043](adr/0043-gardner-timing.md)). These take the samples as given (no
+  scaling).
+  - `pi_loop_gains(loop_bandwidth, damping, detector_gain)` returns `(kp, ki)` for a
+    proportional-plus-integral loop whose detector has slope `Kd = detector_gain`, with
+    `Bn = loop_bandwidth` the one-sided noise bandwidth per update and `ζ = damping`:
+    `θ = Bn/(ζ + 1/(4ζ))`, `d = 1 + 2ζθ + θ²`, `kp = 4ζθ/d/Kd`, `ki = 4θ²/d/Kd`, evaluated
+    left to right as written. `0 < Bn < 0.5`, `ζ > 0`, `Kd > 0`, all finite.
+  - `gardner_timing(samples, samples_per_symbol, kp, ki, *, start=0.0, half_width=8)`: the
+    samples `y` (matched-filter output, finite, `sps = samples_per_symbol ≥ 2`) are read between
+    samples by the fractional-delay kernel, `z(t) = Σ_j y[b+j]·h(f−j)` with `b = ⌊t⌋`,
+    `f = t − b`, `j = −H+1 … H` in order, `h` as in Fractional delay with `H = half_width`, and
+    `y` zero outside `0 … N−1` (so `z(n − d)` is `fractional_delay(y, d)[n]`). With `τ₀ = start`
+    and `v = 0`, for `k = 0, 1, …` while `τₖ ≤ N − 1`: the symbol is `zₖ = z(τₖ)`; the
+    detector is `eₖ = 0` for `k = 0` and otherwise `eₖ = Re{conj(m)·(zₖ − zₖ₋₁)}` computed as
+    `m.re·Δ.re + m.im·Δ.im`, `m = z((τₖ₋₁ + τₖ)/2)`, `Δ = zₖ − zₖ₋₁` (positive when sampling
+    late); then `v ← v + ki·eₖ`, `s = sps − kp·eₖ − v`, held to `[sps/2, 3·sps/2]`, and
+    `τₖ₊₁ = τₖ + s`. The result has `symbols` (`zₖ`), `positions` (`τₖ`) and `errors` (`eₖ`),
+    one each per symbol, empty if `start > N − 1`. `kp`, `ki` finite and `≥ 0`, `start` finite
+    and `≥ 0`, `half_width` an integer `≥ 1`. In the linear model (`e = Kd·(τ − t)`) a clock
+    whose symbols arrive every `sps·(1 + δ)` samples leaves a lag of `−sps·δ/(kp·Kd)` with
+    `ki = 0`, and none with `ki > 0`. **(implemented)**
 - **QPSK phase offset** (`qpsk_phase_offset(symbols)`): `φ = arg(−Σ z⁴) / 4`, in `(−π/4, π/4]`;
   the true phase is `φ + m·π/2`. Correct by multiplying by `e^{−jφ}`
   (`frequency_offset(symbols, 0, 1, −φ)`). At least one symbol. **(implemented)**

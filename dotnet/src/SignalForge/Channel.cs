@@ -242,16 +242,7 @@ public static class Channel
             double pos = i - delay, b = Math.Floor(pos), f = pos - b;
             if (!kernels.TryGetValue(f, out double[]? taps))
             {
-                taps = new double[2 * halfWidth];
-                for (int j = -halfWidth + 1; j <= halfWidth; j++)
-                {
-                    double t = f - j;
-                    if (Math.Abs(t) >= halfWidth)
-                        continue;
-                    double s = t == 0 ? 1 : f == 0 ? 0 : Math.Sin(Math.PI * t) / (Math.PI * t);
-                    double u = t / halfWidth;
-                    taps[j + halfWidth - 1] = s * (Spectral.BesselI0(FractionalDelayBeta * Math.Sqrt(Math.Max(1 - u * u, 0))) / norm);
-                }
+                taps = DelayKernel(f, halfWidth, norm);
                 kernels[f] = taps;
             }
             for (int j = -halfWidth + 1; j <= halfWidth; j++)
@@ -262,6 +253,38 @@ public static class Channel
             }
         }
         return y;
+    }
+
+    // h(f − j) for j = −H+1 … H (conventions: Channel, Fractional delay).
+    private static double[] DelayKernel(double f, int halfWidth, double norm)
+    {
+        var taps = new double[2 * halfWidth];
+        for (int j = -halfWidth + 1; j <= halfWidth; j++)
+        {
+            double t = f - j;
+            if (Math.Abs(t) >= halfWidth)
+                continue;
+            double s = t == 0 ? 1 : f == 0 ? 0 : Math.Sin(Math.PI * t) / (Math.PI * t);
+            double u = t / halfWidth;
+            taps[j + halfWidth - 1] = s * (Spectral.BesselI0(FractionalDelayBeta * Math.Sqrt(Math.Max(1 - u * u, 0))) / norm);
+        }
+        return taps;
+    }
+
+    /// <summary>z(t) through the fractional-delay kernel (conventions: Synchronization, Tracking
+    /// loops); the same arithmetic as <see cref="FractionalDelay"/>.</summary>
+    internal static Complex Interpolate(ReadOnlySpan<Complex> y, double t, int halfWidth)
+    {
+        double b = Math.Floor(t);
+        double[] taps = DelayKernel(t - b, halfWidth, Spectral.BesselI0(FractionalDelayBeta));
+        Complex acc = Complex.Zero;
+        for (int j = -halfWidth + 1; j <= halfWidth; j++)
+        {
+            double m = b + j;
+            if (m >= 0 && m < y.Length)
+                acc += taps[j + halfWidth - 1] * y[(int)m];
+        }
+        return acc;
     }
 
     private static double ImbalanceGain(double gainDb, double phase)

@@ -1,4 +1,5 @@
-"""Block synchronization estimators: symbol timing, QPSK carrier frequency and phase.
+"""Synchronization: block estimators of symbol timing, QPSK carrier frequency and phase, and
+tracking loops.
 
 Definitions are in docs/conventions.md (Synchronization) and
 docs/adr/0008-block-synchronization.md.
@@ -7,11 +8,13 @@ docs/adr/0008-block-synchronization.md.
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from ._checks import count
+from ._checks import count, real
+from .channel import _interpolate
 
 
 def _complex(x: ArrayLike, what: str, minimum: int) -> NDArray[np.complex128]:
@@ -90,3 +93,82 @@ def qpsk_block_phases(symbols: ArrayLike, block_symbols: int) -> NDArray[np.floa
             phi += (math.pi / 2) * round((out[i - 1] - phi) / (math.pi / 2))
         out[i] = phi
     return out
+
+
+def pi_loop_gains(
+    loop_bandwidth: float, damping: float, detector_gain: float
+) -> tuple[float, float]:
+    """``(kp, ki)`` of a second-order loop with noise bandwidth ``loop_bandwidth`` per update
+    (conventions: Synchronization, Tracking loops)."""
+    bn = real(loop_bandwidth, "loop_bandwidth")
+    z = real(damping, "damping")
+    kd = real(detector_gain, "detector_gain")
+    if not 0 < bn < 0.5:
+        raise ValueError("loop_bandwidth must be in (0, 0.5)")
+    if not z > 0 or not kd > 0:
+        raise ValueError("damping and detector_gain must be positive")
+    theta = bn / (z + 1 / (4 * z))
+    d = 1 + 2 * z * theta + theta * theta
+    return 4 * z * theta / d / kd, 4 * theta * theta / d / kd
+
+
+@dataclass(frozen=True)
+class TimingRecovery:
+    """What a timing loop took: the symbols, their positions in samples, the detector output."""
+
+    symbols: NDArray[np.complex128]
+    positions: NDArray[np.float64]
+    errors: NDArray[np.float64]
+
+
+def gardner_timing(
+    samples: ArrayLike,
+    samples_per_symbol: int,
+    kp: float,
+    ki: float,
+    *,
+    start: float = 0.0,
+    half_width: int = 8,
+) -> TimingRecovery:
+    """Gardner timing recovery: a PI loop on the step between symbols, reading between samples
+    by the fractional-delay kernel (conventions: Synchronization, Tracking loops)."""
+    sps = count(samples_per_symbol, "samples_per_symbol")
+    if sps < 2:
+        raise ValueError("samples_per_symbol must be at least 2")
+    y = np.asarray(samples)
+    if y.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    y = np.asarray(y, dtype=np.complex128)
+    if not np.all(np.isfinite(y)):
+        raise ValueError("samples must be finite")
+    p = real(kp, "kp")
+    i = real(ki, "ki")
+    tau = real(start, "start")
+    if p < 0 or i < 0 or tau < 0:
+        raise ValueError("kp, ki and start must not be negative")
+    h = count(half_width, "half_width")
+    if h < 1:
+        raise ValueError("half_width must be at least 1")
+    ys: list[complex] = y.tolist()
+    symbols: list[complex] = []
+    positions: list[float] = []
+    errors: list[float] = []
+    v = 0.0
+    while tau <= len(ys) - 1:
+        z = _interpolate(ys, tau, h)
+        e = 0.0
+        if symbols:
+            mid = _interpolate(ys, (positions[-1] + tau) / 2, h)
+            delta = z - symbols[-1]
+            e = mid.real * delta.real + mid.imag * delta.imag
+        symbols.append(z)
+        positions.append(tau)
+        errors.append(e)
+        v += i * e
+        step = min(max(sps - p * e - v, sps / 2), 3 * sps / 2)
+        tau += step
+    return TimingRecovery(
+        np.array(symbols, dtype=np.complex128),
+        np.array(positions, dtype=np.float64),
+        np.array(errors, dtype=np.float64),
+    )

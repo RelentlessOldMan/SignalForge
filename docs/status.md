@@ -4,9 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Gardner timing recovery**: a closed loop (Gardner detector, PI loop filter, interpolation by
-   the `fractional_delay` kernel) with its conventions, ADR and vectors; checks: lock to a
-   static and a slowly drifting offset, and loop bandwidth against the linear model.
+1. **QPSK carrier tracking loop**: a decision-directed phase-locked loop on symbols (the
+   fourth-power or sign-based QPSK phase detector, a PI loop filter from `pi_loop_gains`) with
+   its conventions, ADR and vectors; checks: lock to a static phase and a small residual
+   frequency offset, the steady-state phase error with and without the integrator against the
+   linear model, and BER after `gardner_timing` plus the carrier loop on a full impaired link.
 
 ## Built
 
@@ -459,12 +461,24 @@ Updated with every chunk of work. Dates are absolute.
   or more off is over 1.3 times worse. `fractional_delay` now evaluates its kernel once per
   distinct fraction in both languages (same arithmetic, about 9 times faster on long inputs).
   Python 2015 passed, 2 skipped; .NET 1615 passed.
+- 2026-11-13: Gardner timing recovery (conventions: Synchronization, Tracking loops; ADR 0043):
+  `gardner_timing(samples, samples_per_symbol, kp, ki, *, start, half_width)` returns a
+  `TimingRecovery` (symbols, positions, detector output); a PI loop on the step between symbols,
+  held within half a symbol of nominal, reading between samples by the `fractional_delay`
+  kernel (shared code in both languages). `pi_loop_gains(loop_bandwidth, damping,
+  detector_gain)` gives the gains from the standard second-order formulas. 22 vectors from
+  `vectors/generators/timing_loop.py` (stdlib, its own kernel and I0). Tests: the open loop
+  matches `fractional_delay`; the S-curve is odd and positive when late; locks to a 2.3-sample
+  offset at Eb/N0 2 dB (mean error under 0.06 samples, rms under 0.25, BER within 20 % of
+  theory); on an analytic raised-cosine burst whose clock is slow by 1e-3, the
+  proportional-only lag matches `−sps·δ/(kp·Kd)` within 25 % and the PI loop removes it.
+  Python 2050 passed, 2 skipped; .NET 1645 passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay and block fading, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay and block fading, carrier tracking loops, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

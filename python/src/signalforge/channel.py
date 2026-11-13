@@ -122,6 +122,7 @@ def multipath(samples: ArrayLike, delays: ArrayLike, gains: ArrayLike) -> NDArra
 
 
 _FD_BETA = 8.0
+_FD_NORM = float(np.i0(_FD_BETA))
 
 
 def fractional_delay(
@@ -144,7 +145,7 @@ def fractional_delay(
     # values: evaluate it once per fraction (the same arithmetic) and gather
     frac, which = np.unique(pos - base, return_inverse=True)
     on_grid = frac == 0
-    norm = float(np.i0(_FD_BETA))
+    norm = _FD_NORM
     for j in range(-h + 1, h + 1):
         t = frac - j
         with np.errstate(invalid="ignore", divide="ignore"):
@@ -191,6 +192,25 @@ def rician_fading(
     scatter = (ab[:, 0] + 1j * ab[:, 1]) / math.sqrt(2)
     g = math.sqrt(k / (k + 1)) + math.sqrt(1 / (k + 1)) * scatter
     return np.asarray(x * np.repeat(g, length)[: x.size], dtype=np.complex128)
+
+
+def _interpolate(y: list[complex], t: float, half_width: int) -> complex:
+    """``z(t)`` through the fractional-delay kernel (conventions: Synchronization, Tracking
+    loops); the same arithmetic as ``fractional_delay``."""
+    h = half_width
+    b = math.floor(t)
+    f = t - b
+    tt = f - np.arange(-h + 1, h + 1)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        s = np.where(tt == 0, 1.0, np.sin(math.pi * tt) / (math.pi * tt))
+    if f == 0:
+        s = np.where(tt != 0, 0.0, s)
+    w = np.i0(_FD_BETA * np.sqrt(np.maximum(1 - (tt / h) ** 2, 0.0))) / _FD_NORM
+    taps = np.where(np.abs(tt) < h, s * w, 0.0).tolist()
+    acc = 0j
+    for i in range(max(0, h - 1 - b), min(2 * h, len(y) + h - 1 - b)):
+        acc += taps[i] * y[b - h + 1 + i]
+    return acc
 
 
 def _imbalance_gain(gain_db: float, phase: float) -> float:

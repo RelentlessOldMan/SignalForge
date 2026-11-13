@@ -331,6 +331,8 @@ public static class Conformance
             "iq_image_rejection_db" => Bind((a.D("gain_db"), a.D("phase")), t => Channel.IqImageRejectionDb(t.Item1, t.Item2)),
             "phase_noise" => Bind((Complexes(a.Get("samples")), a.D("linewidth_hz"), a.D("sample_rate"), a.I("seed")), t => Channel.PhaseNoise(t.Item1, t.Item2, t.Item3, t.Item4)),
             "multipath" => Bind((Complexes(a.Get("samples")), Ints(a.Get("delays")), Complexes(a.Get("gains"))), t => Channel.Multipath(t.Item1, t.Item2, t.Item3)),
+            "gardner_timing" => Bind((Complexes(a.Get("samples")), a.I("samples_per_symbol"), a.D("kp"), a.D("ki"), a.Opt("start", 0), a.Has("half_width") ? a.I("half_width") : 8), t => Sync.GardnerTiming(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
+            "pi_loop_gains" => Bind((a.D("loop_bandwidth"), a.D("damping"), a.D("detector_gain")), t => Sync.PiLoopGains(t.Item1, t.Item2, t.Item3)),
             "rician_fading" => Bind((Complexes(a.Get("samples")), a.D("k_factor"), a.I("block_length"), a.I("seed")), t => Channel.RicianFading(t.Item1, t.Item2, t.Item3, t.Item4)),
             "fractional_delay" => Bind((Complexes(a.Get("samples")), a.D("delay"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.FractionalDelay(t.Item1, t.Item2, t.Item3)),
             "dc_offset" => Bind((Complexes(a.Get("samples")), ComplexScalar(a.Get("offset"))), t => Channel.DcOffset(t.Item1, t.Item2)),

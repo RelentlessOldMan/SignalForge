@@ -2,10 +2,81 @@ using System.Numerics;
 
 namespace SignalForge;
 
-/// <summary>Block synchronization estimators: symbol timing, QPSK carrier frequency and phase.
-/// Definitions in docs/conventions.md (Synchronization).</summary>
+/// <summary>What a timing loop took (conventions: Synchronization, Tracking loops).</summary>
+/// <param name="Symbols">The symbols, one per loop step.</param>
+/// <param name="Positions">Where each symbol was taken, in samples.</param>
+/// <param name="Errors">The timing detector's output at each symbol, 0 for the first.</param>
+public sealed record TimingRecovery(Complex[] Symbols, double[] Positions, double[] Errors);
+
+/// <summary>Synchronization: block estimators of symbol timing, QPSK carrier frequency and phase,
+/// and tracking loops. Definitions in docs/conventions.md (Synchronization).</summary>
 public static class Sync
 {
+    /// <summary>(kp, ki) of a second-order loop with noise bandwidth <paramref name="loopBandwidth"/>
+    /// per update (conventions: Synchronization, Tracking loops).</summary>
+    /// <param name="loopBandwidth">One-sided noise bandwidth per update, in (0, 0.5).</param>
+    /// <param name="damping">Damping factor, positive and finite.</param>
+    /// <param name="detectorGain">Slope of the detector at lock, positive and finite.</param>
+    public static (double Kp, double Ki) PiLoopGains(double loopBandwidth, double damping, double detectorGain)
+    {
+        if (!(loopBandwidth > 0 && loopBandwidth < 0.5))
+            throw new ArgumentOutOfRangeException(nameof(loopBandwidth), loopBandwidth, "must be in (0, 0.5)");
+        Check.PositiveFinite(damping, nameof(damping));
+        Check.PositiveFinite(detectorGain, nameof(detectorGain));
+        double z = damping, kd = detectorGain;
+        double theta = loopBandwidth / (z + 1 / (4 * z));
+        double d = 1 + 2 * z * theta + theta * theta;
+        return (4 * z * theta / d / kd, 4 * theta * theta / d / kd);
+    }
+
+    /// <summary>Gardner timing recovery: a PI loop on the step between symbols, reading between
+    /// samples by the fractional-delay kernel (conventions: Synchronization, Tracking loops).</summary>
+    /// <param name="samples">Matched-filter output, all finite.</param>
+    /// <param name="samplesPerSymbol">Nominal samples per symbol, at least 2.</param>
+    /// <param name="kp">Proportional gain, finite, not negative.</param>
+    /// <param name="ki">Integral gain, finite, not negative.</param>
+    /// <param name="start">Position of the first symbol in samples, finite, not negative.</param>
+    /// <param name="halfWidth">Half the interpolator's length, at least 1.</param>
+    public static TimingRecovery GardnerTiming(ReadOnlySpan<Complex> samples, int samplesPerSymbol, double kp, double ki, double start = 0, int halfWidth = 8)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(samplesPerSymbol, 2);
+        foreach (Complex y in samples)
+            if (!double.IsFinite(y.Real) || !double.IsFinite(y.Imaginary))
+                throw new ArgumentException("must be finite", nameof(samples));
+        NotNegativeFinite(kp, nameof(kp));
+        NotNegativeFinite(ki, nameof(ki));
+        NotNegativeFinite(start, nameof(start));
+        ArgumentOutOfRangeException.ThrowIfLessThan(halfWidth, 1);
+        var symbols = new List<Complex>();
+        var positions = new List<double>();
+        var errors = new List<double>();
+        double tau = start, v = 0, sps = samplesPerSymbol;
+        while (tau <= samples.Length - 1)
+        {
+            Complex z = Channel.Interpolate(samples, tau, halfWidth);
+            double e = 0;
+            if (symbols.Count > 0)
+            {
+                Complex mid = Channel.Interpolate(samples, (positions[^1] + tau) / 2, halfWidth);
+                Complex delta = z - symbols[^1];
+                e = mid.Real * delta.Real + mid.Imaginary * delta.Imaginary;
+            }
+            symbols.Add(z);
+            positions.Add(tau);
+            errors.Add(e);
+            v += ki * e;
+            double step = Math.Min(Math.Max(sps - kp * e - v, sps / 2), 3 * sps / 2);
+            tau += step;
+        }
+        return new TimingRecovery([.. symbols], [.. positions], [.. errors]);
+    }
+
+    private static void NotNegativeFinite(double x, string name)
+    {
+        if (!(x >= 0 && double.IsFinite(x)))
+            throw new ArgumentOutOfRangeException(name, x, "must be finite and not negative");
+    }
+
     /// <summary>Oerder–Meyr symbol timing estimate in samples, in [0, sps): the phase of the
     /// symbol-rate line in |y|².</summary>
     /// <param name="samples">Matched-filter output, at least one sample, all finite.</param>

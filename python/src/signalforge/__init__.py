@@ -101,7 +101,15 @@ from .spectral import (
     window,
     window_stats,
 )
-from .sync import qpsk_block_phases, qpsk_frequency_offset, qpsk_phase_offset, timing_offset
+from .sync import (
+    TimingRecovery,
+    gardner_timing,
+    pi_loop_gains,
+    qpsk_block_phases,
+    qpsk_frequency_offset,
+    qpsk_phase_offset,
+    timing_offset,
+)
 from .units import (
     amp_to_db,
     db_to_amp,
@@ -114,7 +122,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.64"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.65"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -131,6 +139,7 @@ __all__ = [
     "Signal",
     "SpectralDensity",
     "Spectrogram",
+    "TimingRecovery",
     "ToneMetrics",
     "WindowStats",
     "acpr",
@@ -182,6 +191,7 @@ __all__ = [
     "fir_response",
     "fractional_delay",
     "frequency_offset",
+    "gardner_timing",
     "ifft",
     "interpolate",
     "iq_image_rejection_db",
@@ -193,6 +203,7 @@ __all__ = [
     "newman_phases",
     "occupied_bandwidth",
     "phase_noise",
+    "pi_loop_gains",
     "power_stats",
     "prbs",
     "psk8_ber_theory",

@@ -128,6 +128,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "multipath": channel.multipath,
     "fractional_delay": channel.fractional_delay,
     "rician_fading": channel.rician_fading,
+    "gardner_timing": sync.gardner_timing,
+    "pi_loop_gains": sync.pi_loop_gains,
     "evm": metrics.evm,
     "qpsk_ber_theory": metrics.qpsk_ber_theory,
     "qpsk_ber_rayleigh_theory": metrics.qpsk_ber_rayleigh_theory,
