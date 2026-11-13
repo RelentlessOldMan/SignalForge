@@ -178,6 +178,15 @@ recs.append((
     "the signalforge extension fields map back to the Signal; two captures at one frequency",
 ))
 recs.append((
+    "int64_extremes",
+    meta(base("ri16_le", **{"x:min": -(2**63), "x:max": 2**63 - 1})),
+    struct.pack("<h", -16384),
+    {"samples": [-0.5], "sample_rate": 1000, "center_frequency": 0, "time_origin": 0,
+     "units": None, "impedance": None,
+     "metadata": {"x:min": -(2**63), "x:max": 2**63 - 1}},
+    "the int64 extremes are kept as integers",
+))
+recs.append((
     "no_captures_ri8",
     meta(base("ri8"), []),
     bytes([0x80, 0x7F, 0x00]),
@@ -210,6 +219,41 @@ for name, text, why in (
     ("nan_token", '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '
      '"core:sample_rate": NaN}, "captures": [], "annotations": []}\n', "NaN is not JSON"),
     ("not_an_object", '[1, 2]\n', "the metadata must be a JSON object"),
+    ("captures_null", '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '
+     '"core:sample_rate": 1000}, "captures": null, "annotations": []}\n',
+     "captures, when present, must be an array; null is not one"),
+    ("captures_object", meta(base("ri16_le"), {"core:sample_start": 0}),
+     "captures must be an array"),
+    ("metadata_null", meta(base("ri16_le", **{"signalforge:metadata": None})),
+     "signalforge:metadata, when present, must be an object; null is not one"),
+    ("integer_beyond_int64", meta(base("ri16_le", **{"x:big": 2**63})),
+     "JSON integers must fit in signed 64 bits; 2^63 does not"),
+    ("float_overflow", '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '
+     '"core:sample_rate": 1000, "x:huge": 1e400}, "captures": [], "annotations": []}\n',
+     "1e400 overflows a double; numbers must be finite"),
+    ("huge_integer_rate", meta(base("ri16_le", 10**400)),
+     "a 401-digit sample rate is outside the signed 64-bit range"),
+    ("lone_surrogate", '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '
+     '"core:sample_rate": 1000, "x:note": "a\\ud800b"}, "captures": [], '
+     '"annotations": []}\n', "an unpaired surrogate escape is not valid Unicode"),
+    ("too_deep", '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '
+     '"core:sample_rate": 1000, "x:deep": ' + "[" * 63 + "]" * 63 + '}, '
+     '"captures": [], "annotations": []}\n',
+     "63 arrays inside global inside the document are 65 levels; at most 64"),
+    ("infinity_token", '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '
+     '"core:sample_rate": Infinity}, "captures": [], "annotations": []}\n',
+     "Infinity is not JSON"),
+    ("metadata_only", meta(base("ri16_le", **{"core:metadata_only": True})),
+     "a metadata-only recording has no samples"),
+    ("units_number", meta(base("ri16_le", **{"signalforge:units": 5})),
+     "signalforge:units must be a string"),
+    ("time_origin_string", meta(base("ri16_le", **{"signalforge:time_origin": "0"})),
+     "signalforge:time_origin must be a number"),
+    ("impedance_bool", meta(base("ri16_le", **{"signalforge:impedance": True})),
+     "signalforge:impedance must be a number, and a bool is not one"),
+    ("header_bytes_float",
+     meta(base("ri16_le"), [{"core:sample_start": 0, "core:header_bytes": 0.0}]),
+     "core:header_bytes must be the integer 0, and 0.0 is a float"),
 ):
     recs.append((name, text, one, None, why))
 recs.append(("partial_sample", meta(base("ri16_le")), b"\x01\x00\x02", None,

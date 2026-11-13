@@ -12,7 +12,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from ._checks import count
+from ._checks import count, real
 
 _COSINE_SUMS: dict[str, tuple[float, ...]] = {
     "rectangular": (1.0,),
@@ -192,7 +192,7 @@ def _segments(
     beta: float | None,
 ) -> _Segments:
     x = _vector(samples, "samples")
-    if not 0 < sample_rate < math.inf:
+    if not real(sample_rate, "sample_rate") > 0:
         raise ValueError("sample_rate must be positive and finite")
     is_complex = np.iscomplexobj(x)
     if one_sided is None:

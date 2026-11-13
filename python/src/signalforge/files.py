@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from ._checks import real
 from .core import Signal
 
 SIGMF_VERSION = "1.2.0"
@@ -30,6 +31,9 @@ _RESERVED = frozenset(
     }
 )
 _EXTENSION = {"name": "signalforge", "version": "1.0.0", "optional": True}
+MAX_DEPTH = 64
+"""Deepest nesting of objects and arrays in a ``.sigmf-meta`` file; the top object is level 1."""
+_INT64 = (-(2**63), 2**63 - 1)
 
 
 def _parse(datatype: str) -> tuple[bool, np.dtype[Any], int]:
@@ -62,14 +66,17 @@ def encode_samples(x: ArrayLike, datatype: str) -> bytes:
     return codes.astype(dt).tobytes()
 
 
-def decode_samples(data: bytes, datatype: str) -> NDArray[np.complex128] | NDArray[np.float64]:
+def decode_samples(
+    data: bytes | bytearray | memoryview, datatype: str
+) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Samples from the raw bytes of ``datatype``, as ``float64`` or ``complex128``."""
     is_complex, dt, bits = _parse(datatype)
     if not isinstance(data, bytes | bytearray | memoryview):
         raise ValueError("data must be bytes")
     size = dt.itemsize * (2 if is_complex else 1)
-    if len(data) % size:
-        raise ValueError(f"{len(data)} bytes is not a whole number of {datatype} samples")
+    nbytes = memoryview(data).nbytes
+    if nbytes % size:
+        raise ValueError(f"{nbytes} bytes is not a whole number of {datatype} samples")
     parts = np.frombuffer(data, dtype=dt).astype(np.float64)
     if bits:
         parts /= 2.0 ** (bits - 1)
@@ -90,29 +97,46 @@ def _files(path: str | os.PathLike[str]) -> tuple[Path, Path]:
     return base.with_name(base.name + ".sigmf-meta"), base.with_name(base.name + ".sigmf-data")
 
 
-def _json(v: Any, where: str) -> Any:
-    """``v`` as plain JSON data, or ValueError."""
+def _text(s: str, where: str) -> str:
+    try:
+        s.encode("utf-8")
+    except UnicodeEncodeError:
+        raise ValueError(f"{where}: not valid Unicode (a lone surrogate)") from None
+    return s
+
+
+def _json(v: Any, where: str, depth: int = 1) -> Any:
+    """``v`` as plain JSON data within the limits of conventions: Signal files, or ValueError.
+
+    ``depth`` is the level an object or array ``v`` would sit at.
+    """
     if isinstance(v, np.generic):
         v = v.item()
-    if v is None or isinstance(v, str | bool | int):
+    if v is None or isinstance(v, bool):
+        return v
+    if isinstance(v, str):
+        return _text(v, where)
+    if isinstance(v, int):
+        if not _INT64[0] <= v <= _INT64[1]:
+            raise ValueError(f"{where}: integer outside the signed 64-bit range")
         return v
     if isinstance(v, float):
         if not math.isfinite(v):
             raise ValueError(f"{where}: JSON cannot hold {v}")
         return v
+    if isinstance(v, list | tuple | Mapping) and depth > MAX_DEPTH:
+        raise ValueError(f"{where}: nested deeper than {MAX_DEPTH} levels")
     if isinstance(v, list | tuple):
-        return [_json(x, f"{where}[{i}]") for i, x in enumerate(v)]
+        return [_json(x, f"{where}[{i}]", depth + 1) for i, x in enumerate(v)]
     if isinstance(v, Mapping):
         if not all(isinstance(k, str) for k in v):
             raise ValueError(f"{where}: object keys must be strings")
-        return {k: _json(x, f"{where}.{k}") for k, x in v.items()}
+        return {_text(k, where): _json(x, f"{where}.{k}", depth + 1) for k, x in v.items()}
     raise ValueError(f"{where}: {type(v).__name__} is not JSON data")
 
 
 def _finite(v: float, what: str) -> float:
-    if isinstance(v, bool) or not isinstance(v, int | float) or not math.isfinite(v):
-        raise ValueError(f"{what} must be a finite number")
-    return float(v)
+    return real(v, what)
 
 
 def write_sigmf(path: str | os.PathLike[str], signal: Signal, datatype: str | None = None) -> None:
@@ -134,7 +158,7 @@ def write_sigmf(path: str | os.PathLike[str], signal: Signal, datatype: str | No
         glob["signalforge:units"] = signal.units
     if signal.impedance is not None:
         glob["signalforge:impedance"] = float(signal.impedance)
-    meta = _json(signal.metadata, "metadata")
+    meta = _json(signal.metadata, "metadata", depth=-MAX_DEPTH)  # depth checked on doc below
     plain = {k: v for k, v in meta.items() if ":" not in k}
     if plain:
         glob["signalforge:metadata"] = plain
@@ -147,11 +171,11 @@ def write_sigmf(path: str | os.PathLike[str], signal: Signal, datatype: str | No
         "core:sample_start": 0,
         "core:frequency": _finite(signal.center_frequency, "center_frequency"),
     }
-    doc = {"global": glob, "captures": [capture], "annotations": []}
+    doc = _json({"global": glob, "captures": [capture], "annotations": []}, "the metadata")
     text = json.dumps(doc, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
     meta_path, data_path = _files(path)
-    data_path.write_bytes(data)
-    meta_path.write_text(text, encoding="utf-8", newline="\n")
+    data_path.write_bytes(data)  # only once nothing above can fail
+    meta_path.write_bytes(text.encode("utf-8"))
 
 
 def _unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -181,14 +205,15 @@ def _object(v: Any, what: str) -> dict[str, Any]:
 def read_sigmf(path: str | os.PathLike[str]) -> Signal:
     """Read a ``.sigmf-meta`` / ``.sigmf-data`` pair as a :class:`Signal`."""
     meta_path, data_path = _files(path)
-    doc = _object(
-        json.loads(
+    try:
+        parsed = json.loads(
             meta_path.read_text(encoding="utf-8"),
             object_pairs_hook=_unique,
             parse_constant=_no_constant,
-        ),
-        "the metadata",
-    )
+        )
+    except RecursionError:
+        raise ValueError(f"the metadata is nested deeper than {MAX_DEPTH} levels") from None
+    doc = _object(_json(parsed, "the metadata"), "the metadata")
     glob = _object(doc.get("global"), "global")
     datatype = glob.get("core:datatype")
     if not isinstance(datatype, str):

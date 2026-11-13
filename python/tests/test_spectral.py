@@ -179,3 +179,10 @@ def test_spectrogram_rejects_bad_arguments() -> None:
         spectral.spectrogram(x + 0j, 1.0, 4, one_sided=True)
     with pytest.raises(ValueError):
         spectral.spectrogram(x, 1.0, None)  # type: ignore[arg-type]
+
+
+def test_a_bool_is_not_a_sample_rate() -> None:
+    with pytest.raises(ValueError):
+        spectral.welch_psd(np.zeros(8), True)
+    with pytest.raises(ValueError):
+        spectral.spectrogram(np.zeros(8), True, 4)

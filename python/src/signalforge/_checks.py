@@ -24,10 +24,12 @@ def count(value: int, what: str) -> int:
 
 def real(value: float, what: str) -> float:
     """A finite real number (any ``numbers.Real`` but a bool) as a ``float``."""
-    if (
-        isinstance(value, bool | np.bool_)
-        or not isinstance(value, numbers.Real)
-        or not math.isfinite(value)
-    ):
+    if isinstance(value, bool | np.bool_) or not isinstance(value, numbers.Real):
         raise ValueError(f"{what} must be a finite number")
-    return float(value)
+    try:
+        f = float(value)
+    except OverflowError:  # an int too large for a float
+        raise ValueError(f"{what} must be a finite number") from None
+    if not math.isfinite(f):
+        raise ValueError(f"{what} must be a finite number")
+    return f

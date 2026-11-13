@@ -127,6 +127,12 @@ cases = [
         {"order": 2, "cutoff": 4.0, "sample_rate": 8.0}, "0 < cutoff < sample_rate/2 required"),
     err("butterworth.rate_zero", "butterworth_lowpass",
         {"order": 2, "cutoff": 1.0, "sample_rate": 0.0}, "sample_rate must be positive"),
+    err("butterworth.cutoff_above_nyquist", "butterworth_lowpass",
+        {"order": 2, "cutoff": 5.0, "sample_rate": 8.0}, "0 < cutoff < sample_rate/2 required"),
+    err("butterworth.cutoff_nan", "butterworth_highpass",
+        {"order": 2, "cutoff": "nan", "sample_rate": 8.0}, "the cutoff must be finite"),
+    err("butterworth.rate_nan", "butterworth_lowpass",
+        {"order": 2, "cutoff": 1.0, "sample_rate": "nan"}, "sample_rate must be finite"),
     resp("sos_response.one_pole", pole_half, [0.0, 0.25, 0.5], 1.0,
          expected=[2 + 0j, 1 / (1 + 0.5j), 2 / 3 + 0j],
          src="by hand: H = 1/(1 - 0.5 z^-1); z^-1 = 1, -j, -1 at f = 0, fs/4, fs/2 gives 2, "
@@ -140,6 +146,14 @@ cases = [
         {"sos": bad_a0, "frequencies": [0.0], "sample_rate": 1.0}, "every a0 must be nonzero"),
     err("sos_response.short_row", "sos_response",
         {"sos": short_row, "frequencies": [0.0], "sample_rate": 1.0}, "rows of 6 required"),
+    err("sos_response.no_sections", "sos_response",
+        {"sos": [], "frequencies": [0.0], "sample_rate": 1.0}, "at least one section required"),
+    err("sos_response.coefficient_inf", "sos_response",
+        {"sos": [[1.0, "inf", 0.0, 1.0, 0.0, 0.0]], "frequencies": [0.0], "sample_rate": 1.0},
+        "coefficients must be finite"),
+    err("sos_response.frequency_nan", "sos_response",
+        {"sos": [[1.0, 0.0, 0.0, 1.0, 0.0, 0.0]], "frequencies": ["nan"], "sample_rate": 1.0},
+        "frequencies must be finite"),
     filt("iir_filter.one_pole_impulse", [[0.5, 0.0, 0.0, 1.0, -0.5, 0.0]],
          [1.0, 0.0, 0.0, 0.0, 0.0, 0.0], [2, 4], expected=[0.5 ** (n + 1) for n in range(6)],
          src="by hand: y[n] = 0.5 x[n] + 0.5 y[n-1] with an impulse gives 0.5^(n+1)"),
@@ -152,6 +166,8 @@ cases = [
     filt("iir_filter.butterworth_complex_chunks", hp3, chirp, [1, 1, 18]),
     err("iir_filter.a0_zero", "iir_filter", {"sos": bad_a0, "samples": [1.0], "chunks": [1]},
         "every a0 must be nonzero"),
+    err("iir_filter.no_sections", "iir_filter", {"sos": [], "samples": [1.0], "chunks": [1]},
+        "at least one section required"),
 ]
 
 doc = {

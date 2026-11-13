@@ -69,6 +69,7 @@
     {"id": "decode_samples.bad_datatype", "op": "decode_samples", "args": {"data": "00", "datatype": "ru8"}, "error": "invalid_argument", "source": "unsigned types are not supported"},
     {"id": "read_sigmf.foreign_ci16", "op": "read_sigmf", "args": {"file": "foreign_ci16"}, "expected": {"samples": {"re": [0.5, 0.999969482421875, -1.0, 0.0], "im": [-0.25, 0.0, 3.0517578125e-05, 0.0]}, "sample_rate": 48000, "center_frequency": 915000000, "time_origin": 0, "units": null, "impedance": null, "metadata": {"core:author": "a test", "core:description": "four samples"}}, "tol": {"abs": 0, "rel": 0}, "source": "a file laid out as another tool writes one: codes over 2^15, frequency from the capture, core:author and core:description kept as metadata, annotations not read"},
     {"id": "read_sigmf.signalforge_rf32_be", "op": "read_sigmf", "args": {"file": "signalforge_rf32_be"}, "expected": {"samples": [0.5, -2.0, 3.25], "sample_rate": 2500000.0, "center_frequency": 0, "time_origin": 1.5, "units": "V", "impedance": 50, "metadata": {"run": 7, "note": "hi"}}, "tol": {"abs": 0, "rel": 0}, "source": "the signalforge extension fields map back to the Signal; two captures at one frequency"},
+    {"id": "read_sigmf.int64_extremes", "op": "read_sigmf", "args": {"file": "int64_extremes"}, "expected": {"samples": [-0.5], "sample_rate": 1000, "center_frequency": 0, "time_origin": 0, "units": null, "impedance": null, "metadata": {"x:min": -9223372036854775808, "x:max": 9223372036854775807}}, "tol": {"abs": 0, "rel": 0}, "source": "the int64 extremes are kept as integers"},
     {"id": "read_sigmf.no_captures_ri8", "op": "read_sigmf", "args": {"file": "no_captures_ri8"}, "expected": {"samples": [-1.0, 0.9921875, 0.0], "sample_rate": 1000, "center_frequency": 0, "time_origin": 0, "units": null, "impedance": null, "metadata": {}}, "tol": {"abs": 0, "rel": 0}, "source": "no captures: center frequency 0; i8 codes over 2^7"},
     {"id": "read_sigmf.two_frequencies", "op": "read_sigmf", "args": {"file": "two_frequencies"}, "error": "invalid_argument", "source": "captures at different frequencies are not one Signal"},
     {"id": "read_sigmf.two_channels", "op": "read_sigmf", "args": {"file": "two_channels"}, "error": "invalid_argument", "source": "one channel only"},
@@ -83,6 +84,20 @@
     {"id": "read_sigmf.duplicate_key", "op": "read_sigmf", "args": {"file": "duplicate_key"}, "error": "invalid_argument", "source": "duplicate JSON keys are ambiguous"},
     {"id": "read_sigmf.nan_token", "op": "read_sigmf", "args": {"file": "nan_token"}, "error": "invalid_argument", "source": "NaN is not JSON"},
     {"id": "read_sigmf.not_an_object", "op": "read_sigmf", "args": {"file": "not_an_object"}, "error": "invalid_argument", "source": "the metadata must be a JSON object"},
+    {"id": "read_sigmf.captures_null", "op": "read_sigmf", "args": {"file": "captures_null"}, "error": "invalid_argument", "source": "captures, when present, must be an array; null is not one"},
+    {"id": "read_sigmf.captures_object", "op": "read_sigmf", "args": {"file": "captures_object"}, "error": "invalid_argument", "source": "captures must be an array"},
+    {"id": "read_sigmf.metadata_null", "op": "read_sigmf", "args": {"file": "metadata_null"}, "error": "invalid_argument", "source": "signalforge:metadata, when present, must be an object; null is not one"},
+    {"id": "read_sigmf.integer_beyond_int64", "op": "read_sigmf", "args": {"file": "integer_beyond_int64"}, "error": "invalid_argument", "source": "JSON integers must fit in signed 64 bits; 2^63 does not"},
+    {"id": "read_sigmf.float_overflow", "op": "read_sigmf", "args": {"file": "float_overflow"}, "error": "invalid_argument", "source": "1e400 overflows a double; numbers must be finite"},
+    {"id": "read_sigmf.huge_integer_rate", "op": "read_sigmf", "args": {"file": "huge_integer_rate"}, "error": "invalid_argument", "source": "a 401-digit sample rate is outside the signed 64-bit range"},
+    {"id": "read_sigmf.lone_surrogate", "op": "read_sigmf", "args": {"file": "lone_surrogate"}, "error": "invalid_argument", "source": "an unpaired surrogate escape is not valid Unicode"},
+    {"id": "read_sigmf.too_deep", "op": "read_sigmf", "args": {"file": "too_deep"}, "error": "invalid_argument", "source": "63 arrays inside global inside the document are 65 levels; at most 64"},
+    {"id": "read_sigmf.infinity_token", "op": "read_sigmf", "args": {"file": "infinity_token"}, "error": "invalid_argument", "source": "Infinity is not JSON"},
+    {"id": "read_sigmf.metadata_only", "op": "read_sigmf", "args": {"file": "metadata_only"}, "error": "invalid_argument", "source": "a metadata-only recording has no samples"},
+    {"id": "read_sigmf.units_number", "op": "read_sigmf", "args": {"file": "units_number"}, "error": "invalid_argument", "source": "signalforge:units must be a string"},
+    {"id": "read_sigmf.time_origin_string", "op": "read_sigmf", "args": {"file": "time_origin_string"}, "error": "invalid_argument", "source": "signalforge:time_origin must be a number"},
+    {"id": "read_sigmf.impedance_bool", "op": "read_sigmf", "args": {"file": "impedance_bool"}, "error": "invalid_argument", "source": "signalforge:impedance must be a number, and a bool is not one"},
+    {"id": "read_sigmf.header_bytes_float", "op": "read_sigmf", "args": {"file": "header_bytes_float"}, "error": "invalid_argument", "source": "core:header_bytes must be the integer 0, and 0.0 is a float"},
     {"id": "read_sigmf.partial_sample", "op": "read_sigmf", "args": {"file": "partial_sample"}, "error": "invalid_argument", "source": "3 bytes is not a whole number of 2-byte samples"}
   ]
 }

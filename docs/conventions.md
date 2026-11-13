@@ -463,8 +463,17 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
   `metadata` under their own names; annotations and the rest of each capture are not read.
   JSON numbers without a fraction or exponent are integers (`int` / `long`), others floats;
   writing, a float always gets a fraction or an exponent (`2.0`, not `2`), so the kind survives a
-  trip through the other language. A missing or unreadable file is an OS error (`OSError` /
-  `IOException`), not `invalid_argument`. **(implemented)**
+  trip through the other language. `captures` and `signalforge:metadata` may be missing, but `null`
+  is not an array or an object and is rejected. A missing or unreadable file is an OS error
+  (`OSError` / `IOException`), not `invalid_argument`. **(implemented)**
+- **JSON limits**, the same reading and writing, so whatever one language writes the other reads:
+  integers within signed 64 bits (`−2^63 … 2^63 − 1`); floats finite (a literal that overflows a
+  double, such as `1e400`, is rejected, not read as infinity); strings and keys valid Unicode (no
+  unpaired surrogate, written or as a `\u` escape); objects and arrays nested at most 64 levels
+  (`MAX_DEPTH` / `SignalFiles.MaxDepth`), the top object being level 1, so a metadata value
+  without a `:` (inside `signalforge:metadata`) starts at level 4 and one with a `:` at level 3.
+  Writing checks everything before either file is touched, so a rejected write leaves an existing
+  recording as it was. **(implemented)**
 
 ## PRBS
 

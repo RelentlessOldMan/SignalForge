@@ -121,4 +121,54 @@ public sealed class SignalFilesTests : IDisposable
     [Fact]
     public void MissingFileIsAnIoError() =>
         Assert.Throws<FileNotFoundException>(() => SignalFiles.ReadSigmf<double>(P("absent")));
+
+    private static object Nest(int k)
+    {
+        object v = new List<object?>();
+        for (int i = 1; i < k; i++)
+            v = new List<object?> { v };
+        return v;
+    }
+
+    [Theory]
+    [InlineData("plain", 61)]
+    [InlineData("x:colon", 62)]
+    public void MetadataNestingLimit(string key, int fits)
+    {
+        // A plain key's value sits at level 4 (document, global, signalforge:metadata), a colon key's
+        // at level 3; 64 levels in all is the limit, read and write.
+        SignalFiles.WriteSigmf(P("ok"), new Signal<double>([0.5], 1, metadata: new Dictionary<string, object?> { [key] = Nest(fits) }));
+        object? back = SignalFiles.ReadSigmf<double>(P("ok")).Metadata[key];
+        for (int i = 1; i < fits; i++)
+            back = Assert.Single(Assert.IsType<List<object?>>(back));
+        Assert.Empty(Assert.IsType<List<object?>>(back));
+        var e = Assert.ThrowsAny<ArgumentException>(() =>
+            SignalFiles.WriteSigmf(P("deep"), new Signal<double>([0.5], 1, metadata: new Dictionary<string, object?> { [key] = Nest(fits + 1) })));
+        Assert.Contains("deeper", e.Message, StringComparison.Ordinal);
+        File.WriteAllText(P("deep.sigmf-meta"), File.ReadAllText(P("ok.sigmf-meta")).Replace("[]", "[[]]", StringComparison.Ordinal));
+        File.Copy(P("ok.sigmf-data"), P("deep.sigmf-data"));
+        Assert.ThrowsAny<ArgumentException>(() => SignalFiles.ReadSigmf<double>(P("deep")));
+    }
+
+    [Fact]
+    public void AFailedWriteLeavesExistingFiles()
+    {
+        SignalFiles.WriteSigmf(P("r"), new Signal<double>([0.25], 1));
+        byte[][] before = [File.ReadAllBytes(P("r.sigmf-meta")), File.ReadAllBytes(P("r.sigmf-data"))];
+        foreach (object bad in (object[])["a\ud800b", ulong.MaxValue, (ulong)long.MaxValue + 1])
+            Assert.ThrowsAny<ArgumentException>(() =>
+                SignalFiles.WriteSigmf(P("r"), new Signal<double>([0.5, 0.5], 2, metadata: new Dictionary<string, object?> { ["n"] = bad })));
+        Assert.ThrowsAny<ArgumentException>(() => SignalFiles.WriteSigmf(P("r"), new Signal<double>([0.5], 2, units: "\udc00")));
+        Assert.Equal(before[0], File.ReadAllBytes(P("r.sigmf-meta")));
+        Assert.Equal(before[1], File.ReadAllBytes(P("r.sigmf-data")));
+    }
+
+    [Fact]
+    public void Int64ExtremesRoundTrip()
+    {
+        SignalFiles.WriteSigmf(P("r"), new Signal<double>([0.5], 1, metadata: new Dictionary<string, object?> { ["lo"] = long.MinValue, ["hi"] = (ulong)long.MaxValue }));
+        var m = SignalFiles.ReadSigmf<double>(P("r")).Metadata;
+        Assert.Equal(long.MinValue, m["lo"]);
+        Assert.Equal(long.MaxValue, m["hi"]);
+    }
 }

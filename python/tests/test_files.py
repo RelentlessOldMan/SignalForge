@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -100,3 +101,61 @@ def test_encode_rejects_bad_shapes_and_kinds() -> None:
 def test_missing_file_is_an_os_error(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         sf.read_sigmf(tmp_path / "absent")
+
+
+def _nest(k: int) -> object:
+    v: object = []
+    for _ in range(k - 1):
+        v = [v]
+    return v
+
+
+@pytest.mark.parametrize(("key", "fits"), [("plain", 61), ("x:colon", 62)])
+def test_metadata_nesting_limit(tmp_path: Path, key: str, fits: int) -> None:
+    # a plain key's value sits at level 4 (document, global, signalforge:metadata), a colon key's
+    # at level 3; 64 levels in all is the limit, read and write
+    sf.write_sigmf(tmp_path / "ok", sf.Signal(np.array([0.5]), 1.0, metadata={key: _nest(fits)}))
+    assert sf.read_sigmf(tmp_path / "ok").metadata[key] == _nest(fits)
+    with pytest.raises(ValueError, match="deeper"):
+        sf.write_sigmf(
+            tmp_path / "deep", sf.Signal(np.array([0.5]), 1.0, metadata={key: _nest(fits + 1)})
+        )
+    text = (tmp_path / "ok.sigmf-meta").read_text(encoding="utf-8")
+    (tmp_path / "deep.sigmf-meta").write_text(text.replace("[]", "[[]]"), encoding="utf-8")
+    (tmp_path / "deep.sigmf-data").write_bytes((tmp_path / "ok.sigmf-data").read_bytes())
+    with pytest.raises(ValueError):
+        sf.read_sigmf(tmp_path / "deep")
+
+
+def test_a_failed_write_leaves_existing_files(tmp_path: Path) -> None:
+    sf.write_sigmf(tmp_path / "r", sf.Signal(np.array([0.25]), 1.0))
+    before = [(tmp_path / n).read_bytes() for n in ("r.sigmf-meta", "r.sigmf-data")]
+    for bad in ({"note": "a\ud800b"}, {"n": 2**63}, {"n": -(2**63) - 1}):
+        with pytest.raises(ValueError):
+            sf.write_sigmf(tmp_path / "r", sf.Signal(np.array([0.5, 0.5]), 2.0, metadata=bad))
+    assert [(tmp_path / n).read_bytes() for n in ("r.sigmf-meta", "r.sigmf-data")] == before
+
+
+def test_int64_extremes_and_numpy_scalars_round_trip(tmp_path: Path) -> None:
+    rate: Any = np.float32(8.0)  # NumPy scalars, not floats
+    fc: Any = np.float32(1e6)
+    t0: Any = np.int64(3)
+    s = sf.Signal(
+        np.zeros(2),
+        rate,
+        center_frequency=fc,
+        time_origin=t0,
+        metadata={"lo": -(2**63), "hi": np.int64(2**63 - 1)},
+    )
+    sf.write_sigmf(tmp_path / "r", s)
+    r = sf.read_sigmf(tmp_path / "r")
+    assert (r.center_frequency, r.time_origin) == (1e6, 3.0)
+    assert r.metadata == {"lo": -(2**63), "hi": 2**63 - 1}
+    assert type(r.metadata["hi"]) is int
+
+
+def test_decode_counts_bytes_of_a_memoryview() -> None:
+    codes = np.array([1, -2, 3], dtype="<i2")
+    assert np.array_equal(
+        sf.decode_samples(memoryview(codes.tobytes()).cast("h"), "ri16_le"), codes / 32768
+    )

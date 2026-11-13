@@ -147,6 +147,13 @@ Updated with every chunk of work. Dates are absolute.
   passed; conformance 415/415 in both.
 - 2026-11-13: `build.ps1` runs every vector generator's `--check`, as CI already did, so a stale
   vector file fails locally before a push.
+- 2026-11-13: review of the signal files, spectrogram and IIR slices (no wrong numbers found):
+  the two languages now apply one set of JSON limits to SigMF meta (int64 integers, finite floats,
+  valid Unicode, 64 levels, `null` captures or metadata rejected), and Python checks everything
+  before writing either file, as C# did. Python `write_sigmf` accepts NumPy scalars in the signal,
+  `decode_samples` counts a memoryview's bytes, and a huge JSON integer or a bool sample rate is a
+  `ValueError`. 24 new vectors, 23 of them errors (files, IIR, spectrogram); the C# runner reads an empty `sos`.
+  Python 809 passed, 2 skipped (3.10 too); .NET 655 passed; conformance 468/468 in both.
 - 2026-11-13: more waveforms in both languages: `multitone` (chosen phases, or `newman_phases`),
   linear `chirp` (reaches `stop` at N/fs) and `pulse_train` (whole samples, floored modulo, any
   delay). `tone` now rejects non-finite frequency, amplitude and phase in both. 29 vectors from

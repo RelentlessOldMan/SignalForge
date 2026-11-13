@@ -115,6 +115,10 @@ cases = [
                                        "noverlap": 8}, "noverlap < nperseg required"),
     err("spectrogram.rate_zero", {"samples": ramp, "sample_rate": 0.0, "nperseg": 4},
         "sample_rate must be positive"),
+    err("spectrogram.noverlap_negative", {"samples": ramp, "sample_rate": 1.0, "nperseg": 8,
+                                          "noverlap": -1}, "noverlap >= 0 required"),
+    err("spectrogram.rate_nan", {"samples": ramp, "sample_rate": "nan", "nperseg": 4},
+        "sample_rate must be finite"),
 ]
 
 doc = {

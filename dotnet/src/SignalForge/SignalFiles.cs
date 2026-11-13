@@ -18,6 +18,9 @@ public static class SignalFiles
     /// <summary>The SigMF version written into <c>core:version</c>.</summary>
     public const string SigmfVersion = "1.2.0";
 
+    /// <summary>Deepest nesting of objects and arrays in a <c>.sigmf-meta</c> file; the top object is level 1.</summary>
+    public const int MaxDepth = 64;
+
     private static readonly HashSet<string> Reserved =
     [
         "core:datatype", "core:version", "core:sample_rate", "core:extensions",
@@ -195,7 +198,7 @@ public static class SignalFiles
             w.WritePropertyName("signalforge:time_origin");
             WriteDouble(w, signal.TimeOrigin);
             if (signal.Units is { } units)
-                w.WriteString("signalforge:units", units);
+                w.WriteString("signalforge:units", Text(units, "units"));
             if (signal.Impedance is { } r)
             {
                 w.WritePropertyName("signalforge:impedance");
@@ -207,8 +210,8 @@ public static class SignalFiles
                 w.WriteStartObject("signalforge:metadata");
                 foreach (var (k, v) in plain)
                 {
-                    w.WritePropertyName(k);
-                    WriteValue(w, v, k);
+                    w.WritePropertyName(Text(k, k));
+                    WriteValue(w, v, k, 4);
                 }
                 w.WriteEndObject();
             }
@@ -216,8 +219,8 @@ public static class SignalFiles
             {
                 if (Reserved.Contains(k) || k.StartsWith("signalforge:", StringComparison.Ordinal))
                     throw new ArgumentException($"metadata key '{k}' is reserved", nameof(signal));
-                w.WritePropertyName(k);
-                WriteValue(w, v, k);
+                w.WritePropertyName(Text(k, k));
+                WriteValue(w, v, k, 3);
             }
             w.WriteEndObject();
             w.WriteStartArray("captures");
@@ -244,16 +247,22 @@ public static class SignalFiles
         w.WriteRawValue(s.Contains('.', StringComparison.Ordinal) || s.Contains('E', StringComparison.Ordinal) ? s : s + ".0");
     }
 
-    private static void WriteValue(Utf8JsonWriter w, object? v, string where)
+    /// <summary>Writes metadata value <paramref name="v"/>; an object or array would sit at
+    /// <paramref name="depth"/> (the document's top object is level 1).</summary>
+    private static void WriteValue(Utf8JsonWriter w, object? v, string where, int depth)
     {
+        if (v is IEnumerable and not string && depth > MaxDepth)
+            throw new ArgumentException($"metadata {where}: nested deeper than {MaxDepth} levels");
         switch (v)
         {
             case null: w.WriteNullValue(); break;
-            case string s: w.WriteStringValue(s); break;
+            case string s: w.WriteStringValue(Text(s, $"metadata {where}")); break;
             case bool b: w.WriteBooleanValue(b); break;
             case sbyte or byte or short or ushort or int or uint or long:
                 w.WriteNumberValue(Convert.ToInt64(v, CultureInfo.InvariantCulture)); break;
-            case ulong u: w.WriteNumberValue(u); break;
+            case ulong u when u <= long.MaxValue: w.WriteNumberValue(u); break;
+            case ulong:
+                throw new ArgumentException($"metadata {where}: integer outside the signed 64-bit range");
             case float or double:
                 double d = Convert.ToDouble(v, CultureInfo.InvariantCulture);
                 if (!double.IsFinite(d))
@@ -266,8 +275,8 @@ public static class SignalFiles
                 {
                     if (e.Key is not string k)
                         throw new ArgumentException($"metadata {where}: object keys must be strings");
-                    w.WritePropertyName(k);
-                    WriteValue(w, e.Value, $"{where}.{k}");
+                    w.WritePropertyName(Text(k, $"metadata {where}"));
+                    WriteValue(w, e.Value, $"{where}.{k}", depth + 1);
                 }
                 w.WriteEndObject();
                 break;
@@ -275,7 +284,7 @@ public static class SignalFiles
                 w.WriteStartArray();
                 int i = 0;
                 foreach (object? x in items)
-                    WriteValue(w, x, $"{where}[{i++}]");
+                    WriteValue(w, x, $"{where}[{i++}]", depth + 1);
                 w.WriteEndArray();
                 break;
             default:
@@ -295,10 +304,10 @@ public static class SignalFiles
         object? doc;
         try
         {
-            using var json = JsonDocument.Parse(text);
+            using var json = JsonDocument.Parse(text, new JsonDocumentOptions { MaxDepth = MaxDepth });
             doc = ToValue(json.RootElement);
         }
-        catch (JsonException e)
+        catch (Exception e) when (e is JsonException or InvalidOperationException)
         {
             throw new ArgumentException($"{metaPath}: not valid JSON: {e.Message}", nameof(path), e);
         }
@@ -314,7 +323,7 @@ public static class SignalFiles
         foreach (string k in (string[])["core:dataset", "core:metadata_only"])
             if (glob.ContainsKey(k))
                 throw new ArgumentException($"{k} recordings are not supported", nameof(path));
-        var captures = top.GetValueOrDefault("captures") ?? new List<object?>();
+        object? captures = top.TryGetValue("captures", out var cv) ? cv : new List<object?>();
         if (captures is not List<object?> caps)
             throw new ArgumentException("captures must be a JSON array", nameof(path));
         var freqs = new HashSet<double>();
@@ -332,7 +341,7 @@ public static class SignalFiles
             throw new ArgumentException("signalforge:units must be a string", nameof(path));
         object? impedance = glob.GetValueOrDefault("signalforge:impedance");
         var metadata = new Dictionary<string, object?>(
-            Obj(glob.GetValueOrDefault("signalforge:metadata") ?? new Dictionary<string, object?>(), "signalforge:metadata"));
+            Obj(glob.TryGetValue("signalforge:metadata", out var mv) ? mv : new Dictionary<string, object?>(), "signalforge:metadata"));
         foreach (var (k, v) in glob)
             if (!Reserved.Contains(k) && !k.StartsWith("signalforge:", StringComparison.Ordinal))
                 metadata[k] = v;
@@ -340,6 +349,21 @@ public static class SignalFiles
         T[] samples = DecodeSamples<T>(File.ReadAllBytes(dataPath), datatype);
         return new Signal<T>(samples, rate, freqs.Count == 1 ? freqs.First() : 0.0, timeOrigin, (string?)units,
             impedance is null ? null : Num(impedance, "signalforge:impedance"), metadata);
+    }
+
+    /// <summary><paramref name="s"/>, or an exception if it has a lone surrogate (not valid Unicode).</summary>
+    private static string Text(string s, string where, bool read = false)
+    {
+        for (int i = 0; i < s.Length; i++)
+        {
+            if (char.IsHighSurrogate(s[i]) && i + 1 < s.Length && char.IsLowSurrogate(s[i + 1]))
+                i++;
+            else if (char.IsSurrogate(s[i]))
+                throw read
+                    ? new JsonException($"{where} is not valid Unicode (a lone surrogate)")
+                    : new ArgumentException($"{where}: not valid Unicode (a lone surrogate)");
+        }
+        return s;
     }
 
     private static Dictionary<string, object?> Obj(object? v, string what) =>
@@ -361,20 +385,22 @@ public static class SignalFiles
             case JsonValueKind.Object:
                 var map = new Dictionary<string, object?>();
                 foreach (var p in e.EnumerateObject())
-                    if (!map.TryAdd(p.Name, ToValue(p.Value)))
+                    if (!map.TryAdd(Text(p.Name, "a key", read: true), ToValue(p.Value)))
                         throw new JsonException($"duplicate JSON key '{p.Name}'");
                 return map;
             case JsonValueKind.Array:
                 return e.EnumerateArray().Select(ToValue).ToList();
             case JsonValueKind.String:
-                return e.GetString();
+                return Text(e.GetString()!, "a string", read: true);
             case JsonValueKind.True:
                 return true;
             case JsonValueKind.False:
                 return false;
             case JsonValueKind.Number:
-                string raw = e.GetRawText();
-                return raw.AsSpan().IndexOfAny(".eE") < 0 && e.TryGetInt64(out long l) ? (object)l : e.GetDouble();
+                if (e.GetRawText().AsSpan().IndexOfAny(".eE") < 0)
+                    return e.TryGetInt64(out long l) ? l : throw new JsonException("an integer is outside the signed 64-bit range");
+                double d = e.GetDouble();
+                return double.IsFinite(d) ? d : throw new JsonException($"a number overflows a double: {e.GetRawText()}");
             default:
                 return null;
         }

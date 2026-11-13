@@ -445,7 +445,12 @@ public static class Conformance
 
     /// <summary>A 2-D vector argument as rows.</summary>
     private static double[][] Rows(object? v) =>
-        v as double[][] ?? throw new InvalidDataException("expected an array of rows");
+        v switch
+        {
+            double[][] rows => rows,
+            Array { Length: 0 } => [],
+            _ => throw new InvalidDataException("expected an array of rows"),
+        };
 
     /// <summary>Runs the samples through one streaming filter, made from the coefficients when the
     /// case runs, in chunks of the given lengths.</summary>
