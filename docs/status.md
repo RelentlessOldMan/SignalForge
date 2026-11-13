@@ -4,11 +4,17 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **8-PSK and 16-QAM through the link**: a `modulation` config field (`qpsk` by default) so the
-   link maps, recovers and measures 8-PSK and 16-QAM with the same chain. It needs a coarse
-   frequency estimate for each (8th power for 8-PSK; 4th power works for 16-QAM), the preamble
-   resolving each loop's ambiguity, and BER against `psk8_ber_theory`/`qam16_ber_theory`. Each
-   gets a link config in `vectors/links/`.
+1. **A coarse frequency estimator that works on 16-QAM**, then 16-QAM through the link. Tried
+   on 2026-11-13 (not committed): a `modulation` field with `qpsk_frequency_offset` and
+   `qpsk_block_phases` reused for 16-QAM. `E[s⁴]` is a negative real for 16-QAM (−0.68) as for
+   QPSK, but the lag-1 estimator `Σ w[k]·conj(w[k−1])`, `w = z⁴`, has so much self-noise on
+   16-QAM (mean of each term 0.46 against an rms of about 3) that it was 7 Hz off on 400
+   noiseless symbols at 1000 Bd with a 30 Hz offset. The 32-symbol block phases then moved more
+   than π/4 per block, the line through them aliased, and the BER was 0.41. Options: use only
+   the outer (corner) points, a non-differential estimate (the peak of the spectrum of `z⁴`), or
+   a data-aided estimate on a longer preamble. Write the convention and ADR first.
+2. **8-PSK through the link**: needs eighth-power frequency and phase estimators
+   (`psk8_frequency_offset`, `psk8_block_phases`), then the same `modulation` field.
 
 ## Built
 
