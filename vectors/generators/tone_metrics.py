@@ -63,9 +63,20 @@ def case(case_id, x, fs, expected, src, **kw):
             "source": src}
 
 
-def err(case_id, args, why):
-    return {"id": case_id, "op": "tone_metrics", "args": args, "error": "invalid_argument",
-            "source": why}
+def err(case_id, args, why, op="tone_metrics"):
+    return {"id": case_id, "op": op, "args": args, "error": "invalid_argument", "source": why}
+
+
+def spurs(case_id, x, fs, carrier, found, src, **kw):
+    """An sfdr case: carrier and each found spur as (frequency, power)."""
+    dbc = [10 * math.log10(p / carrier[1]) for _, p in found]
+    expected = {"carrier_frequency": carrier[0], "carrier_power": carrier[1],
+                "sfdr_db": -dbc[0] if found else "inf",
+                "spur_frequencies": [f for f, _ in found], "spur_powers": [p for _, p in found],
+                "spur_dbc": dbc}
+    c = case(case_id, x, fs, expected, src, **kw)
+    c["op"] = "sfdr"
+    return c
 
 
 # Real, rectangular, N = fs = 64 (1 Hz bins), half-width 1. Groups: DC 0-1, fundamental 4-6,
@@ -148,6 +159,27 @@ cases = [
                                          "fundamental": "nan"}, "the fundamental must be finite"),
     err("tone_metrics.no_signal", {"samples": [0.0] * 16, "sample_rate": 16.0},
         "all zeros: no signal power at the fundamental"),
+    spurs("sfdr.real_rectangular", rect, 64.0, (5.0, 0.5),
+          [(10.0, 0.1**2 / 2), (15.0, 0.05**2 / 2), (13.0, 0.02**2 / 2), (28.0, 0.01**2 / 2)],
+          "closed form: the tone_metrics real_rectangular input; spurs strongest first, the "
+          "harmonics at 10 and 15 Hz among them", window="rectangular", num_spurs=4),
+    spurs("sfdr.complex_hann", cx, 64.0, (20.0, 0.8**2),
+          [(-24.0, 0.05**2), (-4.0, 0.02**2), (10.0, 0.004**2)],
+          "closed form: the tone_metrics complex_hann_aliased input; each spur's three Hann bins "
+          "lie in its group, so its centroid is its bin", window="hann", num_spurs=3),
+    spurs("sfdr.named_carrier_below_spur", named, 32.0, (3.0, 0.1**2 / 2), [(12.0, 0.5**2 / 2)],
+          "closed form: the carrier named at 3 Hz is 14 dB below the 12 Hz spur, so SFDR is "
+          "negative", window="rectangular", fundamental=3.0),
+    spurs("sfdr.no_bins_left", real_tones(8, 0.0, [(3, 1.0, 0.0)]), 8.0, (3.0, 0.5), [],
+          "by hand: 5 one-sided bins; with half-width 1 DC takes bins 0-1 and the 3 Hz carrier "
+          "2-4, so no bin is left for a spur", window="rectangular", width=1, num_spurs=2),
+    err("sfdr.no_spurs_asked", {"samples": rect, "sample_rate": 64.0, "num_spurs": 0},
+        "num_spurs >= 1 required", op="sfdr"),
+    err("sfdr.fundamental_in_dc", {"samples": rect, "sample_rate": 64.0, "window": "rectangular",
+                                   "fundamental": 0.0}, "the fundamental is in the DC group",
+        op="sfdr"),
+    err("sfdr.one_sample", {"samples": [1.0], "sample_rate": 1.0},
+        "at least two samples required", op="sfdr"),
     err("tone_metrics.kaiser_without_beta", {"samples": rect, "sample_rate": 64.0,
                                              "window": "kaiser"}, "the kaiser window needs beta"),
 ]
@@ -155,8 +187,8 @@ cases = [
 doc = {
     "schema": 1,
     "suite": "tone_metrics",
-    "description": "SNR, SINAD, THD and ENOB of a tone from one windowed spectrum (conventions: "
-    "Tone metrics).",
+    "description": "SNR, SINAD, THD and ENOB of a tone, and SFDR with its spurs, from one windowed "
+    "spectrum (conventions: Tone metrics, Spurs and SFDR).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "tone_metrics.json"

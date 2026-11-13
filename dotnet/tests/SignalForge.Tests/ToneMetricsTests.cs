@@ -73,4 +73,19 @@ public class ToneMetricsTests
         Assert.ThrowsAny<ArgumentException>(() => Measurements.ToneMetrics(x, 32, WindowType.Kaiser));
         Assert.ThrowsAny<ArgumentException>(() => Measurements.ToneMetrics(x.AsSpan(0, 1), 32));
     }
+
+    [Fact]
+    public void SfdrTakesTheStrongestSpurAndNeverDc()
+    {
+        double[] x = Cosines(1024, 0.5, (100, 1.0), (200, 0.03), (371.4, 0.001));
+        var s = Measurements.Sfdr(x, 1024, numSpurs: 2);
+        Assert.Equal(100.0, s.CarrierFrequency, 1e-9);
+        Assert.Equal(200.0, s.SpurFrequencies[0], 1e-9);
+        Assert.Equal(-20 * Math.Log10(0.03), s.SfdrDb, 1e-9);
+        Assert.Equal(371.4, s.SpurFrequencies[1], 0.01);
+        Assert.Equal(20 * Math.Log10(0.001), s.SpurDbc[1], 1e-3);
+        var t = Measurements.ToneMetrics(x, 1024);
+        Assert.Equal(t.SignalPower, s.CarrierPower);
+        Assert.Throws<ArgumentOutOfRangeException>(() => Measurements.Sfdr(x, 1024, numSpurs: 0));
+    }
 }

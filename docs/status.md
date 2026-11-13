@@ -4,9 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **SFDR and spurs**: the largest spur relative to the carrier (dBc), found from the same bin
-   groups as the tone metrics, and a spur list.
-2. **Band-pass Butterworth** IIR design (low-pass prototype, transformed), with closed-form
+1. **Band-pass Butterworth** IIR design (low-pass prototype, transformed), with closed-form
    magnitude vectors.
 
 ## Built
@@ -170,14 +168,19 @@ Updated with every chunk of work. Dates are absolute.
   18 vectors (`generators/tone_metrics.py`) built from on-bin tones whose group powers are known
   in closed form, including aliased harmonics of a complex tone and the Hann 1/6 : 2/3 : 1/6 split.
   Python 839 passed, 2 skipped (3.10 too); .NET 681 passed; conformance 486/486 in both.
-
+- 2026-11-13: SFDR in both languages: `sfdr` / `Measurements.Sfdr` gives the carrier and up to
+  `num_spurs` spurs (group power, power centroid, dBc), strongest peak bin first, DC never a spur,
+  from the same groups as the tone metrics; both languages now share one grouping helper. 7 more
+  closed-form vectors in `tone_metrics.json`, among them a named carrier below its spur (negative
+  SFDR) and a spectrum with no bin left for a spur.
+  Python 851 passed, 2 skipped (3.10 too); .NET 689 passed; conformance 493/493 in both.
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth low-pass and high-pass (band-pass,
 Chebyshev, elliptic), zero-phase filtering, FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
-SFDR, phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
+phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.
 

@@ -41,5 +41,7 @@ those choices, so they are fixed here.
   can always be reproduced.
 - A tone close to DC or Nyquist loses part of its group to clipping or to DC; the centroid is then
   biased. Measurements should keep the tone a few groups away from both.
-- Spurs that are not harmonics count as noise; SFDR and spur search come later as their own
-  measurement.
+- Spurs that are not harmonics count as noise in the tone metrics. SFDR (`sfdr` /
+  `Measurements.Sfdr`, added the same day) uses the same spectrum and groups: after DC and the
+  carrier, each spur is the group around the strongest bin left, so a harmonic is a spur like any
+  other and DC never is one.

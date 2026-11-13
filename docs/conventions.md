@@ -216,6 +216,25 @@ C#: `Measurements.ToneMetrics`.
   `N + H = 0` gives `sinad_db` and `enob` `+∞`. Noise is not scaled for the bins the groups took.
   The four group powers add up to the PSD's total power. **(implemented)**
 
+## Spurs and SFDR
+
+Python: `signalforge.measurements.sfdr`; C#: `Measurements.Sfdr`. Same spectrum, half-width and
+groups as the tone metrics (ADR 0015).
+
+- **Call:** `sfdr(samples, sample_rate, window="blackman_harris", beta=None, width=None,
+  fundamental=None, num_spurs=1)`, arguments as for `tone_metrics`; `num_spurs ≥ 1`.
+  **(implemented)**
+- **Groups:** DC, then the carrier (the tone metrics' fundamental), then spurs one at a time: each
+  spur is the group around the unclaimed bin with the largest `P_k` (the first, on a tie), until
+  `num_spurs` are found, no bin is left, or the largest bin left has zero power. So spurs come
+  strongest peak bin first, a harmonic is a spur like any other, and DC is never one.
+  **(implemented)**
+- **Result** (`Sfdr`): `carrier_frequency` and `carrier_power` (as `fundamental_frequency` and
+  `signal_power`), and per spur, in the order found, `spur_frequencies` (the group's power
+  centroid), `spur_powers` (the group's power) and `spur_dbc = 10·log10(spur / carrier)`.
+  `sfdr_db = −spur_dbc[0]`, in dB below the carrier (negative when a spur is stronger than a
+  named carrier); `+∞` and empty arrays when no spur is found. **(implemented)**
+
 ## Bits and symbols
 
 - Bits are integers 0 or 1 (`uint8` / `byte`). **(implemented)**
