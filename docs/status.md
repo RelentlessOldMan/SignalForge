@@ -4,11 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **LLR statistics in the link**: in AWGN the QPSK LLR of a sent 0 is Gaussian with mean
-   `2·Es/N0` and variance twice that (the consistency condition); check it through `qpsk_link`'s
-   pieces (shaping, matched filter, sampling) in both suites, which tests the receive chain's
-   scaling end to end.
-2. **Block fading**: Rayleigh and Rician flat fading, one complex gain per block of samples
+1. **Block fading**: Rayleigh and Rician flat fading, one complex gain per block of samples
    (`rician_fading(samples, k_factor, block_length, *, seed)`, unit mean power, K = 0 is
    Rayleigh); the gain's statistics against theory in the unit tests, deterministic cases in
    vectors.
@@ -442,6 +438,10 @@ Updated with every chunk of work. Dates are absolute.
   sum over every input sample, its own I0 series); tests: tones up to 0.25·fs within 5e-5
   (measured floor about 2e-5), exact integer shifts. Python 1976 passed, 2 skipped; .NET 1583
   passed.
+- 2026-11-13: LLR statistics through the receive chain (tests only): QPSK through RRC shaping,
+  AWGN, the matched filter and sampling at Es/N0 = 7 dB gives signed LLRs with mean `2·Es/N0`
+  and variance twice that, within 1.5 % and 2 % (measured within 0.3 %), in both link suites.
+  Python 1977 passed, 2 skipped; .NET 1584 passed.
 
 ## Not built
 

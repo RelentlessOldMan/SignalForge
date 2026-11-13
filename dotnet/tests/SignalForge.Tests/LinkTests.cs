@@ -133,6 +133,26 @@ public class LinkTests
         Assert.True(Math.Abs(ber - theory) / theory < 0.08, $"ber {ber} vs theory {theory}");
     }
 
+    /// <summary>In AWGN the LLR of a sent bit, signed so a correct bit is positive, is Gaussian with
+    /// mean 2·Es/N0 and variance twice that (Es = 1): checks the chain's scaling end to end.</summary>
+    [Fact]
+    public void QpskLlrsThroughTheReceiveChain()
+    {
+        const int sps = 4;
+        byte[] bits = Waveforms.Prbs(15, 200_000);
+        Complex[] symbols = Modulation.QpskMap(bits);
+        double[] h = Dsp.RrcTaps(0.35, sps, 10);
+        double esN0Db = 4.0 + 10 * Math.Log10(2), n0 = Math.Pow(10, -esN0Db / 10);
+        Complex[] tx = Dsp.PulseShape(symbols, h, sps);
+        Complex[] rx = Dsp.Convolve(Channel.Awgn(tx, esN0Db, sps, seed: 12, signalPower: 1.0 / sps), h);
+        double[] llr = Modulation.QpskDemapLlr(Every(rx, h.Length - 1, sps, symbols.Length), n0);
+        double[] signed = [.. llr.Select((l, i) => l * (1 - 2.0 * bits[i]))];
+        double mean = signed.Average(), variance = signed.Sum(l => (l - mean) * (l - mean)) / signed.Length;
+        // 200 000 LLRs: the standard errors are about 0.2 % and 0.3 %; the filter adds a little ISI
+        Assert.Equal(1, mean / (2 / n0), 0.015);
+        Assert.Equal(1, variance / (4 / n0), 0.02);
+    }
+
     // Reference values: Python's math.erfc (the C library), 0.5 * erfc(sqrt(10**(db/10))).
     [Theory]
     [InlineData(-20.0, 0.4437685419908576)]

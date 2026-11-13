@@ -18,6 +18,7 @@ from signalforge import (
     pulse_shape,
     qpsk_ber_theory,
     qpsk_demap_hard,
+    qpsk_demap_llr,
     qpsk_map,
     rrc_taps,
 )
@@ -135,6 +136,25 @@ def test_qpsk_link_ber_matches_theory() -> None:
     theory = qpsk_ber_theory(eb_n0_db)  # 0.0125
     # ~2500 errors expected: 3 sigma is about 6 %; the truncated filter adds a little ISI
     assert abs(ber - theory) / theory < 0.08
+
+
+def test_qpsk_llrs_through_the_receive_chain() -> None:
+    """In AWGN the LLR of a sent bit, signed so a correct bit is positive, is Gaussian with mean
+    2*Es/N0 and variance twice that (Es = 1): checks the chain's scaling end to end."""
+    sps = 4
+    bits = prbs(15, 200_000)
+    symbols = qpsk_map(bits)
+    h = rrc_taps(0.35, sps, 10)
+    es_n0_db = 4.0 + 10 * math.log10(2)
+    rx = convolve(
+        awgn(pulse_shape(symbols, h, sps), es_n0_db, sps, seed=12, signal_power=1 / sps), h
+    )
+    sampled = rx[h.size - 1 : h.size - 1 + symbols.size * sps : sps]
+    n0 = 10 ** (-es_n0_db / 10)
+    llr = qpsk_demap_llr(sampled, n0) * (1 - 2.0 * bits)
+    # 200 000 LLRs: the standard errors are about 0.2 % and 0.3 %; the filter adds a little ISI
+    assert llr.mean() == pytest.approx(2 / n0, rel=0.015)
+    assert llr.var() == pytest.approx(4 / n0, rel=0.02)
 
 
 def test_qpsk_ber_theory_limits() -> None:
