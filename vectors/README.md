@@ -45,12 +45,19 @@ come from are in [docs/testing.md](../docs/testing.md): never from SignalForge's
 |---|---|
 | number | real number (integers compare as numbers) |
 | `"inf"`, `"-inf"`, `"nan"` | special floats; NaN matches only NaN |
+| `null` | no value (`None` / `null`); matches only null |
 | `[1, 2, 3]` | real or integer array |
 | `{"re": 1, "im": 2}` | complex number |
 | `{"re": [..], "im": [..]}` | complex array |
 | any other object | a structured result; **only the fields listed are compared** |
 
 Structured results use the Python field names (`mean_power`, `peak_index`, …).
+
+## Link configs
+
+`links/*.json` are `qpsk_link` configs (the config's field names) that `build.ps1` and CI run in
+both languages and compare statistically (`docs/testing.md`, Cross-language checks). They have no
+expected values.
 
 ## Runner self-test
 

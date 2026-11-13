@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Cross-language compare tool**: C# conformance report (to match the Python
-   `--report` output) and a small script that diffs the two reports, plus a link-report compare:
-   the same noisy `qpsk_link` config run in both languages, BER and EVM compared statistically.
-2. **FIR design and filtering**: windowed-sinc low-pass, band-pass and high-pass design, and a
+1. **FIR design and filtering**: windowed-sinc low-pass, band-pass and high-pass design, and a
    stateful streaming FIR filter (the first operation with state across chunks, per the
    architecture).
-3. **Resampling**: integer decimation and interpolation with that FIR, then rational resampling.
+2. **Resampling**: integer decimation and interpolation with that FIR, then rational resampling.
+3. **Signal files**: write and read samples with their metadata (SigMF-style, implemented from the
+   description), so one language can generate a noisy signal and the other analyse it
+   (`docs/testing.md`, the planned cross-generation).
 
 ## Built
 
@@ -93,6 +93,14 @@ Updated with every chunk of work. Dates are absolute.
   (`dataclasses.asdict` keeps `np.int64`), and NumPy floats or an integer Eb/N0 were rejected. The
   link now accepts any real number (not bool) and stores the config in the report as plain `int`
   and `float`. Python 355 passed, 2 skipped; .NET 327 passed.
+- 2026-11-13: cross-language checks. A C# console tool (`dotnet/tools/SignalForge.Conformance`,
+  built from the tests' own runner) writes the same conformance report as Python, and runs a
+  `qpsk_link` config. `python -m signalforge.compare` diffs the two reports (every field of every
+  result, at the case's tolerance) and compares two link reports (noiseless: every field; noisy:
+  bit errors and mean squared EVM by two-sample tests). `vectors/links/` holds one noisy and one
+  noiseless config; `build.ps1` and a new CI job run all of it. Vectors may now give `null`. The
+  first diff found a real gap: Python's runner ignored properties, so `SpectralDensity.span` was
+  never compared. Python 367 passed, 2 skipped; .NET 330 passed; vectors 237/237; reports agree.
 
 ## Not built
 
@@ -132,3 +140,7 @@ packaging and publishing.
   trusting it. The fourth-power frequency estimate looked fine at 20 dB and on clean vectors, but
   at 6 dB its error (0.1 to 0.5 Hz at Rs = 1000) turned a long frame by whole turns. A link test
   that skips a step when its parameter is zero (no frequency correction at 0 Hz) hides exactly this.
+- 2026-11-13: Diff the two languages' full results, not just each against a partial expected
+  value. A vector checks only the fields it lists, so a field one runner never sees (a Python
+  property, where C# reflection sees every property) passes everywhere until the results are
+  compared with each other.

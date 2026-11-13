@@ -93,15 +93,22 @@ cd ../dotnet
 dotnet build SignalForge.slnx
 dotnet test SignalForge.slnx
 dotnet format SignalForge.slnx --verify-no-changes
+dotnet run --no-build --project tools/SignalForge.Conformance -- --report ../reports/dotnet.json
+
+cd ../python
+../.venv/Scripts/python -m signalforge.compare reports ../reports/python.json ../reports/dotnet.json
 ```
+
+`build.ps1` runs all of this, plus the link configs in `vectors/links/` in both languages.
 
 ### Job sizes
 
 Measured 2026-11-13:
 
-- Python `pytest` (357 tests): about 2 s.
-- .NET `dotnet test` (incremental build + 327 tests): about 6 s.
-- `build.ps1 -Jobs 1` (everything, incremental): about 20 s. A clean build with restore takes
+- Python `pytest` (369 tests): about 2 s.
+- .NET `dotnet test` (incremental build + 330 tests): about 6 s.
+- `build.ps1 -Jobs 1` (everything, incremental): about 20 s before the cross-language steps were
+  added; not re-timed since. A clean build with restore takes
   longer (not yet timed).
 
 Memory not measured yet; nothing holds more than a few MB of samples. No job uses the GPU.
@@ -119,7 +126,10 @@ Memory not measured yet; nothing holds more than a few MB of samples. No job use
 | `docs/adr/` | Architecture decision records. |
 | `vectors/README.md`, `vectors/cases/` | Shared vector format and cases. |
 | `vectors/selftest/` | Deliberately wrong cases both runners must fail. |
+| `vectors/links/` | `qpsk_link` configs run in both languages and compared. |
+| `python/src/signalforge/compare.py` | Cross-language compare: conformance reports, link reports. |
+| `dotnet/tools/SignalForge.Conformance/` | C# conformance report and link runner (command line). |
 | `python/src/signalforge/` | Python package; `conformance.py` runs the vectors. |
 | `dotnet/src/SignalForge/` | C# library. |
 | `dotnet/tests/SignalForge.Tests/` | C# tests; `Conformance.cs` runs the vectors. |
-| `.github/workflows/ci.yml` | CI: lint and test both languages. |
+| `.github/workflows/ci.yml` | CI: lint and test both languages, then compare them. |

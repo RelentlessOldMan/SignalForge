@@ -19,6 +19,7 @@
     {"id": "qpsk_link.zero_rate", "op": "qpsk_link", "args": {"num_symbols": 50, "symbol_rate": 0.0}, "error": "invalid_argument", "source": "symbol_rate must be positive"},
     {"id": "qpsk_link.nan_offset", "op": "qpsk_link", "args": {"num_symbols": 50, "frequency_offset_hz": "nan"}, "error": "invalid_argument", "source": "numbers must be finite"},
     {"id": "qpsk_link.inf_eb_n0", "op": "qpsk_link", "args": {"num_symbols": 50, "eb_n0_db": "inf"}, "error": "invalid_argument", "source": "numbers must be finite"},
-    {"id": "qpsk_link.negative_delay", "op": "qpsk_link", "args": {"num_symbols": 50, "delay_samples": -1}, "error": "invalid_argument", "source": "delay_samples is a count"}
+    {"id": "qpsk_link.negative_delay", "op": "qpsk_link", "args": {"num_symbols": 50, "delay_samples": -1}, "error": "invalid_argument", "source": "delay_samples is a count"},
+    {"id": "qpsk_link.no_noise_no_theory", "op": "qpsk_link", "args": {"num_symbols": 50}, "expected": {"ber_theory": null, "config": {"eb_n0_db": null}}, "source": "conventions (QPSK link): without eb_n0_db there is no noise, so the report has no theoretical BER"}
   ]
 }

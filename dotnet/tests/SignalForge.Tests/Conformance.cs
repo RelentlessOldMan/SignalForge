@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace SignalForge.Tests;
 
@@ -41,20 +42,78 @@ public static class Conformance
     }
 
     /// <summary>Runs one case; returns the failure messages (empty when it passes).</summary>
-    public static List<string> Run(VectorCase c)
+    public static List<string> Run(VectorCase c) => RunWithActual(c).Messages;
+
+    /// <summary>Runs one case; returns the failure messages and the result in canonical form (null
+    /// when the operation threw).</summary>
+    public static (List<string> Messages, object? Actual) RunWithActual(VectorCase c)
     {
+        object? actual = null;
         try
         {
-            return RunCase(c.Json);
+            return (RunCase(c.Json, out actual), actual);
         }
         catch (InvalidDataException e)
         {
-            return [$"bad case: {e.Message}"];
+            return ([$"bad case: {e.Message}"], actual);
         }
     }
 
-    private static List<string> RunCase(JsonElement json)
+    /// <summary>Runs every case and writes the report that <c>python -m signalforge.conformance
+    /// --report</c> writes: implementation, passed, failed, and per case file, id, passed, messages
+    /// and the actual result. Returns the number of failures.</summary>
+    public static int WriteReport(string path, string? dir = null, TextWriter? log = null)
     {
+        var cases = new JsonArray();
+        int passed = 0, failed = 0;
+        foreach (var c in LoadCases(dir))
+        {
+            var (msgs, actual) = RunWithActual(c);
+            if (msgs.Count == 0)
+                passed++;
+            else
+            {
+                failed++;
+                log?.WriteLine($"FAIL {c.File} {c.Id}: {string.Join("; ", msgs)}");
+            }
+            cases.Add(new JsonObject
+            {
+                ["file"] = c.File,
+                ["id"] = c.Id,
+                ["passed"] = msgs.Count == 0,
+                ["messages"] = new JsonArray([.. msgs.Select(m => (JsonNode?)JsonValue.Create(m))]),
+                ["actual"] = Encode(actual),
+            });
+        }
+        log?.WriteLine($"{passed}/{passed + failed} cases passed");
+        var report = new JsonObject { ["implementation"] = "dotnet", ["passed"] = passed, ["failed"] = failed, ["cases"] = cases };
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        File.WriteAllText(path, report.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        return failed;
+    }
+
+    /// <summary>Canonical result to the JSON vector form: non-finite numbers as "inf", "-inf",
+    /// "nan"; complex values as {"re", "im"}.</summary>
+    public static JsonNode? Encode(object? v) => v switch
+    {
+        null => null,
+        double d => double.IsFinite(d) ? JsonValue.Create(d) : JsonValue.Create(double.IsNaN(d) ? "nan" : d > 0 ? "inf" : "-inf"),
+        bool b => JsonValue.Create(b),
+        string s => JsonValue.Create(s),
+        Complex z => new JsonObject { ["re"] = Encode(z.Real), ["im"] = Encode(z.Imaginary) },
+        Complex[] zs => new JsonObject
+        {
+            ["re"] = new JsonArray([.. zs.Select(z => Encode(z.Real))]),
+            ["im"] = new JsonArray([.. zs.Select(z => Encode(z.Imaginary))]),
+        },
+        double[] ds => new JsonArray([.. ds.Select(d => Encode(d))]),
+        Dictionary<string, object?> m => new JsonObject(m.Select(kv => KeyValuePair.Create(kv.Key, Encode(kv.Value)))),
+        _ => throw new InvalidOperationException($"cannot encode {v.GetType()}"),
+    };
+
+    private static List<string> RunCase(JsonElement json, out object? canonical)
+    {
+        canonical = null;
         string op = json.GetProperty("op").GetString()!;
         var args = new Dictionary<string, object?>();
         if (json.TryGetProperty("args", out var a))
@@ -72,6 +131,7 @@ public static class Conformance
         try
         {
             actual = Invoke(op, new Args(args));
+            canonical = Canonical(actual);
         }
         catch (LibraryArgumentException e)
         {
@@ -84,7 +144,7 @@ public static class Conformance
         var msgs = new List<string>();
         if (!json.TryGetProperty("expected", out var expected))
             throw new InvalidDataException("no expected value or error");
-        Compare(Canonical(actual), Decode(expected), abs, rel, "", msgs);
+        Compare(canonical, Decode(expected), abs, rel, "", msgs);
         return msgs;
     }
 
@@ -306,6 +366,8 @@ public static class Conformance
     {
         switch (v.ValueKind)
         {
+            case JsonValueKind.Null:
+                return null;
             case JsonValueKind.Number:
                 return v.GetDouble();
             case JsonValueKind.True:
@@ -373,6 +435,9 @@ public static class Conformance
         string where = path.Length == 0 ? "value" : path;
         switch (expected)
         {
+            case null:
+                if (actual is not null) msgs.Add($"{where}: expected null, got {actual.GetType().Name}");
+                return;
             case Dictionary<string, object?> rec:
                 if (actual is not Dictionary<string, object?> act)
                 {

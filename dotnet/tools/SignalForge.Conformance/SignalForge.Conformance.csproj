@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- A command-line tool, not a library: the runner it shares with the tests has no XML docs. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The same runner the tests use, so the report and the tests cannot drift apart. -->
+    <Compile Include="..\..\tests\SignalForge.Tests\Conformance.cs" Link="Conformance.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SignalForge\SignalForge.csproj" />
+  </ItemGroup>
+
+</Project>

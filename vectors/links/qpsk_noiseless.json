@@ -1,0 +1,6 @@
+{
+  "num_symbols": 300,
+  "frequency_offset_hz": -45.0,
+  "phase": -1.2,
+  "delay_samples": 5
+}

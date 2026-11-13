@@ -160,6 +160,26 @@
         0.4
       ],
       "source": "deliberately wrong"
+    },
+    {
+      "id": "null_expected",
+      "why": "expected null, the result is a number",
+      "op": "lin_to_db",
+      "args": {
+        "ratio": 10
+      },
+      "expected": null
+    },
+    {
+      "id": "null_actual",
+      "why": "a null field (no noise, so no theoretical BER) where a number is expected",
+      "op": "qpsk_link",
+      "args": {
+        "num_symbols": 50
+      },
+      "expected": {
+        "ber_theory": 0.0
+      }
     }
   ]
 }

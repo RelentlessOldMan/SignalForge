@@ -42,3 +42,28 @@ jobs:
       - run: dotnet build SignalForge.slnx
       - run: dotnet test SignalForge.slnx --no-build
       - run: dotnet format SignalForge.slnx --verify-no-changes
+
+  cross:
+    # Both languages on one runner: the conformance reports diffed, the link configs compared.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+      - run: pip install -e python
+      - run: dotnet build dotnet/tools/SignalForge.Conformance
+      - run: python -m signalforge.conformance --report reports/python.json
+      - run: dotnet run --no-build --project dotnet/tools/SignalForge.Conformance -- --report reports/dotnet.json
+      - run: python -m signalforge.compare reports reports/python.json reports/dotnet.json
+      - name: Link configs in both languages
+        run: |
+          for cfg in vectors/links/*.json; do
+            name=$(basename "$cfg" .json)
+            python -m signalforge.compare run-link "$cfg" --out "reports/link-$name-python.json"
+            dotnet run --no-build --project dotnet/tools/SignalForge.Conformance -- link "$cfg" --out "reports/link-$name-dotnet.json"
+            python -m signalforge.compare link "reports/link-$name-python.json" "reports/link-$name-dotnet.json"
+          done

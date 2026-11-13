@@ -95,10 +95,19 @@ def decode(v: Any) -> Any:
     return v
 
 
+def _record(v: Any) -> dict[str, Any]:
+    """A result record's fields and public properties, as C# reflection sees its record."""
+    out = {f.name: getattr(v, f.name) for f in dataclasses.fields(v)}
+    for k in dir(type(v)):
+        if not k.startswith("_") and isinstance(getattr(type(v), k), property):
+            out[k] = getattr(v, k)
+    return out
+
+
 def encode(v: Any) -> Any:
     """Python result to the JSON vector form (for reports)."""
     if dataclasses.is_dataclass(v) and not isinstance(v, type):
-        return {f.name: encode(getattr(v, f.name)) for f in dataclasses.fields(v)}
+        return {k: encode(x) for k, x in _record(v).items()}
     if isinstance(v, dict):
         return {k: encode(x) for k, x in v.items()}
     if isinstance(v, np.ndarray):
@@ -146,7 +155,11 @@ def compare(actual: Any, expected: Any, tol: dict[str, float], path: str = "") -
     """
     where = path or "value"
     if dataclasses.is_dataclass(actual) and not isinstance(actual, type):
-        actual = {f.name: getattr(actual, f.name) for f in dataclasses.fields(actual)}
+        actual = _record(actual)
+    if expected is None or actual is None:
+        if expected is None and actual is None:
+            return []
+        return [f"{where}: {actual!r} != expected {expected!r}"]
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
             return [f"{where}: expected a record, got {type(actual).__name__}"]

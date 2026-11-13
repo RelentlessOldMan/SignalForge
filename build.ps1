@@ -7,7 +7,8 @@
   bumped with Get-NextVersion, written back, and stamped into the Python package. The .NET build
   reads VERSION itself. Then runs, stopping at the first failure:
     Python: ruff check, ruff format --check, mypy, pytest, conformance (report in reports/python.json)
-    .NET:   build, test, format --verify-no-changes
+    .NET:   build, test, format --verify-no-changes, conformance (report in reports/dotnet.json)
+    Both:   the two reports diffed, and each config in vectors/links run in both languages and compared
   CI does not run this script and never bumps; it builds the committed version. The bump happens
   before the checks, so a failed build still uses up its number (numbers are never reused).
 
@@ -76,6 +77,21 @@ try {
     Invoke-Step 'dotnet build' { dotnet build SignalForge.slnx --nologo -v q $msbuildJobs }
     Invoke-Step 'dotnet test' { dotnet test SignalForge.slnx --no-build --nologo -v q $runSettings }
     Invoke-Step 'dotnet format' { dotnet format SignalForge.slnx --verify-no-changes -v q }
+    Invoke-Step 'conformance (dotnet)' { dotnet run --no-build --project tools/SignalForge.Conformance -- --report ../reports/dotnet.json }
+    foreach ($cfg in Get-ChildItem (Join-Path $root 'vectors/links') -Filter *.json) {
+        Invoke-Step "link $($cfg.BaseName) (dotnet)" { dotnet run --no-build --project tools/SignalForge.Conformance -- link $cfg.FullName --out "../reports/link-$($cfg.BaseName)-dotnet.json" }
+    }
+}
+finally { Pop-Location }
+
+Push-Location (Join-Path $root 'python')
+try {
+    Invoke-Step 'compare reports' { & "$venv/python" -m signalforge.compare reports ../reports/python.json ../reports/dotnet.json }
+    foreach ($cfg in Get-ChildItem (Join-Path $root 'vectors/links') -Filter *.json) {
+        $py, $cs = "../reports/link-$($cfg.BaseName)-python.json", "../reports/link-$($cfg.BaseName)-dotnet.json"
+        Invoke-Step "link $($cfg.BaseName) (python)" { & "$venv/python" -m signalforge.compare run-link $cfg.FullName --out $py }
+        Invoke-Step "compare link $($cfg.BaseName)" { & "$venv/python" -m signalforge.compare link $py $cs }
+    }
 }
 finally { Pop-Location }
 

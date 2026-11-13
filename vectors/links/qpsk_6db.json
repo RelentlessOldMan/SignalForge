@@ -1,0 +1,8 @@
+{
+  "num_symbols": 20000,
+  "eb_n0_db": 6.0,
+  "frequency_offset_hz": 20.0,
+  "phase": 1.0,
+  "delay_samples": 2,
+  "seed": 5
+}
