@@ -13,3 +13,4 @@
 *.cf64 binary
 *.npy binary
 *.wav binary
+*.sigmf-data binary
