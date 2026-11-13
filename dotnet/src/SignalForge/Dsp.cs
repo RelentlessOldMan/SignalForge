@@ -5,7 +5,7 @@ namespace SignalForge;
 /// <summary>Convolution, upsampling, root-raised-cosine pulse shaping, FIR and IIR design and
 /// response, resampling. Definitions in docs/conventions.md (Pulse shaping, FIR filters, IIR
 /// filters, Resampling).</summary>
-public static class Dsp
+public static partial class Dsp
 {
     /// <summary>Full linear convolution y[n] = Σ h[k]·x[n−k], length len(x) + len(h) − 1.</summary>
     public static double[] Convolve(ReadOnlySpan<double> x, ReadOnlySpan<double> h)

@@ -329,6 +329,51 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
   - order `M = ⌈(A − 8)/(2.285·Δω)⌉`, at least 0, and `num_taps = M + 1`.
   - `A > 0`, `0 < transition_width < fs/2`, all finite; a `num_taps` above 2³¹ − 1 raises. For a
     high-pass, round `num_taps` up to odd.
+- **Equiripple design** (`fir_equiripple(num_taps, bands, desired, sample_rate, weights=None,
+  grid_density=16)`, [ADR 0024](adr/0024-equiripple-fir.md)): the symmetric taps whose zero-phase
+  gain `A(f)` (as above) minimizes the largest weighted error `max |W_j·(A(f) − D_j)|` over the
+  bands, **on the grid defined here** (the discrete optimum; it is unique).
+  - `bands` is a flat list of edges in Hz, `[b_0, b_1, b_2, b_3, …]`, band `j` being
+    `[b_2j, b_2j+1]`; at least one band; `0 ≤ b_0 < b_1 < b_2 < … ≤ fs/2`, finite (bands do not
+    touch). `desired` has one finite value per band; `weights` one positive finite value per band
+    (default all 1). `1 ≤ num_taps ≤ 1001`; `grid_density` an integer, `1 ≤ grid_density ≤ 64`.
+  - `N = num_taps`. Odd `N` (type I): `L = (N + 1)/2` cosine terms, `Q(f) = 1`. Even `N`
+    (type II): `L = N/2`, `Q(f) = cos(πf/fs)`, since every such `A` has the factor `Q`; a band that
+    ends at `fs/2` must then have `desired` 0, else `invalid_argument`.
+  - **Grid**, in `ν = f/fs`: `Δ = 0.5/(grid_density·L)`. Band `j` with `ν_lo = b_2j/fs`,
+    `ν_hi = b_2j+1/fs` gets `m = ⌈(ν_hi − ν_lo)/Δ⌉` intervals and the points
+    `ν_lo + (ν_hi − ν_lo)·i/m` for `i = 0 … m − 1`, then `ν_hi` exactly. Type II drops the point
+    `ν = 0.5` if present. Fewer than `L + 1` points in all is `invalid_argument`.
+  - The problem is then: find `P(ν) = Σ_{k<L} c_k cos(2πkν)` minimizing
+    `max |W'(ν)(D'(ν) − P(ν))|` over the grid, with `D' = D/Q`, `W' = W·Q`; and `A = Q·P`.
+  - **Algorithm** (Remez exchange; any method reaching the same optimum agrees): the extremal
+    set starts at the grid indices `⌊i·(G − 1)/L⌋`, `i = 0 … L`, of the `G` points. Each
+    iteration, with `x = cos(2πν)` at the set: `γ_i = 1/∏_{j≠i}(x_i − x_j)` (computed from
+    logarithms, scaled by a common factor), `δ = Σγ_i D'_i / Σ(−1)^i γ_i/W'_i`,
+    `P(x_i) = D'_i − (−1)^i δ/W'_i`, and `P` elsewhere by barycentric interpolation through the
+    first `L` points. The new set: every grid point where the error `E = W'(D' − P)` is a
+    nonzero local extremum within its band (`E > 0` and not below either in-band neighbour, or
+    the mirror for `E < 0`); runs of the same sign keep their largest `|E|` (the first of
+    equals); while there are more than `L + 1`: if one too many, drop whichever end has the
+    smaller `|E|` (the first, if equal), else drop the smallest `|E|` (the first, if equal) and
+    merge again. It stops when the set does not change, or when the largest grid `|E|` is at
+    most `|δ|·(1 + 1e-9) + 1e-12·max_j |W_j·D_j|` (an optimum with more than `L + 1` equal
+    extrema would otherwise swap between equally good sets). Fewer than `L + 1` points, or 250
+    iterations without stopping, is `invalid_argument`: the design is beyond double precision
+    (its ripple is near or below 1e-13; e.g. a wide transition with many taps).
+  - If every `desired` value is 0, or `N` is odd and all are equal, the taps are exact
+    (`D·[n = (N−1)/2]`) and there is no iteration.
+  - **Taps**: `c_0 … c_{L−1}` (and `δ` again) from the `(L+1)×(L+1)` linear system
+    `Σ_k c_k cos(2πkν_i) + (−1)^i δ/W'_i = D'_i` at the final set, solved with partial pivoting.
+    (Sampling `P` uniformly and inverting a DFT would read `P` in the gaps between bands, where
+    interpolation from the band points magnifies rounding enormously.) The taps are then
+    checked: the largest grid `|W'(D' − P)|` with these `c_k` must be at most
+    `|δ|·(1 + 1e-6) + 1e-10·max_j |W_j·D_j|`, else `invalid_argument`. Near the precision limit
+    the two languages may differ in whether a design raises, but anything returned meets this
+    bound. Type I:
+    `h[(N−1)/2] = c_0`, `h[(N−1)/2 ± k] = c_k/2`. Type II: `A = Σ_{k=1}^{L} β_k cos(2π(k − ½)ν)`
+    with `β_1 = c_0 + c_1/2`, `β_k = (c_{k−1} + c_k)/2`, `β_L = c_{L−1}/2` (`β_1 = c_0` if
+    `L = 1`), and `h[N/2 − 1 + k] = h[N/2 − k] = β_k/2`.
 - **Frequency response** (`fir_response(taps, frequencies, sample_rate)`): the complex
   `H(f) = Σ h[n]·e^(−j2π·f·n/fs)` at each frequency (`n` from 0, so it includes the delay).
   Real taps, non-empty and finite; frequencies finite.

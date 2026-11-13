@@ -74,6 +74,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "fir_lowpass": dsp.fir_lowpass,
     "fir_highpass": dsp.fir_highpass,
     "fir_bandpass": dsp.fir_bandpass,
+    "fir_equiripple": dsp.fir_equiripple,
     "kaiser_parameters": dsp.kaiser_parameters,
     "fir_response": dsp.fir_response,
     "resample": dsp.resample,

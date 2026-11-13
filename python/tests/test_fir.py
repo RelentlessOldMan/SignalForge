@@ -10,6 +10,7 @@ from signalforge import (
     FirFilter,
     convolve,
     fir_bandpass,
+    fir_equiripple,
     fir_highpass,
     fir_lowpass,
     fir_response,
@@ -104,3 +105,65 @@ def test_bad_taps(taps: object) -> None:
 def test_two_dimensional_chunk_raises() -> None:
     with pytest.raises(ValueError):
         FirFilter([1.0]).process([[1.0]])
+
+
+def _worst(taps: NDArray[np.float64], lo: float, hi: float, want: float) -> float:
+    """Largest ``|A(f) - want|`` on a dense grid over ``[lo, hi]`` (normalized frequency)."""
+    t = np.arange(taps.size) - (taps.size - 1) / 2
+    f = np.linspace(lo, hi, 4001)
+    return float(np.max(np.abs(np.cos(2 * np.pi * np.outer(f, t)) @ taps - want)))
+
+
+@pytest.mark.parametrize("n", [40, 41])
+def test_equiripple_errors_are_level_across_bands(n: int) -> None:
+    h = fir_equiripple(n, [0, 0.1, 0.15, 0.5], [1, 0], 1)
+    np.testing.assert_allclose(h, h[::-1], rtol=0, atol=1e-15)
+    passband, stopband = _worst(h, 0, 0.1, 1), _worst(h, 0.15, 0.5, 0)
+    assert passband == pytest.approx(stopband, rel=0.02)
+    w = fir_equiripple(n, [0, 0.1, 0.15, 0.5], [1, 0], 1, weights=[1, 10])
+    assert _worst(w, 0, 0.1, 1) == pytest.approx(10 * _worst(w, 0.15, 0.5, 0), rel=0.02)
+    assert _worst(w, 0.15, 0.5, 0) < stopband < _worst(w, 0, 0.1, 1)
+    if n % 2 == 0:
+        assert abs(float(np.sum(h * (-1.0) ** np.arange(n)))) < 1e-15  # type II: H(fs/2) = 0
+
+
+def test_equiripple_beats_a_windowed_design_and_improves_with_length() -> None:
+    bands = [0, 0.1, 0.15, 0.5]
+    h = fir_equiripple(41, bands, [1, 0], 1)
+    windowed = fir_lowpass(41, 0.125, 1)
+    worst = max(_worst(h, 0, 0.1, 1), _worst(h, 0.15, 0.5, 0))
+    assert worst < max(_worst(windowed, 0, 0.1, 1), _worst(windowed, 0.15, 0.5, 0))
+    longer = fir_equiripple(61, bands, [1, 0], 1)
+    assert max(_worst(longer, 0, 0.1, 1), _worst(longer, 0.15, 0.5, 0)) < worst / 2
+
+
+def test_equiripple_accepts_arrays_and_scales_with_sample_rate() -> None:
+    bands = [0, 0.1, 0.15, 0.5]
+    h = fir_equiripple(31, bands, [1, 0], 1)
+    np.testing.assert_array_equal(h, fir_equiripple(31, np.array(bands), np.array([1, 0]), 1))
+    np.testing.assert_array_equal(h, fir_equiripple(31, bands, [1, 0], 1, weights=[1, 1]))
+    hz = fir_equiripple(31, [b * 48000 for b in bands], [1, 0], 48000)
+    np.testing.assert_allclose(hz, h, rtol=0, atol=1e-15)
+
+
+@pytest.mark.parametrize("n", [45, 51, 61, 101, 301])
+def test_equiripple_near_the_precision_limit_raises_or_meets_its_bound(n: int) -> None:
+    try:
+        h = fir_equiripple(n, [0, 0.1, 0.4, 0.5], [1, 0], 1)
+    except ValueError as e:
+        assert "beyond double precision" in str(e)
+    else:
+        assert max(_worst(h, 0, 0.1, 1), _worst(h, 0.4, 0.5, 0)) < 1e-9
+
+
+def test_equiripple_bad_arguments() -> None:
+    with pytest.raises(ValueError):
+        fir_equiripple(21, [0, 0.1, np.nan, 0.5], [1, 0], 1)
+    with pytest.raises(ValueError):
+        fir_equiripple(21, [[0, 0.1], [0.2, 0.5]], [1, 0], 1)
+    with pytest.raises(ValueError):
+        fir_equiripple(21, [0, 0.1, 0.2, 0.5], [1, np.inf], 1)
+    with pytest.raises(ValueError):
+        fir_equiripple(21, [0, 0.1, 0.2, 0.5], [1, 0], 1, weights=[1, np.nan])
+    with pytest.raises(ValueError):
+        fir_equiripple(21, [0, 0.1, 0.2, 0.5], [1, 0], 1, grid_density=2.5)  # type: ignore[arg-type]

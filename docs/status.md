@@ -4,9 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Equiripple (Parks–McClellan) FIR design**: conventions and an ADR first (band weights, grid
-   density, convergence and failure reporting); expected values from analytic cases and
-   independently computed extremal alternation checks.
+1. **Review of the equiripple design**: sweep random designs in both languages against the
+   generator's 50-digit solver (lengths to 1001, many bands, extreme weights, densities 1-64),
+   then fix what it finds.
+2. **Bessel IIR design** (low-pass, high-pass): conventions and an ADR first (which
+   normalization: delay, phase or magnitude at the cutoff); expected values from the reverse
+   Bessel polynomials computed exactly.
 
 ## Built
 
@@ -290,9 +293,26 @@ Updated with every chunk of work. Dates are absolute.
   1000, the same bands, ripple from 1e-9 dB): all agree to 1e-7 and accept and reject the same
   designs. No defects found.
 
+- 2026-11-13: equiripple FIR design ([ADR 0024](adr/0024-equiripple-fir.md)):
+  `fir_equiripple(num_taps, bands, desired, sample_rate, weights=None, grid_density=16)`
+  (`FirEquiripple`), symmetric type I and II, piecewise-constant bands with weights. The grid,
+  the Remez exchange's tie rules and the stop rule are in the conventions, so the result is the
+  unique discrete optimum on a defined grid. Two numerical traps found and fixed on the way: an
+  optimum with an extra ripple makes the exchange swap between two equally good sets forever
+  (now also stopped by the gap between the largest error and δ), and rebuilding the taps by
+  sampling the interpolant on a uniform grid magnifies rounding in the transition gaps (a 41-tap
+  design measured 2e-8 instead of 3e-11; now a direct solve at the final set). The returned taps
+  are verified on the grid. Near the precision limit (ripple about 1e-13) the languages may
+  differ in whether a design raises, so that is a unit-test property, not a vector. New
+  generator `vectors/generators/equiripple.py`: 50-digit Remez by cosine-basis solves and
+  Clenshaw evaluation, each result certified by alternation; 33 cases (seven by hand, nine
+  certified, 17 rejections). The library matches to 1e-14, except 2e-11 on a design with
+  δ = 3e-9 whose taps are ill-determined in double. Python 1480 passed, 2 skipped; .NET 1166
+  passed; conformance 702/702 in both.
+
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II and elliptic (Bessel, all-pass), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II and elliptic (Bessel, all-pass), FIR design beyond windowed sinc and equiripple (differentiators, Hilbert transformers), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

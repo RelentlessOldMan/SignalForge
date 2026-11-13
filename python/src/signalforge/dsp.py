@@ -184,6 +184,181 @@ def kaiser_parameters(
     return order + 1, beta
 
 
+def _equiripple_grid(
+    num_taps: int,
+    bands: ArrayLike,
+    desired: ArrayLike,
+    sample_rate: float,
+    weights: ArrayLike | None,
+    grid_density: int,
+) -> tuple[int, NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.int64]]:
+    """Checked arguments as ``(L, nu, D, W, band index)`` on the grid (conventions)."""
+    n = count(num_taps, "num_taps")
+    if not 1 <= n <= 1001:
+        raise ValueError("num_taps must be in [1, 1001]")
+    density = count(grid_density, "grid_density")
+    if not 1 <= density <= 64:
+        raise ValueError("grid_density must be in [1, 64]")
+    fs = _rate(sample_rate)
+    b = np.asarray(bands, dtype=np.float64)
+    if b.ndim != 1 or b.size < 2 or b.size % 2 or not np.all(np.isfinite(b)):
+        raise ValueError("bands must be a finite 1-D array of edge pairs")
+    if b[0] < 0 or b[-1] > fs / 2 or np.any(np.diff(b) <= 0):
+        raise ValueError("band edges must increase strictly from >= 0 to <= sample_rate/2")
+    nb = b.size // 2
+    d = np.asarray(desired, dtype=np.float64)
+    if d.shape != (nb,) or not np.all(np.isfinite(d)):
+        raise ValueError("desired must have one finite value per band")
+    w = np.ones(nb) if weights is None else np.asarray(weights, dtype=np.float64)
+    if w.shape != (nb,) or not np.all(np.isfinite(w)) or np.any(w <= 0):
+        raise ValueError("weights must have one positive finite value per band")
+    odd = n % 2 == 1
+    if not odd and b[-1] == fs / 2 and d[-1] != 0:
+        raise ValueError("an even num_taps has zero gain at sample_rate/2: desired must be 0 there")
+    big_l = (n + 1) // 2 if odd else n // 2
+    step = 0.5 / (density * big_l)
+    nu: list[float] = []
+    dd: list[float] = []
+    ww: list[float] = []
+    bi: list[int] = []
+    for j in range(nb):
+        lo, hi = b[2 * j] / fs, b[2 * j + 1] / fs
+        m = math.ceil((hi - lo) / step)
+        for i in range(m + 1):
+            v = hi if i == m else lo + (hi - lo) * i / m
+            if not odd and v == 0.5:
+                continue
+            nu.append(v)
+            dd.append(float(d[j]))
+            ww.append(float(w[j]))
+            bi.append(j)
+    if len(nu) < big_l + 1:
+        raise ValueError("the bands are too narrow for num_taps: too few grid points")
+    return big_l, np.array(nu), np.array(dd), np.array(ww), np.array(bi, dtype=np.int64)
+
+
+def _extrema(e: NDArray[np.float64], band: NDArray[np.int64], want: int) -> list[int]:
+    """The new extremal set from the error on the grid (conventions: Equiripple design)."""
+    g = e.size
+    same_left = np.zeros(g, dtype=bool)
+    same_left[1:] = band[1:] == band[:-1]
+    same_right = np.zeros(g, dtype=bool)
+    same_right[:-1] = band[:-1] == band[1:]
+    left = np.concatenate(([0.0], e[:-1]))
+    right = np.concatenate((e[1:], [0.0]))
+    up = (e > 0) & (~same_left | (e >= left)) & (~same_right | (e >= right))
+    down = (e < 0) & (~same_left | (e <= left)) & (~same_right | (e <= right))
+    mag = np.abs(e)
+
+    def merge(ks: list[int]) -> list[int]:
+        out: list[int] = []
+        for k in ks:
+            if out and (e[k] > 0) == (e[out[-1]] > 0):
+                if mag[k] > mag[out[-1]]:
+                    out[-1] = k
+            else:
+                out.append(k)
+        return out
+
+    cand = merge([int(k) for k in np.flatnonzero(up | down)])
+    while len(cand) > want:
+        if len(cand) == want + 1:
+            cand.pop(0 if mag[cand[0]] <= mag[cand[-1]] else -1)
+        else:
+            smallest = min(range(len(cand)), key=lambda i: mag[cand[i]])
+            cand.pop(smallest)
+            cand = merge(cand)
+    return cand
+
+
+def _barycentric(
+    xs: NDArray[np.float64],
+    nodes: NDArray[np.float64],
+    bary: NDArray[np.float64],
+    vals: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    """The interpolant through ``(nodes, vals)`` at ``xs``, with barycentric weights ``bary``."""
+    out = np.empty(xs.size)
+    for s in range(0, xs.size, 1024):  # chunks keep the matrix to a few MB
+        t = xs[s : s + 1024, None] - nodes[None, :]
+        hit = t == 0
+        t[hit] = 1.0
+        r = bary / t
+        p = (r @ vals) / r.sum(axis=1)
+        rows, cols = np.nonzero(hit)
+        p[rows] = vals[cols]
+        out[s : s + 1024] = p
+    return out
+
+
+def fir_equiripple(
+    num_taps: int,
+    bands: ArrayLike,
+    desired: ArrayLike,
+    sample_rate: float,
+    weights: ArrayLike | None = None,
+    grid_density: int = 16,
+) -> NDArray[np.float64]:
+    """Parks-McClellan (Remez exchange) symmetric taps: the minimax weighted error over ``bands``
+    (edge pairs in Hz) with piecewise-constant ``desired`` gains, on the conventions' grid."""
+    big_l, nu, dd, ww, band = _equiripple_grid(
+        num_taps, bands, desired, sample_rate, weights, grid_density
+    )
+    n = int(num_taps)
+    odd = n % 2 == 1
+    if np.all(dd == 0) or (odd and np.all(dd == dd[0])):
+        h = np.zeros(n)
+        h[(n - 1) // 2] = dd[0]  # exact: only reached for odd n unless every value is 0
+        return h
+    q = np.ones_like(nu) if odd else np.cos(np.pi * nu)
+    dp, wp, x = dd / q, ww * q, np.cos(2 * np.pi * nu)
+    g = nu.size
+    ext = np.array([(i * (g - 1)) // big_l for i in range(big_l + 1)])
+    sign = (-1.0) ** np.arange(big_l + 1)
+    slack = 1e-12 * float(np.max(np.abs(ww * dd)))
+    for _ in range(250):
+        xe = x[ext]
+        diff = xe[:, None] - xe[None, :]
+        np.fill_diagonal(diff, 1.0)
+        logs = np.sum(np.log(np.abs(diff)), axis=1)
+        gamma = np.prod(np.sign(diff), axis=1) * np.exp(logs.min() - logs)
+        delta = float(np.dot(gamma, dp[ext]) / np.dot(gamma * sign, 1 / wp[ext]))
+        values = dp[ext] - sign * delta / wp[ext]
+        nodes, vals = xe[:big_l], values[:big_l]
+        bary = gamma[:big_l] * (nodes - xe[big_l])
+
+        e = wp * (dp - _barycentric(x, nodes, bary, vals))
+        new = _extrema(e, band, big_l + 1)
+        if len(new) < big_l + 1:
+            break
+        if np.array_equal(new, ext) or np.max(np.abs(e)) <= abs(delta) * (1 + 1e-9) + slack:
+            # The cosine coefficients by a direct solve at the set: sampling P across the gaps
+            # between bands would amplify rounding there (the interpolant is ill-conditioned).
+            k = np.arange(big_l)
+            a = np.empty((big_l + 1, big_l + 1))
+            a[:, :big_l] = np.cos(2 * np.pi * np.outer(nu[ext], k))
+            a[:, big_l] = sign / wp[ext]
+            c = np.linalg.solve(a, dp[ext])[:big_l]
+            worst = 0.0
+            for s in range(0, g, 1024):
+                p = np.cos(2 * np.pi * np.outer(nu[s : s + 1024], k)) @ c
+                worst = max(worst, float(np.max(np.abs(wp[s : s + 1024] * (dp[s : s + 1024] - p)))))
+            if worst > abs(delta) * (1 + 1e-6) + 100 * slack:
+                break
+            if odd:
+                return np.concatenate((c[:0:-1] / 2, c[:1], c[1:] / 2))
+            beta = np.empty(big_l)
+            beta[0] = c[0] + (c[1] / 2 if big_l > 1 else 0.0)
+            if big_l > 1:
+                beta[1:-1] = (c[1:-1] + c[2:]) / 2
+                beta[-1] = c[-1] / 2
+            return np.concatenate((beta[::-1] / 2, beta / 2))
+        ext = np.array(new)
+    raise ValueError(
+        "the equiripple design did not converge: its ripple is beyond double precision"
+    )
+
+
 def _taps(taps: ArrayLike) -> NDArray[np.float64]:
     h = np.asarray(taps)
     if h.ndim != 1 or h.size == 0 or np.iscomplexobj(h):
