@@ -371,14 +371,15 @@ and `SignalForge.IirFilter`.
     which equals these to rounding and gives exactly unit gain at the reference); the first-order low-pass is `b = K·[1, 1, 0]/(K + 1)`,
     `a = [1, (K − 1)/(K + 1), 0]`, the high-pass the same `a` with `b = [1, −1, 0]/(K + 1)`.
   - `order` is an integer, `1 ≤ order ≤ 1000`; `0 < cutoff < fs/2`, finite.
-  - **Every IIR design** (Butterworth, Chebyshev, band forms) checks its sections: each must be
+  - **Every IIR design** (Butterworth, Chebyshev, elliptic, band forms) checks its sections: each must be
     finite and strictly stable (`|a2| < 1`, `|a1| < 1 + a2`). A cutoff or band edge within about
     1e-8·fs of 0 or `fs/2` rounds a pole onto the unit circle (and the gain to 0), so such a
     design is `invalid_argument`; accuracy is already reduced near that limit (below about
     1e-6·fs). Band designs have the same limit for the bandwidth: poles sit about `high − low`
     from the unit circle, so a band narrower than about 1e-8·fs is `invalid_argument` or loses
     digits (a 1e-12·fs band matches the closed form only to about 1e-3), and extreme dB values
-    (ripple near 200 dB, attenuation near 0) push poles closer still. Designs near these limits
+    (ripple near 200 dB, attenuation near 0; for elliptic, ripple above about 100 dB, where a
+    pole can sit one rounding step from the circle) push poles closer still. Designs near these limits
     are not used as cross-language vectors: which side of the limit they land on depends on
     the last bit of `tan` and `sinh`. dB arguments enter as `10^(x/10) − 1`, computed as `expm1(x·ln10/10)` so small
     values keep their digits.

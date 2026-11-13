@@ -4,9 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Review pass** over the elliptic designs: edge cases (order 1, levels near 200 dB, tiny
-   ripple), the `k' ≥ 1e-6` limit, and the docs.
-2. **Elliptic band-pass and band-stop** on the shared band transform.
+1. **Elliptic band-pass and band-stop** on the shared band transform: conventions and an ADR
+   first; expected values from the closed-form |H|² through the band map.
+2. **Review pass** over the elliptic band designs once built.
 
 ## Built
 
@@ -262,6 +262,15 @@ Updated with every chunk of work. Dates are absolute.
   to 1e-12, and stability. A temporary sweep of 600 random designs (orders 1-1000) agreed in both
   languages to 1e-10, accepting and rejecting the same ones. Python 1388 passed, 2 skipped; .NET
   1086 passed; conformance 655/655 in both.
+- 2026-11-13: review of the elliptic low/high-pass. Against the generator's independent R_N
+  (theta series), 2310 designs (orders 1-30, ripple 1e-6 to 199 dB, A − R 1e-3 to 200 dB,
+  cutoffs 1e-4 to 0.4999·fs) match the closed-form |H|² to 4e-9 at mid-band cutoffs and 7e-7 at
+  the extreme ones. Orders 1 and 2 are never rejected; rejections are the `k' ≥ 1e-6` limit and
+  the pole check. Both languages ran a 9204-design grid (orders to 1000, cutoffs to 1e-6·fs):
+  they agree to 1e-7 except at cutoffs 1e-6·fs and 0.4999·fs (ill-conditioned rows, agreeing
+  to about 1e-5), and accept/reject the same designs except three with 150-200 dB ripple whose
+  poles sit one rounding step (2e-16) from the unit circle. No code defects; the conventions'
+  conditioning note now names the elliptic ripple limit.
 
 ## Not built
 
