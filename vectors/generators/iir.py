@@ -527,6 +527,42 @@ def bessel_band_design(case_id, order, low, high, fs, stop, rows=None, src=None)
                "relative at this order, which the band transform spreads" if order >= 9 else "")}
 
 
+def allpass(fs, cutoff=None, center=None, bandwidth=None):
+    """All-pass section from the conventions' formula, checked: |H| = 1 on a grid, H = 1 at DC,
+    and the named phases at the named frequencies (the second order's edges from their closed
+    form, independent of the coefficients)."""
+    t = math.tan(math.pi * (cutoff if center is None else bandwidth) / fs)
+    c = (t - 1) / (t + 1)
+    if center is None:
+        rows = [[c, 1.0, 0.0, 1.0, c, 0.0]]
+        points = [(0.0, 1), (cutoff, -1j), (fs / 2, -1)]
+    else:
+        d = -math.cos(2 * math.pi * center / fs)
+        rows = [[-c, d * (1 - c), 1.0, 1.0, d * (1 - c), -c]]
+        total = math.acos(math.cos(2 * math.pi * center / fs) * math.cos(math.pi * bandwidth / fs))
+        f1 = (total - math.pi * bandwidth / fs) / 2 * fs / math.pi
+        assert 0 < f1 < f1 + bandwidth < fs / 2
+        points = [(0.0, 1), (f1, -1j), (center, -1), (f1 + bandwidth, 1j), (fs / 2, 1)]
+    assert abs(rows[0][5]) < 1 and abs(rows[0][4]) < 1 + rows[0][5]
+    for h in response(rows, [fs * k / 200 for k in range(101)], fs):
+        assert abs(abs(h) - 1) < 1e-13
+    for f, want in points:
+        assert abs(response(rows, [f], fs)[0] - want) < 1e-12, (cutoff, center, bandwidth, f)
+    return rows
+
+
+def allpass_design(case_id, fs, cutoff=None, center=None, bandwidth=None, rows=None, src=None):
+    if center is None:
+        op, args = "allpass_first_order", {"cutoff": cutoff, "sample_rate": fs}
+    else:
+        op, args = "allpass_second_order", {"center": center, "bandwidth": bandwidth,
+                                            "sample_rate": fs}
+    return {"id": case_id, "op": op, "args": args,
+            "expected": rows if rows is not None else allpass(fs, cutoff, center, bandwidth),
+            "tol": TOL, "source": src or SRC + "the conventions' coefficients, checked: |H| = 1, "
+            "H = 1 at DC, and H = -j, -1, j at the phase points (edges by their closed form)"}
+
+
 def bessel_design(case_id, order, cutoff, fs, high, rows=None, src=None):
     return {"id": case_id, "op": "bessel_highpass" if high else "bessel_lowpass",
             "args": {"order": order, "cutoff": cutoff, "sample_rate": fs},
@@ -1054,6 +1090,35 @@ cases = [
         {"order": 3, "low": 0.2, "high": 0.1, "sample_rate": 1.0}, "low < high required"),
     err("bessel.bandstop_high_at_nyquist", "bessel_bandstop",
         {"order": 3, "low": 0.1, "high": 0.5, "sample_rate": 1.0}, "high < fs/2 required"),
+    allpass_design("allpass.first_order_quarter_by_hand", 4.0, cutoff=1.0,
+                   rows=[[0.0, 1.0, 0.0, 1.0, 0.0, 0.0]],
+                   src="by hand: t = tan(pi/4) = 1, c = 0: H = z^-1, -j at fs/4"),
+    allpass_design("allpass.first_order_sixth_by_hand", 6.0, cutoff=1.0,
+                   rows=[[3**0.5 - 2, 1.0, 0.0, 1.0, 3**0.5 - 2, 0.0]],
+                   src="by hand: t = tan(pi/6) = 1/sqrt 3, c = (1 - sqrt 3)/(1 + sqrt 3) = sqrt 3 - 2"),
+    allpass_design("allpass.second_order_quarter_by_hand", 4.0, center=1.0, bandwidth=1.0,
+                   rows=[[0.0, 0.0, 1.0, 1.0, 0.0, 0.0]],
+                   src="by hand: c = 0 (t = 1), d = -cos(pi/2) = 0: H = z^-2, -1 at fs/4"),
+    allpass_design("allpass.second_order_sixth_by_hand", 6.0, center=1.0, bandwidth=1.5,
+                   rows=[[0.0, -0.5, 1.0, 1.0, -0.5, 0.0]],
+                   src="by hand: c = 0 (t = tan(pi/4)), d = -cos(pi/3) = -1/2, H = (z^-2 - z^-1/2)/"
+                   "(1 - z^-1/2); at z^-1 = e^(-j pi/3) the numerator is -(3/4 + j sqrt(3)/4) and "
+                   "the denominator 3/4 + j sqrt(3)/4: H = -1 at the center"),
+    allpass_design("allpass.first_order_low", 48000.0, cutoff=100.0),
+    allpass_design("allpass.first_order_high", 1.0, cutoff=0.47),
+    allpass_design("allpass.second_order_narrow", 1.0, center=0.1, bandwidth=0.002),
+    allpass_design("allpass.second_order_wide", 1.0, center=0.05, bandwidth=0.4),
+    allpass_design("allpass.second_order_high", 8000.0, center=3500.0, bandwidth=300.0),
+    err("allpass.first_order_cutoff_zero", "allpass_first_order",
+        {"cutoff": 0.0, "sample_rate": 1.0}, "cutoff > 0 required"),
+    err("allpass.first_order_cutoff_nyquist", "allpass_first_order",
+        {"cutoff": 0.5, "sample_rate": 1.0}, "cutoff < fs/2 required"),
+    err("allpass.second_order_bandwidth_nyquist", "allpass_second_order",
+        {"center": 0.1, "bandwidth": 0.5, "sample_rate": 1.0}, "bandwidth < fs/2 required"),
+    err("allpass.second_order_center_zero", "allpass_second_order",
+        {"center": 0.0, "bandwidth": 0.1, "sample_rate": 1.0}, "center > 0 required"),
+    err("allpass.second_order_rate_zero", "allpass_second_order",
+        {"center": 0.1, "bandwidth": 0.1, "sample_rate": 0.0}, "sample_rate > 0 required"),
     ell_band_design("elliptic.bandpass_1_by_hand", 1, 10 * math.log10(2), 40.0, 1.0, 3.0, 8.0,
                     False, [[0.5, 0.0, -0.5, 1.0, 0.0, 0.0]],
                     "by hand: fs = 8, edges 1 and 3 give L = tan(pi/8), H = 1/L, so W^2 = 1 and B = 2; 10 log10(2) dB ripple makes eps_p = 1, and order 1 has no zeros and the real pole -1/eps_p = -1 (k = k1, R_1(x) = x), so the section is B s/(s^2 + 2s + 1) -> a0 = 4, [2, 0, -2]/4 over [4, 0, 0]/4"),

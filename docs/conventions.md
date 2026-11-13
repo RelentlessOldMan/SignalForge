@@ -686,6 +686,20 @@ and `SignalForge.IirFilter`.
   (band-pass) or `s² + W²` (band-stop), band-pass pair gains `|p_k|`, band-stop gains 1. Order 1
   is the order-1 band Butterworth. The delay is flat in the prototype's frequency `x`, not in
   `f`: the band transform does not keep the Bessel's flat group delay.
+- **All-pass sections** (`allpass_first_order(cutoff, sample_rate)`,
+  `allpass_second_order(center, bandwidth, sample_rate)`, [ADR 0033](adr/0033-allpass.md)): one
+  section each, `|H| = 1` at every frequency, for phase equalization. With `t = tan(π·f/fs)` of
+  the frequency named and `c = (t − 1)/(t + 1)`:
+  - first order, `t` of the `cutoff`: `[c, 1, 0, 1, c, 0]`, the bilinear transform of
+    `(K − s)/(K + s)`. The phase falls from 0 at DC through `−π/2` at the cutoff (`H = −j`) to
+    `−π` at `fs/2` (`H = −1`).
+  - second order, `t` of the `bandwidth` and `d = −cos(2π·center/fs)`:
+    `[−c, d(1 − c), 1, 1, d(1 − c), −c]`. The phase falls from 0 at DC through `−π` at the
+    center (`H = −1`) to `−2π` at `fs/2`; it is `−π/2` (`H = −j`) at `f₁` and `−3π/2`
+    (`H = j`) at `f₂`, with `f₂ − f₁ = bandwidth` exactly and
+    `cos(π(f₁ + f₂)/fs) = cos(2π·center/fs)·cos(π·bandwidth/fs)`, both inside `(0, fs/2)`.
+  - `cutoff`, `center` and `bandwidth` each strictly between 0 and `fs/2`, finite; a design whose
+    pole rounds onto the unit circle is `invalid_argument`, as for every IIR design.
 - **Frequency response** (`sos_response(sos, frequencies, sample_rate)`): the complex
   `H(f) = Π_i H_i(e^(j2π·f/fs))` at each frequency. Frequencies finite.
 - **Group delay** (`sos_group_delay(sos, frequencies, sample_rate)`,

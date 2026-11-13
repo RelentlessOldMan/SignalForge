@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Mixing**: `mix(samples, frequency, sample_rate, phase=0)`, multiplying by
-   `e^(j(2π f n/fs + φ))` (complex output for real or complex input), the sign and phase
-   reference in the conventions first; expected values by hand and from exact rotations.
-2. **All-pass sections**: a first- and second-order all-pass design (`allpass(frequency,
-   bandwidth, sample_rate)` or similar) for phase equalization, unit magnitude to rounding and
-   the group delay checked by hand; conventions first.
+1. **IQ impairments**: `iq_imbalance(samples, gain_db, phase)` and `dc_offset(samples, offset)`,
+   the imbalance's convention (which branch carries the error, the sign of the phase skew) and
+   the image-rejection ratio it implies written first; expected values by hand.
+2. **PSK and QAM beyond QPSK**: 8-PSK and 16-QAM mapping and hard-decision demapping with Gray
+   codes, unit average symbol energy; the bit order and constellation in the conventions first,
+   expected values by hand.
 
 ## Built
 
@@ -390,10 +390,18 @@ Updated with every chunk of work. Dates are absolute.
   the 50-digit roots (checked against the closed-form `|H|²` and the substituted denominator),
   four errors; orders 9 and 10 at 1e-11, the roots' double-precision accuracy. Tests: every order
   equals the low-pass at `fs/4` read at `atan(|x|)`, order 1 is the band Butterworth.
+- 2026-11-13: all-pass sections (conventions: IIR filters, All-pass sections; ADR 0033):
+  `allpass_first_order(cutoff, sample_rate)` (phase `−π/2` at the cutoff) and
+  `allpass_second_order(center, bandwidth, sample_rate)` (`−π` at the center, the `−π/2` and
+  `−3π/2` points exactly `bandwidth` apart), one section each. Vectors in `iir.json`: four by
+  hand, five checked at `H = −j, −1, j` with the edges from their closed form, five errors.
+  Tests: unit magnitude, monotone phase, the group delay integrating to the total phase, power
+  kept through `IirFilter`. The planned "mixing" slice was dropped: `frequency_offset` already
+  is it.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
@@ -402,6 +410,8 @@ packaging and publishing.
 
 ## Lessons
 
+- 2026-11-13: Before putting a feature in Next, grep for it: "mixing" was planned while
+  `frequency_offset` already multiplied by `e^(j(2π f n/fs + φ))` in both languages.
 - 2026-11-12: The test for any dependency is whether it could ever force our code under the GPL or
   limit commercial shipping. A GPL label on a compiler runtime with the GCC exception does not.
 - 2026-11-12: Check build tools' licenses too: hatchling and mypy both pull in pathspec (MPL-2.0).

@@ -6,6 +6,8 @@ from .dsp import (
     FirFilter,
     IirFilter,
     Resampler,
+    allpass_first_order,
+    allpass_second_order,
     bessel_bandpass,
     bessel_bandstop,
     bessel_highpass,
@@ -81,7 +83,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.48"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.49"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -101,6 +103,8 @@ __all__ = [
     "ToneMetrics",
     "WindowStats",
     "acpr",
+    "allpass_first_order",
+    "allpass_second_order",
     "amp_to_db",
     "awgn",
     "bessel_bandpass",

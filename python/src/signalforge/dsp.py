@@ -1094,6 +1094,29 @@ def bessel_bandstop(order: int, low: float, high: float, sample_rate: float) -> 
     return _bessel_band(order, low, high, sample_rate, stop=True)
 
 
+def _allpass_c(f: float, fs: float, what: str) -> float:
+    t = math.tan(math.pi * _band_edge(f, fs, what))
+    return (t - 1) / (t + 1)
+
+
+def allpass_first_order(cutoff: float, sample_rate: float) -> NDArray[np.float64]:
+    """First-order all-pass section, phase -pi/2 at ``cutoff`` (conventions: IIR filters,
+    All-pass sections)."""
+    c = _allpass_c(cutoff, _rate(sample_rate), "cutoff")
+    return _usable([[c, 1.0, 0.0, 1.0, c, 0.0]])
+
+
+def allpass_second_order(
+    center: float, bandwidth: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Second-order all-pass section, phase -pi at ``center`` and -pi/2, -3pi/2 at two frequencies
+    ``bandwidth`` apart (conventions: IIR filters, All-pass sections)."""
+    fs = _rate(sample_rate)
+    d = -math.cos(2 * math.pi * _band_edge(center, fs, "center"))
+    c = _allpass_c(bandwidth, fs, "bandwidth")
+    return _usable([[-c, d * (1 - c), 1.0, 1.0, d * (1 - c), -c]])
+
+
 def butterworth_bandpass(
     order: int, low: float, high: float, sample_rate: float
 ) -> NDArray[np.float64]:
