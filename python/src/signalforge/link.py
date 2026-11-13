@@ -16,10 +16,12 @@ import numpy as np
 from ._checks import count, real
 from .channel import awgn, clock_offset, frequency_offset, phase_noise
 from .dsp import convolve, pulse_shape, rrc_taps
-from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
-from .modulation import qpsk_demap_hard, qpsk_map
+from .metrics import ErrorCount, Evm, bit_errors, evm, qam16_ber_theory, qpsk_ber_theory
+from .modulation import qam16_demap_hard, qam16_map, qpsk_demap_hard, qpsk_map
 from .sync import (
     gardner_timing,
+    power_frequency_offset,
+    qam16_carrier_tracking,
     qpsk_block_phases,
     qpsk_carrier_tracking,
     qpsk_frequency_offset,
@@ -45,6 +47,7 @@ class QpskLinkConfig:
     phase_block_symbols: int = 32
     prbs_order: int = 15
     seed: int = 0
+    modulation: str = "qpsk"
     phase_noise_linewidth_hz: float = 0.0
     clock_offset_ppm: float = 0.0
     timing_loop_gains: tuple[float, float] | None = None
@@ -88,6 +91,13 @@ def _wrap(phi: float) -> float:
     return math.pi if phi <= -math.pi else phi
 
 
+# bits per symbol, mapper, demapper, carrier loop, theory
+_MODULATIONS: dict[str, tuple[int, Any, Any, Any, Any]] = {
+    "qpsk": (2, qpsk_map, qpsk_demap_hard, qpsk_carrier_tracking, qpsk_ber_theory),
+    "qam16": (4, qam16_map, qam16_demap_hard, qam16_carrier_tracking, qam16_ber_theory),
+}
+
+
 def _gains(g: Any, what: str) -> tuple[float, float] | None:
     """None, or a pair of finite numbers ``>= 0`` as plain floats."""
     if g is None:
@@ -121,6 +131,9 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     rs = real(config.symbol_rate, "symbol_rate")
     if rs <= 0:
         raise ValueError("symbol_rate must be positive")
+    if not isinstance(config.modulation, str) or config.modulation not in _MODULATIONS:
+        raise ValueError(f"modulation must be one of {sorted(_MODULATIONS)}")
+    bps, mapper, demap, carrier_loop, theory = _MODULATIONS[config.modulation]
     lw = real(config.phase_noise_linewidth_hz, "phase_noise_linewidth_hz")
     if lw < 0:
         raise ValueError("phase_noise_linewidth_hz must not be negative")
@@ -142,6 +155,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         phase_block_symbols=blk,
         prbs_order=count(config.prbs_order, "prbs_order"),
         seed=count(config.seed, "seed"),
+        modulation=config.modulation,
         phase_noise_linewidth_hz=lw,
         clock_offset_ppm=ppm,
         timing_loop_gains=_gains(config.timing_loop_gains, "timing_loop_gains"),
@@ -150,8 +164,8 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     df, phase, eb_n0_db, seed = c.frequency_offset_hz, c.phase, c.eb_n0_db, c.seed
 
     # transmitter
-    bits = prbs(c.prbs_order, 2 * n)
-    a = qpsk_map(bits)
+    bits = prbs(c.prbs_order, bps * n)
+    a = mapper(bits)
     h = rrc_taps(c.rolloff, sps, span)
     tx = np.concatenate([np.zeros(delay, dtype=np.complex128), pulse_shape(a, h, sps)])
     # channel
@@ -162,7 +176,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     if ppm != 0:
         rx = clock_offset(rx, ppm)
     if eb_n0_db is not None:
-        rx = awgn(rx, eb_n0_db + 10 * math.log10(2), sps, seed=rng, signal_power=1 / sps)
+        rx = awgn(rx, eb_n0_db + 10 * math.log10(bps), sps, seed=rng, signal_power=1 / sps)
     # receiver
     y = np.asarray(convolve(rx, h), dtype=np.complex128)
     tau = timing_offset(y, sps)
@@ -170,7 +184,10 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         z_raw = y[round(tau) % sps :: sps]
     else:
         z_raw = gardner_timing(y, sps, *c.timing_loop_gains, start=tau).symbols
-    f_hat = qpsk_frequency_offset(z_raw, rs)
+    if c.modulation == "qpsk":
+        f_hat = qpsk_frequency_offset(z_raw, rs)
+    else:
+        f_hat = power_frequency_offset(z_raw, rs, 4)
     # frame start: the first maximum of the preamble correlation
     ref = np.conj(a[:pre])
     zc = frequency_offset(z_raw, -f_hat, rs)
@@ -197,7 +214,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         w = frequency_offset(z_raw[k0 : k0 + n], -f_hat, rs)
         c_w = complex(np.sum(ref * w[:pre]))
         phi_p = math.atan2(c_w.imag, c_w.real)
-        z = qpsk_carrier_tracking(w, *c.carrier_loop_gains, phase=phi_p).symbols
+        z = carrier_loop(w, *c.carrier_loop_gains, phase=phi_p).symbols
 
     return QpskLinkReport(
         config=c,
@@ -206,6 +223,6 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         frequency_offset_hz=f_hat,
         phase_offset=phi,
         evm=evm(z, a),
-        bit_errors=bit_errors(bits, qpsk_demap_hard(z)),
-        ber_theory=None if eb_n0_db is None else qpsk_ber_theory(eb_n0_db),
+        bit_errors=bit_errors(bits, demap(z)),
+        ber_theory=None if eb_n0_db is None else theory(eb_n0_db),
     )

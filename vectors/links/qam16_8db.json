@@ -1,0 +1,10 @@
+{
+  "num_symbols": 20000,
+  "eb_n0_db": 8.0,
+  "modulation": "qam16",
+  "frequency_offset_hz": 15.0,
+  "phase": -0.9,
+  "delay_samples": 6,
+  "preamble_symbols": 64,
+  "seed": 21
+}

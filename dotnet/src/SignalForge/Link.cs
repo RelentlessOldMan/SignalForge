@@ -47,6 +47,9 @@ public sealed record QpskLinkConfig
     /// <summary>Noise seed.</summary>
     public int Seed { get; init; }
 
+    /// <summary>"qpsk" or "qam16".</summary>
+    public string Modulation { get; init; } = "qpsk";
+
     /// <summary>Wiener phase noise linewidth in Hz, at least 0; 0 adds none.</summary>
     public double PhaseNoiseLinewidthHz { get; init; }
 
@@ -137,6 +140,13 @@ public static class Link
         double rs = Check.PositiveFinite(c.SymbolRate, nameof(config));
         if (!double.IsFinite(c.FrequencyOffsetHz) || !double.IsFinite(c.Phase) || c.EbN0Db is { } e && !double.IsFinite(e))
             throw new ArgumentOutOfRangeException(nameof(config), "numbers must be finite");
+        bool qam = c.Modulation switch
+        {
+            "qpsk" => false,
+            "qam16" => true,
+            _ => throw new ArgumentException("Modulation must be \"qpsk\" or \"qam16\"", nameof(config)),
+        };
+        int bps = qam ? 4 : 2;
         if (!(c.PhaseNoiseLinewidthHz >= 0) || !double.IsFinite(c.PhaseNoiseLinewidthHz))
             throw new ArgumentOutOfRangeException(nameof(config), c.PhaseNoiseLinewidthHz, "PhaseNoiseLinewidthHz must be finite and at least 0");
         if (!(Math.Abs(c.ClockOffsetPpm) <= 1e5))
@@ -145,8 +155,8 @@ public static class Link
         Gains(c.CarrierLoopGains, nameof(c.CarrierLoopGains), nameof(config));
 
         // transmitter
-        byte[] bits = Waveforms.Prbs(c.PrbsOrder, 2 * n);
-        Complex[] a = Modulation.QpskMap(bits);
+        byte[] bits = Waveforms.Prbs(c.PrbsOrder, bps * n);
+        Complex[] a = qam ? SignalForge.Modulation.Qam16Map(bits) : SignalForge.Modulation.QpskMap(bits);
         double[] h = Dsp.RrcTaps(c.Rolloff, sps, c.SpanSymbols);
         Complex[] shaped = Dsp.PulseShape(a, h, sps);
         var tx = new Complex[c.DelaySamples + shaped.Length];
@@ -159,7 +169,7 @@ public static class Link
         if (c.ClockOffsetPpm != 0)
             rx = Channel.ClockOffset(rx, c.ClockOffsetPpm);
         if (c.EbN0Db is { } ebN0Db)
-            rx = Channel.Awgn(rx, ebN0Db + 10 * Math.Log10(2), sps, rng, signalPower: 1.0 / sps);
+            rx = Channel.Awgn(rx, ebN0Db + 10 * Math.Log10(bps), sps, rng, signalPower: 1.0 / sps);
         // receiver
         Complex[] y = Dsp.Convolve(rx, h);
         double tau = Sync.TimingOffset(y, sps);
@@ -173,7 +183,7 @@ public static class Link
             for (int k = 0; k < r.Length; k++)
                 r[k] = y[p + k * sps];
         }
-        double f = Sync.QpskFrequencyOffset(r, rs);
+        double f = qam ? Sync.PowerFrequencyOffset(r, rs, 4) : Sync.QpskFrequencyOffset(r, rs);
         // frame start: the first maximum of the preamble correlation
         Complex[] cr = Channel.FrequencyOffset(r, -f, rs);
         int k0 = 0;
@@ -217,13 +227,14 @@ public static class Link
             Complex cw = Complex.Zero;
             for (int i = 0; i < pre; i++)
                 cw += Complex.Conjugate(a[i]) * w[i];
-            z = Sync.QpskCarrierTracking(w, cg[0], cg[1], Math.Atan2(cw.Imaginary, cw.Real)).Symbols;
+            z = (qam ? Sync.Qam16CarrierTracking(w, cg[0], cg[1], Math.Atan2(cw.Imaginary, cw.Real))
+                : Sync.QpskCarrierTracking(w, cg[0], cg[1], Math.Atan2(cw.Imaginary, cw.Real))).Symbols;
         }
         else
             z = Channel.FrequencyOffset(r.AsSpan(k0, n), -f, rs, -phi);
 
-        return new QpskLinkReport(c, tau, k0, f, phi, Metrics.Evm(z, a), Metrics.BitErrors(bits, Modulation.QpskDemapHard(z)),
-            c.EbN0Db is { } eb ? Metrics.QpskBerTheory(eb) : null);
+        return new QpskLinkReport(c, tau, k0, f, phi, Metrics.Evm(z, a), Metrics.BitErrors(bits, qam ? SignalForge.Modulation.Qam16DemapHard(z) : SignalForge.Modulation.QpskDemapHard(z)),
+            c.EbN0Db is { } eb ? (qam ? Metrics.Qam16BerTheory(eb) : Metrics.QpskBerTheory(eb)) : null);
     }
 
     private static void Gains(IReadOnlyList<double>? g, string name, string paramName)

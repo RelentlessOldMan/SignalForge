@@ -13,7 +13,7 @@ public class LinkReportTests
     private static readonly string[] ConfigKeys =
     [
         "num_symbols", "eb_n0_db", "symbol_rate", "samples_per_symbol", "rolloff", "span_symbols", "delay_samples",
-        "frequency_offset_hz", "phase", "preamble_symbols", "phase_block_symbols", "prbs_order", "seed", "phase_noise_linewidth_hz",
+        "frequency_offset_hz", "phase", "preamble_symbols", "phase_block_symbols", "prbs_order", "seed", "modulation", "phase_noise_linewidth_hz",
         "clock_offset_ppm",
         "timing_loop_gains", "carrier_loop_gains",
     ];

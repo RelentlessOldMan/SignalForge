@@ -4,15 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **16-QAM through the link**: a `modulation` config field (`"qpsk"` by default, so QPSK
-   reports stay the same) choosing the mapper, the carrier loop's decision, the demapper and the
-   BER theory, with Es/N0 = Eb/N0 + 10·log10 4. The coarse estimate for 16-QAM is
-   `power_frequency_offset(·, Rs, 4)` over the whole frame (ADR 0049); the block phases and the
-   preamble ambiguity work unchanged (`E[s⁴]` of 16-QAM is a negative real, as for QPSK). A first
-   try with the lag-1 estimator failed (BER 0.41 on 400 noiseless symbols): check the noiseless
-   case first. Link configs for 16-QAM, noiseless and at about 8 dB.
-2. **8-PSK through the link**: needs eighth-power frequency and phase estimators
-   (`psk8_frequency_offset`, `psk8_block_phases`), then the same `modulation` field.
+1. **8-PSK through the link**: `power_frequency_offset(·, Rs, 8)` gives the coarse frequency; it
+   still needs an eighth-power block phase estimate (`psk8_block_phases`, π/4 ambiguity, resolved
+   by the preamble), then `"psk8"` as a value of the `modulation` field (ADR 0050).
 
 ## Built
 
@@ -523,6 +517,13 @@ Updated with every chunk of work. Dates are absolute.
   symbols at Eb/N0 8 dB, and works on 8-PSK at power 8. 12 new vectors in `sync.json` (tones and
   PSK symbols, where `zᵖ` is one tone and the estimate is exact). Python 2161 passed, 2 skipped;
   .NET 1727 passed.
+- 2026-11-13: 16-QAM in the link (conventions: QPSK link; ADR 0050): a `modulation` config field,
+  `"qpsk"` (default, reports unchanged) or `"qam16"`, choosing the mapper, the coarse frequency
+  estimate (`power_frequency_offset(·, Rs, 4)` for 16-QAM), the carrier loop's decision, the
+  demapper and the BER theory; Es/N0 = Eb/N0 + 10·log10 k. The block phases and the preamble's
+  π/2 resolution are shared. Link configs `qam16_8db` (20000 symbols: 744 bit errors in Python,
+  765 in C#, theory 740) and `qam16_noiseless` (0 errors in both). Python 2169 passed, 2 skipped;
+  .NET 1734 passed.
 
 ## Not built
 
