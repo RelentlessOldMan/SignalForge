@@ -21,10 +21,10 @@ rule for code not written yet.
 - Sample rates and impedances must be positive and **finite**; NaN and infinity are rejected.
   **(implemented)**
 - Counts (`n`, `num_samples`, `num_bits`, `order`, `seed`, `nperseg`, `noverlap`, `factor`,
-  `samples_per_symbol`, `span_symbols`, `block_symbols`, `num_taps`, and the link's `num_symbols`,
+  `samples_per_symbol`, `span_symbols`, `block_symbols`, `num_taps`, `up`, `down`, and the link's `num_symbols`,
   `delay_samples`, `preamble_symbols`, `phase_block_symbols`) are integers ≥ 0.
-  Python accepts anything with `__index__` (so NumPy integers) and rejects floats, even whole ones
-  like `3.0`; C# takes `int`. **(implemented)**
+  Python accepts anything with `__index__` (so NumPy integers) and rejects bools and floats, even whole
+  ones like `3.0`; C# takes `int`. **(implemented)**
 - Measurements reject non-finite input where a NaN would otherwise pass through silently
   (`power_stats` samples, PSD frequencies and values). **(implemented)**
 - A bad argument raises `ValueError` (Python) or `ArgumentException` or a subclass (C#).
@@ -225,6 +225,24 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
   `convolve(x, h)`. Taps are real, non-empty and finite. The first non-empty chunk fixes the
   filter as real or complex; a chunk of the other kind raises, until `reset()`. An empty chunk
   returns an empty output and changes nothing.
+
+## Resampling
+
+Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `SignalForge.Dsp`.
+
+- **Rational resampling** (`resample(x, up, down, taps=None)`): `up, down ≥ 1` are reduced by
+  their greatest common divisor to `L, M`. With `u` the zero-stuffed `x` (`u[n·L] = x[n]`, other
+  samples 0, and `u` zero outside `0 … len(x)·L − 1`), taps `h` of **odd** length `N` and
+  `D = (N − 1)/2`:
+  `y[m] = L·Σₖ h[k]·u[m·M + D − k]` for `m = 0 … ⌈len(x)·L/M⌉ − 1`.
+  Output sample `m` is at input time `m·M/L` (input sample periods). `x` is real or complex (the
+  output matches); taps are real, non-empty, finite and odd in length; `x` is non-empty.
+- **Default taps** (`resample_taps(up, down)`): with `R = max(L, M)` after reduction,
+  `fir_lowpass(20·R + 1, 1/(2R), 1)` (Hamming). When `taps` is omitted, `resample` uses these.
+  `resample_taps` raises when `R = 1` (the cutoff would be `fs/2`); `resample` with `L = M = 1`
+  and no taps returns a copy of `x`.
+- `interpolate(x, factor, taps=None)` is `resample(x, factor, 1, taps)`; `decimate(x, factor,
+  taps=None)` is `resample(x, 1, factor, taps)`.
 
 ## Channel
 

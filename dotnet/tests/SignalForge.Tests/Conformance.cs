@@ -250,6 +250,10 @@ public static class Conformance
             "fir_response" => Bind((Reals(a.Get("taps")), Reals(a.Get("frequencies")), a.D("sample_rate")),
                 t => Dsp.FirResponse(t.Item1, t.Item2, t.Item3)),
             "fir_filter" => FirFilterOp(a),
+            "resample" => ResampleOp(a, a.I("up"), a.I("down")),
+            "interpolate" => ResampleOp(a, a.I("factor"), 1),
+            "decimate" => ResampleOp(a, 1, a.I("factor")),
+            "resample_taps" => Bind((a.I("up"), a.I("down")), t => Dsp.ResampleTaps(t.Item1, t.Item2)),
             "frequency_offset" => Bind((Complexes(a.Get("samples")), a.D("offset_hz"), a.D("sample_rate"), a.Opt("phase", 0)),
                 t => Channel.FrequencyOffset(t.Item1, t.Item2, t.Item3, t.Item4)),
             "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),
@@ -337,6 +341,15 @@ public static class Conformance
             return h is Complex[] ch ? () => Dsp.Convolve(cx, ch) : Bind(Reals(h), rh => Dsp.Convolve(cx, rh));
         }
         return Bind((Reals(x), Reals(h)), t => Dsp.Convolve(t.Item1, t.Item2));
+    }
+
+    private static Func<object?> ResampleOp(Args a, int up, int down)
+    {
+        object? x = a.Get("x");
+        double[]? taps = a.Has("taps") ? Reals(a.Get("taps")) : null;
+        return x is Complex[] z
+            ? () => Dsp.Resample(z, up, down, taps)
+            : Bind(Reals(x), r => Dsp.Resample(r, up, down, taps));
     }
 
     private static WindowType FirWindow(Args a) => a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hamming;

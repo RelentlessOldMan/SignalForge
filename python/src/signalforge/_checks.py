@@ -10,7 +10,9 @@ import numpy as np
 
 
 def count(value: int, what: str) -> int:
-    """A non-negative integer argument; floats, even whole ones, are rejected."""
+    """A non-negative integer argument; floats, even whole ones, and bools are rejected."""
+    if isinstance(value, bool | np.bool_):
+        raise ValueError(f"{what} must be an integer")
     try:
         n = operator.index(value)
     except TypeError:

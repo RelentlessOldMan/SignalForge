@@ -248,3 +248,59 @@ class FirFilter:
         y = np.convolve(ext, self._h, mode="valid")
         self._state = ext[ext.size - (self._h.size - 1) :]
         return cast("NDArray[np.complex128] | NDArray[np.float64]", y)
+
+
+def _factors(up: int, down: int) -> tuple[int, int]:
+    """``(up, down)`` checked and reduced by their greatest common divisor."""
+    lu, md = count(up, "up"), count(down, "down")
+    if lu < 1 or md < 1:
+        raise ValueError("up and down must be at least 1")
+    g = math.gcd(lu, md)
+    return lu // g, md // g
+
+
+def resample_taps(up: int, down: int) -> NDArray[np.float64]:
+    """Default anti-aliasing taps for :func:`resample`: ``fir_lowpass(20R + 1, 1/(2R), 1)``,
+    ``R = max(up, down)`` after reduction. Needs ``R > 1``."""
+    r = max(_factors(up, down))
+    if r == 1:
+        raise ValueError("up and down reduce to 1/1, which needs no filter")
+    return fir_lowpass(20 * r + 1, 1 / (2 * r), 1)
+
+
+def resample(
+    x: ArrayLike, up: int, down: int, taps: ArrayLike | None = None
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Resample by ``up/down`` with the delay removed: output ``m`` is at input time
+    ``m * down / up`` (conventions: Resampling)."""
+    a = _vector(x, "x")
+    if a.size == 0:
+        raise ValueError("x must be non-empty")
+    lu, md = _factors(up, down)
+    if taps is None:
+        if lu == md == 1:
+            return a.copy()
+        h = resample_taps(lu, md)
+    else:
+        h = _taps(taps)
+        if h.size % 2 == 0:
+            raise ValueError("resample needs an odd number of taps")
+    d = (h.size - 1) // 2
+    n_out = -(-a.size * lu // md)
+    full = np.convolve(upsample(a, lu), h)
+    y = lu * full[d : d + n_out * md : md]
+    return cast("NDArray[np.complex128] | NDArray[np.float64]", y)
+
+
+def interpolate(
+    x: ArrayLike, factor: int, taps: ArrayLike | None = None
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """``resample(x, factor, 1, taps)``."""
+    return resample(x, factor, 1, taps)
+
+
+def decimate(
+    x: ArrayLike, factor: int, taps: ArrayLike | None = None
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """``resample(x, 1, factor, taps)``."""
+    return resample(x, 1, factor, taps)

@@ -105,9 +105,9 @@ cd ../python
 
 Measured 2026-11-13:
 
-- Python `pytest` (424 tests): about 3 s.
-- .NET `dotnet test` (incremental build + 376 tests): about 6 s.
-- `vectors/generators/fir.py`: about 3 s.
+- Python `pytest` (470 tests): about 3 s.
+- .NET `dotnet test` (incremental build + 408 tests): about 6 s.
+- `vectors/generators/fir.py`: about 3 s; `resample.py`: well under 1 s.
 - `build.ps1 -Jobs 1` (everything, incremental): about 20 s before the cross-language steps were
   added; not re-timed since. A clean build with restore takes
   longer (not yet timed).

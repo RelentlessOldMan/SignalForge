@@ -4,8 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Resampling**: integer decimation and interpolation with that FIR, then rational resampling.
-2. **Signal files**: write and read samples with their metadata (SigMF-style, implemented from the
+1. **Signal files**: write and read samples with their metadata (SigMF-style, implemented from the
    description), so one language can generate a noisy signal and the other analyse it
    (`docs/testing.md`, the planned cross-generation).
 
@@ -114,10 +113,18 @@ Updated with every chunk of work. Dates are absolute.
   NaN. `link._finite` moved to `_checks.real` for reuse. A unit test caught Python's `FirFilter`
   keeping the caller's array instead of a copy. Python 422 passed, 2 skipped; .NET 376 passed;
   vectors 275/275; reports and links agree.
+- 2026-11-13: Resampling in both languages (ADR 0011): `resample(x, up, down, taps)` by a
+  rational factor reduced by its gcd, with the filter delay removed so output `m` sits at input
+  time `m·down/up`; `interpolate` and `decimate` are its two special cases; default taps
+  `resample_taps` are a Hamming low-pass of 20·R + 1 taps. C# runs a polyphase loop that skips the
+  zero products; Python convolves the zero-stuffed signal. The 20 vectors come from
+  `vectors/generators/resample.py` (standard library, brute-force sum) and hand derivations.
+  Review fix: integer arguments now reject bools in Python (`True` used to pass as 1), as reals
+  already did.
 
 ## Not built
 
-Everything else in the brief: IIR filter design, FIR design beyond windowed sinc (equiripple), resampling, spectrograms and spectral options beyond Welch
+Everything else in the brief: IIR filter design, FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectrograms and spectral options beyond Welch
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
 SFDR, phase noise, NF), standards waveforms, file formats (SigMF, WAV, raw IQ), plotting, CLI,

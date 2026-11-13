@@ -5,12 +5,16 @@ from .core import Signal
 from .dsp import (
     FirFilter,
     convolve,
+    decimate,
     fir_bandpass,
     fir_highpass,
     fir_lowpass,
     fir_response,
+    interpolate,
     kaiser_parameters,
     pulse_shape,
+    resample,
+    resample_taps,
     rrc_taps,
     upsample,
 )
@@ -44,7 +48,7 @@ from .units import (
 )
 from .waveforms import prbs, tone
 
-__version__ = "2026.11.13.18"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.19"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
@@ -66,6 +70,7 @@ __all__ = [
     "db_to_lin",
     "dbm_to_vrms",
     "dbm_to_w",
+    "decimate",
     "evm",
     "fft",
     "fft_frequencies",
@@ -75,6 +80,7 @@ __all__ = [
     "fir_response",
     "frequency_offset",
     "ifft",
+    "interpolate",
     "kaiser_parameters",
     "lin_to_db",
     "occupied_bandwidth",
@@ -88,6 +94,8 @@ __all__ = [
     "qpsk_link",
     "qpsk_map",
     "qpsk_phase_offset",
+    "resample",
+    "resample_taps",
     "rrc_taps",
     "timing_offset",
     "tone",

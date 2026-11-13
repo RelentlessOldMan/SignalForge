@@ -203,6 +203,110 @@ public static class Dsp
         return h;
     }
 
+    /// <summary>Default anti-aliasing taps for <see cref="Resample(ReadOnlySpan{double}, int, int, double[])"/>:
+    /// FirLowpass(20R + 1, 1/(2R), 1) with R = max(up, down) after reducing by their gcd
+    /// (conventions: Resampling).</summary>
+    /// <param name="up">Interpolation factor, at least 1.</param>
+    /// <param name="down">Decimation factor, at least 1.</param>
+    public static double[] ResampleTaps(int up, int down)
+    {
+        var (l, m) = Factors(up, down);
+        int r = Math.Max(l, m);
+        if (r == 1)
+            throw new ArgumentException("up and down reduce to 1/1, which needs no filter", nameof(up));
+        return FirLowpass(checked(20 * r + 1), 1.0 / (2 * r), 1);
+    }
+
+    /// <summary>Resamples by up/down with the filter delay removed: output m is at input time
+    /// m·down/up (conventions: Resampling).</summary>
+    /// <param name="x">Samples, non-empty.</param>
+    /// <param name="up">Interpolation factor, at least 1.</param>
+    /// <param name="down">Decimation factor, at least 1.</param>
+    /// <param name="taps">Real taps of odd length with unit DC gain; null for <see cref="ResampleTaps"/>.</param>
+    public static double[] Resample(ReadOnlySpan<double> x, int up, int down, double[]? taps = null) =>
+        ResampleCore(x, up, down, taps, static (s, v, h) => s + v * h);
+
+    /// <summary>Complex form of <see cref="Resample(ReadOnlySpan{double}, int, int, double[])"/>.</summary>
+    /// <param name="x">Samples, non-empty.</param>
+    /// <param name="up">Interpolation factor, at least 1.</param>
+    /// <param name="down">Decimation factor, at least 1.</param>
+    /// <param name="taps">Real taps of odd length with unit DC gain; null for <see cref="ResampleTaps"/>.</param>
+    public static Complex[] Resample(ReadOnlySpan<Complex> x, int up, int down, double[]? taps = null) =>
+        ResampleCore(x, up, down, taps, static (s, v, h) => s + v * h);
+
+    /// <summary>Resample(x, factor, 1, taps).</summary>
+    /// <param name="x">Samples, non-empty.</param>
+    /// <param name="factor">Interpolation factor, at least 1.</param>
+    /// <param name="taps">Real taps of odd length; null for the default.</param>
+    public static double[] Interpolate(ReadOnlySpan<double> x, int factor, double[]? taps = null) => Resample(x, factor, 1, taps);
+
+    /// <summary>Resample(x, factor, 1, taps).</summary>
+    /// <param name="x">Samples, non-empty.</param>
+    /// <param name="factor">Interpolation factor, at least 1.</param>
+    /// <param name="taps">Real taps of odd length; null for the default.</param>
+    public static Complex[] Interpolate(ReadOnlySpan<Complex> x, int factor, double[]? taps = null) => Resample(x, factor, 1, taps);
+
+    /// <summary>Resample(x, 1, factor, taps).</summary>
+    /// <param name="x">Samples, non-empty.</param>
+    /// <param name="factor">Decimation factor, at least 1.</param>
+    /// <param name="taps">Real taps of odd length; null for the default.</param>
+    public static double[] Decimate(ReadOnlySpan<double> x, int factor, double[]? taps = null) => Resample(x, 1, factor, taps);
+
+    /// <summary>Resample(x, 1, factor, taps).</summary>
+    /// <param name="x">Samples, non-empty.</param>
+    /// <param name="factor">Decimation factor, at least 1.</param>
+    /// <param name="taps">Real taps of odd length; null for the default.</param>
+    public static Complex[] Decimate(ReadOnlySpan<Complex> x, int factor, double[]? taps = null) => Resample(x, 1, factor, taps);
+
+    private static T[] ResampleCore<T>(ReadOnlySpan<T> x, int up, int down, double[]? taps, Func<T, T, double, T> mac)
+        where T : struct
+    {
+        if (x.IsEmpty)
+            throw new ArgumentException("x must be non-empty", nameof(x));
+        var (l, m) = Factors(up, down);
+        double[] h;
+        if (taps is null)
+        {
+            if (l == 1 && m == 1)
+                return x.ToArray();
+            h = ResampleTaps(l, m);
+        }
+        else
+        {
+            CheckTaps(taps);
+            if (taps.Length % 2 == 0)
+                throw new ArgumentException("resample needs an odd number of taps", nameof(taps));
+            h = taps;
+        }
+        int d = (h.Length - 1) / 2;
+        long nOut = (checked((long)x.Length * l) + m - 1) / m;
+        var y = new T[checked((int)nOut)];
+        for (int i = 0; i < y.Length; i++)
+        {
+            long n0 = (long)i * m + d; // index into the zero-stuffed signal
+            T s = default;
+            // only taps k with n0 − k a multiple of l meet a real sample x[(n0 − k)/l]
+            for (long k = n0 % l; k < h.Length && k <= n0; k += l)
+            {
+                long j = (n0 - k) / l;
+                if (j < x.Length)
+                    s = mac(s, x[(int)j], h[k]);
+            }
+            y[i] = mac(default, s, l);
+        }
+        return y;
+    }
+
+    private static (int L, int M) Factors(int up, int down)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(up, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(down, 1);
+        int a = up, b = down;
+        while (b != 0)
+            (a, b) = (b, a % b);
+        return (up / a, down / a);
+    }
+
     /// <summary>Throws unless the taps are non-empty and finite.</summary>
     internal static void CheckTaps(ReadOnlySpan<double> taps)
     {
