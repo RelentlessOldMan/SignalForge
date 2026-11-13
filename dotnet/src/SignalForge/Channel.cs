@@ -234,18 +234,31 @@ public static class Channel
         double norm = Spectral.BesselI0(FractionalDelayBeta);
         int n = samples.Length;
         var y = new Complex[n];
+        // the kernel depends on the sample only through its fraction, which takes few distinct
+        // values: evaluate it once per fraction (the same arithmetic) and reuse it
+        var kernels = new Dictionary<double, double[]>();
         for (int i = 0; i < n; i++)
         {
             double pos = i - delay, b = Math.Floor(pos), f = pos - b;
+            if (!kernels.TryGetValue(f, out double[]? taps))
+            {
+                taps = new double[2 * halfWidth];
+                for (int j = -halfWidth + 1; j <= halfWidth; j++)
+                {
+                    double t = f - j;
+                    if (Math.Abs(t) >= halfWidth)
+                        continue;
+                    double s = t == 0 ? 1 : f == 0 ? 0 : Math.Sin(Math.PI * t) / (Math.PI * t);
+                    double u = t / halfWidth;
+                    taps[j + halfWidth - 1] = s * (Spectral.BesselI0(FractionalDelayBeta * Math.Sqrt(Math.Max(1 - u * u, 0))) / norm);
+                }
+                kernels[f] = taps;
+            }
             for (int j = -halfWidth + 1; j <= halfWidth; j++)
             {
-                double t = f - j, m = b + j;
-                if (m < 0 || m >= n || Math.Abs(t) >= halfWidth)
-                    continue;
-                double s = t == 0 ? 1 : f == 0 ? 0 : Math.Sin(Math.PI * t) / (Math.PI * t);
-                double u = t / halfWidth;
-                double w = Spectral.BesselI0(FractionalDelayBeta * Math.Sqrt(Math.Max(1 - u * u, 0))) / norm;
-                y[i] += s * w * samples[(int)m];
+                double m = b + j;
+                if (m >= 0 && m < n)
+                    y[i] += taps[j + halfWidth - 1] * samples[(int)m];
             }
         }
         return y;

@@ -11,6 +11,7 @@ from signalforge import (
     awgn,
     bit_errors,
     convolve,
+    fractional_delay,
     frequency_offset,
     prbs,
     pulse_shape,
@@ -104,3 +105,29 @@ def test_estimates_are_in_range() -> None:
         assert 0 <= timing_offset(z, 4) < 4
         assert -125 < qpsk_frequency_offset(z, 1000.0) <= 125
         assert -math.pi / 4 < qpsk_phase_offset(z) <= math.pi / 4
+
+
+@pytest.mark.parametrize("delay", [0.3, 1.7, 2.5, 3.9])
+def test_fractional_timing_end_to_end(delay: float) -> None:
+    """A burst delayed by part of a sample: Oerder-Meyr finds the delay, and undoing its fraction
+    with fractional_delay gives the AWGN error rate back."""
+    sps, nsym = 4, 50_000
+    bits = prbs(15, 2 * nsym)
+    h = rrc_taps(0.35, sps, 10)
+    tx = np.concatenate([pulse_shape(qpsk_map(bits), h, sps), np.zeros(64)])
+    es_n0_db = 4.0 + 10 * math.log10(2)
+    rx = convolve(awgn(fractional_delay(tx, delay), es_n0_db, sps, seed=7, signal_power=1 / sps), h)
+    first = h.size - 1 + delay
+    tau = timing_offset(rx, sps)
+    assert abs((tau - first % sps + 2) % sps - 2) < 0.05
+    frac = tau % 1
+    start = round(first - frac)  # the whole-sample part comes from a preamble in practice
+    fixed = fractional_delay(rx, -frac)
+    theory = qpsk_ber_theory(4.0)
+    ber = bit_errors(bits, qpsk_demap_hard(fixed[start : start + nsym * sps : sps])).rate
+    # 100 000 bits, about 1250 errors: 3 sigma is about 8.5 %
+    assert ber == pytest.approx(theory, rel=0.1)
+    if delay % 1 > 0.45:  # sampled half a sample or more off, it is clearly worse
+        late = math.floor(first)
+        late_bits = qpsk_demap_hard(rx[late : late + nsym * sps : sps])
+        assert bit_errors(bits, late_bits).rate > 1.3 * theory

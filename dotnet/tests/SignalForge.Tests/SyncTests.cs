@@ -100,4 +100,36 @@ public class SyncTests
         Assert.ThrowsAny<ArgumentException>(() => Sync.QpskFrequencyOffset(ones, double.NaN));
         Assert.ThrowsAny<ArgumentException>(() => Sync.QpskPhaseOffset([new Complex(0, double.PositiveInfinity)]));
     }
+
+    /// <summary>A burst delayed by part of a sample: Oerder–Meyr finds the delay, and undoing its
+    /// fraction with FractionalDelay gives the AWGN error rate back.</summary>
+    [Theory]
+    [InlineData(0.3)]
+    [InlineData(1.7)]
+    [InlineData(2.5)]
+    [InlineData(3.9)]
+    public void FractionalTimingEndToEnd(double delay)
+    {
+        const int sps = 4, nsym = 50_000;
+        byte[] bits = Waveforms.Prbs(15, 2 * nsym);
+        double[] h = Dsp.RrcTaps(0.35, sps, 10);
+        Complex[] tx = [.. Dsp.PulseShape(Modulation.QpskMap(bits), h, sps), .. new Complex[64]];
+        double esN0Db = 4.0 + 10 * Math.Log10(2);
+        Complex[] rx = Dsp.Convolve(Channel.Awgn(Channel.FractionalDelay(tx, delay), esN0Db, sps, seed: 7, signalPower: 1.0 / sps), h);
+        double first = h.Length - 1 + delay;
+        double tau = Sync.TimingOffset(rx, sps);
+        Assert.True(Math.Abs((tau - first % sps + 2 + sps) % sps - 2) < 0.05, $"tau {tau}");
+        double frac = tau % 1;
+        int start = (int)Math.Round(first - frac); // the whole-sample part comes from a preamble in practice
+        Complex[] fixedRx = Channel.FractionalDelay(rx, -frac);
+        double theory = Metrics.QpskBerTheory(4.0);
+        double ber = Metrics.BitErrors(bits, Modulation.QpskDemapHard(Every(fixedRx, start, nsym))).Rate;
+        // 100 000 bits, about 1250 errors: 3 sigma is about 8.5 %
+        Assert.True(Math.Abs(ber - theory) / theory < 0.1, $"ber {ber} vs theory {theory}");
+        if (delay % 1 > 0.45) // sampled half a sample or more off, it is clearly worse
+            Assert.True(Metrics.BitErrors(bits, Modulation.QpskDemapHard(Every(rx, (int)Math.Floor(first), nsym))).Rate > 1.3 * theory);
+    }
+
+    private static Complex[] Every(Complex[] x, int start, int nsym) =>
+        [.. Enumerable.Range(0, nsym).Select(k => x[start + k * 4])];
 }

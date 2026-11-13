@@ -140,21 +140,22 @@ def fractional_delay(
     y = np.zeros(n, dtype=np.complex128)
     pos = np.arange(n) - d
     base = np.floor(pos)
-    frac = pos - base
+    # the kernel depends on the sample only through its fraction, which takes few distinct
+    # values: evaluate it once per fraction (the same arithmetic) and gather
+    frac, which = np.unique(pos - base, return_inverse=True)
     on_grid = frac == 0
     norm = float(np.i0(_FD_BETA))
     for j in range(-h + 1, h + 1):
         t = frac - j
-        m = base + j
-        valid = (m >= 0) & (m < n) & (np.abs(t) < h)
-        if not valid.any():
-            continue
-        tv = t[valid]
         with np.errstate(invalid="ignore", divide="ignore"):
-            s = np.where(tv == 0, 1.0, np.sin(math.pi * tv) / (math.pi * tv))
-        s = np.where(on_grid[valid] & (tv != 0), 0.0, s)
-        w = np.i0(_FD_BETA * np.sqrt(np.maximum(1 - (tv / h) ** 2, 0.0))) / norm
-        y[valid] += (s * w) * x[m[valid].astype(np.int64)]
+            s = np.where(t == 0, 1.0, np.sin(math.pi * t) / (math.pi * t))
+        s = np.where(on_grid & (t != 0), 0.0, s)
+        w = np.i0(_FD_BETA * np.sqrt(np.maximum(1 - (t / h) ** 2, 0.0))) / norm
+        tap = np.where(np.abs(t) < h, s * w, 0.0)[which]
+        m = base + j
+        valid = (m >= 0) & (m < n)
+        if valid.any():
+            y[valid] += tap[valid] * x[m[valid].astype(np.int64)]
     return y
 
 
