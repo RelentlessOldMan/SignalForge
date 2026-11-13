@@ -1,0 +1,29 @@
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Python build output
+build/
+dist/
+*.spec
+
+# .NET
+bin/
+obj/
+*.user
+TestResults/
+
+# Generated reports and scratch output
+reports/
+*.corpus/

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "suite": "waveforms",
+  "description": "Tones whose samples fall on multiples of 45 degrees, so the expected values are exact closed forms (0.7071067811865476 = 1/sqrt 2).",
+  "cases": [
+    {
+      "id": "tone.complex.fs8.f1", "op": "tone",
+      "args": {"sample_rate": 8, "num_samples": 8, "frequency": 1},
+      "expected": {"re": [1, 0.7071067811865476, 0, -0.7071067811865476, -1, -0.7071067811865476, 0, 0.7071067811865476],
+                   "im": [0, 0.7071067811865476, 1, 0.7071067811865476, 0, -0.7071067811865476, -1, -0.7071067811865476]},
+      "source": "exp(j*pi*n/4)"
+    },
+    {
+      "id": "tone.complex.negative_frequency", "op": "tone",
+      "args": {"sample_rate": 4, "num_samples": 4, "frequency": -1},
+      "expected": {"re": [1, 0, -1, 0], "im": [0, -1, 0, 1]},
+      "source": "exp(-j*pi*n/2): a negative frequency rotates clockwise"
+    },
+    {
+      "id": "tone.real.amplitude_phase", "op": "tone",
+      "args": {"sample_rate": 8, "num_samples": 4, "frequency": 2, "amplitude": 2, "phase": 1.5707963267948966, "complex": false},
+      "expected": [0, -2, 0, 2],
+      "source": "2*cos(pi*n/2 + pi/2) = -2*sin(pi*n/2)"
+    },
+    {
+      "id": "tone.empty", "op": "tone",
+      "args": {"sample_rate": 1000, "num_samples": 0, "frequency": 10},
+      "expected": {"re": [], "im": []},
+      "source": "zero samples"
+    },
+    {
+      "id": "tone.bad_sample_rate", "op": "tone",
+      "args": {"sample_rate": 0, "num_samples": 4, "frequency": 1},
+      "error": "invalid_argument", "source": "sample_rate must be positive"
+    }
+  ]
+}

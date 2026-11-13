@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "suite": "measurements",
+  "description": "power_stats on short sequences with hand-computable results. Fields left out of expected are not compared.",
+  "cases": [
+    {
+      "id": "power_stats.complex_tone_amp2", "op": "power_stats",
+      "args": {"samples": {"re": [2, 1.4142135623730951, 0, -1.4142135623730951, -2, -1.4142135623730951, 0, 1.4142135623730951],
+                           "im": [0, 1.4142135623730951, 2, 1.4142135623730951, 0, -1.4142135623730951, -2, -1.4142135623730951]}},
+      "expected": {"num_samples": 8, "mean_power": 4, "rms": 2, "peak_power": 4, "peak_amplitude": 2, "papr_db": 0, "dc": {"re": 0, "im": 0}},
+      "source": "constant envelope |x| = 2: power 4, PAPR 0 dB. peak_index not compared: all |x|^2 tie up to rounding."
+    },
+    {
+      "id": "power_stats.real_sine", "op": "power_stats",
+      "args": {"samples": [0, 0.7071067811865476, 1, 0.7071067811865476, 0, -0.7071067811865476, -1, -0.7071067811865476]},
+      "expected": {"num_samples": 8, "mean_power": 0.5, "rms": 0.7071067811865476, "peak_power": 1, "peak_amplitude": 1, "peak_index": 2, "papr_db": 3.010299956639812, "dc": {"re": 0, "im": 0}},
+      "source": "sin over one period: mean of sin^2 = 1/2, peak 1, PAPR 10*log10(2)"
+    },
+    {
+      "id": "power_stats.square", "op": "power_stats",
+      "args": {"samples": [1, -1, 1, -1]},
+      "expected": {"mean_power": 1, "peak_power": 1, "peak_index": 0, "papr_db": 0, "dc": {"re": 0, "im": 0}},
+      "source": "+-1 square: power 1, PAPR 0 dB; exact tie, first index wins"
+    },
+    {
+      "id": "power_stats.dc_offset", "op": "power_stats",
+      "args": {"samples": {"re": [1, 1, 3, 3], "im": [1, 1, 3, 3]}},
+      "expected": {"mean_power": 10, "rms": 3.1622776601683795, "peak_power": 18, "peak_index": 2, "papr_db": 2.5527250510330606, "dc": {"re": 2, "im": 2}},
+      "source": "|x|^2 = 2, 2, 18, 18: mean 10, peak 18, PAPR 10*log10(1.8); mean sample 2+2j"
+    },
+    {
+      "id": "power_stats.all_zero", "op": "power_stats",
+      "args": {"samples": [0, 0]},
+      "expected": {"mean_power": 0, "peak_power": 0, "peak_index": 0, "papr_db": "nan"},
+      "source": "PAPR undefined for zero power: NaN"
+    },
+    {"id": "power_stats.empty", "op": "power_stats", "args": {"samples": []}, "error": "invalid_argument", "source": "needs at least one sample"}
+  ]
+}

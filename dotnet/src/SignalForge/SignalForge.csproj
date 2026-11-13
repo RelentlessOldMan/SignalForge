@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>SignalForge</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Version>0.1.0</Version>
+    <Authors>RelentlessOldMan</Authors>
+    <Description>Signal generation, processing and measurement for RF and communications.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/RelentlessOldMan/SignalForge</RepositoryUrl>
+  </PropertyGroup>
+
+</Project>

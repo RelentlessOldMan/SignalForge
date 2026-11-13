@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "suite": "prbs",
+  "description": "PRBS prefixes derived by hand from a[i] = a[i-m] XOR a[i-k] with the all-ones seed. Period and balance are checked by the unit tests in each language.",
+  "cases": [
+    {
+      "id": "prbs7.prefix28", "op": "prbs", "args": {"order": 7, "num_bits": 28},
+      "expected": [1,1,1,1,1,1,1, 0,0,0,0,0,0, 1, 0,0,0,0,0, 1,1, 0,0,0,0, 1, 0, 1],
+      "source": "x^7+x^6+1: a[i] = a[i-7]^a[i-6]; a0..a6 = 1, a7..a12 = 0, a13 = a7^a6 = 1, a14..a18 = 0, a19 = a13^a12 = 1, a20 = a14^a13 = 1, a21..a24 = 0, a25 = a19^a18 = 1, a26 = a20^a19 = 0, a27 = a21^a20 = 1"
+    },
+    {
+      "id": "prbs7.inverted.prefix10", "op": "prbs", "args": {"order": 7, "num_bits": 10, "invert": true},
+      "expected": [0,0,0,0,0,0,0, 1,1,1],
+      "source": "complement of prbs7.prefix28"
+    },
+    {
+      "id": "prbs9.prefix20", "op": "prbs", "args": {"order": 9, "num_bits": 20},
+      "expected": [1,1,1,1,1,1,1,1,1, 0,0,0,0,0, 1,1,1,1, 0, 1],
+      "source": "x^9+x^5+1: a[i] = a[i-9]^a[i-5]; a9..a13 = 0, a14 = a5^a9 = 1, a15..a17 = 1, a18 = a9^a13 = 0, a19 = a10^a14 = 1"
+    },
+    {
+      "id": "prbs7.seed1.prefix9", "op": "prbs", "args": {"order": 7, "num_bits": 9, "seed": 1},
+      "expected": [0,0,0,0,0,0,1, 0,0],
+      "source": "seed 0000001 (MSB = first bit); a7 = a0^a1 = 0, a8 = a1^a2 = 0"
+    },
+    {"id": "prbs.unsupported_order", "op": "prbs", "args": {"order": 8, "num_bits": 4}, "error": "invalid_argument", "source": "only O.150 orders"},
+    {"id": "prbs.zero_seed", "op": "prbs", "args": {"order": 7, "num_bits": 4, "seed": 0}, "error": "invalid_argument", "source": "all-zero state never leaves zero"}
+  ]
+}
