@@ -488,6 +488,31 @@ public static class Dsp
     public static double[][] Chebyshev2Bandstop(int order, double attenuationDb, double low, double high, double sampleRate) =>
         Chebyshev2Band(order, attenuationDb, low, high, sampleRate, true);
 
+    /// <summary>Elliptic (Cauer) band-pass from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>:
+    /// pass band [low, high] rippling by rippleDb, stop-band peaks at −attenuationDb (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, 1 to 1000; the filter's order is twice it.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, in (0, <paramref name="attenuationDb"/>).</param>
+    /// <param name="attenuationDb">Stop-band attenuation in dB, at most 200.</param>
+    /// <param name="low">Lower pass-band edge in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper pass-band edge in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] EllipticBandpass(int order, double rippleDb, double attenuationDb, double low, double high, double sampleRate) =>
+        EllipticBand(order, rippleDb, attenuationDb, low, high, sampleRate, false);
+
+    /// <summary>Elliptic (Cauer) band-stop from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>:
+    /// pass bands up to low and from high rippling by rippleDb, stop-band peaks between them at
+    /// −attenuationDb (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, 1 to 1000; the filter's order is twice it.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, in (0, <paramref name="attenuationDb"/>).</param>
+    /// <param name="attenuationDb">Stop-band attenuation in dB, at most 200.</param>
+    /// <param name="low">Lower pass-band edge in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper pass-band edge in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] EllipticBandstop(int order, double rippleDb, double attenuationDb, double low, double high, double sampleRate) =>
+        EllipticBand(order, rippleDb, attenuationDb, low, high, sampleRate, true);
+
     private static double Theta(int i, int n) => Math.PI / 2 + Math.PI * (2 * i + 1) / (2.0 * n);
 
     private static double[][] Butterworth(int order, double cutoff, double sampleRate, bool high)
@@ -571,9 +596,9 @@ public static class Dsp
         return (Math.Sqrt((1 - kp) * (1 + kp)), kp);
     }
 
-    private static double[][] Elliptic(int order, double rippleDb, double attenuationDb, double cutoff, double sampleRate, bool high)
+    // The elliptic prototype's pole i and pair i's zero frequency (edge 1).
+    private static (Func<int, Complex> Poles, Func<int, double> Zeros) EllipticPrototype(int order, double rippleDb, double attenuationDb)
     {
-        Order(order);
         double ep = Math.Sqrt(DbPowerRatio(rippleDb, nameof(rippleDb)));
         double es = Math.Sqrt(DbPowerRatio(attenuationDb, nameof(attenuationDb)));
         if (!(rippleDb < attenuationDb))
@@ -590,9 +615,15 @@ public static class Dsp
         }
         double v0 = 2 / Math.PI * Math.Asinh(y) / order;
         List<double> ladder = Landen(k, kp);
-        double[][] rows = Cascade(order, cutoff, sampleRate, high,
-            i => Complex.ImaginaryOne * Cd(new Complex((2.0 * i + 1) / order, -v0), ladder),
+        return (i => Complex.ImaginaryOne * Cd(new Complex((2.0 * i + 1) / order, -v0), ladder),
             i => 1 / (k * Cd((2.0 * i + 1) / order, ladder).Real));
+    }
+
+    private static double[][] Elliptic(int order, double rippleDb, double attenuationDb, double cutoff, double sampleRate, bool high)
+    {
+        Order(order);
+        var (poles, zeros) = EllipticPrototype(order, rippleDb, attenuationDb);
+        double[][] rows = Cascade(order, cutoff, sampleRate, high, poles, zeros);
         if (order % 2 == 0)
         {
             double g = Math.Pow(10, -rippleDb / 20); // the ripple's low point at DC (or fs/2)
@@ -693,6 +724,20 @@ public static class Dsp
     {
         Order(order);
         double[][] rows = Band(order, low, high, sampleRate, stop, ChebyshevPoles(order, rippleDb, nameof(rippleDb), false));
+        if (order % 2 == 0)
+        {
+            double g = Math.Pow(10, -rippleDb / 20); // the ripple's low point at the reference
+            for (int j = 0; j < 3; j++)
+                rows[0][j] *= g;
+        }
+        return rows;
+    }
+
+    private static double[][] EllipticBand(int order, double rippleDb, double attenuationDb, double low, double high, double sampleRate, bool stop)
+    {
+        Order(order);
+        var (poles, zeros) = EllipticPrototype(order, rippleDb, attenuationDb);
+        double[][] rows = Band(order, low, high, sampleRate, stop, poles, zeros);
         if (order % 2 == 0)
         {
             double g = Math.Pow(10, -rippleDb / 20); // the ripple's low point at the reference

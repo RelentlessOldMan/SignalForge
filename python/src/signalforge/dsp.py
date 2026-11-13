@@ -381,15 +381,10 @@ def _selectivity(n: int, k1: float, k1p: float) -> tuple[float, float]:
     return math.sqrt((1 - kp) * (1 + kp)), kp
 
 
-def _elliptic(
-    order: int,
-    ripple_db: float,
-    attenuation_db: float,
-    cutoff: float,
-    sample_rate: float,
-    high: bool,
-) -> NDArray[np.float64]:
-    n = _order(order)
+def _elliptic_prototype(
+    n: int, ripple_db: float, attenuation_db: float
+) -> tuple[Callable[[int], complex], Callable[[int], float]]:
+    """The elliptic prototype's pole ``i`` and pair ``i``'s zero frequency (edge 1)."""
     ep = math.sqrt(_db_power_ratio(ripple_db, "ripple_db"))
     es = math.sqrt(_db_power_ratio(attenuation_db, "attenuation_db"))
     if not float(ripple_db) < float(attenuation_db):
@@ -408,14 +403,23 @@ def _elliptic(
         prev = v
     v0 = 2 / math.pi * math.asinh(y) / n
     ladder = _landen(k, kp)
-    rows = _cascade(
-        n,
-        cutoff,
-        sample_rate,
-        high,
+    return (
         lambda i: 1j * _cd((2 * i + 1) / n - 1j * v0, ladder),
         lambda i: 1 / (k * _cd((2 * i + 1) / n, ladder).real),
     )
+
+
+def _elliptic(
+    order: int,
+    ripple_db: float,
+    attenuation_db: float,
+    cutoff: float,
+    sample_rate: float,
+    high: bool,
+) -> NDArray[np.float64]:
+    n = _order(order)
+    poles, zeros = _elliptic_prototype(n, ripple_db, attenuation_db)
+    rows = _cascade(n, cutoff, sample_rate, high, poles, zeros)
     if n % 2 == 0:
         rows[0, :3] *= 10 ** (-float(ripple_db) / 20)  # the ripple's low point at DC (or fs/2)
     return rows
@@ -563,6 +567,23 @@ def _chebyshev2_band(
     return _band(n, low, high, sample_rate, stop, poles, lambda i: 1 / math.sin(_theta(i, n)))
 
 
+def _elliptic_band(
+    order: int,
+    ripple_db: float,
+    attenuation_db: float,
+    low: float,
+    high: float,
+    sample_rate: float,
+    stop: bool,
+) -> NDArray[np.float64]:
+    n = _order(order)
+    poles, zeros = _elliptic_prototype(n, ripple_db, attenuation_db)
+    rows = _band(n, low, high, sample_rate, stop, poles, zeros)
+    if n % 2 == 0:
+        rows[0, :3] *= 10 ** (-float(ripple_db) / 20)  # the ripple's low point at the reference
+    return rows
+
+
 def _band(
     n: int,
     low: float,
@@ -669,6 +690,34 @@ def chebyshev2_bandstop(
     ``[low, high]`` with peaks at ``-attenuation_db``, ``order`` second-order sections
     (conventions: IIR filters)."""
     return _chebyshev2_band(order, attenuation_db, low, high, sample_rate, stop=True)
+
+
+def elliptic_bandpass(
+    order: int,
+    ripple_db: float,
+    attenuation_db: float,
+    low: float,
+    high: float,
+    sample_rate: float,
+) -> NDArray[np.float64]:
+    """Elliptic (Cauer) band-pass by the bilinear transform, as second-order sections: pass band
+    from ``low`` to ``high`` with ripple ``ripple_db``, stop-band peaks at ``-attenuation_db``
+    (conventions: IIR filters)."""
+    return _elliptic_band(order, ripple_db, attenuation_db, low, high, sample_rate, stop=False)
+
+
+def elliptic_bandstop(
+    order: int,
+    ripple_db: float,
+    attenuation_db: float,
+    low: float,
+    high: float,
+    sample_rate: float,
+) -> NDArray[np.float64]:
+    """Elliptic (Cauer) band-stop by the bilinear transform, as second-order sections: pass bands
+    below ``low`` and above ``high`` with ripple ``ripple_db``, stop-band peaks between them at
+    ``-attenuation_db`` (conventions: IIR filters)."""
+    return _elliptic_band(order, ripple_db, attenuation_db, low, high, sample_rate, stop=True)
 
 
 def sos_response(

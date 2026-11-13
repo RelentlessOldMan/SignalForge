@@ -281,6 +281,8 @@ public static class Conformance
             "elliptic_highpass" => Bind((a.I("order"), a.D("ripple_db"), a.D("attenuation_db"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.EllipticHighpass(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "butterworth_bandpass" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.ButterworthBandpass(t.Item1, t.Item2, t.Item3, t.Item4)),
             "butterworth_bandstop" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.ButterworthBandstop(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "elliptic_bandpass" => Bind((a.I("order"), a.D("ripple_db"), a.D("attenuation_db"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.EllipticBandpass(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
+            "elliptic_bandstop" => Bind((a.I("order"), a.D("ripple_db"), a.D("attenuation_db"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.EllipticBandstop(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "chebyshev1_bandpass" => Bind((a.I("order"), a.D("ripple_db"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.Chebyshev1Bandpass(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "chebyshev1_bandstop" => Bind((a.I("order"), a.D("ripple_db"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.Chebyshev1Bandstop(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "chebyshev2_bandpass" => Bind((a.I("order"), a.D("attenuation_db"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.Chebyshev2Bandpass(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),

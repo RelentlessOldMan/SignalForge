@@ -23,6 +23,8 @@ from signalforge import (
     chebyshev2_bandstop,
     chebyshev2_highpass,
     chebyshev2_lowpass,
+    elliptic_bandpass,
+    elliptic_bandstop,
     elliptic_highpass,
     elliptic_lowpass,
     sos_response,
@@ -542,5 +544,69 @@ def test_elliptic_order_1_is_chebyshev1() -> None:
     ],
 )
 def test_elliptic_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
+    with pytest.raises(ValueError):
+        design(*args)
+
+
+@pytest.mark.parametrize("stop", [False, True])
+@pytest.mark.parametrize(
+    ("order", "ripple", "atten", "band"),
+    [(1, 1.0, 40.0, (0.1, 0.2)), (2, 0.5, 30.0, (0.001, 0.002)), (3, 0.1, 60.0, (0.1, 0.11)),
+     (4, 1.0, 80.0, (0.05, 0.45)), (7, 0.2, 100.0, (0.3, 0.45))],
+)  # fmt: skip
+def test_elliptic_band_is_the_lowpass_through_the_band_map(
+    stop: bool, order: int, ripple: float, atten: float, band: tuple[float, float]
+) -> None:
+    design = elliptic_bandstop if stop else elliptic_bandpass
+    sos = design(order, ripple, atten, band[0] * 1000, band[1] * 1000, 1000.0)
+    assert sos.shape == (order, 6)
+    for row in sos:
+        assert np.all(np.abs(np.roots(row[3:])) < 1)
+    lo, hi = math.tan(math.pi * band[0]), math.tan(math.pi * band[1])
+    w2, bw = lo * hi, hi - lo
+    f = np.linspace(0.0005, 0.4995, 999)
+    t = np.tan(np.pi * f)
+    x = np.abs(bw * t / (w2 - t * t) if stop else (t * t - w2) / (bw * t))
+    lowpass = elliptic_lowpass(order, ripple, atten, 0.25, 1.0)  # prewarped edge 1
+    want = np.abs(sos_response(lowpass, np.arctan(x) / np.pi, 1.0)) ** 2
+    got = np.abs(sos_response(sos, f * 1000, 1000.0)) ** 2
+    assert np.allclose(got, want, rtol=1e-8, atol=1e-12)
+    edges = np.abs(sos_response(sos, [band[0] * 1000, band[1] * 1000], 1000.0)) ** 2
+    assert edges == pytest.approx([10 ** (-ripple / 10)] * 2, rel=1e-8)
+
+
+def test_elliptic_band_reference_gains() -> None:
+    center = (
+        1000 / math.pi * math.atan(math.sqrt(math.tan(math.pi * 0.1) * math.tan(math.pi * 0.2)))
+    )
+    for order, want in [(3, 1.0), (4, 10 ** (-1 / 20))]:  # even: the ripple's low point
+        bp = elliptic_bandpass(order, 1.0, 50.0, 100.0, 200.0, 1000.0)
+        bs = elliptic_bandstop(order, 1.0, 50.0, 100.0, 200.0, 1000.0)
+        assert abs(sos_response(bp, [center], 1000.0)[0]) == pytest.approx(want, rel=1e-9)
+        assert np.abs(sos_response(bs, [0.0, 500.0], 1000.0)) == pytest.approx([want] * 2, rel=1e-9)
+        # The band-stop's center is the prototype's infinity: a zero (odd) or the stop level.
+        null = abs(sos_response(bs, [center], 1000.0)[0])
+        assert null == pytest.approx(0.0 if order % 2 else 10 ** (-50 / 20), abs=1e-12)
+
+
+@pytest.mark.parametrize("design", [elliptic_bandpass, elliptic_bandstop])
+@pytest.mark.parametrize(
+    "args",
+    [
+        (0, 1.0, 40.0, 0.1, 0.2, 1.0),
+        (1001, 1.0, 40.0, 0.1, 0.2, 1.0),
+        (2, 0.0, 40.0, 0.1, 0.2, 1.0),
+        (2, 40.0, 40.0, 0.1, 0.2, 1.0),
+        (2, 1.0, 250.0, 0.1, 0.2, 1.0),
+        (2, math.nan, 40.0, 0.1, 0.2, 1.0),
+        (2, 1.0, 40.0, 0.2, 0.1, 1.0),
+        (2, 1.0, 40.0, 0.1, 0.5, 1.0),
+        (2, 1.0, 40.0, 0.0, 0.2, 1.0),
+        (2, 1.0, 40.0, 0.1, 0.2, 0.0),
+        (4, 1.0, 40.0, 1e-9, 2e-9, 1.0),
+        (1000, 1.0, 2.0, 0.1, 0.2, 1.0),
+    ],
+)
+def test_elliptic_band_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
     with pytest.raises(ValueError):
         design(*args)

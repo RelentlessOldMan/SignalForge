@@ -4,9 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Elliptic band-pass and band-stop** on the shared band transform: conventions and an ADR
-   first; expected values from the closed-form |H|² through the band map.
-2. **Review pass** over the elliptic band designs once built.
+1. **Review pass** over the elliptic band designs.
+2. **Equiripple (Parks–McClellan) FIR design**: conventions and an ADR first (band weights, grid
+   density, convergence and failure reporting); expected values from analytic cases and
+   independently computed extremal alternation checks.
 
 ## Built
 
@@ -271,10 +272,20 @@ Updated with every chunk of work. Dates are absolute.
   to about 1e-5), and accept/reject the same designs except three with 150-200 dB ripple whose
   poles sit one rounding step (2e-16) from the unit circle. No code defects; the conventions'
   conditioning note now names the elliptic ripple limit.
+- 2026-11-13: band-pass and band-stop elliptic ([ADR 0023](adr/0023-band-elliptic.md)):
+  `elliptic_bandpass`, `elliptic_bandstop` (`EllipticBandpass`, `EllipticBandstop`): the elliptic
+  prototype (now a shared helper) through the ADR 0021 band builder unchanged, with the type I
+  even-order gain. 14 new `iir.json` cases: two by hand (order 1, ε = 1, W = 1, B = 2), seven
+  computed (orders 2-6, narrow and wide bands), five rejections. The generator puts its own
+  theta-series prototype through the band transform and checks the closed-form |H|², the edges,
+  the band-stop center, stability and the denominator product by polynomial substitution; the
+  library matches it to 2e-15. A temporary sweep of 800 random band designs agreed in both
+  languages to 1e-10. Python 1437 passed, 2 skipped; .NET 1123 passed; conformance 669/669 in
+  both.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II and elliptic low/high-pass (elliptic band designs), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II and elliptic (Bessel, all-pass), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

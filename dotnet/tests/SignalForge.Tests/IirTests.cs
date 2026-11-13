@@ -553,4 +553,74 @@ public class IirTests
         Assert.ThrowsAny<ArgumentException>(() => Dsp.EllipticLowpass(order, ripple, atten, cutoff, fs));
         Assert.ThrowsAny<ArgumentException>(() => Dsp.EllipticHighpass(order, ripple, atten, cutoff, fs));
     }
+
+    [Theory]
+    [InlineData(false, 1, 1.0, 40.0, 0.1, 0.2)]
+    [InlineData(false, 2, 0.5, 30.0, 0.001, 0.002)]
+    [InlineData(false, 3, 0.1, 60.0, 0.1, 0.11)]
+    [InlineData(false, 4, 1.0, 80.0, 0.05, 0.45)]
+    [InlineData(false, 7, 0.2, 100.0, 0.3, 0.45)]
+    [InlineData(true, 1, 1.0, 40.0, 0.1, 0.2)]
+    [InlineData(true, 2, 0.5, 30.0, 0.001, 0.002)]
+    [InlineData(true, 3, 0.1, 60.0, 0.1, 0.11)]
+    [InlineData(true, 4, 1.0, 80.0, 0.05, 0.45)]
+    [InlineData(true, 7, 0.2, 100.0, 0.3, 0.45)]
+    public void EllipticBandIsTheLowpassThroughTheBandMap(bool stop, int order, double ripple, double atten, double low, double high)
+    {
+        double[][] sos = stop ? Dsp.EllipticBandstop(order, ripple, atten, low * 1000, high * 1000, 1000)
+            : Dsp.EllipticBandpass(order, ripple, atten, low * 1000, high * 1000, 1000);
+        Assert.Equal(order, sos.Length);
+        Assert.All(sos, r => Assert.True(Math.Abs(r[5]) < 1 && Math.Abs(r[4]) < 1 + r[5], "a pole outside the unit circle"));
+        double lo = Math.Tan(Math.PI * low), hi = Math.Tan(Math.PI * high), w2 = lo * hi, bw = hi - lo;
+        double[] f = [.. Enumerable.Range(0, 999).Select(i => 0.0005 + 0.0005 * i)];
+        double[] mapped = [.. f.Select(v =>
+        {
+            double t = Math.Tan(Math.PI * v);
+            return Math.Atan(Math.Abs(stop ? bw * t / (w2 - t * t) : (t * t - w2) / (bw * t))) / Math.PI;
+        })];
+        double[][] lowpass = Dsp.EllipticLowpass(order, ripple, atten, 0.25, 1); // prewarped edge 1
+        Complex[] want = Dsp.SosResponse(lowpass, mapped, 1);
+        Complex[] got = Dsp.SosResponse(sos, [.. f.Select(v => v * 1000)], 1000);
+        for (int i = 0; i < f.Length; i++)
+        {
+            double w = want[i].Magnitude * want[i].Magnitude, g = got[i].Magnitude * got[i].Magnitude;
+            Assert.True(Math.Abs(g - w) <= 1e-12 + 1e-8 * w, $"{f[i]}: {g} vs {w}");
+        }
+        foreach (Complex e in Dsp.SosResponse(sos, [low * 1000, high * 1000], 1000))
+            Assert.True(Math.Abs(e.Magnitude * e.Magnitude / Math.Pow(10, -ripple / 10) - 1) < 1e-8);
+    }
+
+    [Fact]
+    public void EllipticBandReferenceGains()
+    {
+        double center = 1000 / Math.PI * Math.Atan(Math.Sqrt(Math.Tan(Math.PI * 0.1) * Math.Tan(Math.PI * 0.2)));
+        foreach (var (order, want) in new[] { (3, 1.0), (4, Math.Pow(10, -1 / 20.0)) }) // even: the ripple's low point
+        {
+            double[][] bp = Dsp.EllipticBandpass(order, 1, 50, 100, 200, 1000), bs = Dsp.EllipticBandstop(order, 1, 50, 100, 200, 1000);
+            Assert.Equal(want, Dsp.SosResponse(bp, [center], 1000)[0].Magnitude, 1e-9);
+            foreach (Complex h in Dsp.SosResponse(bs, [0.0, 500.0], 1000))
+                Assert.Equal(want, h.Magnitude, 1e-9);
+            // The band-stop's center is the prototype's infinity: a zero (odd) or the stop level.
+            Assert.Equal(order % 2 == 1 ? 0.0 : Math.Pow(10, -50 / 20.0), Dsp.SosResponse(bs, [center], 1000)[0].Magnitude, 1e-12);
+        }
+    }
+
+    [Theory]
+    [InlineData(0, 1.0, 40.0, 0.1, 0.2, 1.0)]
+    [InlineData(1001, 1.0, 40.0, 0.1, 0.2, 1.0)]
+    [InlineData(2, 0.0, 40.0, 0.1, 0.2, 1.0)]
+    [InlineData(2, 40.0, 40.0, 0.1, 0.2, 1.0)]
+    [InlineData(2, 1.0, 250.0, 0.1, 0.2, 1.0)]
+    [InlineData(2, double.NaN, 40.0, 0.1, 0.2, 1.0)]
+    [InlineData(2, 1.0, 40.0, 0.2, 0.1, 1.0)]
+    [InlineData(2, 1.0, 40.0, 0.1, 0.5, 1.0)]
+    [InlineData(2, 1.0, 40.0, 0.0, 0.2, 1.0)]
+    [InlineData(2, 1.0, 40.0, 0.1, 0.2, 0.0)]
+    [InlineData(4, 1.0, 40.0, 1e-9, 2e-9, 1.0)]
+    [InlineData(1000, 1.0, 2.0, 0.1, 0.2, 1.0)]
+    public void EllipticBandRejectsBadArguments(int order, double ripple, double atten, double low, double high, double fs)
+    {
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.EllipticBandpass(order, ripple, atten, low, high, fs));
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.EllipticBandstop(order, ripple, atten, low, high, fs));
+    }
 }

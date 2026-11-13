@@ -502,6 +502,19 @@ and `SignalForge.IirFilter`.
     gain at the center `f_0`, and the band-stop has it at 0 and `fs/2`.
   - `order` is an integer, `1 ≤ order ≤ 1000`; `ripple_db` or `attenuation_db` in `(0, 200]`;
     `0 < low < high < fs/2`, finite.
+- **Band-pass and band-stop elliptic** (`elliptic_bandpass(order, ripple_db, attenuation_db, low,
+  high, sample_rate)`, `elliptic_bandstop(...)`, [ADR 0023](adr/0023-band-elliptic.md)): the
+  elliptic low-pass prototype of that `order` (edge 1; poles `p_i`, zeros `±jΩ_i`,
+  `Ω_i = 1/(k·cd(u_i K, k))`, as above, with the same validation and `k' ≥ 1e-6` limit) through
+  the band transform exactly as the band Chebyshev, with the same `L, H, W, B, t, x`:
+  `|H(f)|² = 1/(1 + ε_p²R_N(|x|)²)`. `low` and `high` are the pass-band edges (`|x| = 1`,
+  `|H|² = 1/(1 + ε_p²)`); the stop band is `|x| ≥ 1/k`. Sections as for the band Chebyshev:
+  the odd order's real pole `p_r` as type I (band-pass gain `−p_r`), each pair with its zeros as
+  type II (`d = B·Ω_i` or `B/Ω_i`, the smaller-`|s|` image takes `ω_lo`; band-pass gain
+  `|p_i|/Ω_i`), band-stop gains 1; an even `order` multiplies the first section's `b` by
+  `10^(−R/20)`. So the band-pass has the prototype's DC gain (`1`, or `10^(−R/20)` for an even
+  order) at the center `f_0`, and the band-stop has it at 0 and `fs/2`; the band-stop's center
+  maps to `|x| = ∞`, where `|H|²` is 0 (odd order) or `10^(−A/10)` (even).
 - **Frequency response** (`sos_response(sos, frequencies, sample_rate)`): the complex
   `H(f) = Π_i H_i(e^(j2π·f/fs))` at each frequency. Frequencies finite.
 - **Streaming filter** (`IirFilter(sos)`, method `process(chunk)`, `reset()`, property `sections`,

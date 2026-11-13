@@ -179,12 +179,13 @@ def poly_roots(c):
     return r
 
 
-def elliptic(order, ripple, atten, cutoff, fs, high):
-    """Elliptic design by a route independent of the library: k and cd from theta series, the
-    elliptic rational function R_N from its zeros and poles, the poles as the left-half-plane roots
-    of D(w)^2 + eps^2 c^2 N(w)^2 (w = omega^2 = -s^2), each section from its analog quadratics
-    through the bilinear transform. Checked: R_N's equiripple bounds in both bands (the definition
-    of the elliptic filter), the closed-form |H|^2 of the rows, and stability."""
+def ell_proto(order, ripple, atten):
+    """The elliptic low-pass prototype (edge 1) by a route independent of the library: k and cd
+    from theta series, the elliptic rational function R_N from its zeros and poles, the poles as
+    the left-half-plane roots of D(w)^2 + eps^2 c^2 N(w)^2 (w = omega^2 = -s^2). Checked: R_N's
+    equiripple bounds in both bands (the definition of the elliptic filter). Returns the real pole
+    (or None), the upper pole of each pair by rising Im, each pair's zero frequency (descending,
+    so the lowest-Q pair has the highest zero), R_N and eps_p^2."""
     n, ep2 = order, 10 ** (ripple / 10) - 1
     es2 = 10 ** (atten / 10) - 1
     k1 = math.sqrt(ep2 / es2)
@@ -258,16 +259,24 @@ def elliptic(order, ripple, atten, cutoff, fs, high):
     real = [p for p in poles if abs(p.imag) < 1e-9]
     pairs = sorted([p for p in poles if p.imag > 1e-9], key=lambda p: p.imag)  # rising |Im|
     assert len(real) == n % 2 and len(pairs) == n // 2, (order, poles)
+    return (real[0].real if real else None), pairs, sorted(om, reverse=True), rn, ep2
+
+
+def elliptic(order, ripple, atten, cutoff, fs, high):
+    """Elliptic low-pass or high-pass: the prototype's sections from their analog quadratics
+    through the bilinear transform. Checked: the closed-form |H|^2 of the rows, and stability."""
+    n = order
+    real, pairs, zeros, rn, ep2 = ell_proto(order, ripple, atten)
     kc = math.tan(math.pi * cutoff / fs)
     rows = []
     if n % 2:
-        a = -real[0].real  # pole at -a
+        a = -real  # pole at -a
         qq = kc / a if high else kc * a
         if high:
             rows.append([1 / (1 + qq), -1 / (1 + qq), 0.0, 1.0, (qq - 1) / (qq + 1), 0.0])
         else:
             rows.append([qq / (1 + qq), qq / (1 + qq), 0.0, 1.0, (qq - 1) / (qq + 1), 0.0])
-    for p, o in zip(pairs, sorted(om, reverse=True)):  # lowest Q with the highest zero
+    for p, o in zip(pairs, zeros):  # lowest Q with the highest zero
         if high:
             sp, w = kc / p, (kc / o) ** 2
         else:
@@ -288,6 +297,73 @@ def elliptic(order, ripple, atten, cutoff, fs, high):
         assert abs(abs(h) ** 2 - want) < 1e-12, (order, ripple, atten, high, f, abs(h) ** 2, want)
     assert abs(abs(response(rows, [cutoff], fs)[0]) ** 2 - 1 / (1 + ep2)) < 1e-12
     return rows
+
+
+def ell_band(order, ripple, atten, low, high, fs, stop):
+    """Elliptic band design: the prototype's analog quadratics through the band transform
+    (conventions: band-pass and band-stop elliptic) and the bilinear transform. Checked: the
+    closed-form |H|^2 = 1/(1 + eps^2 R_N(|x|)^2) and the edges, stability, and the product of the
+    denominators against the prototype expanded by polynomial substitution."""
+    real, pairs, zeros, rn, ep2 = ell_proto(order, ripple, atten)
+    lo, hi = math.tan(math.pi * low / fs), math.tan(math.pi * high / fs)
+    w2, bw = lo * hi, hi - lo
+    sections = []  # (Re s, |s|^2, gain, zero^2 or None)
+    quads = [(-2 * p.real, abs(p) ** 2) for p in pairs]
+    if real is not None:
+        c = bw / real if stop else bw * real
+        sections.append((c / 2, w2, 1.0 if stop else -real, None))
+    for p, omega in zip(pairs, zeros):
+        c = bw / p if stop else bw * p
+        d = cmath.sqrt(c * c - 4 * w2)
+        images = sorted([(c + d) / 2, (c - d) / 2], key=abs)
+        e = bw / omega if stop else bw * omega
+        w_hi = (e + math.sqrt(e * e + 4 * w2)) / 2
+        gain = 1.0 if stop else abs(p) / omega
+        sections += [(s.real, abs(s) ** 2, gain, z) for s, z in
+                     zip(images, [(w2 / w_hi) ** 2, w_hi * w_hi])]
+    rows = []
+    for sigma, m, g, z in sections:
+        a0 = 1 - 2 * sigma + m
+        if z is not None:
+            b = [1 + z, 2 * (z - 1), 1 + z]
+        else:
+            b = [1 + w2, 2 * (w2 - 1), 1 + w2] if stop else [bw, 0.0, -bw]
+        rows.append([g * v / a0 for v in b] + [1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
+    if order % 2 == 0:
+        rows[0][:3] = [v * 10 ** (-ripple / 20) for v in rows[0][:3]]
+    for row in rows:
+        assert abs(row[5]) < 1 and abs(row[4]) < 1 + row[5], (order, low, high, row)
+    prod = [1.0]
+    for row in rows:
+        prod = pmul(prod, row[3:])
+    want = substituted_denominator(order, quads, real, w2, bw, stop)
+    assert all(abs(a - b) <= 1e-9 * max(map(abs, want)) for a, b in zip(prod, want)), (order, low)
+    center = fs / math.pi * math.atan(w2 ** 0.5)
+    freqs = [fs * j / 128 for j in range(1, 64)] + [low, high] + ([] if stop else [center])
+    for f, h in zip(freqs, response(rows, freqs, fs)):
+        t = math.tan(math.pi * f / fs)
+        x = bw * t / (w2 - t * t) if stop else (t * t - w2) / (bw * t)
+        want = 1 / (1 + ep2 * rn(abs(x)) ** 2)
+        assert abs(abs(h) ** 2 - want) < 1e-12, (order, low, high, stop, f, abs(h) ** 2, want)
+    for f in (low, high):
+        assert abs(abs(response(rows, [f], fs)[0]) ** 2 - 1 / (1 + ep2)) < 1e-12
+    if stop:  # the center maps to infinity: 0 (odd order) or the stop level (even)
+        want = 0.0 if order % 2 else 10 ** (-atten / 10)
+        assert abs(abs(response(rows, [center], fs)[0]) ** 2 - want) < 1e-12
+    return rows
+
+
+def ell_band_design(case_id, order, ripple, atten, low, high, fs, stop, rows=None, src=None):
+    return {"id": case_id, "op": f"elliptic_band{'stop' if stop else 'pass'}",
+            "args": {"order": order, "ripple_db": ripple, "attenuation_db": atten, "low": low,
+                     "high": high, "sample_rate": fs},
+            "expected": rows if rows is not None else ell_band(order, ripple, atten, low, high,
+                                                               fs, stop),
+            "tol": TOL, "source": src or SRC + "the elliptic prototype (theta-function series, "
+            "poles as roots of D^2 + eps^2 N^2) through the band and bilinear transforms; "
+            "checked against the closed-form |H|^2 = 1/(1 + eps^2 R_N(|x|)^2) and the edges, "
+            "section stability, and the product of the denominators against the prototype "
+            "expanded by polynomial substitution"}
 
 
 def ell_design(case_id, order, ripple, atten, cutoff, fs, high, rows=None, src=None):
@@ -756,6 +832,35 @@ cases = [
         {"order": 1000, "ripple_db": 1.0, "attenuation_db": 2.0, "cutoff": 0.1, "sample_rate": 1.0},
         "order 1000 with 1 dB and 2 dB: K'(k)/K(k) is about 1e-3, so k' = 4 exp(-pi/tau)... "
         "underflows to 0, below the k' >= 1e-6 limit"),
+    ell_band_design("elliptic.bandpass_1_by_hand", 1, 10 * math.log10(2), 40.0, 1.0, 3.0, 8.0,
+                    False, [[0.5, 0.0, -0.5, 1.0, 0.0, 0.0]],
+                    "by hand: fs = 8, edges 1 and 3 give L = tan(pi/8), H = 1/L, so W^2 = 1 and B = 2; 10 log10(2) dB ripple makes eps_p = 1, and order 1 has no zeros and the real pole -1/eps_p = -1 (k = k1, R_1(x) = x), so the section is B s/(s^2 + 2s + 1) -> a0 = 4, [2, 0, -2]/4 over [4, 0, 0]/4"),
+    ell_band_design("elliptic.bandstop_1_by_hand", 1, 10 * math.log10(2), 40.0, 1.0, 3.0, 8.0,
+                    True, [[0.5, 0.0, 0.5, 1.0, 0.0, 0.0]],
+                    "by hand: fs = 8, edges 1 and 3 give L = tan(pi/8), H = 1/L, so W^2 = 1 and B = 2; 10 log10(2) dB ripple makes eps_p = 1, and order 1 has no zeros and the real pole -1/eps_p = -1 (k = k1, R_1(x) = x), so the section is (s^2 + 1)/(s^2 + 2s + 1) -> a0 = 4, [2, 0, 2]/4 over [4, 0, 0]/4"),
+    ell_band_design("elliptic.bandpass_2", 2, 1.0, 40.0, 1000.0, 2000.0, 8000.0, False),
+    ell_band_design("elliptic.bandpass_3", 3, 0.5, 50.0, 0.1, 0.3, 1.0, False),
+    ell_band_design("elliptic.bandpass_2_narrow", 2, 3.0, 30.0, 0.2, 0.21, 1.0, False),
+    ell_band_design("elliptic.bandpass_6", 6, 0.5, 90.0, 0.1, 0.2, 1.0, False),
+    ell_band_design("elliptic.bandstop_3_wide", 3, 0.2, 80.0, 0.02, 0.45, 1.0, True),
+    ell_band_design("elliptic.bandstop_4", 4, 0.1, 60.0, 0.05, 0.15, 1.0, True),
+    ell_band_design("elliptic.bandstop_5", 5, 1.0, 70.0, 2000.0, 6000.0, 48000.0, True),
+    err("elliptic.bandpass_ripple_equals_attenuation", "elliptic_bandpass",
+        {"order": 4, "ripple_db": 40.0, "attenuation_db": 40.0, "low": 0.1, "high": 0.2,
+         "sample_rate": 1.0}, "ripple_db < attenuation_db required"),
+    err("elliptic.bandstop_low_above_high", "elliptic_bandstop",
+        {"order": 2, "ripple_db": 1.0, "attenuation_db": 40.0, "low": 0.2, "high": 0.1,
+         "sample_rate": 1.0}, "low < high required"),
+    err("elliptic.bandpass_order_zero", "elliptic_bandpass",
+        {"order": 0, "ripple_db": 1.0, "attenuation_db": 40.0, "low": 0.1, "high": 0.2,
+         "sample_rate": 1.0}, "order >= 1 required"),
+    err("elliptic.bandstop_high_at_nyquist", "elliptic_bandstop",
+        {"order": 2, "ripple_db": 1.0, "attenuation_db": 40.0, "low": 0.1, "high": 0.5,
+         "sample_rate": 1.0}, "high < fs/2 required"),
+    err("elliptic.bandpass_transition_too_narrow", "elliptic_bandpass",
+        {"order": 1000, "ripple_db": 1.0, "attenuation_db": 2.0, "low": 0.1, "high": 0.2,
+         "sample_rate": 1.0}, "k' underflows to 0 (order 1000, 1 dB and 2 dB), below the "
+        "k' >= 1e-6 limit"),
     band_design("butterworth.bandpass_2", 2, 1000.0, 2000.0, 8000.0, False),
     band_design("butterworth.bandpass_3", 3, 1000.0, 3000.0, 16000.0, False),
     band_design("butterworth.bandpass_4_narrow", 4, 0.1, 0.11, 1.0, False),
