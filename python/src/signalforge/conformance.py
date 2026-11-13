@@ -73,7 +73,11 @@ OPS: dict[str, Callable[..., Any]] = {
     "resample_taps": dsp.resample_taps,
     "interpolate": dsp.interpolate,
     "decimate": dsp.decimate,
-    "fir_filter": lambda taps, samples, chunks: _fir_filter(taps, samples, chunks),
+    "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
+    "butterworth_lowpass": dsp.butterworth_lowpass,
+    "butterworth_highpass": dsp.butterworth_highpass,
+    "sos_response": dsp.sos_response,
+    "iir_filter": lambda sos, samples, chunks: _chunked(dsp.IirFilter(sos), samples, chunks),
     "frequency_offset": channel.frequency_offset,
     "evm": metrics.evm,
     "qpsk_ber_theory": metrics.qpsk_ber_theory,
@@ -117,14 +121,13 @@ def _signal_record(s: Any) -> dict[str, Any]:
     }
 
 
-def _fir_filter(taps: Any, samples: Any, chunks: Any) -> Any:
-    """Run ``samples`` through one :class:`dsp.FirFilter` in chunks of the given lengths."""
+def _chunked(f: dsp.FirFilter | dsp.IirFilter, samples: Any, chunks: Any) -> Any:
+    """Run ``samples`` through one streaming filter in chunks of the given lengths."""
     sizes = [int(c) for c in chunks]
     if any(c < 0 or c != float(x) for c, x in zip(sizes, chunks, strict=True)):
         raise BadCase("chunks must be non-negative whole numbers")
     if sum(sizes) != len(samples):
         raise BadCase("chunks must add up to the number of samples")
-    f = dsp.FirFilter(taps)
     edges = np.cumsum([0, *sizes])
     return np.concatenate([f.process(samples[i:j]) for i, j in itertools.pairwise(edges)])
 

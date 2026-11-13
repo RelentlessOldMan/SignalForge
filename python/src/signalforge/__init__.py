@@ -4,6 +4,9 @@ from .channel import awgn, frequency_offset
 from .core import Signal
 from .dsp import (
     FirFilter,
+    IirFilter,
+    butterworth_highpass,
+    butterworth_lowpass,
     convolve,
     decimate,
     fir_bandpass,
@@ -16,6 +19,7 @@ from .dsp import (
     resample,
     resample_taps,
     rrc_taps,
+    sos_response,
     upsample,
 )
 from .files import decode_samples, encode_samples, read_sigmf, write_sigmf
@@ -51,12 +55,13 @@ from .units import (
 )
 from .waveforms import prbs, tone
 
-__version__ = "2026.11.13.21"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.22"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
     "Evm",
     "FirFilter",
+    "IirFilter",
     "OccupiedBandwidth",
     "PowerStats",
     "QpskLinkConfig",
@@ -68,6 +73,8 @@ __all__ = [
     "amp_to_db",
     "awgn",
     "bit_errors",
+    "butterworth_highpass",
+    "butterworth_lowpass",
     "channel_power",
     "convolve",
     "db_to_amp",
@@ -104,6 +111,7 @@ __all__ = [
     "resample",
     "resample_taps",
     "rrc_taps",
+    "sos_response",
     "spectrogram",
     "timing_offset",
     "tone",

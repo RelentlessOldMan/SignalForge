@@ -2,8 +2,9 @@ using System.Numerics;
 
 namespace SignalForge;
 
-/// <summary>Convolution, upsampling, root-raised-cosine pulse shaping, FIR design and FIR response.
-/// Definitions in docs/conventions.md (Pulse shaping, FIR filters).</summary>
+/// <summary>Convolution, upsampling, root-raised-cosine pulse shaping, FIR and IIR design and
+/// response, resampling. Definitions in docs/conventions.md (Pulse shaping, FIR filters, IIR
+/// filters, Resampling).</summary>
 public static class Dsp
 {
     /// <summary>Full linear convolution y[n] = Σ h[k]·x[n−k], length len(x) + len(h) − 1.</summary>
@@ -305,6 +306,99 @@ public static class Dsp
         while (b != 0)
             (a, b) = (b, a % b);
         return (up / a, down / a);
+    }
+
+    /// <summary>Butterworth low-pass by the bilinear transform, as second-order sections
+    /// <c>[b0, b1, b2, a0, a1, a2]</c> (conventions: IIR filters).</summary>
+    /// <param name="order">Filter order, at least 1.</param>
+    /// <param name="cutoff">−3 dB frequency in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] ButterworthLowpass(int order, double cutoff, double sampleRate) =>
+        Butterworth(order, cutoff, sampleRate, false);
+
+    /// <summary>Butterworth high-pass by the bilinear transform, as second-order sections
+    /// <c>[b0, b1, b2, a0, a1, a2]</c> (conventions: IIR filters).</summary>
+    /// <param name="order">Filter order, at least 1.</param>
+    /// <param name="cutoff">−3 dB frequency in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] ButterworthHighpass(int order, double cutoff, double sampleRate) =>
+        Butterworth(order, cutoff, sampleRate, true);
+
+    /// <summary>Complex response of a cascade of second-order sections at each frequency
+    /// (conventions: IIR filters).</summary>
+    /// <param name="sos">Sections <c>[b0, b1, b2, a0, a1, a2]</c>, at least one, finite, a0 ≠ 0.</param>
+    /// <param name="frequencies">Frequencies in Hz, finite.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static Complex[] SosResponse(double[][] sos, ReadOnlySpan<double> frequencies, double sampleRate)
+    {
+        double[][] s = CheckSos(sos);
+        double fs = Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        var h = new Complex[frequencies.Length];
+        for (int i = 0; i < frequencies.Length; i++)
+        {
+            if (!double.IsFinite(frequencies[i]))
+                throw new ArgumentException("frequencies must be finite", nameof(frequencies));
+            Complex zi = Complex.FromPolarCoordinates(1, -2 * Math.PI * frequencies[i] / fs);
+            Complex r = Complex.One;
+            foreach (double[] c in s)
+                r *= (c[0] + zi * (c[1] + zi * c[2])) / (c[3] + zi * (c[4] + zi * c[5]));
+            h[i] = r;
+        }
+        return h;
+    }
+
+    /// <summary>A copy of the sections, each row divided by its a0; throws unless valid.</summary>
+    internal static double[][] CheckSos(double[][] sos)
+    {
+        ArgumentNullException.ThrowIfNull(sos);
+        if (sos.Length == 0)
+            throw new ArgumentException("sos needs at least one section", nameof(sos));
+        var s = new double[sos.Length][];
+        for (int i = 0; i < sos.Length; i++)
+        {
+            double[] row = sos[i];
+            if (row is null || row.Length != 6)
+                throw new ArgumentException("every section needs 6 values [b0, b1, b2, a0, a1, a2]", nameof(sos));
+            if (!Array.TrueForAll(row, double.IsFinite))
+                throw new ArgumentException("sos must be finite", nameof(sos));
+            if (row[3] == 0)
+                throw new ArgumentException("every section needs a0 != 0", nameof(sos));
+            s[i] = [.. row.Select(v => v / row[3])];
+        }
+        return s;
+    }
+
+    private static double[][] Butterworth(int order, double cutoff, double sampleRate, bool high)
+    {
+        if (order < 1)
+            throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
+        double k = Math.Tan(Math.PI * BandEdge(cutoff, Check.PositiveFinite(sampleRate, nameof(sampleRate)), nameof(cutoff)));
+        double zero = high ? 1 : -1; // zeros at z = 1 (high-pass) or z = -1 (low-pass)
+
+        // Analog pole i (cutoff 1 after prewarping by K) through the bilinear transform.
+        Complex Pole(int i)
+        {
+            Complex s = k * Complex.FromPolarCoordinates(1, Math.PI / 2 + Math.PI * (2 * i + 1) / (2.0 * order));
+            if (high)
+                s = k * k / s;
+            return (1 + s) / (1 - s);
+        }
+
+        var rows = new List<double[]>();
+        if (order % 2 == 1)
+        {
+            double p = Pole((order - 1) / 2).Real;
+            double g = high ? (1 + p) / 2 : (1 - p) / 2; // unit gain at fs/2 or DC
+            rows.Add([g, -zero * g, 0, 1, -p, 0]);
+        }
+        for (int i = order / 2 - 1; i >= 0; i--)
+        {
+            Complex z = Pole(i);
+            double a1 = -2 * z.Real, a2 = z.Magnitude * z.Magnitude;
+            double g = (1 - zero * a1 + a2) / 4; // unit gain at the reference z = -zero
+            rows.Add([g, -2 * zero * g, g, 1, a1, a2]);
+        }
+        return [.. rows];
     }
 
     /// <summary>Throws unless the taps are non-empty and finite.</summary>

@@ -239,6 +239,47 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
   filter as real or complex; a chunk of the other kind raises, until `reset()`. An empty chunk
   returns an empty output and changes nothing.
 
+## IIR filters
+
+Decided in [ADR 0014](adr/0014-iir-filters.md). Python: `signalforge.dsp`; C#: `SignalForge.Dsp`
+and `SignalForge.IirFilter`.
+
+- **Second-order sections.** An IIR filter is a cascade of sections, each a row
+  `[b0, b1, b2, a0, a1, a2]` with transfer function
+  `H_i(z) = (b0 + b1·z⁻¹ + b2·z⁻²)/(a0 + a1·z⁻¹ + a2·z⁻²)`; the filter is their product, applied in
+  row order. Python holds them as a float array of shape `(sections, 6)`, C# as `double[][]`, one
+  array of 6 per section. A valid cascade has at least one section, every value finite and every
+  `a0 ≠ 0`; each row is divided by its `a0` on the way in, so a function or filter given a cascade
+  works on a copy with `a0 = 1`. Stability is not checked.
+- **Butterworth design** (`butterworth_lowpass(order, cutoff, sample_rate)` and
+  `butterworth_highpass(order, cutoff, sample_rate)`): the analog Butterworth filter of that order,
+  its cutoff prewarped to `Ω_c = 2·fs·tan(π·f_c/fs)`, through the bilinear transform
+  `s = 2·fs·(1 − z⁻¹)/(1 + z⁻¹)`. So `|H(f)|² = 1/(1 + (tan(πf/fs)/K)^(2·order))` for the
+  low-pass and `1/(1 + (K/tan(πf/fs))^(2·order))` for the high-pass, `K = tan(π·f_c/fs)`: exactly
+  `1/2` (−3.01 dB) at the cutoff. The sections, with analog pole angles
+  `θ_k = π/2 + π(2k + 1)/(2·order)`, `k = 0 … order − 1`:
+  - for an odd order, first a first-order section from the real pole (`k = (order − 1)/2`):
+    zero at `z = −1` (low-pass) or `z = 1` (high-pass), `b2 = a2 = 0`;
+  - then one section per conjugate pole pair `k` and `order − 1 − k`, for `k = ⌊order/2⌋ − 1`
+    down to 0 (in order of rising Q, the sharpest last), with a double zero at `z = −1` (low-pass)
+    or `z = 1` (high-pass);
+  - each section with `a0 = 1` and unit gain at `f = 0` (low-pass) or `fs/2` (high-pass). With
+    `1/Q = 2·sin(π(2k + 1)/(2·order))` and `D = K² + K/Q + 1`, a low-pass pair is
+    `b = K²·[1, 2, 1]/D`, `a = [1, 2(K² − 1)/D, (K² − K/Q + 1)/D]`, a high-pass pair the same `a` with
+    `b = [1, −2, 1]/D`; the first-order low-pass is `b = K·[1, 1, 0]/(K + 1)`,
+    `a = [1, (K − 1)/(K + 1), 0]`, the high-pass the same `a` with `b = [1, −1, 0]/(K + 1)`.
+  - `order` is an integer `≥ 1`; `0 < cutoff < fs/2`, finite.
+- **Frequency response** (`sos_response(sos, frequencies, sample_rate)`): the complex
+  `H(f) = Π_i H_i(e^(j2π·f/fs))` at each frequency. Frequencies finite.
+- **Streaming filter** (`IirFilter(sos)`, method `process(chunk)`, `reset()`, property `sections`,
+  a copy with `a0 = 1`): each section is the causal difference equation
+  `y[n] = b0·x[n] + b1·x[n−1] + b2·x[n−2] − a1·y[n−1] − a2·y[n−2]` (after dividing by `a0`), with
+  zero initial state, the sections in cascade, over the concatenation of every chunk since the start
+  or the last reset. How each language arranges the arithmetic (direct form I, transposed direct
+  form II) is its own; results agree to rounding. Otherwise as `FirFilter`: each call returns as
+  many samples as it is given, the first non-empty chunk fixes the filter as real or complex until
+  `reset()`, and an empty chunk changes nothing.
+
 ## Resampling
 
 Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `SignalForge.Dsp`.

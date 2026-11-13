@@ -4,10 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **IIR filters**: biquad sections, a Butterworth design and a streaming `IirFilter`, matching
-   the FIR filter's shape.
-2. **Waveforms**: multitone (with chosen or Newman phases), linear chirp and rectangular pulse
+1. **Waveforms**: multitone (with chosen or Newman phases), linear chirp and rectangular pulse
    trains, with closed-form vectors.
+2. **Measurements**: SNR, SINAD and THD of a tone from a spectrum, with conventions for which bins
+   count as the tone, its harmonics and noise.
 
 ## Built
 
@@ -140,10 +140,18 @@ Updated with every chunk of work. Dates are absolute.
   code. 13 vectors from `vectors/generators/spectrogram.py` (standard library, DFT summed term by
   term) and a hand-derived tone; both runners now read and compare 2-D results.
   Python 604 passed, 2 skipped (3.10 too); .NET 533 passed; conformance 389/389 in both.
+- 2026-11-13: IIR filters in both languages (ADR 0014): second-order sections, Butterworth
+  low-pass and high-pass by the prewarped bilinear transform with a fixed section order and unit
+  gain per section, `sos_response`, and a streaming `IirFilter` shaped like `FirFilter`. 26 vectors
+  from `vectors/generators/iir.py` (real biquad formulas, a different route from the library's
+  pole mapping) plus hand cases; unit tests check every design against the closed-form magnitude.
+  The runners share one chunked-filter op. Python 713 passed, 2 skipped (3.10 too); .NET 589
+  passed; conformance 415/415 in both.
 
 ## Not built
 
-Everything else in the brief: IIR filter design, FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth low-pass and high-pass (band-pass,
+Chebyshev, elliptic), zero-phase filtering, FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
 SFDR, phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

@@ -1,13 +1,15 @@
-"""Convolution, upsampling, root-raised-cosine pulse shaping, FIR design and FIR filtering.
+"""Convolution, upsampling, root-raised-cosine pulse shaping, FIR and IIR design and filtering.
 
-Definitions are in docs/conventions.md (Pulse shaping, FIR filters),
-docs/adr/0007-pulse-shaping-channel-evm.md and docs/adr/0010-fir-design-streaming.md.
+Definitions are in docs/conventions.md (Pulse shaping, FIR filters, IIR filters),
+docs/adr/0007-pulse-shaping-channel-evm.md, docs/adr/0010-fir-design-streaming.md and
+docs/adr/0014-iir-filters.md.
 """
 
 from __future__ import annotations
 
+import cmath
 import math
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -248,6 +250,127 @@ class FirFilter:
         y = np.convolve(ext, self._h, mode="valid")
         self._state = ext[ext.size - (self._h.size - 1) :]
         return cast("NDArray[np.complex128] | NDArray[np.float64]", y)
+
+
+def _sos(sos: ArrayLike) -> NDArray[np.float64]:
+    """A copy of a cascade of second-order sections, each row divided by its ``a0``."""
+    s = np.asarray(sos)
+    if s.ndim != 2 or s.shape[0] == 0 or s.shape[1] != 6 or np.iscomplexobj(s):
+        raise ValueError(
+            "sos must be a real array of shape (sections, 6) with at least one section"
+        )
+    s = np.array(s, dtype=np.float64)
+    if not np.all(np.isfinite(s)):
+        raise ValueError("sos must be finite")
+    if np.any(s[:, 3] == 0):
+        raise ValueError("every section needs a0 != 0")
+    return np.asarray(s / s[:, 3:4], dtype=np.float64)
+
+
+def _butterworth(order: int, cutoff: float, sample_rate: float, high: bool) -> NDArray[np.float64]:
+    n = count(order, "order")
+    if n < 1:
+        raise ValueError("order must be at least 1")
+    fs = _rate(sample_rate)
+    k = math.tan(math.pi * _band_edge(cutoff, fs, "cutoff"))
+    zero = 1.0 if high else -1.0  # zeros at z = 1 (high-pass) or z = -1 (low-pass)
+    rows: list[list[float]] = []
+
+    def pole(i: int) -> complex:
+        """Analog pole ``k`` (cutoff 1 after prewarping by ``K``) through the bilinear transform."""
+        s = k * cmath.exp(1j * (math.pi / 2 + math.pi * (2 * i + 1) / (2 * n)))
+        if high:
+            s = k * k / s
+        return (1 + s) / (1 - s)
+
+    if n % 2:
+        p = pole((n - 1) // 2).real
+        g = (1 + p) / 2 if high else (1 - p) / 2  # unit gain at fs/2 or DC
+        rows.append([g, -zero * g, 0.0, 1.0, -p, 0.0])
+    for i in range(n // 2 - 1, -1, -1):
+        z = pole(i)
+        a1, a2 = -2 * z.real, abs(z) ** 2
+        g = (1 - zero * a1 + a2) / 4  # unit gain at the reference z = -zero
+        rows.append([g, -2 * zero * g, g, 1.0, a1, a2])
+    return np.array(rows, dtype=np.float64)
+
+
+def butterworth_lowpass(order: int, cutoff: float, sample_rate: float) -> NDArray[np.float64]:
+    """Butterworth low-pass by the bilinear transform, as second-order sections (conventions: IIR
+    filters)."""
+    return _butterworth(order, cutoff, sample_rate, high=False)
+
+
+def butterworth_highpass(order: int, cutoff: float, sample_rate: float) -> NDArray[np.float64]:
+    """Butterworth high-pass by the bilinear transform, as second-order sections (conventions: IIR
+    filters)."""
+    return _butterworth(order, cutoff, sample_rate, high=True)
+
+
+def sos_response(
+    sos: ArrayLike, frequencies: ArrayLike, sample_rate: float
+) -> NDArray[np.complex128]:
+    """Complex response of a cascade of second-order sections at each frequency."""
+    s = _sos(sos)
+    fs = _rate(sample_rate)
+    f = np.asarray(frequencies, dtype=np.float64)
+    if f.ndim != 1 or not np.all(np.isfinite(f)):
+        raise ValueError("frequencies must be a finite 1-D array")
+    zi = np.exp(-2j * np.pi * f / fs)  # z^-1
+    h = np.ones(f.size, dtype=np.complex128)
+    for b0, b1, b2, a0, a1, a2 in s:
+        h *= (b0 + zi * (b1 + zi * b2)) / (a0 + zi * (a1 + zi * a2))
+    return h
+
+
+class IirFilter:
+    """Causal cascade of second-order sections that keeps its state across chunks (conventions:
+    IIR filters).
+
+    The first non-empty chunk fixes the filter as real or complex until :meth:`reset`.
+    """
+
+    def __init__(self, sos: ArrayLike) -> None:
+        self._sos = _sos(sos)
+        self._complex: bool | None = None
+        self._state: list[list[Any]] = []
+
+    @property
+    def sections(self) -> NDArray[np.float64]:
+        """A copy of the sections, each with ``a0 = 1``."""
+        return self._sos.copy()
+
+    def reset(self) -> None:
+        """Forget every sample seen, as if new."""
+        self._complex = None
+        self._state = []
+
+    def process(self, chunk: ArrayLike) -> NDArray[np.complex128] | NDArray[np.float64]:
+        """The next ``len(chunk)`` output samples."""
+        a = np.asarray(chunk)
+        if a.ndim != 1:
+            raise ValueError("chunk must be a 1-D array")
+        is_complex = bool(np.iscomplexobj(a))
+        dtype = np.complex128 if is_complex else np.float64
+        if a.size == 0:
+            empty = np.zeros(0, dtype=np.complex128 if self._complex else np.float64)
+            return cast("NDArray[np.complex128] | NDArray[np.float64]", empty)
+        if self._complex is None:
+            self._complex = is_complex
+            self._state = [[0.0, 0.0] for _ in self._sos]
+        elif self._complex != is_complex:
+            kind = "complex" if self._complex else "real"
+            raise ValueError(f"this filter takes {kind} samples until reset()")
+        y: list[Any] = np.asarray(a, dtype=dtype).tolist()
+        for (b0, b1, b2, _, a1, a2), st in zip(self._sos.tolist(), self._state, strict=True):
+            s1, s2 = st  # transposed direct form II
+            for i, v in enumerate(y):
+                out = b0 * v + s1
+                s1 = b1 * v - a1 * out + s2
+                s2 = b2 * v - a2 * out
+                y[i] = out
+            st[0], st[1] = s1, s2
+        return cast("NDArray[np.complex128] | NDArray[np.float64]", np.array(y, dtype=dtype))
 
 
 def _factors(up: int, down: int) -> tuple[int, int]:

@@ -251,7 +251,11 @@ public static class Conformance
                 t => Dsp.KaiserParameters(t.Item1, t.Item2, t.Item3)),
             "fir_response" => Bind((Reals(a.Get("taps")), Reals(a.Get("frequencies")), a.D("sample_rate")),
                 t => Dsp.FirResponse(t.Item1, t.Item2, t.Item3)),
-            "fir_filter" => FirFilterOp(a),
+            "fir_filter" => ChunkedOp(a, Reals(a.Get("taps")), t => new FirFilter(t), (f, x) => f.Process(x), (f, z) => f.Process(z)),
+            "iir_filter" => ChunkedOp(a, Rows(a.Get("sos")), c => new IirFilter(c), (f, x) => f.Process(x), (f, z) => f.Process(z)),
+            "butterworth_lowpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthLowpass(t.Item1, t.Item2, t.Item3)),
+            "butterworth_highpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthHighpass(t.Item1, t.Item2, t.Item3)),
+            "sos_response" => Bind((Rows(a.Get("sos")), Reals(a.Get("frequencies")), a.D("sample_rate")), t => Dsp.SosResponse(t.Item1, t.Item2, t.Item3)),
             "encode_samples" => a.Get("x") is Complex[] z
                 ? Bind((z, Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2)))
                 : Bind((Reals(a.Get("x")), Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2))),
@@ -416,10 +420,15 @@ public static class Conformance
 
     private static WindowType FirWindow(Args a) => a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hamming;
 
-    /// <summary>Runs the samples through one <see cref="FirFilter"/> in chunks of the given lengths.</summary>
-    private static Func<object?> FirFilterOp(Args a)
+    /// <summary>A 2-D vector argument as rows.</summary>
+    private static double[][] Rows(object? v) =>
+        v as double[][] ?? throw new InvalidDataException("expected an array of rows");
+
+    /// <summary>Runs the samples through one streaming filter, made from the coefficients when the
+    /// case runs, in chunks of the given lengths.</summary>
+    private static Func<object?> ChunkedOp<TCoefficients, TFilter>(Args a, TCoefficients coefficients, Func<TCoefficients, TFilter> make,
+        Func<TFilter, double[], double[]> real, Func<TFilter, Complex[], Complex[]> complex)
     {
-        double[] taps = Reals(a.Get("taps"));
         object? samples = a.Get("samples");
         int[] sizes = [.. Reals(a.Get("chunks")).Select(c => c >= 0 && c == Math.Floor(c) && c <= int.MaxValue
             ? (int)c : throw new InvalidDataException("chunks must be non-negative whole numbers"))];
@@ -428,23 +437,23 @@ public static class Conformance
             throw new InvalidDataException("chunks must add up to the number of samples");
         return () =>
         {
-            var f = new FirFilter(taps);
+            TFilter f = make(coefficients);
             int at = 0;
             if (samples is Complex[] z)
             {
                 var yz = new List<Complex>();
                 foreach (int c in sizes)
                 {
-                    yz.AddRange(f.Process(z.AsSpan(at, c)));
+                    yz.AddRange(complex(f, z[at..(at + c)]));
                     at += c;
                 }
                 return yz.ToArray();
             }
-            double[] x = (double[])samples!;
+            double[] x = Reals(samples);
             var y = new List<double>();
             foreach (int c in sizes)
             {
-                y.AddRange(f.Process(x.AsSpan(at, c)));
+                y.AddRange(real(f, x[at..(at + c)]));
                 at += c;
             }
             return y.ToArray();
