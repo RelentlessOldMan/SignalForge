@@ -66,4 +66,89 @@ public class WaveformTests
         Assert.Throws<ArgumentOutOfRangeException>(() => Waveforms.Prbs(9, 10, seed: 1u << 9));
         Assert.Empty(Waveforms.Prbs(7, 0));
     }
+
+    [Fact]
+    public void MultitoneIsTheSumOfTones()
+    {
+        double[] f = [10, -37.5, 200], a = [1, 0.5, 2], p = [0.1, 2, -3];
+        Complex[] x = Waveforms.Multitone(1000, 57, f, a, p);
+        double[] r = Waveforms.RealMultitone(1000, 57, f, a, p);
+        for (int n = 0; n < 57; n++)
+        {
+            Complex z = Complex.Zero;
+            double v = 0;
+            for (int k = 0; k < 3; k++)
+            {
+                z += Waveforms.Tone(1000, 57, f[k], a[k], p[k])[n];
+                v += Waveforms.RealTone(1000, 57, f[k], a[k], p[k])[n];
+            }
+            Assert.True(Complex.Abs(x[n] - z) <= 1e-14 && Math.Abs(r[n] - v) <= 1e-14);
+        }
+        Assert.Equal(Waveforms.Multitone(1000, 8, f, [1, 1, 1], [0, 0, 0]), Waveforms.Multitone(1000, 8, f));
+    }
+
+    [Fact]
+    public void NewmanPhasesLowerTheCrestFactor()
+    {
+        double[] f = [.. Enumerable.Range(1, 32).Select(k => (double)k)];
+        static double Crest(Complex[] x) =>
+            x.Max(Complex.Abs) / Math.Sqrt(x.Average(z => z.Magnitude * z.Magnitude));
+        double flat = Crest(Waveforms.Multitone(1024, 1024, f));
+        Assert.Equal(Math.Sqrt(32), flat, 1e-10);
+        Assert.True(Crest(Waveforms.Multitone(1024, 1024, f, phases: Waveforms.NewmanPhases(32))) < 0.4 * flat);
+    }
+
+    [Fact]
+    public void ChirpInstantaneousFrequencyIsLinear()
+    {
+        double fs = 1e4, f0 = -1500, f1 = 2500;
+        int n = 500;
+        Complex[] x = Waveforms.Chirp(fs, n, f0, f1);
+        for (int i = 0; i < n - 1; i++)
+        {
+            double inst = (x[i + 1] * Complex.Conjugate(x[i])).Phase * fs / (2 * Math.PI);
+            Assert.Equal(f0 + (f1 - f0) * (i + 0.5) / n, inst, 1e-8);
+        }
+        double[] r = Waveforms.RealChirp(fs, n, f0, f1, 2, 0.3);
+        Complex[] z = Waveforms.Chirp(fs, n, f0, f1, 2, 0.3);
+        for (int i = 0; i < n; i++)
+            Assert.Equal(z[i].Real, r[i], 1e-13);
+        Assert.Empty(Waveforms.Chirp(fs, 0, f0, f1));
+    }
+
+    [Theory]
+    [InlineData(-13)]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(3)]
+    [InlineData(1000)]
+    public void PulseTrainMatchesItsDefinition(int delay)
+    {
+        double[] x = Waveforms.PulseTrain(100, 7, 3, 1.5, delay);
+        for (int n = 0; n < 100; n++)
+            Assert.Equal((((n - delay) % 7) + 7) % 7 < 3 ? 1.5 : 0, x[n]);
+    }
+
+    [Fact]
+    public void NewGeneratorsRejectBadArguments()
+    {
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.Multitone(1, 4, []));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.RealMultitone(1, 4, [double.NaN]));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.Multitone(1, 4, [0.1], [double.PositiveInfinity]));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.Multitone(1, 4, [0.1], phases: [0, 1]));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.NewmanPhases(0));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.Chirp(0, 4, 0, 1));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.Chirp(1, -1, 0, 1));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.RealChirp(1, 4, double.NaN, 1));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.Chirp(1, 4, 0, 1, double.NaN));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.Chirp(1, 4, 0, 1, 1, double.PositiveInfinity));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.PulseTrain(4, 0, 0));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.PulseTrain(4, 2, 3));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.PulseTrain(4, 2, -1));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.PulseTrain(-1, 2, 1));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.PulseTrain(4, 2, 1, double.NaN));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.Tone(1, 4, double.NaN));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.RealTone(1, 4, 0.1, double.PositiveInfinity));
+        Assert.ThrowsAny<ArgumentException>(() => Waveforms.Tone(1, 4, 0.1, 1, double.NaN));
+    }
 }

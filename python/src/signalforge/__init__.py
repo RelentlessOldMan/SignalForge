@@ -53,9 +53,9 @@ from .units import (
     vrms_to_dbm,
     w_to_dbm,
 )
-from .waveforms import prbs, tone
+from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.22"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.23"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
@@ -76,6 +76,7 @@ __all__ = [
     "butterworth_highpass",
     "butterworth_lowpass",
     "channel_power",
+    "chirp",
     "convolve",
     "db_to_amp",
     "db_to_lin",
@@ -96,10 +97,13 @@ __all__ = [
     "interpolate",
     "kaiser_parameters",
     "lin_to_db",
+    "multitone",
+    "newman_phases",
     "occupied_bandwidth",
     "power_stats",
     "prbs",
     "pulse_shape",
+    "pulse_train",
     "qpsk_ber_theory",
     "qpsk_block_phases",
     "qpsk_demap_hard",

@@ -210,6 +210,11 @@ public static class Conformance
             "dbm_to_vrms" => Bind((a.D("dbm"), a.Opt("impedance", Units.DefaultImpedance)), t => Units.DbmToVrms(t.Item1, t.Item2)),
             "tone" => Tone(a),
             "prbs" => Prbs(a),
+            "multitone" => Multitone(a),
+            "newman_phases" => Bind(a.I("count"), Waveforms.NewmanPhases),
+            "chirp" => Chirp(a),
+            "pulse_train" => Bind((a.I("num_samples"), a.I("period"), a.I("width"), a.Opt("amplitude", 1), a.Has("delay") ? a.I("delay") : 0),
+                t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "power_stats" => a.Get("samples") is Complex[] cs
                 ? () => Measurements.PowerStats(cs)
                 : Bind(Reals(a.Get("samples")), x => Measurements.PowerStats(x)),
@@ -315,6 +320,24 @@ public static class Conformance
         return a.Flag("complex", dflt: true)
             ? () => Waveforms.Tone(fs, n, f, amp, ph)
             : () => Waveforms.RealTone(fs, n, f, amp, ph);
+    }
+
+    private static Func<object?> Multitone(Args a)
+    {
+        var (fs, n, f) = (a.D("sample_rate"), a.I("num_samples"), Reals(a.Get("frequencies")));
+        double[]? amps = a.Has("amplitudes") ? Reals(a.Get("amplitudes")) : null;
+        double[]? phases = a.Has("phases") ? Reals(a.Get("phases")) : null;
+        return a.Flag("complex", dflt: true)
+            ? () => Waveforms.Multitone(fs, n, f, amps, phases)
+            : () => Waveforms.RealMultitone(fs, n, f, amps, phases);
+    }
+
+    private static Func<object?> Chirp(Args a)
+    {
+        var (fs, n, f0, f1, amp, ph) = (a.D("sample_rate"), a.I("num_samples"), a.D("start"), a.D("stop"), a.Opt("amplitude", 1), a.Opt("phase", 0));
+        return a.Flag("complex", dflt: true)
+            ? () => Waveforms.Chirp(fs, n, f0, f1, amp, ph)
+            : () => Waveforms.RealChirp(fs, n, f0, f1, amp, ph);
     }
 
     private static Func<object?> Prbs(Args a)

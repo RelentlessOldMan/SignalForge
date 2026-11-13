@@ -48,6 +48,25 @@ rule for code not written yet.
 - The phase is computed as `2π·f·(n / fs) + φ` with `time_origin = 0`, in double precision, so both
   languages agree to about 1e-12 for phases up to ~1e4 radians. Long tones accumulate rounding in the
   argument; see `docs/testing.md` for the tolerance this implies. **(implemented)**
+- **Multitone** (`multitone(sample_rate, num_samples, frequencies, amplitudes=None, phases=None,
+  complex=True)`; C# `Multitone` and `RealMultitone`): the sum, in the order given, of
+  `tone(sample_rate, num_samples, f_k, A_k, φ_k)` over the tones `k`. `amplitudes` (peak, default
+  all 1) and `phases` (radians, default all 0) have one value per frequency; at least one
+  frequency; every value finite.
+- **Newman phases** (`newman_phases(count)`): `φ_k = π·k²/K` for `k = 0 … K − 1`, `K = count ≥ 1`.
+  Newman's rule for a multitone of equally spaced, equal-amplitude tones with a low crest factor.
+- **Linear chirp** (`chirp(sample_rate, num_samples, start, stop, amplitude=1, phase=0,
+  complex=True)`; C# `Chirp` and `RealChirp`): the instantaneous frequency rises (or falls)
+  linearly from `start` Hz at the first sample to `stop` Hz at `T = num_samples/fs`, one sample
+  after the last, so a chirp of `N` samples followed by another from `stop` continues without a
+  frequency jump. Samples `A·e^(jθ[n])` (or `A·cos θ[n]`) with
+  `θ[n] = 2π·(start·t + (stop − start)·t²/(2T)) + φ`, `t = n/fs`. With `num_samples = 0` the result
+  is empty. Frequencies, amplitude and phase finite.
+- **Pulse train** (`pulse_train(num_samples, period, width, amplitude=1, delay=0)`, real): in whole
+  samples, `x[n] = A` when `(n − delay) mod period < width` and 0 otherwise, `mod` the floored
+  modulo (non-negative for a negative `n − delay`). `period ≥ 1`, `0 ≤ width ≤ period`, `delay`
+  any integer, `A` finite.
+- The tone, multitone and chirp also need finite frequencies, amplitudes and phases.
 
 ## Power, amplitude, and dB
 

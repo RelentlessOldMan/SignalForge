@@ -4,9 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Waveforms**: multitone (with chosen or Newman phases), linear chirp and rectangular pulse
-   trains, with closed-form vectors.
-2. **Measurements**: SNR, SINAD and THD of a tone from a spectrum, with conventions for which bins
+1. **Measurements**: SNR, SINAD and THD of a tone from a spectrum, with conventions for which bins
    count as the tone, its harmonics and noise.
 
 ## Built
@@ -149,6 +147,13 @@ Updated with every chunk of work. Dates are absolute.
   passed; conformance 415/415 in both.
 - 2026-11-13: `build.ps1` runs every vector generator's `--check`, as CI already did, so a stale
   vector file fails locally before a push.
+- 2026-11-13: more waveforms in both languages: `multitone` (chosen phases, or `newman_phases`),
+  linear `chirp` (reaches `stop` at N/fs) and `pulse_train` (whole samples, floored modulo, any
+  delay). `tone` now rejects non-finite frequency, amplitude and phase in both. 29 vectors from
+  `vectors/generators/stimuli.py` (standard library, formulas sample by sample) plus hand cases.
+  Unit tests: Newman phases cut a 32-tone crest factor below 0.4 of √32, chirp instantaneous
+  frequency is linear and two chirps join without a jump. Python 779 passed, 2 skipped (3.10
+  too); .NET 627 passed; conformance 444/444 in both.
 
 ## Not built
 
