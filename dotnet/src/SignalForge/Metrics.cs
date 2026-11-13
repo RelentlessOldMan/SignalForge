@@ -98,6 +98,37 @@ public static class Metrics
             + SpecialFunctions.Erfc(9 * r) - SpecialFunctions.Erfc(13 * r)) / 24;
     }
 
+    /// <summary>Symbol error rate of noncoherent orthogonal M-FSK in AWGN (conventions: EVM and BER;
+    /// ADR 0054).</summary>
+    /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
+    /// <param name="order">2, 4, 8 or 16.</param>
+    public static double FskSerTheory(double ebN0Db, int order = 2)
+    {
+        int g = order switch
+        {
+            2 => 1,
+            4 => 2,
+            8 => 3,
+            16 => 4,
+            _ => throw new ArgumentException("order must be 2, 4, 8 or 16", nameof(order)),
+        };
+        double es = g * EbN0(ebN0Db);
+        double total = 0, c = 1;
+        for (int k = 1; k < order; k++)
+        {
+            c = c * (order - k) / k;
+            double term = c / (k + 1) * Math.Exp(-k * es / (k + 1));
+            total = k % 2 == 1 ? total + term : total - term;
+        }
+        return total;
+    }
+
+    /// <summary>Bit error rate of noncoherent orthogonal M-FSK in AWGN: Ps·(M/2)/(M − 1).</summary>
+    /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
+    /// <param name="order">2, 4, 8 or 16.</param>
+    public static double FskBerTheory(double ebN0Db, int order = 2) =>
+        FskSerTheory(ebN0Db, order) * (order / 2.0) / (order - 1);
+
     /// <summary>Exact symbol error rate of 64-QAM in AWGN: p·(2 − p), p = ⅞·erfc(r).</summary>
     /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
     public static double Qam64SerTheory(double ebN0Db)

@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Binary and M-ary FSK**: continuous-phase FSK modulator (modulation index, samples per symbol)
-   and a noncoherent energy detector, with BER theory for noncoherent orthogonal BFSK
-   (`½·e^{−Eb/2N0}`).
-2. **WAV read and write**: PCM 16/24/32-bit integer and 32/64-bit float, mono and multi-channel,
+1. **WAV read and write**: PCM 16/24/32-bit integer and 32/64-bit float, mono and multi-channel,
    to and from `Signal`; stdlib-only vectors.
-3. **NumPy `.npy` read and write**: version 1.0 headers, little-endian `float64` and
+2. **NumPy `.npy` read and write**: version 1.0 headers, little-endian `float64` and
    `complex128` 1-D arrays, so both languages exchange samples without SigMF; stdlib-only vectors.
+3. **FSK in the link**: `modulation` `"fsk2"`/`"fsk4"` through the same channel (rectangular
+   symbols, no RRC), noncoherent detection after preamble timing, error counts against
+   `fsk_ber_theory`.
 
 ## Built
 
@@ -547,12 +547,20 @@ Updated with every chunk of work. Dates are absolute.
   so 64-QAM configs set `phase_block_symbols`. Link configs `qam64_14db` (273 bit errors in
   Python, 275 in C#, theory 258) and `qam64_noiseless` (0 in both). Python 2247 passed,
   2 skipped; .NET 1803 passed.
+- 2026-11-13: Binary and M-ary FSK (conventions: Bits and symbols, FSK; EVM and BER; ADR 0054):
+  `fsk_modulate` (continuous phase, orders 2–16, natural binary labels, the phase from an exact
+  integer sum of past levels), `fsk_demod_noncoherent` (square-law correlator bank, ties to the
+  smallest label), `fsk_ser_theory` and `fsk_ber_theory` (noncoherent orthogonal closed form).
+  New generator `vectors/generators/fsk.py` (76 cases) checks the closed form against the
+  detector's Rician/Rayleigh error integral to 1e-9. Monte Carlo within 15 % in both languages
+  (about 500 symbol errors each; over 10 seeds C# averages 0.97–1.03 of theory). Python 2345
+  passed, 2 skipped; .NET 1895 passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond noncoherent detection with known timing, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.
@@ -596,3 +604,7 @@ packaging and publishing.
 - 2026-11-13: `np.asarray` returns the caller's own array when it already has the right dtype,
   so an object that keeps an argument (filter taps) must copy it with `np.array`. C# copies
   with `ToArray()` by habit; Python needs the same care, and a test that mutates the input.
+- 2026-11-13: Size a Monte Carlo test from its expected error count, not by trying seeds: a
+  window of ±k% needs about `(300/k)²` errors to sit at 3σ (500 for ±15 %). The FSK tests first
+  had about 200 errors and ±12 %, passed in Python and failed in C# with unbiased code; ten
+  seeds showed no bias, and resizing fixed it.

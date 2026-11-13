@@ -7,7 +7,7 @@ import math
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from ._checks import real
+from ._checks import count, real
 
 _INV_SQRT2 = 1.0 / np.sqrt(2.0)
 _INV_SQRT10 = 1.0 / math.sqrt(10.0)
@@ -188,3 +188,57 @@ def qam64_demap_llr(symbols: ArrayLike, noise_variance: float) -> NDArray[np.flo
     """Max-log LLRs of 64-QAM, positive for bit 0 (conventions: Bits and symbols, Soft
     demapping)."""
     return _demap_llr(symbols, noise_variance, _QAM64_POINTS, 6)
+
+
+_FSK_ORDERS = {2: 1, 4: 2, 8: 3, 16: 4}
+
+
+def _fsk_args(
+    order: int, samples_per_symbol: int, modulation_index: float
+) -> tuple[int, int, float]:
+    if count(order, "order") not in _FSK_ORDERS:
+        raise ValueError("order must be 2, 4, 8 or 16")
+    sps = count(samples_per_symbol, "samples_per_symbol")
+    if sps < 1:
+        raise ValueError("samples_per_symbol must be at least 1")
+    h = real(modulation_index, "modulation_index")
+    if h <= 0:
+        raise ValueError("modulation_index must be positive")
+    return _FSK_ORDERS[int(order)], sps, h
+
+
+def fsk_modulate(
+    bits: ArrayLike, order: int, samples_per_symbol: int, modulation_index: float
+) -> NDArray[np.complex128]:
+    """Continuous-phase M-FSK, natural binary labels, tone levels ``2m - (M - 1)`` at ``a*h/2``
+    cycles per symbol (conventions: Bits and symbols, FSK; ADR 0054)."""
+    k, sps, h = _fsk_args(order, samples_per_symbol, modulation_index)
+    g = _groups(bits, k, f"{order}-FSK")
+    m = g @ (1 << np.arange(k - 1, -1, -1))
+    a = 2 * m - (int(order) - 1)
+    start = np.concatenate(([0], np.cumsum(a)[:-1])) if a.size else a
+    n = np.arange(sps)
+    phi = np.pi * h * (start[:, None] + (a[:, None] * n[None, :]) / sps)
+    out: NDArray[np.complex128] = (np.cos(phi) + 1j * np.sin(phi)).reshape(-1)
+    return out
+
+
+def fsk_demod_noncoherent(
+    samples: ArrayLike, order: int, samples_per_symbol: int, modulation_index: float
+) -> NDArray[np.uint8]:
+    """Square-law M-FSK detection, one block of ``samples_per_symbol`` per symbol; the label with
+    the most energy wins, ties to the smallest (conventions: Bits and symbols, FSK; ADR 0054)."""
+    k, sps, h = _fsk_args(order, samples_per_symbol, modulation_index)
+    x = np.asarray(samples, dtype=np.complex128)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if x.size % sps:
+        raise ValueError("samples must be a multiple of samples_per_symbol")
+    if not np.isfinite(x).all():
+        raise ValueError("samples must be finite")
+    levels = 2 * np.arange(int(order)) - (int(order) - 1)
+    psi = np.pi * h * ((levels[:, None] * np.arange(sps)[None, :]) / sps)
+    ref = np.cos(psi) - 1j * np.sin(psi)
+    c = x.reshape(-1, sps) @ ref.T
+    energy = c.real * c.real + c.imag * c.imag
+    return _bits_of(np.argmax(energy, axis=1).astype(np.int64), k)

@@ -324,6 +324,26 @@ groups as the tone metrics (ADR 0015).
   together), positive and finite. `|y − s|²` is `Δre·Δre + Δim·Δim`. Symbols must be finite.
   The exact LLR, `ln(Σ_{bᵢ=0} e^{−|y−s|²/N0} / Σ_{bᵢ=1} e^{−|y−s|²/N0})`, differs from this by at
   most `ln(M/2)`; for QPSK they are equal, `2√2·Re(y)/N0` and `2√2·Im(y)/N0`. **(implemented)**
+- **FSK** ([ADR 0054](adr/0054-fsk.md)): `order` `M` is 2, 4, 8 or 16, `k = log2 M` bits per
+  symbol, MSB first, form the label `m` (natural binary), and the label's tone level is
+  `a = 2m − (M − 1)` (so −1, +1 for `M = 2`; −3, −1, +1, +3 for `M = 4`).
+  `modulation_index` `h` is positive and finite; tone `a` sits at `a·h/2` cycles per symbol, so
+  neighboring tones are `h` symbol rates apart.
+  - `fsk_modulate(bits, order, samples_per_symbol, modulation_index)`: continuous-phase FSK of
+    unit amplitude, `len(bits)/k · sps` samples. Sample `n` (0 … sps − 1) of symbol `i` is
+    `e^{jφ}` with `φ = π·h·(S_i + a_i·n/sps)`, where `S_i = a_0 + … + a_{i−1}` (an exact
+    integer, `S_0 = 0`) and the expression is evaluated in that order (`a_i·n` as an integer,
+    then `/ sps`, then `+ S_i`, then `π·h·`). So the phase starts at 0 and steps by `π·h·a/sps`
+    each sample with no jump between symbols. The bit count must be a multiple of `k`;
+    `sps ≥ 1`.
+  - `fsk_demod_noncoherent(samples, order, samples_per_symbol, modulation_index)`: for each block
+    of `sps` samples and each label `m`, `c_m = Σ_n x[n]·e^{−jψ}` with
+    `ψ = π·h·(a_m·n/sps)`, and the energy `|c_m|² = re² + im²`; the label with the largest
+    energy is decided (on a tie, the smallest label) and written out as `k` bits, MSB first.
+    The tones are orthogonal over a block, so the detector is the noncoherent optimum, when `h`
+    is a whole number and `sps > h·(M − 1)` (no tone aliases onto another). The sample count
+    must be a multiple of `sps`; samples must be finite.
+  **(implemented)**
 - Other constellations are normalized to unit average symbol energy unless a standard says otherwise.
   **(defined)**
 
@@ -1001,6 +1021,16 @@ Python: `signalforge.metrics`; C#: `SignalForge.Metrics`.
     in Pawula's form `T(ψ) = (1/2π)·∫₀^{π−ψ} exp(−(Es/N0)·sin²ψ / sin²θ) dθ`, evaluated by
     Simpson's rule on 4096 panels (relative error below 1e-12 against the phase density's
     integral); `T(ψ) = (π − ψ)/2π` at `Es/N0 = 0` and 0 at infinity. **(implemented)**
+- **Noncoherent orthogonal FSK** (`fsk_ser_theory(eb_n0_db, order=2)`,
+  `fsk_ber_theory(eb_n0_db, order=2)`, [ADR 0054](adr/0054-fsk.md)): `M = order` in 2, 4, 8, 16,
+  `Es/N0 = log2(M)·Eb/N0` (Eb/N0 from dB as for QPSK: NaN rejected, `−∞` gives the fair-guess
+  rates, overflow is infinite and gives 0), the square-law detector of `fsk_demod_noncoherent`
+  with orthogonal tones in AWGN.
+  `Ps = Σ_{k=1}^{M−1} (−1)^{k+1}·C(M−1, k)/(k + 1)·e^{−k·(Es/N0)/(k+1)}`, summed from `k = 1` up,
+  each term `C(M−1, k)/(k + 1)·exp(−k·g/(k + 1))` with `g = Es/N0` (Proakis, *Digital
+  Communications*, noncoherent orthogonal signals), so for `M = 2`, `Ps = Pb = ½·e^{−Eb/(2N0)}`.
+  Every wrong label is equally likely, so `Pb = Ps·(M/2)/(M − 1)`. At `Eb/N0 = 0`, `Ps = 1 − 1/M`
+  and `Pb = ½` (within rounding of the sum). **(implemented)**
 - **QPSK in Rayleigh fading** (`qpsk_ber_rayleigh_theory(eb_n0_db)`,
   [ADR 0042](adr/0042-rayleigh-ber.md)): the AWGN curve averaged over a Rayleigh gain with
   `E|g|² = 1` and a coherent receiver that knows `g`, with `γ` the mean Eb/N0 (linear, taken from

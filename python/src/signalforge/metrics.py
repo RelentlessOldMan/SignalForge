@@ -8,6 +8,8 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import ArrayLike
 
+from ._checks import count
+
 
 @dataclass(frozen=True)
 class ErrorCount:
@@ -113,6 +115,28 @@ def qam64_ser_theory(eb_n0_db: float) -> float:
     """Exact symbol error rate of 64-QAM in AWGN: ``p*(2 - p)``, ``p = 0.875*erfc(r)``."""
     p = 0.875 * math.erfc(math.sqrt(_eb_n0(eb_n0_db) / 7))
     return p * (2 - p)
+
+
+def fsk_ser_theory(eb_n0_db: float, order: int = 2) -> float:
+    """Symbol error rate of noncoherent orthogonal M-FSK in AWGN (conventions: EVM and BER;
+    ADR 0054)."""
+    if count(order, "order") not in (2, 4, 8, 16):
+        raise ValueError("order must be 2, 4, 8 or 16")
+    g = int(order).bit_length() - 1
+    es = g * _eb_n0(eb_n0_db)
+    total = 0.0
+    c = 1.0
+    for k in range(1, int(order)):
+        c = c * (int(order) - k) / k
+        term = c / (k + 1) * math.exp(-k * es / (k + 1))
+        total = total + term if k % 2 else total - term
+    return total
+
+
+def fsk_ber_theory(eb_n0_db: float, order: int = 2) -> float:
+    """Bit error rate of noncoherent orthogonal M-FSK in AWGN: ``Ps*(M/2)/(M - 1)``."""
+    ps = fsk_ser_theory(eb_n0_db, order)
+    return ps * (int(order) / 2) / (int(order) - 1)
 
 
 _TAIL_PANELS = 4096

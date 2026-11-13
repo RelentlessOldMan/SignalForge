@@ -244,4 +244,102 @@ public static class Modulation
         }
         return llr;
     }
+
+    private static int FskBits(int order, int samplesPerSymbol, double modulationIndex)
+    {
+        int k = order switch
+        {
+            2 => 1,
+            4 => 2,
+            8 => 3,
+            16 => 4,
+            _ => throw new ArgumentException("order must be 2, 4, 8 or 16", nameof(order)),
+        };
+        if (samplesPerSymbol < 1)
+            throw new ArgumentException("samplesPerSymbol must be at least 1", nameof(samplesPerSymbol));
+        Check.PositiveFinite(modulationIndex, nameof(modulationIndex));
+        return k;
+    }
+
+    /// <summary>Continuous-phase M-FSK, natural binary labels, tone levels 2m − (M − 1) at a·h/2 cycles
+    /// per symbol (conventions: Bits and symbols, FSK; ADR 0054).</summary>
+    /// <param name="bits">Bits, 0 or 1, a multiple of log2(order).</param>
+    /// <param name="order">2, 4, 8 or 16.</param>
+    /// <param name="samplesPerSymbol">Samples per symbol, at least 1.</param>
+    /// <param name="modulationIndex">Tone spacing in symbol rates, positive and finite.</param>
+    public static Complex[] FskModulate(ReadOnlySpan<byte> bits, int order, int samplesPerSymbol, double modulationIndex)
+    {
+        int k = FskBits(order, samplesPerSymbol, modulationIndex);
+        CheckLength(bits, k, $"{order}-FSK");
+        int sps = samplesPerSymbol;
+        var samples = new Complex[bits.Length / k * sps];
+        long start = 0;
+        for (int i = 0; i < bits.Length / k; i++)
+        {
+            long a = 2L * Label(bits, k * i, k) - (order - 1);
+            for (int n = 0; n < sps; n++)
+            {
+                double phi = Math.PI * modulationIndex * (start + a * n / (double)sps);
+                samples[i * sps + n] = new Complex(Math.Cos(phi), Math.Sin(phi));
+            }
+            start += a;
+        }
+        return samples;
+    }
+
+    /// <summary>Square-law M-FSK detection, one block of samplesPerSymbol per symbol; the label with the
+    /// most energy wins, ties to the smallest (conventions: Bits and symbols, FSK; ADR 0054).</summary>
+    /// <param name="samples">Samples, finite, a multiple of samplesPerSymbol.</param>
+    /// <param name="order">2, 4, 8 or 16.</param>
+    /// <param name="samplesPerSymbol">Samples per symbol, at least 1.</param>
+    /// <param name="modulationIndex">Tone spacing in symbol rates, positive and finite.</param>
+    public static byte[] FskDemodNoncoherent(ReadOnlySpan<Complex> samples, int order, int samplesPerSymbol, double modulationIndex)
+    {
+        int k = FskBits(order, samplesPerSymbol, modulationIndex);
+        int sps = samplesPerSymbol;
+        if (samples.Length % sps != 0)
+            throw new ArgumentException("samples must be a multiple of samplesPerSymbol", nameof(samples));
+        foreach (Complex x in samples)
+            if (!double.IsFinite(x.Real) || !double.IsFinite(x.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        var cosRef = new double[order * sps];
+        var sinRef = new double[order * sps];
+        for (int m = 0; m < order; m++)
+        {
+            long a = 2L * m - (order - 1);
+            for (int n = 0; n < sps; n++)
+            {
+                double psi = Math.PI * modulationIndex * (a * n / (double)sps);
+                cosRef[m * sps + n] = Math.Cos(psi);
+                sinRef[m * sps + n] = Math.Sin(psi);
+            }
+        }
+        int symbols = samples.Length / sps;
+        var bits = new byte[symbols * k];
+        for (int i = 0; i < symbols; i++)
+        {
+            int best = 0;
+            double bestEnergy = double.NegativeInfinity;
+            for (int m = 0; m < order; m++)
+            {
+                double re = 0, im = 0;
+                for (int n = 0; n < sps; n++)
+                {
+                    Complex x = samples[i * sps + n];
+                    double c = cosRef[m * sps + n], s = sinRef[m * sps + n];
+                    re += x.Real * c + x.Imaginary * s;
+                    im += x.Imaginary * c - x.Real * s;
+                }
+                double energy = re * re + im * im;
+                if (energy > bestEnergy)
+                {
+                    best = m;
+                    bestEnergy = energy;
+                }
+            }
+            for (int b = 0; b < k; b++)
+                bits[i * k + b] = (byte)((best >> (k - 1 - b)) & 1);
+        }
+        return bits;
+    }
 }

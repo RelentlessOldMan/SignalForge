@@ -67,6 +67,8 @@ from .metrics import (
     Evm,
     bit_errors,
     evm,
+    fsk_ber_theory,
+    fsk_ser_theory,
     psk8_ber_theory,
     psk8_ser_theory,
     qam16_ber_theory,
@@ -77,6 +79,8 @@ from .metrics import (
     qpsk_ber_theory,
 )
 from .modulation import (
+    fsk_demod_noncoherent,
+    fsk_modulate,
     psk8_demap_hard,
     psk8_demap_llr,
     psk8_map,
@@ -136,7 +140,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.75"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.76"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -207,6 +211,10 @@ __all__ = [
     "fir_response",
     "fractional_delay",
     "frequency_offset",
+    "fsk_ber_theory",
+    "fsk_demod_noncoherent",
+    "fsk_modulate",
+    "fsk_ser_theory",
     "gardner_timing",
     "ifft",
     "interpolate",

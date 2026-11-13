@@ -241,6 +241,10 @@ public static class Conformance
             "qam64_map" => Bind(Bits(a.Get("bits")), b => Modulation.Qam64Map(b)),
             "qam64_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.Qam64DemapHard(s)),
             "qam64_demap_llr" => Bind((Complexes(a.Get("symbols")), a.D("noise_variance")), t => Modulation.Qam64DemapLlr(t.Item1, t.Item2)),
+            "fsk_modulate" => Bind((Bits(a.Get("bits")), a.I("order"), a.I("samples_per_symbol"), a.D("modulation_index")),
+                t => Modulation.FskModulate(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "fsk_demod_noncoherent" => Bind((Complexes(a.Get("samples")), a.I("order"), a.I("samples_per_symbol"), a.D("modulation_index")),
+                t => Modulation.FskDemodNoncoherent(t.Item1, t.Item2, t.Item3, t.Item4)),
             "bit_errors" => Bind((Bits(a.Get("reference")), Bits(a.Get("received"))), t => Metrics.BitErrors(t.Item1, t.Item2)),
             "fft" => a.Get("samples") is Complex[] fc
                 ? () => Spectral.Fft(fc)
@@ -350,6 +354,8 @@ public static class Conformance
             "qam16_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.Qam16BerTheory),
             "qam64_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.Qam64BerTheory),
             "qam64_ser_theory" => Bind(a.D("eb_n0_db"), Metrics.Qam64SerTheory),
+            "fsk_ber_theory" => Bind((a.D("eb_n0_db"), a.Has("order") ? a.I("order") : 2), t => Metrics.FskBerTheory(t.Item1, t.Item2)),
+            "fsk_ser_theory" => Bind((a.D("eb_n0_db"), a.Has("order") ? a.I("order") : 2), t => Metrics.FskSerTheory(t.Item1, t.Item2)),
             "qam16_ser_theory" => Bind(a.D("eb_n0_db"), Metrics.Qam16SerTheory),
             "psk8_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.Psk8BerTheory),
             "psk8_ser_theory" => Bind(a.D("eb_n0_db"), Metrics.Psk8SerTheory),
