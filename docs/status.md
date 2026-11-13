@@ -4,9 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Signal files**: write and read samples with their metadata (SigMF-style, implemented from the
-   description), so one language can generate a noisy signal and the other analyse it
-   (`docs/testing.md`, the planned cross-generation).
+1. **Spectrogram**: a short-time Fourier transform on the Welch machinery (frame, hop, window,
+   one- and two-sided, PSD scaling per frame), with conventions written first.
+2. **IIR filters**: biquad sections, a Butterworth design and a streaming `IirFilter`, matching
+   the FIR filter's shape.
 
 ## Built
 
@@ -121,13 +122,27 @@ Updated with every chunk of work. Dates are absolute.
   `vectors/generators/resample.py` (standard library, brute-force sum) and hand derivations.
   Review fix: integer arguments now reject bools in Python (`True` used to pass as 1), as reals
   already did.
+- 2026-11-13: signal files in both languages (ADR 0012): `encode_samples` / `decode_samples` for
+  the 18 SigMF datatypes (real and complex; f64, f32, i32, i16, i8; little and big endian), with
+  integers scaled to full scale 1.0, rounded half to even, and out-of-range values rejected; and
+  `write_sigmf` / `read_sigmf` for a `.sigmf-meta` + `.sigmf-data` pair carrying every `Signal`
+  field (the extras in a `signalforge` extension namespace). Written from the format description;
+  nothing copied from the spec or sigmf-python. 81 vectors from `vectors/generators/files.py`
+  (standard library `struct`), with 16 recordings in `vectors/files/`, including foreign-written and
+  malformed ones. New cross-language check: each language writes a recording per datatype, both
+  read all of them, and `compare files` checks the reads match exactly and the two writers agree
+  within one quantization step (`build.ps1`, CI). Review fixes found on the way: the runners turned
+  a complex value with an infinite part into NaN (Python) or failed to match it (C#); C# read JSON
+  integers as doubles (a ternary promoted `long` to `double`).
+  Python 585 passed, 2 skipped (3.10 too); .NET 515 passed; conformance 376/376 in both.
 
 ## Not built
 
 Everything else in the brief: IIR filter design, FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectrograms and spectral options beyond Welch
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
-SFDR, phase noise, NF), standards waveforms, file formats (SigMF, WAV, raw IQ), plotting, CLI,
+SFDR, phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
+multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.
 
 ## Lessons

@@ -39,7 +39,7 @@ module moves into its own project/package only when it brings a dependency the r
 | Channel | `signalforge.channel` | `SignalForge.Channel` | AWGN at Es/N0, frequency offset; later phase noise, multipath | started |
 | Sync | `signalforge.sync` | `SignalForge.Sync` | block timing, QPSK frequency, phase and block-phase estimates ([ADR 0008](adr/0008-block-synchronization.md)); later tracking loops | started |
 | Link | `signalforge.link` | `SignalForge.Link` | end-to-end QPSK link run and its JSON report ([ADR 0009](adr/0009-qpsk-link-report.md)) | started |
-| IO | | | raw IQ files, SigMF, WAV, NumPy | planned |
+| Files | `signalforge.files` | `SignalForge.SignalFiles` | raw sample encoding, SigMF-layout recordings ([ADR 0012](adr/0012-signal-files.md)); later WAV, NumPy, streaming | started |
 | Standards | | | one subpackage per standard, versioned, never mixed into generic code | planned |
 | Hardware | | | separate package, never a dependency of the core | planned |
 

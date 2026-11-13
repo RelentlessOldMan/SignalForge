@@ -130,3 +130,36 @@ def test_noisy_links_must_share_the_theoretical_ber() -> None:
     b = copy.deepcopy(a)
     b["ber_theory"] *= 1.01
     assert cmp.compare_link_reports(a, b)[0].startswith("ber_theory")
+
+
+def _exchange(tmp_path: Path) -> dict[str, Any]:
+    """Python's recordings, plus a copy of each under the dotnet name, read back."""
+    cmp.write_exchange_files(tmp_path, "python")
+    cmp.write_exchange_files(tmp_path, "dotnet")
+    return cmp.read_files_report(tmp_path)
+
+
+def test_file_reports_agree(tmp_path: Path) -> None:
+    r = _exchange(tmp_path)
+    assert len(r["files"]) == 2 * len(cmp.EXCHANGE_DATATYPES) == 36
+    assert cmp.compare_file_reports(r, copy.deepcopy(r)) == []
+
+
+def test_file_reports_catch_differences(tmp_path: Path) -> None:
+    r = _exchange(tmp_path)
+    b = copy.deepcopy(r)
+    b["files"]["python-ci16_le"]["re"][3] += 1e-15
+    assert cmp.compare_file_reports(r, b) == ["python-ci16_le: re.3: " + _pair(r, b)]
+    c = copy.deepcopy(r)
+    c["files"]["dotnet-rf32_be"]["re"][5] += 1e-6
+    c["files"]["dotnet-ri8"]["metadata"]["run"] = 8
+    del c["files"]["dotnet-ci8"]
+    diffs = cmp.compare_file_reports(c, c)
+    assert "rf32_be python vs dotnet: re differs by 1e-06 (> 5.96e-08)" in diffs
+    assert "ri8 python vs dotnet metadata: run: 7 != 8" in diffs
+    assert "ci8: a recording is missing from one writer" in diffs
+
+
+def _pair(a: dict[str, Any], b: dict[str, Any]) -> str:
+    x, y = a["files"]["python-ci16_le"]["re"][3], b["files"]["python-ci16_le"]["re"][3]
+    return f"{x!r} != {y!r}"

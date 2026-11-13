@@ -55,7 +55,7 @@ the source repositories.
 
 | Package | Version | Use | License | Verified from |
 |---|---|---|---|---|
-| (none) | | runtime | | The library uses only the .NET base class library (MIT). |
+| (none) | | runtime | | The library uses only the .NET base class library (MIT), including System.Text.Json for signal files. Python's signal files use only the standard library (`json`) and NumPy. |
 | Microsoft.NET.Test.Sdk | 17.14.1 | test | MIT | `.nuspec` |
 | ↳ Microsoft.TestPlatform.ObjectModel / TestHost | 17.14.1 | test (transitive) | MIT | `.nuspec` |
 | ↳ Microsoft.CodeCoverage | 17.14.1 | test (transitive) | MIT | `.nuspec` |

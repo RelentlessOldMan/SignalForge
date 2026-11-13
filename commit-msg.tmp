@@ -1,0 +1,13 @@
+Signal files in both languages (2026.11.13.20)
+
+Raw sample encoding for the 18 SigMF datatypes and SigMF-layout recordings
+(write_sigmf / read_sigmf, WriteSigmf / ReadSigmf), written from the format
+description (ADR 0012, conventions: Signal files). 81 shared vectors from a
+stdlib generator, with recordings in vectors/files. New cross-language check:
+each language writes a recording per datatype and both read all of them.
+
+Review fixes: complex values with an infinite part are now compared part by
+part in both runners; C# reads JSON integers as long, not double.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014zWqD7JArszqtrvsBRgXop

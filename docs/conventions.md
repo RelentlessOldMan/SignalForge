@@ -346,6 +346,53 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   the middle of the first transmitted pulse. Truncated taps and an offset applied before the matched
   filter leave a little inter-symbol interference, so these hold to a tolerance, not exactly.
 
+## Signal files
+
+Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#:
+`SignalForge.SignalFiles`. Implemented from the SigMF format description, not from its text.
+
+- **Data types** are named `<kind><type>[_<order>]`: kind `c` (complex, interleaved I then Q) or
+  `r` (real); type `f64`, `f32`, `i32`, `i16` or `i8`; order `le` or `be`, which `i8` omits and
+  every other type requires. Anything else (unsigned types, `f16`, a missing or extra order) is
+  rejected. **(implemented)**
+- **Integer scaling**: code `c` of a `b`-bit type is the sample `c / 2^(b−1)`, so full scale is
+  1.0 (units `"FS"` if the caller wants to say so). Writing, a sample becomes
+  `round(x·2^(b−1))`, rounding half to even; a non-finite sample or a code outside
+  `−2^(b−1) … 2^(b−1) − 1` is rejected (nothing is clipped silently, so `+1.0` itself cannot be
+  written). Complex samples scale each part. **(implemented)**
+- **Floats** are stored as IEEE binary64 or binary32 in the given byte order; writing `f32` rounds
+  to nearest even, and a value beyond its range becomes ±inf. NaN and ±inf are stored as they are.
+  Reading always returns `float64` / `complex128` (`double` / `Complex`). **(implemented)**
+- `encode_samples(x, datatype)` gives the bytes, `decode_samples(data, datatype)` the samples; the
+  byte count must be a whole number of samples. A real datatype needs real samples and a complex
+  one complex samples. In C# the kind is the type argument (`DecodeSamples<double>`), and a
+  datatype of the other kind is rejected. **(implemented)**
+- **Recording** (`write_sigmf(path, signal, datatype)`, `read_sigmf(path)`): two files,
+  `<base>.sigmf-meta` (UTF-8 JSON) and `<base>.sigmf-data` (the raw samples, nothing else). `path`
+  is the base, or either file's name. Written meta:
+  - `global`: `core:datatype`, `core:version` (`"1.2.0"`), `core:sample_rate`, `core:extensions`
+    (one entry: name `signalforge`, version `1.0.0`, optional), `signalforge:time_origin`, then
+    `signalforge:units` and `signalforge:impedance` when they are set, `signalforge:metadata` (an
+    object) for metadata keys without a `:`, and every metadata key with a `:` as its own field.
+  - `captures`: one, `{"core:sample_start": 0, "core:frequency": center_frequency}`.
+  - `annotations`: empty.
+  Rejected on write: a datatype of the other kind, a non-finite `center_frequency` or
+  `time_origin`, metadata that is not JSON (strings, finite numbers, bools, null, lists, string-keyed
+  objects), and a metadata key that would replace a field above (`core:datatype`, `core:version`,
+  `core:sample_rate`, `core:extensions`, `core:num_channels`, `core:dataset`,
+  `core:metadata_only`, or anything `signalforge:`). **(implemented)**
+- **Reading** inverts that. `core:datatype`, `core:version` (a string starting `1.`) and
+  `core:sample_rate` (positive, finite) are required. Rejected: `core:num_channels` other than the
+  integer 1, `core:dataset` or `core:metadata_only`, a capture whose `core:header_bytes` is not the
+  integer 0, captures with
+  different `core:frequency` (a missing one is 0), a data file that is not a whole number of
+  samples, JSON with duplicate keys or the non-standard `NaN`/`Infinity`. Other global fields go to
+  `metadata` under their own names; annotations and the rest of each capture are not read.
+  JSON numbers without a fraction or exponent are integers (`int` / `long`), others floats;
+  writing, a float always gets a fraction or an exponent (`2.0`, not `2`), so the kind survives a
+  trip through the other language. A missing or unreadable file is an OS error (`OSError` /
+  `IOException`), not `invalid_argument`. **(implemented)**
+
 ## PRBS
 
 - `prbs(order, n)` produces the maximal-length sequence for the ITU-T O.150 polynomials

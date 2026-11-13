@@ -7,6 +7,7 @@ passes, 1 otherwise.
 from __future__ import annotations
 
 import argparse
+import cmath
 import dataclasses
 import itertools
 import json
@@ -22,6 +23,7 @@ import numpy as np
 from . import (
     channel,
     dsp,
+    files,
     link,
     measurements,
     metrics,
@@ -79,7 +81,39 @@ OPS: dict[str, Callable[..., Any]] = {
     "qpsk_phase_offset": sync.qpsk_phase_offset,
     "qpsk_block_phases": sync.qpsk_block_phases,
     "qpsk_link": lambda **kw: link.qpsk_link(link.QpskLinkConfig(**kw)),
+    "encode_samples": lambda x, datatype: files.encode_samples(x, datatype).hex(),
+    "decode_samples": lambda data, datatype: files.decode_samples(_hex(data), datatype),
+    "read_sigmf": lambda file: _signal_record(files.read_sigmf(_fixture(file))),
 }
+
+
+def _hex(data: Any) -> bytes:
+    if not isinstance(data, str):
+        raise BadCase("data must be a hex string")
+    try:
+        return bytes.fromhex(data)
+    except ValueError:
+        raise BadCase("data must be a hex string") from None
+
+
+def _fixture(name: Any) -> Path:
+    """A file in ``vectors/files``, named without a directory."""
+    if not isinstance(name, str) or Path(name).name != name:
+        raise BadCase("file must be a bare file name in vectors/files")
+    return find_vectors_dir().parent / "files" / name
+
+
+def _signal_record(s: Any) -> dict[str, Any]:
+    """A :class:`Signal` as a record with its field names, for comparison."""
+    return {
+        "samples": s.samples,
+        "sample_rate": s.sample_rate,
+        "center_frequency": s.center_frequency,
+        "time_origin": s.time_origin,
+        "units": s.units,
+        "impedance": s.impedance,
+        "metadata": dict(s.metadata),
+    }
 
 
 def _fir_filter(taps: Any, samples: Any, chunks: Any) -> Any:
@@ -108,9 +142,10 @@ def decode(v: Any) -> Any:
             if isinstance(re, list):
                 if not isinstance(im, list) or len(im) != len(re):
                     raise BadCase("re and im must be arrays of the same length")
-                return np.asarray([decode(r) for r in re]) + 1j * np.asarray(
-                    [decode(i) for i in im]
-                )
+                z = np.empty(len(re), dtype=np.complex128)  # re + 1j*im would turn inf into nan
+                z.real = [float(decode(r)) for r in re]
+                z.imag = [float(decode(i)) for i in im]
+                return z
             return complex(decode(re), decode(im))
         return {k: decode(x) for k, x in v.items()}
     if isinstance(v, list):
@@ -156,6 +191,9 @@ def _close(actual: complex | float, expected: complex | float, tol: dict[str, fl
         return isinstance(actual, float | np.floating) and math.isnan(actual)
     if isinstance(expected, float) and math.isinf(expected):
         return bool(actual == expected)
+    if isinstance(expected, complex) and not cmath.isfinite(expected):  # parts must match exactly
+        a = complex(actual)
+        return _close(a.real, expected.real, tol) and _close(a.imag, expected.imag, tol)
     return bool(abs(actual - expected) <= tol["abs"] + tol["rel"] * abs(expected))
 
 
@@ -193,6 +231,8 @@ def compare(actual: Any, expected: Any, tol: dict[str, float], path: str = "") -
             p = f"{path}.{k}" if path else k
             out += compare(actual[k], e, tol, p) if k in actual else [f"{p}: missing"]
         return out
+    if isinstance(expected, str):
+        return [] if actual == expected else [f"{where}: {actual!r} != expected {expected!r}"]
     if isinstance(actual, tuple):  # a tuple of numbers is a real array, as in the C# runner
         actual = np.asarray(actual, dtype=np.float64)
     if isinstance(actual, np.ndarray) and not np.iscomplexobj(actual) and actual.dtype != np.bool_:

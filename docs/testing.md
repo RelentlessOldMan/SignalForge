@@ -7,8 +7,8 @@
 2. **Shared vectors** (`vectors/cases/*.json`): language-neutral cases with expected results. Both
    test suites load every file and run every case. This is the cross-language contract.
 3. **Cross-language checks** (`python -m signalforge.compare`, run by `build.ps1` and CI): the
-   two languages' results compared with each other, below. Still planned: cross-generation, where
-   Python writes a signal file, C# analyses it, and the other way round.
+   two languages' results compared with each other, below, including signal files written by each
+   language and read by both.
 
 ## Where expected values come from
 
@@ -78,6 +78,17 @@ reports of one config. Each config in `vectors/links/` is run in both languages
     its mean).
   The theoretical BER depends only on the config and must agree within 1e-9. The receiver's
   estimates (timing, frequency, phase) are noisy and are not judged.
+
+The file exchange: each language writes one recording per datatype into one directory
+(`compare write-files` and the C# tool's `write-files`; 64 samples of a raised-cosine-shaped tone,
+the same formula in both, with units, impedance, time origin, center frequency and metadata). Each
+language reads every recording there into a report (`read-files`), and `compare files` checks:
+
+- both reports read the same recordings, and every value agrees exactly (both decode the same
+  bytes);
+- for each datatype, the Python and C# recordings agree in every field and in their metadata
+  (except `writer`), and their samples within one quantization step plus 1e-12 (the formula's
+  rounding may differ by an ulp between the languages).
 
 ## Running
 

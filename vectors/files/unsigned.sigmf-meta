@@ -1,0 +1,13 @@
+{
+  "global": {
+    "core:datatype": "ru16_le",
+    "core:version": "1.0.0",
+    "core:sample_rate": 1000
+  },
+  "captures": [
+    {
+      "core:sample_start": 0
+    }
+  ],
+  "annotations": []
+}

@@ -46,7 +46,8 @@ jobs:
       - run: dotnet format SignalForge.slnx --verify-no-changes
 
   cross:
-    # Both languages on one runner: the conformance reports diffed, the link configs compared.
+    # Both languages on one runner: the conformance reports diffed, the link configs compared,
+    # and signal files written by each language read by both.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -69,3 +70,10 @@ jobs:
             dotnet run --no-build --project dotnet/tools/SignalForge.Conformance -- link "$cfg" --out "reports/link-$name-dotnet.json"
             python -m signalforge.compare link "reports/link-$name-python.json" "reports/link-$name-dotnet.json"
           done
+      - name: Signal files exchanged between the languages
+        run: |
+          python -m signalforge.compare write-files reports/files
+          dotnet run --no-build --project dotnet/tools/SignalForge.Conformance -- write-files reports/files
+          dotnet run --no-build --project dotnet/tools/SignalForge.Conformance -- read-files reports/files --out reports/files-dotnet.json
+          python -m signalforge.compare read-files reports/files --out reports/files-python.json
+          python -m signalforge.compare files reports/files-python.json reports/files-dotnet.json

@@ -250,6 +250,11 @@ public static class Conformance
             "fir_response" => Bind((Reals(a.Get("taps")), Reals(a.Get("frequencies")), a.D("sample_rate")),
                 t => Dsp.FirResponse(t.Item1, t.Item2, t.Item3)),
             "fir_filter" => FirFilterOp(a),
+            "encode_samples" => a.Get("x") is Complex[] z
+                ? Bind((z, Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2)))
+                : Bind((Reals(a.Get("x")), Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2))),
+            "decode_samples" => DecodeSamplesOp(Convert.FromHexString(Str(a, "data")), Str(a, "datatype")),
+            "read_sigmf" => ReadSigmfOp(Str(a, "file")),
             "resample" => ResampleOp(a, a.I("up"), a.I("down")),
             "interpolate" => ResampleOp(a, a.I("factor"), 1),
             "decimate" => ResampleOp(a, 1, a.I("factor")),
@@ -342,6 +347,44 @@ public static class Conformance
         }
         return Bind((Reals(x), Reals(h)), t => Dsp.Convolve(t.Item1, t.Item2));
     }
+
+    private static string Str(Args a, string k) => a.Get(k) as string ?? throw new InvalidDataException($"{k} must be a string");
+
+    private static Func<object?> DecodeSamplesOp(byte[] data, string datatype) => datatype.StartsWith('c')
+        ? () => SignalFiles.DecodeSamples<Complex>(data, datatype)
+        : () => SignalFiles.DecodeSamples<double>(data, datatype);
+
+    /// <summary>A recording in vectors/files, read as the kind its datatype names (the runner
+    /// peeks; a file it can't peek at is read as real, and the library must reject it).</summary>
+    private static Func<object?> ReadSigmfOp(string name)
+    {
+        if (Path.GetFileName(name) != name)
+            throw new InvalidDataException("file must be a bare file name in vectors/files");
+        string path = Path.Combine(VectorsDir(), "..", "files", name);
+        bool isComplex = false;
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllBytes(path + ".sigmf-meta"));
+            isComplex = doc.RootElement.GetProperty("global").GetProperty("core:datatype").GetString()?.StartsWith('c') == true;
+        }
+        catch (Exception e) when (e is JsonException or KeyNotFoundException or InvalidOperationException)
+        {
+        }
+        return isComplex
+            ? () => SignalRecord(SignalFiles.ReadSigmf<Complex>(path))
+            : () => SignalRecord(SignalFiles.ReadSigmf<double>(path));
+    }
+
+    private static Dictionary<string, object?> SignalRecord<T>(Signal<T> s) where T : struct => new()
+    {
+        ["samples"] = s.Samples.ToArray(),
+        ["sample_rate"] = s.SampleRate,
+        ["center_frequency"] = s.CenterFrequency,
+        ["time_origin"] = s.TimeOrigin,
+        ["units"] = s.Units,
+        ["impedance"] = s.Impedance,
+        ["metadata"] = s.Metadata.ToDictionary(kv => kv.Key, kv => kv.Value),
+    };
 
     private static Func<object?> ResampleOp(Args a, int up, int down)
     {
@@ -473,6 +516,8 @@ public static class Conformance
     {
         null => null,
         double or Complex or Complex[] or double[] or bool or string => v,
+        long l => (double)l,
+        Dictionary<string, object?> m => m.ToDictionary(kv => kv.Key, kv => Canonical(kv.Value)),
         int i => (double)i,
         byte[] b => b.Select(x => (double)x).ToArray(),
         System.Runtime.CompilerServices.ITuple t => Enumerable.Range(0, t.Length).Select(i => Convert.ToDouble(t[i], CultureInfo.InvariantCulture)).ToArray(),
@@ -516,10 +561,16 @@ public static class Conformance
                 }
                 return;
             case double[] ed when actual is double[] ad:
-                CompareArrays(ad.Select(x => new Complex(x, 0)).ToArray(), ed.Select(x => new Complex(x, 0)).ToArray(), abs, rel, where, msgs);
+                if (ad.Length != ed.Length)
+                    msgs.Add($"{where}: length {ad.Length} != expected {ed.Length}");
+                else if (Enumerable.Range(0, ed.Length).Where(i => !Close(ad[i], ed[i], abs, rel)).ToList() is [int i0, ..] bad)
+                    msgs.Add($"{where}[{i0}]: {ad[i0]:R} != expected {ed[i0]:R} ({bad.Count} differ)");
                 return;
             case Complex[] ec when actual is Complex[] ac:
                 CompareArrays(ac, ec, abs, rel, where, msgs);
+                return;
+            case string es:
+                if (actual as string != es) msgs.Add($"{where}: {actual ?? "null"} != expected {es}");
                 return;
             case bool eb when actual is bool ab:
                 if (ab != eb) msgs.Add($"{where}: {ab} != expected {eb}");
@@ -556,5 +607,7 @@ public static class Conformance
     }
 
     private static bool Close(Complex a, Complex e, double abs, double rel) =>
-        Complex.Abs(a - e) <= abs + rel * Complex.Abs(e);
+        double.IsFinite(e.Real) && double.IsFinite(e.Imaginary)
+            ? Complex.Abs(a - e) <= abs + rel * Complex.Abs(e)
+            : Close(a.Real, e.Real, abs, rel) && Close(a.Imaginary, e.Imaginary, abs, rel); // part by part, so inf matches inf
 }

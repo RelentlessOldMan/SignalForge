@@ -18,6 +18,7 @@ from .dsp import (
     rrc_taps,
     upsample,
 )
+from .files import decode_samples, encode_samples, read_sigmf, write_sigmf
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import PowerStats, power_stats
 from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
@@ -48,7 +49,7 @@ from .units import (
 )
 from .waveforms import prbs, tone
 
-__version__ = "2026.11.13.19"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.20"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
@@ -71,6 +72,8 @@ __all__ = [
     "dbm_to_vrms",
     "dbm_to_w",
     "decimate",
+    "decode_samples",
+    "encode_samples",
     "evm",
     "fft",
     "fft_frequencies",
@@ -94,6 +97,7 @@ __all__ = [
     "qpsk_link",
     "qpsk_map",
     "qpsk_phase_offset",
+    "read_sigmf",
     "resample",
     "resample_taps",
     "rrc_taps",
@@ -105,4 +109,5 @@ __all__ = [
     "welch_psd",
     "window",
     "window_stats",
+    "write_sigmf",
 ]

@@ -1,0 +1,9 @@
+{
+  "global": {
+    "core:datatype": "ri8",
+    "core:version": "1.0.0",
+    "core:sample_rate": 1000
+  },
+  "captures": [],
+  "annotations": []
+}
