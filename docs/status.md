@@ -4,8 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Band-pass and band-stop Chebyshev** (types I and II) on the band transform of ADR 0016.
-2. **Review pass** over the band Chebyshevs once built.
+1. **Review pass** over the band Chebyshevs: numerical edge cases (narrow and near-Nyquist
+   bands, high orders, extreme ripple and attenuation), API and docs agreement across languages.
+2. **Elliptic (Cauer) low-pass and high-pass** design: conventions and an ADR first.
 
 ## Built
 
@@ -232,11 +233,20 @@ Updated with every chunk of work. Dates are absolute.
   Known weakness, not fixed: the band-form vectors come from a generator that follows the same
   pole-pair construction as the code; an independent root-finding check would be stronger.
   Python 1208 passed, 2 skipped (3.10 too); .NET 959 passed; conformance 617/617 in both.
+- 2026-11-13: band-pass and band-stop Chebyshev types I and II ([ADR 0021](adr/0021-band-chebyshev.md)):
+  `chebyshev1_bandpass`, `chebyshev1_bandstop`, `chebyshev2_bandpass`, `chebyshev2_bandstop`
+  (`Chebyshev1Bandpass` ... in C#), on the shared band transform that Butterworth band designs now
+  also use. Conventions give the prototype frequency maps, the closed-form |H|², the type II
+  zero images and the section gains. 21 new `iir.json` cases: four by-hand order-1 designs, ten
+  computed designs (orders 2-5), seven rejections. The generator builds the sections from their
+  own analog quadratics and checks them against the closed-form |H|² and edge values, section
+  stability, and the product of the denominators against the prototype expanded by polynomial
+  substitution (independent of the pole-pair split). Python 1334 passed, 2 skipped; .NET 1046
+  passed; conformance 638/638 in both.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth and
-IIR designs beyond Butterworth and Chebyshev I/II (elliptic, band Chebyshev), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth and Chebyshev I/II (elliptic), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

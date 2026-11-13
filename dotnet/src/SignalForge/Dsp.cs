@@ -424,6 +424,50 @@ public static class Dsp
     public static double[][] Chebyshev2Highpass(int order, double attenuationDb, double cutoff, double sampleRate) =>
         Chebyshev2(order, attenuationDb, cutoff, sampleRate, true);
 
+    /// <summary>Chebyshev type I band-pass from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>:
+    /// pass band [low, high] rippling by rippleDb (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, 1 to 1000; the filter's order is twice it.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, in (0, 200].</param>
+    /// <param name="low">Lower pass-band edge in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper pass-band edge in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] Chebyshev1Bandpass(int order, double rippleDb, double low, double high, double sampleRate) =>
+        Chebyshev1Band(order, rippleDb, low, high, sampleRate, false);
+
+    /// <summary>Chebyshev type I band-stop from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>:
+    /// pass bands up to low and from high, rippling by rippleDb (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, 1 to 1000; the filter's order is twice it.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, in (0, 200].</param>
+    /// <param name="low">Lower pass-band edge in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper pass-band edge in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] Chebyshev1Bandstop(int order, double rippleDb, double low, double high, double sampleRate) =>
+        Chebyshev1Band(order, rippleDb, low, high, sampleRate, true);
+
+    /// <summary>Chebyshev type II band-pass from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>:
+    /// stop bands up to low and from high, peaks at −attenuationDb (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, 1 to 1000; the filter's order is twice it.</param>
+    /// <param name="attenuationDb">Stop-band attenuation in dB, in (0, 200].</param>
+    /// <param name="low">Lower stop-band edge in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper stop-band edge in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] Chebyshev2Bandpass(int order, double attenuationDb, double low, double high, double sampleRate) =>
+        Chebyshev2Band(order, attenuationDb, low, high, sampleRate, false);
+
+    /// <summary>Chebyshev type II band-stop from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>:
+    /// stop band [low, high], peaks at −attenuationDb (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, 1 to 1000; the filter's order is twice it.</param>
+    /// <param name="attenuationDb">Stop-band attenuation in dB, in (0, 200].</param>
+    /// <param name="low">Lower stop-band edge in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper stop-band edge in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] Chebyshev2Bandstop(int order, double attenuationDb, double low, double high, double sampleRate) =>
+        Chebyshev2Band(order, attenuationDb, low, high, sampleRate, true);
+
     private static double Theta(int i, int n) => Math.PI / 2 + Math.PI * (2 * i + 1) / (2.0 * n);
 
     private static double[][] Butterworth(int order, double cutoff, double sampleRate, bool high)
@@ -528,6 +572,48 @@ public static class Dsp
     private static double[][] ButterworthBand(int order, double low, double high, double sampleRate, bool stop)
     {
         Order(order);
+        return Band(order, low, high, sampleRate, stop, i => Complex.FromPolarCoordinates(1, Theta(i, order)), unit: true);
+    }
+
+    // Type I prototype poles for ripple db (inverse: type II, their reciprocals, for attenuation db).
+    private static Func<int, Complex> ChebyshevPoles(int n, double db, string name, bool inverse)
+    {
+        double eps2 = DbPowerRatio(db, name);
+        double mu = Math.Asinh(inverse ? Math.Sqrt(eps2) : 1 / Math.Sqrt(eps2)) / n;
+        double sh = Math.Sinh(mu), ch = Math.Cosh(mu);
+        return i =>
+        {
+            var p = new Complex(sh * Math.Cos(Theta(i, n)), ch * Math.Sin(Theta(i, n)));
+            return inverse ? 1 / p : p;
+        };
+    }
+
+    private static double[][] Chebyshev1Band(int order, double rippleDb, double low, double high, double sampleRate, bool stop)
+    {
+        Order(order);
+        double[][] rows = Band(order, low, high, sampleRate, stop, ChebyshevPoles(order, rippleDb, nameof(rippleDb), false));
+        if (order % 2 == 0)
+        {
+            double g = Math.Pow(10, -rippleDb / 20); // the ripple's low point at the reference
+            for (int j = 0; j < 3; j++)
+                rows[0][j] *= g;
+        }
+        return rows;
+    }
+
+    private static double[][] Chebyshev2Band(int order, double attenuationDb, double low, double high, double sampleRate, bool stop)
+    {
+        Order(order);
+        return Band(order, low, high, sampleRate, stop, ChebyshevPoles(order, attenuationDb, nameof(attenuationDb), true),
+            i => 1 / Math.Sin(Theta(i, order)));
+    }
+
+    // Band-pass or band-stop sections from the low-pass prototype's poles (edge 1) and, for pair i,
+    // zeros at s = ±j·zeros(i) (default: at infinity), with the prototype's gain (unit: the poles are
+    // on the unit circle, so the pair gains are exactly 1).
+    private static double[][] Band(int order, double low, double high, double sampleRate, bool stop,
+        Func<int, Complex> prototype, Func<int, double>? zeros = null, bool unit = false)
+    {
         double fs = Check.PositiveFinite(sampleRate, nameof(sampleRate));
         double lo = Math.Tan(Math.PI * BandEdge(low, fs, nameof(low)));
         double hi = Math.Tan(Math.PI * BandEdge(high, fs, nameof(high)));
@@ -536,29 +622,43 @@ public static class Dsp
         double w2 = lo * hi, bw = hi - lo; // center squared and width, prewarped
         var rows = new List<double[]>();
 
-        // Analog section with poles at s and its conjugate (sigma = Re s, m = |s|²) through the
-        // bilinear transform s = (1 − z⁻¹)/(1 + z⁻¹), divided by a0.
-        void Section(double sigma, double m)
+        // Analog section with poles at s and its conjugate (sigma = Re s, m = |s|²) times gain, through
+        // the bilinear transform s = (1 − z⁻¹)/(1 + z⁻¹), divided by a0; numerator s² + zero2 if
+        // given, else as for Butterworth.
+        void Section(double sigma, double m, double gain, double? zero2)
         {
             double a0 = 1 - 2 * sigma + m;
-            double[] b = stop // (s² + w2) / ... or bw·s / ...
-                ? [(1 + w2) / a0, 2 * (w2 - 1) / a0, (1 + w2) / a0]
-                : [bw / a0, 0, -bw / a0];
-            rows.Add([.. b, 1, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0]);
+            double[] b = zero2 is { } z2 ? [1 + z2, 2 * (z2 - 1), 1 + z2] // (s² + zero2) / ...
+                : stop ? [1 + w2, 2 * (w2 - 1), 1 + w2] // (s² + w2) / ...
+                : [bw, 0, -bw]; // bw·s / ...
+            rows.Add([gain * b[0] / a0, gain * b[1] / a0, gain * b[2] / a0, 1, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0]);
         }
 
-        if (order % 2 == 1) // the real pole −1 maps to s² + bw·s + w2 in both transforms
-            Section(-bw / 2, w2);
+        if (order % 2 == 1) // the real pole p maps to s² − c·s + w2, one section whatever its roots
+        {
+            double p = prototype((order - 1) / 2).Real;
+            double c = stop ? bw / p : bw * p;
+            Section(c / 2, w2, stop ? 1 : -p, null);
+        }
         for (int i = order / 2 - 1; i >= 0; i--)
         {
-            Complex p = Complex.FromPolarCoordinates(1, Math.PI / 2 + Math.PI * (2 * i + 1) / (2.0 * order));
+            Complex p = prototype(i);
             Complex c = stop ? bw / p : bw * p; // the pole's two images: roots of s² − c·s + w2
             Complex r = Complex.Sqrt(c * c - 4 * w2);
             Complex s1 = (c + r) / 2, s2 = (c - r) / 2;
             if (s2.Magnitude < s1.Magnitude)
                 (s1, s2) = (s2, s1);
-            Section(s1.Real, s1.Magnitude * s1.Magnitude);
-            Section(s2.Real, s2.Magnitude * s2.Magnitude);
+            double gain = stop || unit ? 1 : p.Magnitude;
+            double? z1 = null, z2 = null;
+            if (zeros is not null) // j·omega maps to j·wHi and j·wLo, wHi·wLo = w2
+            {
+                double d = stop ? bw / zeros(i) : bw * zeros(i);
+                double wHi = (d + Math.Sqrt(d * d + 4 * w2)) / 2, wLo = w2 / wHi;
+                gain = stop ? 1 : p.Magnitude / zeros(i);
+                (z1, z2) = (wLo * wLo, wHi * wHi);
+            }
+            Section(s1.Real, s1.Magnitude * s1.Magnitude, gain, z1);
+            Section(s2.Real, s2.Magnitude * s2.Magnitude, gain, z2);
         }
         return Usable(rows);
     }

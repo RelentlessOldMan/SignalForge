@@ -15,8 +15,12 @@ from signalforge import (
     butterworth_bandstop,
     butterworth_highpass,
     butterworth_lowpass,
+    chebyshev1_bandpass,
+    chebyshev1_bandstop,
     chebyshev1_highpass,
     chebyshev1_lowpass,
+    chebyshev2_bandpass,
+    chebyshev2_bandstop,
     chebyshev2_highpass,
     chebyshev2_lowpass,
     sos_response,
@@ -399,3 +403,79 @@ def test_tiny_db_values_keep_their_digits() -> None:
 def test_sos_response_rejects_non_real_frequencies(bad: list[Any]) -> None:
     with pytest.raises(ValueError):
         sos_response([[1, 0, 0, 1, -0.5, 0]], bad, 1.0)
+
+
+_BAND_CHEBYSHEVS = {
+    (1, False): chebyshev1_bandpass,
+    (1, True): chebyshev1_bandstop,
+    (2, False): chebyshev2_bandpass,
+    (2, True): chebyshev2_bandstop,
+}
+
+
+@pytest.mark.parametrize("kind", [1, 2])
+@pytest.mark.parametrize("stop", [False, True])
+@pytest.mark.parametrize("order", [1, 2, 3, 6])
+@pytest.mark.parametrize(
+    ("band", "db"),
+    [((0.001, 0.002), 0.5), ((0.1, 0.11), 3.0), ((0.05, 0.45), 40.0), ((0.3, 0.45), 80.0)],
+)
+def test_chebyshev_band_magnitude_has_the_closed_form(
+    kind: int, stop: bool, order: int, band: tuple[float, float], db: float
+) -> None:
+    sos = _BAND_CHEBYSHEVS[kind, stop](order, db, band[0] * 1000, band[1] * 1000, 1000.0)
+    assert sos.shape == (order, 6)
+    for row in sos:
+        assert np.all(np.abs(np.roots(row[3:])) < 1)
+    lo, hi = math.tan(math.pi * band[0]), math.tan(math.pi * band[1])
+    w2, bw = lo * hi, hi - lo
+    ratio = 10 ** (db / 10) - 1
+    f = np.linspace(-0.4999, 0.4999, 301) * 1000
+    t = np.abs(np.tan(np.pi * f / 1000))
+    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
+        x = bw * t / (w2 - t * t) if stop else (t * t - w2) / (bw * t)
+        if kind == 1:
+            expected = 1 / (1 + ratio * _cheb_t(order, x) ** 2)
+        else:
+            y = _cheb_t(order, 1 / x) ** 2 / ratio
+            expected = 1 / (1 + 1 / y)
+    got = np.abs(sos_response(sos, f, 1000.0)) ** 2
+    assert np.allclose(got, expected, rtol=1e-8, atol=1e-10)
+    edges = np.abs(sos_response(sos, [band[0] * 1000, band[1] * 1000], 1000.0)) ** 2
+    assert edges == pytest.approx([1 / (1 + ratio)] * 2, rel=1e-8)
+
+
+def test_chebyshev_band_reference_gains() -> None:
+    center = (
+        1000 / math.pi * math.atan(math.sqrt(math.tan(math.pi * 0.1) * math.tan(math.pi * 0.2)))
+    )
+    for order, want in [(3, 1.0), (4, 10 ** (-1 / 20))]:  # even type I: the ripple's low point
+        bp = chebyshev1_bandpass(order, 1.0, 100.0, 200.0, 1000.0)
+        bs = chebyshev1_bandstop(order, 1.0, 100.0, 200.0, 1000.0)
+        assert abs(sos_response(bp, [center], 1000.0)[0]) == pytest.approx(want, rel=1e-9)
+        assert np.abs(sos_response(bs, [0.0, 500.0], 1000.0)) == pytest.approx([want] * 2, rel=1e-9)
+    bp2 = chebyshev2_bandpass(4, 40.0, 100.0, 200.0, 1000.0)
+    bs2 = chebyshev2_bandstop(4, 40.0, 100.0, 200.0, 1000.0)
+    assert abs(sos_response(bp2, [center], 1000.0)[0]) == pytest.approx(1.0, rel=1e-9)
+    assert np.abs(sos_response(bs2, [0.0, 500.0], 1000.0)) == pytest.approx([1.0, 1.0], rel=1e-9)
+
+
+@pytest.mark.parametrize("design", list(_BAND_CHEBYSHEVS.values()))
+@pytest.mark.parametrize(
+    "args",
+    [
+        (0, 1.0, 0.1, 0.2, 1.0),
+        (1001, 1.0, 0.1, 0.2, 1.0),
+        (2, 0.0, 0.1, 0.2, 1.0),
+        (2, 250.0, 0.1, 0.2, 1.0),
+        (2, math.nan, 0.1, 0.2, 1.0),
+        (2, 1.0, 0.2, 0.1, 1.0),
+        (2, 1.0, 0.1, 0.5, 1.0),
+        (2, 1.0, 0.0, 0.2, 1.0),
+        (2, 1.0, 0.1, 0.2, 0.0),
+        (4, 1.0, 1e-9, 2e-9, 1.0),
+    ],
+)
+def test_chebyshev_band_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
+    with pytest.raises(ValueError):
+        design(*args)

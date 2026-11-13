@@ -428,6 +428,56 @@ def _butterworth_band(
     order: int, low: float, high: float, sample_rate: float, stop: bool
 ) -> NDArray[np.float64]:
     n = _order(order)
+    poles = lambda i: cmath.exp(1j * _theta(i, n))  # noqa: E731
+    return _band(n, low, high, sample_rate, stop, poles, unit=True)
+
+
+def _chebyshev_poles(n: int, db: float, name: str, inverse: bool) -> Callable[[int], complex]:
+    """Type I prototype poles for ripple ``db`` (``inverse``: type II, their reciprocals, for
+    attenuation ``db``)."""
+    eps2 = _db_power_ratio(db, name)
+    mu = math.asinh(math.sqrt(eps2) if inverse else 1 / math.sqrt(eps2)) / n
+    sh, ch = math.sinh(mu), math.cosh(mu)
+
+    def pole(i: int) -> complex:
+        p = complex(sh * math.cos(_theta(i, n)), ch * math.sin(_theta(i, n)))
+        return 1 / p if inverse else p
+
+    return pole
+
+
+def _chebyshev1_band(
+    order: int, ripple_db: float, low: float, high: float, sample_rate: float, stop: bool
+) -> NDArray[np.float64]:
+    n = _order(order)
+    poles = _chebyshev_poles(n, ripple_db, "ripple_db", False)
+    rows = _band(n, low, high, sample_rate, stop, poles)
+    if n % 2 == 0:
+        rows[0, :3] *= 10 ** (-float(ripple_db) / 20)  # the ripple's low point at the reference
+    return rows
+
+
+def _chebyshev2_band(
+    order: int, attenuation_db: float, low: float, high: float, sample_rate: float, stop: bool
+) -> NDArray[np.float64]:
+    n = _order(order)
+    poles = _chebyshev_poles(n, attenuation_db, "attenuation_db", True)
+    return _band(n, low, high, sample_rate, stop, poles, lambda i: 1 / math.sin(_theta(i, n)))
+
+
+def _band(
+    n: int,
+    low: float,
+    high: float,
+    sample_rate: float,
+    stop: bool,
+    prototype: Callable[[int], complex],
+    zeros: Callable[[int], float] | None = None,
+    unit: bool = False,
+) -> NDArray[np.float64]:
+    """Band-pass or band-stop sections from the low-pass prototype's poles (edge 1) and, for pair
+    ``i``, zeros at ``s = ±j·zeros(i)`` (default: at infinity), with the prototype's gain
+    (``unit``: the poles are on the unit circle, so the pair gains are exactly 1)."""
     fs = _rate(sample_rate)
     lo = math.tan(math.pi * _band_edge(low, fs, "low"))
     hi = math.tan(math.pi * _band_edge(high, fs, "high"))
@@ -436,24 +486,38 @@ def _butterworth_band(
     w2, bw = lo * hi, hi - lo  # center squared and width, prewarped
     rows: list[list[float]] = []
 
-    def section(sigma: float, m: float) -> None:
+    def section(sigma: float, m: float, gain: float, zero2: float | None) -> None:
         """Analog section with poles at ``s`` and its conjugate (``sigma = Re s``, ``m = |s|^2``)
-        through the bilinear transform ``s = (1 - z^-1)/(1 + z^-1)``, divided by ``a0``."""
+        times ``gain``, through the bilinear transform ``s = (1 - z^-1)/(1 + z^-1)``, divided by
+        ``a0``; numerator ``s^2 + zero2`` if given, else as for Butterworth."""
         a0 = 1 - 2 * sigma + m
-        if stop:  # (s^2 + w2) / ...
-            b = [(1 + w2) / a0, 2 * (w2 - 1) / a0, (1 + w2) / a0]
+        if zero2 is not None:  # (s^2 + zero2) / ...
+            b = [1 + zero2, 2 * (zero2 - 1), 1 + zero2]
+        elif stop:  # (s^2 + w2) / ...
+            b = [1 + w2, 2 * (w2 - 1), 1 + w2]
         else:  # bw * s / ...
-            b = [bw / a0, 0.0, -bw / a0]
-        rows.append([*b, 1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
+            b = [bw, 0.0, -bw]
+        rows.append([*(gain * v / a0 for v in b), 1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
 
-    if n % 2:  # the real pole -1 maps to s^2 + bw*s + w2 in both transforms
-        section(-bw / 2, w2)
+    if n % 2:  # the real pole p maps to s^2 - c*s + w2, one section whatever its roots
+        pr = prototype((n - 1) // 2).real
+        cr = bw / pr if stop else bw * pr
+        section(cr / 2, w2, 1.0 if stop else -pr, None)
     for i in range(n // 2 - 1, -1, -1):
-        p = cmath.exp(1j * (math.pi / 2 + math.pi * (2 * i + 1) / (2 * n)))
+        p = prototype(i)
         c = bw / p if stop else bw * p  # the pole's two images: roots of s^2 - c*s + w2
         r = cmath.sqrt(c * c - 4 * w2)
-        for s in sorted([(c + r) / 2, (c - r) / 2], key=abs):
-            section(s.real, abs(s) ** 2)
+        images = sorted([(c + r) / 2, (c - r) / 2], key=abs)
+        zero2: list[float | None] = [None, None]
+        if zeros is None:
+            gain = 1.0 if stop or unit else abs(p)
+        else:  # j*omega maps to j*w_hi and j*w_lo, w_hi * w_lo = w2
+            d = bw / zeros(i) if stop else bw * zeros(i)
+            w_hi = (d + math.sqrt(d * d + 4 * w2)) / 2
+            gain = 1.0 if stop else abs(p) / zeros(i)
+            zero2 = [(w2 / w_hi) ** 2, w_hi * w_hi]
+        for s, z2 in zip(images, zero2, strict=True):
+            section(s.real, abs(s) ** 2, gain, z2)
     return _usable(rows)
 
 
@@ -471,6 +535,42 @@ def butterworth_bandstop(
     """Butterworth band-stop from the low-pass prototype of that order, by the bilinear transform,
     as ``order`` second-order sections (conventions: IIR filters)."""
     return _butterworth_band(order, low, high, sample_rate, stop=True)
+
+
+def chebyshev1_bandpass(
+    order: int, ripple_db: float, low: float, high: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Chebyshev type I band-pass from the low-pass prototype of that order: pass band
+    ``[low, high]`` rippling by ``ripple_db``, ``order`` second-order sections (conventions: IIR
+    filters)."""
+    return _chebyshev1_band(order, ripple_db, low, high, sample_rate, stop=False)
+
+
+def chebyshev1_bandstop(
+    order: int, ripple_db: float, low: float, high: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Chebyshev type I band-stop from the low-pass prototype of that order: pass bands up to
+    ``low`` and from ``high``, rippling by ``ripple_db``, ``order`` second-order sections
+    (conventions: IIR filters)."""
+    return _chebyshev1_band(order, ripple_db, low, high, sample_rate, stop=True)
+
+
+def chebyshev2_bandpass(
+    order: int, attenuation_db: float, low: float, high: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Chebyshev type II band-pass from the low-pass prototype of that order: stop bands up to
+    ``low`` and from ``high`` with peaks at ``-attenuation_db``, ``order`` second-order sections
+    (conventions: IIR filters)."""
+    return _chebyshev2_band(order, attenuation_db, low, high, sample_rate, stop=False)
+
+
+def chebyshev2_bandstop(
+    order: int, attenuation_db: float, low: float, high: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Chebyshev type II band-stop from the low-pass prototype of that order: stop band
+    ``[low, high]`` with peaks at ``-attenuation_db``, ``order`` second-order sections
+    (conventions: IIR filters)."""
+    return _chebyshev2_band(order, attenuation_db, low, high, sample_rate, stop=True)
 
 
 def sos_response(

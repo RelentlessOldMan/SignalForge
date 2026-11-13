@@ -214,6 +214,116 @@ def band(order, low, high, fs, stop):
     return rows
 
 
+def substituted_denominator(order, quads, real, w2, bw, stop):
+    """Digital denominator (powers of z^-1, constant term 1) of a band design from the analog
+    prototype's factors: quadratics S^2 + a S + b (``quads``) and, for an odd order, S - real,
+    with S = (s^2 + w2)/(bw s) or its reciprocal for band-stop, cleared of fractions, then
+    s = (1 - z^-1)/(1 + z^-1) cleared of (1 + z^-1)^(2n). Ascending powers of s throughout."""
+    q = [w2, 0.0, 1.0]  # s^2 + w2
+    r = [0.0, bw]  # bw s
+    num, den = (r, q) if stop else (q, r)  # S = num/den
+    d = [1.0]
+    for a, b in quads:
+        f = padd(padd(pmul(num, num), [a * v for v in pmul(num, den)]), [b * v for v in pmul(den, den)])
+        d = pmul(d, f)
+    if real is not None:
+        d = pmul(d, padd(num, [-real * v for v in den]))
+    z = [0.0] * (2 * order + 1)
+    for k, c in enumerate(d):
+        term = pmul(ppow([1.0, -1.0], k), ppow([1.0, 1.0], 2 * order - k))
+        z = padd(z, [c * v for v in term])
+    return [v / z[0] for v in z]
+
+
+def cheb_t2(n, x):
+    """T_n(x)^2, infinite where it overflows (|x| huge or infinite)."""
+    if math.isinf(x) or (abs(x) > 1 and n * math.acosh(abs(x)) > 700):
+        return math.inf
+    return cheb_t(n, x) ** 2
+
+
+def cheb_band(order, kind, db, low, high, fs, stop):
+    """Chebyshev type I (kind 1, ripple db) or II (kind 2, attenuation db) band design: each
+    section's analog quadratics (conventions: band-pass and band-stop Chebyshev) through the
+    bilinear transform."""
+    ratio = 10 ** (db / 10) - 1
+    mu = math.asinh(1 / math.sqrt(ratio) if kind == 1 else math.sqrt(ratio)) / order
+    sh, ch = math.sinh(mu), math.cosh(mu)
+    lo, hi = math.tan(math.pi * low / fs), math.tan(math.pi * high / fs)
+    w2, bw = lo * hi, hi - lo
+    sections = []  # (Re s, |s|^2, gain, zero^2 or None) of each section, in order
+    quads, real = [], None  # the prototype's denominator factors, for the independent check
+    if order % 2:
+        real = -sh if kind == 1 else -1 / sh
+        c = bw / real if stop else bw * real
+        sections.append((c / 2, w2, 1.0 if stop else -real, None))
+    for i in range(order // 2 - 1, -1, -1):
+        phi = math.pi * (2 * i + 1) / (2 * order)
+        p = complex(-sh * math.sin(phi), ch * math.cos(phi))
+        if kind == 2:
+            p = 1 / p
+        quads.append((-2 * p.real, abs(p) ** 2))
+        c = bw / p if stop else bw * p
+        d = cmath.sqrt(c * c - 4 * w2)
+        images = sorted([(c + d) / 2, (c - d) / 2], key=abs)
+        if kind == 1:
+            gain, zeros = (1.0 if stop else abs(p)), [None, None]
+        else:
+            omega = 1 / math.cos(phi)  # prototype zeros +-j omega
+            e = bw / omega if stop else bw * omega
+            w_hi = (e + math.sqrt(e * e + 4 * w2)) / 2
+            gain, zeros = (1.0 if stop else abs(p) / omega), [(w2 / w_hi) ** 2, w_hi * w_hi]
+        sections += [(s.real, abs(s) ** 2, gain, z) for s, z in zip(images, zeros)]
+    rows = []
+    for sigma, m, g, z in sections:
+        a0 = 1 - 2 * sigma + m
+        if z is not None:
+            b = [1 + z, 2 * (z - 1), 1 + z]
+        else:
+            b = [1 + w2, 2 * (w2 - 1), 1 + w2] if stop else [bw, 0.0, -bw]
+        rows.append([g * v / a0 for v in b] + [1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
+    if kind == 1 and order % 2 == 0:
+        rows[0][:3] = [v * 10 ** (-db / 20) for v in rows[0][:3]]
+    for row in rows:  # stable: both poles inside the unit circle
+        assert abs(row[5]) < 1 and abs(row[4]) < 1 + row[5], (order, kind, low, high, row)
+    prod = [1.0]
+    for row in rows:
+        prod = pmul(prod, row[3:])
+    want = substituted_denominator(order, quads, real, w2, bw, stop)
+    assert all(abs(a - b) <= 1e-9 * max(map(abs, want)) for a, b in zip(prod, want)), (order, low)
+    center = fs / math.pi * math.atan(w2 ** 0.5)
+    freqs = [fs * k / 64 for k in range(1, 32)] + [low, high, center]
+    for f, h in zip(freqs, response(rows, freqs, fs)):
+        t = math.tan(math.pi * f / fs)
+        if stop:
+            x = math.inf if t * t == w2 else bw * t / (w2 - t * t)
+        else:
+            x = (t * t - w2) / (bw * t)
+        if kind == 1:
+            want = 1 / (1 + ratio * cheb_t2(order, x))
+        else:  # e^2 T^2(1/x) / (1 + e^2 T^2(1/x)), e^2 = 1/ratio
+            y = cheb_t2(order, math.inf if x == 0 else 1 / x) / ratio
+            want = 1 / (1 + 1 / y) if y > 0 else 0.0
+        assert abs(abs(h) ** 2 - want) < 1e-12, (order, kind, low, high, fs, stop, f)
+    for f in (low, high):  # the edges: -ripple (type I) or -attenuation (type II)
+        assert abs(abs(response(rows, [f], fs)[0]) ** 2 - 1 / (1 + ratio if kind == 1 else
+                                                              10 ** (db / 10))) < 1e-12
+    return rows
+
+
+def cheb_band_design(case_id, order, kind, db, low, high, fs, stop, rows=None, src=None):
+    op = f"chebyshev{kind}_band{'stop' if stop else 'pass'}"
+    arg = "ripple_db" if kind == 1 else "attenuation_db"
+    return {"id": case_id, "op": op,
+            "args": {"order": order, arg: db, "low": low, "high": high, "sample_rate": fs},
+            "expected": rows if rows is not None else cheb_band(order, kind, db, low, high, fs,
+                                                                stop),
+            "tol": TOL, "source": src or SRC + "each section's analog quadratics through the "
+            "bilinear transform, checked against the closed-form |H|^2 (and the edge values), "
+            "section stability, and the product of the denominators against the analog "
+            "prototype expanded by polynomial substitution"}
+
+
 def band_design(case_id, order, low, high, fs, stop, rows=None, src=None):
     op = "butterworth_bandstop" if stop else "butterworth_bandpass"
     return {"id": case_id, "op": op,
@@ -392,6 +502,49 @@ cases = [
                 rows=[[0.5, 0.0, 0.5, 1.0, 0.0, 0.0]],
                 src="by hand: as bandpass_1_by_hand, the analog section (s^2 + 1)/(s^2 + 2s + 1) "
                 "is (2 + 2 z^-2)/4"),
+    cheb_band_design("chebyshev1.bandpass_1_by_hand", 1, 1, 10 * math.log10(2), 1.0, 3.0, 8.0,
+                     False, [[0.5, 0.0, -0.5, 1.0, 0.0, 0.0]],
+                     "by hand: fs = 8, edges 1 and 3 give L = tan(pi/8), H = 1/L, so W^2 = 1 and B = 2; 10 log10(2) dB makes eps = 1 and the order-1 prototype pole -1 for either type, so the section is B s/(s^2 + 2s + 1) -> a0 = 4, [2, 0, -2]/4 over [4, 0, 0]/4"),
+    cheb_band_design("chebyshev1.bandstop_1_by_hand", 1, 1, 10 * math.log10(2), 1.0, 3.0, 8.0,
+                     True, [[0.5, 0.0, 0.5, 1.0, 0.0, 0.0]],
+                     "by hand: fs = 8, edges 1 and 3 give L = tan(pi/8), H = 1/L, so W^2 = 1 and B = 2; 10 log10(2) dB makes eps = 1 and the order-1 prototype pole -1 for either type, so the section is (s^2 + 1)/(s^2 + 2s + 1) -> a0 = 4, [2, 0, 2]/4 over [4, 0, 0]/4"),
+    cheb_band_design("chebyshev2.bandpass_1_by_hand", 1, 2, 10 * math.log10(2), 1.0, 3.0, 8.0,
+                     False, [[0.5, 0.0, -0.5, 1.0, 0.0, 0.0]],
+                     "by hand: fs = 8, edges 1 and 3 give L = tan(pi/8), H = 1/L, so W^2 = 1 and B = 2; 10 log10(2) dB makes eps = 1 and the order-1 prototype pole -1 for either type, so the section is B s/(s^2 + 2s + 1) -> a0 = 4, [2, 0, -2]/4 over [4, 0, 0]/4"),
+    cheb_band_design("chebyshev2.bandstop_1_by_hand", 1, 2, 10 * math.log10(2), 1.0, 3.0, 8.0,
+                     True, [[0.5, 0.0, 0.5, 1.0, 0.0, 0.0]],
+                     "by hand: fs = 8, edges 1 and 3 give L = tan(pi/8), H = 1/L, so W^2 = 1 and B = 2; 10 log10(2) dB makes eps = 1 and the order-1 prototype pole -1 for either type, so the section is (s^2 + 1)/(s^2 + 2s + 1) -> a0 = 4, [2, 0, 2]/4 over [4, 0, 0]/4"),
+    cheb_band_design("chebyshev1.bandpass_2", 2, 1, 1.0, 1000.0, 2000.0, 8000.0, False),
+    cheb_band_design("chebyshev1.bandpass_3", 3, 1, 0.5, 0.1, 0.3, 1.0, False),
+    cheb_band_design("chebyshev1.bandpass_5_narrow", 5, 1, 0.1, 0.2, 0.21, 1.0, False),
+    cheb_band_design("chebyshev1.bandstop_2", 2, 1, 3.0, 0.05, 0.15, 1.0, True),
+    cheb_band_design("chebyshev1.bandstop_4", 4, 1, 1.0, 2000.0, 6000.0, 48000.0, True),
+    cheb_band_design("chebyshev2.bandpass_2", 2, 2, 40.0, 1000.0, 2000.0, 8000.0, False),
+    cheb_band_design("chebyshev2.bandpass_3", 3, 2, 60.0, 0.1, 0.3, 1.0, False),
+    cheb_band_design("chebyshev2.bandpass_4_wide", 4, 2, 20.0, 0.02, 0.45, 1.0, False),
+    cheb_band_design("chebyshev2.bandstop_3", 3, 2, 30.0, 0.05, 0.15, 1.0, True),
+    cheb_band_design("chebyshev2.bandstop_5", 5, 2, 80.0, 2000.0, 6000.0, 48000.0, True),
+    err("chebyshev1.bandpass_ripple_zero", "chebyshev1_bandpass",
+        {"order": 2, "ripple_db": 0.0, "low": 0.1, "high": 0.2, "sample_rate": 1.0},
+        "0 < ripple_db <= 200"),
+    err("chebyshev1.bandstop_low_above_high", "chebyshev1_bandstop",
+        {"order": 2, "ripple_db": 1.0, "low": 0.2, "high": 0.1, "sample_rate": 1.0},
+        "low < high required"),
+    err("chebyshev1.bandpass_order_1001", "chebyshev1_bandpass",
+        {"order": 1001, "ripple_db": 1.0, "low": 0.1, "high": 0.2, "sample_rate": 1.0},
+        "order <= 1000 required"),
+    err("chebyshev2.bandpass_attenuation_over_200", "chebyshev2_bandpass",
+        {"order": 2, "attenuation_db": 250.0, "low": 0.1, "high": 0.2, "sample_rate": 1.0},
+        "0 < attenuation_db <= 200"),
+    err("chebyshev2.bandstop_order_zero", "chebyshev2_bandstop",
+        {"order": 0, "attenuation_db": 40.0, "low": 0.1, "high": 0.2, "sample_rate": 1.0},
+        "order >= 1 required"),
+    err("chebyshev2.bandstop_high_at_nyquist", "chebyshev2_bandstop",
+        {"order": 2, "attenuation_db": 40.0, "low": 0.1, "high": 0.5, "sample_rate": 1.0},
+        "high < fs/2 required"),
+    err("chebyshev2.bandpass_edges_1e-9", "chebyshev2_bandpass",
+        {"order": 4, "attenuation_db": 40.0, "low": 1e-9, "high": 2e-9, "sample_rate": 1.0},
+        "the design rounds to a pole on the unit circle (band edges within ~1e-8 fs of 0)"),
     band_design("butterworth.bandpass_2", 2, 1000.0, 2000.0, 8000.0, False),
     band_design("butterworth.bandpass_3", 3, 1000.0, 3000.0, 16000.0, False),
     band_design("butterworth.bandpass_4_narrow", 4, 0.1, 0.11, 1.0, False),

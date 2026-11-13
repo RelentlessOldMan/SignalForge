@@ -434,6 +434,34 @@ and `SignalForge.IirFilter`.
     images, the roots `s = (c ± √(c² − 4W²))/2` of `s² − c·s + W²`, with `c = B·p_k` (band-pass) or
     `c = B/p_k` (band-stop), the root with the smaller `|s|` first.
   - `order` is an integer, `1 ≤ order ≤ 1000`; `0 < low < high < fs/2`, finite.
+- **Band-pass and band-stop Chebyshev** (`chebyshev1_bandpass(order, ripple_db, low, high,
+  sample_rate)`, `chebyshev1_bandstop(...)`, `chebyshev2_bandpass(order, attenuation_db, low, high,
+  sample_rate)`, `chebyshev2_bandstop(...)`, [ADR 0021](adr/0021-band-chebyshev.md)): the type I
+  or type II low-pass prototype of that `order` (edge 1; poles `p_k`, zeros `±jΩ_k`,
+  `Ω_k = 1/sin θ_k` for type II, as above) through the band transform and bilinear transform of
+  the band Butterworth, with the same `L, H, W, B, t` and `x = (t² − W²)/(B·t)` (band-pass) or
+  `x = B·t/(W² − t²)` (band-stop): the band filter's `|H(f)|²` is the low-pass prototype's at
+  frequency `|x|`, so for type I `1/(1 + ε²T_N²(x))`, and for type II
+  `ε²T_N²(1/x)/(1 + ε²T_N²(1/x))`. `low` and `high` are where `|x| = 1`: the pass-band edges
+  (type I, `|H|² = 1/(1 + ε²)`) or the stop-band edges (type II, `|H|² = 10^(−A/10)`); a type II
+  band-pass passes the band inside them and a type II band-stop stops the band inside them.
+  Sections, in the band Butterworth's order:
+  - the odd `order`'s real prototype pole `p_r` (`−sinh μ`, type I; `−1/sinh μ`, type II) gives
+    one section with the quadratic `s² − c·s + W²`, `c = B·p_r` (band-pass) or `B/p_r`
+    (band-stop): `σ = c/2`, `m = W²`;
+  - pair `k`'s two images as for Butterworth (`c = B·p_k` or `B/p_k`, smaller `|s|` first);
+  - numerators: band-pass `B·s` and band-stop `s² + W²`, as for Butterworth, except that type II
+    pair sections have `s² + ω²`, a zero pair on the unit circle (bilinear:
+    `b ∝ [1 + ω², 2(ω² − 1), 1 + ω²]/a0`). The prototype zero `jΩ_k` maps to `jω_hi` and `jω_lo`,
+    `ω_hi = (d + √(d² + 4W²))/2`, `ω_lo = W²/ω_hi`, with `d = B·Ω_k` (band-pass) or `B/Ω_k`
+    (band-stop); the smaller-`|s|` section takes `ω_lo`, the other `ω_hi`;
+  - gains, from the prototype's own factors so the cascade equals it exactly: band-pass, the
+    real-pole section `× (−p_r)`, each pair section `× |p_k|` (type I) or `× |p_k|/Ω_k`
+    (type II); band-stop, every section `× 1`. Type I of even `order` multiplies the first
+    section's `b` by `10^(−R/20)`, as for the low-pass. So the band-pass has the prototype's DC
+    gain at the center `f_0`, and the band-stop has it at 0 and `fs/2`.
+  - `order` is an integer, `1 ≤ order ≤ 1000`; `ripple_db` or `attenuation_db` in `(0, 200]`;
+    `0 < low < high < fs/2`, finite.
 - **Frequency response** (`sos_response(sos, frequencies, sample_rate)`): the complex
   `H(f) = Π_i H_i(e^(j2π·f/fs))` at each frequency. Frequencies finite.
 - **Streaming filter** (`IirFilter(sos)`, method `process(chunk)`, `reset()`, property `sections`,

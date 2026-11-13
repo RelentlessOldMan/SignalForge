@@ -404,4 +404,83 @@ public class IirTests
         Assert.True(Math.Abs((1 - edge * edge) / want - 1) < 1e-5, $"{1 - edge * edge} vs {want}");
         Assert.All(Dsp.Chebyshev2Lowpass(3, 1e-9, 100, 1000), r => Assert.True(Math.Abs(r[5]) < 1 && Math.Abs(r[4]) < 1 + r[5]));
     }
+
+    private static double[][] BandChebyshev(int kind, bool stop, int order, double db, double low, double high, double fs) =>
+        (kind, stop) switch
+        {
+            (1, false) => Dsp.Chebyshev1Bandpass(order, db, low, high, fs),
+            (1, true) => Dsp.Chebyshev1Bandstop(order, db, low, high, fs),
+            (2, false) => Dsp.Chebyshev2Bandpass(order, db, low, high, fs),
+            _ => Dsp.Chebyshev2Bandstop(order, db, low, high, fs),
+        };
+
+    public static TheoryData<int, bool, int, double, double, double> BandChebyshevs()
+    {
+        var data = new TheoryData<int, bool, int, double, double, double>();
+        foreach (int kind in new[] { 1, 2 })
+            foreach (bool stop in new[] { false, true })
+                foreach (int order in new[] { 1, 2, 3, 6 })
+                    foreach (var (low, high, db) in new[] { (0.001, 0.002, 0.5), (0.1, 0.11, 3.0), (0.05, 0.45, 40.0), (0.3, 0.45, 80.0) })
+                        data.Add(kind, stop, order, low, high, db);
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(BandChebyshevs))]
+    public void ChebyshevBandMagnitudeHasTheClosedForm(int kind, bool stop, int order, double low, double high, double db)
+    {
+        double[][] sos = BandChebyshev(kind, stop, order, db, low * 1000, high * 1000, 1000);
+        Assert.Equal(order, sos.Length);
+        Assert.All(sos, r => Assert.True(Math.Abs(r[5]) < 1 && Math.Abs(r[4]) < 1 + r[5], "a pole outside the unit circle"));
+        double lo = Math.Tan(Math.PI * low), hi = Math.Tan(Math.PI * high), w2 = lo * hi, bw = hi - lo;
+        double ratio = Math.Pow(10, db / 10) - 1;
+        double[] f = [.. Enumerable.Range(0, 301).Select(i => (-0.4999 + 0.9998 * i / 300) * 1000)];
+        Complex[] h = Dsp.SosResponse(sos, f, 1000);
+        for (int i = 0; i < f.Length; i++)
+        {
+            double t = Math.Abs(Math.Tan(Math.PI * f[i] / 1000));
+            double x = stop ? bw * t / (w2 - t * t) : (t * t - w2) / (bw * t);
+            double expected = kind == 1
+                ? 1 / (1 + ratio * Math.Pow(ChebT(order, x), 2))
+                : 1 / (1 + 1 / (Math.Pow(ChebT(order, 1 / x), 2) / ratio));
+            double got = h[i].Magnitude * h[i].Magnitude;
+            Assert.True(Math.Abs(got - expected) <= 1e-10 + 1e-8 * expected, $"f = {f[i]}: {got} vs {expected}");
+        }
+        foreach (Complex e in Dsp.SosResponse(sos, [low * 1000, high * 1000], 1000))
+            Assert.True(Math.Abs(e.Magnitude * e.Magnitude * (1 + ratio) - 1) < 1e-8);
+    }
+
+    [Fact]
+    public void ChebyshevBandReferenceGains()
+    {
+        double center = 1000 / Math.PI * Math.Atan(Math.Sqrt(Math.Tan(Math.PI * 0.1) * Math.Tan(Math.PI * 0.2)));
+        foreach (var (order, want) in new[] { (3, 1.0), (4, Math.Pow(10, -1.0 / 20)) }) // even type I: the ripple's low point
+        {
+            Assert.Equal(want, Dsp.SosResponse(Dsp.Chebyshev1Bandpass(order, 1, 100, 200, 1000), [center], 1000)[0].Magnitude, 1e-9);
+            Assert.All(Dsp.SosResponse(Dsp.Chebyshev1Bandstop(order, 1, 100, 200, 1000), [0.0, 500], 1000),
+                h => Assert.Equal(want, h.Magnitude, 1e-9));
+        }
+        Assert.Equal(1.0, Dsp.SosResponse(Dsp.Chebyshev2Bandpass(4, 40, 100, 200, 1000), [center], 1000)[0].Magnitude, 1e-9);
+        Assert.All(Dsp.SosResponse(Dsp.Chebyshev2Bandstop(4, 40, 100, 200, 1000), [0.0, 500], 1000),
+            h => Assert.Equal(1.0, h.Magnitude, 1e-9));
+    }
+
+    [Fact]
+    public void ChebyshevBandRejectsBadArguments()
+    {
+        foreach (int kind in new[] { 1, 2 })
+            foreach (bool stop in new[] { false, true })
+            {
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 0, 1, 0.1, 0.2, 1));
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 1001, 1, 0.1, 0.2, 1));
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 2, 0, 0.1, 0.2, 1));
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 2, 250, 0.1, 0.2, 1));
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 2, double.NaN, 0.1, 0.2, 1));
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 2, 1, 0.2, 0.1, 1));
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 2, 1, 0.1, 0.5, 1));
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 2, 1, 0, 0.2, 1));
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 2, 1, 0.1, 0.2, 0));
+                Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 4, 1, 1e-9, 2e-9, 1));
+            }
+    }
 }
