@@ -824,6 +824,16 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   samples, `gains` complex and finite, the two of equal non-zero length; a repeated delay adds its
   gains, and a delay `≥ N` contributes nothing. Paths are summed in the order given.
   **(implemented)**
+- **Fractional delay** (`fractional_delay(samples, delay, *, half_width=16)`,
+  [ADR 0040](adr/0040-fractional-delay.md)): `y[n] = Σ_m x[m]·h(n − delay − m)` for
+  `n = 0 … N−1`, `x[m] = 0` outside `0 … N−1`, with the Kaiser-windowed sinc
+  `h(t) = sinc(t)·I₀(β·√(1 − (t/H)²))/I₀(β)` for `|t| < H` and 0 otherwise, `β = 8`,
+  `H = half_width`, `sinc(t) = sin(πt)/(πt)`, `sinc(0) = 1`. With `p = n − delay`,
+  `b = ⌊p⌋` and `f = p − b`, the sum runs over `m = b + j` for `j = −H+1 … H` in that order, so
+  `t = f − j`; where `f = 0` the sinc is exactly 0 at every `t ≠ 0`, so an integer delay is an
+  exact shift. `delay` is any finite real (negative advances), `half_width` an integer `≥ 1`.
+  Output as long as the input, complex. A multipath channel with fractional delays is the sum of
+  `gainᵢ·fractional_delay(x, delayᵢ)`. **(implemented)**
 
 ## Synchronization
 

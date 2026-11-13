@@ -10,7 +10,7 @@ import math
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from ._checks import count
+from ._checks import count, real
 
 
 def awgn(
@@ -117,6 +117,43 @@ def multipath(samples: ArrayLike, delays: ArrayLike, gains: ArrayLike) -> NDArra
     for lag, tap in zip(lags, taps, strict=True):
         if lag < x.size:
             y[lag:] += tap * x[: x.size - lag]
+    return y
+
+
+_FD_BETA = 8.0
+
+
+def fractional_delay(
+    samples: ArrayLike, delay: float, *, half_width: int = 16
+) -> NDArray[np.complex128]:
+    """Delay by ``delay`` samples through a Kaiser-windowed sinc of ``2*half_width`` taps,
+    as long as the input (conventions: Channel, Fractional delay)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    d = real(delay, "delay")
+    h = count(half_width, "half_width")
+    if h < 1:
+        raise ValueError("half_width must be at least 1")
+    n = x.size
+    y = np.zeros(n, dtype=np.complex128)
+    pos = np.arange(n) - d
+    base = np.floor(pos)
+    frac = pos - base
+    on_grid = frac == 0
+    norm = float(np.i0(_FD_BETA))
+    for j in range(-h + 1, h + 1):
+        t = frac - j
+        m = base + j
+        valid = (m >= 0) & (m < n) & (np.abs(t) < h)
+        if not valid.any():
+            continue
+        tv = t[valid]
+        with np.errstate(invalid="ignore", divide="ignore"):
+            s = np.where(tv == 0, 1.0, np.sin(math.pi * tv) / (math.pi * tv))
+        s = np.where(on_grid[valid] & (tv != 0), 0.0, s)
+        w = np.i0(_FD_BETA * np.sqrt(np.maximum(1 - (tv / h) ** 2, 0.0))) / norm
+        y[valid] += (s * w) * x[m[valid].astype(np.int64)]
     return y
 
 

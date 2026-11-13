@@ -4,12 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Fractional-delay multipath**: per-path fractional delays through a windowed-sinc
-   interpolator, on top of the integer-delay `multipath`; expected values from the sinc sum.
-2. **LLR statistics in the link**: in AWGN the QPSK LLR of a sent 0 is Gaussian with mean
+1. **LLR statistics in the link**: in AWGN the QPSK LLR of a sent 0 is Gaussian with mean
    `2·Es/N0` and variance twice that (the consistency condition); check it through `qpsk_link`'s
    pieces (shaping, matched filter, sampling) in both suites, which tests the receive chain's
    scaling end to end.
+2. **Block fading**: Rayleigh and Rician flat fading, one complex gain per block of samples
+   (`rician_fading(samples, k_factor, block_length, *, seed)`, unit mean power, K = 0 is
+   Rayleigh); the gain's statistics against theory in the unit tests, deterministic cases in
+   vectors.
 
 ## Built
 
@@ -433,12 +435,19 @@ Updated with every chunk of work. Dates are absolute.
   input and errors); tests: the sign is the hard decision, QPSK equals `2√2·Re(y)/N0` exactly,
   within `ln(M/2)` of the exact log-sum LLR, scaling with `N0`. Python 1952 passed, 2 skipped;
   .NET 1563 passed.
+- 2026-11-13: fractional delay (conventions: Channel; ADR 0040): `fractional_delay(samples, delay,
+  *, half_width=16)`, a Kaiser-windowed sinc (β = 8) evaluated per output sample, exact shifts for
+  whole-sample delays, zero outside the input. Fractional multipath is a sum of these, so
+  `multipath` keeps integer delays. 15 vectors from `vectors/generators/fractional_delay.py` (the
+  sum over every input sample, its own I0 series); tests: tones up to 0.25·fs within 5e-5
+  (measured floor about 2e-5), exact integer shifts. Python 1976 passed, 2 skipped; .NET 1583
+  passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static integer-delay multipath, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath and fractional delay, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

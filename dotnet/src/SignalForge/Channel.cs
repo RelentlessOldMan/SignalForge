@@ -176,6 +176,39 @@ public static class Channel
         return y;
     }
 
+    private const double FractionalDelayBeta = 8;
+
+    /// <summary>Delay by <paramref name="delay"/> samples through a Kaiser-windowed sinc of
+    /// 2·<paramref name="halfWidth"/> taps, as long as the input (conventions: Channel, Fractional
+    /// delay).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="delay">Delay in samples, finite; negative advances.</param>
+    /// <param name="halfWidth">Half the interpolator's length in samples, at least 1.</param>
+    public static Complex[] FractionalDelay(ReadOnlySpan<Complex> samples, double delay, int halfWidth = 16)
+    {
+        if (!double.IsFinite(delay))
+            throw new ArgumentOutOfRangeException(nameof(delay), delay, "must be finite");
+        ArgumentOutOfRangeException.ThrowIfLessThan(halfWidth, 1);
+        double norm = Spectral.BesselI0(FractionalDelayBeta);
+        int n = samples.Length;
+        var y = new Complex[n];
+        for (int i = 0; i < n; i++)
+        {
+            double pos = i - delay, b = Math.Floor(pos), f = pos - b;
+            for (int j = -halfWidth + 1; j <= halfWidth; j++)
+            {
+                double t = f - j, m = b + j;
+                if (m < 0 || m >= n || Math.Abs(t) >= halfWidth)
+                    continue;
+                double s = t == 0 ? 1 : f == 0 ? 0 : Math.Sin(Math.PI * t) / (Math.PI * t);
+                double u = t / halfWidth;
+                double w = Spectral.BesselI0(FractionalDelayBeta * Math.Sqrt(Math.Max(1 - u * u, 0))) / norm;
+                y[i] += s * w * samples[(int)m];
+            }
+        }
+        return y;
+    }
+
     private static double ImbalanceGain(double gainDb, double phase)
     {
         if (!double.IsFinite(gainDb))
