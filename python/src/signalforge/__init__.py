@@ -9,6 +9,7 @@ from .channel import (
     iq_imbalance,
     multipath,
     phase_noise,
+    rician_fading,
 )
 from .core import Signal
 from .dsp import (
@@ -112,7 +113,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.58"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.59"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -216,6 +217,7 @@ __all__ = [
     "read_sigmf",
     "resample",
     "resample_taps",
+    "rician_fading",
     "rrc_taps",
     "sfdr",
     "sos_group_delay",

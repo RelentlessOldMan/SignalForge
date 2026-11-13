@@ -127,6 +127,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "phase_noise": channel.phase_noise,
     "multipath": channel.multipath,
     "fractional_delay": channel.fractional_delay,
+    "rician_fading": channel.rician_fading,
     "evm": metrics.evm,
     "qpsk_ber_theory": metrics.qpsk_ber_theory,
     "qam16_ber_theory": metrics.qam16_ber_theory,

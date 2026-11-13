@@ -41,6 +41,12 @@
     {"id": "multipath.length_mismatch", "op": "multipath", "args": {"samples": {"re": [1.0, 2.0], "im": [0.0, 0.0]}, "delays": [0, 1], "gains": {"re": [1.0], "im": [0.0]}}, "error": "invalid_argument", "source": "one gain per delay"},
     {"id": "multipath.no_paths", "op": "multipath", "args": {"samples": {"re": [1.0, 2.0], "im": [0.0, 0.0]}, "delays": [], "gains": {"re": [], "im": []}}, "error": "invalid_argument", "source": "at least one path"},
     {"id": "multipath.inf_gain", "op": "multipath", "args": {"samples": {"re": [1.0, 2.0], "im": [0.0, 0.0]}, "delays": [0], "gains": {"re": ["inf"], "im": [0]}}, "error": "invalid_argument", "source": "gains must be finite"},
-    {"id": "multipath.nan_gain", "op": "multipath", "args": {"samples": {"re": [1.0, 2.0], "im": [0.0, 0.0]}, "delays": [0], "gains": {"re": [0], "im": ["nan"]}}, "error": "invalid_argument", "source": "gains must be finite"}
+    {"id": "multipath.nan_gain", "op": "multipath", "args": {"samples": {"re": [1.0, 2.0], "im": [0.0, 0.0]}, "delays": [0], "gains": {"re": [0], "im": ["nan"]}}, "error": "invalid_argument", "source": "gains must be finite"},
+    {"id": "rician_fading.no_fading_by_hand", "op": "rician_fading", "args": {"samples": {"re": [1.0, 0.5, -0.0, 3.0], "im": [0.0, -2.0, -1.0, 0.0]}, "k_factor": "inf", "block_length": 2, "seed": 3}, "expected": {"re": [1.0, 0.5, -0.0, 3.0], "im": [0.0, -2.0, -1.0, 0.0]}, "tol": {"abs": 0, "rel": 0}, "source": "by hand: K infinite gives g = 1 for every block"},
+    {"id": "rician_fading.empty_by_hand", "op": "rician_fading", "args": {"samples": {"re": [], "im": []}, "k_factor": 0.0, "block_length": 4, "seed": 3}, "expected": {"re": [], "im": []}, "tol": {"abs": 0, "rel": 0}, "source": "by hand: no samples in, none out"},
+    {"id": "rician_fading.negative_k", "op": "rician_fading", "args": {"samples": {"re": [1.0, 2.0], "im": [0.0, 0.0]}, "k_factor": -0.5, "block_length": 2, "seed": 1}, "error": "invalid_argument", "source": "k_factor must not be negative"},
+    {"id": "rician_fading.nan_k", "op": "rician_fading", "args": {"samples": {"re": [1.0, 2.0], "im": [0.0, 0.0]}, "k_factor": "nan", "block_length": 2, "seed": 1}, "error": "invalid_argument", "source": "k_factor must not be NaN"},
+    {"id": "rician_fading.zero_block_length", "op": "rician_fading", "args": {"samples": {"re": [1.0, 2.0], "im": [0.0, 0.0]}, "k_factor": 1.0, "block_length": 0, "seed": 1}, "error": "invalid_argument", "source": "block_length must be at least 1"},
+    {"id": "rician_fading.negative_block_length", "op": "rician_fading", "args": {"samples": {"re": [1.0, 2.0], "im": [0.0, 0.0]}, "k_factor": 1.0, "block_length": -3, "seed": 1}, "error": "invalid_argument", "source": "block_length must be at least 1"}
   ]
 }

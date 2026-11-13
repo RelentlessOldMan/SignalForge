@@ -6,6 +6,7 @@ Definitions are in docs/conventions.md (Channel) and docs/adr/0007-pulse-shaping
 from __future__ import annotations
 
 import math
+import numbers
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -155,6 +156,40 @@ def fractional_delay(
         w = np.i0(_FD_BETA * np.sqrt(np.maximum(1 - (tv / h) ** 2, 0.0))) / norm
         y[valid] += (s * w) * x[m[valid].astype(np.int64)]
     return y
+
+
+def rician_fading(
+    samples: ArrayLike,
+    k_factor: float,
+    block_length: int,
+    *,
+    seed: int | np.random.Generator,
+) -> NDArray[np.complex128]:
+    """Flat block fading: each block of ``block_length`` samples times one Rician gain of unit
+    mean power, ``k_factor = 0`` for Rayleigh (conventions: Channel, Block fading)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if isinstance(k_factor, bool | np.bool_) or not isinstance(k_factor, numbers.Real):
+        raise ValueError("k_factor must be a number")
+    k = float(k_factor)
+    if not k >= 0:
+        raise ValueError("k_factor must not be negative or NaN")
+    length = count(block_length, "block_length")
+    if length < 1:
+        raise ValueError("block_length must be at least 1")
+    rng = (
+        seed
+        if isinstance(seed, np.random.Generator)
+        else np.random.default_rng(count(seed, "seed"))
+    )
+    if math.isinf(k):
+        return np.asarray(x, dtype=np.complex128).copy()
+    blocks = -(-x.size // length)
+    ab = rng.standard_normal((blocks, 2))
+    scatter = (ab[:, 0] + 1j * ab[:, 1]) / math.sqrt(2)
+    g = math.sqrt(k / (k + 1)) + math.sqrt(1 / (k + 1)) * scatter
+    return np.asarray(x * np.repeat(g, length)[: x.size], dtype=np.complex128)
 
 
 def _imbalance_gain(gain_db: float, phase: float) -> float:

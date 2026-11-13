@@ -176,6 +176,48 @@ public static class Channel
         return y;
     }
 
+    /// <summary>Flat block fading: each block of <paramref name="blockLength"/> samples times one
+    /// Rician gain of unit mean power, K = 0 for Rayleigh (conventions: Channel, Block fading).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="kFactor">Rician K factor, not negative; infinity means no fading.</param>
+    /// <param name="blockLength">Samples per gain, at least 1; the last block may be short.</param>
+    /// <param name="seed">Seed for the gains.</param>
+    public static Complex[] RicianFading(ReadOnlySpan<Complex> samples, double kFactor, int blockLength, int seed) =>
+        RicianFading(samples, kFactor, blockLength, new Random(seed));
+
+    /// <summary>As <see cref="RicianFading(ReadOnlySpan{Complex}, double, int, int)"/>, drawing from
+    /// <paramref name="rng"/>.</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="kFactor">Rician K factor, not negative; infinity means no fading.</param>
+    /// <param name="blockLength">Samples per gain, at least 1; the last block may be short.</param>
+    /// <param name="rng">Source of the gains.</param>
+    public static Complex[] RicianFading(ReadOnlySpan<Complex> samples, double kFactor, int blockLength, Random rng)
+    {
+        ArgumentNullException.ThrowIfNull(rng);
+        if (!(kFactor >= 0))
+            throw new ArgumentOutOfRangeException(nameof(kFactor), kFactor, "must not be negative or NaN");
+        ArgumentOutOfRangeException.ThrowIfLessThan(blockLength, 1);
+        if (double.IsPositiveInfinity(kFactor))
+            return samples.ToArray();
+        double los = Math.Sqrt(kFactor / (kFactor + 1)), spread = Math.Sqrt(1 / (kFactor + 1) / 2);
+        var y = new Complex[samples.Length];
+        Complex g = Complex.Zero;
+        for (int n = 0; n < y.Length; n++)
+        {
+            if (n % blockLength == 0)
+            {
+                double a = Gaussian(rng), b = Gaussian(rng);
+                g = new Complex(los + spread * a, spread * b);
+            }
+            y[n] = g * samples[n];
+        }
+        return y;
+    }
+
+    // Box–Muller, the cosine branch: one pair of uniforms gives one standard Gaussian.
+    private static double Gaussian(Random rng) =>
+        Math.Sqrt(-2 * Math.Log(1 - rng.NextDouble())) * Math.Cos(2 * Math.PI * rng.NextDouble());
+
     private const double FractionalDelayBeta = 8;
 
     /// <summary>Delay by <paramref name="delay"/> samples through a Kaiser-windowed sinc of

@@ -4,10 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Block fading**: Rayleigh and Rician flat fading, one complex gain per block of samples
-   (`rician_fading(samples, k_factor, block_length, *, seed)`, unit mean power, K = 0 is
-   Rayleigh); the gain's statistics against theory in the unit tests, deterministic cases in
-   vectors.
+1. **BER in Rayleigh fading**: `qpsk_ber_rayleigh_theory(eb_n0_db)`, the average of the AWGN
+   curve over an exponential |g|², `½(1 − √(γ/(1+γ)))`; expected values from the closed form by
+   hand and a numerical average of the AWGN curve; Monte-Carlo checks through `rician_fading`
+   (K = 0, coherent with the true gain) in both suites.
 
 ## Built
 
@@ -442,12 +442,18 @@ Updated with every chunk of work. Dates are absolute.
   AWGN, the matched filter and sampling at Es/N0 = 7 dB gives signed LLRs with mean `2·Es/N0`
   and variance twice that, within 1.5 % and 2 % (measured within 0.3 %), in both link suites.
   Python 1977 passed, 2 skipped; .NET 1584 passed.
+- 2026-11-13: block fading (conventions: Channel; ADR 0041): `rician_fading(samples, k_factor,
+  block_length, *, seed)`, one gain `√(K/(K+1)) + √(1/(K+1))·CN(0, 1)` per block, Rayleigh at
+  K = 0, no fading at K = ∞. 6 deterministic vectors in channel.json (K = ∞, empty, bad
+  arguments); tests: mean power, mean, per-axis variance for K = 0, 1, 3, 10, the Rayleigh power
+  CDF, one gain per block with a short last block, seeding. Python 1998 passed, 2 skipped;
+  .NET 1598 passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath and fractional delay, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay and block fading, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

@@ -834,6 +834,14 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   exact shift. `delay` is any finite real (negative advances), `half_width` an integer `≥ 1`.
   Output as long as the input, complex. A multipath channel with fractional delays is the sum of
   `gainᵢ·fractional_delay(x, delayᵢ)`. **(implemented)**
+- **Block fading** (`rician_fading(samples, k_factor, block_length, *, seed)`,
+  [ADR 0041](adr/0041-block-fading.md)): flat fading, one complex gain per block,
+  `y[n] = g[⌊n/L⌋]·x[n]` with `L = block_length` (the last block may be short). Each gain is
+  `g = √(K/(K+1)) + √(1/(K+1))·(a + jb)/√2`, `K = k_factor`, with `a` and `b` independent
+  standard Gaussians drawn block by block, `a` first. So `E|g|² = 1`, `E[g] = √(K/(K+1))`, and
+  `|g|` is Rician; `K = 0` is Rayleigh (`|g|²` exponential of mean 1). `K = ∞` is allowed and
+  gives `g = 1` exactly (no draws are used). `k_factor` is `≥ 0` (not NaN), `block_length` an
+  integer `≥ 1`; seeded as for AWGN, with streams that differ between languages. **(implemented)**
 
 ## Synchronization
 
