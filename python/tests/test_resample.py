@@ -78,3 +78,57 @@ def test_numpy_integer_factors() -> None:
 def test_bad_arguments(call) -> None:  # type: ignore[no-untyped-def]
     with pytest.raises(ValueError):
         call()
+
+
+@pytest.mark.parametrize(("up", "down"), [(3, 2), (2, 3), (1, 4), (5, 1), (4, 6)])
+def test_resampler_is_resample_with_delayed_taps(up: int, down: int) -> None:
+    rng = np.random.default_rng(7)
+    x = rng.standard_normal(301)
+    r = sf.Resampler(up, down)
+    cuts = np.sort(rng.integers(0, x.size, 9))
+    y = np.concatenate([r.process(c) for c in np.split(x, cuts)])
+    h = np.concatenate((np.zeros(r.taps.size - 1), r.taps))
+    assert y.size == -(-x.size * (up // np.gcd(up, down)) // (down // np.gcd(up, down)))
+    assert np.allclose(y, sf.resample(x, up, down, h), rtol=0, atol=1e-12)
+
+
+def test_resampler_complex_even_taps_and_reset() -> None:
+    x = np.exp(1j * 0.3 * np.arange(50))
+    taps = [0.2, 0.5, 0.3, -0.1]
+    r = sf.Resampler(7, 3, taps)
+    first = np.concatenate([r.process(x[:13]), r.process(x[13:13]), r.process(x[13:])])
+    assert np.iscomplexobj(first)
+    r.reset()
+    assert np.array_equal(r.process(x), first)
+    assert np.allclose(first, sf.resample(x, 7, 3, [0, 0, 0, *taps]), rtol=0, atol=1e-12)
+
+
+def test_resampler_one_one_copies_and_empty_chunk() -> None:
+    r = sf.Resampler(2, 2)
+    assert np.array_equal(r.taps, [1.0])
+    assert r.process([]).size == 0
+    assert np.array_equal(r.process([1.0, 2.0]), [1.0, 2.0])
+
+
+def test_resampler_kind_is_fixed_until_reset() -> None:
+    r = sf.Resampler(3, 2)
+    r.process([1.0])
+    with pytest.raises(ValueError):
+        r.process([1j])
+    r.reset()
+    assert np.iscomplexobj(r.process([1j]))
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda: sf.Resampler(0, 1),
+        lambda: sf.Resampler(1, 0),
+        lambda: sf.Resampler(2, 1, []),
+        lambda: sf.Resampler(2, 1, [1.0, np.nan]),
+        lambda: sf.Resampler(2, 1).process([[1.0]]),
+    ],
+)
+def test_resampler_bad_arguments(call) -> None:  # type: ignore[no-untyped-def]
+    with pytest.raises(ValueError):
+        call()

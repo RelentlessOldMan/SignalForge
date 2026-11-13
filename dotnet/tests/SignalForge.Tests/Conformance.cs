@@ -275,6 +275,8 @@ public static class Conformance
                 t => Dsp.FirResponse(t.Item1, t.Item2, t.Item3)),
             "fir_filter" => ChunkedOp(a, Reals(a.Get("taps")), t => new FirFilter(t), (f, x) => f.Process(x), (f, z) => f.Process(z)),
             "iir_filter" => ChunkedOp(a, Rows(a.Get("sos")), c => new IirFilter(c), (f, x) => f.Process(x), (f, z) => f.Process(z)),
+            "resampler" => ChunkedOp(a, (a.I("up"), a.I("down"), a.Has("taps") ? Reals(a.Get("taps")) : null),
+                c => new Resampler(c.Item1, c.Item2, c.Item3), (f, x) => f.Process(x), (f, z) => f.Process(z)),
             "butterworth_lowpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthLowpass(t.Item1, t.Item2, t.Item3)),
             "butterworth_highpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthHighpass(t.Item1, t.Item2, t.Item3)),
             "chebyshev1_lowpass" => Bind((a.I("order"), a.D("ripple_db"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.Chebyshev1Lowpass(t.Item1, t.Item2, t.Item3, t.Item4)),

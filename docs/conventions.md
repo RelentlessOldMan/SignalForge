@@ -666,6 +666,19 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   and no taps returns a copy of `x`.
 - `interpolate(x, factor, taps=None)` is `resample(x, factor, 1, taps)`; `decimate(x, factor,
   taps=None)` is `resample(x, 1, factor, taps)`.
+- **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
+  `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
+  `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
+  before its first sample) and taps `h` of length `N`, the output stream is
+  `z[m] = L·Σₖ h[k]·u[m·M − k]`, `m = 0, 1, …`. After `n` input samples in all, exactly
+  `⌈n·L/M⌉` outputs have been returned: output `m` comes out with the chunk that holds its last
+  input, sample `⌊m·M/L⌋`. So the outputs of any split concatenate to the same stream, which is
+  `resample(x, up, down, [0]·(N − 1) + h)` (the taps delayed by `N − 1` at the up-sampled rate);
+  for symmetric taps, output `m` is at input time `(m·M − (N − 1)/2)/L`. Taps are real,
+  non-empty and finite, of any length; the default is `resample_taps(up, down)`, or `[1]` when
+  `L = M = 1` (a copy). The first non-empty chunk fixes the stream as real or complex; a chunk of
+  the other kind raises, until `reset()`. An empty chunk returns an empty output and changes
+  nothing.
 
 ## Channel
 

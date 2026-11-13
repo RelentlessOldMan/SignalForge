@@ -298,7 +298,7 @@ public static partial class Dsp
         return y;
     }
 
-    private static (int L, int M) Factors(int up, int down)
+    internal static (int L, int M) Factors(int up, int down)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(up, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(down, 1);

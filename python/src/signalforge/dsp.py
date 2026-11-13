@@ -1211,6 +1211,69 @@ def resample(
     return cast("NDArray[np.complex128] | NDArray[np.float64]", y)
 
 
+class Resampler:
+    """Causal rational resampler that keeps its state across chunks (conventions: Resampling,
+    Streaming resampling). Its stream is ``resample`` with the taps delayed by ``N - 1``.
+
+    The first non-empty chunk fixes the stream as real or complex until :meth:`reset`.
+    """
+
+    def __init__(self, up: int, down: int, taps: ArrayLike | None = None) -> None:
+        self._l, self._m = _factors(up, down)
+        if taps is None:
+            h = np.ones(1) if self._l == self._m == 1 else resample_taps(self._l, self._m)
+        else:
+            h = _taps(taps)
+        self._h = h
+        t = -(-h.size // self._l)
+        poly = np.zeros(self._l * t)
+        poly[: h.size] = self._l * h
+        self._poly = poly.reshape(t, self._l).T  # row p: L·h[p + t·L], t = 0 … T - 1
+        self.reset()
+
+    @property
+    def taps(self) -> NDArray[np.float64]:
+        """A copy of the taps."""
+        return self._h.copy()
+
+    def reset(self) -> None:
+        """Forget every sample seen, as if new."""
+        self._complex: bool | None = None
+        self._count = 0  # inputs so far
+        self._next = 0  # index of the next output
+        self._hist: NDArray[np.complex128] | NDArray[np.float64] = np.zeros(0)
+
+    def process(self, chunk: ArrayLike) -> NDArray[np.complex128] | NDArray[np.float64]:
+        """Every output whose last input is in ``chunk``: ``⌈n·L/M⌉`` in all after ``n`` inputs."""
+        a = np.asarray(chunk)
+        if a.ndim != 1:
+            raise ValueError("chunk must be a 1-D array")
+        is_complex = bool(np.iscomplexobj(a))
+        x = np.asarray(a, dtype=np.complex128 if is_complex else np.float64)
+        if x.size == 0:
+            empty = np.zeros(0, dtype=np.complex128 if self._complex else np.float64)
+            return cast("NDArray[np.complex128] | NDArray[np.float64]", empty)
+        t = self._poly.shape[1]
+        if self._complex is None:
+            self._complex = is_complex
+            self._hist = cast(
+                "NDArray[np.complex128] | NDArray[np.float64]", np.zeros(t - 1, dtype=x.dtype)
+            )
+        elif self._complex != is_complex:
+            kind = "complex" if self._complex else "real"
+            raise ValueError(f"this resampler takes {kind} samples until reset()")
+        buf = np.concatenate([self._hist, x])  # buf[j] is input count - (T - 1) + j
+        total = self._count + x.size
+        end = -(-total * self._l // self._m)
+        m = np.arange(self._next, end, dtype=np.int64) * self._m
+        base, phase = m // self._l, m % self._l
+        idx = base[:, None] - np.arange(t)[None, :] - (self._count - (t - 1))
+        y = np.sum(self._poly[phase] * buf[idx], axis=1)
+        self._hist = buf[buf.size - (t - 1) :]
+        self._count, self._next = total, end
+        return cast("NDArray[np.complex128] | NDArray[np.float64]", y)
+
+
 def interpolate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

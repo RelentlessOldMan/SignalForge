@@ -103,6 +103,9 @@ OPS: dict[str, Callable[..., Any]] = {
     "chebyshev2_bandstop": dsp.chebyshev2_bandstop,
     "sos_response": dsp.sos_response,
     "iir_filter": lambda sos, samples, chunks: _chunked(dsp.IirFilter(sos), samples, chunks),
+    "resampler": lambda up, down, samples, chunks, taps=None: _chunked(
+        dsp.Resampler(up, down, taps), samples, chunks
+    ),
     "frequency_offset": channel.frequency_offset,
     "evm": metrics.evm,
     "qpsk_ber_theory": metrics.qpsk_ber_theory,
@@ -146,7 +149,7 @@ def _signal_record(s: Any) -> dict[str, Any]:
     }
 
 
-def _chunked(f: dsp.FirFilter | dsp.IirFilter, samples: Any, chunks: Any) -> Any:
+def _chunked(f: dsp.FirFilter | dsp.IirFilter | dsp.Resampler, samples: Any, chunks: Any) -> Any:
     """Run ``samples`` through one streaming filter in chunks of the given lengths."""
     sizes = [int(c) for c in chunks]
     if any(c < 0 or c != float(x) for c, x in zip(sizes, chunks, strict=True)):

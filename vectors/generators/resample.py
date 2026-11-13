@@ -73,6 +73,44 @@ def gen(case_id, op, args, x, up, down, taps_used, src=SRC):
     return {"id": case_id, "op": op, "args": args, "expected": expected, "tol": TOL, "source": src}
 
 
+def stream(x, up, down, h):
+    """The causal stream z[m] = L * sum_k h[k] u[m*M - k], m < ceil(len(x)*L/M), term by term."""
+    g = math.gcd(up, down)
+    lu, md = up // g, down // g
+    u = [0.0] * (len(x) * lu)
+    for i, v in enumerate(x):
+        u[i * lu] = v
+    z = []
+    for m in range(-(-len(x) * lu // md)):
+        terms = [h[k] * u[m * md - k] for k in range(len(h)) if 0 <= m * md - k < len(u)]
+        if any(isinstance(t, complex) for t in terms):
+            z.append(lu * complex(math.fsum(t.real for t in terms), math.fsum(t.imag for t in terms)))
+        else:
+            z.append(lu * math.fsum(terms))
+    # The conventions' identity: the stream is resample with the taps delayed by N - 1.
+    other = resample(x, up, down, [0.0] * (len(h) - 1) + list(h))
+    assert all(abs(a - b) < 1e-12 for a, b in zip(z, other, strict=True))
+    return z
+
+
+STREAM_SRC = (
+    "vectors/generators/resample.py (stdlib only): the causal sum z[m] = L sum_k h[k] u[m M - k] "
+    "evaluated term by term over the explicitly zero-stuffed input, and checked against the "
+    "resample sum with the taps delayed by N - 1"
+)
+
+
+def streamed(case_id, x, up, down, chunks, taps=None):
+    h = taps if taps is not None else [1.0] if up == down else default_taps(up, down)
+    z = stream(x, up, down, h)
+    is_c = any(isinstance(v, complex) for v in x)
+    args = {"up": up, "down": down, "samples": cplx(x) if is_c else x, "chunks": chunks}
+    if taps is not None:
+        args["taps"] = taps
+    return {"id": case_id, "op": "resampler", "args": args, "expected": cplx(z) if is_c else z,
+            "tol": TOL, "source": STREAM_SRC + f"; chunks {chunks}"}
+
+
 def err(case_id, op, args, why):
     return {"id": case_id, "op": op, "args": args, "error": "invalid_argument", "source": why}
 
@@ -132,13 +170,33 @@ cases = [
         "taps must be finite"),
     err("resample_taps.one_one", "resample_taps", {"up": 2, "down": 2},
         "2/2 reduces to 1/1, whose cutoff would be fs/2"),
+    {"id": "resampler.linear_by_hand", "op": "resampler",
+     "args": {"up": 2, "down": 1, "taps": lin, "samples": [1, 2, 3], "chunks": [1, 0, 2]},
+     "expected": [0.5, 1, 1.5, 2, 2.5, 3], "tol": TOL,
+     "source": "by hand: u = [1 0 2 0 3 0], z[m] = 2(0.25 u[m] + 0.5 u[m-1] + 0.25 u[m-2]): "
+     "0.5, 1, 1 + 0.5, 2, 1.5 + 1, 3 (linear interpolation one output late, from the zero before "
+     "the input); 3 inputs give ceil(3*2/1) = 6 outputs, the first chunk 2 of them"},
+    streamed("resampler.3_2_default", ramp, 3, 2, [5, 0, 17, 1, 17]),
+    streamed("resampler.3_2_one_chunk", ramp, 3, 2, [40]),
+    streamed("resampler.decimate_4_small_chunks", tone, 1, 4, [1, 2, 3, 1, 1, 5, 7, 28]),
+    streamed("resampler.interpolate_4", tone[:12], 4, 1, [3, 4, 5]),
+    streamed("resampler.2_5_complex", ctone, 2, 5, [7, 0, 11, 12]),
+    streamed("resampler.7_3_even_taps", ramp[:25], 7, 3, [1, 9, 15], [0.2, 0.5, 0.3, -0.1]),
+    streamed("resampler.one_one_copy", ramp[:9], 3, 3, [4, 5]),
+    err("resampler.up_zero", "resampler", {"up": 0, "down": 1, "samples": [1], "chunks": [1]},
+        "up >= 1 required"),
+    err("resampler.nan_tap", "resampler",
+        {"up": 2, "down": 1, "taps": [1, "nan"], "samples": [1], "chunks": [1]},
+        "taps must be finite"),
+    err("resampler.empty_taps", "resampler",
+        {"up": 2, "down": 1, "taps": [], "samples": [1], "chunks": [1]}, "taps must be non-empty"),
 ]
 
 doc = {
     "schema": 1,
     "suite": "resample",
-    "description": "Rational resampling, interpolation and decimation with the delay removed, and "
-    "the default anti-aliasing taps (conventions: Resampling).",
+    "description": "Rational resampling, interpolation and decimation with the delay removed, "
+    "the default anti-aliasing taps, and the streaming resampler (conventions: Resampling).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "resample.json"

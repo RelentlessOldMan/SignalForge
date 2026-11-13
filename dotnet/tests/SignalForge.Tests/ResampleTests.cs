@@ -81,4 +81,67 @@ public class ResampleTests
         Assert.ThrowsAny<ArgumentException>(() => Dsp.Decimate([Complex.One], 0));
         Assert.ThrowsAny<ArgumentException>(() => Dsp.Interpolate([1.0], 0));
     }
+
+    [Theory]
+    [InlineData(3, 2)]
+    [InlineData(2, 3)]
+    [InlineData(1, 4)]
+    [InlineData(5, 1)]
+    [InlineData(4, 6)]
+    public void ResamplerIsResampleWithDelayedTaps(int up, int down)
+    {
+        var rng = new Random(7);
+        double[] x = [.. Enumerable.Range(0, 301).Select(_ => rng.NextDouble() - 0.5)];
+        var r = new Resampler(up, down);
+        var y = new List<double>();
+        int at = 0;
+        foreach (int n in new[] { 0, 1, 17, 3, 0, 120, 60, 100 })
+        {
+            y.AddRange(r.Process(x.AsSpan(at, n)));
+            at += n;
+        }
+        double[] h = [.. new double[r.Taps.Length - 1], .. r.Taps];
+        double[] whole = Dsp.Resample(x, up, down, h);
+        Assert.Equal(whole.Length, y.Count);
+        for (int i = 0; i < whole.Length; i++)
+            Assert.True(Math.Abs(y[i] - whole[i]) < 1e-12);
+    }
+
+    [Fact]
+    public void ResamplerComplexEvenTapsAndReset()
+    {
+        Complex[] x = [.. Enumerable.Range(0, 50).Select(n => Complex.FromPolarCoordinates(1, 0.3 * n))];
+        double[] taps = [0.2, 0.5, 0.3, -0.1];
+        var r = new Resampler(7, 3, taps);
+        Complex[] first = [.. r.Process(x.AsSpan(0, 13)), .. r.Process(ReadOnlySpan<Complex>.Empty), .. r.Process(x.AsSpan(13))];
+        r.Reset();
+        Assert.Equal(first, r.Process(x));
+        Complex[] whole = Dsp.Resample(x, 7, 3, [0, 0, 0, .. taps]);
+        Assert.Equal(whole.Length, first.Length);
+        for (int i = 0; i < whole.Length; i++)
+            Assert.True(Complex.Abs(first[i] - whole[i]) < 1e-12);
+    }
+
+    [Fact]
+    public void ResamplerOneOneCopiesAndKindIsFixedUntilReset()
+    {
+        var copy = new Resampler(2, 2);
+        Assert.Equal([1.0], copy.Taps);
+        Assert.Empty(copy.Process(ReadOnlySpan<double>.Empty));
+        Assert.Equal([1.0, 2.0], copy.Process([1.0, 2.0]));
+        var r = new Resampler(3, 2);
+        r.Process([1.0]);
+        Assert.Throws<ArgumentException>(() => r.Process([Complex.ImaginaryOne]));
+        r.Reset();
+        Assert.Equal(2, r.Process([Complex.ImaginaryOne]).Length);
+    }
+
+    [Fact]
+    public void ResamplerBadArgumentsThrow()
+    {
+        Assert.ThrowsAny<ArgumentException>(() => new Resampler(0, 1));
+        Assert.ThrowsAny<ArgumentException>(() => new Resampler(1, 0));
+        Assert.ThrowsAny<ArgumentException>(() => new Resampler(2, 1, []));
+        Assert.ThrowsAny<ArgumentException>(() => new Resampler(2, 1, [1.0, double.NaN]));
+    }
 }

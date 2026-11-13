@@ -4,10 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Streaming resampling**: a stateful `Resampler` (like `FirFilter`) whose chunked output
-   equals `resample` of the whole input; conventions first (where the output grid starts, what a
-   chunk boundary does to the polyphase phase).
-2. **Group delay**: `group_delay` of FIR taps and of second-order sections, in samples, computed
+1. **Group delay**: `group_delay` of FIR taps and of second-order sections, in samples, computed
    per section in closed form (no phase unwrapping); conventions first (sign, what happens at a
    zero on the unit circle). It also checks the Bessel designs' flat delay directly.
 
@@ -344,10 +341,18 @@ Updated with every chunk of work. Dates are absolute.
   the 50-digit generator (extended to types III and IV), five errors. Tests: a Hilbert
   transformer turns cos into sin, a differentiator gives the derivative, taps exactly
   antisymmetric.
+- 2026-11-13: streaming resampling (conventions: Resampling, ADR 0027): `Resampler(up, down,
+  taps=None)` with `process`, `reset` and `taps`, like `FirFilter`. Its causal stream
+  `z[m] = L·Σ h[k]·u[mM − k]` is `resample` with the taps delayed by `N − 1`; after `n` inputs
+  exactly `⌈nL/M⌉` outputs have come out, however the input was split. Taps of any length (even
+  too); the default is `resample_taps`, or `[1]` at 1/1. Polyphase, `⌈N/L⌉` taps per phase.
+  Vectors: one by hand, seven from the generator's term-by-term causal sum (cross-checked there
+  against its delayed-taps `resample`), three errors. Tests: the identity with `resample` over
+  random splits, complex input with even taps, reset, the real/complex kind fixed until reset.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc and equiripple (least squares, arbitrary-magnitude bands), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc and equiripple (least squares, arbitrary-magnitude bands), spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
