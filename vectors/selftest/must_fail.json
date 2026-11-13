@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "description": "Runner self-test: every case here is wrong and must FAIL in both conformance runners (never pass, never crash the run). Not part of vectors/cases.",
+  "cases": [
+    {
+      "id": "wrong_value",
+      "why": "a number outside tolerance",
+      "op": "lin_to_db",
+      "args": {
+        "ratio": 10
+      },
+      "expected": 10.001,
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "misspelled_argument",
+      "why": "an argument the function does not take",
+      "op": "lin_to_db",
+      "args": {
+        "ratoi": 10
+      },
+      "expected": 10,
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "missing_argument",
+      "why": "a required argument left out",
+      "op": "lin_to_db",
+      "args": {},
+      "expected": 10,
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "real_expected_complex_actual",
+      "why": "a real array expected where the result is complex",
+      "op": "ifft",
+      "args": {
+        "spectrum": {
+          "re": [
+            10,
+            -2,
+            -2,
+            -2
+          ],
+          "im": [
+            0,
+            2,
+            0,
+            -2
+          ]
+        }
+      },
+      "expected": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "scalar_expected_array_actual",
+      "why": "a scalar expected where the result is a one-element array",
+      "op": "fft_frequencies",
+      "args": {
+        "n": 1,
+        "sample_rate": 1
+      },
+      "expected": 0,
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "number_expected_bool_actual",
+      "why": "booleans compare exactly, not as 0 and 1",
+      "op": "welch_psd",
+      "args": {
+        "samples": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "sample_rate": 4
+      },
+      "expected": {
+        "one_sided": 1
+      },
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "missing_record_field",
+      "why": "a record field the result does not have",
+      "op": "window_stats",
+      "args": {
+        "w": [
+          1,
+          1
+        ]
+      },
+      "expected": {
+        "gain": 1
+      },
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "ragged_complex",
+      "why": "re and im arrays of different lengths",
+      "op": "fft",
+      "args": {
+        "samples": {
+          "re": [
+            1,
+            2
+          ],
+          "im": [
+            0
+          ]
+        }
+      },
+      "expected": {
+        "re": [
+          3,
+          -1
+        ],
+        "im": [
+          0,
+          0
+        ]
+      },
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "error_expected_none_raised",
+      "why": "an error expected from a valid call",
+      "op": "lin_to_db",
+      "args": {
+        "ratio": 10
+      },
+      "error": "invalid_argument",
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "unknown_op",
+      "why": "an op neither runner knows",
+      "op": "no_such_op",
+      "args": {},
+      "expected": 0,
+      "source": "deliberately wrong"
+    },
+    {
+      "id": "non_integer_count",
+      "why": "a count that is not a whole number",
+      "op": "fft_frequencies",
+      "args": {
+        "n": 2.5,
+        "sample_rate": 1
+      },
+      "expected": [
+        0,
+        0.4
+      ],
+      "source": "deliberately wrong"
+    }
+  ]
+}

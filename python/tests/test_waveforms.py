@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -44,3 +46,18 @@ def test_prbs_invert_and_seed() -> None:
     with pytest.raises(ValueError):
         waveforms.prbs(9, 10, seed=1 << 9)
     assert waveforms.prbs(7, 0).size == 0
+
+
+@pytest.mark.parametrize("bad", [2.5, 3.0, "3", -1])
+def test_counts_must_be_non_negative_integers(bad: Any) -> None:
+    with pytest.raises(ValueError):
+        waveforms.tone(8, bad, 1)
+    with pytest.raises(ValueError):
+        waveforms.prbs(7, 10, seed=bad)
+    with pytest.raises(ValueError):
+        waveforms.prbs(7, bad)
+
+
+def test_numpy_integers_are_accepted_as_counts() -> None:
+    bits = waveforms.prbs(np.int64(7), np.int32(5))  # type: ignore[arg-type]
+    assert bits.tolist() == [1, 1, 1, 1, 1]

@@ -11,6 +11,8 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from ._checks import count
+
 _COSINE_SUMS: dict[str, tuple[float, ...]] = {
     "rectangular": (1.0,),
     "hann": (0.5, 0.5),
@@ -21,6 +23,9 @@ _COSINE_SUMS: dict[str, tuple[float, ...]] = {
 }
 
 WINDOWS = (*_COSINE_SUMS, "kaiser")
+
+KAISER_MAX_BETA = 700.0
+"""Largest Kaiser beta: I0(beta) overflows a double just above 713."""
 
 
 def _vector(x: ArrayLike, what: str) -> NDArray[np.complex128] | NDArray[np.float64]:
@@ -50,10 +55,10 @@ def ifft(spectrum: ArrayLike) -> NDArray[np.complex128]:
 
 def fft_frequencies(n: int, sample_rate: float, shifted: bool = False) -> NDArray[np.float64]:
     """Bin frequencies of an ``n``-point FFT: NumPy ``fftfreq`` order, or ``fftshift`` order."""
-    if n < 1:
+    if count(n, "n") < 1:
         raise ValueError("n must be at least 1")
-    if not sample_rate > 0:
-        raise ValueError("sample_rate must be positive")
+    if not 0 < sample_rate < math.inf:
+        raise ValueError("sample_rate must be positive and finite")
     i = np.arange(n)
     k = i - n // 2 if shifted else np.where(i <= (n - 1) // 2, i, i - n)
     return np.asarray(k * (sample_rate / n), dtype=np.float64)
@@ -63,11 +68,10 @@ def window(
     name: str, n: int, *, symmetric: bool = False, beta: float | None = None
 ) -> NDArray[np.float64]:
     """A named window of length ``n``; periodic unless ``symmetric``. ``kaiser`` needs ``beta``."""
-    if n < 0:
-        raise ValueError("n must be non-negative")
+    n = count(n, "n")
     if name == "kaiser":
-        if beta is None or not beta >= 0:
-            raise ValueError("kaiser needs beta >= 0")
+        if beta is None or not 0 <= beta <= KAISER_MAX_BETA:
+            raise ValueError(f"kaiser needs 0 <= beta <= {KAISER_MAX_BETA:g}")
     elif name not in _COSINE_SUMS:
         raise ValueError(f"unknown window {name!r}; known: {', '.join(WINDOWS)}")
     elif beta is not None:
@@ -121,6 +125,11 @@ class SpectralDensity:
     bin_width: float
     enbw_hz: float
 
+    @property
+    def span(self) -> Span | None:
+        """``(0, fs/2)`` for a one-sided PSD (its DC and Nyquist bins are half bins), else None."""
+        return (0.0, self.sample_rate / 2) if self.one_sided else None
+
 
 def welch_psd(
     samples: ArrayLike,
@@ -130,27 +139,28 @@ def welch_psd(
     noverlap: int | None = None,
     window: str = "hann",
     one_sided: bool | None = None,
+    beta: float | None = None,
 ) -> SpectralDensity:
     """Welch PSD: mean of ``|FFT(w*segment)|^2 / (fs*sum(w^2))`` over overlapping segments."""
     x = _vector(samples, "samples")
-    if not sample_rate > 0:
-        raise ValueError("sample_rate must be positive")
+    if not 0 < sample_rate < math.inf:
+        raise ValueError("sample_rate must be positive and finite")
     is_complex = np.iscomplexobj(x)
     if one_sided is None:
         one_sided = not is_complex
     elif one_sided and is_complex:
         raise ValueError("a one-sided PSD needs real samples")
-    n = x.size if nperseg is None else nperseg
+    n = x.size if nperseg is None else count(nperseg, "nperseg")
     if n < 1:
         raise ValueError("nperseg must be at least 1")
     if x.size < n:
         raise ValueError("fewer samples than nperseg")
-    overlap = n // 2 if noverlap is None else noverlap
-    if not 0 <= overlap < n:
+    overlap = n // 2 if noverlap is None else count(noverlap, "noverlap")
+    if not overlap < n:
         raise ValueError("noverlap must satisfy 0 <= noverlap < nperseg")
     step = n - overlap
     num_segments = (x.size - n) // step + 1
-    w = _window_for_psd(window, n)
+    w = _window_for_psd(window, n, beta)
     scale = 1.0 / (sample_rate * float(np.sum(w * w)))
     acc = np.zeros(n)
     for s in range(num_segments):
@@ -179,27 +189,42 @@ def welch_psd(
     )
 
 
-def _window_for_psd(name: str, n: int) -> NDArray[np.float64]:
-    w = window(name, n)
+def _window_for_psd(name: str, n: int, beta: float | None) -> NDArray[np.float64]:
+    w = window(name, n, beta=beta)
     if not np.any(w):
         raise ValueError(f"{name} window of length {n} is all zeros")
     return w
 
 
-def _bins(frequencies: ArrayLike, psd: ArrayLike) -> tuple[NDArray[np.float64], float]:
-    """Validated bin powers ``psd*delta`` and the bin spacing ``delta``."""
+Span = tuple[float, float]
+
+
+def _bins(
+    frequencies: ArrayLike, psd: ArrayLike, span: Span | ArrayLike | None
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+    """Validated bin powers ``psd*delta`` and bin edges ``left``, ``right``, clipped to span."""
     f = np.asarray(frequencies, dtype=np.float64)
     p = np.asarray(psd, dtype=np.float64)
     if f.ndim != 1 or p.shape != f.shape:
         raise ValueError("frequencies and psd must be 1-D arrays of the same length")
     if f.size < 2:
         raise ValueError("need at least two bins")
+    if not np.all(np.isfinite(f)):
+        raise ValueError("frequencies must be finite")
     if not (np.all(np.isfinite(p)) and np.all(p >= 0)):
         raise ValueError("psd must be finite and non-negative")
     delta = float(f[-1] - f[0]) / (f.size - 1)
     if not delta > 0 or np.any(np.abs(np.diff(f) - delta) > 1e-6 * delta):
         raise ValueError("frequencies must be ascending and evenly spaced")
-    return p * delta, delta
+    left, right = f - delta / 2, f + delta / 2
+    if span is not None:
+        s = np.asarray(span, dtype=np.float64)
+        if s.shape != (2,) or not (s[0] <= f[0] and s[1] >= f[-1]):
+            raise ValueError(
+                "span must be (low, high) with low <= the first and high >= the last bin"
+            )
+        left, right = np.maximum(left, s[0]), np.minimum(right, s[1])
+    return p * delta, left, right
 
 
 @dataclass(frozen=True)
@@ -214,35 +239,48 @@ class OccupiedBandwidth:
 
 
 def occupied_bandwidth(
-    frequencies: ArrayLike, psd: ArrayLike, fraction: float = 0.99
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    fraction: float = 0.99,
+    *,
+    span: Span | ArrayLike | None = None,
 ) -> OccupiedBandwidth:
-    """Band holding ``fraction`` of the power, with ``(1-fraction)/2`` left out on each side."""
+    """Band holding ``fraction`` of the power, with ``(1-fraction)/2`` left out on each side.
+
+    ``span`` clips the outer bins (a one-sided PSD: ``SpectralDensity.span``, ``(0, fs/2)``).
+    """
     if not 0 < fraction <= 1:
         raise ValueError("fraction must be in (0, 1]")
-    power, delta = _bins(frequencies, psd)
-    f = np.asarray(frequencies, dtype=np.float64)
-    edges = f - delta / 2
-    total = float(np.sum(power))
+    power, left, right = _bins(frequencies, psd, span)
+    cum = np.concatenate(([0.0], np.cumsum(power)))  # cum[k] = power before bin k
+    total = float(cum[-1])
     if not total > 0:
         raise ValueError("total power must be positive")
-    cum = np.concatenate(([0.0], np.cumsum(power)))  # cum[k] = power before bin k
     lo_target = (1 - fraction) / 2 * total
     hi_target = (1 + fraction) / 2 * total
     k_lo = int(np.argmax(cum[1:] > lo_target))
-    lower = float(edges[k_lo] + (lo_target - cum[k_lo]) / power[k_lo] * delta)
+    lower = float(left[k_lo] + (lo_target - cum[k_lo]) / power[k_lo] * (right[k_lo] - left[k_lo]))
     k_hi = int(np.nonzero(cum[:-1] < hi_target)[0][-1])
-    upper = float(edges[k_hi] + (hi_target - cum[k_hi]) / power[k_hi] * delta)
+    upper = float(left[k_hi] + (hi_target - cum[k_hi]) / power[k_hi] * (right[k_hi] - left[k_hi]))
     return OccupiedBandwidth(
         bandwidth=upper - lower, lower=lower, upper=upper, total_power=total, fraction=fraction
     )
 
 
-def channel_power(frequencies: ArrayLike, psd: ArrayLike, low: float, high: float) -> float:
-    """PSD integrated over ``[low, high]``; bins count by the part of their width inside."""
+def channel_power(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    low: float,
+    high: float,
+    *,
+    span: Span | ArrayLike | None = None,
+) -> float:
+    """PSD integrated over ``[low, high]``; bins count by the part of their width inside.
+
+    ``span`` clips the outer bins, as for ``occupied_bandwidth``.
+    """
     if not (math.isfinite(low) and math.isfinite(high) and low < high):
         raise ValueError("need finite low < high")
-    power, delta = _bins(frequencies, psd)
-    f = np.asarray(frequencies, dtype=np.float64)
-    left = f - delta / 2
-    overlap = np.clip(np.minimum(left + delta, high) - np.maximum(left, low), 0.0, None)
-    return float(np.sum(power * overlap / delta))
+    power, left, right = _bins(frequencies, psd, span)
+    overlap = np.clip(np.minimum(right, high) - np.maximum(left, low), 0.0, None)
+    return float(np.sum(power * overlap / (right - left)))

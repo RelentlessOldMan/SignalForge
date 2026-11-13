@@ -360,6 +360,102 @@
       "args": {"frequencies": [0, 1, 2], "psd": [1, 1, 1], "low": 1, "high": 1},
       "error": "invalid_argument",
       "source": "low < high"
+    },
+    {
+      "id": "occupied_bandwidth.all_with_trailing_zero_bins", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "psd": [1.1, 0.1, 0.2, 0.3, 0.2, 1.1, 1.1, 0.6, 0.1, 0, 0, 0], "fraction": 1},
+      "expected": {"bandwidth": 9, "lower": -0.5, "upper": 8.5},
+      "source": "fraction 1: from the left edge of the first bin with power (bin 0) to the right edge of the last (bin 8). Sums of these values differ in the last bit between summation orders, which once gave upper = inf."
+    },
+    {
+      "id": "occupied_bandwidth.one_sided_span_dc", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2, 3, 4], "psd": [1, 0, 0, 0, 0], "fraction": 0.5, "span": [0, 4]},
+      "expected": {"bandwidth": 0.25, "lower": 0.125, "upper": 0.375, "total_power": 1},
+      "source": "span clips the DC bin to [0, 0.5], holding power 1 uniformly; 25% and 75% of it lie at 0.125 and 0.375 Hz"
+    },
+    {
+      "id": "occupied_bandwidth.span_must_cover_bins", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2, 3, 4], "psd": [1, 0, 0, 0, 0], "span": [0.5, 4]},
+      "error": "invalid_argument",
+      "source": "span starts above the first bin center"
+    },
+    {
+      "id": "channel_power.one_sided_span", "op": "channel_power",
+      "args": {"frequencies": [0, 1, 2, 3, 4], "psd": [1, 0, 0.5, 0, 0], "low": 0, "high": 4, "span": [0, 4]},
+      "expected": 1.5,
+      "source": "one-sided PSD of 1 + cos(2*pi*2n/8), fs 8, N 8, rectangular: DC bin 64/64 = 1, bin 2 doubled 2*16/64 = 0.5. With the span the clipped DC bin keeps its whole power: 1 + 0.5 = 1.5 = mean power of the signal."
+    },
+    {
+      "id": "channel_power.one_sided_span_part_of_dc", "op": "channel_power",
+      "args": {"frequencies": [0, 1, 2, 3, 4], "psd": [1, 0, 0.5, 0, 0], "low": 0, "high": 0.25, "span": [0, 4]},
+      "expected": 0.5,
+      "source": "the DC bin's power 1 spread over [0, 0.5]: half of it lies in [0, 0.25]"
+    },
+    {
+      "id": "channel_power.infinite_frequency", "op": "channel_power",
+      "args": {"frequencies": [0, 1, "inf"], "psd": [1, 1, 1], "low": 0, "high": 1},
+      "error": "invalid_argument",
+      "source": "frequencies must be finite"
+    },
+    {
+      "id": "channel_power.nan_frequency", "op": "channel_power",
+      "args": {"frequencies": [0, "nan", 2], "psd": [1, 1, 1], "low": 0, "high": 1},
+      "error": "invalid_argument",
+      "source": "frequencies must be finite"
+    },
+    {
+      "id": "window.kaiser_beta_too_large", "op": "window",
+      "args": {"name": "kaiser", "n": 4, "beta": 701},
+      "error": "invalid_argument",
+      "source": "beta above 700 is rejected (I0 overflows a double just above 713)"
+    },
+    {
+      "id": "window.kaiser_beta_inf", "op": "window",
+      "args": {"name": "kaiser", "n": 4, "beta": "inf"},
+      "error": "invalid_argument",
+      "source": "beta must be finite"
+    },
+    {
+      "id": "window.kaiser_periodic_4_beta0", "op": "window",
+      "args": {"name": "kaiser", "n": 4, "beta": 0},
+      "expected": [1, 1, 1, 1],
+      "source": "I0(0)/I0(0) = 1 for every sample, periodic or symmetric"
+    },
+    {
+      "id": "window.blackman_harris_symmetric_3", "op": "window",
+      "args": {"name": "blackman_harris", "n": 3, "symmetric": true},
+      "expected": [6e-05, 1, 6e-05],
+      "source": "D = 2: ends a0-a1+a2-a3 = 0.35875-0.48829+0.14128-0.01168 = 0.00006; middle (cos(pi k) = (-1)^k) a0+a1+a2+a3 = 1"
+    },
+    {
+      "id": "window.flattop_symmetric_3", "op": "window",
+      "args": {"name": "flattop", "n": 3, "symmetric": true},
+      "expected": [-0.000421051, 1.000000003, -0.000421051],
+      "source": "D = 2: ends a0-a1+a2-a3+a4 = -0.000421051; middle a0+a1+a2+a3+a4 = 1.000000003"
+    },
+    {
+      "id": "welch_psd.kaiser_beta0_is_rectangular", "op": "welch_psd",
+      "args": {"samples": {"re": [1, 0, -1, 0], "im": [0, 1, 0, -1]}, "sample_rate": 4, "window": "kaiser", "beta": 0},
+      "expected": {"frequencies": [-2, -1, 0, 1], "psd": [0, 0, 0, 1], "enbw_hz": 1},
+      "source": "Kaiser with beta 0 is all ones, so this is welch_psd.complex_tone_rect: 16/(4*4) = 1 at bin 1"
+    },
+    {
+      "id": "welch_psd.kaiser_needs_beta", "op": "welch_psd",
+      "args": {"samples": [1, 2, 3, 4], "sample_rate": 4, "window": "kaiser"},
+      "error": "invalid_argument",
+      "source": "kaiser needs beta"
+    },
+    {
+      "id": "fft_frequencies.infinite_sample_rate", "op": "fft_frequencies",
+      "args": {"n": 4, "sample_rate": "inf"},
+      "error": "invalid_argument",
+      "source": "sample_rate must be positive and finite"
+    },
+    {
+      "id": "fft_frequencies.nan_sample_rate", "op": "fft_frequencies",
+      "args": {"n": 4, "sample_rate": "nan"},
+      "error": "invalid_argument",
+      "source": "sample_rate must be positive and finite"
     }
   ]
 }

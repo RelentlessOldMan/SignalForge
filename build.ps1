@@ -8,7 +8,8 @@
   reads VERSION itself. Then runs, stopping at the first failure:
     Python: ruff check, ruff format --check, mypy, pytest, conformance (report in reports/python.json)
     .NET:   build, test, format --verify-no-changes
-  CI does not run this script and never bumps; it builds the committed version.
+  CI does not run this script and never bumps; it builds the committed version. The bump happens
+  before the checks, so a failed build still uses up its number (numbers are never reused).
 
 .PARAMETER Jobs
   Limit .NET build and test parallelism (passes -m:N and MaxCpuCount=N). Default: no limit.
@@ -27,13 +28,11 @@ $root = $PSScriptRoot
 function Get-NextVersion([string]$current) {
     $today = Get-Date
     $todayKey = [int]$today.ToString('yyyyMMdd')
-    if ($current -match '^(\d+)\.(\d+)\.(\d+)\.(\d+)$') {
-        $y, $m, $d, $n = [int]$Matches[1], [int]$Matches[2], [int]$Matches[3], [int]$Matches[4]
-        if ($y * 10000 + $m * 100 + $d -ge $todayKey) {      # same day (or a later date): bump N
-            return "$y.$m.$d.$($n + 1)"
-        }
+    $y, $m, $d, $n = $current.Split('.') | ForEach-Object { [int]$_ }
+    if ($y * 10000 + $m * 100 + $d -ge $todayKey) {      # same day (or a later date): bump N
+        return "$y.$m.$d.$($n + 1)"
     }
-    return "$($today.Year).$($today.Month).$($today.Day).0"   # first build today (or no/old-style version)
+    return "$($today.Year).$($today.Month).$($today.Day).0"   # first build today
 }
 
 function Invoke-Step([string]$name, [scriptblock]$command) {
@@ -44,11 +43,15 @@ function Invoke-Step([string]$name, [scriptblock]$command) {
 
 # Version: VERSION is the source of truth; the Python package gets a stamped copy.
 $versionFile = Join-Path $root 'VERSION'
-$current = if (Test-Path $versionFile) { (Get-Content $versionFile -Raw).Trim() } else { $null }
+if (-not (Test-Path $versionFile)) { throw "VERSION not found at $versionFile" }
+$current = [IO.File]::ReadAllText($versionFile).Trim()
+if ($current -notmatch '^[1-9]\d{3}\.[1-9]\d?\.[1-9]\d?\.(0|[1-9]\d*)$') {
+    throw "VERSION '$current' is not YYYY.M.D.N (docs/versioning.md)"
+}
 $version = if ($NoBump) { $current } else { Get-NextVersion $current }
 if (-not $NoBump) { [IO.File]::WriteAllText($versionFile, "$version`n") }
 $init = Join-Path $root 'python/src/signalforge/__init__.py'
-$text = Get-Content $init -Raw
+$text = [IO.File]::ReadAllText($init)
 $stamped = [regex]::Replace($text, '(?m)^__version__ = "[^"]*"', "__version__ = `"$version`"")
 if ($stamped -ne $text) { [IO.File]::WriteAllText($init, $stamped) }
 Write-Host "SignalForge $version" -ForegroundColor Green

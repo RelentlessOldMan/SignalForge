@@ -23,12 +23,12 @@ from . import measurements, metrics, modulation, spectral, units, waveforms
 DEFAULT_TOL = {"abs": 1e-12, "rel": 1e-12}
 
 OPS: dict[str, Callable[..., Any]] = {
-    "lin_to_db": lambda x: units.lin_to_db(x),
-    "db_to_lin": lambda x: units.db_to_lin(x),
-    "amp_to_db": lambda x: units.amp_to_db(x),
-    "db_to_amp": lambda x: units.db_to_amp(x),
-    "w_to_dbm": lambda x: units.w_to_dbm(x),
-    "dbm_to_w": lambda x: units.dbm_to_w(x),
+    "lin_to_db": units.lin_to_db,
+    "db_to_lin": units.db_to_lin,
+    "amp_to_db": units.amp_to_db,
+    "db_to_amp": units.db_to_amp,
+    "w_to_dbm": units.w_to_dbm,
+    "dbm_to_w": units.dbm_to_w,
     "vrms_to_dbm": units.vrms_to_dbm,
     "dbm_to_vrms": units.dbm_to_vrms,
     "tone": waveforms.tone,
@@ -48,6 +48,10 @@ OPS: dict[str, Callable[..., Any]] = {
 }
 
 
+class BadCase(Exception):
+    """A vector case that is malformed (as opposed to one the library fails)."""
+
+
 def decode(v: Any) -> Any:
     """JSON vector value to a Python value: complex objects, special floats, arrays."""
     if isinstance(v, str) and v in ("inf", "-inf", "nan"):
@@ -56,6 +60,8 @@ def decode(v: Any) -> Any:
         if set(v) == {"re", "im"}:
             re, im = v["re"], v["im"]
             if isinstance(re, list):
+                if not isinstance(im, list) or len(im) != len(re):
+                    raise BadCase("re and im must be arrays of the same length")
                 return np.asarray([decode(r) for r in re]) + 1j * np.asarray(
                     [decode(i) for i in im]
                 )
@@ -92,12 +98,29 @@ def _close(actual: complex | float, expected: complex | float, tol: dict[str, fl
     if isinstance(expected, float) and math.isnan(expected):
         return isinstance(actual, float | np.floating) and math.isnan(actual)
     if isinstance(expected, float) and math.isinf(expected):
-        return actual == expected
-    return abs(actual - expected) <= tol["abs"] + tol["rel"] * abs(expected)
+        return bool(actual == expected)
+    return bool(abs(actual - expected) <= tol["abs"] + tol["rel"] * abs(expected))
+
+
+def _kind(v: Any) -> str:
+    """The vector type of a value: bool, real, complex, array, or other."""
+    if isinstance(v, bool | np.bool_):
+        return "bool"
+    if isinstance(v, np.ndarray):
+        return "complex array" if np.iscomplexobj(v) else "real array"
+    if isinstance(v, complex | np.complexfloating):
+        return "complex"
+    if isinstance(v, int | float | np.integer | np.floating):
+        return "real"
+    return type(v).__name__
 
 
 def compare(actual: Any, expected: Any, tol: dict[str, float], path: str = "") -> list[str]:
-    """Differences between an actual result and a decoded expected value, as messages."""
+    """Differences between an actual result and a decoded expected value, as messages.
+
+    Types must match exactly (a real array is not a complex array, a scalar is not a one-element
+    array); booleans compare exactly, numbers within ``tol``.
+    """
     where = path or "value"
     if dataclasses.is_dataclass(actual) and not isinstance(actual, type):
         actual = {f.name: getattr(actual, f.name) for f in dataclasses.fields(actual)}
@@ -106,19 +129,25 @@ def compare(actual: Any, expected: Any, tol: dict[str, float], path: str = "") -
             return [f"{where}: expected a record, got {type(actual).__name__}"]
         out: list[str] = []
         for k, e in expected.items():
-            if k not in actual:
-                out.append(f"{path}.{k}: missing")
-            else:
-                out += compare(actual[k], e, tol, f"{path}.{k}" if path else k)
+            p = f"{path}.{k}" if path else k
+            out += compare(actual[k], e, tol, p) if k in actual else [f"{p}: missing"]
         return out
+    if isinstance(actual, np.ndarray) and not np.iscomplexobj(actual) and actual.dtype != np.bool_:
+        actual = np.asarray(actual, dtype=np.float64)  # uint8 bits and int arrays are real arrays
+    ka, ke = _kind(actual), _kind(expected)
+    if ka != ke:
+        return [f"{where}: type {ka} does not match expected {ke}"]
+    if ke == "bool":
+        return (
+            [] if bool(actual) == bool(expected) else [f"{where}: {actual} != expected {expected}"]
+        )
     if isinstance(expected, np.ndarray):
-        a = np.asarray(actual)
-        if a.shape != expected.shape:
-            return [f"{where}: shape {a.shape} != expected {expected.shape}"]
-        bad = [i for i in range(expected.size) if not _close(a[i], expected[i], tol)]
+        if actual.shape != expected.shape:
+            return [f"{where}: shape {actual.shape} != expected {expected.shape}"]
+        bad = [i for i in range(expected.size) if not _close(actual[i], expected[i], tol)]
         if bad:
             i = bad[0]
-            return [f"{where}[{i}]: {a[i]!r} != expected {expected[i]!r} ({len(bad)} differ)"]
+            return [f"{where}[{i}]: {actual[i]!r} != expected {expected[i]!r} ({len(bad)} differ)"]
         return []
     if not _close(actual, expected, tol):
         return [f"{where}: {actual!r} != expected {expected!r}"]
@@ -158,18 +187,26 @@ def run_case(file: str, case: dict[str, Any]) -> CaseResult:
     op = OPS.get(case["op"])
     if op is None:
         return CaseResult(file, cid, False, [f"unknown op {case['op']!r}"])
-    args = {k: decode(v) for k, v in case.get("args", {}).items()}
+    try:
+        args = {k: decode(v) for k, v in case.get("args", {}).items()}
+        expected = decode(case["expected"]) if "expected" in case else None
+    except BadCase as e:
+        return CaseResult(file, cid, False, [f"bad case: {e}"])
     tol = {**DEFAULT_TOL, **case.get("tol", {})}
     want_error = case.get("error")
     try:
         actual = op(**args)
+    except TypeError as e:  # an unknown or missing argument: the case itself is wrong
+        return CaseResult(file, cid, False, [f"bad case: {e}"])
     except ValueError as e:
         if want_error == "invalid_argument":
             return CaseResult(file, cid, True, [])
         return CaseResult(file, cid, False, [f"raised ValueError: {e}"])
     if want_error:
         return CaseResult(file, cid, False, [f"expected error {want_error!r}"], encode(actual))
-    msgs = compare(actual, decode(case["expected"]), tol)
+    if "expected" not in case:
+        return CaseResult(file, cid, False, ["bad case: no expected value or error"])
+    msgs = compare(actual, expected, tol)
     return CaseResult(file, cid, not msgs, msgs, encode(actual))
 
 

@@ -1,8 +1,8 @@
-# 📶 SignalForge
+# SignalForge 📶
 
-Signal generation, DSP and measurement, built twice: once in Python, once in C#/.NET. The two
-implementations share nothing at runtime. They share test vectors and conventions, and both must
-produce the same numbers.
+**Signal generation, DSP and measurement, built twice: in Python and in C#/.NET, and the two must
+agree.** The two implementations share nothing at runtime. They share test vectors and conventions,
+and both must produce the same numbers.
 
 > Early days. The foundation is in: signals, units, tones, PRBS, power measurements, spectra (FFT,
 > windows, Welch PSD, occupied bandwidth, channel power), QPSK mapping
@@ -53,8 +53,10 @@ Neither package is published yet; build from source (commands below).
 - **Shared vectors.** [vectors/cases](vectors/cases) holds JSON test cases with expected values from
   analytical or hand derivations, never from SignalForge's own output. Each language has a small
   runner that executes every case.
-- **Strict licensing.** Only MIT, BSD-2, BSD-3, Apache-2.0 and ISC dependencies. Every one is
-  recorded, with how its license was checked, in [docs/dependencies.md](docs/dependencies.md).
+- **Strict licensing.** Only MIT, BSD-2, BSD-3, Apache-2.0, ISC and PSF-2.0 dependencies (plus
+  MPL-2.0 for development tools that are never shipped), so SignalForge can always ship under MIT.
+  Every one is recorded, with how its license was checked, in
+  [docs/dependencies.md](docs/dependencies.md).
 - Decisions are written up in [docs/adr](docs/adr); the overall shape is in
   [docs/architecture.md](docs/architecture.md).
 
@@ -63,18 +65,21 @@ Neither package is published yet; build from source (commands below).
 ```
 python/      the Python package (src/signalforge) and its tests
 dotnet/      the C# library (src/SignalForge) and its tests
-vectors/     shared test vectors, run by both
+vectors/     shared test vectors, run by both (selftest/: cases the runners must fail)
 docs/        conventions, architecture, ADRs, dependencies, status
 ```
 
-Build and test:
+Build and test (Windows PowerShell or pwsh):
 
 ```
-python -m venv .venv && .venv/Scripts/pip install -e python[dev]   # bin/ on Linux and macOS
-cd python && pytest
-
-cd dotnet && dotnet test
+python -m venv .venv
+.venv/Scripts/pip install -e python[dev]   # bin/ instead of Scripts/ on Linux and macOS
+./build.ps1                                # bumps VERSION, then every check and test in both languages
 ```
+
+Or one language at a time: `cd python && ../.venv/Scripts/pytest`, and `cd dotnet && dotnet test`.
+Versions are date-based (`YYYY.M.D.N`), kept in [VERSION](VERSION); see
+[docs/versioning.md](docs/versioning.md).
 
 ## Contributing
 

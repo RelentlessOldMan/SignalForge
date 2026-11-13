@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 from numpy.typing import NDArray
+
+from ._checks import count as _count
 
 #: ITU-T O.150 PRBS polynomials ``x^m + x^k + 1`` as ``order -> k``.
 PRBS_TAPS: dict[int, int] = {7: 6, 9: 5, 11: 9, 15: 14, 20: 3, 23: 18, 31: 28}
@@ -22,10 +26,9 @@ def tone(
 
     ``amplitude`` is the peak amplitude and ``phase`` is in radians.
     """
-    if not sample_rate > 0:
-        raise ValueError("sample_rate must be positive")
-    if num_samples < 0:
-        raise ValueError("num_samples must be non-negative")
+    if not 0 < sample_rate < math.inf:
+        raise ValueError("sample_rate must be positive and finite")
+    num_samples = _count(num_samples, "num_samples")
     arg = 2.0 * np.pi * frequency * (np.arange(num_samples) / sample_rate) + phase
     if complex:
         return np.asarray(amplitude * np.exp(1j * arg), dtype=np.complex128)
@@ -40,13 +43,13 @@ def prbs(
     The sequence satisfies ``a[i] = a[i-m] XOR a[i-k]`` for ``x^m + x^k + 1``. ``seed`` gives the
     first ``m`` bits, first bit in the most significant position; the default is all ones.
     """
+    order = _count(order, "order")
+    num_bits = _count(num_bits, "num_bits")
     if order not in PRBS_TAPS:
         raise ValueError(f"unsupported PRBS order {order}; supported: {sorted(PRBS_TAPS)}")
-    if num_bits < 0:
-        raise ValueError("num_bits must be non-negative")
     m, k = order, PRBS_TAPS[order]
     full = (1 << m) - 1
-    state = full if seed is None else seed
+    state = full if seed is None else _count(seed, "seed")
     if not 0 < state <= full:
         raise ValueError(f"seed must be in 1..{full}")
 

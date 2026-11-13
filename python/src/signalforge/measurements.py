@@ -33,6 +33,8 @@ def power_stats(samples: ArrayLike) -> PowerStats:
     if x.ndim != 1 or x.shape[0] == 0:
         raise ValueError("samples must be a non-empty one-dimensional array")
     x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
     p = x.real * x.real + x.imag * x.imag if np.iscomplexobj(x) else x * x
     mean_power = float(np.mean(p))
     peak_index = int(np.argmax(p))

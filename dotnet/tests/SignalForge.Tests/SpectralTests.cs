@@ -45,10 +45,10 @@ public class SpectralTests
     }
 
     [Fact]
-    public void FftOfRealSamplesEqualsComplexFft()
+    public void FftOfRealSamplesMatchesDirectDft()
     {
         double[] r = [0.5, -1, 2, 3.25, 0];
-        Assert.True(MaxError(Spectral.Fft(r), Spectral.Fft(r.Select(v => new Complex(v, 0)).ToArray())) == 0);
+        Assert.True(MaxError(Spectral.Fft(r), DirectDft(r.Select(v => new Complex(v, 0)).ToArray())) < 1e-13);
     }
 
     [Fact]
@@ -74,7 +74,8 @@ public class SpectralTests
         Assert.Equal(1.0, w[5], 1e-15);
         for (int i = 0; i < 11; i++)
             Assert.Equal(w[i], w[10 - i], 1e-15);
-        // The end values are 1/I0(beta); I0(8.6) = 750.4611595631661 (power series, 80 terms).
+        // The end values are 1/I0(beta); I0(8.6) = 750.4611595631661 (power series, 80 terms;
+        // NumPy's np.i0, a Chebyshev fit, gives 750.4611595631659).
         Assert.Equal(1 / 750.4611595631661, w[0], 1e-15);
     }
 
@@ -134,5 +135,47 @@ public class SpectralTests
         Assert.Throws<ArgumentException>(() => Spectral.Window((WindowType)99, 4));
         Assert.Throws<ArgumentException>(() => Spectral.WelchPsd(new double[3], 1, nperseg: 4));
         Assert.Throws<ArgumentException>(() => Spectral.OccupiedBandwidth([0.0, 1.0], [1.0, 1.0], 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Spectral.FftFrequencies(4, double.PositiveInfinity));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Spectral.FftFrequencies(4, double.NaN));
+        Assert.Throws<ArgumentException>(() => Spectral.ChannelPower([0.0, double.NaN], [1.0, 1.0], 0, 1));
+        Assert.Throws<ArgumentException>(() =>
+            Spectral.OccupiedBandwidth([0.0, 1.0, 2.0], [1.0, 1.0, 1.0], span: (0.5, 2.0)));
+    }
+
+    [Fact]
+    public void OneSidedSpanCountsDcAndNyquistInFull()
+    {
+        var x = Enumerable.Range(0, 64)
+            .Select(n => 1 + Math.Cos(2 * Math.PI * n * 8 / 64) + 0.5 * Math.Cos(Math.PI * n)).ToArray();
+        var p = Spectral.WelchPsd(x, 64, window: WindowType.Rectangular);
+        Assert.Equal((0.0, 32.0), p.Span);
+        double meanPower = x.Average(v => v * v);
+        Assert.Equal(meanPower, Spectral.ChannelPower(p.Frequencies, p.Psd, 0, 32, p.Span), 1e-12 * meanPower);
+        Assert.True(Spectral.ChannelPower(p.Frequencies, p.Psd, 0, 32) < meanPower);
+        var obw = Spectral.OccupiedBandwidth(p.Frequencies, p.Psd, 1.0, p.Span);
+        Assert.Equal((0.0, 32.0), (obw.Lower, obw.Upper));
+    }
+
+    [Fact]
+    public void TwoSidedPsdHasNoSpan() =>
+        Assert.Null(Spectral.WelchPsd(new Complex[8], 8).Span);
+
+    [Fact]
+    public void KaiserBetaLimit()
+    {
+        var w = Spectral.Window(WindowType.Kaiser, 9, symmetric: true, beta: Spectral.KaiserMaxBeta);
+        Assert.All(w, v => Assert.True(double.IsFinite(v)));
+        Assert.Equal(1.0, w[4]);
+        foreach (double beta in new[] { Math.BitIncrement(Spectral.KaiserMaxBeta), double.PositiveInfinity, double.NaN, -1 })
+            Assert.Throws<ArgumentException>(() => Spectral.Window(WindowType.Kaiser, 9, beta: beta));
+    }
+
+    [Fact]
+    public void WelchPassesBetaToKaiser()
+    {
+        var x = Enumerable.Range(0, 16).Select(i => (double)i).ToArray();
+        var p = Spectral.WelchPsd(x, 1, window: WindowType.Kaiser, beta: 6);
+        var w = Spectral.Window(WindowType.Kaiser, 16, beta: 6);
+        Assert.Equal(Spectral.WindowStats(w).EnbwBins / 16, p.EnbwHz, 1e-14);
     }
 }

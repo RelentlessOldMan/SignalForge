@@ -76,9 +76,8 @@ CI never bumps.
 ## Commands
 
 The build, from the repo root: `./build.ps1` (Windows PowerShell or pwsh; `-Jobs N` limits .NET
-parallelism, `-NoBump` re-runs without a new version). The steps it runs, one by one:
-
-From the repo root. The Python venv lives at `.venv` in the repo root (gitignored).
+parallelism, `-NoBump` re-runs without a new version). The Python venv lives at `.venv` in the repo
+root (gitignored). Setup, then the steps `build.ps1` runs, one by one, from the repo root:
 
 ```
 python -m venv .venv
@@ -90,7 +89,7 @@ cd python
 ../.venv/Scripts/pytest -q
 ../.venv/Scripts/python -m signalforge.conformance --report ../reports/python.json
 
-cd dotnet
+cd ../dotnet
 dotnet build SignalForge.slnx
 dotnet test SignalForge.slnx
 dotnet format SignalForge.slnx --verify-no-changes
@@ -98,11 +97,11 @@ dotnet format SignalForge.slnx --verify-no-changes
 
 ### Job sizes
 
-Measured 2026-11-12, restricted to one core:
+Measured 2026-11-13:
 
-- Python `pytest`: about 2 s.
-- .NET `dotnet test` (incremental build + 149 tests): about 6 s.
-- `build.ps1 -Jobs 1` (everything, incremental): about 40 s. A clean build with restore takes
+- Python `pytest` (209 tests): about 1 s.
+- .NET `dotnet test` (incremental build + 189 tests): about 6 s.
+- `build.ps1 -Jobs 1` (everything, incremental): about 20 s. A clean build with restore takes
   longer (not yet timed).
 
 Memory not measured yet; nothing holds more than a few MB of samples. No job uses the GPU.
@@ -119,6 +118,7 @@ Memory not measured yet; nothing holds more than a few MB of samples. No job use
 | `docs/versioning.md`, `VERSION`, `build.ps1` | Version scheme, the version, the build. |
 | `docs/adr/` | Architecture decision records. |
 | `vectors/README.md`, `vectors/cases/` | Shared vector format and cases. |
+| `vectors/selftest/` | Deliberately wrong cases both runners must fail. |
 | `python/src/signalforge/` | Python package; `conformance.py` runs the vectors. |
 | `dotnet/src/SignalForge/` | C# library. |
 | `dotnet/tests/SignalForge.Tests/` | C# tests; `Conformance.cs` runs the vectors. |

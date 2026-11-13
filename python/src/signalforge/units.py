@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
@@ -17,8 +19,8 @@ def _non_negative(x: ArrayLike, what: str) -> NDArray[np.float64]:
 
 
 def _positive(value: float, what: str) -> float:
-    if not value > 0:
-        raise ValueError(f"{what} must be positive")
+    if not 0 < value < math.inf:
+        raise ValueError(f"{what} must be positive and finite")
     return float(value)
 
 

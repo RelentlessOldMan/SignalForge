@@ -25,6 +25,14 @@ together against the same vectors, so they carry the same number.
 Tests in both languages fail if the stamped values and `VERSION` disagree. Nothing else types a
 version by hand.
 
+`build.ps1` refuses to run if `VERSION` is missing or not in the `YYYY.M.D.N` form, rather than
+starting over at today's `.0` (which could reuse a number). It bumps before running the checks, so
+a build that fails still uses up its number.
+
+An editable install (`pip install -e python`) records the version in its metadata when it is
+installed, so `importlib.metadata.version("signalforge")` goes stale after later builds;
+`signalforge.__version__` is the authoritative value in a working tree.
+
 ## Builds, CI and releases
 
 - `build.ps1` is the build: it bumps the version, then runs every check and test in both languages.

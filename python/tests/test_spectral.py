@@ -81,3 +81,44 @@ def test_obw_and_channel_power_of_a_flat_band() -> None:
     assert obw.lower == pytest.approx(-9.9, abs=1e-9)
     assert spectral.channel_power(f, psd, -10.05, 10.05) == pytest.approx(obw.total_power)
     assert spectral.channel_power(f, psd, -10.05, 10.05) == pytest.approx(20.0)
+
+
+def test_one_sided_span_counts_dc_and_nyquist_in_full() -> None:
+    x = 1.0 + np.cos(2 * np.pi * np.arange(64) * 8 / 64) + 0.5 * np.cos(np.pi * np.arange(64))
+    p = spectral.welch_psd(x, 64.0, window="rectangular")
+    assert p.span == (0.0, 32.0)
+    mean_power = float(np.mean(x * x))
+    total = spectral.channel_power(p.frequencies, p.psd, 0, 32, span=p.span)
+    assert total == pytest.approx(mean_power, rel=1e-12)
+    assert spectral.channel_power(p.frequencies, p.psd, 0, 32) < mean_power
+    obw = spectral.occupied_bandwidth(p.frequencies, p.psd, 1.0, span=p.span)
+    assert (obw.lower, obw.upper) == (0.0, 32.0)
+
+
+def test_two_sided_psd_has_no_span() -> None:
+    assert spectral.welch_psd(np.ones(8, dtype=complex), 8.0).span is None
+
+
+def test_kaiser_beta_limit() -> None:
+    w = spectral.window("kaiser", 9, symmetric=True, beta=spectral.KAISER_MAX_BETA)
+    assert np.all(np.isfinite(w)) and w[4] == 1.0
+    for beta in (np.nextafter(spectral.KAISER_MAX_BETA, np.inf), np.inf, np.nan, -1.0):
+        with pytest.raises(ValueError):
+            spectral.window("kaiser", 9, beta=beta)
+
+
+def test_welch_passes_beta_to_kaiser() -> None:
+    x = np.arange(16.0)
+    a = spectral.welch_psd(x, 1.0, window="kaiser", beta=6.0)
+    w = spectral.window("kaiser", 16, beta=6.0)
+    assert a.enbw_hz == pytest.approx(spectral.window_stats(w).enbw_bins / 16, rel=1e-14)
+
+
+@pytest.mark.parametrize("bad", [2.5, 4.0, -1])
+def test_counts_must_be_non_negative_integers(bad: float) -> None:
+    with pytest.raises(ValueError):
+        spectral.fft_frequencies(bad, 1.0)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        spectral.window("hann", bad)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        spectral.welch_psd(np.ones(8), 1.0, nperseg=bad)  # type: ignore[arg-type]

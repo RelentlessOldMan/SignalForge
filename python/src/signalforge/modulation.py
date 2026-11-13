@@ -12,7 +12,7 @@ def _bits(bits: ArrayLike) -> NDArray[np.uint8]:
     b = np.asarray(bits)
     if b.ndim != 1:
         raise ValueError("bits must be one-dimensional")
-    if b.size and (np.any(b < 0) or np.any(b > 1)):
+    if b.size and not np.all((b == 0) | (b == 1)):
         raise ValueError("bits must be 0 or 1")
     return b.astype(np.uint8)
 

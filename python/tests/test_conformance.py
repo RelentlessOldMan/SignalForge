@@ -28,9 +28,12 @@ def test_ids_unique_per_file() -> None:
         seen.add((f, c["id"]))
 
 
-def test_comparison_catches_a_wrong_value() -> None:
-    case = {"id": "x", "op": "lin_to_db", "args": {"x": 10}, "expected": 10.001, "source": "t"}
-    assert not conformance.run_case("t.json", case).passed
+SELFTEST = list(conformance.iter_cases(conformance.find_vectors_dir().parent / "selftest"))
+
+
+@pytest.mark.parametrize(("file", "case"), SELFTEST, ids=[c["id"] for _, c in SELFTEST])
+def test_runner_fails_a_wrong_case(file: str, case: dict[str, Any]) -> None:
+    assert not conformance.run_case(file, case).passed, case["why"]
 
 
 def test_main_writes_report(tmp_path: Path) -> None:

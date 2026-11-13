@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from types import MappingProxyType
@@ -36,10 +37,10 @@ class Signal:
             a = a.astype(np.float64)
         a.setflags(write=False)
         object.__setattr__(self, "samples", a)
-        if not self.sample_rate > 0:
-            raise ValueError("sample_rate must be positive")
-        if self.impedance is not None and not self.impedance > 0:
-            raise ValueError("impedance must be positive")
+        if not 0 < self.sample_rate < math.inf:
+            raise ValueError("sample_rate must be positive and finite")
+        if self.impedance is not None and not 0 < self.impedance < math.inf:
+            raise ValueError("impedance must be positive and finite")
         object.__setattr__(self, "metadata", MappingProxyType(dict(self.metadata)))
 
     @classmethod

@@ -43,5 +43,5 @@ public static class Units
         x >= 0 ? x : throw new ArgumentOutOfRangeException(name, x, "must be non-negative");
 
     private static double Positive(double x, string name) =>
-        x > 0 ? x : throw new ArgumentOutOfRangeException(name, x, "must be positive");
+        Check.PositiveFinite(x, name);
 }

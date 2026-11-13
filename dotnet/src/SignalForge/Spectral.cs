@@ -49,7 +49,14 @@ public sealed record SpectralDensity(
     int NumSegments,
     bool OneSided,
     double BinWidth,
-    double EnbwHz);
+    double EnbwHz)
+{
+    /// <summary>
+    /// (0, fs/2) for a one-sided PSD, whose DC and Nyquist bins are half bins; null for two-sided. Pass
+    /// it to <see cref="Spectral.OccupiedBandwidth"/> and <see cref="Spectral.ChannelPower"/>.
+    /// </summary>
+    public (double Low, double High)? Span => OneSided ? (0.0, SampleRate / 2) : null;
+}
 
 /// <summary>Occupied bandwidth by the β/2 method, in the PSD's frequency axis.</summary>
 /// <param name="Bandwidth">Upper minus lower, in Hz.</param>
@@ -65,6 +72,9 @@ public sealed record OccupiedBandwidth(double Bandwidth, double Lower, double Up
 /// </summary>
 public static class Spectral
 {
+    /// <summary>Largest Kaiser β: I₀(β) overflows a double just above 713.</summary>
+    public const double KaiserMaxBeta = 700.0;
+
     private static readonly Dictionary<WindowType, double[]> CosineSums = new()
     {
         [WindowType.Rectangular] = [1.0],
@@ -110,7 +120,7 @@ public static class Spectral
     public static double[] FftFrequencies(int n, double sampleRate, bool shifted = false)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(n);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
         var f = new double[n];
         double df = sampleRate / n;
         for (int i = 0; i < n; i++)
@@ -130,8 +140,8 @@ public static class Spectral
         ArgumentOutOfRangeException.ThrowIfNegative(n);
         if (type == WindowType.Kaiser)
         {
-            if (beta is not >= 0)
-                throw new ArgumentException("kaiser needs beta >= 0", nameof(beta));
+            if (beta is not (>= 0 and <= KaiserMaxBeta))
+                throw new ArgumentException($"kaiser needs 0 <= beta <= {KaiserMaxBeta}", nameof(beta));
         }
         else if (!CosineSums.ContainsKey(type))
             throw new ArgumentException($"unknown window {type}", nameof(type));
@@ -181,24 +191,26 @@ public static class Spectral
 
     /// <summary>
     /// Welch PSD of complex samples: two-sided, in shifted (ascending) order. Segment length defaults
-    /// to the whole input, overlap to half a segment.
+    /// to the whole input, overlap to half a segment. <paramref name="beta"/> is the Kaiser β.
     /// </summary>
     public static SpectralDensity WelchPsd(ReadOnlySpan<Complex> samples, double sampleRate,
-        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann) =>
-        Welch(samples, sampleRate, nperseg, noverlap, window, oneSided: false);
+        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null) =>
+        Welch(samples, sampleRate, nperseg, noverlap, window, beta, oneSided: false);
 
     /// <summary>
     /// Welch PSD of real samples: one-sided (bins 0 … ⌊N/2⌋, all but DC and Nyquist doubled) unless
     /// <paramref name="oneSided"/> is false, which gives the two-sided shifted PSD.
+    /// <paramref name="beta"/> is the Kaiser β.
     /// </summary>
     public static SpectralDensity WelchPsd(ReadOnlySpan<double> samples, double sampleRate,
-        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, bool oneSided = true) =>
-        Welch(ToComplex(samples), sampleRate, nperseg, noverlap, window, oneSided);
+        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, bool oneSided = true,
+        double? beta = null) =>
+        Welch(ToComplex(samples), sampleRate, nperseg, noverlap, window, beta, oneSided);
 
     private static SpectralDensity Welch(ReadOnlySpan<Complex> x, double sampleRate, int? nperseg,
-        int? noverlap, WindowType window, bool oneSided)
+        int? noverlap, WindowType window, double? beta, bool oneSided)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
         int n = nperseg ?? x.Length;
         if (n < 1)
             throw new ArgumentException("nperseg must be at least 1", nameof(nperseg));
@@ -209,7 +221,7 @@ public static class Spectral
             throw new ArgumentException("noverlap must satisfy 0 <= noverlap < nperseg", nameof(noverlap));
         int step = n - overlap;
         int segments = (x.Length - n) / step + 1;
-        double[] w = Window(window, n);
+        double[] w = Window(window, n, beta: beta);
         if (w.All(v => v == 0))
             throw new ArgumentException($"{window} window of length {n} is all zeros", nameof(window));
 
@@ -254,18 +266,20 @@ public static class Spectral
 
     /// <summary>
     /// Occupied bandwidth by the ITU-R SM.328 β/2 method: the band with (1 − fraction)/2 of the power
-    /// left out on each side. Bins are rectangles of the bin spacing; edges interpolate within a bin.
+    /// left out on each side. Bins are rectangles of the bin spacing, clipped to
+    /// <paramref name="span"/> if given (for a one-sided PSD pass <see cref="SpectralDensity.Span"/>);
+    /// edges interpolate within a bin.
     /// </summary>
     public static OccupiedBandwidth OccupiedBandwidth(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
-        double fraction = 0.99)
+        double fraction = 0.99, (double Low, double High)? span = null)
     {
         if (!(fraction > 0 && fraction <= 1))
             throw new ArgumentException("fraction must be in (0, 1]", nameof(fraction));
-        double delta = CheckBins(frequencies, psd);
-        int n = psd.Length;
+        var (power, left, right) = Bins(frequencies, psd, span);
+        int n = power.Length;
         var cum = new double[n + 1]; // cum[k] = power before bin k
         for (int k = 0; k < n; k++)
-            cum[k + 1] = cum[k] + psd[k] * delta;
+            cum[k + 1] = cum[k] + power[k];
         double total = cum[n];
         if (!(total > 0))
             throw new ArgumentException("total power must be positive", nameof(psd));
@@ -277,34 +291,41 @@ public static class Spectral
         int kHi = n - 1;
         while (!(cum[kHi] < hiTarget))
             kHi--;
-        double lower = frequencies[kLo] - delta / 2 + (loTarget - cum[kLo]) / (psd[kLo] * delta) * delta;
-        double upper = frequencies[kHi] - delta / 2 + (hiTarget - cum[kHi]) / (psd[kHi] * delta) * delta;
+        double lower = left[kLo] + (loTarget - cum[kLo]) / power[kLo] * (right[kLo] - left[kLo]);
+        double upper = left[kHi] + (hiTarget - cum[kHi]) / power[kHi] * (right[kHi] - left[kHi]);
         return new OccupiedBandwidth(upper - lower, lower, upper, total, fraction);
     }
 
-    /// <summary>The PSD integrated over [low, high]; bins count by the part of their width inside.</summary>
-    public static double ChannelPower(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double low, double high)
+    /// <summary>
+    /// The PSD integrated over [low, high]; bins count by the part of their width inside. Bins are
+    /// clipped to <paramref name="span"/> as for <see cref="OccupiedBandwidth"/>.
+    /// </summary>
+    public static double ChannelPower(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double low, double high,
+        (double Low, double High)? span = null)
     {
         if (!(double.IsFinite(low) && double.IsFinite(high) && low < high))
             throw new ArgumentException("need finite low < high", nameof(low));
-        double delta = CheckBins(frequencies, psd);
+        var (power, left, right) = Bins(frequencies, psd, span);
         double sum = 0;
-        for (int k = 0; k < psd.Length; k++)
+        for (int k = 0; k < power.Length; k++)
         {
-            double left = frequencies[k] - delta / 2;
-            double overlap = Math.Max(Math.Min(left + delta, high) - Math.Max(left, low), 0.0);
-            sum += psd[k] * delta * overlap / delta;
+            double overlap = Math.Max(Math.Min(right[k], high) - Math.Max(left[k], low), 0.0);
+            sum += power[k] * overlap / (right[k] - left[k]);
         }
         return sum;
     }
 
-    /// <summary>Validates a PSD's bins and returns the bin spacing.</summary>
-    private static double CheckBins(ReadOnlySpan<double> f, ReadOnlySpan<double> psd)
+    /// <summary>Validates a PSD's bins; returns each bin's power PSD·Δ and its edges, clipped to the span.</summary>
+    private static (double[] Power, double[] Left, double[] Right) Bins(ReadOnlySpan<double> f, ReadOnlySpan<double> psd,
+        (double Low, double High)? span)
     {
         if (f.Length != psd.Length)
             throw new ArgumentException("frequencies and psd must have the same length", nameof(psd));
         if (f.Length < 2)
             throw new ArgumentException("need at least two bins", nameof(f));
+        foreach (double v in f)
+            if (!double.IsFinite(v))
+                throw new ArgumentException("frequencies must be finite", nameof(f));
         foreach (double p in psd)
             if (!(double.IsFinite(p) && p >= 0))
                 throw new ArgumentException("psd must be finite and non-negative", nameof(psd));
@@ -314,7 +335,24 @@ public static class Spectral
             even = Math.Abs(f[i] - f[i - 1] - delta) <= 1e-6 * delta;
         if (!even)
             throw new ArgumentException("frequencies must be ascending and evenly spaced", nameof(f));
-        return delta;
+        double lo = double.NegativeInfinity, hi = double.PositiveInfinity;
+        if (span is { } s)
+        {
+            if (!(s.Low <= f[0] && s.High >= f[^1]))
+                throw new ArgumentException("span must be (low, high) covering every bin center", nameof(span));
+            (lo, hi) = s;
+        }
+        int n = f.Length;
+        var power = new double[n];
+        var left = new double[n];
+        var right = new double[n];
+        for (int k = 0; k < n; k++)
+        {
+            power[k] = psd[k] * delta;
+            left[k] = Math.Max(f[k] - delta / 2, lo);
+            right[k] = Math.Min(f[k] + delta / 2, hi);
+        }
+        return (power, left, right);
     }
 
     private static Complex[] ToComplex(ReadOnlySpan<double> x)

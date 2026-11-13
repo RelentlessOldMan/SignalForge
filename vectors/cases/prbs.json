@@ -24,6 +24,42 @@
       "source": "seed 0000001 (MSB = first bit); a7 = a0^a1 = 0, a8 = a1^a2 = 0"
     },
     {"id": "prbs.unsupported_order", "op": "prbs", "args": {"order": 8, "num_bits": 4}, "error": "invalid_argument", "source": "only O.150 orders"},
-    {"id": "prbs.zero_seed", "op": "prbs", "args": {"order": 7, "num_bits": 4, "seed": 0}, "error": "invalid_argument", "source": "all-zero state never leaves zero"}
+    {"id": "prbs.zero_seed", "op": "prbs", "args": {"order": 7, "num_bits": 4, "seed": 0}, "error": "invalid_argument", "source": "all-zero state never leaves zero"},
+    {
+      "id": "prbs11.prefix30", "op": "prbs",
+      "args": {"order": 11, "num_bits": 30},
+      "expected": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+      "source": "x^11+x^9+1 (O.150): a[i] = a[i-11] XOR a[i-9] from 11 ones, worked bit by bit"
+    },
+    {
+      "id": "prbs15.prefix38", "op": "prbs",
+      "args": {"order": 15, "num_bits": 38},
+      "expected": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      "source": "x^15+x^14+1 (O.150): a[i] = a[i-15] XOR a[i-14] from 15 ones, worked bit by bit"
+    },
+    {
+      "id": "prbs20.prefix48", "op": "prbs",
+      "args": {"order": 20, "num_bits": 48},
+      "expected": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1],
+      "source": "x^20+x^3+1 (O.150): a[i] = a[i-20] XOR a[i-3] from 20 ones, worked bit by bit"
+    },
+    {
+      "id": "prbs23.prefix54", "op": "prbs",
+      "args": {"order": 23, "num_bits": 54},
+      "expected": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      "source": "x^23+x^18+1 (O.150): a[i] = a[i-23] XOR a[i-18] from 23 ones, worked bit by bit"
+    },
+    {
+      "id": "prbs31.prefix70", "op": "prbs",
+      "args": {"order": 31, "num_bits": 70},
+      "expected": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      "source": "x^31+x^28+1 (O.150): a[i] = a[i-31] XOR a[i-28] from 31 ones, worked bit by bit"
+    },
+    {
+      "id": "prbs7.wraps_after_period", "op": "prbs",
+      "args": {"order": 7, "num_bits": 130},
+      "expected": [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1],
+      "source": "x^7+x^6+1 recurrence; period 127, so bits 127-129 repeat bits 0-2 (1, 1, 1)"
+    }
   ]
 }

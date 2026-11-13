@@ -24,9 +24,9 @@ public sealed class Signal<T> where T : struct
         double timeOrigin = 0.0, string? units = null, double? impedance = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
         if (impedance is { } r)
-            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(r, nameof(impedance));
+            Check.PositiveFinite(r, nameof(impedance));
         _samples = samples.ToArray();
         SampleRate = sampleRate;
         CenterFrequency = centerFrequency;

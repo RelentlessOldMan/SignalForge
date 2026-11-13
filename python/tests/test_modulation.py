@@ -28,3 +28,9 @@ def test_rotation_by_90_degrees_costs_one_bit_per_symbol() -> None:
 def test_bit_errors_empty() -> None:
     r = bit_errors([], [])
     assert r.errors == 0 and r.compared == 0 and np.isnan(r.rate)
+
+
+@pytest.mark.parametrize("bits", [[0, 2], [0.5, 1], [-1, 0], [True, 0.0, 1, 3]])
+def test_qpsk_map_rejects_non_bits(bits: list[float]) -> None:
+    with pytest.raises(ValueError):
+        qpsk_map(bits)

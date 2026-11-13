@@ -31,7 +31,7 @@ public static class Waveforms
     public static void Tone(Span<Complex> destination, double sampleRate, double frequency,
         double amplitude = 1.0, double phase = 0.0)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
         double w = 2.0 * Math.PI * frequency;
         for (int n = 0; n < destination.Length; n++)
         {
@@ -44,7 +44,7 @@ public static class Waveforms
     public static double[] RealTone(double sampleRate, int numSamples, double frequency,
         double amplitude = 1.0, double phase = 0.0)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
         ArgumentOutOfRangeException.ThrowIfNegative(numSamples);
         double w = 2.0 * Math.PI * frequency;
         var x = new double[numSamples];

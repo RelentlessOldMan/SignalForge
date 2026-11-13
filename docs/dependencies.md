@@ -33,7 +33,7 @@ the source repositories.
 
 | Package | Version | Use | License | Verified from | Notes |
 |---|---|---|---|---|---|
-| numpy | 2.5.4 | runtime | BSD-3-Clause (+ 0BSD, MIT, Zlib, CC0-1.0 for vendored parts) | wheel `License-Expression`, `dist-info/licenses/` | Approved 2026-11-12 ([ADR 0004](adr/0004-numpy-gcc-runtime-exception.md)). Wheels bundle the GCC Fortran runtime under GPL-3.0-or-later WITH GCC-exception-3.1; no obligation on our code. Bundled distributions must carry NumPy's `LICENSE.txt`. |
+| numpy | ≥ 2.2 (2.5.4 locally; 2.2.6 in CI on Python 3.10, its last release for 3.10) | runtime | BSD-3-Clause (+ 0BSD, MIT, Zlib, CC0-1.0, Apache-2.0 for vendored parts; see open questions) | wheel `License-Expression`, `dist-info/licenses/`; 2.2.6 and 2.5.4 Linux wheels opened 2026-11-13 | Approved 2026-11-12 ([ADR 0004](adr/0004-numpy-gcc-runtime-exception.md)). Wheels bundle the GCC Fortran runtime under GPL-3.0-or-later WITH GCC-exception-3.1; no obligation on our code. **Linux wheels also bundle `libquadmath` (LGPL-2.1-or-later): open question below.** Bundled distributions must carry NumPy's `LICENSE.txt`. |
 | flit_core | 4.2.0 | build backend | BSD-3-Clause | wheel metadata | no dependencies |
 | pytest | 9.2.0 | test | MIT | wheel metadata | |
 | ↳ iniconfig | 2.3.1 | test (transitive) | MIT | wheel metadata | |
@@ -41,6 +41,8 @@ the source repositories.
 | ↳ pluggy | 1.7.0 | test (transitive) | MIT | wheel metadata | |
 | ↳ pygments | 2.21.0 | test (transitive) | BSD-2-Clause | wheel metadata | |
 | ↳ colorama | 0.4.6 | test (transitive, Windows) | BSD-3-Clause | classifier + upstream LICENSE | |
+| ↳ exceptiongroup | 1.3.1 | test (transitive, Python < 3.11) | MIT | classifier + `dist-info/licenses/LICENSE`, 2026-11-13 | needs typing_extensions (PSF-2.0, below) |
+| ↳ tomli | 2.5.0 | test (transitive, Python < 3.11) | MIT | wheel `License-Expression`, 2026-11-13 | also a mypy dependency on Python < 3.11 |
 | ruff | 0.17.5 | lint/format | MIT | wheel metadata | single binary, no Python deps |
 | mypy | 2.4.1 | type check (dev only) | MIT; a few files PSF-2.0 | `dist-info/licenses/LICENSE` | ADR 0005 |
 | ↳ typing_extensions | 4.16.0 | dev (transitive) | PSF-2.0 | wheel `License-Expression` | |
@@ -48,7 +50,6 @@ the source repositories.
 | ↳ pathspec | 1.1.1 | dev (transitive) | MPL-2.0 | classifier + `dist-info/licenses/LICENSE` | dev-only MPL exception, ADR 0005 |
 | ↳ librt | 0.16.0 | dev (transitive) | MIT; `getargsfast.c` PSF-2.0 | `dist-info/licenses/LICENSE` | mypyc runtime |
 | ↳ ast_serialize | 0.13.1 | dev (transitive) | MIT (bundled Ruff crates MIT) | `dist-info/licenses/` | |
-| ↳ tomli | — | dev (transitive, Python < 3.11) | MIT | GitHub license API (hukkin/tomli) | |
 
 ### .NET
 
@@ -67,8 +68,9 @@ library, so no NOTICE file is needed today. Revisit if a test artifact is ever s
 
 ### CI
 
-GitHub Actions `actions/checkout`, `actions/setup-python` and `actions/setup-dotnet` are MIT. They run
-on GitHub's runners and are not distributed.
+GitHub Actions `actions/checkout@v7`, `actions/setup-python@v7` and `actions/setup-dotnet@v6` (the
+current majors on 2026-11-13, all on the node24 runtime) are MIT (GitHub license API). They run on
+GitHub's runners and are not distributed.
 
 ## Rejected
 
@@ -108,4 +110,23 @@ Licenses and cases outside the allowed list that the user has approved.
 
 ## Open questions for the user
 
-None right now.
+1. **libquadmath in NumPy's Linux wheels (LGPL-2.1-or-later).** Found 2026-11-13: the Linux x86-64
+   wheels of numpy 2.2.6 and 2.5.4 ship `numpy.libs/libquadmath-*.so` (GCC's quad-precision math
+   library), listed in their `LICENSE.txt` as LGPL-2.1-or-later. The Windows wheel checked for ADR
+   0004 does not ship it. ADR 0004 approved the GCC *runtime exception* case only, and LGPL is not
+   on the allowed list, so this needs a decision.
+   - What it means: SignalForge never links it; it is a separate shared library inside NumPy that
+     NumPy's own BLAS loads. Depending on NumPy (the normal pip install) redistributes nothing, so no
+     obligation. LGPL on a separate dynamic library never requires the code that uses it to be
+     GPL or LGPL. Only a **bundle** that includes NumPy's Linux files (a container image, a frozen
+     app) would redistribute it, and would then have to carry the LGPL text and make the
+     libquadmath source available (it is part of GCC).
+   - Options: approve it for NumPy's Linux wheels on those terms (extend ADR 0004), or rule out
+     bundling NumPy on Linux.
+   - Until decided, nothing changes: CI and development keep using NumPy as before, and no bundle
+     is made.
+2. **NumPy's vendored permissive parts.** NumPy's `LICENSE.txt` lists vendored code under Zlib
+   (libdivide), BSD-3-Clause-Attribution (LAPACK), 0BSD and CC0 (2.5.4), and Apache-2.0 (Meson, build
+   only). ADR 0004 approved NumPy as a whole without naming these. They are permissive and place no
+   condition on our code (Zlib and the LAPACK variant only ask that notices stay with copies,
+   which `LICENSE.txt` already does). Confirm that the NumPy approval covers them.

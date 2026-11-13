@@ -16,6 +16,18 @@ rule for code not written yet.
 - Low-level functions take plain arrays (NumPy arrays / `ReadOnlySpan<T>`). The `Signal` type carries
   metadata around them; nothing low-level requires it. **(implemented)**
 
+## Arguments
+
+- Sample rates and impedances must be positive and **finite**; NaN and infinity are rejected.
+  **(implemented)**
+- Counts (`n`, `num_samples`, `num_bits`, `order`, `seed`, `nperseg`, `noverlap`) are integers ≥ 0.
+  Python accepts anything with `__index__` (so NumPy integers) and rejects floats, even whole ones
+  like `3.0`; C# takes `int`. **(implemented)**
+- Measurements reject non-finite input where a NaN would otherwise pass through silently
+  (`power_stats` samples, PSD frequencies and values). **(implemented)**
+- A bad argument raises `ValueError` (Python) or `ArgumentException` or a subclass (C#).
+  **(implemented)**
+
 ## Complex baseband
 
 - A complex baseband signal is `x[n] = I[n] + j·Q[n]`. I is the real part, Q the imaginary part.
@@ -79,14 +91,16 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
     `blackman` (0.42, 0.5, 0.08), `blackman_harris` (0.35875, 0.48829, 0.14128, 0.01168),
     `flattop` (0.21557895, 0.41663158, 0.277263158, 0.083578947, 0.006947368; the five-term
     flat-top from D'Antona and Ferrero, *Digital Signal Processing for Measurement Systems*, 2006);
-  - `kaiser`: `w[n] = I₀(β·√(1 − (2n/D − 1)²)) / I₀(β)`, `β ≥ 0` required (and only allowed here).
+  - `kaiser`: `w[n] = I₀(β·√(1 − (2n/D − 1)²)) / I₀(β)`, `0 ≤ β ≤ 700` required (and only
+    allowed here); I₀(β) overflows a double just above β = 713. The limit is `KAISER_MAX_BETA` /
+    `Spectral.KaiserMaxBeta`.
   - `N = 0` gives an empty window; `N = 1` gives `[1]`. Unknown names raise.
   **(implemented)**
 - **Window figures** (`window_stats(w)`): coherent gain `CG = Σw / N` (a tone at a bin center reads
   `CG` times its amplitude); equivalent noise bandwidth in bins `ENBW = N·Σw² / (Σw)²`. Hann has
   CG 0.5 and ENBW exactly 1.5. **(implemented)**
 - **PSD** (`welch_psd(samples, sample_rate, nperseg=None, noverlap=None, window="hann",
-  one_sided=None)`), Welch's method:
+  one_sided=None, beta=None)`), Welch's method (`beta` is the Kaiser β):
   - `nperseg` defaults to the whole input; `noverlap` defaults to `⌊nperseg/2⌋`, `0 ≤ noverlap <
     nperseg`. Segments start at `0, step, 2·step, …` with `step = nperseg − noverlap`, as many as fit
     whole: `num_segments = ⌊(L − nperseg)/step⌋ + 1`. No detrending, no zero padding.
@@ -99,24 +113,34 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
     and, for even `N`, Nyquist. Real input with `one_sided=False` gives the two-sided shifted PSD;
     complex input with `one_sided=True` raises.
   - The result carries `frequencies`, `psd`, `sample_rate`, `nperseg`, `num_segments`,
-    `one_sided`, `bin_width = fs/N` and `enbw_hz = ENBW·fs/N` (the resolution bandwidth).
+    `one_sided`, `bin_width = fs/N` and `enbw_hz = ENBW·fs/N` (the resolution bandwidth), and
+    `span`: `(0, fs/2)` when one-sided, else none (see Bins as rectangles).
   **(implemented)**
 - **PSD units:** W/Hz when the samples are volts and an impedance is known (divide by the
   impedance), otherwise sample-units²/Hz. The functions above work in sample units. **(defined)**
 - **Bins as rectangles:** OBW and channel power treat PSD bin `k` (center `f_k`, uniform spacing
-  `Δ`) as constant over `[f_k − Δ/2, f_k + Δ/2]`, holding power `PSD_k·Δ`. So cumulative power is
-  piecewise linear in frequency and band edges are interpolated within a bin. Frequencies must be
-  ascending and evenly spaced (relative error ≤ 1e-6), at least two bins, PSD finite and ≥ 0.
+  `Δ`) as holding power `PSD_k·Δ` spread evenly over `[f_k − Δ/2, f_k + Δ/2]`. So cumulative power
+  is piecewise linear in frequency and band edges are interpolated within a bin. Frequencies must
+  be finite, ascending and evenly spaced (relative error ≤ 1e-6), at least two bins, PSD finite
+  and ≥ 0.
+  - An optional `span = (low, high)` clips every bin's interval to `[low, high]`; a clipped bin
+    keeps its whole power, spread over the clipped width. `low ≤ f_0` and `high ≥` the last bin
+    center are required. A one-sided PSD needs its `span` `(0, fs/2)`: its DC bin (and Nyquist bin,
+    for even `N`) covers only half a bin of positive frequency but holds that bin's full power, so
+    without the span the power in `[0, f]` is undercounted near DC and Nyquist.
   **(implemented)**
-- **Occupied bandwidth** (`occupied_bandwidth(frequencies, psd, fraction=0.99)`), the ITU-R SM.328
-  β/2 method: the band outside which lies `(1 − fraction)/2` of the total power on each side. With
-  `C(f)` the cumulative power and `P` the total, `lower` is the smallest `f` where `C(f)` exceeds
-  `(1 − fraction)/2·P` and `upper` the largest `f` where `C(f)` is still below `(1 + fraction)/2·P`.
-  `0 < fraction ≤ 1`; `P > 0` required. Result: `bandwidth = upper − lower`, `lower`, `upper`,
-  `total_power`, `fraction`. **(implemented)**
-- **Channel power** (`channel_power(frequencies, psd, low, high)`): the PSD integrated over
-  `[low, high]`, partial bins counted by their overlap. `low < high` required. Result in the PSD's
-  power units. **(implemented)**
+- **Occupied bandwidth** (`occupied_bandwidth(frequencies, psd, fraction=0.99, span=None)`), the
+  ITU-R SM.328 β/2 method: the band outside which lies `(1 − fraction)/2` of the total power on each
+  side. With `C(f)` the cumulative power and `P` the total (the running sum of bin powers in
+  ascending order, so `C` ends exactly at `P`), `lower` is the `f` where `C(f) = (1 − fraction)/2·P`,
+  interpolated within the first bin whose power takes `C` above that, and `upper` the `f` where
+  `C(f) = (1 + fraction)/2·P`, within the last bin where `C` starts below it. With `fraction = 1`
+  these are the outer edges of the first and last bins with power. `0 < fraction ≤ 1`; `P > 0`
+  required. Result: `bandwidth = upper − lower`, `lower`, `upper`, `total_power`, `fraction`.
+  **(implemented)**
+- **Channel power** (`channel_power(frequencies, psd, low, high, span=None)`): the PSD integrated
+  over `[low, high]`, each bin counted by the fraction of its (clipped) width inside. Finite
+  `low < high` required. Result in the PSD's power units. **(implemented)**
 - Windowed spectra state the window and the correction (coherent gain for tone amplitude, ENBW for
   noise and power) in the result. **(defined)**
 

@@ -39,6 +39,8 @@ public static class Measurements
         for (int i = 0; i < samples.Length; i++)
         {
             Complex x = samples[i];
+            if (!(double.IsFinite(x.Real) && double.IsFinite(x.Imaginary)))
+                throw new ArgumentException("samples must be finite", nameof(samples));
             double p = x.Real * x.Real + x.Imaginary * x.Imaginary;
             sum += p;
             dc += x;
@@ -61,6 +63,8 @@ public static class Measurements
         for (int i = 0; i < samples.Length; i++)
         {
             double x = samples[i];
+            if (!double.IsFinite(x))
+                throw new ArgumentException("samples must be finite", nameof(samples));
             double p = x * x;
             sum += p;
             dc += x;

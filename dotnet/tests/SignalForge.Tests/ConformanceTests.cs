@@ -22,11 +22,14 @@ public class ConformanceTests
         Assert.All(Cases.Values, c =>
             Assert.False(string.IsNullOrEmpty(c.Json.GetProperty("source").GetString()), c.Id));
 
-    [Fact]
-    public void ComparisonCatchesAWrongValue()
-    {
-        using var doc = JsonDocument.Parse(
-            """{"id": "x", "op": "lin_to_db", "args": {"x": 10}, "expected": 10.001, "source": "t"}""");
-        Assert.NotEmpty(Conformance.Run(new Conformance.VectorCase("t.json", "x", doc.RootElement.Clone())));
-    }
+    private static readonly Dictionary<string, Conformance.VectorCase> SelfTest =
+        Conformance.LoadCases(Path.Combine(Conformance.VectorsDir(), "..", "selftest")).ToDictionary(c => c.Id);
+
+    public static TheoryData<string> SelfTestNames() => new(SelfTest.Keys);
+
+    /// <summary>Every case in vectors/selftest is wrong; the runner must fail it, not pass or crash.</summary>
+    [Theory]
+    [MemberData(nameof(SelfTestNames))]
+    public void RunnerFailsAWrongCase(string id) =>
+        Assert.True(Conformance.Run(SelfTest[id]).Count > 0, SelfTest[id].Json.GetProperty("why").GetString());
 }

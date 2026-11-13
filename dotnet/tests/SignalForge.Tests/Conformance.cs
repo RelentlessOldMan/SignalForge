@@ -43,7 +43,18 @@ public static class Conformance
     /// <summary>Runs one case; returns the failure messages (empty when it passes).</summary>
     public static List<string> Run(VectorCase c)
     {
-        var json = c.Json;
+        try
+        {
+            return RunCase(c.Json);
+        }
+        catch (InvalidDataException e)
+        {
+            return [$"bad case: {e.Message}"];
+        }
+    }
+
+    private static List<string> RunCase(JsonElement json)
+    {
         string op = json.GetProperty("op").GetString()!;
         var args = new Dictionary<string, object?>();
         if (json.TryGetProperty("args", out var a))
@@ -60,74 +71,184 @@ public static class Conformance
         object? actual;
         try
         {
-            actual = Invoke(op, args);
+            actual = Invoke(op, new Args(args));
         }
-        catch (ArgumentException e)
+        catch (LibraryArgumentException e)
         {
-            return wantError && err.GetString() == "invalid_argument" ? [] : [$"threw {e.GetType().Name}: {e.Message}"];
+            return wantError && err.GetString() == "invalid_argument"
+                ? []
+                : [$"threw {e.InnerException!.GetType().Name}: {e.InnerException.Message}"];
         }
         if (wantError)
             return [$"expected error {err.GetString()}"];
         var msgs = new List<string>();
-        Compare(Canonical(actual), Decode(json.GetProperty("expected")), abs, rel, "", msgs);
+        if (!json.TryGetProperty("expected", out var expected))
+            throw new InvalidDataException("no expected value or error");
+        Compare(Canonical(actual), Decode(expected), abs, rel, "", msgs);
         return msgs;
     }
 
-    private static object? Invoke(string op, Dictionary<string, object?> a)
+    /// <summary>An ArgumentException thrown by the library itself (not by argument decoding).</summary>
+    private sealed class LibraryArgumentException(ArgumentException inner) : Exception(inner.Message, inner);
+
+    /// <summary>A case's arguments. Every argument must be read exactly once, so a misspelled one fails.</summary>
+    private sealed class Args(Dictionary<string, object?> a)
     {
-        double D(string k) => Convert.ToDouble(a[k], CultureInfo.InvariantCulture);
-        double Opt(string k, double dflt) => a.ContainsKey(k) ? D(k) : dflt;
-        int I(string k) => checked((int)D(k));
-        int? OptInt(string k) => a.ContainsKey(k) ? I(k) : null;
-        bool Flag(string k) => a.TryGetValue(k, out var f) && f is true;
-        return op switch
+        private readonly HashSet<string> _unused = [.. a.Keys];
+
+        public bool Has(string k) => a.ContainsKey(k);
+
+        public object? Get(string k)
         {
-            "lin_to_db" => Units.LinToDb(D("x")),
-            "db_to_lin" => Units.DbToLin(D("x")),
-            "amp_to_db" => Units.AmpToDb(D("x")),
-            "db_to_amp" => Units.DbToAmp(D("x")),
-            "w_to_dbm" => Units.WToDbm(D("x")),
-            "dbm_to_w" => Units.DbmToW(D("x")),
-            "vrms_to_dbm" => Units.VrmsToDbm(D("vrms"), Opt("impedance", Units.DefaultImpedance)),
-            "dbm_to_vrms" => Units.DbmToVrms(D("dbm"), Opt("impedance", Units.DefaultImpedance)),
-            "tone" => a.TryGetValue("complex", out var cx) && cx is false
-                ? Waveforms.RealTone(D("sample_rate"), I("num_samples"), D("frequency"), Opt("amplitude", 1), Opt("phase", 0))
-                : Waveforms.Tone(D("sample_rate"), I("num_samples"), D("frequency"), Opt("amplitude", 1), Opt("phase", 0)),
-            "prbs" => Waveforms.Prbs(I("order"), I("num_bits"),
-                a.ContainsKey("seed") ? checked((uint)D("seed")) : null, a.TryGetValue("invert", out var inv) && inv is true),
-            "power_stats" => a["samples"] is Complex[] cs ? Measurements.PowerStats(cs) : Measurements.PowerStats(Reals(a["samples"])),
-            "qpsk_map" => Modulation.QpskMap(Bits(a["bits"])),
-            "qpsk_demap_hard" => Modulation.QpskDemapHard(Complexes(a["symbols"])),
-            "bit_errors" => Metrics.BitErrors(Bits(a["reference"]), Bits(a["received"])),
-            "fft" => a["samples"] is Complex[] fc ? Spectral.Fft(fc) : Spectral.Fft(Reals(a["samples"])),
-            "ifft" => Spectral.Ifft(Complexes(a["spectrum"])),
-            "fft_frequencies" => Spectral.FftFrequencies(I("n"), D("sample_rate"), Flag("shifted")),
-            "window" => Spectral.Window(WindowName(a["name"]), I("n"), Flag("symmetric"),
-                a.ContainsKey("beta") ? D("beta") : null),
-            "window_stats" => Spectral.WindowStats(Reals(a["w"])),
-            "welch_psd" => a["samples"] is Complex[] ws
-                ? Spectral.WelchPsd(ws, D("sample_rate"), OptInt("nperseg"), OptInt("noverlap"), WindowName(a.GetValueOrDefault("window", "hann")))
-                : Spectral.WelchPsd(Reals(a["samples"]), D("sample_rate"), OptInt("nperseg"), OptInt("noverlap"),
-                    WindowName(a.GetValueOrDefault("window", "hann")), !a.TryGetValue("one_sided", out var os) || os is true),
-            "occupied_bandwidth" => Spectral.OccupiedBandwidth(Reals(a["frequencies"]), Reals(a["psd"]), Opt("fraction", 0.99)),
-            "channel_power" => Spectral.ChannelPower(Reals(a["frequencies"]), Reals(a["psd"]), D("low"), D("high")),
-            _ => throw new InvalidOperationException($"unknown op {op}"),
-        };
+            if (!a.TryGetValue(k, out var v))
+                throw new InvalidDataException($"missing argument {k}");
+            _unused.Remove(k);
+            return v;
+        }
+
+        public double D(string k) => Get(k) as double? ?? throw new InvalidDataException($"{k} must be a number");
+
+        public double Opt(string k, double dflt) => Has(k) ? D(k) : dflt;
+
+        public double? OptD(string k) => Has(k) ? D(k) : null;
+
+        public int I(string k)
+        {
+            double v = D(k);
+            return v == Math.Floor(v) && v is >= int.MinValue and <= int.MaxValue
+                ? (int)v
+                : throw new InvalidDataException($"{k} must be an integer, got {v}");
+        }
+
+        public int? OptInt(string k) => Has(k) ? I(k) : null;
+
+        public bool Flag(string k, bool dflt = false) =>
+            !Has(k) ? dflt : Get(k) as bool? ?? throw new InvalidDataException($"{k} must be true or false");
+
+        public void CheckAllUsed()
+        {
+            if (_unused.Count > 0)
+                throw new InvalidDataException($"unknown argument(s): {string.Join(", ", _unused)}");
+        }
     }
 
-    /// <summary>Vector window name (snake_case) to the enum; unknown names throw ArgumentException.</summary>
-    private static WindowType WindowName(object? v) =>
-        Enum.Parse<WindowType>(((string)v!).Replace("_", "", StringComparison.Ordinal), ignoreCase: true);
+    private static object? Invoke(string op, Args a)
+    {
+        Func<object?> call = op switch
+        {
+            "lin_to_db" => Bind(a.D("ratio"), Units.LinToDb),
+            "db_to_lin" => Bind(a.D("db"), Units.DbToLin),
+            "amp_to_db" => Bind(a.D("ratio"), Units.AmpToDb),
+            "db_to_amp" => Bind(a.D("db"), Units.DbToAmp),
+            "w_to_dbm" => Bind(a.D("watts"), Units.WToDbm),
+            "dbm_to_w" => Bind(a.D("dbm"), Units.DbmToW),
+            "vrms_to_dbm" => Bind((a.D("vrms"), a.Opt("impedance", Units.DefaultImpedance)), t => Units.VrmsToDbm(t.Item1, t.Item2)),
+            "dbm_to_vrms" => Bind((a.D("dbm"), a.Opt("impedance", Units.DefaultImpedance)), t => Units.DbmToVrms(t.Item1, t.Item2)),
+            "tone" => Tone(a),
+            "prbs" => Prbs(a),
+            "power_stats" => a.Get("samples") is Complex[] cs
+                ? () => Measurements.PowerStats(cs)
+                : Bind(Reals(a.Get("samples")), x => Measurements.PowerStats(x)),
+            "qpsk_map" => Bind(Bits(a.Get("bits")), b => Modulation.QpskMap(b)),
+            "qpsk_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.QpskDemapHard(s)),
+            "bit_errors" => Bind((Bits(a.Get("reference")), Bits(a.Get("received"))), t => Metrics.BitErrors(t.Item1, t.Item2)),
+            "fft" => a.Get("samples") is Complex[] fc
+                ? () => Spectral.Fft(fc)
+                : Bind(Reals(a.Get("samples")), x => Spectral.Fft(x)),
+            "ifft" => Bind(Complexes(a.Get("spectrum")), x => Spectral.Ifft(x)),
+            "fft_frequencies" => Bind((a.I("n"), a.D("sample_rate"), a.Flag("shifted")),
+                t => Spectral.FftFrequencies(t.Item1, t.Item2, t.Item3)),
+            "window" => Bind((WindowName(a.Get("name")), a.I("n"), a.Flag("symmetric"), a.OptD("beta")),
+                t => Spectral.Window(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "window_stats" => Bind(Reals(a.Get("w")), w => Spectral.WindowStats(w)),
+            "welch_psd" => Welch(a),
+            "occupied_bandwidth" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Opt("fraction", 0.99), Span(a)),
+                t => Spectral.OccupiedBandwidth(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "channel_power" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.D("low"), a.D("high"), Span(a)),
+                t => Spectral.ChannelPower(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            _ => throw new InvalidDataException($"unknown op {op}"),
+        };
+        a.CheckAllUsed();
+        try
+        {
+            return call();
+        }
+        catch (ArgumentException e)
+        {
+            throw new LibraryArgumentException(e);
+        }
+    }
+
+    private static Func<object?> Bind<T, TResult>(T args, Func<T, TResult> f) => () => f(args);
+
+    private static Func<object?> Tone(Args a)
+    {
+        var (fs, n, f, amp, ph) = (a.D("sample_rate"), a.I("num_samples"), a.D("frequency"), a.Opt("amplitude", 1), a.Opt("phase", 0));
+        return a.Flag("complex", dflt: true)
+            ? () => Waveforms.Tone(fs, n, f, amp, ph)
+            : () => Waveforms.RealTone(fs, n, f, amp, ph);
+    }
+
+    private static Func<object?> Prbs(Args a)
+    {
+        var (order, n, invert) = (a.I("order"), a.I("num_bits"), a.Flag("invert"));
+        uint? seed = a.Has("seed") ? (a.I("seed") is var v and >= 0 ? (uint)v : throw new InvalidDataException("seed < 0")) : null;
+        return () => Waveforms.Prbs(order, n, seed, invert);
+    }
+
+    private static Func<object?> Welch(Args a)
+    {
+        object? samples = a.Get("samples");
+        var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.OptInt("nperseg"), a.OptInt("noverlap"));
+        var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
+        double? beta = a.OptD("beta");
+        if (samples is Complex[] cs)
+        {
+            // C# has no one-sided option for complex samples (Python raises for one_sided=True).
+            if (a.Flag("one_sided"))
+                throw new InvalidDataException("one_sided=true with complex samples has no C# form");
+            return () => Spectral.WelchPsd(cs, fs, nperseg, noverlap, window, beta);
+        }
+        double[] x = Reals(samples);
+        bool oneSided = a.Flag("one_sided", dflt: true);
+        return () => Spectral.WelchPsd(x, fs, nperseg, noverlap, window, oneSided, beta);
+    }
+
+    private static (double Low, double High)? Span(Args a)
+    {
+        if (!a.Has("span"))
+            return null;
+        double[] s = Reals(a.Get("span"));
+        return s.Length == 2 ? (s[0], s[1]) : throw new InvalidDataException("span must have two values");
+    }
+
+    /// <summary>Vector window names: exactly the Python names. An unknown name is a library error in
+    /// Python, so it maps to an undefined enum value that the library must reject.</summary>
+    private static WindowType WindowName(object? v) => (v as string) switch
+    {
+        "rectangular" => WindowType.Rectangular,
+        "hann" => WindowType.Hann,
+        "hamming" => WindowType.Hamming,
+        "blackman" => WindowType.Blackman,
+        "blackman_harris" => WindowType.BlackmanHarris,
+        "flattop" => WindowType.Flattop,
+        "kaiser" => WindowType.Kaiser,
+        string => (WindowType)(-1),
+        _ => throw new InvalidDataException("window name must be a string"),
+    };
 
     private static double[] Reals(object? v) => v as double[] ?? throw new InvalidDataException("expected a real array");
 
     private static Complex[] Complexes(object? v) =>
         v as Complex[] ?? Reals(v).Select(x => new Complex(x, 0)).ToArray();
 
+    /// <summary>Bits as bytes. A value that is not 0 or 1 has no byte form the library could reject
+    /// for being a non-bit (e.g. 0.5), so it is a bad case, except whole numbers 2…255, which the
+    /// library must reject.</summary>
     private static byte[] Bits(object? v) => Reals(v).Select(x =>
         x is >= 0 and <= byte.MaxValue && x == Math.Floor(x)
             ? (byte)x
-            : throw new ArgumentException($"not a bit value: {x}")).ToArray();
+            : throw new InvalidDataException($"not representable as a byte: {x}")).ToArray();
 
     /// <summary>JSON vector value to: double, bool, string, double[], Complex, Complex[], or a record dictionary.</summary>
     public static object? Decode(JsonElement v)
@@ -158,6 +279,8 @@ public static class Conformance
                     {
                         var r = (double[])Decode(re)!;
                         var i = (double[])Decode(im)!;
+                        if (r.Length != i.Length)
+                            throw new InvalidDataException("re and im have different lengths");
                         return r.Zip(i, (x, y) => new Complex(x, y)).ToArray();
                     }
                     return new Complex((double)Decode(re)!, (double)Decode(im)!);
@@ -175,6 +298,7 @@ public static class Conformance
         double or Complex or Complex[] or double[] or bool or string => v,
         int i => (double)i,
         byte[] b => b.Select(x => (double)x).ToArray(),
+        System.Runtime.CompilerServices.ITuple t => Enumerable.Range(0, t.Length).Select(i => Convert.ToDouble(t[i], CultureInfo.InvariantCulture)).ToArray(),
         _ when v.GetType().Assembly == typeof(Units).Assembly =>
             v.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .ToDictionary(p => SnakeCase(p.Name), p => Canonical(p.GetValue(v))),

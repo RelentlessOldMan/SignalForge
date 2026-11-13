@@ -6,7 +6,10 @@
     <Authors>RelentlessOldMan</Authors>
     <Description>Signal generation, processing and measurement for RF and communications.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>© 2026 RelentlessOldMan</Copyright>
+    <PackageProjectUrl>https://github.com/RelentlessOldMan/SignalForge</PackageProjectUrl>
     <RepositoryUrl>https://github.com/RelentlessOldMan/SignalForge</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
 </Project>
