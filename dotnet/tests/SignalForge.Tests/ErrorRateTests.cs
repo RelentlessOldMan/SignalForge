@@ -1,3 +1,4 @@
+using System.Numerics;
 using Xunit;
 
 namespace SignalForge.Tests;
@@ -69,5 +70,39 @@ public class ErrorRateTests
         // about 4000 to 5500 errors of each kind: 3 sigma is under 5 %
         Assert.Equal(1, bitErrors / (double)(k * symbols) / ber, 0.06);
         Assert.Equal(1, symbolErrors / (double)symbols / ser, 0.06);
+    }
+
+    [Fact]
+    public void RayleighLimitsAndAsymptote()
+    {
+        Assert.Equal(0.5, Metrics.QpskBerRayleighTheory(double.NegativeInfinity));
+        Assert.Equal(0, Metrics.QpskBerRayleighTheory(double.PositiveInfinity));
+        Assert.ThrowsAny<ArgumentException>(() => Metrics.QpskBerRayleighTheory(double.NaN));
+        foreach (double db in new[] { 30.0, 60.0, 120.0 })
+        {
+            double g = Math.Pow(10, db / 10);
+            Assert.Equal(1, Metrics.QpskBerRayleighTheory(db) * 4 * g, 2 / g);
+        }
+        for (int db = -10; db < 40; db += 2)
+            Assert.True(Metrics.QpskBerRayleighTheory(db) > Metrics.QpskBerRayleighTheory(db + 2));
+        for (int db = 0; db < 20; db++)
+            Assert.True(Metrics.QpskBerRayleighTheory(db) > Metrics.QpskBerTheory(db));
+    }
+
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(5.0)]
+    [InlineData(10.0)]
+    public void RayleighMonteCarlo(double ebN0Db)
+    {
+        byte[] bits = Waveforms.Prbs(15, 400_000);
+        Complex[] symbols = Modulation.QpskMap(bits);
+        Complex[] g = Channel.RicianFading([.. Enumerable.Repeat(Complex.One, symbols.Length)], 0, 1, seed: 3);
+        Complex[] faded = [.. symbols.Select((s, i) => g[i] * s)];
+        Complex[] rx = Channel.Awgn(faded, ebN0Db + 10 * Math.Log10(2), 1, seed: 5, signalPower: 1.0);
+        double ber = Metrics.BitErrors(bits, Modulation.QpskDemapHard([.. rx.Select((r, i) => r * Complex.Conjugate(g[i]))])).Rate;
+        double theory = Metrics.QpskBerRayleighTheory(ebN0Db);
+        // 400 000 bits, two to a gain: the deep fades make it noisier than the error count says
+        Assert.True(Math.Abs(ber - theory) / theory < 0.06, $"ber {ber} vs theory {theory}");
     }
 }

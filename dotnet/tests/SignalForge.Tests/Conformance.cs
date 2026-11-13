@@ -335,6 +335,7 @@ public static class Conformance
             "fractional_delay" => Bind((Complexes(a.Get("samples")), a.D("delay"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.FractionalDelay(t.Item1, t.Item2, t.Item3)),
             "dc_offset" => Bind((Complexes(a.Get("samples")), ComplexScalar(a.Get("offset"))), t => Channel.DcOffset(t.Item1, t.Item2)),
             "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),
+            "qpsk_ber_rayleigh_theory" => Bind(a.D("eb_n0_db"), Metrics.QpskBerRayleighTheory),
             "qpsk_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.QpskBerTheory),
             "qam16_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.Qam16BerTheory),
             "qam16_ser_theory" => Bind(a.D("eb_n0_db"), Metrics.Qam16SerTheory),

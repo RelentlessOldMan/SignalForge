@@ -64,6 +64,15 @@ public static class Metrics
     public static double QpskBerTheory(double ebN0Db) =>
         0.5 * SpecialFunctions.Erfc(Math.Sqrt(EbN0(ebN0Db)));
 
+    /// <summary>Bit error rate of Gray QPSK in Rayleigh fading with a coherent receiver, mean Eb/N0 in
+    /// dB: ½·(1 − √(γ/(1+γ))) (conventions: EVM and BER).</summary>
+    /// <param name="ebN0Db">Mean Eb/N0 in dB, not NaN.</param>
+    public static double QpskBerRayleighTheory(double ebN0Db)
+    {
+        double g = EbN0(ebN0Db);
+        return double.IsInfinity(g) ? 0 : 1 / (2 * (1 + g) * (1 + Math.Sqrt(g / (1 + g))));
+    }
+
     /// <summary>Exact bit error rate of Gray 16-QAM in AWGN (conventions: EVM and BER).</summary>
     /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
     public static double Qam16BerTheory(double ebN0Db)

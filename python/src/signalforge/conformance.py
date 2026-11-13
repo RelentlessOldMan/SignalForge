@@ -130,6 +130,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "rician_fading": channel.rician_fading,
     "evm": metrics.evm,
     "qpsk_ber_theory": metrics.qpsk_ber_theory,
+    "qpsk_ber_rayleigh_theory": metrics.qpsk_ber_rayleigh_theory,
     "qam16_ber_theory": metrics.qam16_ber_theory,
     "qam16_ser_theory": metrics.qam16_ser_theory,
     "psk8_ber_theory": metrics.psk8_ber_theory,

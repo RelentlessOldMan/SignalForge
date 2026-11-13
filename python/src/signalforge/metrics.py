@@ -81,6 +81,15 @@ def qpsk_ber_theory(eb_n0_db: float) -> float:
     return 0.5 * math.erfc(math.sqrt(_eb_n0(eb_n0_db)))
 
 
+def qpsk_ber_rayleigh_theory(eb_n0_db: float) -> float:
+    """Bit error rate of Gray QPSK in Rayleigh fading with a coherent receiver, mean Eb/N0 in dB:
+    ``0.5 * (1 - sqrt(g / (1 + g)))`` (conventions: EVM and BER)."""
+    g = _eb_n0(eb_n0_db)
+    if math.isinf(g):
+        return 0.0
+    return 1 / (2 * (1 + g) * (1 + math.sqrt(g / (1 + g))))
+
+
 def qam16_ber_theory(eb_n0_db: float) -> float:
     """Exact bit error rate of Gray 16-QAM in AWGN (conventions: EVM and BER)."""
     r = math.sqrt(2 * _eb_n0(eb_n0_db) / 5)

@@ -4,10 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **BER in Rayleigh fading**: `qpsk_ber_rayleigh_theory(eb_n0_db)`, the average of the AWGN
-   curve over an exponential |g|², `½(1 − √(γ/(1+γ)))`; expected values from the closed form by
-   hand and a numerical average of the AWGN curve; Monte-Carlo checks through `rician_fading`
-   (K = 0, coherent with the true gain) in both suites.
+1. **Fractional timing offsets end to end**: delay a shaped QPSK burst by a fraction of a sample
+   with `fractional_delay`, check `timing_offset` finds it, then correct with the opposite delay
+   and get the AWGN BER back; tests only, in both suites.
+2. **Gardner timing recovery**: a closed loop (Gardner detector, PI loop filter, interpolation by
+   the `fractional_delay` kernel) with its conventions, ADR and vectors; checks: lock to a
+   static and a slowly drifting offset, and loop bandwidth against the linear model.
 
 ## Built
 
@@ -448,6 +450,12 @@ Updated with every chunk of work. Dates are absolute.
   arguments); tests: mean power, mean, per-axis variance for K = 0, 1, 3, 10, the Rayleigh power
   CDF, one gain per block with a short last block, seeding. Python 1998 passed, 2 skipped;
   .NET 1598 passed.
+- 2026-11-13: QPSK in Rayleigh fading (conventions: EVM and BER; ADR 0042):
+  `qpsk_ber_rayleigh_theory(eb_n0_db)`, `½(1 − √(γ/(1+γ)))` in a form without cancellation. 9
+  vectors added to `error_rates.py`, checked there against the AWGN curve averaged over the
+  exponential |g|² density; tests: limits, `1/(4γ)` asymptote, above the AWGN curve, and
+  Monte-Carlo through `rician_fading` (K = 0) with coherent detection at 0, 5 and 10 dB within
+  6 % (measured within 2 %). Python 2011 passed, 2 skipped; .NET 1611 passed.
 
 ## Not built
 

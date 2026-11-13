@@ -64,3 +64,29 @@ def test_monte_carlo(
     # about 4000 to 5500 errors of each kind: 3 sigma is under 5 %
     assert wrong.mean() == pytest.approx(ber(eb_n0_db), rel=0.06)
     assert wrong.reshape(-1, k).any(axis=1).mean() == pytest.approx(ser(eb_n0_db), rel=0.06)
+
+
+def test_rayleigh_limits_and_asymptote() -> None:
+    assert sf.qpsk_ber_rayleigh_theory(-math.inf) == 0.5
+    assert sf.qpsk_ber_rayleigh_theory(math.inf) == 0.0
+    with pytest.raises(ValueError):
+        sf.qpsk_ber_rayleigh_theory(math.nan)
+    for db in (30.0, 60.0, 120.0):
+        g = 10 ** (db / 10)
+        assert sf.qpsk_ber_rayleigh_theory(db) == pytest.approx(1 / (4 * g), rel=2 / g)
+    curve = [sf.qpsk_ber_rayleigh_theory(db) for db in range(-10, 40, 2)]
+    assert all(a > b for a, b in itertools.pairwise(curve))
+    # fading costs: above the AWGN curve everywhere past 0 dB
+    assert all(sf.qpsk_ber_rayleigh_theory(db) > sf.qpsk_ber_theory(db) for db in range(0, 20))
+
+
+@pytest.mark.parametrize("eb_n0_db", [0.0, 5.0, 10.0])
+def test_rayleigh_monte_carlo(eb_n0_db: float) -> None:
+    bits = sf.prbs(15, 400_000)
+    symbols = sf.qpsk_map(bits)
+    g = sf.rician_fading(np.ones(symbols.size), 0.0, 1, seed=3)
+    es_n0_db = eb_n0_db + 10 * math.log10(2)
+    rx = sf.awgn(g * symbols, es_n0_db, seed=5, signal_power=1.0)
+    ber = sf.bit_errors(bits, sf.qpsk_demap_hard(rx * np.conj(g))).rate
+    # 400 000 bits, two to a gain: the deep fades make it noisier than the error count says
+    assert ber == pytest.approx(sf.qpsk_ber_rayleigh_theory(eb_n0_db), rel=0.06)

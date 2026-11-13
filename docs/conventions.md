@@ -897,6 +897,12 @@ Python: `signalforge.metrics`; C#: `SignalForge.Metrics`.
     in Pawula's form `T(ψ) = (1/2π)·∫₀^{π−ψ} exp(−(Es/N0)·sin²ψ / sin²θ) dθ`, evaluated by
     Simpson's rule on 4096 panels (relative error below 1e-12 against the phase density's
     integral); `T(ψ) = (π − ψ)/2π` at `Es/N0 = 0` and 0 at infinity. **(implemented)**
+- **QPSK in Rayleigh fading** (`qpsk_ber_rayleigh_theory(eb_n0_db)`,
+  [ADR 0042](adr/0042-rayleigh-ber.md)): the AWGN curve averaged over a Rayleigh gain with
+  `E|g|² = 1` and a coherent receiver that knows `g`, with `γ` the mean Eb/N0 (linear, taken from
+  dB as for QPSK): `Pb = ½·(1 − √(γ/(1+γ)))`, computed without cancellation as
+  `Pb = 1 / (2·(1+γ)·(1 + √(γ/(1+γ))))`. `−∞` dB gives ½, an infinite `γ` gives 0, NaN is
+  rejected. At high `γ`, `Pb ≈ 1/(4γ)`. **(implemented)**
 
 ## QPSK link
 

@@ -9,6 +9,9 @@ It does not import NumPy or SignalForge.
   P(psi) = integral from psi to pi of p(phi), p(phi) = e^-g/(2 pi) + sqrt(g) cos(phi)
   e^(-g sin^2 phi) erfc(-sqrt(g) cos(phi)) / (2 sqrt(pi)), by Simpson with one Richardson step.
   The libraries integrate Pawula's form instead, so the two are independent.
+- QPSK in Rayleigh fading: the closed form, checked against the AWGN curve averaged over the
+  exponential density of |g|^2 (with x = u^2 so the integrand is smooth, Simpson with one
+  Richardson step on [0, 12]).
 
 Run from the repo root: python vectors/generators/error_rates.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write (numbers
@@ -100,6 +103,17 @@ def psk8(eb_n0):
 cases = []
 
 
+def rayleigh(eb_n0):
+    if eb_n0 == 0:
+        return 0.5
+    return 0.5 * (1 - math.sqrt(eb_n0 / (1 + eb_n0)))
+
+
+def rayleigh_by_integral(eb_n0):
+    root = math.sqrt(eb_n0)
+    return richardson(lambda u: math.erfc(root * u) * math.exp(-u * u) * u, 0.0, 12.0, 40000)
+
+
 def add(op, db, value, source, tol):
     cases.append({"id": f"{op}.{'minus_inf' if db == -math.inf else f'{db:g}db'}", "op": op,
                   "args": {"eb_n0_db": "-inf" if db == -math.inf else db},
@@ -110,26 +124,33 @@ QAM_SRC = ("closed form (conventions: EVM and BER), erfc from Python's math modu
            "against Simpson integration of the Gaussian over the 4-PAM decision intervals")
 PSK_SRC = ("the received phase's density integrated from psi to pi (Simpson, Richardson step), "
            "independent of the libraries' Pawula form; rel 1e-11 covers both integrations")
+RAY_SRC = ("closed form 0.5*(1 - sqrt(g/(1+g))) by hand (conventions: EVM and BER); checked "
+           "against the AWGN curve averaged over the exponential density of |g|^2 by Simpson")
 for db in LEVELS:
     g = lin(db)
     ber, ser = qam16(g)
     ib, iser = qam16_by_integral(g)
     assert abs(ib / ber - 1) < 1e-10 and abs(iser / ser - 1) < 1e-10, (db, ber, ib, ser, iser)
     pb, ps = psk8(g)
+    ray = rayleigh(g)
+    if g:
+        assert abs(rayleigh_by_integral(g) / ray - 1) < 1e-10, (db, ray, rayleigh_by_integral(g))
     if db == -math.inf:
         assert (ber, ser, pb, ps) == (0.5, 15 / 16, 0.5, 7 / 8), (ber, ser, pb, ps)
         src = "by hand: Eb/N0 = 0 makes every decision a fair guess"
-        for op, v in (("qam16_ber_theory", 0.5), ("qam16_ser_theory", 15 / 16),
+        for op, v in (("qpsk_ber_rayleigh_theory", 0.5), ("qam16_ber_theory", 0.5), ("qam16_ser_theory", 15 / 16),
                       ("psk8_ber_theory", 0.5), ("psk8_ser_theory", 7 / 8)):
             add(op, db, v, src + (": 15 of 16 points wrong" if op == "qam16_ser_theory" else
                                   ": 7 of 8 points wrong" if op == "psk8_ser_theory" else
                                   ": half the bits"), {"abs": 1e-15, "rel": 0})
         continue
+    add("qpsk_ber_rayleigh_theory", db, ray, RAY_SRC, {"abs": 0, "rel": 1e-12})
     add("qam16_ber_theory", db, ber, QAM_SRC, {"abs": 0, "rel": 1e-12})
     add("qam16_ser_theory", db, ser, QAM_SRC, {"abs": 0, "rel": 1e-12})
     add("psk8_ber_theory", db, pb, PSK_SRC, {"abs": 0, "rel": 1e-11})
     add("psk8_ser_theory", db, ps, PSK_SRC, {"abs": 0, "rel": 1e-11})
-for op in ("qam16_ber_theory", "qam16_ser_theory", "psk8_ber_theory", "psk8_ser_theory"):
+for op in ("qpsk_ber_rayleigh_theory", "qam16_ber_theory", "qam16_ser_theory", "psk8_ber_theory",
+           "psk8_ser_theory"):
     cases.append({"id": f"{op}.inf", "op": op, "args": {"eb_n0_db": "inf"}, "expected": 0.0,
                   "tol": {"abs": 0, "rel": 0}, "source": "by hand: no noise, no errors"})
     cases.append({"id": f"{op}.nan", "op": op, "args": {"eb_n0_db": "nan"},
@@ -138,8 +159,8 @@ for op in ("qam16_ber_theory", "qam16_ser_theory", "psk8_ber_theory", "psk8_ser_
 doc = {
     "schema": 1,
     "suite": "error_rates",
-    "description": "Bit and symbol error rates of Gray 16-QAM and 8-PSK in AWGN "
-    "(conventions: EVM and BER).",
+    "description": "Bit and symbol error rates of Gray 16-QAM and 8-PSK in AWGN, and of QPSK in "
+    "Rayleigh fading (conventions: EVM and BER).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "error_rates.json"
