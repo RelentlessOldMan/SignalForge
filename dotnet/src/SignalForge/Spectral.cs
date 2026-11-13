@@ -421,28 +421,31 @@ public static class Spectral
         foreach (double o in offsets)
             Check.PositiveFinite(o, nameof(offsets));
         var (power, left, right) = Bins(frequencies, psd, span);
+        double slack = 0; // rounding in center ± offset ± width/2
+        for (int k = 0; k < power.Length; k++)
+            slack = Math.Max(slack, 1e-9 * (right[k] - left[k]));
 
-        double Channel(double low, double high)
+        double Channel(double low, double high, string param)
         {
-            if (low < left[0] || high > right[^1])
-                throw new ArgumentException($"channel [{low}, {high}] leaves the spectrum [{left[0]}, {right[^1]}]", nameof(offsets));
+            if (low < left[0] - slack || high > right[^1] + slack)
+                throw new ArgumentException($"channel [{low}, {high}] leaves the spectrum [{left[0]}, {right[^1]}]", param);
             double sum = 0;
             for (int k = 0; k < power.Length; k++)
                 sum += power[k] * Math.Max(Math.Min(right[k], high) - Math.Max(left[k], low), 0.0) / (right[k] - left[k]);
             return sum;
         }
 
-        double main = Channel(center - b / 2, center + b / 2);
+        double main = Channel(center - b / 2, center + b / 2, nameof(center));
         if (!(main > 0))
             throw new ArgumentException("the main channel has no power", nameof(psd));
         int n = offsets.Length;
         double[] lower = new double[n], upper = new double[n], lowerDbc = new double[n], upperDbc = new double[n];
         for (int i = 0; i < n; i++)
         {
-            lower[i] = Channel(center - offsets[i] - ba / 2, center - offsets[i] + ba / 2);
-            upper[i] = Channel(center + offsets[i] - ba / 2, center + offsets[i] + ba / 2);
-            lowerDbc[i] = 10 * Math.Log10(lower[i] / main);
-            upperDbc[i] = 10 * Math.Log10(upper[i] / main);
+            lower[i] = Channel(center - offsets[i] - ba / 2, center - offsets[i] + ba / 2, nameof(offsets));
+            upper[i] = Channel(center + offsets[i] - ba / 2, center + offsets[i] + ba / 2, nameof(offsets));
+            lowerDbc[i] = 10 * (Math.Log10(lower[i]) - Math.Log10(main)); // the ratio itself could underflow
+            upperDbc[i] = 10 * (Math.Log10(upper[i]) - Math.Log10(main));
         }
         return new Acpr(main, lower, upper, lowerDbc, upperDbc);
     }
@@ -462,11 +465,11 @@ public static class Spectral
             if (!(double.IsFinite(p) && p >= 0))
                 throw new ArgumentException("psd must be finite and non-negative", nameof(psd));
         double delta = (f[^1] - f[0]) / (f.Length - 1);
-        bool even = delta > 0;
+        bool even = double.IsFinite(delta) && delta > 0;
         for (int i = 1; even && i < f.Length; i++)
             even = Math.Abs(f[i] - f[i - 1] - delta) <= 1e-6 * delta;
         if (!even)
-            throw new ArgumentException("frequencies must be ascending and evenly spaced", nameof(f));
+            throw new ArgumentException("frequencies must be ascending, evenly spaced, with a finite spacing", nameof(f));
         double lo = double.NegativeInfinity, hi = double.PositiveInfinity;
         if (span is { } s)
         {
@@ -483,7 +486,14 @@ public static class Spectral
             power[k] = psd[k] * delta;
             left[k] = Math.Max(f[k] - delta / 2, lo);
             right[k] = Math.Min(f[k] + delta / 2, hi);
+            if (!(right[k] > left[k]))
+                throw new ArgumentException("half a bin rounds to nothing at these frequencies", nameof(f));
         }
+        double total = 0;
+        foreach (double p in power)
+            total += p;
+        if (!double.IsFinite(total))
+            throw new ArgumentException("psd too large: the bin powers or their sum overflow", nameof(psd));
         return (power, left, right);
     }
 

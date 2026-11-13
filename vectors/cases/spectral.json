@@ -392,6 +392,30 @@
       "source": "the DC bin's power 1 spread over [0, 0.5]: half of it lies in [0, 0.25]"
     },
     {
+      "id": "occupied_bandwidth.span_fraction_one", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2], "psd": [2, 1, 2], "fraction": 1, "span": [0, 2]},
+      "expected": {"bandwidth": 2, "lower": 0, "upper": 2, "total_power": 5},
+      "source": "span clips bins 0 and 2 to [0, 0.5] and [1.5, 2], each still holding power 2; with fraction 1 the band is the whole clipped spectrum [0, 2]"
+    },
+    {
+      "id": "occupied_bandwidth.bin_power_overflows", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1], "psd": [1e308, 1e308]},
+      "error": "invalid_argument",
+      "source": "the bin powers sum to 2e308, past the largest double: the total must be finite"
+    },
+    {
+      "id": "occupied_bandwidth.spacing_overflows", "op": "occupied_bandwidth",
+      "args": {"frequencies": [-1e308, 1e308], "psd": [1, 1]},
+      "error": "invalid_argument",
+      "source": "the bin spacing 2e308 is not a finite double"
+    },
+    {
+      "id": "channel_power.bin_power_overflows", "op": "channel_power",
+      "args": {"frequencies": [0, 1, 2], "psd": [1e308, 1e308, 1e308], "low": 0, "high": 1},
+      "error": "invalid_argument",
+      "source": "the bin powers sum to 3e308, past the largest double: the total must be finite"
+    },
+    {
       "id": "channel_power.infinite_frequency", "op": "channel_power",
       "args": {"frequencies": [0, 1, "inf"], "psd": [1, 1, 1], "low": 0, "high": 1},
       "error": "invalid_argument",

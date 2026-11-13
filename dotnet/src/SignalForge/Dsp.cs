@@ -428,17 +428,14 @@ public static class Dsp
 
     private static double[][] Butterworth(int order, double cutoff, double sampleRate, bool high)
     {
-        if (order < 1)
-            throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
+        Order(order);
         return Cascade(order, cutoff, sampleRate, high, i => Complex.FromPolarCoordinates(1, Theta(i, order)));
     }
 
     private static double[][] Chebyshev1(int order, double rippleDb, double cutoff, double sampleRate, bool high)
     {
-        if (order < 1)
-            throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
-        Decibels(rippleDb, nameof(rippleDb));
-        double mu = Math.Asinh(1 / Math.Sqrt(Math.Pow(10, rippleDb / 10) - 1)) / order;
+        Order(order);
+        double mu = Math.Asinh(1 / Math.Sqrt(DbPowerRatio(rippleDb, nameof(rippleDb)))) / order;
         double sh = Math.Sinh(mu), ch = Math.Cosh(mu);
         double[][] rows = Cascade(order, cutoff, sampleRate, high, i => new Complex(sh * Math.Cos(Theta(i, order)), ch * Math.Sin(Theta(i, order))));
         if (order % 2 == 0)
@@ -452,20 +449,38 @@ public static class Dsp
 
     private static double[][] Chebyshev2(int order, double attenuationDb, double cutoff, double sampleRate, bool high)
     {
-        if (order < 1)
-            throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
-        Decibels(attenuationDb, nameof(attenuationDb));
-        double mu = Math.Asinh(Math.Sqrt(Math.Pow(10, attenuationDb / 10) - 1)) / order;
+        Order(order);
+        double mu = Math.Asinh(Math.Sqrt(DbPowerRatio(attenuationDb, nameof(attenuationDb)))) / order;
         double sh = Math.Sinh(mu), ch = Math.Cosh(mu);
         return Cascade(order, cutoff, sampleRate, high,
             i => 1 / new Complex(sh * Math.Cos(Theta(i, order)), ch * Math.Sin(Theta(i, order))),
             i => 1 / Math.Sin(Theta(i, order)));
     }
 
-    private static void Decibels(double x, string name)
+    // 10^(x/10) − 1 for 0 < x ≤ 200 dB, without losing digits for small x.
+    private static double DbPowerRatio(double x, string name)
     {
         if (!(Check.Finite(x, name) > 0 && x <= 200))
             throw new ArgumentOutOfRangeException(name, x, "must be in (0, 200] dB");
+        double y = x * Math.Log(10) / 10; // expm1(y), which .NET lacks: Exp(y) − 1 loses digits for small y
+        return y < 1e-5 ? y + y * y / 2 + y * y * y / 6 : Math.Exp(y) - 1;
+    }
+
+    private static void Order(int order)
+    {
+        if (order is < 1 or > 1000)
+            throw new ArgumentOutOfRangeException(nameof(order), order, "must be between 1 and 1000");
+    }
+
+    // The design's sections, if each is finite and strictly stable; a cutoff (or band edge) too near
+    // 0 or fs/2 rounds to a pole on the unit circle and is rejected.
+    private static double[][] Usable(List<double[]> rows)
+    {
+        foreach (double[] r in rows)
+            if (!(Array.TrueForAll(r, double.IsFinite) && Math.Abs(r[5]) < 1 && Math.Abs(r[4]) < 1 + r[5]))
+                throw new ArgumentException("the design rounds to a pole on or outside the unit circle: the cutoff is too "
+                    + "close to 0 or sampleRate/2 (or the dB value too small) for double precision");
+        return [.. rows];
     }
 
     // Sections from the analog prototype poles (cutoff 1) and, for pair i, zeros at s = ±j·zeros(i)
@@ -495,22 +510,24 @@ public static class Dsp
         {
             Complex z = Pole(i);
             double a1 = -2 * z.Real, a2 = z.Magnitude * z.Magnitude;
-            double c = zero; // numerator 1 - 2c z^-1 + z^-2: a double zero at z = zero, or a pair on the circle
+            // Numerator 1 − 2c z⁻¹ + z⁻²: a double zero at z = zero, or a pair on the circle; reference =
+            // 2 + 2·zero·c, its value at z = −zero, exactly.
+            double c = zero, reference = 4;
             if (zeros is not null)
             {
                 double w = high ? k / zeros(i) : k * zeros(i);
                 c = (1 - w * w) / (1 + w * w);
+                reference = high ? 4 / (1 + w * w) : 4 * w * w / (1 + w * w);
             }
-            double g = (1 - zero * a1 + a2) / (2 + 2 * zero * c); // unit gain at the reference z = -zero
+            double g = (1 - zero * a1 + a2) / reference; // unit gain at the reference z = -zero
             rows.Add([g, -2 * c * g, g, 1, a1, a2]);
         }
-        return [.. rows];
+        return Usable(rows);
     }
 
     private static double[][] ButterworthBand(int order, double low, double high, double sampleRate, bool stop)
     {
-        if (order < 1)
-            throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
+        Order(order);
         double fs = Check.PositiveFinite(sampleRate, nameof(sampleRate));
         double lo = Math.Tan(Math.PI * BandEdge(low, fs, nameof(low)));
         double hi = Math.Tan(Math.PI * BandEdge(high, fs, nameof(high)));
@@ -543,7 +560,7 @@ public static class Dsp
             Section(s1.Real, s1.Magnitude * s1.Magnitude);
             Section(s2.Real, s2.Magnitude * s2.Magnitude);
         }
-        return [.. rows];
+        return Usable(rows);
     }
 
     /// <summary>The sections run forward, then backward, over the samples extended by

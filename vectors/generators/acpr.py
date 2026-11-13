@@ -65,6 +65,13 @@ cases = [
          "by hand: main [3, 5] takes half of bins 3 and 5 and bin 4; lower [0, 2] takes bin 0 (its "
          "clipped width [0, 0.5] is inside, so all of its power), bin 1 and half of bin 2; upper "
          "[6, 8] half of bin 6, bin 7 and all of the clipped bin 8"),
+    case("acpr.edge_after_rounding", {"frequencies": f1, "psd": p1, "center": 0.3,
+                                      "bandwidth": 0.4, "offsets": [0.1], "span": [0.0, 8.0]},
+         0.4 * 0.5 / 0.5, [0.4 * 0.5 / 0.5], [0.3 * 0.5 / 0.5 + 0.1 * 0.25],
+         "by hand: bin 0 holds 0.5 over its clipped width [0, 0.5]; main [0.1, 0.5] takes 0.4 of it; "
+         "lower [0, 0.4] starts exactly at the spectrum's edge (0.3 - 0.1 - 0.2 rounds a hair below "
+         "0, inside the 1e-9-bin slack) and takes 0.4 of it; upper [0.2, 0.6] takes 0.3 of bin 0 "
+         "and 0.1 of bin 1 (0.25)"),
     err("acpr.channel_past_the_end", {"frequencies": f2, "psd": p2, "center": 0.0,
                                       "bandwidth": 3.0, "offsets": [7.0]},
         "the upper channel [5.5, 8.5] runs past the last bin's edge, 7.5"),

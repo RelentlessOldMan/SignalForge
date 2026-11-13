@@ -231,3 +231,31 @@ def test_acpr_rejects_bad_arguments(kwargs: dict[str, Any]) -> None:
     args: dict[str, Any] = {"center": 0.0, "bandwidth": 10.0, "offsets": [10.0]} | kwargs
     with pytest.raises(ValueError):
         spectral.acpr(np.arange(-50.0, 50.0), psd, **args)
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda: spectral.occupied_bandwidth([0, 1], [1e308, 1e308]),
+        lambda: spectral.channel_power([0, 1, 2], [1e308] * 3, 0, 1),
+        lambda: spectral.occupied_bandwidth([-1e308, 1e308], [1, 1]),
+        lambda: spectral.channel_power([0, 1], [1, 1], "a", 1),  # type: ignore[arg-type]
+        lambda: spectral.channel_power([0, 1], [1, 1], 0, 10**400),
+        lambda: spectral.occupied_bandwidth([1e16, 1e16 + 2, 1e16 + 4], [1, 1, 1]),
+    ],
+)
+def test_spectral_measurements_reject_overflow_and_degenerate_bins(call: Any) -> None:
+    with pytest.raises(ValueError):
+        call()
+
+
+def test_acpr_channel_on_the_edge_after_rounding() -> None:
+    f, p = np.arange(9.0), np.ones(9)
+    r = spectral.acpr(f, p, 0.3, 0.4, [0.1], span=(0, 8))
+    assert r.lower_power[0] == pytest.approx(0.8, abs=1e-12)
+
+
+def test_acpr_tiny_ratio_does_not_underflow() -> None:
+    p = np.array([1e-200] * 4 + [1e200] + [1e-200] * 4)
+    r = spectral.acpr(np.arange(9.0), p, 4, 1, [2])
+    assert r.lower_dbc[0] == pytest.approx(-4000.0)

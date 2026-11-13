@@ -270,9 +270,30 @@ def _sos(sos: ArrayLike) -> NDArray[np.float64]:
 
 def _order(order: int) -> int:
     n = count(order, "order")
-    if n < 1:
-        raise ValueError("order must be at least 1")
+    if not 1 <= n <= 1000:
+        raise ValueError("order must be between 1 and 1000")
     return n
+
+
+def _usable(rows: list[list[float]]) -> NDArray[np.float64]:
+    """The design's sections, if each is finite and strictly stable; a cutoff (or band edge) too
+    near 0 or fs/2 rounds to a pole on the unit circle and is rejected."""
+    for row in rows:
+        a1, a2 = row[4], row[5]
+        if not (all(math.isfinite(v) for v in row) and abs(a2) < 1 and abs(a1) < 1 + a2):
+            raise ValueError(
+                "the design rounds to a pole on or outside the unit circle: the cutoff is too "
+                "close to 0 or sample_rate/2 (or the dB value too small) for double precision"
+            )
+    return np.array(rows, dtype=np.float64)
+
+
+def _db_power_ratio(x: float, name: str) -> float:
+    """``10^(x/10) - 1`` for ``0 < x <= 200`` dB, without losing digits for small ``x``."""
+    v = real(x, name)
+    if not 0 < v <= 200:
+        raise ValueError(f"{name} must be in (0, 200] dB")
+    return math.expm1(v * math.log(10) / 10)
 
 
 def _theta(i: int, n: int) -> float:
@@ -288,8 +309,9 @@ def _chebyshev1(
     order: int, ripple_db: float, cutoff: float, sample_rate: float, high: bool
 ) -> NDArray[np.float64]:
     n = _order(order)
-    r = _decibels(ripple_db, "ripple_db")
-    mu = math.asinh(1 / math.sqrt(10 ** (r / 10) - 1)) / n
+    eps2 = _db_power_ratio(ripple_db, "ripple_db")
+    r = float(ripple_db)
+    mu = math.asinh(1 / math.sqrt(eps2)) / n
     sh, ch = math.sinh(mu), math.cosh(mu)
     rows = _cascade(
         n,
@@ -307,8 +329,7 @@ def _chebyshev2(
     order: int, attenuation_db: float, cutoff: float, sample_rate: float, high: bool
 ) -> NDArray[np.float64]:
     n = _order(order)
-    a = _decibels(attenuation_db, "attenuation_db")
-    mu = math.asinh(math.sqrt(10 ** (a / 10) - 1)) / n
+    mu = math.asinh(math.sqrt(_db_power_ratio(attenuation_db, "attenuation_db"))) / n
     sh, ch = math.sinh(mu), math.cosh(mu)
     return _cascade(
         n,
@@ -318,13 +339,6 @@ def _chebyshev2(
         lambda i: 1 / complex(sh * math.cos(_theta(i, n)), ch * math.sin(_theta(i, n))),
         lambda i: 1 / math.sin(_theta(i, n)),
     )
-
-
-def _decibels(x: float, name: str) -> float:
-    v = real(x, name)
-    if not 0 < v <= 200:
-        raise ValueError(f"{name} must be in (0, 200] dB")
-    return v
 
 
 def _cascade(
@@ -355,13 +369,14 @@ def _cascade(
     for i in range(n // 2 - 1, -1, -1):
         z = pole(i)
         a1, a2 = -2 * z.real, abs(z) ** 2
-        c = zero  # numerator 1 - 2c z^-1 + z^-2: a double zero at z = zero, or a pair on the circle
-        if zeros is not None:
+        c, ref = zero, 4.0  # numerator 1 - 2c z^-1 + z^-2: a double zero at z = zero, or a pair
+        if zeros is not None:  # on the circle; ref = 2 + 2 zero c, its value at z = -zero, exactly
             w = k / zeros(i) if high else k * zeros(i)
             c = (1 - w * w) / (1 + w * w)
-        g = (1 - zero * a1 + a2) / (2 + 2 * zero * c)  # unit gain at the reference z = -zero
+            ref = 4 / (1 + w * w) if high else 4 * w * w / (1 + w * w)
+        g = (1 - zero * a1 + a2) / ref  # unit gain at the reference z = -zero
         rows.append([g, -2 * c * g, g, 1.0, a1, a2])
-    return np.array(rows, dtype=np.float64)
+    return _usable(rows)
 
 
 def butterworth_lowpass(order: int, cutoff: float, sample_rate: float) -> NDArray[np.float64]:
@@ -439,7 +454,7 @@ def _butterworth_band(
         r = cmath.sqrt(c * c - 4 * w2)
         for s in sorted([(c + r) / 2, (c - r) / 2], key=abs):
             section(s.real, abs(s) ** 2)
-    return np.array(rows, dtype=np.float64)
+    return _usable(rows)
 
 
 def butterworth_bandpass(
@@ -464,7 +479,10 @@ def sos_response(
     """Complex response of a cascade of second-order sections at each frequency."""
     s = _sos(sos)
     fs = _rate(sample_rate)
-    f = np.asarray(frequencies, dtype=np.float64)
+    raw = np.asarray(frequencies)
+    if raw.dtype.kind not in "iuf":
+        raise ValueError("frequencies must be real numbers")
+    f = raw.astype(np.float64)
     if f.ndim != 1 or not np.all(np.isfinite(f)):
         raise ValueError("frequencies must be a finite 1-D array")
     zi = np.exp(-2j * np.pi * f / fs)  # z^-1

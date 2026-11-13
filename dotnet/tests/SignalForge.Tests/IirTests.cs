@@ -375,4 +375,33 @@ public class IirTests
             Assert.ThrowsAny<ArgumentException>(() => design(2, 40, 1, 0));
         }
     }
+
+    [Fact]
+    public void DesignsThatRoundOntoTheUnitCircleAreRejected()
+    {
+        Assert.Throws<ArgumentException>(() => Dsp.ButterworthLowpass(4, 1e-9, 1));
+        Assert.Throws<ArgumentException>(() => Dsp.ButterworthHighpass(4, 0.499999999, 1));
+        Assert.Throws<ArgumentException>(() => Dsp.ButterworthBandpass(4, 1e-9, 2e-9, 1));
+        Assert.Throws<ArgumentException>(() => Dsp.Chebyshev1Lowpass(4, 1, 1e-9, 1));
+        Assert.Throws<ArgumentException>(() => Dsp.Chebyshev2Lowpass(4, 40, 1e-9, 1));
+        Assert.Throws<ArgumentException>(() => Dsp.Chebyshev2Highpass(4, 40, 0.499999999, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Dsp.ButterworthLowpass(1001, 0.1, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Dsp.ButterworthBandstop(int.MaxValue, 0.1, 0.2, 1));
+    }
+
+    [Fact]
+    public void DesignsNearTheLimitAreStillStable()
+    {
+        Assert.Equal(1.0, Dsp.SosResponse(Dsp.ButterworthLowpass(4, 1e-6, 1), [0.0], 1)[0].Magnitude, 1e-9);
+        Assert.Equal(1.0, Dsp.SosResponse(Dsp.Chebyshev2Lowpass(4, 40, 1e-6, 1), [0.0], 1)[0].Magnitude, 1e-9);
+    }
+
+    [Fact]
+    public void TinyDbValuesKeepTheirDigits()
+    {
+        double ripple = 1e-9, want = ripple * Math.Log(10) / 10;
+        double edge = Dsp.SosResponse(Dsp.Chebyshev1Lowpass(3, ripple, 100, 1000), [100.0], 1000)[0].Magnitude;
+        Assert.True(Math.Abs((1 - edge * edge) / want - 1) < 1e-5, $"{1 - edge * edge} vs {want}");
+        Assert.All(Dsp.Chebyshev2Lowpass(3, 1e-9, 100, 1000), r => Assert.True(Math.Abs(r[5]) < 1 && Math.Abs(r[4]) < 1 + r[5]));
+    }
 }

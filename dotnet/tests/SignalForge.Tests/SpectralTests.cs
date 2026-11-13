@@ -263,4 +263,27 @@ public class SpectralTests
         Assert.ThrowsAny<ArgumentException>(() => Spectral.Acpr(f, psd, center, bandwidth, [offset], adjacent));
         Assert.Throws<ArgumentException>(() => Spectral.Acpr(f, psd, 0, 10, ReadOnlySpan<double>.Empty));
     }
+
+    [Fact]
+    public void SpectralMeasurementsRejectOverflowAndDegenerateBins()
+    {
+        Assert.Throws<ArgumentException>(() => Spectral.OccupiedBandwidth([0.0, 1], [1e308, 1e308]));
+        Assert.Throws<ArgumentException>(() => Spectral.ChannelPower([0.0, 1, 2], [1e308, 1e308, 1e308], 0, 1));
+        Assert.Throws<ArgumentException>(() => Spectral.OccupiedBandwidth([-1e308, 1e308], [1.0, 1]));
+        Assert.Throws<ArgumentException>(() => Spectral.OccupiedBandwidth([1e16, 1e16 + 2, 1e16 + 4], [1.0, 1, 1]));
+    }
+
+    [Fact]
+    public void AcprChannelOnTheEdgeAfterRounding()
+    {
+        double[] f = [0, 1, 2, 3, 4, 5, 6, 7, 8], p = [1, 1, 1, 1, 1, 1, 1, 1, 1];
+        Assert.Equal(0.8, Spectral.Acpr(f, p, 0.3, 0.4, [0.1], span: (0, 8)).LowerPower[0], 1e-12);
+    }
+
+    [Fact]
+    public void AcprTinyRatioDoesNotUnderflow()
+    {
+        double[] f = [0, 1, 2, 3, 4, 5, 6, 7, 8], p = [1e-200, 1e-200, 1e-200, 1e-200, 1e200, 1e-200, 1e-200, 1e-200, 1e-200];
+        Assert.Equal(-4000, Spectral.Acpr(f, p, 4, 1, [2]).LowerDbc[0], 1e-9);
+    }
 }

@@ -4,9 +4,8 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Review pass** over the spectral measurements (OBW, channel power, ACPR) and the IIR designs
-   (Butterworth, both Chebyshev types, band forms, zero-phase).
-2. **Band-pass and band-stop Chebyshev** (types I and II) on the band transform of ADR 0016.
+1. **Band-pass and band-stop Chebyshev** (types I and II) on the band transform of ADR 0016.
+2. **Review pass** over the band Chebyshevs once built.
 
 ## Built
 
@@ -217,6 +216,22 @@ Updated with every chunk of work. Dates are absolute.
   `iir.json` cases (two designs by hand, eight computed from the analog quadratics and checked
   against the closed form, a response, nine errors incl. two type I ones).
   Python 1176 passed, 2 skipped (3.10 too); .NET 940 passed; conformance 604/604 in both.
+- 2026-11-13: review pass over the spectral measurements and the IIR designs, fixes in both
+  languages. IIR: a cutoff or band edge within ~1e-8·fs of 0 or fs/2 rounded a pole onto the unit
+  circle (Butterworth gain 0, a pole at z = 1; Chebyshev II raised ZeroDivisionError in Python and
+  gave NaN in C#); every design now checks its sections are finite and strictly stable and
+  rejects the rest. The Chebyshev II reference gain uses the exact denominators. dB values enter
+  as `expm1` (C#: a series below 1e-5), so a 1e-17 dB ripple no longer divides by zero. Order is
+  capped at 1000. Python `sos_response` rejects complex and bool frequencies. Spectral: an
+  overflowing bin power or total gave NaN (Python) or IndexOutOfRangeException (C#); an infinite
+  bin spacing passed in Python; bins whose half-width rounds away are rejected; a channel past the
+  spectrum by rounding (`0.3 − 0.1 − 0.2`) is accepted within 1e-9 of a bin; dBc is a difference
+  of logs, so a 1e-400 ratio is −4000 dBc, not −∞; Python `channel_power` validates its edges
+  (no TypeError/OverflowError); C# names `center` when the main channel leaves the spectrum.
+  Conventions updated; 8 more `iir.json` and 5 more spectral/ACPR cases.
+  Known weakness, not fixed: the band-form vectors come from a generator that follows the same
+  pole-pair construction as the code; an independent root-finding check would be stronger.
+  Python 1208 passed, 2 skipped (3.10 too); .NET 959 passed; conformance 617/617 in both.
 
 ## Not built
 

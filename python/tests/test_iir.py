@@ -363,3 +363,39 @@ def test_attenuation_and_ripple_may_be_200_db() -> None:
 def test_chebyshev2_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
     with pytest.raises(ValueError):
         design(*args)
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda: butterworth_lowpass(4, 1e-9, 1.0),
+        lambda: butterworth_highpass(4, 0.499999999, 1.0),
+        lambda: chebyshev1_lowpass(4, 1.0, 1e-9, 1.0),
+        lambda: chebyshev2_lowpass(4, 40.0, 1e-9, 1.0),
+        lambda: chebyshev2_highpass(4, 40.0, 0.499999999, 1.0),
+        lambda: butterworth_lowpass(1001, 0.1, 1.0),
+    ],
+)
+def test_designs_that_round_onto_the_unit_circle_are_rejected(make: Any) -> None:
+    with pytest.raises(ValueError):
+        make()
+
+
+def test_designs_near_the_limit_are_still_stable() -> None:
+    for sos in (butterworth_lowpass(4, 1e-6, 1.0), chebyshev2_lowpass(4, 40.0, 1e-6, 1.0)):
+        assert abs(sos_response(sos, [0.0], 1.0)[0]) == pytest.approx(1.0, rel=1e-9)
+
+
+def test_tiny_db_values_keep_their_digits() -> None:
+    ripple = 1e-9
+    sos = chebyshev1_lowpass(3, ripple, 100.0, 1000.0)
+    edge = abs(sos_response(sos, [100.0], 1000.0)[0]) ** 2
+    assert 1 - edge == pytest.approx(math.expm1(ripple * math.log(10) / 10), rel=1e-5)
+    sos2 = chebyshev2_lowpass(3, 1e-9, 100.0, 1000.0)
+    assert all(abs(r[5]) < 1 and abs(r[4]) < 1 + r[5] for r in sos2)
+
+
+@pytest.mark.parametrize("bad", [[True], [0.25 + 1j], ["x"]])
+def test_sos_response_rejects_non_real_frequencies(bad: list[Any]) -> None:
+    with pytest.raises(ValueError):
+        sos_response([[1, 0, 0, 1, -0.5, 0]], bad, 1.0)

@@ -292,9 +292,11 @@ def _bins(
         raise ValueError("frequencies must be finite")
     if not (np.all(np.isfinite(p)) and np.all(p >= 0)):
         raise ValueError("psd must be finite and non-negative")
-    delta = float(f[-1] - f[0]) / (f.size - 1)
-    if not delta > 0 or np.any(np.abs(np.diff(f) - delta) > 1e-6 * delta):
-        raise ValueError("frequencies must be ascending and evenly spaced")
+    with np.errstate(over="ignore", invalid="ignore"):
+        delta = float(f[-1] - f[0]) / (f.size - 1)
+        even = np.all(np.abs(np.diff(f) - delta) <= 1e-6 * delta)  # NaN fails
+    if not (math.isfinite(delta) and delta > 0 and even):
+        raise ValueError("frequencies must be ascending, evenly spaced, with a finite spacing")
     left, right = f - delta / 2, f + delta / 2
     if span is not None:
         s = np.asarray(span, dtype=np.float64)
@@ -303,7 +305,14 @@ def _bins(
                 "span must be (low, high) with low <= the first and high >= the last bin"
             )
         left, right = np.maximum(left, s[0]), np.minimum(right, s[1])
-    return p * delta, left, right
+    if not np.all(right > left):
+        raise ValueError("half a bin rounds to nothing at these frequencies")
+    with np.errstate(over="ignore"):
+        power = p * delta
+        total = float(np.sum(power))
+    if not math.isfinite(total):
+        raise ValueError("psd too large: the bin powers or their sum overflow")
+    return power, left, right
 
 
 @dataclass(frozen=True)
@@ -379,9 +388,10 @@ def acpr(
     if o.ndim != 1 or o.size == 0 or not np.all(np.isfinite(o) & (o > 0)):
         raise ValueError("offsets must be a non-empty list of finite values > 0")
     power, left, right = _bins(frequencies, psd, span)
+    slack = 1e-9 * float(np.max(right - left))  # rounding in center +- offset +- width/2
 
     def channel(low: float, high: float) -> float:
-        if low < left[0] or high > right[-1]:
+        if low < left[0] - slack or high > right[-1] + slack:
             raise ValueError(
                 f"channel [{low}, {high}] leaves the spectrum [{left[0]}, {right[-1]}]"
             )
@@ -394,7 +404,10 @@ def acpr(
     lower = np.array([channel(c - v - ba / 2, c - v + ba / 2) for v in o])
     upper = np.array([channel(c + v - ba / 2, c + v + ba / 2) for v in o])
     with np.errstate(divide="ignore"):
-        return Acpr(main, lower, upper, 10 * np.log10(lower / main), 10 * np.log10(upper / main))
+        db_main = math.log10(main)  # a difference of logs: the ratio itself could underflow
+        return Acpr(
+            main, lower, upper, 10 * (np.log10(lower) - db_main), 10 * (np.log10(upper) - db_main)
+        )
 
 
 def channel_power(
@@ -409,8 +422,9 @@ def channel_power(
 
     ``span`` clips the outer bins, as for ``occupied_bandwidth``.
     """
-    if not (math.isfinite(low) and math.isfinite(high) and low < high):
+    lo, hi = real(low, "low"), real(high, "high")
+    if not lo < hi:
         raise ValueError("need finite low < high")
     power, left, right = _bins(frequencies, psd, span)
-    overlap = np.clip(np.minimum(right, high) - np.maximum(left, low), 0.0, None)
+    overlap = np.clip(np.minimum(right, hi) - np.maximum(left, lo), 0.0, None)
     return float(np.sum(power * overlap / (right - left)))

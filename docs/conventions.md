@@ -155,8 +155,10 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
 - **Bins as rectangles:** OBW and channel power treat PSD bin `k` (center `f_k`, uniform spacing
   `Δ`) as holding power `PSD_k·Δ` spread evenly over `[f_k − Δ/2, f_k + Δ/2]`. So cumulative power
   is piecewise linear in frequency and band edges are interpolated within a bin. Frequencies must
-  be finite, ascending and evenly spaced (relative error ≤ 1e-6), at least two bins, PSD finite
-  and ≥ 0.
+  be finite, ascending and evenly spaced (relative error ≤ 1e-6) with a finite spacing, at least
+  two bins, PSD finite and ≥ 0. Every bin power `PSD_k·Δ` and their sum must be finite, and every
+  bin's (clipped) width must be positive in floating point (half a bin must not round away at the
+  bin's frequency); otherwise `invalid_argument`.
   - An optional `span = (low, high)` clips every bin's interval to `[low, high]`; a clipped bin
     keeps its whole power, spread over the clipped width. `low ≤ f_0` and `high ≥` the last bin
     center are required. A one-sided PSD needs its `span` `(0, fs/2)`: its DC bin (and Nyquist bin,
@@ -181,11 +183,13 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   adjacent channels are `[center ∓ o − B_a/2, center ∓ o + B_a/2]`, `B_a = adjacent_bandwidth`
   (default `B`). Each channel's power is its channel power, as above (with the same `span`).
   - Result (`Acpr`): `main_power`, and per offset, in the order given, `lower_power`,
-    `upper_power`, `lower_dbc = 10·log10(lower_power/main_power)` and `upper_dbc` likewise;
-    an empty adjacent channel gives `−∞` dBc.
+    `upper_power`, `lower_dbc = 10·log10(lower_power/main_power)` and `upper_dbc` likewise
+    (computed as a difference of logs, so a tiny ratio does not underflow); an empty adjacent
+    channel gives `−∞` dBc.
   - Every channel must lie inside the PSD's frequency range, from the first bin's lower edge to
     the last bin's upper edge (each clipped to `span`); a channel that leaves it would count
-    missing spectrum as zero power, so it is `invalid_argument`. For a one-sided PSD with span
+    missing spectrum as zero power, so it is `invalid_argument`. A channel edge past the spectrum
+    by at most `1e-9` of the widest bin counts as on it (rounding in `center ± offset ± B_a/2`). For a one-sided PSD with span
     `(0, fs/2)` a lower channel below 0 Hz is therefore an error.
   - `center` finite; `bandwidth` and `adjacent_bandwidth` finite and `> 0`; `offsets` a non-empty
     list of finite values `> 0`; `main_power > 0`. Channels may overlap one another.
@@ -363,9 +367,16 @@ and `SignalForge.IirFilter`.
   - each section with `a0 = 1` and unit gain at `f = 0` (low-pass) or `fs/2` (high-pass). With
     `1/Q = 2·sin(π(2k + 1)/(2·order))` and `D = K² + K/Q + 1`, a low-pass pair is
     `b = K²·[1, 2, 1]/D`, `a = [1, 2(K² − 1)/D, (K² − K/Q + 1)/D]`, a high-pass pair the same `a` with
-    `b = [1, −2, 1]/D`; the first-order low-pass is `b = K·[1, 1, 0]/(K + 1)`,
+    `b = [1, −2, 1]/D` (the code takes the gain from the computed `a`, `g = (1 ∓ a1 + a2)/4`,
+    which equals these to rounding and gives exactly unit gain at the reference); the first-order low-pass is `b = K·[1, 1, 0]/(K + 1)`,
     `a = [1, (K − 1)/(K + 1), 0]`, the high-pass the same `a` with `b = [1, −1, 0]/(K + 1)`.
-  - `order` is an integer `≥ 1`; `0 < cutoff < fs/2`, finite.
+  - `order` is an integer, `1 ≤ order ≤ 1000`; `0 < cutoff < fs/2`, finite.
+  - **Every IIR design** (Butterworth, Chebyshev, band forms) checks its sections: each must be
+    finite and strictly stable (`|a2| < 1`, `|a1| < 1 + a2`). A cutoff or band edge within about
+    1e-8·fs of 0 or `fs/2` rounds a pole onto the unit circle (and the gain to 0), so such a
+    design is `invalid_argument`; accuracy is already reduced near that limit (below about
+    1e-6·fs). dB arguments enter as `10^(x/10) − 1`, computed as `expm1(x·ln10/10)` so small
+    values keep their digits.
 - **Chebyshev type I design** (`chebyshev1_lowpass(order, ripple_db, cutoff, sample_rate)` and
   `chebyshev1_highpass(...)`, [ADR 0018](adr/0018-chebyshev-type-1.md)): the analog Chebyshev
   type I filter with pass-band ripple `ripple_db` (`R`), through the same prewarped bilinear
@@ -383,7 +394,7 @@ and `SignalForge.IirFilter`.
     (low-pass) or `fs/2` (high-pass). Then, for an even order only, the first section's `b` is
     multiplied by `10^(−R/20) = 1/√(1 + ε²)`: an even-order Chebyshev filter has its ripple's low
     point at DC (low-pass) or `fs/2` (high-pass). An odd order has gain 1 there.
-  - `order` is an integer `≥ 1`; `0 < ripple_db ≤ 200`; `0 < cutoff < fs/2`, finite. Past
+  - `order` is an integer, `1 ≤ order ≤ 1000`; `0 < ripple_db ≤ 200`; `0 < cutoff < fs/2`, finite. Past
     200 dB the poles are within about 1e-11 of the unit circle and `10^(R/10)` soon overflows, so
     larger ripples are `invalid_argument`.
 - **Chebyshev type II design** (`chebyshev2_lowpass(order, attenuation_db, cutoff, sample_rate)`
@@ -400,7 +411,7 @@ and `SignalForge.IirFilter`.
     `c = (1 − w²)/(1 + w²)`; the real pole's zero is at `z = −1` (low-pass) or `z = 1` (high-pass).
   - Sections in the Butterworth order, pair `k` with its own zeros, each with unit gain at DC
     (low-pass) or `fs/2` (high-pass); with no pass-band ripple there is no extra factor.
-  - `order` is an integer `≥ 1`; `0 < attenuation_db ≤ 200`; `0 < cutoff < fs/2`, finite.
+  - `order` is an integer, `1 ≤ order ≤ 1000`; `0 < attenuation_db ≤ 200`; `0 < cutoff < fs/2`, finite.
 - **Band-pass and band-stop Butterworth** (`butterworth_bandpass(order, low, high, sample_rate)`,
   `butterworth_bandstop(...)`, [ADR 0016](adr/0016-band-butterworth.md)): the low-pass prototype
   of that `order` (cutoff 1, poles `p_k = e^(jθ_k)` as above) transformed to the band, through the
@@ -422,7 +433,7 @@ and `SignalForge.IirFilter`.
   - then, for `k = ⌊order/2⌋ − 1` down to 0, two sections from the prototype pole `p_k`: its two
     images, the roots `s = (c ± √(c² − 4W²))/2` of `s² − c·s + W²`, with `c = B·p_k` (band-pass) or
     `c = B/p_k` (band-stop), the root with the smaller `|s|` first.
-  - `order` is an integer `≥ 1`; `0 < low < high < fs/2`, finite.
+  - `order` is an integer, `1 ≤ order ≤ 1000`; `0 < low < high < fs/2`, finite.
 - **Frequency response** (`sos_response(sos, frequencies, sample_rate)`): the complex
   `H(f) = Π_i H_i(e^(j2π·f/fs))` at each frequency. Frequencies finite.
 - **Streaming filter** (`IirFilter(sos)`, method `process(chunk)`, `reset()`, property `sections`,
