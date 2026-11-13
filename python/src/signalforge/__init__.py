@@ -107,6 +107,7 @@ from .sync import (
     TimingRecovery,
     gardner_timing,
     pi_loop_gains,
+    power_frequency_offset,
     psk8_carrier_tracking,
     qam16_carrier_tracking,
     qpsk_block_phases,
@@ -127,7 +128,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.70"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.71"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -211,6 +212,7 @@ __all__ = [
     "occupied_bandwidth",
     "phase_noise",
     "pi_loop_gains",
+    "power_frequency_offset",
     "power_stats",
     "prbs",
     "psk8_ber_theory",

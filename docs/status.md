@@ -4,15 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **A coarse frequency estimator that works on 16-QAM**, then 16-QAM through the link. Tried
-   on 2026-11-13 (not committed): a `modulation` field with `qpsk_frequency_offset` and
-   `qpsk_block_phases` reused for 16-QAM. `E[s⁴]` is a negative real for 16-QAM (−0.68) as for
-   QPSK, but the lag-1 estimator `Σ w[k]·conj(w[k−1])`, `w = z⁴`, has so much self-noise on
-   16-QAM (mean of each term 0.46 against an rms of about 3) that it was 7 Hz off on 400
-   noiseless symbols at 1000 Bd with a 30 Hz offset. The 32-symbol block phases then moved more
-   than π/4 per block, the line through them aliased, and the BER was 0.41. Options: use only
-   the outer (corner) points, a non-differential estimate (the peak of the spectrum of `z⁴`), or
-   a data-aided estimate on a longer preamble. Write the convention and ADR first.
+1. **16-QAM through the link**: a `modulation` config field (`"qpsk"` by default, so QPSK
+   reports stay the same) choosing the mapper, the carrier loop's decision, the demapper and the
+   BER theory, with Es/N0 = Eb/N0 + 10·log10 4. The coarse estimate for 16-QAM is
+   `power_frequency_offset(·, Rs, 4)` over the whole frame (ADR 0049); the block phases and the
+   preamble ambiguity work unchanged (`E[s⁴]` of 16-QAM is a negative real, as for QPSK). A first
+   try with the lag-1 estimator failed (BER 0.41 on 400 noiseless symbols): check the noiseless
+   case first. Link configs for 16-QAM, noiseless and at about 8 dB.
 2. **8-PSK through the link**: needs eighth-power frequency and phase estimators
    (`psk8_frequency_offset`, `psk8_block_phases`), then the same `modulation` field.
 
@@ -517,6 +515,14 @@ Updated with every chunk of work. Dates are absolute.
   exactly `asin(ω/kp)`; the PI loop removes the lag for both; both track a drifting carrier
   through noise at Es/N0 22 dB with no bit errors; 8-PSK locks to a multiple of π/4. Python 2136
   passed, 2 skipped; .NET 1710 passed.
+- 2026-11-13: power-spectrum frequency offset (conventions: Synchronization; ADR 0049):
+  `power_frequency_offset(symbols, symbol_rate, power)`, the periodogram peak of `zᵖ`
+  (zero-padded FFT, at least 4 bins per symbol) refined by 60 bisection steps on the sign of the
+  periodogram's slope. The lag-1 `qpsk_frequency_offset` is swamped by 16-QAM's self-noise (9 Hz
+  rms on 400 noiseless symbols at 1000 Bd); this is under 0.1 Hz there, under 0.05 Hz on 2000
+  symbols at Eb/N0 8 dB, and works on 8-PSK at power 8. 12 new vectors in `sync.json` (tones and
+  PSK symbols, where `zᵖ` is one tone and the estimate is exact). Python 2161 passed, 2 skipped;
+  .NET 1727 passed.
 
 ## Not built
 

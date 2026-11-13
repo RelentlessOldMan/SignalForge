@@ -143,6 +143,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "psk8_ser_theory": metrics.psk8_ser_theory,
     "timing_offset": sync.timing_offset,
     "qpsk_frequency_offset": sync.qpsk_frequency_offset,
+    "power_frequency_offset": sync.power_frequency_offset,
     "qpsk_phase_offset": sync.qpsk_phase_offset,
     "qpsk_block_phases": sync.qpsk_block_phases,
     "qpsk_link": lambda **kw: link.qpsk_link(link.QpskLinkConfig(**kw)),

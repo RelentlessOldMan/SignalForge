@@ -193,6 +193,80 @@ public static class Sync
         return Arg(s) * symbolRate / (8 * Math.PI);
     }
 
+    /// <summary>Carrier frequency offset in Hz, in (−Rs/(2p), Rs/(2p)], from the peak of the
+    /// spectrum of zᵖ (conventions: Synchronization; ADR 0049). Works for any constellation whose
+    /// p-th power has a non-zero mean: QPSK and 16-QAM at 4, 8-PSK at 8.</summary>
+    /// <param name="symbols">One complex value per symbol, at least two, all finite.</param>
+    /// <param name="symbolRate">Symbol rate in Hz, positive and finite.</param>
+    /// <param name="power">The power p, from 1 to 16.</param>
+    public static double PowerFrequencyOffset(ReadOnlySpan<Complex> symbols, double symbolRate, int power)
+    {
+        Check.PositiveFinite(symbolRate, nameof(symbolRate));
+        ArgumentOutOfRangeException.ThrowIfLessThan(power, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(power, 16);
+        double scale = CheckFinite(symbols, 2, nameof(symbols));
+        int n = symbols.Length;
+        var w = new Complex[n];
+        for (int k = 0; k < n; k++)
+        {
+            Complex z = symbols[k] * scale, v = z;
+            for (int j = 1; j < power; j++)
+                v *= z;
+            w[k] = v;
+        }
+        int big = 1;
+        while (big < 4 * n)
+            big *= 2;
+        var padded = new Complex[big];
+        w.CopyTo(padded, 0);
+        Complex[] spectrum = Spectral.Fft(padded);
+        int i = 0;
+        double best = 0;
+        for (int b = 0; b < big; b++)
+        {
+            double p = spectrum[b].Real * spectrum[b].Real + spectrum[b].Imaginary * spectrum[b].Imaginary;
+            if (p > best)
+            {
+                best = p;
+                i = b;
+            }
+        }
+        if (!(best > 0))
+            return 0;
+        if (i > big / 2)
+            i -= big;
+        double lo = (i - 1) / (double)big, hi = (i + 1) / (double)big;
+        for (int step = 0; step < 60; step++)
+        {
+            double m = (lo + hi) / 2;
+            if (Slope(w, m) > 0)
+                lo = m;
+            else
+                hi = m;
+        }
+        double nu = (lo + hi) / 2;
+        if (nu > 0.5)
+            nu -= 1;
+        else if (nu <= -0.5)
+            nu += 1;
+        return nu * symbolRate / power;
+    }
+
+    /// <summary>S.re·T.im − S.im·T.re with S = Σ w[k]·e^{−j2πνk}, T = Σ k·w[k]·e^{−j2πνk}: the sign
+    /// of the periodogram's slope at ν.</summary>
+    private static double Slope(Complex[] w, double nu)
+    {
+        Complex s = Complex.Zero, t = Complex.Zero;
+        for (int k = 0; k < w.Length; k++)
+        {
+            double a = -2 * Math.PI * nu * k;
+            Complex v = w[k] * new Complex(Math.Cos(a), Math.Sin(a));
+            s += v;
+            t += k * v;
+        }
+        return s.Real * t.Imaginary - s.Imaginary * t.Real;
+    }
+
     /// <summary>Carrier phase of QPSK symbols in radians, in (−π/4, π/4]; the true phase is this
     /// plus a multiple of π/2.</summary>
     /// <param name="symbols">One complex value per symbol, at least one, all finite.</param>

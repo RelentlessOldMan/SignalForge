@@ -70,6 +70,56 @@ def qpsk_frequency_offset(symbols: ArrayLike, symbol_rate: float) -> float:
     return _arg(s) * symbol_rate / (8 * math.pi)
 
 
+def power_frequency_offset(symbols: ArrayLike, symbol_rate: float, power: int) -> float:
+    """Carrier frequency offset in Hz from the peak of the spectrum of ``z**power``.
+
+    In ``(-Rs/(2p), Rs/(2p)]``. Works for any constellation whose ``power``-th power has a non-zero
+    mean: QPSK and 16-QAM at 4, 8-PSK at 8.
+    """
+    if not 0 < symbol_rate < math.inf:
+        raise ValueError("symbol_rate must be positive and finite")
+    p = count(power, "power")
+    if not 1 <= p <= 16:
+        raise ValueError("power must be from 1 to 16")
+    z = _complex(symbols, "symbols", 2)
+    w = z.copy()
+    for _ in range(p - 1):
+        w = w * z
+    n = w.size
+    big = 1
+    while big < 4 * n:
+        big *= 2
+    spectrum = np.fft.fft(w, big)
+    pw = spectrum.real**2 + spectrum.imag**2
+    if not np.any(pw > 0):
+        return 0.0
+    i = int(np.argmax(pw))
+    if i > big // 2:
+        i -= big
+    k = np.arange(n, dtype=np.float64)
+
+    def slope(nu: float) -> float:
+        a = (-2 * math.pi * nu) * k
+        e = np.cos(a) + 1j * np.sin(a)
+        s = complex(np.sum(w * e))
+        t = complex(np.sum(k * w * e))
+        return s.real * t.imag - s.imag * t.real
+
+    lo, hi = (i - 1) / big, (i + 1) / big
+    for _ in range(60):
+        m = (lo + hi) / 2
+        if slope(m) > 0:
+            lo = m
+        else:
+            hi = m
+    nu = (lo + hi) / 2
+    if nu > 0.5:
+        nu -= 1
+    elif nu <= -0.5:
+        nu += 1
+    return nu * symbol_rate / p
+
+
 def qpsk_phase_offset(symbols: ArrayLike) -> float:
     """Carrier phase of QPSK symbols in radians, in ``(-pi/4, pi/4]``, modulo pi/2."""
     z = _complex(symbols, "symbols", 1)

@@ -349,6 +349,7 @@ public static class Conformance
             "psk8_ser_theory" => Bind(a.D("eb_n0_db"), Metrics.Psk8SerTheory),
             "timing_offset" => Bind((Complexes(a.Get("samples")), a.I("samples_per_symbol")), t => Sync.TimingOffset(t.Item1, t.Item2)),
             "qpsk_frequency_offset" => Bind((Complexes(a.Get("symbols")), a.D("symbol_rate")), t => Sync.QpskFrequencyOffset(t.Item1, t.Item2)),
+            "power_frequency_offset" => Bind((Complexes(a.Get("symbols")), a.D("symbol_rate"), a.I("power")), t => Sync.PowerFrequencyOffset(t.Item1, t.Item2, t.Item3)),
             "qpsk_phase_offset" => Bind(Complexes(a.Get("symbols")), s => Sync.QpskPhaseOffset(s)),
             "qpsk_block_phases" => Bind((Complexes(a.Get("symbols")), a.I("block_symbols")), t => Sync.QpskBlockPhases(t.Item1, t.Item2)),
             "qpsk_link" => Bind(LinkConfig(a), Link.QpskLink),

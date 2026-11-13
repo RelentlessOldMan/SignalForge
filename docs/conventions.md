@@ -871,6 +871,27 @@ multiplies the block by the power of two that brings its largest real or imagina
 - **QPSK frequency offset** (`qpsk_frequency_offset(symbols, symbol_rate)`): with `w = z⁴`,
   `S = Σₖ₌₁ w[k]·conj(w[k−1])`, `Δf = arg(S)·symbol_rate / (8π)`, in `(−Rs/8, Rs/8]`. At least two
   symbols. Correct with `frequency_offset(symbols, −Δf, symbol_rate)`. **(implemented)**
+- **Power-spectrum frequency offset** (`power_frequency_offset(symbols, symbol_rate, power)`,
+  [ADR 0049](adr/0049-power-frequency-offset.md)): the frequency of the strongest line in the
+  spectrum of `w = zᵖ`, divided by `p`. For any constellation whose `p`-th power has a non-zero
+  mean (QPSK and 16-QAM at `p = 4`, 8-PSK at `p = 8`) it adds up the line over the whole block,
+  so unlike the lag-1 estimator it is not swamped by 16-QAM's self-noise. `p = power` is an
+  integer in `1 … 16`; at least two symbols; `symbol_rate` positive and finite. After the exact
+  scaling above, `w[k]` is `z[k]` multiplied by `z[k]` `p − 1` times, left to right.
+  1. `L` is the smallest power of two `≥ 4N` (`N` symbols). `P[i] = |W[i]|²`, `W` the `L`-point
+     DFT of `w` zero-padded to `L`. If every `P[i]` is 0 the result is 0. Otherwise `i` is the
+     first index of the largest `P[i]`, then `i − L` if `i > L/2`.
+  2. With `S(ν) = Σₖ w[k]·e^{−j2πνk}` and `T(ν) = Σₖ k·w[k]·e^{−j2πνk}` (the angle computed as
+     `(−2π·ν)·k`), `D(ν) = S.re·T.im − S.im·T.re` is `dA/dν / (4π)` for `A = |S|²`: positive
+     below a peak, negative above. Starting from `lo = (i − 1)/L`, `hi = (i + 1)/L`, 60 times:
+     `m = (lo + hi)/2`; if `D(m) > 0` then `lo = m`, else `hi = m`. Then `ν = (lo + hi)/2`,
+     moved by 1 into `(−1/2, 1/2]` if outside.
+  3. `Δf = ν·symbol_rate/p`, in `(−Rs/(2p), Rs/(2p)]`.
+
+  For `z[k] = A·e^{j(2πfk/Rs + φ)}` times constellation points whose `p`-th powers are all the
+  same, `w` is a single tone and the estimate is `f` (wrapped into the range) to rounding. The
+  grid spacing `1/L ≤ 1/(4N)` is a quarter of the main lobe's half-width, so the largest bin is
+  within `1/L` of the true peak and `D` changes sign once in `[lo, hi]`. **(implemented)**
 - **Tracking loops** ([ADR 0043](adr/0043-gardner-timing.md),
   [ADR 0044](adr/0044-qpsk-carrier-loop.md)). These take the samples as given (no scaling).
   - `pi_loop_gains(loop_bandwidth, damping, detector_gain)` returns `(kp, ki)` for a
