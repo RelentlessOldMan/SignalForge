@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 from signalforge import (
     IirFilter,
@@ -247,7 +248,7 @@ def test_zero_phase_filter_rejects_bad_arguments(sos: Any, x: Any, pad: Any) -> 
         zero_phase_filter(sos, x, pad)
 
 
-def _cheb_t(n: int, x: np.ndarray) -> np.ndarray:
+def _cheb_t(n: int, x: NDArray[np.float64]) -> NDArray[np.float64]:
     with np.errstate(invalid="ignore", over="ignore"):
         inside = np.cos(n * np.arccos(np.clip(x, -1, 1)))
         outside = np.sign(x) ** n * np.cosh(n * np.arccosh(np.maximum(np.abs(x), 1)))

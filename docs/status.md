@@ -197,7 +197,8 @@ Updated with every chunk of work. Dates are absolute.
   Python 981 passed, 2 skipped (3.10 too); .NET 793 passed; conformance 549/549 in both.
 - 2026-11-13: Chebyshev type I low-pass and high-pass in both languages (`chebyshev1_lowpass`,
   `chebyshev1_highpass` / `Dsp.Chebyshev1Lowpass`, `Chebyshev1Highpass`, ADR 0018): pass-band
-  ripple in dB, the cutoff the pass-band edge, sections shared with Butterworth's builder. 20 more
+  ripple in dB, the cutoff the pass-band edge, sections shared with Butterworth's builder (a test
+  annotation fixed for NumPy on Python 3.10 in the next build). 20 more
   `iir.json` cases (two designs by hand, eight checked against the closed form, a response, a
   filter run, eight errors).
   Python 1061 passed, 2 skipped (3.10 too); .NET 854 passed; conformance 569/569 in both.
