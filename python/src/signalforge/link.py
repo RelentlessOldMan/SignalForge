@@ -23,6 +23,7 @@ from .metrics import (
     evm,
     psk8_ber_theory,
     qam16_ber_theory,
+    qam64_ber_theory,
     qpsk_ber_theory,
 )
 from .modulation import (
@@ -30,6 +31,8 @@ from .modulation import (
     psk8_map,
     qam16_demap_hard,
     qam16_map,
+    qam64_demap_hard,
+    qam64_map,
     qpsk_demap_hard,
     qpsk_map,
 )
@@ -39,6 +42,7 @@ from .sync import (
     psk8_block_phases,
     psk8_carrier_tracking,
     qam16_carrier_tracking,
+    qam64_carrier_tracking,
     qpsk_block_phases,
     qpsk_carrier_tracking,
     qpsk_frequency_offset,
@@ -144,6 +148,16 @@ _MODULATIONS: dict[str, tuple[int, Any, Any, Any, Any, Any, Any, float]] = {
         _coarse(8),
         psk8_block_phases,
         math.pi / 4,
+    ),
+    "qam64": (
+        6,
+        qam64_map,
+        qam64_demap_hard,
+        qam64_carrier_tracking,
+        qam64_ber_theory,
+        _coarse(4),
+        qpsk_block_phases,
+        math.pi / 2,
     ),
 }
 

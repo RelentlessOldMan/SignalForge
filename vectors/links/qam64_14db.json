@@ -1,0 +1,11 @@
+{
+  "num_symbols": 20000,
+  "eb_n0_db": 14.0,
+  "modulation": "qam64",
+  "frequency_offset_hz": 9.0,
+  "phase": 1.7,
+  "delay_samples": 4,
+  "preamble_symbols": 64,
+  "seed": 33,
+  "phase_block_symbols": 128
+}

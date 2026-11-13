@@ -2,7 +2,7 @@ using Xunit;
 
 namespace SignalForge.Tests;
 
-/// <summary>16-QAM and 8-PSK in the link (conventions: QPSK link; ADR 0050, 0051).</summary>
+/// <summary>16-QAM, 8-PSK and 64-QAM in the link (conventions: QPSK link; ADR 0050, 0051, 0053).</summary>
 public class LinkModulationTests
 {
     [Theory]
@@ -124,6 +124,61 @@ public class LinkModulationTests
             Modulation = "psk8",
             FrequencyOffsetHz = -12,
             Phase = 1.0,
+            CarrierLoopGains = [kp, ki],
+            Seed = 2,
+        });
+        Assert.True(r.BitErrors.Errors <= 3, $"errors {r.BitErrors.Errors}");
+    }
+
+    [Theory]
+    [InlineData(-20.0, 0.4, 2)]
+    [InlineData(60.0, -2.9, 6)]
+    public void Qam64NoiselessHasNoErrors(double df, double phase, int delay)
+    {
+        QpskLinkReport r = Link.QpskLink(new QpskLinkConfig
+        {
+            NumSymbols = 400,
+            Modulation = "qam64",
+            FrequencyOffsetHz = df,
+            Phase = phase,
+            DelaySamples = delay,
+        });
+        Assert.Equal(2400, r.BitErrors.Compared);
+        Assert.Equal(0, r.BitErrors.Errors);
+    }
+
+    [Fact]
+    public void Qam64BerNearTheory()
+    {
+        QpskLinkReport r = Link.QpskLink(new QpskLinkConfig
+        {
+            NumSymbols = 20000,
+            EbN0Db = 14,
+            Modulation = "qam64",
+            FrequencyOffsetHz = 9,
+            Phase = 1.7,
+            DelaySamples = 4,
+            PreambleSymbols = 64,
+            PhaseBlockSymbols = 128,
+            Seed = 33,
+        });
+        double expected = r.BerTheory!.Value * r.BitErrors.Compared; // about 258
+        Assert.InRange(r.BitErrors.Errors, 0.85 * expected, 1.25 * expected);
+        Assert.InRange(r.FrequencyOffsetHz, 8.95, 9.05);
+    }
+
+    [Fact]
+    public void Qam64CarrierLoop()
+    {
+        var (kp, ki) = Sync.PiLoopGains(0.01, 1 / Math.Sqrt(2), 1.0); // mean detector slope 1
+        QpskLinkReport r = Link.QpskLink(new QpskLinkConfig
+        {
+            NumSymbols = 2000,
+            EbN0Db = 18,
+            Modulation = "qam64",
+            FrequencyOffsetHz = -12,
+            Phase = 1.0,
+            PhaseBlockSymbols = 128,
             CarrierLoopGains = [kp, ki],
             Seed = 2,
         });

@@ -327,6 +327,22 @@ def _qam16_decision(re: float, im: float) -> tuple[float, float]:
     return (_qam16_level(re), _qam16_level(im))
 
 
+_INV_SQRT42 = 1.0 / math.sqrt(42.0)
+_QAM64_T2 = 2.0 / math.sqrt(42.0)
+_QAM64_T4 = 4.0 / math.sqrt(42.0)
+_QAM64_T6 = 6.0 / math.sqrt(42.0)
+
+
+def _qam64_level(v: float) -> float:
+    a = abs(v)
+    m = 4.0 + (-1.0 if a < _QAM64_T4 else 1.0) * (1.0 if _QAM64_T2 < a < _QAM64_T6 else 3.0)
+    return (-m if v < 0 else m) * _INV_SQRT42
+
+
+def _qam64_decision(re: float, im: float) -> tuple[float, float]:
+    return (_qam64_level(re), _qam64_level(im))
+
+
 def qpsk_carrier_tracking(
     symbols: ArrayLike, kp: float, ki: float, *, phase: float = 0.0
 ) -> CarrierRecovery:
@@ -347,3 +363,10 @@ def qam16_carrier_tracking(
 ) -> CarrierRecovery:
     """Decision-directed 16-QAM carrier loop (conventions: Synchronization, Tracking loops)."""
     return _carrier_loop(symbols, kp, ki, phase, _qam16_decision)
+
+
+def qam64_carrier_tracking(
+    symbols: ArrayLike, kp: float, ki: float, *, phase: float = 0.0
+) -> CarrierRecovery:
+    """Decision-directed 64-QAM carrier loop (conventions: Synchronization, Tracking loops)."""
+    return _carrier_loop(symbols, kp, ki, phase, _qam64_decision)

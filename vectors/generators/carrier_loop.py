@@ -1,6 +1,6 @@
 """Writes vectors/cases/carrier_loop.json from the definition, using only the Python standard library.
 
-It does not import NumPy or SignalForge. It runs the decision-directed QPSK, 8-PSK and 16-QAM
+It does not import NumPy or SignalForge. It runs the decision-directed QPSK, 8-PSK, 16-QAM and 64-QAM
 carrier loops in the conventions (Synchronization, Tracking loops) step by step. The by-hand cases are checked here
 against the closed forms they rely on.
 
@@ -36,6 +36,20 @@ def qam16(re, im):
     def level(v):
         m = 1.0 if abs(v) < THR else 3.0
         return (m if v >= 0 else -m) * INV10
+    return (level(re), level(im))
+
+
+INV42 = 1.0 / math.sqrt(42.0)
+T2, T4, T6 = 2.0 / math.sqrt(42.0), 4.0 / math.sqrt(42.0), 6.0 / math.sqrt(42.0)
+
+
+def qam64(re, im):
+    """The point qam64_demap_hard decides, from its bit rules (bit 1 strictly inside)."""
+    def level(v):
+        a = abs(v)
+        b1, b2 = a < T4, T2 < a < T6
+        m = {(False, False): 7.0, (False, True): 5.0, (True, True): 3.0, (True, False): 1.0}[(b1, b2)]
+        return (-m if v < 0 else m) * INV42
     return (level(re), level(im))
 
 
@@ -156,7 +170,23 @@ add_m(op, qam16, "ties_by_hand", [0, 2 * INV10 * 1, 1j * 2 * INV10], 0.0, 0.0,
       tol={"abs": 1e-15, "rel": 0})
 _, _, e = loop([0, 2 * INV10, 2j * INV10], 0, 0, 0.0, qam16)
 assert e[0] == 0 and abs(e[1] + 0.2) < 1e-15 and abs(e[2] - 0.2) < 1e-15, e
-for op in ("psk8_carrier_tracking", "qam16_carrier_tracking"):
+Q64 = [complex(a, b) * INV42 for a, b in
+       [((3 * k) % 8 * 2 - 7, (5 * k + k // 8) % 8 * 2 - 7) for k in range(64)]]
+op = "qam64_carrier_tracking"
+s, p, e = add_m(op, qam64, "one_symbol_by_hand", [complex(7, 7) * INV42 * cmath.rect(1, 0.1)],
+                0.5, 0.1, source="by hand: (7+7j)/sqrt42 turned 0.1 decides itself, so "
+                "e = |s|^2*sin(0.1) = (98/42)*sin(0.1)", tol={"abs": 1e-15, "rel": 0})
+assert abs(e[0] - 98 / 42 * math.sin(0.1)) < 1e-15
+add_m(op, qam64, "static_rotation", [z * cmath.rect(1, 0.12) for z in Q64], 0.2, 0.01)
+add_m(op, qam64, "frequency_offset", [z * cmath.rect(0.95, -0.03 + 0.002 * k) for k, z in
+                                      enumerate(Q64)], 0.1, 0.003, phase=-0.01)
+add_m(op, qam64, "ties_by_hand", [0, T4, 1j * T6], 0.0, 0.0,
+      source="by hand: 0 decides (1+j)/sqrt42, so e = 0; 4/sqrt42 decides (5+j)/sqrt42, so "
+      "e = -(1/sqrt42)*(4/sqrt42) = -4/42, and 6j/sqrt42 decides (1+7j)/sqrt42, so e = 6/42",
+      tol={"abs": 1e-15, "rel": 0})
+_, _, e = loop([0, T4, 1j * T6], 0, 0, 0.0, qam64)
+assert e[0] == 0 and abs(e[1] + 4 / 42) < 1e-15 and abs(e[2] - 6 / 42) < 1e-15, e
+for op in ("psk8_carrier_tracking", "qam16_carrier_tracking", "qam64_carrier_tracking"):
     for name, args, why in (("negative_ki", {"ki": -0.1}, "ki must not be negative"),
                             ("nan_symbol", {"symbols": {"re": [1.0, "nan"], "im": [0.0, 0.0]}},
                              "symbols must be finite")):
@@ -167,7 +197,7 @@ for op in ("psk8_carrier_tracking", "qam16_carrier_tracking"):
 doc = {
     "schema": 1,
     "suite": "carrier_loop",
-    "description": "Decision-directed QPSK, 8-PSK and 16-QAM carrier tracking (conventions: "
+    "description": "Decision-directed QPSK, 8-PSK, 16-QAM and 64-QAM carrier tracking (conventions: "
     "Synchronization, Tracking loops).",
     "cases": cases,
 }

@@ -105,6 +105,27 @@ public static class Sync
     public static CarrierRecovery Qam16CarrierTracking(ReadOnlySpan<Complex> symbols, double kp, double ki, double phase = 0) =>
         CarrierLoop(symbols, kp, ki, phase, static (re, im) => (Qam16Level(re), Qam16Level(im)));
 
+    /// <summary>Decision-directed 64-QAM carrier loop (conventions: Synchronization, Tracking
+    /// loops; ADR 0053).</summary>
+    /// <param name="symbols">64-QAM symbols, all finite.</param>
+    /// <param name="kp">Proportional gain, finite, not negative.</param>
+    /// <param name="ki">Integral gain, finite, not negative.</param>
+    /// <param name="phase">Phase removed from the first symbol, in radians, finite.</param>
+    public static CarrierRecovery Qam64CarrierTracking(ReadOnlySpan<Complex> symbols, double kp, double ki, double phase = 0) =>
+        CarrierLoop(symbols, kp, ki, phase, static (re, im) => (Qam64Level(re), Qam64Level(im)));
+
+    private static readonly double InvSqrt42 = 1.0 / Math.Sqrt(42.0);
+    private static readonly double Qam64T2 = 2.0 / Math.Sqrt(42.0);
+    private static readonly double Qam64T4 = 4.0 / Math.Sqrt(42.0);
+    private static readonly double Qam64T6 = 6.0 / Math.Sqrt(42.0);
+
+    private static double Qam64Level(double v)
+    {
+        double a = Math.Abs(v);
+        double m = 4.0 + (a < Qam64T4 ? -1.0 : 1.0) * (a > Qam64T2 && a < Qam64T6 ? 1.0 : 3.0);
+        return (v < 0 ? -m : m) * InvSqrt42;
+    }
+
     private static readonly double C8 = 1 / Math.Sqrt(2);
     private static readonly (double, double)[] Psk8Points =
         [(1, 0), (C8, C8), (0, 1), (-C8, C8), (-1, 0), (-C8, -C8), (0, -1), (C8, -C8)];

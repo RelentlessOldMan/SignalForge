@@ -4,14 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **64-QAM carrier loop and link**: `qam64_carrier_tracking` (decision-directed like
-   `qam16_carrier_tracking`, ADR 0048), then `"qam64"` as a link `modulation` (its `E[s⁴]` is a
-   negative real, so `power_frequency_offset(·, Rs, 4)` and the fourth-power block phases apply).
-2. **Binary and M-ary FSK**: continuous-phase FSK modulator (modulation index, samples per symbol)
+1. **Binary and M-ary FSK**: continuous-phase FSK modulator (modulation index, samples per symbol)
    and a noncoherent energy detector, with BER theory for noncoherent orthogonal BFSK
    (`½·e^{−Eb/2N0}`).
-3. **WAV read and write**: PCM 16/24/32-bit integer and 32/64-bit float, mono and multi-channel,
+2. **WAV read and write**: PCM 16/24/32-bit integer and 32/64-bit float, mono and multi-channel,
    to and from `Signal`; stdlib-only vectors.
+3. **NumPy `.npy` read and write**: version 1.0 headers, little-endian `float64` and
+   `complex128` 1-D arrays, so both languages exchange samples without SigMF; stdlib-only vectors.
 
 ## Built
 
@@ -541,12 +540,19 @@ Updated with every chunk of work. Dates are absolute.
   square-QAM sum written out for 8-PAM, which the error-rate generator checks against an integral
   over the decision intervals (to 1e-10). 10 modulation and 16 error-rate vectors; Monte Carlo at
   12 dB within 5 % in both languages. Python 2237 passed, 2 skipped; .NET 1793 passed.
+- 2026-11-13: 64-QAM carrier loop and link (ADR 0053): `qam64_carrier_tracking` (decisions as in
+  `qam64_demap_hard`, ties included; 7 carrier-loop vectors) and `"qam64"` as a link
+  `modulation` (fourth-power coarse frequency and block phases, π/2 resolution). 32-symbol phase
+  blocks are too noisy for 64-QAM at 14 dB (the unwrapping slips; BER 0.43), 64 and longer work,
+  so 64-QAM configs set `phase_block_symbols`. Link configs `qam64_14db` (273 bit errors in
+  Python, 275 in C#, theory 258) and `qam64_noiseless` (0 in both). Python 2247 passed,
+  2 skipped; .NET 1803 passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK and 16-QAM, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

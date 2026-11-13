@@ -137,6 +137,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "qpsk_carrier_tracking": sync.qpsk_carrier_tracking,
     "psk8_carrier_tracking": sync.psk8_carrier_tracking,
     "qam16_carrier_tracking": sync.qam16_carrier_tracking,
+    "qam64_carrier_tracking": sync.qam64_carrier_tracking,
     "evm": metrics.evm,
     "qpsk_ber_theory": metrics.qpsk_ber_theory,
     "qpsk_ber_rayleigh_theory": metrics.qpsk_ber_rayleigh_theory,

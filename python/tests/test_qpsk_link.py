@@ -315,3 +315,54 @@ def test_psk8_carrier_loop() -> None:
         )
     )
     assert r.bit_errors.errors <= 3
+
+
+@pytest.mark.parametrize(("df", "phase", "delay"), [(-20.0, 0.4, 2), (60.0, -2.9, 6)])
+def test_qam64_noiseless_has_no_errors(df: float, phase: float, delay: int) -> None:
+    r = qpsk_link(
+        QpskLinkConfig(
+            num_symbols=400,
+            modulation="qam64",
+            frequency_offset_hz=df,
+            phase=phase,
+            delay_samples=delay,
+        )
+    )
+    assert r.bit_errors.compared == 2400
+    assert r.bit_errors.errors == 0
+
+
+def test_qam64_ber_near_theory() -> None:
+    cfg = QpskLinkConfig(
+        num_symbols=20000,
+        eb_n0_db=14.0,
+        modulation="qam64",
+        frequency_offset_hz=9.0,
+        phase=1.7,
+        delay_samples=4,
+        preamble_symbols=64,
+        phase_block_symbols=128,
+        seed=33,
+    )
+    r = qpsk_link(cfg)
+    assert r.ber_theory is not None
+    expected = r.ber_theory * r.bit_errors.compared  # about 258
+    assert 0.85 * expected < r.bit_errors.errors < 1.25 * expected
+    assert abs(r.frequency_offset_hz - 9.0) < 0.05
+
+
+def test_qam64_carrier_loop() -> None:
+    gains = pi_loop_gains(0.01, 1 / math.sqrt(2), 1.0)  # mean detector slope 1
+    r = qpsk_link(
+        QpskLinkConfig(
+            num_symbols=2000,
+            eb_n0_db=18.0,
+            modulation="qam64",
+            frequency_offset_hz=-12.0,
+            phase=1.0,
+            phase_block_symbols=128,
+            carrier_loop_gains=gains,
+            seed=2,
+        )
+    )
+    assert r.bit_errors.errors <= 3

@@ -47,7 +47,7 @@ public sealed record QpskLinkConfig
     /// <summary>Noise seed.</summary>
     public int Seed { get; init; }
 
-    /// <summary>"qpsk", "qam16" or "psk8".</summary>
+    /// <summary>"qpsk", "qam16", "psk8" or "qam64".</summary>
     public string Modulation { get; init; } = "qpsk";
 
     /// <summary>Wiener phase noise linewidth in Hz, at least 0; 0 adds none.</summary>
@@ -140,15 +140,16 @@ public static class Link
         double rs = Check.PositiveFinite(c.SymbolRate, nameof(config));
         if (!double.IsFinite(c.FrequencyOffsetHz) || !double.IsFinite(c.Phase) || c.EbN0Db is { } e && !double.IsFinite(e))
             throw new ArgumentOutOfRangeException(nameof(config), "numbers must be finite");
-        // 0 QPSK, 1 16-QAM, 2 8-PSK
+        // 0 QPSK, 1 16-QAM, 2 8-PSK, 3 64-QAM
         int mod = c.Modulation switch
         {
             "qpsk" => 0,
             "qam16" => 1,
             "psk8" => 2,
-            _ => throw new ArgumentException("Modulation must be \"qpsk\", \"qam16\" or \"psk8\"", nameof(config)),
+            "qam64" => 3,
+            _ => throw new ArgumentException("Modulation must be \"qpsk\", \"qam16\", \"psk8\" or \"qam64\"", nameof(config)),
         };
-        int bps = mod switch { 1 => 4, 2 => 3, _ => 2 };
+        int bps = mod switch { 1 => 4, 2 => 3, 3 => 6, _ => 2 };
         double step = mod == 2 ? Math.PI / 4 : Math.PI / 2;
         if (!(c.PhaseNoiseLinewidthHz >= 0) || !double.IsFinite(c.PhaseNoiseLinewidthHz))
             throw new ArgumentOutOfRangeException(nameof(config), c.PhaseNoiseLinewidthHz, "PhaseNoiseLinewidthHz must be finite and at least 0");
@@ -163,6 +164,7 @@ public static class Link
         {
             1 => SignalForge.Modulation.Qam16Map(bits),
             2 => SignalForge.Modulation.Psk8Map(bits),
+            3 => SignalForge.Modulation.Qam64Map(bits),
             _ => SignalForge.Modulation.QpskMap(bits),
         };
         double[] h = Dsp.RrcTaps(c.Rolloff, sps, c.SpanSymbols);
@@ -193,7 +195,7 @@ public static class Link
         }
         double f = mod switch
         {
-            1 => Sync.PowerFrequencyOffset(r, rs, 4),
+            1 or 3 => Sync.PowerFrequencyOffset(r, rs, 4),
             2 => Sync.PowerFrequencyOffset(r, rs, 8),
             _ => Sync.QpskFrequencyOffset(r, rs),
         };
@@ -245,6 +247,7 @@ public static class Link
             {
                 1 => Sync.Qam16CarrierTracking(w, cg[0], cg[1], start),
                 2 => Sync.Psk8CarrierTracking(w, cg[0], cg[1], start),
+                3 => Sync.Qam64CarrierTracking(w, cg[0], cg[1], start),
                 _ => Sync.QpskCarrierTracking(w, cg[0], cg[1], start),
             }).Symbols;
         }
@@ -255,12 +258,14 @@ public static class Link
         {
             1 => SignalForge.Modulation.Qam16DemapHard(z),
             2 => SignalForge.Modulation.Psk8DemapHard(z),
+            3 => SignalForge.Modulation.Qam64DemapHard(z),
             _ => SignalForge.Modulation.QpskDemapHard(z),
         };
         double? theory = c.EbN0Db is not { } eb ? null : mod switch
         {
             1 => Metrics.Qam16BerTheory(eb),
             2 => Metrics.Psk8BerTheory(eb),
+            3 => Metrics.Qam64BerTheory(eb),
             _ => Metrics.QpskBerTheory(eb),
         };
         return new QpskLinkReport(c, tau, k0, f, phi, Metrics.Evm(z, a), Metrics.BitErrors(bits, got), theory);

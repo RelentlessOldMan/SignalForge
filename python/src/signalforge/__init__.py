@@ -117,6 +117,7 @@ from .sync import (
     psk8_carrier_tracking,
     psk8_phase_offset,
     qam16_carrier_tracking,
+    qam64_carrier_tracking,
     qpsk_block_phases,
     qpsk_carrier_tracking,
     qpsk_frequency_offset,
@@ -135,7 +136,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.74"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.75"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -239,6 +240,7 @@ __all__ = [
     "qam16_map",
     "qam16_ser_theory",
     "qam64_ber_theory",
+    "qam64_carrier_tracking",
     "qam64_demap_hard",
     "qam64_demap_llr",
     "qam64_map",

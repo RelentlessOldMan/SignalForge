@@ -1,0 +1,7 @@
+{
+  "num_symbols": 400,
+  "modulation": "qam64",
+  "frequency_offset_hz": -20.0,
+  "phase": 0.4,
+  "delay_samples": 2
+}
