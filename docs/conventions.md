@@ -346,8 +346,17 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     `ν = 0.5` if present. Fewer than `L + 1` points in all is `invalid_argument`.
   - The problem is then: find `P(ν) = Σ_{k<L} c_k cos(2πkν)` minimizing
     `max |W'(ν)(D'(ν) − P(ν))|` over the grid, with `D' = D/Q`, `W' = W·Q`; and `A = Q·P`.
-  - **Algorithm** (Remez exchange; any method reaching the same optimum agrees): the extremal
-    set starts at the grid indices `⌊i·(G − 1)/L⌋`, `i = 0 … L`, of the `G` points. Each
+  - **Algorithm** (Remez exchange; any method reaching the same optimum agrees). The first
+    extremal set, by **reference scaling**: for `L ≤ 16`, the grid indices `⌊i·(G − 1)/L⌋`,
+    `i = 0 … L`, of the `G` points. For `L > 16`, first design the same bands with
+    `L' = ⌈L/2⌉` (`N' = N − 2(L − L')`, the same type, on its own grid; this rule again for its
+    start). If that design is beyond double precision, use the index set above. Otherwise, with
+    `s(ν)` the distance along the bands (gaps removed) at each of this grid's points (`s` = 0 at the
+    first, then the sum of the steps between neighbours in the same band), interpolated linearly
+    in `ν` between them: the smaller design's final set `ν'_0 … ν'_{L'}` gives `s'_i = s(ν'_i)`;
+    `t_i` interpolates `s'` linearly at the position `i·L'/L`, `i = 0 … L`; point `i` is the first
+    grid index with `s ≥ t_i`, raised to one past point `i − 1` if not above it, and the set is then
+    pulled back from the end (point `i` at most `G − 1 − (L − i)`) if it runs off the grid. Each
     iteration, with `x = cos(2πν)` at the set: `γ_i = 1/∏_{j≠i}(x_i − x_j)` (computed from
     logarithms, scaled by a common factor), `δ = Σγ_i D'_i / Σ(−1)^i γ_i/W'_i`,
     `P(x_i) = D'_i − (−1)^i δ/W'_i`, and `P` elsewhere by barycentric interpolation through the
@@ -361,9 +370,10 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     merge again. It stops when the set does not change, or when the largest grid `|E|` is at
     most `|δ|·(1 + 1e-9) + 1e-12·max_j |W_j·D_j|` (an optimum with more than `L + 1` equal
     extrema would otherwise swap between equally good sets). 250 iterations without stopping is
-    `invalid_argument`: the design is beyond double precision. (Besides ripples near 1e-13, this
-    happens with many taps and wide gaps between bands: the first set's `δ` can be below
-    rounding, and the exchange then never leaves the noise.)
+    `invalid_argument`: the design is beyond double precision. (This happens with ripples near
+    rounding, and occasionally with many taps and wide gaps between bands, where the first set's
+    `δ` can be below rounding and the exchange never leaves the noise; reference scaling makes
+    that rarer, since the smaller design's set is already near the extrema.)
   - If every `desired` value is 0, or `N` is odd and all are equal, the taps are exact
     (`D·[n = (N−1)/2]`) and there is no iteration.
   - **Taps**: `c_0 … c_{L−1}` (and `δ` again) from the `(L+1)×(L+1)` linear system

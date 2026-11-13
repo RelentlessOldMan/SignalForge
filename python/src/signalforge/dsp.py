@@ -309,19 +309,64 @@ def fir_equiripple(
 ) -> NDArray[np.float64]:
     """Parks-McClellan (Remez exchange) symmetric taps: the minimax weighted error over ``bands``
     (edge pairs in Hz) with piecewise-constant ``desired`` gains, on the conventions' grid."""
-    big_l, nu, dd, ww, band = _equiripple_grid(
-        num_taps, bands, desired, sample_rate, weights, grid_density
-    )
+    _, _, dd, _, _ = _equiripple_grid(num_taps, bands, desired, sample_rate, weights, grid_density)
     n = int(num_taps)
-    odd = n % 2 == 1
-    if np.all(dd == 0) or (odd and np.all(dd == dd[0])):
+    if np.all(dd == 0) or (n % 2 == 1 and np.all(dd == dd[0])):
         h = np.zeros(n)
         h[(n - 1) // 2] = dd[0]  # exact: only reached for odd n unless every value is 0
         return h
+    done = _remez(n, bands, desired, sample_rate, weights, grid_density)
+    if done is None:
+        raise ValueError(
+            "the equiripple design is beyond double precision: its ripple is too small, or its "
+            "gaps between bands too wide, for double taps to reach"
+        )
+    return done[0]
+
+
+def _scaled_start(
+    big_l: int, nu: NDArray[np.float64], band: NDArray[np.int64], prior: NDArray[np.float64] | None
+) -> NDArray[np.int64]:
+    """The first extremal set (conventions: Equiripple design, reference scaling) from the
+    smaller design's final set ``prior`` (its frequencies), or by grid index without one."""
+    g = nu.size
+    if prior is None:
+        return np.array([(i * (g - 1)) // big_l for i in range(big_l + 1)], dtype=np.int64)
+    s = np.concatenate(([0.0], np.cumsum(np.where(band[1:] == band[:-1], np.diff(nu), 0.0))))
+    sp = np.interp(prior, nu, s)
+    lp = sp.size - 1
+    t = np.interp(np.arange(big_l + 1) * lp / big_l, np.arange(lp + 1, dtype=np.float64), sp)
+    idx = np.searchsorted(s, t)
+    out = np.empty(big_l + 1, dtype=np.int64)
+    for i, k in enumerate(idx):
+        out[i] = max(int(k), out[i - 1] + 1) if i else int(k)
+    return np.minimum(out, g - 1 - (big_l - np.arange(big_l + 1)))
+
+
+def _remez(
+    n: int,
+    bands: ArrayLike,
+    desired: ArrayLike,
+    sample_rate: float,
+    weights: ArrayLike | None,
+    grid_density: int,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]] | None:
+    """The exchange (conventions: Equiripple design): the taps and the final set's frequencies,
+    or None if the design is beyond double precision."""
+    big_l, nu, dd, ww, band = _equiripple_grid(
+        n, bands, desired, sample_rate, weights, grid_density
+    )
+    odd = n % 2 == 1
     q = np.ones_like(nu) if odd else np.cos(np.pi * nu)
     dp, wp, x = dd / q, ww * q, np.cos(2 * np.pi * nu)
     g = nu.size
-    ext = np.array([(i * (g - 1)) // big_l for i in range(big_l + 1)])
+    prior = None
+    if big_l > 16:
+        smaller = _remez(
+            n - 2 * (big_l - (big_l + 1) // 2), bands, desired, sample_rate, weights, grid_density
+        )
+        prior = None if smaller is None else smaller[1]
+    ext = _scaled_start(big_l, nu, band, prior)
     sign = (-1.0) ** np.arange(big_l + 1)
     slack = 1e-12 * float(np.max(np.abs(ww * dd)))
     for _ in range(250):
@@ -355,18 +400,15 @@ def fir_equiripple(
             if worst > abs(delta) * (1 + 1e-3) + 100 * slack:
                 break
             if odd:
-                return np.concatenate((c[:0:-1] / 2, c[:1], c[1:] / 2))
+                return np.concatenate((c[:0:-1] / 2, c[:1], c[1:] / 2)), nu[ext]
             beta = np.empty(big_l)
             beta[0] = c[0] + (c[1] / 2 if big_l > 1 else 0.0)
             if big_l > 1:
                 beta[1:-1] = (c[1:-1] + c[2:]) / 2
                 beta[-1] = c[-1] / 2
-            return np.concatenate((beta[::-1] / 2, beta / 2))
+            return np.concatenate((beta[::-1] / 2, beta / 2)), nu[ext]
         ext = np.array(new)
-    raise ValueError(
-        "the equiripple design is beyond double precision: its ripple is too small, or its gaps "
-        "between bands too wide, for double taps to reach"
-    )
+    return None
 
 
 def _taps(taps: ArrayLike) -> NDArray[np.float64]:

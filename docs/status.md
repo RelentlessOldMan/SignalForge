@@ -4,16 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Equiripple start**: with many taps and wide gaps between bands, the first extremal set's
-   `δ` can be below rounding (about 1e-16 against errors near 1) and the exchange cycles in the
-   noise until it raises, though the optimum ripple is ordinary (6.5e-7 in one sweep case). In a
-   sweep of 481 random designs to 400 taps, 2 designs raised in Python only and 7 in C# only for
-   this or the final check. A start that keeps `δ` above rounding (e.g. a first set
-   spaced in `x` rather than by grid index, or a continuation from fewer taps) would fix it; the
-   convention for the start would change, so it needs care.
-2. **Hilbert transformers and differentiators** (equiripple types III and IV, odd symmetry):
+1. **Hilbert transformers and differentiators** (equiripple types III and IV, odd symmetry):
    conventions and an ADR first (the weighting for a differentiator, which types are allowed for
    each); expected values from the 50-digit exchange in `vectors/generators/equiripple.py`.
+2. **Streaming resampling**: a stateful `Resampler` (like `FirFilter`) whose chunked output
+   equals `resample` of the whole input; conventions first (where the output grid starts, what a
+   chunk boundary does to the polyphase phase).
 
 ## Built
 
@@ -332,6 +328,13 @@ Updated with every chunk of work. Dates are absolute.
   50-digit roots of the exact integer coefficients and a 50-digit `ω₀`, each checked against the
   closed-form `|H|²`; tests check −3 dB, monotonic magnitude, the flat delay against
   Butterworth's and the order-2 delay at DC (`ω₀/(2K)`).
+- 2026-11-13: equiripple start by reference scaling (conventions, ADR 0024): above 16 cosine
+  terms the design with half as many is solved first and its final set stretched along the bands
+  to start the exchange. On the 481-design random sweep Python's raises fell from 158 to 136
+  (C# 147); the rest are at the precision limit (relative ripple near 1e-13 or below, or taps so
+  large that their cancellation leaves no digits). Where both languages design, ordinary ripples
+  agree to 4 digits or better; taps differ only in designs whose taps reach 1e3 to 1e10, where
+  they are determined only to rounding times their size.
 
 ## Not built
 

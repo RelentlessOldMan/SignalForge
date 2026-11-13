@@ -34,6 +34,14 @@ of frequencies the error is measured on.
   first set lying only in bands whose desired value is 0 gives `δ = 0`, zero errors there, and
   too few extrema; and rounding at the set's last point (not an interpolation node) could flip a
   sign. A random sweep against the generator's 50-digit solver found both.
+- **The first set by reference scaling** (2026-11-13): above `L = 16`, the design with about half
+  the cosine terms is solved first and its final set is stretched along the bands (gaps removed)
+  to `L + 1` points. With the plain start, spaced by grid index, many taps and wide gaps gave a
+  first `δ` below rounding and an exchange that never left the noise: in a sweep of 481 random
+  designs to 400 taps, it rescued 27 designs (three with ordinary ripples, 6.5e-7 to 3e-11) and
+  lost one at a ripple of 2e-15. Spacing the start uniformly in `x` was tried and was worse. A
+  smaller design that fails falls back to the index start. The cost is about one more design of
+  half the size at each level.
 - **Limits**: `num_taps ≤ 1001`, `grid_density ≤ 64`, 250 iterations. Designs whose ripple is
   near or below 1e-13 lose `δ` to cancellation; they raise rather than return something
   wrong. The 1001 limit keeps the Python grid arrays to a few MB.

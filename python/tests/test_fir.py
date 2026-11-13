@@ -165,6 +165,20 @@ def test_equiripple_with_large_coefficients_still_designs() -> None:
     assert max(errs) < 1.3 * min(errs)  # level, up to the grid effect between grid points
 
 
+def test_equiripple_wide_gaps_start_from_a_smaller_design() -> None:
+    # The index start gives this design a first delta below rounding and the exchange cycled until
+    # it raised, though the optimum ripple is 6.5e-7; reference scaling starts it near the
+    # extrema (found by a random sweep).
+    b = [
+        0.045842972619715705, 0.18121475027229406, 0.22904058535303767, 0.27596522538729434,
+        0.35395230478805423, 0.4455572971806905, 0.4698891486665091, 0.47147747032588316,
+    ]  # fmt: skip
+    d = [0, 1, 1, 1.1481133446514442]
+    h = fir_equiripple(168, b, d, 1, grid_density=32)
+    errs = [_worst(h, b[2 * j], b[2 * j + 1], d[j]) for j in range(4)]
+    assert 6e-7 < min(errs) and max(errs) < 1.3 * min(errs)
+
+
 def test_equiripple_bad_arguments() -> None:
     with pytest.raises(ValueError):
         fir_equiripple(21, [0, 0.1, np.nan, 0.5], [1, 0], 1)

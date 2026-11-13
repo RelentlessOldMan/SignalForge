@@ -19,15 +19,74 @@ public static partial class Dsp
     {
         ArgumentNullException.ThrowIfNull(bands);
         ArgumentNullException.ThrowIfNull(desired);
-        var (l, nu, dd, ww, band) = EquirippleGrid(numTaps, bands, desired, sampleRate, weights, gridDensity);
+        var (_, _, dd, _, _) = EquirippleGrid(numTaps, bands, desired, sampleRate, weights, gridDensity);
         int n = numTaps;
-        bool odd = n % 2 == 1;
-        if (dd.All(v => v == 0) || (odd && dd.All(v => v == dd[0])))
+        if (dd.All(v => v == 0) || (n % 2 == 1 && dd.All(v => v == dd[0])))
         {
             var exact = new double[n];
             exact[(n - 1) / 2] = dd[0];
             return exact;
         }
+        return Remez(n, bands, desired, sampleRate, weights, gridDensity)?.Taps
+            ?? throw new ArgumentException("the equiripple design is beyond double precision: its ripple is too small, or its gaps between bands too wide, for double taps to reach", nameof(numTaps));
+    }
+
+    // The first extremal set (conventions: Equiripple design, reference scaling) from the smaller
+    // design's final set (its frequencies), or by grid index without one.
+    private static int[] ScaledStart(int l, double[] nu, int[] band, double[]? prior)
+    {
+        int g = nu.Length;
+        var ext = new int[l + 1];
+        if (prior is null)
+        {
+            for (int i = 0; i <= l; i++)
+                ext[i] = (int)((long)i * (g - 1) / l);
+            return ext;
+        }
+        var s = new double[g];
+        for (int k = 1; k < g; k++)
+            s[k] = s[k - 1] + (band[k] == band[k - 1] ? nu[k] - nu[k - 1] : 0);
+        int lp = prior.Length - 1;
+        var sp = new double[lp + 1];
+        for (int i = 0; i <= lp; i++)
+            sp[i] = Interp(prior[i], nu, s);
+        var pos = new double[lp + 1];
+        for (int i = 0; i <= lp; i++)
+            pos[i] = i;
+        for (int i = 0; i <= l; i++)
+        {
+            double t = Interp((double)i * lp / l, pos, sp);
+            int k = 0;
+            while (k < g && s[k] < t)
+                k++;
+            ext[i] = i > 0 ? Math.Max(k, ext[i - 1] + 1) : k;
+        }
+        for (int i = 0; i <= l; i++)
+            ext[i] = Math.Min(ext[i], g - 1 - (l - i));
+        return ext;
+    }
+
+    // Linear interpolation of (xp, fp) at x, xp increasing, held constant outside (as NumPy's interp).
+    private static double Interp(double x, double[] xp, double[] fp)
+    {
+        if (x <= xp[0])
+            return fp[0];
+        if (x >= xp[^1])
+            return fp[^1];
+        int j = Array.BinarySearch(xp, x);
+        if (j >= 0)
+            return fp[j];
+        j = ~j - 1;
+        return (fp[j + 1] - fp[j]) / (xp[j + 1] - xp[j]) * (x - xp[j]) + fp[j];
+    }
+
+    // The exchange (conventions: Equiripple design): the taps and the final set's frequencies, or
+    // null if the design is beyond double precision.
+    private static (double[] Taps, double[] Nu)? Remez(int n, IReadOnlyList<double> bands, IReadOnlyList<double> desired,
+        double sampleRate, IReadOnlyList<double>? weights, int gridDensity)
+    {
+        var (l, nu, dd, ww, band) = EquirippleGrid(n, bands, desired, sampleRate, weights, gridDensity);
+        bool odd = n % 2 == 1;
         int g = nu.Length;
         double[] dp = new double[g], wp = new double[g], x = new double[g];
         double slack = 0;
@@ -40,9 +99,8 @@ public static partial class Dsp
             slack = Math.Max(slack, Math.Abs(ww[i] * dd[i]));
         }
         slack *= 1e-12;
-        var ext = new int[l + 1];
-        for (int i = 0; i <= l; i++)
-            ext[i] = (int)((long)i * (g - 1) / l);
+        double[]? prior = l > 16 ? Remez(n - 2 * (l - (l + 1) / 2), bands, desired, sampleRate, weights, gridDensity)?.Nu : null;
+        int[] ext = ScaledStart(l, nu, band, prior);
         double[] gamma = new double[l + 1], logs = new double[l + 1], values = new double[l + 1];
         double[] bary = new double[l], e = new double[g];
         for (int iteration = 0; iteration < 250; iteration++)
@@ -94,11 +152,11 @@ public static partial class Dsp
                     worst = Math.Max(worst, Math.Abs(wp[k] * (dp[k] - Clenshaw(c, x[k]))));
                 if (worst > Math.Abs(delta) * (1 + 1e-3) + 100 * slack)
                     break;
-                return EquirippleTaps(n, c);
+                return (EquirippleTaps(n, c), [.. ext.Select(i => nu[i])]);
             }
             next.CopyTo(ext);
         }
-        throw new ArgumentException("the equiripple design is beyond double precision: its ripple is too small, or its gaps between bands too wide, for double taps to reach", nameof(numTaps));
+        return null;
     }
 
     private static double Alt(int i) => i % 2 == 0 ? 1 : -1;

@@ -93,6 +93,19 @@ public class EquirippleTests
     }
 
     [Fact]
+    public void WideGapsStartFromASmallerDesign()
+    {
+        // The index start gives this design a first δ below rounding and the exchange cycled until
+        // it raised, though the optimum ripple is 6.5e-7; reference scaling starts it near the
+        // extrema (found by a random sweep).
+        double[] b = [0.045842972619715705, 0.18121475027229406, 0.22904058535303767, 0.27596522538729434, 0.35395230478805423, 0.4455572971806905, 0.4698891486665091, 0.47147747032588316];
+        double[] d = [0, 1, 1, 1.1481133446514442];
+        double[] h = Dsp.FirEquiripple(168, b, d, 1, gridDensity: 32);
+        double[] errs = [.. Enumerable.Range(0, 4).Select(j => Worst(h, b[2 * j], b[2 * j + 1], d[j]))];
+        Assert.True(errs.Min() > 6e-7 && errs.Max() < 1.3 * errs.Min());
+    }
+
+    [Fact]
     public void BadArgumentsThrow()
     {
         Assert.Throws<ArgumentNullException>(() => Dsp.FirEquiripple(21, null!, [1, 0], 1));
