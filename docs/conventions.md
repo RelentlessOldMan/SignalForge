@@ -376,6 +376,19 @@ and `SignalForge.IirFilter`.
   form II) is its own; results agree to rounding. Otherwise as `FirFilter`: each call returns as
   many samples as it is given, the first non-empty chunk fixes the filter as real or complex until
   `reset()`, and an empty chunk changes nothing.
+- **Zero-phase filtering** (`zero_phase_filter(sos, samples, pad=None)`,
+  [ADR 0017](adr/0017-zero-phase-filtering.md)): with `P = pad` (default `3·(2·sections + 1)`)
+  and `N` samples, `N > P`:
+  1. extend by odd reflection about the end samples: `x[−i] = 2·x[0] − x[i]` and
+     `x[N−1+i] = 2·x[N−1] − x[N−1−i]` for `i = 1 … P`;
+  2. run the cascade over the extended samples, each section starting in its steady state for a
+     constant input `u` (past inputs `u`, past outputs `g·u`, `g = (b0 + b1 + b2)/(1 + a1 + a2)`),
+     with `u` the first extended sample for the first section and `g·u` of the previous section
+     for each later one;
+  3. reverse, run again the same way, reverse back, and keep the middle `N` samples.
+  The result has as many samples as the input and its kind (real or complex); in steady state it
+  is the input with every frequency scaled by `|H(f)|²` and no delay. Every section needs
+  `1 + a1 + a2 ≠ 0` (no pole at `z = 1`); `pad` is an integer `≥ 0`.
 
 ## Resampling
 

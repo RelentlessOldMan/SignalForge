@@ -460,6 +460,102 @@ public static class Dsp
         return [.. rows];
     }
 
+    /// <summary>The sections run forward, then backward, over the samples extended by
+    /// <paramref name="pad"/> samples of odd reflection at each end, each pass starting in its
+    /// steady state; zero phase, magnitude |H|² (conventions: IIR filters).</summary>
+    /// <param name="sos">Sections <c>[b0, b1, b2, a0, a1, a2]</c>, none with a pole at z = 1.</param>
+    /// <param name="samples">Real samples, more than <paramref name="pad"/>.</param>
+    /// <param name="pad">Samples of extension at each end; default 3·(2·sections + 1).</param>
+    public static double[] ZeroPhaseFilter(double[][] sos, ReadOnlySpan<double> samples, int? pad = null)
+    {
+        var (s, p) = ZeroPhaseCheck(sos, samples.Length, pad);
+        double[] y = new double[samples.Length + 2 * p];
+        for (int i = 0; i < p; i++)
+        {
+            y[i] = 2 * samples[0] - samples[p - i];
+            y[p + samples.Length + i] = 2 * samples[^1] - samples[samples.Length - 2 - i];
+        }
+        samples.CopyTo(y.AsSpan(p));
+        SteadyPass(s, y);
+        Array.Reverse(y);
+        SteadyPass(s, y);
+        Array.Reverse(y);
+        return y[p..(p + samples.Length)];
+    }
+
+    /// <summary>The sections run forward, then backward, over complex samples; otherwise as for
+    /// real samples.</summary>
+    /// <param name="sos">Sections <c>[b0, b1, b2, a0, a1, a2]</c>, none with a pole at z = 1.</param>
+    /// <param name="samples">Complex samples, more than <paramref name="pad"/>.</param>
+    /// <param name="pad">Samples of extension at each end; default 3·(2·sections + 1).</param>
+    public static Complex[] ZeroPhaseFilter(double[][] sos, ReadOnlySpan<Complex> samples, int? pad = null)
+    {
+        var (s, p) = ZeroPhaseCheck(sos, samples.Length, pad);
+        Complex[] y = new Complex[samples.Length + 2 * p];
+        for (int i = 0; i < p; i++)
+        {
+            y[i] = 2 * samples[0] - samples[p - i];
+            y[p + samples.Length + i] = 2 * samples[^1] - samples[samples.Length - 2 - i];
+        }
+        samples.CopyTo(y.AsSpan(p));
+        SteadyPass(s, y);
+        Array.Reverse(y);
+        SteadyPass(s, y);
+        Array.Reverse(y);
+        return y[p..(p + samples.Length)];
+    }
+
+    private static (double[][] Sos, int Pad) ZeroPhaseCheck(double[][] sos, int length, int? pad)
+    {
+        double[][] s = CheckSos(sos);
+        if (Array.Exists(s, r => 1 + r[4] + r[5] == 0))
+            throw new ArgumentException("every section needs 1 + a1 + a2 != 0 (no pole at z = 1)", nameof(sos));
+        int p = pad ?? 3 * (2 * s.Length + 1);
+        ArgumentOutOfRangeException.ThrowIfNegative(p, nameof(pad));
+        if (length <= p)
+            throw new ArgumentException("samples must be longer than pad", nameof(pad));
+        return (s, p);
+    }
+
+    // Each section starts in its steady state for a constant input equal to the first sample it sees.
+    private static void SteadyPass(double[][] sos, double[] y)
+    {
+        double u = y[0];
+        foreach (double[] c in sos)
+        {
+            double g = (c[0] + c[1] + c[2]) / (1 + c[4] + c[5]);
+            double s2 = (c[2] - c[5] * g) * u; // transposed direct form II, as if u had always been the input
+            double s1 = (c[1] - c[4] * g) * u + s2;
+            for (int i = 0; i < y.Length; i++)
+            {
+                double v = y[i], o = c[0] * v + s1;
+                s1 = c[1] * v - c[4] * o + s2;
+                s2 = c[2] * v - c[5] * o;
+                y[i] = o;
+            }
+            u = g * u;
+        }
+    }
+
+    private static void SteadyPass(double[][] sos, Complex[] y)
+    {
+        Complex u = y[0];
+        foreach (double[] c in sos)
+        {
+            double g = (c[0] + c[1] + c[2]) / (1 + c[4] + c[5]);
+            Complex s2 = (c[2] - c[5] * g) * u;
+            Complex s1 = (c[1] - c[4] * g) * u + s2;
+            for (int i = 0; i < y.Length; i++)
+            {
+                Complex v = y[i], o = c[0] * v + s1;
+                s1 = c[1] * v - c[4] * o + s2;
+                s2 = c[2] * v - c[5] * o;
+                y[i] = o;
+            }
+            u = g * u;
+        }
+    }
+
     /// <summary>Throws unless the taps are non-empty and finite.</summary>
     internal static void CheckTaps(ReadOnlySpan<double> taps)
     {

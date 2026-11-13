@@ -37,4 +37,4 @@ to the FIR one.
 - The Python filter runs a per-sample loop, slower than NumPy-vectorized code; fine for the sizes
   tests and measurements use today, revisit if profiling says so.
 - Band-pass and band-stop Butterworth (done: ADR 0016), Chebyshev and elliptic designs, zero-phase (forward-backward)
-  filtering and setting the initial state are later work.
+  filtering (done: ADR 0017) and setting the initial state are later work.

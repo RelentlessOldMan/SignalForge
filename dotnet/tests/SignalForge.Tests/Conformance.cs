@@ -264,6 +264,9 @@ public static class Conformance
             "butterworth_highpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthHighpass(t.Item1, t.Item2, t.Item3)),
             "butterworth_bandpass" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.ButterworthBandpass(t.Item1, t.Item2, t.Item3, t.Item4)),
             "butterworth_bandstop" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.ButterworthBandstop(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "zero_phase_filter" => a.Get("samples") is Complex[] zs
+                ? Bind((Rows(a.Get("sos")), zs, a.OptInt("pad")), t => Dsp.ZeroPhaseFilter(t.Item1, t.Item2, t.Item3))
+                : Bind((Rows(a.Get("sos")), Reals(a.Get("samples")), a.OptInt("pad")), t => Dsp.ZeroPhaseFilter(t.Item1, t.Item2, t.Item3)),
             "sos_response" => Bind((Rows(a.Get("sos")), Reals(a.Get("frequencies")), a.D("sample_rate")), t => Dsp.SosResponse(t.Item1, t.Item2, t.Item3)),
             "encode_samples" => a.Get("x") is Complex[] z
                 ? Bind((z, Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2)))

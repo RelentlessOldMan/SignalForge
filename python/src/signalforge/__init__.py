@@ -23,6 +23,7 @@ from .dsp import (
     rrc_taps,
     sos_response,
     upsample,
+    zero_phase_filter,
 )
 from .files import decode_samples, encode_samples, read_sigmf, write_sigmf
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
@@ -57,7 +58,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.27"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.28"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
@@ -134,4 +135,5 @@ __all__ = [
     "window",
     "window_stats",
     "write_sigmf",
+    "zero_phase_filter",
 ]

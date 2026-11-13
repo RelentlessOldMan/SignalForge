@@ -4,8 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Zero-phase filtering**: forward-backward IIR (`filtfilt`-style) with a stated edge rule, so
-   a filtered measurement has no group delay.
+1. **Review pass** over tone metrics, SFDR, band Butterworth and zero-phase filtering.
+2. **Chebyshev type I** IIR design (low-pass, high-pass), ripple in dB, closed-form magnitude
+   vectors.
 
 ## Built
 
@@ -180,11 +181,16 @@ Updated with every chunk of work. Dates are absolute.
   16 more `iir.json` cases (two by hand, seven designs the generator checks against the closed-form
   magnitude before writing, responses, a filter run, six errors).
   Python 926 passed, 2 skipped (3.10 too); .NET 716 passed; conformance 511/511 in both.
+- 2026-11-13: zero-phase filtering in both languages (`zero_phase_filter` /
+  `Dsp.ZeroPhaseFilter`, ADR 0017): forward then backward over an odd extension, each pass from
+  the sections' steady state. 12 more `iir.json` cases (two by hand, a constant that must come back
+  exactly, five from a direct form I implementation, five errors).
+  Python 949 passed, 2 skipped (3.10 too); .NET 732 passed; conformance 523/523 in both.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth (
-Chebyshev, elliptic), zero-phase filtering, FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Chebyshev, elliptic), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

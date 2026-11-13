@@ -15,6 +15,7 @@ from signalforge import (
     butterworth_highpass,
     butterworth_lowpass,
     sos_response,
+    zero_phase_filter,
 )
 
 DESIGNS = [butterworth_lowpass, butterworth_highpass]
@@ -200,3 +201,41 @@ def test_butterworth_bandpass_passes_its_center_and_bandstop_nulls_it() -> None:
 def test_butterworth_band_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
     with pytest.raises(ValueError):
         design(*args)
+
+
+@pytest.mark.parametrize("f", [200.0, 900.0, 1300.0])
+def test_zero_phase_filter_scales_a_tone_by_h_squared_without_delay(f: float) -> None:
+    sos = butterworth_lowpass(5, 1000.0, 8000.0)
+    n = np.arange(4000)
+    x = np.cos(2 * np.pi * f * n / 8000 + 0.3)
+    y = zero_phase_filter(sos, x)
+    h2 = abs(sos_response(sos, [f], 8000.0)[0]) ** 2
+    assert np.max(np.abs(y[1000:3000] - h2 * x[1000:3000])) < 1e-9
+
+
+def test_zero_phase_filter_keeps_the_kind_and_is_linear() -> None:
+    sos = butterworth_bandpass(2, 0.1, 0.2, 1.0)
+    rng = np.random.default_rng(3)
+    re, im = rng.standard_normal(200), rng.standard_normal(200)
+    yr, yi = zero_phase_filter(sos, re, pad=10), zero_phase_filter(sos, im, pad=10)
+    z = zero_phase_filter(sos, re + 1j * im, pad=10)
+    assert yr.dtype == np.float64 and z.dtype == np.complex128
+    assert np.allclose(z, yr + 1j * yi, rtol=0, atol=1e-12)
+    assert np.allclose(zero_phase_filter(sos, np.full(50, 2.0)), 0.0, atol=1e-12)
+
+
+@pytest.mark.parametrize(
+    ("sos", "x", "pad"),
+    [
+        ([[1, 0, 0, 1, -1, 0]], np.ones(8), 0),
+        ([[1, 0, 0, 1, 0, 0]], np.ones(8), 8),
+        ([[1, 0, 0, 1, 0, 0]], np.ones(8), -1),
+        ([[1, 0, 0, 1, 0, 0]], np.ones(8), 1.0),
+        ([[1, 0, 0, 1, 0, 0]], np.ones(9), None),
+        ([[1, 0, 0, 1, 0, 0]], np.ones((2, 20)), 0),
+        ([[1, 0, 0, 1, 0, 0]], [], 0),
+    ],
+)
+def test_zero_phase_filter_rejects_bad_arguments(sos: Any, x: Any, pad: Any) -> None:
+    with pytest.raises(ValueError):
+        zero_phase_filter(sos, x, pad)

@@ -424,6 +424,49 @@ class IirFilter:
         return cast("NDArray[np.complex128] | NDArray[np.float64]", np.array(y, dtype=dtype))
 
 
+def _steady_pass(sos: list[list[float]], y: list[Any]) -> None:
+    """Runs the sections over ``y`` in place, each starting in its steady state for a constant
+    input equal to the first sample it sees."""
+    u = y[0]
+    for b0, b1, b2, _, a1, a2 in sos:
+        g = (b0 + b1 + b2) / (1 + a1 + a2)
+        s2 = (b2 - a2 * g) * u  # transposed direct form II, as if u had always been the input
+        s1 = (b1 - a1 * g) * u + s2
+        for i, v in enumerate(y):
+            out = b0 * v + s1
+            s1 = b1 * v - a1 * out + s2
+            s2 = b2 * v - a2 * out
+            y[i] = out
+        u = g * u
+
+
+def zero_phase_filter(
+    sos: ArrayLike, samples: ArrayLike, pad: int | None = None
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The sections run forward, then backward, over the samples extended by ``pad`` samples of
+    odd reflection at each end (default ``3·(2·sections + 1)``); zero phase, magnitude ``|H|²``
+    (conventions: IIR filters)."""
+    s = _sos(sos)
+    if np.any(1 + s[:, 4] + s[:, 5] == 0):
+        raise ValueError("every section needs 1 + a1 + a2 != 0 (no pole at z = 1)")
+    x = _vector(samples, "samples")
+    p = 3 * (2 * s.shape[0] + 1) if pad is None else count(pad, "pad")
+    if p < 0:
+        raise ValueError("pad must be non-negative")
+    if x.size <= p:
+        raise ValueError("samples must be longer than pad")
+    ext = np.concatenate([2 * x[0] - x[p:0:-1], x, 2 * x[-1] - x[-2 : -p - 2 : -1]])
+    y: list[Any] = ext.tolist()
+    rows = s.tolist()
+    _steady_pass(rows, y)
+    y.reverse()
+    _steady_pass(rows, y)
+    y.reverse()
+    return cast(
+        "NDArray[np.complex128] | NDArray[np.float64]", np.array(y[p : p + x.size], dtype=x.dtype)
+    )
+
+
 def _factors(up: int, down: int) -> tuple[int, int]:
     """``(up, down)`` checked and reduced by their greatest common divisor."""
     lu, md = count(up, "up"), count(down, "down")

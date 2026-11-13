@@ -196,4 +196,40 @@ public class IirTests
             Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 2, 0));
         }
     }
+
+    [Theory]
+    [InlineData(200.0)]
+    [InlineData(900.0)]
+    [InlineData(1300.0)]
+    public void ZeroPhaseFilterScalesAToneByHSquaredWithoutDelay(double f)
+    {
+        double[][] sos = Dsp.ButterworthLowpass(5, 1000, 8000);
+        double[] x = [.. Enumerable.Range(0, 4000).Select(n => Math.Cos(2 * Math.PI * f * n / 8000 + 0.3))];
+        double[] y = Dsp.ZeroPhaseFilter(sos, x);
+        double h2 = Math.Pow(Dsp.SosResponse(sos, [f], 8000)[0].Magnitude, 2);
+        for (int n = 1000; n < 3000; n++)
+            Assert.True(Math.Abs(y[n] - h2 * x[n]) < 1e-9, $"n = {n}");
+    }
+
+    [Fact]
+    public void ZeroPhaseFilterIsLinearAndRejectsBadArguments()
+    {
+        double[][] sos = Dsp.ButterworthBandpass(2, 0.1, 0.2, 1);
+        var rng = new Random(3);
+        double[] re = [.. Enumerable.Range(0, 200).Select(_ => rng.NextDouble() - 0.5)];
+        double[] im = [.. Enumerable.Range(0, 200).Select(_ => rng.NextDouble() - 0.5)];
+        double[] yr = Dsp.ZeroPhaseFilter(sos, re, 10), yi = Dsp.ZeroPhaseFilter(sos, im, 10);
+        Complex[] z = Dsp.ZeroPhaseFilter(sos, [.. re.Zip(im, (a, b) => new Complex(a, b))], 10);
+        for (int i = 0; i < z.Length; i++)
+            Assert.True((z[i] - new Complex(yr[i], yi[i])).Magnitude < 1e-12);
+        Assert.All(Dsp.ZeroPhaseFilter(sos, Enumerable.Repeat(2.0, 50).ToArray()), v => Assert.Equal(0, v, 1e-12));
+
+        double[][] flat = [[1, 0, 0, 1, 0, 0]];
+        double[] ones = [.. Enumerable.Repeat(1.0, 8)];
+        Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter([[1, 0, 0, 1, -1, 0]], ones, 0));
+        Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter(flat, ones, 8));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Dsp.ZeroPhaseFilter(flat, ones, -1));
+        Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter(flat, [.. Enumerable.Repeat(1.0, 9)]));
+        Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter(flat, ReadOnlySpan<double>.Empty, 0));
+    }
 }

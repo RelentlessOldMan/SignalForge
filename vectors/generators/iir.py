@@ -5,7 +5,8 @@ conventions: IIR filters (each pole pair's Q, prewarped K, bilinear transform), 
 complex poles as the library does. Band-pass and band-stop sections come from the quadratic formula
 on each prototype pole's image, and every band design is checked here against the closed-form
 magnitude of conventions: IIR filters before it is written. Responses evaluate each section's rational function at
-e^(j 2 pi f / fs); filter outputs run each section's difference equation in direct form I.
+e^(j 2 pi f / fs); filter outputs run each section's difference equation in direct form I, and
+zero-phase outputs do the same with each section's past inputs and outputs set to its steady state.
 
 Run from the repo root: python vectors/generators/iir.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write (numbers
@@ -96,6 +97,42 @@ def run(sos, x):
             x2, x1, y2, y1 = x1, v, y1, out
             y[n] = out
     return y
+
+
+def steady(sos, y):
+    u = y[0]
+    for b0, b1, b2, a0, a1, a2 in sos:
+        b0, b1, b2, a1, a2 = b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0
+        g = (b0 + b1 + b2) / (1 + a1 + a2)
+        x1 = x2 = u
+        y1 = y2 = g * u
+        for n, v in enumerate(y):
+            out = b0 * v + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+            x2, x1, y2, y1 = x1, v, y1, out
+            y[n] = out
+        u = g * u
+
+
+def zero_phase(sos, x, pad=None):
+    p = 3 * (2 * len(sos) + 1) if pad is None else pad
+    n = len(x)
+    ext = [2 * x[0] - x[p - i] for i in range(p)] + list(x)
+    ext += [2 * x[-1] - x[n - 2 - i] for i in range(p)]
+    steady(sos, ext)
+    ext.reverse()
+    steady(sos, ext)
+    ext.reverse()
+    return ext[p:p + n]
+
+
+def zp(case_id, sos, x, pad=None, expected=None, src=None):
+    args = {"sos": sos, "samples": samples(x)}
+    if pad is not None:
+        args["pad"] = pad
+    y = expected if expected is not None else zero_phase(sos, x, pad)
+    return {"id": case_id, "op": "zero_phase_filter", "args": args, "expected": samples(y),
+            "tol": TOL, "source": src or SRC + "direct form I both ways, each pass from the "
+            "sections' steady state, over the odd extension"}
 
 
 def cplx(z):
@@ -205,6 +242,32 @@ cases = [
          [0.0, 500.0, 1000.0, 1732.0, 3000.0, 5000.0, 8000.0], 16000.0),
     resp("sos_response.butterworth_bandstop_2", bs2, [0.0, 0.2, 0.245, 0.3, 0.5], 1.0),
     filt("iir_filter.butterworth_bandpass_chunks", bp3, ramp, [5, 19]),
+    zp("zero_phase.average_by_hand", [[0.5, 0.5, 0.0, 1.0, 0.0, 0.0]], [1.0, 2.0, 4.0], pad=0,
+       expected=[1.25, 2.25, 3.0],
+       src="by hand: y[n] = (x[n] + x[n-1])/2 with x[-1] = x[0]: forward 1, 1.5, 3; backward "
+       "from 3: 3, 2.25, 1.25; reversed 1.25, 2.25, 3"),
+    zp("zero_phase.average_pad_by_hand", [[0.5, 0.5, 0.0, 1.0, 0.0, 0.0]], [1.0, 2.0, 4.0], pad=1,
+       expected=[1.0, 2.25, 4.0],
+       src="by hand: extended 0, 1, 2, 4, 6; forward from 0: 0, 0.5, 1.5, 3, 5; backward from 5: "
+       "5, 4, 2.25, 1, 0.25; the middle three reversed: 1, 2.25, 4"),
+    zp("zero_phase.constant_lowpass", lp4, [3.0] * 30, expected=[3.0] * 30,
+       src="analytic: each pass starts in the steady state of a constant, so a low-pass (gain 1 "
+       "at DC) gives the constant back exactly, to rounding"),
+    zp("zero_phase.lowpass_default_pad", lp4, ramp),
+    zp("zero_phase.bandpass_no_pad", bp3, ramp, pad=0),
+    zp("zero_phase.highpass_complex", hp3, chirp, pad=4),
+    zp("zero_phase.pad_one_short", lp4, ramp[:16], pad=15),
+    err("zero_phase.pad_too_long", "zero_phase_filter",
+        {"sos": lp4, "samples": ramp[:15], "pad": 15}, "samples must be longer than pad"),
+    err("zero_phase.default_pad_too_long", "zero_phase_filter",
+        {"sos": lp4, "samples": ramp[:15]}, "samples must be longer than the default pad, 15"),
+    err("zero_phase.pad_negative", "zero_phase_filter",
+        {"sos": lp4, "samples": ramp, "pad": -1}, "pad >= 0 required"),
+    err("zero_phase.pole_at_one", "zero_phase_filter",
+        {"sos": [[1.0, 0.0, 0.0, 1.0, -1.0, 0.0]], "samples": ramp, "pad": 0},
+        "a pole at z = 1 has no steady state"),
+    err("zero_phase.empty", "zero_phase_filter", {"sos": lp4, "samples": [], "pad": 0},
+        "samples must be non-empty"),
     resp("sos_response.one_pole", pole_half, [0.0, 0.25, 0.5], 1.0,
          expected=[2 + 0j, 1 / (1 + 0.5j), 2 / 3 + 0j],
          src="by hand: H = 1/(1 - 0.5 z^-1); z^-1 = 1, -j, -1 at f = 0, fs/4, fs/2 gives 2, "
