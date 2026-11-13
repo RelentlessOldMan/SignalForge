@@ -2,6 +2,29 @@ using System.Numerics;
 
 namespace SignalForge;
 
+/// <summary>What each Welch segment loses before the window (conventions: Spectra, PSD).</summary>
+public enum Detrend
+{
+    /// <summary>The segment as it is.</summary>
+    None,
+
+    /// <summary>The segment minus its mean.</summary>
+    Constant,
+
+    /// <summary>The segment minus its least-squares line.</summary>
+    Linear,
+}
+
+/// <summary>How Welch's segment powers are combined per bin (conventions: Spectra, PSD).</summary>
+public enum WelchAverage
+{
+    /// <summary>The mean over segments.</summary>
+    Mean,
+
+    /// <summary>The median over segments divided by its expected value for exponential power.</summary>
+    Median,
+}
+
 /// <summary>Named windows. Formulas in docs/conventions.md (Spectra).</summary>
 public enum WindowType
 {
@@ -230,31 +253,56 @@ public static class Spectral
 
     /// <summary>
     /// Welch PSD of complex samples: two-sided, in shifted (ascending) order. Segment length defaults
-    /// to the whole input, overlap to half a segment. <paramref name="beta"/> is the Kaiser β.
+    /// to the whole input, overlap to half a segment. <paramref name="beta"/> is the Kaiser β;
+    /// <paramref name="detrend"/> acts on each segment, <paramref name="average"/> combines them.
     /// </summary>
     public static SpectralDensity WelchPsd(ReadOnlySpan<Complex> samples, double sampleRate,
-        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null) =>
-        Welch(samples, sampleRate, nperseg, noverlap, window, beta, oneSided: false);
+        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
+        Detrend detrend = Detrend.None, WelchAverage average = WelchAverage.Mean) =>
+        Welch(samples, sampleRate, nperseg, noverlap, window, beta, oneSided: false, detrend, average);
 
     /// <summary>
     /// Welch PSD of real samples: one-sided (bins 0 … ⌊N/2⌋, all but DC and Nyquist doubled) unless
     /// <paramref name="oneSided"/> is false, which gives the two-sided shifted PSD.
-    /// <paramref name="beta"/> is the Kaiser β.
+    /// <paramref name="beta"/> is the Kaiser β; <paramref name="detrend"/> acts on each segment,
+    /// <paramref name="average"/> combines them.
     /// </summary>
     public static SpectralDensity WelchPsd(ReadOnlySpan<double> samples, double sampleRate,
         int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, bool oneSided = true,
-        double? beta = null) =>
-        Welch(ToComplex(samples), sampleRate, nperseg, noverlap, window, beta, oneSided);
+        double? beta = null, Detrend detrend = Detrend.None, WelchAverage average = WelchAverage.Mean) =>
+        Welch(ToComplex(samples), sampleRate, nperseg, noverlap, window, beta, oneSided, detrend, average);
 
     private static SpectralDensity Welch(ReadOnlySpan<Complex> x, double sampleRate, int? nperseg,
-        int? noverlap, WindowType window, double? beta, bool oneSided)
+        int? noverlap, WindowType window, double? beta, bool oneSided, Detrend detrend, WelchAverage average)
     {
-        var g = Prepare(x, sampleRate, nperseg, noverlap, window, beta);
-        var acc = new double[g.N];
+        if (average is not (WelchAverage.Mean or WelchAverage.Median))
+            throw new ArgumentException($"unknown average {average}", nameof(average));
+        var g = Prepare(x, sampleRate, nperseg, noverlap, window, beta, detrend);
         var buf = new Complex[g.N];
-        for (int s = 0; s < g.Count; s++)
-            g.AddPower(x, s, buf, acc);
-        return new SpectralDensity(g.Frequencies(oneSided), g.Fold(acc, g.Scale / g.Count, oneSided), sampleRate,
+        var acc = new double[g.N];
+        double scale = g.Scale / g.Count;
+        if (average == WelchAverage.Mean)
+        {
+            for (int s = 0; s < g.Count; s++)
+                g.AddPower(x, s, buf, acc);
+        }
+        else
+        {
+            var rows = new double[g.Count][];
+            for (int s = 0; s < g.Count; s++)
+                g.AddPower(x, s, buf, rows[s] = new double[g.N]);
+            var col = new double[g.Count];
+            int mid = g.Count / 2;
+            for (int k = 0; k < g.N; k++)
+            {
+                for (int s = 0; s < g.Count; s++)
+                    col[s] = rows[s][k];
+                Array.Sort(col);
+                acc[k] = g.Count % 2 == 1 ? col[mid] : (col[mid - 1] + col[mid]) / 2;
+            }
+            scale = g.Scale / MedianBias(g.Count);
+        }
+        return new SpectralDensity(g.Frequencies(oneSided), g.Fold(acc, scale, oneSided), sampleRate,
             g.N, g.Count, oneSided, sampleRate / g.N, WindowStats(g.W).EnbwBins * sampleRate / g.N);
     }
 
@@ -263,21 +311,23 @@ public static class Spectral
     /// PSD (conventions: Spectra, Spectrogram). <paramref name="beta"/> is the Kaiser β.
     /// </summary>
     public static Spectrogram Spectrogram(ReadOnlySpan<Complex> samples, double sampleRate, int nperseg,
-        int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null) =>
-        Frames(samples, sampleRate, nperseg, noverlap, window, beta, oneSided: false);
+        int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
+        Detrend detrend = Detrend.None) =>
+        Frames(samples, sampleRate, nperseg, noverlap, window, beta, oneSided: false, detrend);
 
     /// <summary>
     /// Spectrogram of real samples: one-sided rows unless <paramref name="oneSided"/> is false, which
     /// gives two-sided shifted rows. <paramref name="beta"/> is the Kaiser β.
     /// </summary>
     public static Spectrogram Spectrogram(ReadOnlySpan<double> samples, double sampleRate, int nperseg,
-        int? noverlap = null, WindowType window = WindowType.Hann, bool oneSided = true, double? beta = null) =>
-        Frames(ToComplex(samples), sampleRate, nperseg, noverlap, window, beta, oneSided);
+        int? noverlap = null, WindowType window = WindowType.Hann, bool oneSided = true, double? beta = null,
+        Detrend detrend = Detrend.None) =>
+        Frames(ToComplex(samples), sampleRate, nperseg, noverlap, window, beta, oneSided, detrend);
 
     private static Spectrogram Frames(ReadOnlySpan<Complex> x, double sampleRate, int nperseg,
-        int? noverlap, WindowType window, double? beta, bool oneSided)
+        int? noverlap, WindowType window, double? beta, bool oneSided, Detrend detrend)
     {
-        var g = Prepare(x, sampleRate, nperseg, noverlap, window, beta);
+        var g = Prepare(x, sampleRate, nperseg, noverlap, window, beta, detrend);
         var rows = new double[g.Count][];
         var times = new double[g.Count];
         var buf = new Complex[g.N];
@@ -293,9 +343,11 @@ public static class Spectral
     }
 
     private static Segments Prepare(ReadOnlySpan<Complex> x, double sampleRate, int? nperseg, int? noverlap,
-        WindowType window, double? beta)
+        WindowType window, double? beta, Detrend detrend)
     {
         Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        if (detrend is not (Detrend.None or Detrend.Constant or Detrend.Linear))
+            throw new ArgumentException($"unknown detrend {detrend}", nameof(detrend));
         int n = nperseg ?? x.Length;
         if (n < 1)
             throw new ArgumentException("nperseg must be at least 1", nameof(nperseg));
@@ -308,18 +360,48 @@ public static class Spectral
         double[] w = Window(window, n, beta: beta);
         if (w.All(v => v == 0))
             throw new ArgumentException($"{window} window of length {n} is all zeros", nameof(window));
-        return new Segments(n, step, (x.Length - n) / step + 1, w, sampleRate, 1.0 / (sampleRate * w.Sum(v => v * v)));
+        return new Segments(n, step, (x.Length - n) / step + 1, w, sampleRate, 1.0 / (sampleRate * w.Sum(v => v * v)),
+            detrend);
     }
 
-    /// <summary>Welch's segmentation: length, step, count, window, and the scale 1/(fs·Σw²).</summary>
-    private sealed record Segments(int N, int Step, int Count, double[] W, double SampleRate, double Scale)
+    /// <summary>The expected median of <paramref name="k"/> independent unit-mean exponential values
+    /// (conventions: Spectra, PSD).</summary>
+    private static double MedianBias(int k)
     {
-        /// <summary>Adds |FFT(w·segment s)|², unscaled and in FFT order, to <paramref name="acc"/>.</summary>
+        double b = 0;
+        for (int i = k / 2 + 1; i <= k; i++)
+            b += 1.0 / i;
+        return k % 2 == 0 ? b + 1.0 / k : b;
+    }
+
+    /// <summary>Welch's segmentation: length, step, count, window, the scale 1/(fs·Σw²), detrending.</summary>
+    private sealed record Segments(int N, int Step, int Count, double[] W, double SampleRate, double Scale,
+        Detrend Detrend)
+    {
+        /// <summary>Adds |FFT(w·detrended segment s)|², unscaled and in FFT order, to <paramref name="acc"/>.</summary>
         public void AddPower(ReadOnlySpan<Complex> x, int s, Complex[] buf, double[] acc)
         {
             var seg = x.Slice(s * Step, N);
+            Complex mean = Complex.Zero, slope = Complex.Zero;
+            double c = (N - 1) / 2.0;
+            if (Detrend != Detrend.None)
+            {
+                for (int i = 0; i < N; i++)
+                    mean += seg[i];
+                mean /= N;
+            }
+            if (Detrend == Detrend.Linear && N > 1)
+            {
+                double tt = 0;
+                for (int i = 0; i < N; i++)
+                {
+                    slope += (i - c) * seg[i];
+                    tt += (i - c) * (i - c);
+                }
+                slope /= tt;
+            }
             for (int i = 0; i < N; i++)
-                buf[i] = seg[i] * W[i];
+                buf[i] = (seg[i] - mean - slope * (i - c)) * W[i];
             Transform(buf);
             for (int i = 0; i < N; i++)
                 acc[i] += buf[i].Real * buf[i].Real + buf[i].Imaginary * buf[i].Imaginary;

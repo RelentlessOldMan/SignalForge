@@ -161,10 +161,16 @@ class _Segments:
     w: NDArray[np.float64]
     scale: float
     one_sided: bool
+    detrend: str
 
     def power(self, s: int) -> NDArray[np.float64]:
-        """``|FFT(w*segment s)|^2``, unscaled, in FFT order."""
+        """``|FFT(w*detrended segment s)|^2``, unscaled, in FFT order."""
         seg = self.x[s * self.step : s * self.step + self.n]
+        if self.detrend != "none":
+            seg = seg - np.mean(seg)
+            if self.detrend == "linear" and self.n > 1:
+                t = np.arange(self.n) - (self.n - 1) / 2
+                seg = seg - t * (np.sum(t * seg) / np.sum(t * t))
         return np.abs(np.fft.fft(seg * self.w)) ** 2
 
     def fold(self, p: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -190,8 +196,11 @@ def _segments(
     window: str,
     one_sided: bool | None,
     beta: float | None,
+    detrend: str,
 ) -> _Segments:
     x = _vector(samples, "samples")
+    if detrend not in ("none", "constant", "linear"):
+        raise ValueError('detrend must be "none", "constant" or "linear"')
     if not real(sample_rate, "sample_rate") > 0:
         raise ValueError("sample_rate must be positive and finite")
     is_complex = np.iscomplexobj(x)
@@ -210,7 +219,7 @@ def _segments(
     step = n - overlap
     w = _window_for_psd(window, n, beta)
     scale = 1.0 / (sample_rate * float(np.sum(w * w)))
-    return _Segments(x, n, step, (x.size - n) // step + 1, w, scale, bool(one_sided))
+    return _Segments(x, n, step, (x.size - n) // step + 1, w, scale, bool(one_sided), detrend)
 
 
 def welch_psd(
@@ -222,15 +231,25 @@ def welch_psd(
     window: str = "hann",
     one_sided: bool | None = None,
     beta: float | None = None,
+    detrend: str = "none",
+    average: str = "mean",
 ) -> SpectralDensity:
-    """Welch PSD: mean of ``|FFT(w*segment)|^2 / (fs*sum(w^2))`` over overlapping segments."""
-    g = _segments(samples, sample_rate, nperseg, noverlap, window, one_sided, beta)
-    acc = np.zeros(g.n)
-    for s in range(g.count):
-        acc += g.power(s)
+    """Welch PSD: mean (or bias-corrected median) of ``|FFT(w*segment)|^2 / (fs*sum(w^2))`` over
+    overlapping, optionally detrended segments."""
+    g = _segments(samples, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend)
+    if average == "mean":
+        acc = np.zeros(g.n)
+        for s in range(g.count):
+            acc += g.power(s)
+        two_sided = acc * (g.scale / g.count)
+    elif average == "median":
+        rows = np.array([g.power(s) for s in range(g.count)])
+        two_sided = np.median(rows, axis=0) * (g.scale / _median_bias(g.count))
+    else:
+        raise ValueError('average must be "mean" or "median"')
     return SpectralDensity(
         frequencies=g.frequencies(sample_rate),
-        psd=np.asarray(g.fold(acc * (g.scale / g.count)), dtype=np.float64),
+        psd=np.asarray(g.fold(two_sided), dtype=np.float64),
         sample_rate=float(sample_rate),
         nperseg=g.n,
         num_segments=g.count,
@@ -249,11 +268,12 @@ def spectrogram(
     window: str = "hann",
     one_sided: bool | None = None,
     beta: float | None = None,
+    detrend: str = "none",
 ) -> Spectrogram:
     """Welch's segments kept, not averaged: row ``s`` is the PSD of segment ``s`` alone."""
     if nperseg is None:
         raise ValueError("nperseg is required")
-    g = _segments(samples, sample_rate, nperseg, noverlap, window, one_sided, beta)
+    g = _segments(samples, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend)
     rows = [g.fold(g.power(s) * g.scale) for s in range(g.count)]
     return Spectrogram(
         frequencies=g.frequencies(sample_rate),
@@ -266,6 +286,13 @@ def spectrogram(
         bin_width=sample_rate / g.n,
         enbw_hz=window_stats(g.w).enbw_bins * sample_rate / g.n,
     )
+
+
+def _median_bias(k: int) -> float:
+    """The expected median of ``k`` independent unit-mean exponential values (conventions: PSD)."""
+    m = k // 2
+    b = math.fsum(1.0 / i for i in range(m + 1, k + 1))
+    return b + 1.0 / k if k % 2 == 0 else b
 
 
 def _window_for_psd(name: str, n: int, beta: float | None) -> NDArray[np.float64]:

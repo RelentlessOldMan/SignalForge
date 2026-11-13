@@ -397,17 +397,32 @@ public static class Conformance
         var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.OptInt("nperseg"), a.OptInt("noverlap"));
         var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
         double? beta = a.OptD("beta");
+        var detrend = DetrendName(a);
+        var average = a.Has("average") ? Str(a, "average") switch
+        {
+            "mean" => WelchAverage.Mean,
+            "median" => WelchAverage.Median,
+            _ => (WelchAverage)(-1), // the library rejects it, as Python does
+        } : WelchAverage.Mean;
         if (samples is Complex[] cs)
         {
             // C# has no one-sided option for complex samples (Python raises for one_sided=True).
             if (a.Flag("one_sided"))
                 throw new InvalidDataException("one_sided=true with complex samples has no C# form");
-            return () => Spectral.WelchPsd(cs, fs, nperseg, noverlap, window, beta);
+            return () => Spectral.WelchPsd(cs, fs, nperseg, noverlap, window, beta, detrend, average);
         }
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
-        return () => Spectral.WelchPsd(x, fs, nperseg, noverlap, window, oneSided, beta);
+        return () => Spectral.WelchPsd(x, fs, nperseg, noverlap, window, oneSided, beta, detrend, average);
     }
+
+    private static Detrend DetrendName(Args a) => a.Has("detrend") ? Str(a, "detrend") switch
+    {
+        "none" => Detrend.None,
+        "constant" => Detrend.Constant,
+        "linear" => Detrend.Linear,
+        _ => (Detrend)(-1), // the library rejects it, as Python does
+    } : Detrend.None;
 
     private static Func<object?> ToneMetricsOp(Args a)
     {
@@ -441,15 +456,16 @@ public static class Conformance
         var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.I("nperseg"), a.OptInt("noverlap"));
         var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
         double? beta = a.OptD("beta");
+        var detrend = DetrendName(a);
         if (samples is Complex[] cs)
         {
             if (a.Flag("one_sided"))
                 throw new InvalidDataException("one_sided=true with complex samples has no C# form");
-            return () => Spectral.Spectrogram(cs, fs, nperseg, noverlap, window, beta);
+            return () => Spectral.Spectrogram(cs, fs, nperseg, noverlap, window, beta, detrend);
         }
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
-        return () => Spectral.Spectrogram(x, fs, nperseg, noverlap, window, oneSided, beta);
+        return () => Spectral.Spectrogram(x, fs, nperseg, noverlap, window, oneSided, beta, detrend);
     }
 
     /// <summary>Real only when both inputs are real, as in NumPy.</summary>

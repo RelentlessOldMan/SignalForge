@@ -4,8 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Welch options**: `detrend` ("constant", "linear" or none) per segment and median averaging
-   (with its bias correction), in `welch` and the spectrogram where it applies; conventions first.
+1. **Zero padding** (`nfft >= nperseg`) for `welch_psd` and `spectrogram`: each windowed segment
+   padded with zeros to `nfft` before the transform, the frequency axis and the one-sided fold on
+   `nfft` bins, the scaling unchanged (`fs·Σw²`); `bin_width` becomes `fs/nfft` while `enbw_hz`
+   stays the window's (`ENBW·fs/nperseg`); conventions first.
+2. **Bessel band-pass and band-stop**, by the same low-pass-to-band transforms as the other
+   families; expected values from the analog prototype's roots transformed by hand formulas.
 
 ## Built
 
@@ -366,11 +370,19 @@ Updated with every chunk of work. Dates are absolute.
   rational arithmetic (up to 101 taps), nine errors. Tests: symmetric perturbations only raise the
   error, lower error energy than the equiripple design, type II zero at `fs/2`, a sloped band
   followed.
+- 2026-11-13: Welch options (conventions: Spectra, PSD; ADR 0030): `detrend` ("none",
+  "constant", "linear") per segment before the window, in `welch_psd` and `spectrogram`, and
+  `average="median"` in `welch_psd`, the per-bin median divided by `b(K)`, the exact expected
+  median of `K` unit-mean exponentials (odd and even `K`). C#: `Detrend`, `WelchAverage`. Vectors
+  (`welch.json`): five by hand, twelve from a stdlib generator that detrends by the uncentred
+  normal equations and checks `b(K)` by integrating the order-statistic densities, three errors.
+  Tests: detrending ignores an added constant or line (real and complex), the median is unbiased
+  for white noise (odd and even `K`), resists a burst, and reads a steady tone `1/b(K)` high.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral options beyond Welch and the spectrogram
-(zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
+(zero padding), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
