@@ -4,7 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-Nothing queued; pick from Not built.
+1. **64-QAM carrier loop and link**: `qam64_carrier_tracking` (decision-directed like
+   `qam16_carrier_tracking`, ADR 0048), then `"qam64"` as a link `modulation` (its `E[s⁴]` is a
+   negative real, so `power_frequency_offset(·, Rs, 4)` and the fourth-power block phases apply).
+2. **Binary and M-ary FSK**: continuous-phase FSK modulator (modulation index, samples per symbol)
+   and a noncoherent energy detector, with BER theory for noncoherent orthogonal BFSK
+   (`½·e^{−Eb/2N0}`).
+3. **WAV read and write**: PCM 16/24/32-bit integer and 32/64-bit float, mono and multi-channel,
+   to and from `Signal`; stdlib-only vectors.
 
 ## Built
 
@@ -528,12 +535,18 @@ Nothing queued; pick from Not built.
   preamble rounds to π/4. Link configs `psk8_10db` (20000 symbols: 56 bit errors in Python, 62 in
   C#, theory 61) and `psk8_noiseless` (0 errors in both). Python 2200 passed, 2 skipped; .NET
   1759 passed.
+- 2026-11-13: 64-QAM (conventions: Bits and symbols, EVM and BER; ADR 0052): `qam64_map`,
+  `qam64_demap_hard`, `qam64_demap_llr`, `qam64_ber_theory`, `qam64_ser_theory`. Gray 8-PAM axes
+  (`(1 − 2a)·(4 + (1 − 2b)·(3 − 2c))/√42`), threshold ties to bit 0; the BER is Cho and Yoon's
+  square-QAM sum written out for 8-PAM, which the error-rate generator checks against an integral
+  over the decision intervals (to 1e-10). 10 modulation and 16 error-rate vectors; Monte Carlo at
+  12 dB within 5 % in both languages. Python 2237 passed, 2 skipped; .NET 1793 passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK and 16-QAM, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK and 16-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

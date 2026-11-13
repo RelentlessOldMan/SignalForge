@@ -305,7 +305,17 @@ groups as the tone metrics (ADR 0015).
   evaluated in double precision); so 0 decides `01` and `±2/√10` decide the outer level. A NaN
   in either part is `invalid_argument`.
   **(implemented)**
-- **Soft demapping** (`qpsk_demap_llr`, `psk8_demap_llr`, `qam16_demap_llr`, each
+- **64-QAM (Gray)** ([ADR 0052](adr/0052-qam64.md)): six bits, `I` from `(b0, b1, b2)` and `Q`
+  from `(b3, b4, b5)`, each `(1 − 2·b_a)·(4 + (1 − 2·b_b)·(3 − 2·b_c))`: `000 → 7`, `001 → 5`,
+  `011 → 3`, `010 → 1`, `110 → −1`, `111 → −3`, `101 → −5`, `100 → −7` (the 16-QAM pattern:
+  first bit the sign, the rest a reflected Gray code of the magnitude), times `1/√42` (computed
+  once) for unit average symbol energy (each axis averages 21). Hard decision per component `v`,
+  with `a = |v|` and the thresholds `T₂ = 2/√42`, `T₄ = 4/√42`, `T₆ = 6/√42` (each quotient in
+  double precision): first bit `v < 0`, second `a < T₄`, third `T₂ < a < T₆`. Each bit is 1 only
+  strictly inside its region, so a value on a threshold decides bit 0: 0 decides `010`, `T₂`
+  decides `010`, `T₄` decides `001`, `T₆` decides `000`. A NaN in either part is
+  `invalid_argument`. **(implemented)**
+- **Soft demapping** (`qpsk_demap_llr`, `psk8_demap_llr`, `qam16_demap_llr`, `qam64_demap_llr`, each
   `(symbols, noise_variance)`, [ADR 0039](adr/0039-soft-demapping.md)): max-log LLRs, one per
   bit in the hard demapper's order. For bit `i` of a received `y`,
   `LLR = (min_{s: bᵢ=1} |y − s|² − min_{s: bᵢ=0} |y − s|²) / noise_variance` over the
@@ -974,6 +984,12 @@ Python: `signalforge.metrics`; C#: `SignalForge.Metrics`.
     `Pb = (3·erfc(r) + 2·erfc(3r) − erfc(5r)) / 8`, exact for the Gray 4-PAM axes (a bit decided
     wrongly two thresholds away counts once).
   - `qam16_ser_theory`: `p = ¾·erfc(r)` per axis, `Ps = 1 − (1 − p)² = p·(2 − p)`.
+  - `qam64_ber_theory` ([ADR 0052](adr/0052-qam64.md)): `k = 6`, `r = √(Eb/N0 / 7)` (half the
+    spacing `1/√42` over `√N0`),
+    `Pb = (7·erfc(r) + 6·erfc(3r) − erfc(5r) + erfc(9r) − erfc(13r)) / 24`, exact for the Gray
+    8-PAM axes: the square-QAM bit error sum of Cho and Yoon (IEEE Trans. Commun. 50(7), 2002)
+    for `√M = 8`, written out; the same sum for `√M = 4` gives the 16-QAM form above.
+  - `qam64_ser_theory`: `p = ⅞·erfc(r)` per axis, `Ps = p·(2 − p)`.
   - `psk8_ser_theory`: `Ps = 2·T(π/8)`, and `psk8_ber_theory`: `Pb = ⅔·(T(π/8) + T(3π/8))`,
     exact for this Gray labeling (the mean bit distance is 1 to the next sector and 2 to each
     one further). `T(ψ)` is the probability that the received phase lies beyond `ψ` on one side,

@@ -12,6 +12,10 @@ from ._checks import real
 _INV_SQRT2 = 1.0 / np.sqrt(2.0)
 _INV_SQRT10 = 1.0 / math.sqrt(10.0)
 _QAM16_THRESHOLD = 2.0 / math.sqrt(10.0)
+_INV_SQRT42 = 1.0 / math.sqrt(42.0)
+_QAM64_T2 = 2.0 / math.sqrt(42.0)
+_QAM64_T4 = 4.0 / math.sqrt(42.0)
+_QAM64_T6 = 6.0 / math.sqrt(42.0)
 
 
 def _bits(bits: ArrayLike) -> NDArray[np.uint8]:
@@ -104,6 +108,32 @@ def qam16_demap_hard(symbols: ArrayLike) -> NDArray[np.uint8]:
     return out
 
 
+def qam64_map(bits: ArrayLike) -> NDArray[np.complex128]:
+    """Gray-coded 64-QAM: ``I`` from ``(b0, b1, b2)``, ``Q`` from ``(b3, b4, b5)``, each
+    ``(1 - 2*a)*(4 + (1 - 2*b)*(3 - 2*c))``, over ``sqrt(42)`` (conventions: Bits and symbols)."""
+    g = _groups(bits, 6, "64-QAM").astype(np.float64)
+    i = (1 - 2 * g[:, 0]) * (4 + (1 - 2 * g[:, 1]) * (3 - 2 * g[:, 2]))
+    q = (1 - 2 * g[:, 3]) * (4 + (1 - 2 * g[:, 4]) * (3 - 2 * g[:, 5]))
+    return np.asarray((i + 1j * q) * _INV_SQRT42, dtype=np.complex128)
+
+
+def qam64_demap_hard(symbols: ArrayLike) -> NDArray[np.uint8]:
+    """Hard-decision 64-QAM: per component ``v`` with ``a = |v|``, bits ``v < 0``,
+    ``a < 4/sqrt(42)`` and ``2/sqrt(42) < a < 6/sqrt(42)``."""
+    s = np.asarray(symbols, dtype=np.complex128)
+    if s.ndim != 1:
+        raise ValueError("symbols must be one-dimensional")
+    if np.isnan(s).any():
+        raise ValueError("symbols must not be NaN")
+    out = np.empty(6 * s.size, dtype=np.uint8)
+    for j, v in enumerate((s.real, s.imag)):
+        a = np.abs(v)
+        out[3 * j :: 6] = v < 0
+        out[3 * j + 1 :: 6] = a < _QAM64_T4
+        out[3 * j + 2 :: 6] = (a > _QAM64_T2) & (a < _QAM64_T6)
+    return out
+
+
 def _label_bits(k: int) -> NDArray[np.uint8]:
     m = np.arange(1 << k)
     return ((m[:, None] >> np.arange(k - 1, -1, -1)) & 1).astype(np.uint8).reshape(-1)
@@ -135,6 +165,7 @@ def _demap_llr(
 _QPSK_POINTS = qpsk_map(_label_bits(2))
 _PSK8_POINTS = psk8_map(_label_bits(3))
 _QAM16_POINTS = qam16_map(_label_bits(4))
+_QAM64_POINTS = qam64_map(_label_bits(6))
 
 
 def qpsk_demap_llr(symbols: ArrayLike, noise_variance: float) -> NDArray[np.float64]:
@@ -151,3 +182,9 @@ def qam16_demap_llr(symbols: ArrayLike, noise_variance: float) -> NDArray[np.flo
     """Max-log LLRs of 16-QAM, positive for bit 0 (conventions: Bits and symbols, Soft
     demapping)."""
     return _demap_llr(symbols, noise_variance, _QAM16_POINTS, 4)
+
+
+def qam64_demap_llr(symbols: ArrayLike, noise_variance: float) -> NDArray[np.float64]:
+    """Max-log LLRs of 64-QAM, positive for bit 0 (conventions: Bits and symbols, Soft
+    demapping)."""
+    return _demap_llr(symbols, noise_variance, _QAM64_POINTS, 6)

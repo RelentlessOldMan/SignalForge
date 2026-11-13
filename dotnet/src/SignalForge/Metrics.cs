@@ -89,6 +89,23 @@ public static class Metrics
         return p * (2 - p);
     }
 
+    /// <summary>Exact bit error rate of Gray 64-QAM in AWGN (conventions: EVM and BER; ADR 0052).</summary>
+    /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
+    public static double Qam64BerTheory(double ebN0Db)
+    {
+        double r = Math.Sqrt(EbN0(ebN0Db) / 7);
+        return (7 * SpecialFunctions.Erfc(r) + 6 * SpecialFunctions.Erfc(3 * r) - SpecialFunctions.Erfc(5 * r)
+            + SpecialFunctions.Erfc(9 * r) - SpecialFunctions.Erfc(13 * r)) / 24;
+    }
+
+    /// <summary>Exact symbol error rate of 64-QAM in AWGN: p·(2 − p), p = ⅞·erfc(r).</summary>
+    /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
+    public static double Qam64SerTheory(double ebN0Db)
+    {
+        double p = 0.875 * SpecialFunctions.Erfc(Math.Sqrt(EbN0(ebN0Db) / 7));
+        return p * (2 - p);
+    }
+
     /// <summary>Exact symbol error rate of 8-PSK in AWGN: 2·T(π/8) (conventions: EVM and BER).</summary>
     /// <param name="ebN0Db">Eb/N0 in dB, not NaN.</param>
     public static double Psk8SerTheory(double ebN0Db) => 2 * PhaseTail(Math.PI / 8, 3 * EbN0(ebN0Db));

@@ -37,6 +37,10 @@ public static class Modulation
 
     private static readonly double InvSqrt10 = 1.0 / Math.Sqrt(10.0);
     private static readonly double Qam16Threshold = 2.0 / Math.Sqrt(10.0);
+    private static readonly double InvSqrt42 = 1.0 / Math.Sqrt(42.0);
+    private static readonly double Qam64T2 = 2.0 / Math.Sqrt(42.0);
+    private static readonly double Qam64T4 = 4.0 / Math.Sqrt(42.0);
+    private static readonly double Qam64T6 = 6.0 / Math.Sqrt(42.0);
 
     private static int Label(ReadOnlySpan<byte> bits, int start, int k)
     {
@@ -131,6 +135,44 @@ public static class Modulation
         return bits;
     }
 
+    /// <summary>Gray-coded 64-QAM: I from (b0, b1, b2), Q from (b3, b4, b5), each
+    /// (1 − 2·a)·(4 + (1 − 2·b)·(3 − 2·c)), over √42 (conventions: Bits and symbols; ADR 0052).</summary>
+    /// <param name="bits">Bits, 0 or 1, a multiple of 6.</param>
+    public static Complex[] Qam64Map(ReadOnlySpan<byte> bits)
+    {
+        CheckLength(bits, 6, "64-QAM");
+        var symbols = new Complex[bits.Length / 6];
+        for (int s = 0; s < symbols.Length; s++)
+        {
+            int m = Label(bits, 6 * s, 6);
+            symbols[s] = new Complex(Pam8(m >> 3) * InvSqrt42, Pam8(m & 7) * InvSqrt42);
+        }
+        return symbols;
+    }
+
+    private static double Pam8(int g) =>
+        (1 - 2 * ((g >> 2) & 1)) * (4 + (1 - 2 * ((g >> 1) & 1)) * (3 - 2 * (g & 1)));
+
+    /// <summary>Hard-decision 64-QAM: per component v with a = |v|, bits v &lt; 0, a &lt; 4/√42 and
+    /// 2/√42 &lt; a &lt; 6/√42.</summary>
+    /// <param name="symbols">Received symbols, not NaN.</param>
+    public static byte[] Qam64DemapHard(ReadOnlySpan<Complex> symbols)
+    {
+        NotNaN(symbols);
+        var bits = new byte[6 * symbols.Length];
+        for (int s = 0; s < symbols.Length; s++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                double v = j == 0 ? symbols[s].Real : symbols[s].Imaginary, a = Math.Abs(v);
+                bits[6 * s + 3 * j] = v < 0 ? (byte)1 : (byte)0;
+                bits[6 * s + 3 * j + 1] = a < Qam64T4 ? (byte)1 : (byte)0;
+                bits[6 * s + 3 * j + 2] = a > Qam64T2 && a < Qam64T6 ? (byte)1 : (byte)0;
+            }
+        }
+        return bits;
+    }
+
     private static byte[] LabelBits(int k)
     {
         var bits = new byte[k << k];
@@ -143,6 +185,7 @@ public static class Modulation
     private static readonly Complex[] QpskPoints = QpskMap(LabelBits(2));
     private static readonly Complex[] Psk8Points = Psk8Map(LabelBits(3));
     private static readonly Complex[] Qam16Points = Qam16Map(LabelBits(4));
+    private static readonly Complex[] Qam64Points = Qam64Map(LabelBits(6));
 
     /// <summary>Max-log LLRs of QPSK, positive for bit 0 (conventions: Bits and symbols, Soft
     /// demapping).</summary>
@@ -164,6 +207,13 @@ public static class Modulation
     /// <param name="noiseVariance">N0 = E|n|² of the complex noise, positive and finite.</param>
     public static double[] Qam16DemapLlr(ReadOnlySpan<Complex> symbols, double noiseVariance) =>
         DemapLlr(symbols, noiseVariance, Qam16Points, 4);
+
+    /// <summary>Max-log LLRs of 64-QAM, six per symbol, positive for bit 0 (conventions: Soft
+    /// demapping).</summary>
+    /// <param name="symbols">Received symbols, all finite.</param>
+    /// <param name="noiseVariance">N0 = E|n|², positive and finite.</param>
+    public static double[] Qam64DemapLlr(ReadOnlySpan<Complex> symbols, double noiseVariance) =>
+        DemapLlr(symbols, noiseVariance, Qam64Points, 6);
 
     private static double[] DemapLlr(ReadOnlySpan<Complex> symbols, double noiseVariance, Complex[] points, int k)
     {

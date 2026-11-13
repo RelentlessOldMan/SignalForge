@@ -102,6 +102,19 @@ def qam16_ser_theory(eb_n0_db: float) -> float:
     return p * (2 - p)
 
 
+def qam64_ber_theory(eb_n0_db: float) -> float:
+    """Exact bit error rate of Gray 64-QAM in AWGN (conventions: EVM and BER; ADR 0052)."""
+    r = math.sqrt(_eb_n0(eb_n0_db) / 7)
+    e = math.erfc
+    return (7 * e(r) + 6 * e(3 * r) - e(5 * r) + e(9 * r) - e(13 * r)) / 24
+
+
+def qam64_ser_theory(eb_n0_db: float) -> float:
+    """Exact symbol error rate of 64-QAM in AWGN: ``p*(2 - p)``, ``p = 0.875*erfc(r)``."""
+    p = 0.875 * math.erfc(math.sqrt(_eb_n0(eb_n0_db) / 7))
+    return p * (2 - p)
+
+
 _TAIL_PANELS = 4096
 
 

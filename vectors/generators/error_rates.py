@@ -2,9 +2,9 @@
 
 It does not import NumPy or SignalForge.
 
-- 16-QAM: the closed forms in the conventions, each checked here against a numerical integral
-  of the Gaussian over the decision intervals of one 4-PAM axis (piecewise Simpson between the
-  thresholds, so the integrands are smooth).
+- 16-QAM and 64-QAM: the closed forms in the conventions, each checked here against a numerical
+  integral of the Gaussian over the decision intervals of one 4-PAM or 8-PAM axis (piecewise
+  Simpson between the thresholds, so the integrands are smooth).
 - 8-PSK: the tail of the received phase's density,
   P(psi) = integral from psi to pi of p(phi), p(phi) = e^-g/(2 pi) + sqrt(g) cos(phi)
   e^(-g sin^2 phi) erfc(-sqrt(g) cos(phi)) / (2 sqrt(pi)), by Simpson with one Richardson step.
@@ -79,6 +79,38 @@ def qam16_by_integral(eb_n0):
     return bit_err, 2 * p - p * p
 
 
+def qam64(eb_n0):
+    a = math.sqrt(2 * eb_n0 / 7)
+    p = 1.75 * q(a)
+    return (7 * q(a) + 6 * q(3 * a) - q(5 * a) + q(9 * a) - q(13 * a)) / 12, 2 * p - p * p
+
+
+def qam64_by_integral(eb_n0):
+    """One 8-PAM axis, levels -7..7 step 2 with the Gray labels of the conventions,
+    noise sigma^2 = 7/(2 Eb/N0) in level units."""
+    if eb_n0 == 0:
+        return 0.5, 63 / 64
+    sigma = math.sqrt(7 / (2 * eb_n0))
+    labels = {7: (0, 0, 0), 5: (0, 0, 1), 3: (0, 1, 1), 1: (0, 1, 0),
+              -1: (1, 1, 0), -3: (1, 1, 1), -5: (1, 0, 1), -7: (1, 0, 0)}
+    edges = [-6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0]
+    region_bits = [labels[-7 + 2 * j] for j in range(8)]
+    bit_err = sym_err = 0.0
+    for level, own in labels.items():
+        lo, hi = level - 40 * sigma, level + 40 * sigma
+        cuts = [lo] + [e for e in edges if lo < e < hi] + [hi]
+        for x0, x1 in zip(cuts, cuts[1:]):
+            region = sum((x0 + x1) / 2 > e for e in edges)
+            wrong = sum(b != o for b, o in zip(region_bits[region], own))
+            if wrong:
+                mass = richardson(lambda v, lv=level: math.exp(-((v - lv) ** 2) / (2 * sigma**2))
+                               / (sigma * math.sqrt(2 * math.pi)), x0, x1, 2000)
+                bit_err += wrong * mass / 3
+                sym_err += mass
+    p = sym_err / 8
+    return bit_err / 8, 2 * p - p * p
+
+
 def phase_tail(psi, es_n0):
     if es_n0 == 0:
         return (math.pi - psi) / (2 * math.pi)
@@ -122,6 +154,9 @@ def add(op, db, value, source, tol):
 
 QAM_SRC = ("closed form (conventions: EVM and BER), erfc from Python's math module; checked "
            "against Simpson integration of the Gaussian over the 4-PAM decision intervals")
+QAM64_SRC = ("closed form (conventions: EVM and BER; Cho and Yoon's square-QAM sum written out "
+             "for 8-PAM), erfc from Python's math module; checked against Simpson integration "
+             "of the Gaussian over the 8-PAM decision intervals")
 PSK_SRC = ("the received phase's density integrated from psi to pi (Simpson, Richardson step), "
            "independent of the libraries' Pawula form; rel 1e-11 covers both integrations")
 RAY_SRC = ("closed form 0.5*(1 - sqrt(g/(1+g))) by hand (conventions: EVM and BER); checked "
@@ -131,16 +166,21 @@ for db in LEVELS:
     ber, ser = qam16(g)
     ib, iser = qam16_by_integral(g)
     assert abs(ib / ber - 1) < 1e-10 and abs(iser / ser - 1) < 1e-10, (db, ber, ib, ser, iser)
+    b64, s64 = qam64(g)
+    ib64, is64 = qam64_by_integral(g)
+    assert abs(ib64 / b64 - 1) < 1e-10 and abs(is64 / s64 - 1) < 1e-10, (db, b64, ib64, s64, is64)
     pb, ps = psk8(g)
     ray = rayleigh(g)
     if g:
         assert abs(rayleigh_by_integral(g) / ray - 1) < 1e-10, (db, ray, rayleigh_by_integral(g))
     if db == -math.inf:
-        assert (ber, ser, pb, ps) == (0.5, 15 / 16, 0.5, 7 / 8), (ber, ser, pb, ps)
+        assert (ber, ser, pb, ps, b64, s64) == (0.5, 15 / 16, 0.5, 7 / 8, 0.5, 63 / 64)
         src = "by hand: Eb/N0 = 0 makes every decision a fair guess"
         for op, v in (("qpsk_ber_rayleigh_theory", 0.5), ("qam16_ber_theory", 0.5), ("qam16_ser_theory", 15 / 16),
-                      ("psk8_ber_theory", 0.5), ("psk8_ser_theory", 7 / 8)):
+                      ("psk8_ber_theory", 0.5), ("psk8_ser_theory", 7 / 8),
+                      ("qam64_ber_theory", 0.5), ("qam64_ser_theory", 63 / 64)):
             add(op, db, v, src + (": 15 of 16 points wrong" if op == "qam16_ser_theory" else
+                                  ": 63 of 64 points wrong" if op == "qam64_ser_theory" else
                                   ": 7 of 8 points wrong" if op == "psk8_ser_theory" else
                                   ": half the bits"), {"abs": 1e-15, "rel": 0})
         continue
@@ -149,8 +189,10 @@ for db in LEVELS:
     add("qam16_ser_theory", db, ser, QAM_SRC, {"abs": 0, "rel": 1e-12})
     add("psk8_ber_theory", db, pb, PSK_SRC, {"abs": 0, "rel": 1e-11})
     add("psk8_ser_theory", db, ps, PSK_SRC, {"abs": 0, "rel": 1e-11})
+    add("qam64_ber_theory", db, b64, QAM64_SRC, {"abs": 0, "rel": 1e-12})
+    add("qam64_ser_theory", db, s64, QAM64_SRC, {"abs": 0, "rel": 1e-12})
 for op in ("qpsk_ber_rayleigh_theory", "qam16_ber_theory", "qam16_ser_theory", "psk8_ber_theory",
-           "psk8_ser_theory"):
+           "psk8_ser_theory", "qam64_ber_theory", "qam64_ser_theory"):
     cases.append({"id": f"{op}.inf", "op": op, "args": {"eb_n0_db": "inf"}, "expected": 0.0,
                   "tol": {"abs": 0, "rel": 0}, "source": "by hand: no noise, no errors"})
     cases.append({"id": f"{op}.nan", "op": op, "args": {"eb_n0_db": "nan"},
@@ -159,7 +201,7 @@ for op in ("qpsk_ber_rayleigh_theory", "qam16_ber_theory", "qam16_ser_theory", "
 doc = {
     "schema": 1,
     "suite": "error_rates",
-    "description": "Bit and symbol error rates of Gray 16-QAM and 8-PSK in AWGN, and of QPSK in "
+    "description": "Bit and symbol error rates of Gray 16-QAM, 64-QAM and 8-PSK in AWGN, and of QPSK in "
     "Rayleigh fading (conventions: EVM and BER).",
     "cases": cases,
 }
