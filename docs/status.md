@@ -4,8 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Chebyshev type II** IIR design (low-pass, high-pass), stop-band attenuation in dB.
-2. **Review pass** over the spectral measurements (OBW, channel power, ACPR) and the IIR designs.
+1. **Review pass** over the spectral measurements (OBW, channel power, ACPR) and the IIR designs
+   (Butterworth, both Chebyshev types, band forms, zero-phase).
+2. **Band-pass and band-stop Chebyshev** (types I and II) on the band transform of ADR 0016.
 
 ## Built
 
@@ -207,11 +208,20 @@ Updated with every chunk of work. Dates are absolute.
   (15 cases, the powers summed from piecewise-constant bins by hand). Tests: on-bin tones through
   Welch (-20 and -40 dBc), flat noise (the bandwidth ratio), bad arguments.
   Python 1086 passed, 2 skipped (3.10 too); .NET 877 passed; conformance 584/584 in both.
+- 2026-11-13: Chebyshev type II low-pass and high-pass in both languages (`chebyshev2_lowpass`,
+  `chebyshev2_highpass` / `Dsp.Chebyshev2Lowpass`, `Chebyshev2Highpass`, ADR 0020): flat pass
+  band, stop-band peaks at `-attenuation_db`, the cutoff the stop-band edge; the shared cascade
+  builder now takes zeros on the unit circle. Fix found while designing it: a type I ripple above
+  about 3080 dB raised OverflowError in Python, not ValueError, and past ~200 dB the poles sit on
+  the unit circle to rounding, so ripple and attenuation are now limited to (0, 200] dB. 20 more
+  `iir.json` cases (two designs by hand, eight computed from the analog quadratics and checked
+  against the closed form, a response, nine errors incl. two type I ones).
+  Python 1176 passed, 2 skipped (3.10 too); .NET 940 passed; conformance 604/604 in both.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth and
-Chebyshev type I (type II, elliptic, band Chebyshev), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+IIR designs beyond Butterworth and Chebyshev I/II (elliptic, band Chebyshev), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

@@ -35,4 +35,6 @@ and scale of the sections.
   rows then meet the closed form only to about `10⁻⁸` relative (a cutoff at `0.4999·fs`, order
   6 or more); both languages give the same rows. Tests check the closed form to `10⁻⁹` up to
   `0.49·fs`.
+- The ripple is limited to 200 dB (added with ADR 0020): beyond it the design is no longer
+  meaningful in double precision, and Python's `10 ** (R/10)` overflows past about 3080 dB.
 - Band-pass and band-stop Chebyshev, type II and elliptic designs are later work.

@@ -301,9 +301,78 @@ public class IirTests
             Assert.Throws<ArgumentOutOfRangeException>(() => design(2, -1, 1, 8));
             Assert.Throws<ArgumentOutOfRangeException>(() => design(2, double.NaN, 1, 8));
             Assert.Throws<ArgumentOutOfRangeException>(() => design(2, double.PositiveInfinity, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, 200.5, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, 4000, 1, 8));
             Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 0, 8));
             Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 4, 8));
             Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 1, 0));
+        }
+    }
+
+    public static TheoryData<bool, int, double, double> InverseChebyshevs()
+    {
+        var data = new TheoryData<bool, int, double, double>();
+        foreach (bool high in new[] { false, true })
+            foreach (int order in new[] { 1, 2, 3, 6, 9 })
+                foreach (var (atten, cutoff) in new[] { (20.0, 0.01), (40.0, 0.2), (60.0, 0.49), (100.0, 0.25) })
+                    data.Add(high, order, atten, cutoff);
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(InverseChebyshevs))]
+    public void Chebyshev2MagnitudeHasTheClosedForm(bool high, int order, double atten, double cutoff)
+    {
+        double[][] sos = high ? Dsp.Chebyshev2Highpass(order, atten, cutoff * 1000, 1000)
+            : Dsp.Chebyshev2Lowpass(order, atten, cutoff * 1000, 1000);
+        Assert.Equal((order + 1) / 2, sos.Length);
+        Assert.All(sos, r => Assert.True(Math.Abs(r[5]) < 1 && Math.Abs(r[4]) < 1 + r[5], "a pole outside the unit circle"));
+        double eps2 = 1 / (Math.Pow(10, atten / 10) - 1), k = Math.Tan(Math.PI * cutoff), floor = Math.Pow(10, -atten / 10);
+        double[] f = [.. Enumerable.Range(0, 301).Select(i => (0.0001 + 0.4998 * i / 300) * 1000)];
+        Complex[] h = Dsp.SosResponse(sos, f, 1000);
+        for (int i = 0; i < f.Length; i++)
+        {
+            double t = Math.Tan(Math.PI * f[i] / 1000);
+            double x = eps2 * Math.Pow(ChebT(order, high ? t / k : k / t), 2), expected = x / (1 + x);
+            double got = h[i].Magnitude * h[i].Magnitude;
+            Assert.True(Math.Abs(got - expected) <= 1e-11 + 1e-9 * expected, $"f = {f[i]}: {got} vs {expected}");
+            if (high ? f[i] < cutoff * 1000 : f[i] > cutoff * 1000)
+                Assert.True(got <= floor * (1 + 1e-9) + 1e-15, $"stop band at {f[i]}: {got}");
+        }
+        double edge = Dsp.SosResponse(sos, [cutoff * 1000], 1000)[0].Magnitude;
+        Assert.Equal(1, edge * edge / floor, 1e-9);
+        double end = Dsp.SosResponse(sos, [high ? 500.0 : 0.0], 1000)[0].Magnitude;
+        Assert.Equal(1.0, end, 1e-12);
+    }
+
+    [Fact]
+    public void Chebyshev2OrderOneHasItsZeroAtTheFarEnd()
+    {
+        Assert.True(Dsp.SosResponse(Dsp.Chebyshev2Lowpass(1, 30, 100, 1000), [500.0], 1000)[0].Magnitude < 1e-15);
+        Assert.True(Dsp.SosResponse(Dsp.Chebyshev2Highpass(1, 30, 100, 1000), [0.0], 1000)[0].Magnitude < 1e-15);
+    }
+
+    [Fact]
+    public void AttenuationAndRippleMayBe200Db()
+    {
+        Assert.Equal(2, Dsp.Chebyshev2Lowpass(4, 200, 100, 1000).Length);
+        Assert.Equal(2, Dsp.Chebyshev1Highpass(4, 200, 100, 1000).Length);
+    }
+
+    [Fact]
+    public void Chebyshev2RejectsBadArguments()
+    {
+        foreach (var design in new Func<int, double, double, double, double[][]>[] { Dsp.Chebyshev2Lowpass, Dsp.Chebyshev2Highpass })
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(0, 40, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, 0, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, -1, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, double.NaN, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, double.PositiveInfinity, 1, 8));
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(2, 200.5, 1, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 40, 0, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 40, 4, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 40, 1, 0));
         }
     }
 }

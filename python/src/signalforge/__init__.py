@@ -11,6 +11,8 @@ from .dsp import (
     butterworth_lowpass,
     chebyshev1_highpass,
     chebyshev1_lowpass,
+    chebyshev2_highpass,
+    chebyshev2_lowpass,
     convolve,
     decimate,
     fir_bandpass,
@@ -62,7 +64,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.32"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.33"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -91,6 +93,8 @@ __all__ = [
     "channel_power",
     "chebyshev1_highpass",
     "chebyshev1_lowpass",
+    "chebyshev2_highpass",
+    "chebyshev2_lowpass",
     "chirp",
     "convolve",
     "db_to_amp",

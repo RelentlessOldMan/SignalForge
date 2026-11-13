@@ -92,6 +92,52 @@ def cheb_design(case_id, order, ripple, cutoff, fs, high, rows=None, src=None):
             "bilinear transform, checked against the closed-form |H|^2 and for stability"}
 
 
+def chebyshev2(order, atten, cutoff, fs, high):
+    """Each section from its analog quadratics: zeros s^2 + W over poles s^2 - 2 sigma s + M (the
+    reciprocals of the type I poles), scaled to the cutoff, through s = (1 - z^-1)/(1 + z^-1)."""
+    e2 = 1 / (10 ** (atten / 10) - 1)
+    mu = math.asinh(1 / math.sqrt(e2)) / order
+    k = math.tan(math.pi * cutoff / fs)
+    rows = []
+    if order % 2:  # type I real pole -sinh(mu); its reciprocal -1/sinh(mu); zero at infinity
+        q = k * math.sinh(mu) if high else k / math.sinh(mu)
+        if high:
+            rows.append([1 / (1 + q), -1 / (1 + q), 0.0, 1.0, (q - 1) / (q + 1), 0.0])
+        else:
+            rows.append([q / (1 + q), q / (1 + q), 0.0, 1.0, (q - 1) / (q + 1), 0.0])
+    for i in range(order // 2 - 1, -1, -1):
+        phi = math.pi * (2 * i + 1) / (2 * order)
+        sigma, omega = -math.sinh(mu) * math.sin(phi), math.cosh(mu) * math.cos(phi)
+        m = sigma * sigma + omega * omega
+        if high:  # s -> k/s of the reciprocal pole: the type I pole times k
+            sigma, m, w = k * sigma, k * k * m, (k * math.cos(phi)) ** 2
+        else:  # the reciprocal pole (sigma - j omega)/m times k; zeros at +-j k/cos(phi)
+            sigma, m, w = k * sigma / m, k * k / m, (k / math.cos(phi)) ** 2
+        a0 = 1 - 2 * sigma + m
+        g = 1 / a0 if high else m / w / a0  # unit gain at s = infinity or s = 0
+        rows.append([g * (1 + w), g * 2 * (w - 1), g * (1 + w), 1.0, 2 * (m - 1) / a0,
+                     (1 + 2 * sigma + m) / a0])
+    for row in rows:
+        assert abs(row[5]) < 1 and abs(row[4]) < 1 + row[5], (order, atten, cutoff, row)
+    freqs = [fs * j / 64 for j in range(1, 32)] + [cutoff]
+    for f, h in zip(freqs, response(rows, freqs, fs)):
+        t = math.tan(math.pi * f / fs)
+        x = e2 * cheb_t(order, t / k if high else k / t) ** 2
+        assert abs(abs(h) ** 2 - x / (1 + x)) < 1e-12, (order, atten, cutoff, high, f)
+    assert abs(abs(response(rows, [cutoff], fs)[0]) ** 2 - 10 ** (-atten / 10)) < 1e-12
+    return rows
+
+
+def cheb2_design(case_id, order, atten, cutoff, fs, high, rows=None, src=None):
+    op = "chebyshev2_highpass" if high else "chebyshev2_lowpass"
+    return {"id": case_id, "op": op,
+            "args": {"order": order, "attenuation_db": atten, "cutoff": cutoff, "sample_rate": fs},
+            "expected": rows if rows is not None else chebyshev2(order, atten, cutoff, fs, high),
+            "tol": TOL, "source": src or SRC + "each section from its analog zero and pole "
+            "quadratics through the bilinear transform, checked against the closed-form |H|^2 "
+            "and for stability"}
+
+
 def pmul(p, q):
     out = [0.0] * (len(p) + len(q) - 1)
     for i, a in enumerate(p):
@@ -275,6 +321,10 @@ r2 = math.sqrt(2)
 c2 = math.sqrt(r2 - 1)  # Chebyshev order 2, ripple 10 log10 2 dB (eps = 1), K = 1: s^2 + c2 s + 1/r2
 cd = 1 + c2 + 1 / r2
 ch3 = chebyshev1(3, 0.5, 0.1, 1.0, False)
+c2s = math.sqrt((math.sqrt(2) - 1) / 2)  # sinh(asinh(1)/2)
+c2d = 1 + 2 * c2s + math.sqrt(2)
+c2b = math.sqrt(2) / 2 / c2d
+cb4 = chebyshev2(4, 40.0, 0.2, 1.0, False)
 ramp = [float(i % 5) - 2 + 0.25 * math.sin(0.7 * i) for i in range(24)]
 chirp = [cmath.exp(1j * (0.3 * i + 0.02 * i * i)) * (1 + 0.1 * i) for i in range(20)]
 lp4 = butterworth(4, 1000.0, 8000.0, False)
@@ -371,6 +421,47 @@ cases = [
     err("chebyshev1.rate_zero", "chebyshev1_lowpass",
         {"order": 2, "ripple_db": 1.0, "cutoff": 1.0, "sample_rate": 0.0},
         "sample_rate must be positive"),
+    cheb2_design("chebyshev2.lowpass_1_by_hand", 1, 10 * math.log10(2), 2.0, 8.0, False,
+                 rows=[[0.5, 0.5, 0.0, 1.0, 0.0, 0.0]],
+                 src="by hand: 10^(A/10) = 2 gives eps = 1 and sinh(mu) = 1, so the prototype pole "
+                 "is -1/sinh(mu) = -1 with its zero at infinity; K = tan(pi/4) = 1, H(s) = 1/(s + 1), "
+                 "through the bilinear transform (1 + z^-1)/2"),
+    cheb2_design("chebyshev2.lowpass_2_by_hand", 2, 10 * math.log10(2), 2.0, 8.0, False,
+                 rows=[[3 * c2b, 2 * c2b, 3 * c2b, 1.0, 2 * (math.sqrt(2) - 1) / c2d,
+                        (1 - 2 * c2s + math.sqrt(2)) / c2d]],
+                 src="by hand: eps = 1, mu = asinh(1)/2, s = sinh mu = sqrt((sqrt2 - 1)/2), "
+                 "sinh^2 + cosh^2 = sqrt2; the type I pair at 3pi/4 has |p|^2 = 1/sqrt2 and real part "
+                 "-s/sqrt2, so the reciprocal pair is s^2 + 2s s + sqrt2; zeros at +-j/cos(pi/4): "
+                 "s^2 + 2; DC gain 1 needs a factor sqrt2/2; K = 1, then s = (1 - z^-1)/(1 + z^-1): "
+                 "numerator (sqrt2/2)[3, 2, 3], denominator [1 + 2s + sqrt2, 2(sqrt2 - 1), "
+                 "1 - 2s + sqrt2]"),
+    cheb2_design("chebyshev2.lowpass_3", 3, 40.0, 0.1, 1.0, False),
+    cheb2_design("chebyshev2.lowpass_4", 4, 40.0, 0.2, 1.0, False),
+    cheb2_design("chebyshev2.lowpass_5_audio", 5, 60.0, 4000.0, 48000.0, False),
+    cheb2_design("chebyshev2.lowpass_8_narrow", 8, 80.0, 0.03, 1.0, False),
+    cheb2_design("chebyshev2.highpass_1", 1, 20.0, 300.0, 8000.0, True),
+    cheb2_design("chebyshev2.highpass_2", 2, 30.0, 0.3, 1.0, True),
+    cheb2_design("chebyshev2.highpass_5", 5, 50.0, 0.1, 1.0, True),
+    cheb2_design("chebyshev2.highpass_6_wide", 6, 20.0, 0.45, 1.0, True),
+    err("chebyshev1.ripple_over_200", "chebyshev1_lowpass",
+        {"order": 2, "ripple_db": 200.5, "cutoff": 1.0, "sample_rate": 8.0}, "0 < ripple_db <= 200 required"),
+    err("chebyshev1.ripple_huge", "chebyshev1_highpass",
+        {"order": 2, "ripple_db": 4000.0, "cutoff": 1.0, "sample_rate": 8.0}, "0 < ripple_db <= 200 required (10^(R/10) would overflow)"),
+    err("chebyshev2.attenuation_zero", "chebyshev2_lowpass",
+        {"order": 2, "attenuation_db": 0.0, "cutoff": 1.0, "sample_rate": 8.0}, "attenuation_db > 0 required"),
+    err("chebyshev2.attenuation_negative", "chebyshev2_highpass",
+        {"order": 2, "attenuation_db": -20.0, "cutoff": 1.0, "sample_rate": 8.0}, "attenuation_db > 0 required"),
+    err("chebyshev2.attenuation_nan", "chebyshev2_lowpass",
+        {"order": 2, "attenuation_db": "nan", "cutoff": 1.0, "sample_rate": 8.0}, "attenuation_db must be finite"),
+    err("chebyshev2.attenuation_over_200", "chebyshev2_highpass",
+        {"order": 2, "attenuation_db": 200.5, "cutoff": 1.0, "sample_rate": 8.0}, "attenuation_db <= 200 required"),
+    err("chebyshev2.order_zero", "chebyshev2_lowpass",
+        {"order": 0, "attenuation_db": 40.0, "cutoff": 1.0, "sample_rate": 8.0}, "order >= 1 required"),
+    err("chebyshev2.cutoff_nyquist", "chebyshev2_lowpass",
+        {"order": 2, "attenuation_db": 40.0, "cutoff": 4.0, "sample_rate": 8.0}, "0 < cutoff < sample_rate/2 required"),
+    err("chebyshev2.rate_inf", "chebyshev2_highpass",
+        {"order": 2, "attenuation_db": 40.0, "cutoff": 1.0, "sample_rate": "inf"}, "sample_rate must be finite"),
+    resp("sos_response.chebyshev2_lowpass_4", cb4, [0.0, 0.1, 0.2, 0.3, 0.5], 1.0),
     resp("sos_response.chebyshev1_lowpass_3", ch3, [0.0, 0.05, 0.1, 0.2, 0.5], 1.0),
     filt("iir_filter.chebyshev1_lowpass_chunks", ch3, ramp, [7, 17]),
     band_design("butterworth.bandstop_3_wide", 3, 0.02, 0.45, 1.0, True),

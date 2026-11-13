@@ -88,6 +88,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "butterworth_highpass": dsp.butterworth_highpass,
     "chebyshev1_lowpass": dsp.chebyshev1_lowpass,
     "chebyshev1_highpass": dsp.chebyshev1_highpass,
+    "chebyshev2_lowpass": dsp.chebyshev2_lowpass,
+    "chebyshev2_highpass": dsp.chebyshev2_highpass,
     "sos_response": dsp.sos_response,
     "iir_filter": lambda sos, samples, chunks: _chunked(dsp.IirFilter(sos), samples, chunks),
     "frequency_offset": channel.frequency_offset,

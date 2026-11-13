@@ -383,7 +383,24 @@ and `SignalForge.IirFilter`.
     (low-pass) or `fs/2` (high-pass). Then, for an even order only, the first section's `b` is
     multiplied by `10^(−R/20) = 1/√(1 + ε²)`: an even-order Chebyshev filter has its ripple's low
     point at DC (low-pass) or `fs/2` (high-pass). An odd order has gain 1 there.
-  - `order` is an integer `≥ 1`; `ripple_db > 0`, finite; `0 < cutoff < fs/2`, finite.
+  - `order` is an integer `≥ 1`; `0 < ripple_db ≤ 200`; `0 < cutoff < fs/2`, finite. Past
+    200 dB the poles are within about 1e-11 of the unit circle and `10^(R/10)` soon overflows, so
+    larger ripples are `invalid_argument`.
+- **Chebyshev type II design** (`chebyshev2_lowpass(order, attenuation_db, cutoff, sample_rate)`
+  and `chebyshev2_highpass(...)`, [ADR 0020](adr/0020-chebyshev-type-2.md)): the inverse
+  Chebyshev filter, flat in the pass band and rippling in the stop band, whose peaks reach
+  `−attenuation_db` (`A`). With `ε = 1/√(10^(A/10) − 1)` and `K`, `t`, `T_N` as for type I:
+  `|H(f)|² = ε²·T_N(K/t)²/(1 + ε²·T_N(K/t)²)` for the low-pass and the same with `T_N(t/K)` for
+  the high-pass. The cutoff is the **stop-band edge**, where `|H|²` first reaches `10^(−A/10)`.
+  - Prototype (stop-band edge 1): with the type I poles `p_k` for this `ε` (`μ = asinh(1/ε)/N`),
+    the poles are `1/p_k`; pair `k` has zeros at `s = ±j/sin θ_k`, and for an odd order the real
+    pole's zero is at infinity. The low-pass scales `s` by `K`, the high-pass maps `s` to `K/s`,
+    then `z = (1 + s)/(1 − s)`. So pair `k`'s zeros are on the unit circle at `z = (1 ± jw)/(1 ∓ jw)`
+    with `w = K/sin θ_k` (low-pass) or `K·sin θ_k` (high-pass): `b ∝ [1, −2c, 1]`,
+    `c = (1 − w²)/(1 + w²)`; the real pole's zero is at `z = −1` (low-pass) or `z = 1` (high-pass).
+  - Sections in the Butterworth order, pair `k` with its own zeros, each with unit gain at DC
+    (low-pass) or `fs/2` (high-pass); with no pass-band ripple there is no extra factor.
+  - `order` is an integer `≥ 1`; `0 < attenuation_db ≤ 200`; `0 < cutoff < fs/2`, finite.
 - **Band-pass and band-stop Butterworth** (`butterworth_bandpass(order, low, high, sample_rate)`,
   `butterworth_bandstop(...)`, [ADR 0016](adr/0016-band-butterworth.md)): the low-pass prototype
   of that `order` (cutoff 1, poles `p_k = e^(jθ_k)` as above) transformed to the band, through the

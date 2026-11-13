@@ -275,6 +275,8 @@ public static class Conformance
             "butterworth_highpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthHighpass(t.Item1, t.Item2, t.Item3)),
             "chebyshev1_lowpass" => Bind((a.I("order"), a.D("ripple_db"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.Chebyshev1Lowpass(t.Item1, t.Item2, t.Item3, t.Item4)),
             "chebyshev1_highpass" => Bind((a.I("order"), a.D("ripple_db"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.Chebyshev1Highpass(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "chebyshev2_lowpass" => Bind((a.I("order"), a.D("attenuation_db"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.Chebyshev2Lowpass(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "chebyshev2_highpass" => Bind((a.I("order"), a.D("attenuation_db"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.Chebyshev2Highpass(t.Item1, t.Item2, t.Item3, t.Item4)),
             "butterworth_bandpass" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.ButterworthBandpass(t.Item1, t.Item2, t.Item3, t.Item4)),
             "butterworth_bandstop" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.ButterworthBandstop(t.Item1, t.Item2, t.Item3, t.Item4)),
             "zero_phase_filter" => a.Get("samples") is Complex[] zs

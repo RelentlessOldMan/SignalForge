@@ -391,7 +391,7 @@ public static class Dsp
     /// <summary>Chebyshev type I low-pass by the bilinear transform, as second-order sections
     /// <c>[b0, b1, b2, a0, a1, a2]</c> (conventions: IIR filters).</summary>
     /// <param name="order">Filter order, at least 1.</param>
-    /// <param name="rippleDb">Pass-band ripple in dB, positive.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, in (0, 200].</param>
     /// <param name="cutoff">Pass-band edge in Hz (where the response is −rippleDb), between 0 and sampleRate/2.</param>
     /// <param name="sampleRate">Sample rate in Hz.</param>
     public static double[][] Chebyshev1Lowpass(int order, double rippleDb, double cutoff, double sampleRate) =>
@@ -400,11 +400,29 @@ public static class Dsp
     /// <summary>Chebyshev type I high-pass by the bilinear transform, as second-order sections
     /// <c>[b0, b1, b2, a0, a1, a2]</c> (conventions: IIR filters).</summary>
     /// <param name="order">Filter order, at least 1.</param>
-    /// <param name="rippleDb">Pass-band ripple in dB, positive.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, in (0, 200].</param>
     /// <param name="cutoff">Pass-band edge in Hz (where the response is −rippleDb), between 0 and sampleRate/2.</param>
     /// <param name="sampleRate">Sample rate in Hz.</param>
     public static double[][] Chebyshev1Highpass(int order, double rippleDb, double cutoff, double sampleRate) =>
         Chebyshev1(order, rippleDb, cutoff, sampleRate, true);
+
+    /// <summary>Chebyshev type II low-pass by the bilinear transform, as second-order sections
+    /// <c>[b0, b1, b2, a0, a1, a2]</c> (conventions: IIR filters).</summary>
+    /// <param name="order">Filter order, at least 1.</param>
+    /// <param name="attenuationDb">Stop-band attenuation in dB, in (0, 200].</param>
+    /// <param name="cutoff">Stop-band edge in Hz (where the response first reaches −attenuationDb), between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] Chebyshev2Lowpass(int order, double attenuationDb, double cutoff, double sampleRate) =>
+        Chebyshev2(order, attenuationDb, cutoff, sampleRate, false);
+
+    /// <summary>Chebyshev type II high-pass by the bilinear transform, as second-order sections
+    /// <c>[b0, b1, b2, a0, a1, a2]</c> (conventions: IIR filters).</summary>
+    /// <param name="order">Filter order, at least 1.</param>
+    /// <param name="attenuationDb">Stop-band attenuation in dB, in (0, 200].</param>
+    /// <param name="cutoff">Stop-band edge in Hz (where the response first reaches −attenuationDb), between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] Chebyshev2Highpass(int order, double attenuationDb, double cutoff, double sampleRate) =>
+        Chebyshev2(order, attenuationDb, cutoff, sampleRate, true);
 
     private static double Theta(int i, int n) => Math.PI / 2 + Math.PI * (2 * i + 1) / (2.0 * n);
 
@@ -419,8 +437,7 @@ public static class Dsp
     {
         if (order < 1)
             throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
-        if (!(Check.Finite(rippleDb, nameof(rippleDb)) > 0))
-            throw new ArgumentOutOfRangeException(nameof(rippleDb), rippleDb, "must be positive");
+        Decibels(rippleDb, nameof(rippleDb));
         double mu = Math.Asinh(1 / Math.Sqrt(Math.Pow(10, rippleDb / 10) - 1)) / order;
         double sh = Math.Sinh(mu), ch = Math.Cosh(mu);
         double[][] rows = Cascade(order, cutoff, sampleRate, high, i => new Complex(sh * Math.Cos(Theta(i, order)), ch * Math.Sin(Theta(i, order))));
@@ -433,9 +450,29 @@ public static class Dsp
         return rows;
     }
 
-    // Sections from the analog prototype poles (cutoff 1): low-pass or high-pass, prewarped bilinear
-    // transform, Butterworth section order and unit gain at DC or fs/2.
-    private static double[][] Cascade(int order, double cutoff, double sampleRate, bool high, Func<int, Complex> prototype)
+    private static double[][] Chebyshev2(int order, double attenuationDb, double cutoff, double sampleRate, bool high)
+    {
+        if (order < 1)
+            throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
+        Decibels(attenuationDb, nameof(attenuationDb));
+        double mu = Math.Asinh(Math.Sqrt(Math.Pow(10, attenuationDb / 10) - 1)) / order;
+        double sh = Math.Sinh(mu), ch = Math.Cosh(mu);
+        return Cascade(order, cutoff, sampleRate, high,
+            i => 1 / new Complex(sh * Math.Cos(Theta(i, order)), ch * Math.Sin(Theta(i, order))),
+            i => 1 / Math.Sin(Theta(i, order)));
+    }
+
+    private static void Decibels(double x, string name)
+    {
+        if (!(Check.Finite(x, name) > 0 && x <= 200))
+            throw new ArgumentOutOfRangeException(name, x, "must be in (0, 200] dB");
+    }
+
+    // Sections from the analog prototype poles (cutoff 1) and, for pair i, zeros at s = ±j·zeros(i)
+    // (default: Butterworth's, at infinity): low-pass or high-pass, prewarped bilinear transform,
+    // Butterworth section order and unit gain at DC or fs/2.
+    private static double[][] Cascade(int order, double cutoff, double sampleRate, bool high, Func<int, Complex> prototype,
+        Func<int, double>? zeros = null)
     {
         double k = Math.Tan(Math.PI * BandEdge(cutoff, Check.PositiveFinite(sampleRate, nameof(sampleRate)), nameof(cutoff)));
         double zero = high ? 1 : -1; // zeros at z = 1 (high-pass) or z = -1 (low-pass)
@@ -458,8 +495,14 @@ public static class Dsp
         {
             Complex z = Pole(i);
             double a1 = -2 * z.Real, a2 = z.Magnitude * z.Magnitude;
-            double g = (1 - zero * a1 + a2) / 4; // unit gain at the reference z = -zero
-            rows.Add([g, -2 * zero * g, g, 1, a1, a2]);
+            double c = zero; // numerator 1 - 2c z^-1 + z^-2: a double zero at z = zero, or a pair on the circle
+            if (zeros is not null)
+            {
+                double w = high ? k / zeros(i) : k * zeros(i);
+                c = (1 - w * w) / (1 + w * w);
+            }
+            double g = (1 - zero * a1 + a2) / (2 + 2 * zero * c); // unit gain at the reference z = -zero
+            rows.Add([g, -2 * c * g, g, 1, a1, a2]);
         }
         return [.. rows];
     }

@@ -288,9 +288,7 @@ def _chebyshev1(
     order: int, ripple_db: float, cutoff: float, sample_rate: float, high: bool
 ) -> NDArray[np.float64]:
     n = _order(order)
-    r = real(ripple_db, "ripple_db")
-    if r <= 0:
-        raise ValueError("ripple_db must be positive")
+    r = _decibels(ripple_db, "ripple_db")
     mu = math.asinh(1 / math.sqrt(10 ** (r / 10) - 1)) / n
     sh, ch = math.sinh(mu), math.cosh(mu)
     rows = _cascade(
@@ -305,10 +303,40 @@ def _chebyshev1(
     return rows
 
 
-def _cascade(
-    n: int, cutoff: float, sample_rate: float, high: bool, prototype: Callable[[int], complex]
+def _chebyshev2(
+    order: int, attenuation_db: float, cutoff: float, sample_rate: float, high: bool
 ) -> NDArray[np.float64]:
-    """Sections from the analog prototype poles (cutoff 1): low-pass or high-pass, prewarped
+    n = _order(order)
+    a = _decibels(attenuation_db, "attenuation_db")
+    mu = math.asinh(math.sqrt(10 ** (a / 10) - 1)) / n
+    sh, ch = math.sinh(mu), math.cosh(mu)
+    return _cascade(
+        n,
+        cutoff,
+        sample_rate,
+        high,
+        lambda i: 1 / complex(sh * math.cos(_theta(i, n)), ch * math.sin(_theta(i, n))),
+        lambda i: 1 / math.sin(_theta(i, n)),
+    )
+
+
+def _decibels(x: float, name: str) -> float:
+    v = real(x, name)
+    if not 0 < v <= 200:
+        raise ValueError(f"{name} must be in (0, 200] dB")
+    return v
+
+
+def _cascade(
+    n: int,
+    cutoff: float,
+    sample_rate: float,
+    high: bool,
+    prototype: Callable[[int], complex],
+    zeros: Callable[[int], float] | None = None,
+) -> NDArray[np.float64]:
+    """Sections from the analog prototype poles (cutoff 1) and, for pair ``i``, zeros at
+    ``s = ±j·zeros(i)`` (default: Butterworth's, at infinity): low-pass or high-pass, prewarped
     bilinear transform, Butterworth section order and unit gain at DC or fs/2."""
     fs = _rate(sample_rate)
     k = math.tan(math.pi * _band_edge(cutoff, fs, "cutoff"))
@@ -327,8 +355,12 @@ def _cascade(
     for i in range(n // 2 - 1, -1, -1):
         z = pole(i)
         a1, a2 = -2 * z.real, abs(z) ** 2
-        g = (1 - zero * a1 + a2) / 4  # unit gain at the reference z = -zero
-        rows.append([g, -2 * zero * g, g, 1.0, a1, a2])
+        c = zero  # numerator 1 - 2c z^-1 + z^-2: a double zero at z = zero, or a pair on the circle
+        if zeros is not None:
+            w = k / zeros(i) if high else k * zeros(i)
+            c = (1 - w * w) / (1 + w * w)
+        g = (1 - zero * a1 + a2) / (2 + 2 * zero * c)  # unit gain at the reference z = -zero
+        rows.append([g, -2 * c * g, g, 1.0, a1, a2])
     return np.array(rows, dtype=np.float64)
 
 
@@ -358,6 +390,23 @@ def chebyshev1_highpass(
     """Chebyshev type I high-pass by the bilinear transform, as second-order sections: pass-band
     ripple ``ripple_db``, which starts at ``cutoff`` (conventions: IIR filters)."""
     return _chebyshev1(order, ripple_db, cutoff, sample_rate, high=True)
+
+
+def chebyshev2_lowpass(
+    order: int, attenuation_db: float, cutoff: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Chebyshev type II low-pass by the bilinear transform, as second-order sections: flat pass
+    band, stop band from ``cutoff`` with peaks at ``-attenuation_db`` (conventions: IIR filters)."""
+    return _chebyshev2(order, attenuation_db, cutoff, sample_rate, high=False)
+
+
+def chebyshev2_highpass(
+    order: int, attenuation_db: float, cutoff: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Chebyshev type II high-pass by the bilinear transform, as second-order sections: flat pass
+    band, stop band up to ``cutoff`` with peaks at ``-attenuation_db`` (conventions: IIR
+    filters)."""
+    return _chebyshev2(order, attenuation_db, cutoff, sample_rate, high=True)
 
 
 def _butterworth_band(

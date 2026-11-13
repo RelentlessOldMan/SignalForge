@@ -17,6 +17,8 @@ from signalforge import (
     butterworth_lowpass,
     chebyshev1_highpass,
     chebyshev1_lowpass,
+    chebyshev2_highpass,
+    chebyshev2_lowpass,
     sos_response,
     zero_phase_filter,
 )
@@ -288,6 +290,8 @@ def test_chebyshev1_magnitude_has_the_closed_form(
         (2, -1.0, 1.0, 8.0),
         (2, math.nan, 1.0, 8.0),
         (2, math.inf, 1.0, 8.0),
+        (2, 200.5, 1.0, 8.0),
+        (2, 4000.0, 1.0, 8.0),
         (2, True, 1.0, 8.0),
         (2, 1.0, 0.0, 8.0),
         (2, 1.0, 4.0, 8.0),
@@ -296,5 +300,66 @@ def test_chebyshev1_magnitude_has_the_closed_form(
     ],
 )
 def test_chebyshev1_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
+    with pytest.raises(ValueError):
+        design(*args)
+
+
+@pytest.mark.parametrize("high", [False, True])
+@pytest.mark.parametrize("order", [1, 2, 3, 6, 9])
+@pytest.mark.parametrize(
+    ("atten", "cutoff"), [(20.0, 0.01), (40.0, 0.2), (60.0, 0.49), (100.0, 0.25)]
+)
+def test_chebyshev2_magnitude_has_the_closed_form(
+    high: bool, order: int, atten: float, cutoff: float
+) -> None:
+    design = chebyshev2_highpass if high else chebyshev2_lowpass
+    sos = design(order, atten, cutoff * 1000, 1000.0)
+    assert sos.shape == ((order + 1) // 2, 6)
+    for row in sos:
+        assert np.all(np.abs(np.roots(row[3:])) < 1)
+    eps2 = 1 / (10 ** (atten / 10) - 1)
+    k = math.tan(math.pi * cutoff)
+    f = np.linspace(0.0001, 0.4999, 301) * 1000
+    t = np.tan(np.pi * f / 1000)
+    x = eps2 * _cheb_t(order, t / k if high else k / t) ** 2
+    got = np.abs(sos_response(sos, f, 1000.0)) ** 2
+    assert np.allclose(got, x / (1 + x), rtol=1e-9, atol=1e-11)
+    stop = got[f > cutoff * 1000] if not high else got[f < cutoff * 1000]
+    assert np.all(stop <= 10 ** (-atten / 10) * (1 + 1e-9) + 1e-15)
+    edge = abs(sos_response(sos, [cutoff * 1000], 1000.0)[0]) ** 2
+    assert edge == pytest.approx(10 ** (-atten / 10), rel=1e-9)
+    end = abs(sos_response(sos, [500.0 if high else 0.0], 1000.0)[0])
+    assert end == pytest.approx(1.0, rel=1e-12)
+
+
+def test_chebyshev2_order_1_has_its_zero_at_the_far_end() -> None:
+    assert abs(sos_response(chebyshev2_lowpass(1, 30.0, 100.0, 1000.0), [500.0], 1000.0)[0]) < 1e-15
+    assert abs(sos_response(chebyshev2_highpass(1, 30.0, 100.0, 1000.0), [0.0], 1000.0)[0]) < 1e-15
+
+
+def test_attenuation_and_ripple_may_be_200_db() -> None:
+    assert chebyshev2_lowpass(4, 200.0, 100.0, 1000.0).shape == (2, 6)
+    assert chebyshev1_highpass(4, 200.0, 100.0, 1000.0).shape == (2, 6)
+
+
+@pytest.mark.parametrize("design", [chebyshev2_lowpass, chebyshev2_highpass])
+@pytest.mark.parametrize(
+    "args",
+    [
+        (0, 40.0, 1.0, 8.0),
+        (2, 0.0, 1.0, 8.0),
+        (2, -1.0, 1.0, 8.0),
+        (2, math.nan, 1.0, 8.0),
+        (2, math.inf, 1.0, 8.0),
+        (2, 200.5, 1.0, 8.0),
+        (2, 4000.0, 1.0, 8.0),
+        (2, True, 1.0, 8.0),
+        (2, 40.0, 0.0, 8.0),
+        (2, 40.0, 4.0, 8.0),
+        (2, 40.0, 1.0, 0.0),
+        (2.0, 40.0, 1.0, 8.0),
+    ],
+)
+def test_chebyshev2_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
     with pytest.raises(ValueError):
         design(*args)
