@@ -34,6 +34,55 @@ public class BesselTests
             Assert.True(high ? h[i] > h[i - 1] : h[i] < h[i - 1]);
     }
 
+    public static TheoryData<bool, int> BandOrders() => Orders();
+
+    [Theory]
+    [MemberData(nameof(BandOrders))]
+    public void BandIsTheLowPassAtTheTransformedFrequency(bool stop, int order)
+    {
+        // A low-pass at fs/4 has K = 1, so its gain at fs/pi atan(|x|) is the prototype's at |x|.
+        double low = 0.12, high = 0.3;
+        double[][] sos = stop ? Dsp.BesselBandstop(order, low, high, 1) : Dsp.BesselBandpass(order, low, high, 1);
+        double[][] lp = Dsp.BesselLowpass(order, 0.25, 1);
+        double lo = Math.Tan(Math.PI * low), hi = Math.Tan(Math.PI * high);
+        double[] f = [.. Enumerable.Range(0, 199).Select(i => 0.005 + i * 0.0025)];
+        double[] x = [.. f.Select(v =>
+        {
+            double t = Math.Tan(Math.PI * v);
+            return stop ? (hi - lo) * t / Math.Abs(lo * hi - t * t) : Math.Abs(t * t - lo * hi) / ((hi - lo) * t);
+        })];
+        Complex[] got = Dsp.SosResponse(sos, f, 1);
+        Complex[] want = Dsp.SosResponse(lp, [.. x.Select(v => Math.Atan(v) / Math.PI)], 1);
+        for (int i = 0; i < f.Length; i++)
+            Assert.True(Math.Abs(got[i].Magnitude - want[i].Magnitude) <= 1e-12 + 1e-9 * want[i].Magnitude, $"{f[i]}");
+        foreach (Complex h in Dsp.SosResponse(sos, [low, high], 1))
+            Assert.Equal(0.5, h.Magnitude * h.Magnitude, 1e-12);
+        Assert.Equal(order, sos.Length);
+    }
+
+    [Fact]
+    public void BandOrder1IsButterworth()
+    {
+        double[][][] pairs = [Dsp.BesselBandpass(1, 100, 300, 1000), Dsp.ButterworthBandpass(1, 100, 300, 1000),
+            Dsp.BesselBandstop(1, 100, 300, 1000), Dsp.ButterworthBandstop(1, 100, 300, 1000)];
+        for (int p = 0; p < 4; p += 2)
+        {
+            for (int j = 0; j < 6; j++)
+                Assert.Equal(pairs[p + 1][0][j], pairs[p][0][j], 1e-15);
+        }
+    }
+
+    [Theory]
+    [InlineData(0, 0.1, 0.2, 1)]
+    [InlineData(11, 0.1, 0.2, 1)]
+    [InlineData(3, 0.2, 0.1, 1)]
+    [InlineData(3, 0.1, 0.5, 1)]
+    public void BandRejectsBadArguments(int order, double low, double high, double fs)
+    {
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.BesselBandpass(order, low, high, fs));
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.BesselBandstop(order, low, high, fs));
+    }
+
     [Fact]
     public void Order1IsButterworth()
     {

@@ -464,6 +464,69 @@ def bessel(order, cutoff, fs, high):
     return rows
 
 
+def bessel_band(order, low, high, fs, stop):
+    """Bessel band-pass or band-stop: the prototype's poles (50-digit roots, as for the low-pass)
+    through the band transform, each section's analog quadratic through the bilinear transform.
+    Checked: the closed-form |H|^2 with x, -3 dB at both edges, stability, and the product of the
+    denominators against the prototype expanded by polynomial substitution."""
+    real, pairs, w0, m2 = bessel_proto(order)
+    lo, hi = math.tan(math.pi * low / fs), math.tan(math.pi * high / fs)
+    w2, bw = lo * hi, hi - lo
+    sections = []  # (Re s, |s|^2, gain) of each section, in order
+    for p in real:
+        c = bw / p.real if stop else bw * p.real
+        sections.append((c / 2, w2, 1.0 if stop else -p.real))
+    for p in pairs:  # lowest Q first
+        c = bw / p if stop else bw * p
+        d = cmath.sqrt(c * c - 4 * w2)
+        sections += [(s.real, abs(s) ** 2, 1.0 if stop else abs(p))
+                     for s in sorted([(c + d) / 2, (c - d) / 2], key=abs)]
+    rows = []
+    for sigma, m, g in sections:
+        a0 = 1 - 2 * sigma + m
+        b = [1 + w2, 2 * (w2 - 1), 1 + w2] if stop else [bw, 0.0, -bw]
+        rows.append([g * v / a0 for v in b] + [1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
+    for row in rows:  # stable: both poles inside the unit circle
+        assert abs(row[5]) < 1 and abs(row[4]) < 1 + row[5], (order, low, high, row)
+    prod = [1.0]
+    for row in rows:
+        prod = pmul(prod, row[3:])
+    quads = [(-2 * p.real, abs(p) ** 2) for p in pairs]
+    want = substituted_denominator(order, quads, real[0].real if real else None, w2, bw, stop)
+    assert all(abs(a - b) <= 1e-9 * max(map(abs, want)) for a, b in zip(prod, want)), (order, low)
+    center = fs / math.pi * math.atan(w2 ** 0.5)
+    freqs = [fs * k / 64 for k in range(1, 32)] + [low, high, center]
+    for f, h in zip(freqs, response(rows, freqs, fs)):
+        t = math.tan(math.pi * f / fs)
+        if stop:
+            x = math.inf if t * t == w2 else w0 * bw * t / (w2 - t * t)
+            want = 0.0 if abs(x) > 1e12 else m2[0] / sum(c * x ** (2 * k) for k, c in enumerate(m2))
+        else:
+            u = (w0 * (t * t - w2) / (bw * t)) ** 2
+            want = m2[0] / sum(c * u**k for k, c in enumerate(m2))
+        assert abs(abs(h) ** 2 - want) < 1e-12, (order, low, high, fs, stop, f, abs(h) ** 2, want)
+    for f in (low, high):
+        assert abs(abs(response(rows, [f], fs)[0]) ** 2 - 0.5) < 1e-12
+    return rows
+
+
+# Double-precision Bessel roots hold about 1e-12 relative at order 10 (conventions: Bessel design),
+# and the band transform's quadratic formula spreads that a little further.
+BAND_TOL_10 = {"abs": 1e-11, "rel": 1e-11}
+
+
+def bessel_band_design(case_id, order, low, high, fs, stop, rows=None, src=None):
+    return {"id": case_id, "op": "bessel_bandstop" if stop else "bessel_bandpass",
+            "args": {"order": order, "low": low, "high": high, "sample_rate": fs},
+            "expected": rows if rows is not None else bessel_band(order, low, high, fs, stop),
+            "tol": BAND_TOL_10 if order >= 9 else TOL, "source": src or SRC + "the Bessel roots by Newton in 50-digit Decimal on "
+            "the exact integer coefficients, through the band transform; checked against the "
+            "closed-form |H|^2, -3 dB at both edges, section stability, and the product of the "
+            "denominators against the prototype expanded by polynomial substitution"
+            + ("; tol 1e-11 because the library's double-precision Bessel roots hold about 1e-12 "
+               "relative at this order, which the band transform spreads" if order >= 9 else "")}
+
+
 def bessel_design(case_id, order, cutoff, fs, high, rows=None, src=None):
     return {"id": case_id, "op": "bessel_highpass" if high else "bessel_lowpass",
             "args": {"order": order, "cutoff": cutoff, "sample_rate": fs},
@@ -966,6 +1029,31 @@ cases = [
         {"order": 4, "cutoff": 0.5, "sample_rate": 1.0}, "cutoff < fs/2 required"),
     err("bessel.lowpass_cutoff_zero", "bessel_lowpass",
         {"order": 4, "cutoff": 0.0, "sample_rate": 1.0}, "cutoff > 0 required"),
+    bessel_band_design("bessel.bandpass_1_by_hand", 1, 1.0, 3.0, 8.0, False,
+                       rows=[[0.5, 0.0, -0.5, 1.0, 0.0, 0.0]],
+                       src="by hand: theta_1 = s + 1 is the Butterworth order 1 (w0 = 1); L = "
+                       "tan(pi/8), H = tan(3 pi/8), W^2 = 1, B = 2: B s/(s^2 + 2s + 1) with a0 = 4"),
+    bessel_band_design("bessel.bandstop_1_by_hand", 1, 1.0, 3.0, 8.0, True,
+                       rows=[[0.5, 0.0, 0.5, 1.0, 0.0, 0.0]],
+                       src="by hand: as bandpass_1_by_hand, (s^2 + 1)/(s^2 + 2s + 1): b = "
+                       "[2, 0, 2]/4"),
+    bessel_band_design("bessel.bandpass_2", 2, 1000.0, 2000.0, 8000.0, False),
+    bessel_band_design("bessel.bandpass_3", 3, 0.1, 0.3, 1.0, False),
+    bessel_band_design("bessel.bandpass_4_narrow", 4, 0.2, 0.21, 1.0, False),
+    bessel_band_design("bessel.bandpass_7_wide", 7, 0.02, 0.45, 1.0, False),
+    bessel_band_design("bessel.bandpass_10", 10, 0.05, 0.2, 1.0, False),
+    bessel_band_design("bessel.bandstop_2", 2, 0.05, 0.15, 1.0, True),
+    bessel_band_design("bessel.bandstop_5", 5, 2000.0, 6000.0, 48000.0, True),
+    bessel_band_design("bessel.bandstop_10", 10, 0.1, 0.3, 1.0, True),
+    err("bessel.bandpass_order_11", "bessel_bandpass",
+        {"order": 11, "low": 0.1, "high": 0.2, "sample_rate": 1.0},
+        "order <= 10 required (conventions: Bessel design)"),
+    err("bessel.bandstop_order_zero", "bessel_bandstop",
+        {"order": 0, "low": 0.1, "high": 0.2, "sample_rate": 1.0}, "order >= 1 required"),
+    err("bessel.bandpass_low_above_high", "bessel_bandpass",
+        {"order": 3, "low": 0.2, "high": 0.1, "sample_rate": 1.0}, "low < high required"),
+    err("bessel.bandstop_high_at_nyquist", "bessel_bandstop",
+        {"order": 3, "low": 0.1, "high": 0.5, "sample_rate": 1.0}, "high < fs/2 required"),
     ell_band_design("elliptic.bandpass_1_by_hand", 1, 10 * math.log10(2), 40.0, 1.0, 3.0, 8.0,
                     False, [[0.5, 0.0, -0.5, 1.0, 0.0, 0.0]],
                     "by hand: fs = 8, edges 1 and 3 give L = tan(pi/8), H = 1/L, so W^2 = 1 and B = 2; 10 log10(2) dB ripple makes eps_p = 1, and order 1 has no zeros and the real pole -1/eps_p = -1 (k = k1, R_1(x) = x), so the section is B s/(s^2 + 2s + 1) -> a0 = 4, [2, 0, -2]/4 over [4, 0, 0]/4"),

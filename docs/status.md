@@ -4,11 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Bessel band-pass and band-stop**, by the same low-pass-to-band transforms as the other
-   families; expected values from the analog prototype's roots transformed by hand formulas.
-2. **Mixing**: `mix(samples, frequency, sample_rate, phase=0)`, multiplying by
+1. **Mixing**: `mix(samples, frequency, sample_rate, phase=0)`, multiplying by
    `e^(j(2π f n/fs + φ))` (complex output for real or complex input), the sign and phase
    reference in the conventions first; expected values by hand and from exact rotations.
+2. **All-pass sections**: a first- and second-order all-pass design (`allpass(frequency,
+   bandwidth, sample_rate)` or similar) for phase equalization, unit magnitude to rounding and
+   the group delay checked by hand; conventions first.
 
 ## Built
 
@@ -383,10 +384,16 @@ Updated with every chunk of work. Dates are absolute.
   `ENBW·fs/nperseg`; both results gain `nfft` (C#: `Nfft`, the last record member). Vectors in
   `welch.json`: one by hand, six generated, two errors. Tests: every `nfft/nperseg`-th padded bin
   is the unpadded bin (one- and two-sided), total power kept for odd and even `nfft`.
+- 2026-11-13: Bessel band-pass and band-stop (conventions: IIR filters; ADR 0032): the Bessel
+  prototype's poles through the shared band transform with the type I Chebyshev gains, −3 dB at
+  `low` and `high`, `1 ≤ order ≤ 10`. Vectors in `iir.json`: two order-1 cases by hand, eight from
+  the 50-digit roots (checked against the closed-form `|H|²` and the substituted denominator),
+  four errors; orders 9 and 10 at 1e-11, the roots' double-precision accuracy. Tests: every order
+  equals the low-pass at `fs/4` read at `atan(|x|)`, order 1 is the band Butterworth.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

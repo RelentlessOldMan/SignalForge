@@ -11,6 +11,8 @@ from numpy.typing import NDArray
 
 from signalforge import (
     IirFilter,
+    bessel_bandpass,
+    bessel_bandstop,
     bessel_highpass,
     bessel_lowpass,
     butterworth_bandpass,
@@ -623,6 +625,47 @@ def test_bessel_is_3db_at_the_cutoff_and_monotonic(high: bool, order: int) -> No
     assert np.abs(sos_response(sos, [0.5 if high else 0.0], 1.0)[0]) == pytest.approx(1, abs=1e-13)
     h = np.abs(sos_response(sos, np.linspace(0.0, 0.5, 501), 1.0))
     assert np.all(np.diff(h) > 0) if high else np.all(np.diff(h) < 0)
+
+
+@pytest.mark.parametrize("stop", [False, True])
+@pytest.mark.parametrize("order", range(1, 11))
+def test_bessel_band_is_the_low_pass_at_the_transformed_frequency(stop: bool, order: int) -> None:
+    # A low-pass at fs/4 has K = 1, so its gain at fs/pi atan(|x|) is the prototype's at |x|.
+    fs, low, high = 1.0, 0.12, 0.3
+    sos = (bessel_bandstop if stop else bessel_bandpass)(order, low, high, fs)
+    lp = bessel_lowpass(order, fs / 4, fs)
+    lo, hi = math.tan(math.pi * low), math.tan(math.pi * high)
+    f = np.linspace(0.005, 0.495, 199)
+    t = np.tan(np.pi * f)
+    x = (
+        np.abs(hi - lo) * t / np.abs(lo * hi - t * t)
+        if stop
+        else np.abs(t * t - lo * hi) / ((hi - lo) * t)
+    )
+    want = np.abs(sos_response(lp, np.arctan(x) / np.pi, fs))
+    np.testing.assert_allclose(np.abs(sos_response(sos, f, fs)), want, rtol=1e-9, atol=1e-12)
+    edges = np.abs(sos_response(sos, [low, high], fs)) ** 2
+    np.testing.assert_allclose(edges, 0.5, atol=1e-12)
+    assert len(sos) == order
+
+
+def test_bessel_band_order_1_is_butterworth() -> None:
+    for design, other in (
+        (bessel_bandpass, butterworth_bandpass),
+        (bessel_bandstop, butterworth_bandstop),
+    ):
+        np.testing.assert_allclose(
+            design(1, 100.0, 300.0, 1000.0), other(1, 100.0, 300.0, 1000.0), rtol=1e-15, atol=1e-16
+        )
+
+
+@pytest.mark.parametrize("design", [bessel_bandpass, bessel_bandstop])
+@pytest.mark.parametrize(
+    "args", [(0, 0.1, 0.2, 1.0), (11, 0.1, 0.2, 1.0), (3, 0.2, 0.1, 1.0), (3, 0.1, 0.5, 1.0)]
+)
+def test_bessel_band_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
+    with pytest.raises(ValueError):
+        design(*args)
 
 
 def test_bessel_order_1_is_butterworth() -> None:

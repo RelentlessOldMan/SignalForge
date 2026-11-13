@@ -20,12 +20,43 @@ public static partial class Dsp
     public static double[][] BesselHighpass(int order, double cutoff, double sampleRate) =>
         Bessel(order, cutoff, sampleRate, true);
 
-    private static double[][] Bessel(int order, double cutoff, double sampleRate, bool high)
+    /// <summary>Bessel band-pass from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>,
+    /// −3 dB at low and high (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, 1 to 10; the filter's order is twice it.</param>
+    /// <param name="low">Lower −3 dB frequency in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper −3 dB frequency in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] BesselBandpass(int order, double low, double high, double sampleRate) =>
+        BesselBand(order, low, high, sampleRate, false);
+
+    /// <summary>Bessel band-stop from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>,
+    /// −3 dB at low and high (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, 1 to 10; the filter's order is twice it.</param>
+    /// <param name="low">Lower −3 dB frequency in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper −3 dB frequency in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] BesselBandstop(int order, double low, double high, double sampleRate) =>
+        BesselBand(order, low, high, sampleRate, true);
+
+    private static Complex[] BesselPoles(int order)
     {
         if (order is < 1 or > 10)
             throw new ArgumentOutOfRangeException(nameof(order), order, "must be between 1 and 10: higher Bessel poles are lost to rounding");
-        Complex[] poles = BesselPrototype(order);
+        return BesselPrototype(order);
+    }
+
+    private static double[][] Bessel(int order, double cutoff, double sampleRate, bool high)
+    {
+        Complex[] poles = BesselPoles(order);
         return Cascade(order, cutoff, sampleRate, high, i => poles[i]);
+    }
+
+    private static double[][] BesselBand(int order, double low, double high, double sampleRate, bool stop)
+    {
+        Complex[] poles = BesselPoles(order);
+        return Band(order, low, high, sampleRate, stop, i => poles[i]);
     }
 
     /// <summary>The reverse Bessel polynomial and its derivative at s, by the recurrence.</summary>

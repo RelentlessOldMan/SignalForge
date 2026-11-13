@@ -674,6 +674,18 @@ and `SignalForge.IirFilter`.
   `10^(−R/20)`. So the band-pass has the prototype's DC gain (`1`, or `10^(−R/20)` for an even
   order) at the center `f_0`, and the band-stop has it at 0 and `fs/2`; the band-stop's center
   maps to `|x| = ∞`, where `|H|²` is 0 (odd order) or `10^(−A/10)` (even).
+- **Band-pass and band-stop Bessel** (`bessel_bandpass(order, low, high, sample_rate)`,
+  `bessel_bandstop(...)`, [ADR 0032](adr/0032-band-bessel.md)): the Bessel low-pass prototype of
+  that `order` (poles `p/ω₀`, −3 dB at 1, as in Bessel design; `1 ≤ order ≤ 10`) through the band
+  transform exactly as the band Chebyshev type I, with the same `L, H, W, B, t, x`:
+  `|H(f)|² = θ_N(0)²/|θ_N(jω₀·x)|²`. So `low` and `high` are the −3 dB points (`|H|² = 1/2`); the
+  band-pass has gain 1 at the center `f_0`, and the band-stop gain 1 at 0 and `fs/2` and 0 at
+  `f_0`. Sections as for the band Chebyshev type I: the odd order's real pole `p_r` first
+  (`c = B·p_r` or `B/p_r`, `σ = c/2`, `m = W²`; band-pass gain `−p_r`), then the pairs from the
+  lowest Q to the highest, each pole's two images with the smaller `|s|` first, numerators `B·s`
+  (band-pass) or `s² + W²` (band-stop), band-pass pair gains `|p_k|`, band-stop gains 1. Order 1
+  is the order-1 band Butterworth. The delay is flat in the prototype's frequency `x`, not in
+  `f`: the band transform does not keep the Bessel's flat group delay.
 - **Frequency response** (`sos_response(sos, frequencies, sample_rate)`): the complex
   `H(f) = Π_i H_i(e^(j2π·f/fs))` at each frequency. Frequencies finite.
 - **Group delay** (`sos_group_delay(sos, frequencies, sample_rate)`,

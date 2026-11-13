@@ -96,6 +96,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "elliptic_lowpass": dsp.elliptic_lowpass,
     "bessel_lowpass": dsp.bessel_lowpass,
     "bessel_highpass": dsp.bessel_highpass,
+    "bessel_bandpass": dsp.bessel_bandpass,
+    "bessel_bandstop": dsp.bessel_bandstop,
     "elliptic_highpass": dsp.elliptic_highpass,
     "elliptic_bandpass": dsp.elliptic_bandpass,
     "elliptic_bandstop": dsp.elliptic_bandstop,

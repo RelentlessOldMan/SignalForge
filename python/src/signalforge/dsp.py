@@ -716,12 +716,23 @@ def _bessel_prototype(n: int) -> list[complex]:
     return [p / w0 for p in pairs] + [complex(p.real / w0, 0) for p in real]
 
 
-def _bessel(order: int, cutoff: float, sample_rate: float, high: bool) -> NDArray[np.float64]:
+def _bessel_poles(order: int) -> list[complex]:
     n = count(order, "order")
     if not 1 <= n <= 10:
         raise ValueError("order must be between 1 and 10: higher Bessel poles are lost to rounding")
-    poles = _bessel_prototype(n)
-    return _cascade(n, cutoff, sample_rate, high, lambda i: poles[i])
+    return _bessel_prototype(n)
+
+
+def _bessel(order: int, cutoff: float, sample_rate: float, high: bool) -> NDArray[np.float64]:
+    poles = _bessel_poles(order)
+    return _cascade(int(order), cutoff, sample_rate, high, lambda i: poles[i])
+
+
+def _bessel_band(
+    order: int, low: float, high: float, sample_rate: float, stop: bool
+) -> NDArray[np.float64]:
+    poles = _bessel_poles(order)
+    return _band(int(order), low, high, sample_rate, stop, lambda i: poles[i])
 
 
 def _chebyshev1(
@@ -1069,6 +1080,18 @@ def _band(
         for s, z2 in zip(images, zero2, strict=True):
             section(s.real, abs(s) ** 2, gain, z2)
     return _usable(rows)
+
+
+def bessel_bandpass(order: int, low: float, high: float, sample_rate: float) -> NDArray[np.float64]:
+    """Bessel band-pass from the low-pass prototype of that order, by the bilinear transform, as
+    ``order`` second-order sections, -3 dB at ``low`` and ``high`` (conventions: IIR filters)."""
+    return _bessel_band(order, low, high, sample_rate, stop=False)
+
+
+def bessel_bandstop(order: int, low: float, high: float, sample_rate: float) -> NDArray[np.float64]:
+    """Bessel band-stop from the low-pass prototype of that order, by the bilinear transform, as
+    ``order`` second-order sections, -3 dB at ``low`` and ``high`` (conventions: IIR filters)."""
+    return _bessel_band(order, low, high, sample_rate, stop=True)
 
 
 def butterworth_bandpass(
