@@ -49,6 +49,31 @@ public class LinkTrackingTests
     }
 
     [Fact]
+    public void CarrierLoopFollowsPhaseNoise()
+    {
+        // 0.15 Hz at 1000 Bd is 0.03 rad rms per symbol, wandering about 1.7 rad over 3000
+        // symbols, which one line through the block phases cannot follow; the loop at Bn 0.03 can
+        var gains = Sync.PiLoopGains(0.03, 1 / Math.Sqrt(2), Math.Sqrt(2));
+        int block = 0, looped = 0;
+        for (int seed = 0; seed < 5; seed++)
+        {
+            var cfg = new QpskLinkConfig { NumSymbols = 3000, EbN0Db = 8, PhaseNoiseLinewidthHz = 0.15, FrequencyOffsetHz = 5, Seed = seed };
+            block += Link.QpskLink(cfg).BitErrors.Errors;
+            looped += Link.QpskLink(cfg with { CarrierLoopGains = [gains.Kp, gains.Ki] }).BitErrors.Errors;
+        }
+        // theory 1.9e-4 is about 6 errors in 30000 bits; a cycle slip would cost hundreds
+        Assert.True(block > 300, $"block {block}");
+        Assert.True(looped < 40, $"looped {looped}");
+    }
+
+    [Fact]
+    public void NoPhaseNoiseDrawsNothing()
+    {
+        var cfg = new QpskLinkConfig { NumSymbols = 500, EbN0Db = 5, Seed = 9 };
+        Assert.Equal(Link.QpskLink(cfg).ToJson(), Link.QpskLink(cfg with { PhaseNoiseLinewidthHz = 0 }).ToJson());
+    }
+
+    [Fact]
     public void GainsSerializeAsPairs()
     {
         string json = Link.QpskLink(new QpskLinkConfig { NumSymbols = 64, TimingLoopGains = [0.1, 0.001] }).ToJson();
@@ -64,6 +89,8 @@ public class LinkTrackingTests
     {
         var c = new QpskLinkConfig { NumSymbols = 50 };
         Assert.ThrowsAny<ArgumentException>(() => Link.QpskLink(c with { ClockOffsetPpm = 2e5 }));
+        Assert.ThrowsAny<ArgumentException>(() => Link.QpskLink(c with { PhaseNoiseLinewidthHz = -1 }));
+        Assert.ThrowsAny<ArgumentException>(() => Link.QpskLink(c with { PhaseNoiseLinewidthHz = double.PositiveInfinity }));
         Assert.ThrowsAny<ArgumentException>(() => Link.QpskLink(c with { ClockOffsetPpm = double.NaN }));
         Assert.ThrowsAny<ArgumentException>(() => Link.QpskLink(c with { TimingLoopGains = [0.1] }));
         Assert.ThrowsAny<ArgumentException>(() => Link.QpskLink(c with { TimingLoopGains = [0.1, -0.01] }));

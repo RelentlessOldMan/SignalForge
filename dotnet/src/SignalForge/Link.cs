@@ -47,6 +47,9 @@ public sealed record QpskLinkConfig
     /// <summary>Noise seed.</summary>
     public int Seed { get; init; }
 
+    /// <summary>Wiener phase noise linewidth in Hz, at least 0; 0 adds none.</summary>
+    public double PhaseNoiseLinewidthHz { get; init; }
+
     /// <summary>Receiver sample clock offset in parts per million, within ±1e5.</summary>
     public double ClockOffsetPpm { get; init; }
 
@@ -114,7 +117,8 @@ public sealed record QpskLinkReport(
 /// <summary>End-to-end QPSK link: bits, shaping, channel, recovery, EVM and BER.</summary>
 public static class Link
 {
-    /// <summary>Runs one shaped QPSK link through delay, carrier offset, clock offset and AWGN,
+    /// <summary>Runs one shaped QPSK link through delay, carrier offset, phase noise, clock offset
+    /// and AWGN,
     /// then recovers it (conventions: QPSK link).</summary>
     /// <param name="config">The run; see <see cref="QpskLinkConfig"/>.</param>
     public static QpskLinkReport QpskLink(QpskLinkConfig config)
@@ -133,6 +137,8 @@ public static class Link
         double rs = Check.PositiveFinite(c.SymbolRate, nameof(config));
         if (!double.IsFinite(c.FrequencyOffsetHz) || !double.IsFinite(c.Phase) || c.EbN0Db is { } e && !double.IsFinite(e))
             throw new ArgumentOutOfRangeException(nameof(config), "numbers must be finite");
+        if (!(c.PhaseNoiseLinewidthHz >= 0) || !double.IsFinite(c.PhaseNoiseLinewidthHz))
+            throw new ArgumentOutOfRangeException(nameof(config), c.PhaseNoiseLinewidthHz, "PhaseNoiseLinewidthHz must be finite and at least 0");
         if (!(Math.Abs(c.ClockOffsetPpm) <= 1e5))
             throw new ArgumentOutOfRangeException(nameof(config), c.ClockOffsetPpm, "ClockOffsetPpm must be finite and within 1e5");
         Gains(c.TimingLoopGains, nameof(c.TimingLoopGains), nameof(config));
@@ -147,10 +153,13 @@ public static class Link
         shaped.CopyTo(tx, c.DelaySamples);
         // channel
         Complex[] rx = Channel.FrequencyOffset(tx, c.FrequencyOffsetHz, rs * sps, c.Phase);
+        var rng = new Random(c.Seed);
+        if (c.PhaseNoiseLinewidthHz > 0)
+            rx = Channel.PhaseNoise(rx, c.PhaseNoiseLinewidthHz, rs * sps, rng);
         if (c.ClockOffsetPpm != 0)
             rx = Channel.ClockOffset(rx, c.ClockOffsetPpm);
         if (c.EbN0Db is { } ebN0Db)
-            rx = Channel.Awgn(rx, ebN0Db + 10 * Math.Log10(2), sps, c.Seed, signalPower: 1.0 / sps);
+            rx = Channel.Awgn(rx, ebN0Db + 10 * Math.Log10(2), sps, rng, signalPower: 1.0 / sps);
         // receiver
         Complex[] y = Dsp.Convolve(rx, h);
         double tau = Sync.TimingOffset(y, sps);
@@ -202,9 +211,16 @@ public static class Link
         for (int i = 0; i < pre; i++)
             cp += Complex.Conjugate(a[i]) * zp[i];
         phi = Wrap(phi + Math.PI / 2 * Math.Round(Math.Atan2(cp.Imaginary, cp.Real) / (Math.PI / 2)));
-        z = Channel.FrequencyOffset(r.AsSpan(k0, n), -f, rs, -phi);
         if (c.CarrierLoopGains is { } cg)
-            z = Sync.QpskCarrierTracking(z, cg[0], cg[1]).Symbols;
+        {
+            Complex[] w = Channel.FrequencyOffset(r.AsSpan(k0, n), -f, rs);
+            Complex cw = Complex.Zero;
+            for (int i = 0; i < pre; i++)
+                cw += Complex.Conjugate(a[i]) * w[i];
+            z = Sync.QpskCarrierTracking(w, cg[0], cg[1], Math.Atan2(cw.Imaginary, cw.Real)).Symbols;
+        }
+        else
+            z = Channel.FrequencyOffset(r.AsSpan(k0, n), -f, rs, -phi);
 
         return new QpskLinkReport(c, tau, k0, f, phi, Metrics.Evm(z, a), Metrics.BitErrors(bits, Modulation.QpskDemapHard(z)),
             c.EbN0Db is { } eb ? Metrics.QpskBerTheory(eb) : null);

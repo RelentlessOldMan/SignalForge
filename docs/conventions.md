@@ -956,16 +956,20 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   noise], `symbol_rate` [1000] Hz, `samples_per_symbol` [4] (≥ 2), `rolloff` [0.35],
   `span_symbols` [10], `delay_samples` [0], `frequency_offset_hz` [0], `phase` [0] rad,
   `preamble_symbols` [32] (1 to `num_symbols`), `phase_block_symbols` [32] (≥ 1), `prbs_order`
-  [15], `seed` [0], `clock_offset_ppm` [0] (`|·| ≤ 1e5`), `timing_loop_gains` [none] and
+  [15], `seed` [0], `phase_noise_linewidth_hz` [0] (`≥ 0`,
+  [ADR 0047](adr/0047-link-phase-noise.md)), `clock_offset_ppm` [0] (`|·| ≤ 1e5`),
+  `timing_loop_gains` [none] and
   `carrier_loop_gains` [none], each none or a pair `[kp, ki]` of numbers `≥ 0`
   ([ADR 0046](adr/0046-link-tracking-loops.md)). Numbers must be finite. **(implemented)**
 - **Transmitter:** `bits = prbs(prbs_order, 2·num_symbols)`, `a = qpsk_map(bits)`,
   `h = rrc_taps(rolloff, sps, span_symbols)`, `tx` = `delay_samples` zeros followed by
   `pulse_shape(a, h, sps)`. **(implemented)**
 - **Channel:** `frequency_offset(tx, frequency_offset_hz, symbol_rate·sps, phase)`, then, with
-  `clock_offset_ppm ≠ 0`, `clock_offset(·, clock_offset_ppm)` (the receiver's clock), then, with
-  `eb_n0_db`, `awgn(·, eb_n0_db + 10·log10 2, sps, seed, signal_power = 1/sps)` (the shaped
-  signal's nominal power). **(implemented)**
+  `phase_noise_linewidth_hz > 0`, `phase_noise(·, phase_noise_linewidth_hz, symbol_rate·sps)`,
+  then, with `clock_offset_ppm ≠ 0`, `clock_offset(·, clock_offset_ppm)` (the receiver's clock), then, with
+  `eb_n0_db`, `awgn(·, eb_n0_db + 10·log10 2, sps, signal_power = 1/sps)` (the shaped
+  signal's nominal power). One generator seeded with `seed` drives the phase noise and then the
+  AWGN, so without phase noise the AWGN is the same as before. **(implemented)**
 - **Receiver**, with `N = num_symbols`, `P = preamble_symbols`, `B = phase_block_symbols`:
   1. `y = convolve(rx, h)`; `τ = timing_offset(y, sps)`; `r = y[round(τ) mod sps :: sps]`
      (round half to even). With `timing_loop_gains = [kp, ki]`, instead
@@ -980,9 +984,11 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   6. `m = round(arg(Σ_{i<P} conj(a[i])·z[i]·e^{−j(φ₀ + s·i)}) / (π/2))` (half to even);
      the phase is `φ = φ₀ + m·π/2` wrapped into `(−π, π]`, and the frequency
      `f = f₁ + s·symbol_rate/(2π)`.
-  7. The symbols are `frequency_offset(r[k₀ : k₀+N], −f, symbol_rate, −φ)`, and with
-     `carrier_loop_gains = [kp, ki]` then `qpsk_carrier_tracking(·, kp, ki).symbols` (start
-     phase 0: the loop follows what the block estimates left); they are compared with
+  7. The symbols are `frequency_offset(r[k₀ : k₀+N], −f, symbol_rate, −φ)`. With
+     `carrier_loop_gains = [kp, ki]` they are instead `qpsk_carrier_tracking(w, kp, ki,
+     phase=φ_p).symbols` with `w = frequency_offset(r[k₀ : k₀+N], −f, symbol_rate)` and
+     `φ_p = arg(Σ_{i<P} conj(a[i])·w[i])`, the preamble's own phase (no π/2 ambiguity, and local
+     to the frame start). Either way they are compared with
      `a` by `evm` and, after `qpsk_demap_hard`, with `bits` by `bit_errors`. The preamble counts.
   **(implemented)**
 - **Report** (`QpskLinkReport`): `config`, `timing_offset` (τ, samples; the loop's start when it

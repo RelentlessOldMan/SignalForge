@@ -1,0 +1,9 @@
+{
+  "num_symbols": 3000,
+  "eb_n0_db": 5.0,
+  "frequency_offset_hz": -8.0,
+  "phase": 2.0,
+  "phase_noise_linewidth_hz": 0.1,
+  "carrier_loop_gains": [0.0544, 0.00217],
+  "seed": 4
+}

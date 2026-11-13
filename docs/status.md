@@ -4,9 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Phase noise in `qpsk_link`**: a channel field for Wiener phase noise (`phase_noise`, already
-   built), and a check that the carrier loop keeps the BER near theory where the block phase
-   estimates cannot follow the wander; a config in `vectors/links/`.
+1. **Carrier tracking for 8-PSK and 16-QAM**: decision-directed loops like
+   `qpsk_carrier_tracking`, with the decision the nearest constellation point
+   (`psk8_map`/`qam16_map` conventions), vectors from a stdlib generator, and the proportional-lag
+   closed form where one exists.
 
 ## Built
 
@@ -495,6 +496,13 @@ Updated with every chunk of work. Dates are absolute.
   bring it back within 5 sd of theory; without an offset the loops change EVM by under 0.02.
   Link configs `qpsk_tracking` (noisy) and `qpsk_tracking_noiseless` run in both languages and
   compare. Python 2104 passed, 2 skipped; .NET 1687 passed.
+- 2026-11-13: phase noise in the QPSK link (ADR 0047): `phase_noise_linewidth_hz`, applied after
+  the carrier offset; one generator seeded with `seed` drives the phase noise and then the AWGN,
+  so links without phase noise are unchanged. The carrier loop now starts at the preamble's
+  data-aided phase (the block line's phase at the frame start can be off by more than π/4 under
+  wander, which locked the loop to the wrong quadrant). Tests: at 0.15 Hz (0.03 rad per symbol),
+  over 5 seeds, the block receiver makes over 300 errors and the loop under 40 (theory about 6).
+  Link config `qpsk_phase_noise`. Python 2107 passed, 2 skipped; .NET 1689 passed.
 
 ## Not built
 

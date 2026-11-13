@@ -19,7 +19,8 @@ use them.
   config stays a plain record of numbers both languages read the same way.
 - The timing loop replaces the fixed-phase decimation and starts at the block timing estimate. The
   carrier loop runs after the block frequency and phase correction, from phase 0, so the preamble
-  has already resolved the π/2 ambiguity.
+  has already resolved the π/2 ambiguity. (Superseded by ADR 0047: the loop starts at the
+  preamble's phase.)
 - The clock offset is applied after the carrier offset and before the noise: it is the receiver's
   sampling, and the noise is added at the receiver's rate.
 - The report's fields keep their meaning; `timing_offset` is the loop's start when it runs.
