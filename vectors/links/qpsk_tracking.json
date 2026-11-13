@@ -1,0 +1,11 @@
+{
+  "num_symbols": 3000,
+  "eb_n0_db": 6.0,
+  "frequency_offset_hz": 12.0,
+  "phase": 0.7,
+  "delay_samples": 3,
+  "clock_offset_ppm": 150.0,
+  "timing_loop_gains": [0.04, 0.0005],
+  "carrier_loop_gains": [0.03, 0.0003],
+  "seed": 11
+}

@@ -1,0 +1,9 @@
+{
+  "num_symbols": 1200,
+  "frequency_offset_hz": -20.0,
+  "phase": -0.4,
+  "delay_samples": 2,
+  "clock_offset_ppm": -250.0,
+  "timing_loop_gains": [0.04, 0.0005],
+  "carrier_loop_gains": [0.03, 0.0003]
+}

@@ -8,7 +8,7 @@ import math
 import numpy as np
 import pytest
 
-from signalforge import QpskLinkConfig, qpsk_link
+from signalforge import QpskLinkConfig, pi_loop_gains, qpsk_link
 
 # The JSON field names; the C# tests check the same list.
 REPORT_KEYS = [
@@ -35,6 +35,9 @@ CONFIG_KEYS = [
     "phase_block_symbols",
     "prbs_order",
     "seed",
+    "clock_offset_ppm",
+    "timing_loop_gains",
+    "carrier_loop_gains",
 ]
 
 
@@ -96,6 +99,11 @@ def test_non_finite_numbers_are_strings() -> None:
         {"num_symbols": 50, "symbol_rate": True},
         {"num_symbols": 50, "prbs_order": 8},
         {"num_symbols": 50, "rolloff": 1.5},
+        {"num_symbols": 50, "clock_offset_ppm": 2e5},
+        {"num_symbols": 50, "timing_loop_gains": (0.1,)},
+        {"num_symbols": 50, "timing_loop_gains": (0.1, -0.01)},
+        {"num_symbols": 50, "carrier_loop_gains": (0.1, math.nan)},
+        {"num_symbols": 50, "carrier_loop_gains": "ab"},
     ],
 )
 def test_rejects(bad: dict[str, object]) -> None:
@@ -116,3 +124,54 @@ def test_numpy_scalars_are_accepted_and_serialize() -> None:
     assert d["config"]["eb_n0_db"] == 8.0
     assert type(r.config.num_symbols) is int
     assert type(r.config.symbol_rate) is float
+
+
+# gains for a loop bandwidth of 0.01 per symbol: the Gardner detector's slope on this pulse is about
+# 0.26 (measured open loop, test_timing_loop), the carrier detector's sqrt2 at unit amplitude
+TIMING = pi_loop_gains(0.01, 1 / math.sqrt(2), 0.26)
+CARRIER = pi_loop_gains(0.01, 1 / math.sqrt(2), math.sqrt(2))
+
+
+def test_timing_loop_follows_a_clock_offset() -> None:
+    # 400 ppm over 3000 symbols is 4.8 samples of drift, more than a symbol
+    base = {
+        "num_symbols": 3000,
+        "eb_n0_db": 6.0,
+        "clock_offset_ppm": 400.0,
+        "frequency_offset_hz": 7.0,
+        "phase": 0.3,
+        "delay_samples": 1,
+        "seed": 3,
+    }
+    fixed = qpsk_link(QpskLinkConfig(**base))  # type: ignore[arg-type]
+    assert fixed.bit_errors.rate > 0.1
+    for gains in [
+        {"timing_loop_gains": TIMING},
+        {"timing_loop_gains": TIMING, "carrier_loop_gains": CARRIER},
+    ]:
+        r = qpsk_link(QpskLinkConfig(**base, **gains))  # type: ignore[arg-type]
+        assert r.ber_theory is not None
+        # theory is about 14 errors in 6000 bits; 5 sd of a Poisson count is about 19
+        assert r.bit_errors.errors < 14 + 19
+        assert r.evm.rms < 0.4
+
+
+def test_loops_off_by_default_and_without_offset_change_little() -> None:
+    cfg = {"num_symbols": 2000, "eb_n0_db": 8.0, "frequency_offset_hz": -15.0, "seed": 5}
+    plain = qpsk_link(QpskLinkConfig(**cfg))  # type: ignore[arg-type]
+    same = qpsk_link(QpskLinkConfig(**cfg, clock_offset_ppm=0.0))  # type: ignore[arg-type]
+    assert plain == same
+    looped = qpsk_link(
+        QpskLinkConfig(**cfg, timing_loop_gains=TIMING, carrier_loop_gains=CARRIER)  # type: ignore[arg-type]
+    )
+    assert abs(looped.evm.rms - plain.evm.rms) < 0.02
+    assert abs(looped.bit_errors.errors - plain.bit_errors.errors) <= 10
+
+
+def test_gains_serialize_as_pairs() -> None:
+    r = qpsk_link(QpskLinkConfig(num_symbols=64, timing_loop_gains=[0.1, 0.001]))  # type: ignore[arg-type]
+    d = json.loads(r.to_json())["config"]
+    assert d["timing_loop_gains"] == [0.1, 0.001]
+    assert d["carrier_loop_gains"] is None
+    assert d["clock_offset_ppm"] == 0.0
+    assert r.config.timing_loop_gains == (0.1, 0.001)

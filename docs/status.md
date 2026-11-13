@@ -4,11 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Tracking loops in `qpsk_link`**: a receiver option that runs `gardner_timing` and
-   `qpsk_carrier_tracking` in place of the block estimators, with a config in `vectors/links/`
-   run in both languages and compared (statistics, since the noise streams differ); checks:
-   BER near theory with a clock offset (`clock_offset`) and a carrier offset the block
-   estimators cannot follow.
+1. **Phase noise in `qpsk_link`**: a channel field for Wiener phase noise (`phase_noise`, already
+   built), and a check that the carrier loop keeps the BER near theory where the block phase
+   estimates cannot follow the wander; a config in `vectors/links/`.
 
 ## Built
 
@@ -489,6 +487,14 @@ Updated with every chunk of work. Dates are absolute.
   tone comes out at the new rate within 5e-5 from −1e5 to 1e5 ppm with the expected length;
   `gardner_timing` follows a 200 ppm offset (4.8 samples of drift over 6000 symbols) with no
   growing lag and no bit errors. Python 2096 passed, 2 skipped; .NET 1683 passed.
+- 2026-11-13: tracking loops in the QPSK link (conventions: QPSK link; ADR 0046): config fields
+  `clock_offset_ppm`, `timing_loop_gains` and `carrier_loop_gains` (pairs `[kp, ki]`, off by
+  default, so existing reports are unchanged). The timing loop replaces the fixed-phase
+  decimation, starting at the block estimate; the carrier loop runs after the block correction.
+  Tests: at 400 ppm over 3000 symbols the fixed sampling loses lock (BER > 0.1) and the loops
+  bring it back within 5 sd of theory; without an offset the loops change EVM by under 0.02.
+  Link configs `qpsk_tracking` (noisy) and `qpsk_tracking_noiseless` run in both languages and
+  compare. Python 2104 passed, 2 skipped; .NET 1687 passed.
 
 ## Not built
 

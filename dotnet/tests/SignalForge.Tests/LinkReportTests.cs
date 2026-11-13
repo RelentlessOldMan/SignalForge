@@ -13,7 +13,8 @@ public class LinkReportTests
     private static readonly string[] ConfigKeys =
     [
         "num_symbols", "eb_n0_db", "symbol_rate", "samples_per_symbol", "rolloff", "span_symbols", "delay_samples",
-        "frequency_offset_hz", "phase", "preamble_symbols", "phase_block_symbols", "prbs_order", "seed",
+        "frequency_offset_hz", "phase", "preamble_symbols", "phase_block_symbols", "prbs_order", "seed", "clock_offset_ppm",
+        "timing_loop_gains", "carrier_loop_gains",
     ];
 
     private static string[] Keys(JsonElement e) => e.EnumerateObject().Select(p => p.Name).ToArray();

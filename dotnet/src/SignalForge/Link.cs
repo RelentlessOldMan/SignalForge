@@ -46,6 +46,17 @@ public sealed record QpskLinkConfig
 
     /// <summary>Noise seed.</summary>
     public int Seed { get; init; }
+
+    /// <summary>Receiver sample clock offset in parts per million, within ±1e5.</summary>
+    public double ClockOffsetPpm { get; init; }
+
+    /// <summary>Gardner timing loop gains [kp, ki], both at least 0; null samples at the block
+    /// timing estimate.</summary>
+    public IReadOnlyList<double>? TimingLoopGains { get; init; }
+
+    /// <summary>QPSK carrier loop gains [kp, ki], both at least 0; null runs no carrier
+    /// loop.</summary>
+    public IReadOnlyList<double>? CarrierLoopGains { get; init; }
 }
 
 /// <summary>What the receiver estimated and measured on one link run.</summary>
@@ -103,8 +114,8 @@ public sealed record QpskLinkReport(
 /// <summary>End-to-end QPSK link: bits, shaping, channel, recovery, EVM and BER.</summary>
 public static class Link
 {
-    /// <summary>Runs one shaped QPSK link through delay, carrier offset and AWGN, then recovers it
-    /// (conventions: QPSK link).</summary>
+    /// <summary>Runs one shaped QPSK link through delay, carrier offset, clock offset and AWGN,
+    /// then recovers it (conventions: QPSK link).</summary>
     /// <param name="config">The run; see <see cref="QpskLinkConfig"/>.</param>
     public static QpskLinkReport QpskLink(QpskLinkConfig config)
     {
@@ -122,6 +133,10 @@ public static class Link
         double rs = Check.PositiveFinite(c.SymbolRate, nameof(config));
         if (!double.IsFinite(c.FrequencyOffsetHz) || !double.IsFinite(c.Phase) || c.EbN0Db is { } e && !double.IsFinite(e))
             throw new ArgumentOutOfRangeException(nameof(config), "numbers must be finite");
+        if (!(Math.Abs(c.ClockOffsetPpm) <= 1e5))
+            throw new ArgumentOutOfRangeException(nameof(config), c.ClockOffsetPpm, "ClockOffsetPpm must be finite and within 1e5");
+        Gains(c.TimingLoopGains, nameof(c.TimingLoopGains), nameof(config));
+        Gains(c.CarrierLoopGains, nameof(c.CarrierLoopGains), nameof(config));
 
         // transmitter
         byte[] bits = Waveforms.Prbs(c.PrbsOrder, 2 * n);
@@ -132,15 +147,23 @@ public static class Link
         shaped.CopyTo(tx, c.DelaySamples);
         // channel
         Complex[] rx = Channel.FrequencyOffset(tx, c.FrequencyOffsetHz, rs * sps, c.Phase);
+        if (c.ClockOffsetPpm != 0)
+            rx = Channel.ClockOffset(rx, c.ClockOffsetPpm);
         if (c.EbN0Db is { } ebN0Db)
             rx = Channel.Awgn(rx, ebN0Db + 10 * Math.Log10(2), sps, c.Seed, signalPower: 1.0 / sps);
         // receiver
         Complex[] y = Dsp.Convolve(rx, h);
         double tau = Sync.TimingOffset(y, sps);
-        int p = (int)Math.Round(tau) % sps;
-        Complex[] r = new Complex[(y.Length - p + sps - 1) / sps];
-        for (int k = 0; k < r.Length; k++)
-            r[k] = y[p + k * sps];
+        Complex[] r;
+        if (c.TimingLoopGains is { } tg)
+            r = Sync.GardnerTiming(y, sps, tg[0], tg[1], tau).Symbols;
+        else
+        {
+            int p = (int)Math.Round(tau) % sps;
+            r = new Complex[(y.Length - p + sps - 1) / sps];
+            for (int k = 0; k < r.Length; k++)
+                r[k] = y[p + k * sps];
+        }
         double f = Sync.QpskFrequencyOffset(r, rs);
         // frame start: the first maximum of the preamble correlation
         Complex[] cr = Channel.FrequencyOffset(r, -f, rs);
@@ -180,9 +203,22 @@ public static class Link
             cp += Complex.Conjugate(a[i]) * zp[i];
         phi = Wrap(phi + Math.PI / 2 * Math.Round(Math.Atan2(cp.Imaginary, cp.Real) / (Math.PI / 2)));
         z = Channel.FrequencyOffset(r.AsSpan(k0, n), -f, rs, -phi);
+        if (c.CarrierLoopGains is { } cg)
+            z = Sync.QpskCarrierTracking(z, cg[0], cg[1]).Symbols;
 
         return new QpskLinkReport(c, tau, k0, f, phi, Metrics.Evm(z, a), Metrics.BitErrors(bits, Modulation.QpskDemapHard(z)),
             c.EbN0Db is { } eb ? Metrics.QpskBerTheory(eb) : null);
+    }
+
+    private static void Gains(IReadOnlyList<double>? g, string name, string paramName)
+    {
+        if (g is null)
+            return;
+        if (g.Count != 2)
+            throw new ArgumentException($"{name} must be null or a pair [kp, ki]", paramName);
+        foreach (double x in g)
+            if (!double.IsFinite(x) || x < 0)
+                throw new ArgumentOutOfRangeException(paramName, x, $"{name} must be finite and at least 0");
     }
 
     /// <summary>Into (−π, π].</summary>

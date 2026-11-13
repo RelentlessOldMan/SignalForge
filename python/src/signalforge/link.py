@@ -14,11 +14,17 @@ from typing import Any
 import numpy as np
 
 from ._checks import count, real
-from .channel import awgn, frequency_offset
+from .channel import awgn, clock_offset, frequency_offset
 from .dsp import convolve, pulse_shape, rrc_taps
 from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
 from .modulation import qpsk_demap_hard, qpsk_map
-from .sync import qpsk_block_phases, qpsk_frequency_offset, timing_offset
+from .sync import (
+    gardner_timing,
+    qpsk_block_phases,
+    qpsk_carrier_tracking,
+    qpsk_frequency_offset,
+    timing_offset,
+)
 from .waveforms import prbs
 
 
@@ -39,6 +45,9 @@ class QpskLinkConfig:
     phase_block_symbols: int = 32
     prbs_order: int = 15
     seed: int = 0
+    clock_offset_ppm: float = 0.0
+    timing_loop_gains: tuple[float, float] | None = None
+    carrier_loop_gains: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -78,8 +87,21 @@ def _wrap(phi: float) -> float:
     return math.pi if phi <= -math.pi else phi
 
 
+def _gains(g: Any, what: str) -> tuple[float, float] | None:
+    """None, or a pair of finite numbers ``>= 0`` as plain floats."""
+    if g is None:
+        return None
+    if isinstance(g, str | bytes) or len(g) != 2:
+        raise ValueError(f"{what} must be None or a pair [kp, ki]")
+    kp, ki = real(g[0], what), real(g[1], what)
+    if kp < 0 or ki < 0:
+        raise ValueError(f"{what} must not be negative")
+    return (kp, ki)
+
+
 def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
-    """Run one shaped QPSK link through delay, carrier offset and AWGN, then recover it."""
+    """Run one shaped QPSK link through delay, carrier offset, clock offset and AWGN, then
+    recover it."""
     n = count(config.num_symbols, "num_symbols")
     sps = count(config.samples_per_symbol, "samples_per_symbol")
     span = count(config.span_symbols, "span_symbols")
@@ -97,6 +119,9 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     rs = real(config.symbol_rate, "symbol_rate")
     if rs <= 0:
         raise ValueError("symbol_rate must be positive")
+    ppm = real(config.clock_offset_ppm, "clock_offset_ppm")
+    if abs(ppm) > 1e5:
+        raise ValueError("clock_offset_ppm must be within 1e5")
     # the report carries the config with plain int and float values, so it always serializes
     c = QpskLinkConfig(
         num_symbols=n,
@@ -112,6 +137,9 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         phase_block_symbols=blk,
         prbs_order=count(config.prbs_order, "prbs_order"),
         seed=count(config.seed, "seed"),
+        clock_offset_ppm=ppm,
+        timing_loop_gains=_gains(config.timing_loop_gains, "timing_loop_gains"),
+        carrier_loop_gains=_gains(config.carrier_loop_gains, "carrier_loop_gains"),
     )
     df, phase, eb_n0_db, seed = c.frequency_offset_hz, c.phase, c.eb_n0_db, c.seed
 
@@ -122,12 +150,17 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     tx = np.concatenate([np.zeros(delay, dtype=np.complex128), pulse_shape(a, h, sps)])
     # channel
     rx = frequency_offset(tx, df, rs * sps, phase)
+    if ppm != 0:
+        rx = clock_offset(rx, ppm)
     if eb_n0_db is not None:
         rx = awgn(rx, eb_n0_db + 10 * math.log10(2), sps, seed=seed, signal_power=1 / sps)
     # receiver
     y = np.asarray(convolve(rx, h), dtype=np.complex128)
     tau = timing_offset(y, sps)
-    z_raw = y[round(tau) % sps :: sps]
+    if c.timing_loop_gains is None:
+        z_raw = y[round(tau) % sps :: sps]
+    else:
+        z_raw = gardner_timing(y, sps, *c.timing_loop_gains, start=tau).symbols
     f_hat = qpsk_frequency_offset(z_raw, rs)
     # frame start: the first maximum of the preamble correlation
     ref = np.conj(a[:pre])
@@ -150,6 +183,8 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     c_pre = complex(np.sum(ref * frequency_offset(z[:pre], -slope * rs / (2 * math.pi), rs, -phi)))
     phi = _wrap(phi + (math.pi / 2) * round(math.atan2(c_pre.imag, c_pre.real) / (math.pi / 2)))
     z = frequency_offset(z_raw[k0 : k0 + n], -f_hat, rs, -phi)
+    if c.carrier_loop_gains is not None:
+        z = qpsk_carrier_tracking(z, *c.carrier_loop_gains).symbols
 
     return QpskLinkReport(
         config=c,
