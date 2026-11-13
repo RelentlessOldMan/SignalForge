@@ -147,6 +147,8 @@ Updated with every chunk of work. Dates are absolute.
   pole mapping) plus hand cases; unit tests check every design against the closed-form magnitude.
   The runners share one chunked-filter op. Python 713 passed, 2 skipped (3.10 too); .NET 589
   passed; conformance 415/415 in both.
+- 2026-11-13: `build.ps1` runs every vector generator's `--check`, as CI already did, so a stale
+  vector file fails locally before a push.
 
 ## Not built
 

@@ -7,6 +7,7 @@
   bumped with Get-NextVersion, written back, and stamped into the Python package. The .NET build
   reads VERSION itself. Then runs, stopping at the first failure:
     Python: ruff check, ruff format --check, mypy, pytest, conformance (report in reports/python.json)
+            and every vector generator's --check
     .NET:   build, test, format --verify-no-changes, conformance (report in reports/dotnet.json)
     Both:   the two reports diffed, each config in vectors/links run in both languages and compared,
             and signal files written by each language read by both and compared
@@ -68,6 +69,9 @@ try {
     Invoke-Step 'mypy' { & "$venv/mypy" }
     Invoke-Step 'pytest' { & "$venv/python" -m pytest -q }
     Invoke-Step 'conformance (python)' { & "$venv/python" -m signalforge.conformance --report ../reports/python.json }
+    foreach ($gen in Get-ChildItem ../vectors/generators/*.py) {
+        Invoke-Step "generator $($gen.BaseName) --check" { & "$venv/python" $gen.FullName --check }
+    }
     if (Test-Path ../reports/files) { Remove-Item -Recurse -Force ../reports/files }
     Invoke-Step 'write files (python)' { & "$venv/python" -m signalforge.compare write-files ../reports/files }
 }

@@ -99,7 +99,8 @@ cd ../python
 ../.venv/Scripts/python -m signalforge.compare reports ../reports/python.json ../reports/dotnet.json
 ```
 
-`build.ps1` runs all of this, plus the link configs in `vectors/links/` in both languages.
+`build.ps1` runs all of this, plus every vector generator's `--check` (as CI does) and the link
+configs in `vectors/links/` in both languages.
 
 ### Job sizes
 
