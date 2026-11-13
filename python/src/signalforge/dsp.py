@@ -450,9 +450,9 @@ def zero_phase_filter(
     if np.any(1 + s[:, 4] + s[:, 5] == 0):
         raise ValueError("every section needs 1 + a1 + a2 != 0 (no pole at z = 1)")
     x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite: one non-finite sample spoils every output")
     p = 3 * (2 * s.shape[0] + 1) if pad is None else count(pad, "pad")
-    if p < 0:
-        raise ValueError("pad must be non-negative")
     if x.size <= p:
         raise ValueError("samples must be longer than pad")
     ext = np.concatenate([2 * x[0] - x[p:0:-1], x, 2 * x[-1] - x[-2 : -p - 2 : -1]])

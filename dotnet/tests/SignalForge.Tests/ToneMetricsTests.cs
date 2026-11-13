@@ -88,4 +88,22 @@ public class ToneMetricsTests
         Assert.Equal(t.SignalPower, s.CarrierPower);
         Assert.Throws<ArgumentOutOfRangeException>(() => Measurements.Sfdr(x, 1024, numSpurs: 0));
     }
+
+    [Fact]
+    public void RoundingLevelBinsAreNeitherSignalNorSpurs()
+    {
+        Assert.Throws<ArgumentException>(() => Measurements.ToneMetrics(Enumerable.Repeat(1.0, 64).ToArray(), 64));
+        var s = Measurements.Sfdr(Cosines(64, 0, (5, 1)), 64, window: WindowType.Rectangular, numSpurs: 3);
+        Assert.Empty(s.SpurPowers);
+        Assert.Equal(double.PositiveInfinity, s.SfdrDb);
+    }
+
+    [Fact]
+    public void HugeSamplesAndHugeWidthsAreHandled()
+    {
+        double[] x = [.. Enumerable.Range(0, 64).Select(i => Math.Cos(i * 1.2))];
+        Assert.Throws<ArgumentException>(() => Measurements.ToneMetrics([.. x.Select(v => 1e160 * v)], 64));
+        Assert.Throws<ArgumentException>(() => Measurements.ToneMetrics(x, 64, width: int.MaxValue));
+        Assert.Throws<ArgumentException>(() => Measurements.Sfdr(x, 64, width: int.MaxValue - 1));
+    }
 }

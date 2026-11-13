@@ -120,9 +120,14 @@ public static class Conformance
         canonical = null;
         string op = json.GetProperty("op").GetString()!;
         var args = new Dictionary<string, object?>();
+        var fractional = new HashSet<string>(); // numbers written with a point or exponent
         if (json.TryGetProperty("args", out var a))
             foreach (var p in a.EnumerateObject())
+            {
                 args[p.Name] = Decode(p.Value);
+                if (p.Value.ValueKind == JsonValueKind.Number && p.Value.GetRawText().IndexOfAny(['.', 'e', 'E']) >= 0)
+                    fractional.Add(p.Name);
+            }
         double abs = DefaultAbs, rel = DefaultRel;
         if (json.TryGetProperty("tol", out var tol))
         {
@@ -134,7 +139,7 @@ public static class Conformance
         object? actual;
         try
         {
-            actual = Invoke(op, new Args(args));
+            actual = Invoke(op, new Args(args, fractional));
             canonical = Canonical(actual);
         }
         catch (LibraryArgumentException e)
@@ -155,8 +160,10 @@ public static class Conformance
     /// <summary>An ArgumentException thrown by the library itself (not by argument decoding).</summary>
     private sealed class LibraryArgumentException(ArgumentException inner) : Exception(inner.Message, inner);
 
-    /// <summary>A case's arguments. Every argument must be read exactly once, so a misspelled one fails.</summary>
-    private sealed class Args(Dictionary<string, object?> a)
+    /// <summary>A case's arguments. Every argument must be read exactly once, so a misspelled one fails.
+    /// An integer argument must be written as a JSON integer: Python rejects 2.0 where it wants an
+    /// int, and the C# API cannot be given one, so such a case could only pass in one language.</summary>
+    private sealed class Args(Dictionary<string, object?> a, HashSet<string>? fractional = null)
     {
         private readonly HashSet<string> _unused = [.. a.Keys];
 
@@ -179,6 +186,8 @@ public static class Conformance
         public int I(string k)
         {
             double v = D(k);
+            if (fractional?.Contains(k) == true)
+                throw new InvalidDataException($"{k} must be written as a JSON integer, got {v}");
             return v == Math.Floor(v) && v is >= int.MinValue and <= int.MaxValue
                 ? (int)v
                 : throw new InvalidDataException($"{k} must be an integer, got {v}");

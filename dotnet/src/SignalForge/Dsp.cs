@@ -469,6 +469,9 @@ public static class Dsp
     public static double[] ZeroPhaseFilter(double[][] sos, ReadOnlySpan<double> samples, int? pad = null)
     {
         var (s, p) = ZeroPhaseCheck(sos, samples.Length, pad);
+        foreach (double v in samples)
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite: one non-finite sample spoils every output", nameof(samples));
         double[] y = new double[samples.Length + 2 * p];
         for (int i = 0; i < p; i++)
         {
@@ -491,6 +494,9 @@ public static class Dsp
     public static Complex[] ZeroPhaseFilter(double[][] sos, ReadOnlySpan<Complex> samples, int? pad = null)
     {
         var (s, p) = ZeroPhaseCheck(sos, samples.Length, pad);
+        foreach (Complex v in samples)
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("samples must be finite: one non-finite sample spoils every output", nameof(samples));
         Complex[] y = new Complex[samples.Length + 2 * p];
         for (int i = 0; i < p; i++)
         {
@@ -514,6 +520,8 @@ public static class Dsp
         ArgumentOutOfRangeException.ThrowIfNegative(p, nameof(pad));
         if (length <= p)
             throw new ArgumentException("samples must be longer than pad", nameof(pad));
+        if (length + 2L * p > Array.MaxLength)
+            throw new ArgumentException("samples plus twice pad must fit in one array", nameof(pad));
         return (s, p);
     }
 

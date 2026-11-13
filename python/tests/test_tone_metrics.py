@@ -89,3 +89,19 @@ def test_sfdr_takes_the_strongest_spur_and_never_dc() -> None:
 def test_sfdr_needs_a_positive_whole_spur_count(num_spurs: object) -> None:
     with pytest.raises(ValueError):
         measurements.sfdr(np.cos(np.arange(32) * 1.2), 32.0, num_spurs=num_spurs)  # type: ignore[arg-type]
+
+
+def test_rounding_level_bins_are_neither_signal_nor_spurs() -> None:
+    with pytest.raises(ValueError):
+        measurements.tone_metrics(np.ones(64), 64.0)
+    x = np.cos(2 * np.pi * 5 * np.arange(64) / 64)
+    s = measurements.sfdr(x, 64.0, window="rectangular", num_spurs=3)
+    assert s.spur_powers.size == 0 and s.sfdr_db == math.inf
+
+
+def test_huge_samples_and_huge_widths_are_handled() -> None:
+    x = np.cos(np.arange(64) * 1.2)
+    with pytest.raises(ValueError):
+        measurements.tone_metrics(1e160 * x, 64.0)
+    with pytest.raises(ValueError):
+        measurements.tone_metrics(x, 64.0, width=2**62)

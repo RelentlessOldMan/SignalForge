@@ -40,6 +40,48 @@ def butterworth(order, cutoff, fs, high):
     return rows
 
 
+def pmul(p, q):
+    out = [0.0] * (len(p) + len(q) - 1)
+    for i, a in enumerate(p):
+        for j, b in enumerate(q):
+            out[i + j] += a * b
+    return out
+
+
+def padd(p, q):
+    n = max(len(p), len(q))
+    return [(p[i] if i < len(p) else 0.0) + (q[i] if i < len(q) else 0.0) for i in range(n)]
+
+
+def ppow(p, k):
+    out = [1.0]
+    for _ in range(k):
+        out = pmul(out, p)
+    return out
+
+
+def band_denominator(order, w2, bw, stop):
+    """Digital denominator (powers of z^-1, constant term 1) of the band design, from the analog
+    prototype prod (S^2 + 2 sin(pi(2i+1)/(2n)) S + 1) [x (S + 1)] with S = (s^2 + w2)/(bw s), or its
+    reciprocal for band-stop, cleared of fractions, then s = (1 - z^-1)/(1 + z^-1) cleared of
+    (1 + z^-1)^(2n). Ascending powers of s throughout."""
+    q = [w2, 0.0, 1.0]  # s^2 + w2
+    r = [0.0, bw]  # bw s
+    num, den = (r, q) if stop else (q, r)  # S = num/den
+    d = [1.0]
+    for i in range(order // 2):
+        a = 2 * math.sin(math.pi * (2 * i + 1) / (2 * order))
+        f = padd(padd(pmul(num, num), [a * v for v in pmul(num, den)]), pmul(den, den))
+        d = pmul(d, f)
+    if order % 2:
+        d = pmul(d, padd(num, den))
+    z = [0.0] * (2 * order + 1)
+    for k, c in enumerate(d):
+        term = pmul(ppow([1.0, -1.0], k), ppow([1.0, 1.0], 2 * order - k))
+        z = padd(z, [c * v for v in term])
+    return [v / z[0] for v in z]
+
+
 def band(order, low, high, fs, stop):
     lo, hi = math.tan(math.pi * low / fs), math.tan(math.pi * high / fs)
     w2, bw = lo * hi, hi - lo
@@ -58,6 +100,13 @@ def band(order, low, high, fs, stop):
         a0 = 1 - 2 * sigma + m
         b = [(1 + w2) / a0, 2 * (w2 - 1) / a0, (1 + w2) / a0] if stop else [bw / a0, 0.0, -bw / a0]
         rows.append(b + [1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
+    for row in rows:  # stable: both poles inside the unit circle
+        assert abs(row[5]) < 1 and abs(row[4]) < 1 + row[5], (order, low, high, row)
+    prod = [1.0]
+    for row in rows:
+        prod = pmul(prod, row[3:])
+    want = band_denominator(order, w2, bw, stop)
+    assert all(abs(a - b) <= 1e-9 * max(map(abs, want)) for a, b in zip(prod, want)), (order, low)
     freqs = [fs * k / 64 for k in range(1, 32)] + [low, high, fs / math.pi * math.atan(w2 ** 0.5)]
     for f, h in zip(freqs, response(rows, freqs, fs)):
         t = math.tan(math.pi * f / fs)
@@ -73,7 +122,8 @@ def band_design(case_id, order, low, high, fs, stop, rows=None, src=None):
             "args": {"order": order, "low": low, "high": high, "sample_rate": fs},
             "expected": rows if rows is not None else band(order, low, high, fs, stop),
             "tol": TOL, "source": src or SRC + "quadratic formula on each prototype pole's image, "
-            "checked against the closed-form |H|^2"}
+            "checked against the closed-form |H|^2, section stability, and the product of the "
+            "denominators against the analog prototype expanded by polynomial substitution"}
 
 
 def response(sos, freqs, fs):
@@ -226,6 +276,21 @@ cases = [
     band_design("butterworth.bandstop_2", 2, 0.2, 0.3, 1.0, True),
     band_design("butterworth.bandstop_3", 3, 50.0, 70.0, 1000.0, True),
     band_design("butterworth.bandstop_6", 6, 3000.0, 9000.0, 48000.0, True),
+    band_design("butterworth.bandstop_3_wide", 3, 0.02, 0.45, 1.0, True),
+    err("butterworth.band_low_negative", "butterworth_bandstop",
+        {"order": 2, "low": -1.0, "high": 2.0, "sample_rate": 8.0}, "0 < low required"),
+    err("butterworth.band_high_above_nyquist", "butterworth_bandpass",
+        {"order": 2, "low": 1.0, "high": 5.0, "sample_rate": 8.0}, "high < sample_rate/2 required"),
+    err("butterworth.band_low_inf", "butterworth_bandstop",
+        {"order": 2, "low": "-inf", "high": 2.0, "sample_rate": 8.0}, "the edges must be finite"),
+    err("butterworth.band_rate_zero", "butterworth_bandstop",
+        {"order": 2, "low": 1.0, "high": 2.0, "sample_rate": 0.0}, "sample_rate must be positive"),
+    err("butterworth.band_rate_negative", "butterworth_bandpass",
+        {"order": 2, "low": 1.0, "high": 2.0, "sample_rate": -8.0}, "sample_rate must be positive"),
+    err("butterworth.band_rate_nan", "butterworth_bandpass",
+        {"order": 2, "low": 1.0, "high": 2.0, "sample_rate": "nan"}, "sample_rate must be finite"),
+    err("butterworth.band_order_negative", "butterworth_bandstop",
+        {"order": -1, "low": 1.0, "high": 2.0, "sample_rate": 8.0}, "order >= 1 required"),
     err("butterworth.band_low_above_high", "butterworth_bandpass",
         {"order": 2, "low": 2.0, "high": 1.0, "sample_rate": 8.0}, "low < high required"),
     err("butterworth.band_low_equals_high", "butterworth_bandstop",
@@ -257,6 +322,27 @@ cases = [
     zp("zero_phase.bandpass_no_pad", bp3, ramp, pad=0),
     zp("zero_phase.highpass_complex", hp3, chirp, pad=4),
     zp("zero_phase.pad_one_short", lp4, ramp[:16], pad=15),
+    zp("zero_phase.bandstop_gains", bs2, ramp),
+    zp("zero_phase.one_sample", lp4, [2.5], pad=0, expected=[2.5],
+       src="analytic: one sample is a constant, and a low-pass with unit DC gain started in its "
+       "steady state gives it back"),
+    err("zero_phase.pole_at_one_second", "zero_phase_filter",
+        {"sos": [[1.0, 0.0, 0.0, 1.0, -0.5, 0.0], [1.0, 0.0, 0.0, 1.0, -1.0, 0.0]],
+         "samples": ramp, "pad": 0}, "the second section has a pole at z = 1"),
+    err("zero_phase.pole_at_one_after_a0", "zero_phase_filter",
+        {"sos": [[2.0, 0.0, 0.0, 2.0, -2.0, 0.0]], "samples": ramp, "pad": 0},
+        "divided by a0 = 2 the section has a pole at z = 1"),
+    err("zero_phase.a0_zero", "zero_phase_filter", {"sos": bad_a0, "samples": ramp, "pad": 0},
+        "every a0 must be nonzero"),
+    err("zero_phase.no_sections", "zero_phase_filter", {"sos": [], "samples": ramp, "pad": 0},
+        "at least one section required"),
+    err("zero_phase.short_row", "zero_phase_filter", {"sos": short_row, "samples": ramp, "pad": 0},
+        "rows of 6 required"),
+    err("zero_phase.coefficient_nan", "zero_phase_filter",
+        {"sos": [[1.0, "nan", 0.0, 1.0, 0.0, 0.0]], "samples": ramp, "pad": 0},
+        "coefficients must be finite"),
+    err("zero_phase.sample_nan", "zero_phase_filter",
+        {"sos": lp4, "samples": ramp[:5] + ["nan"] + ramp[6:]}, "samples must be finite"),
     err("zero_phase.pad_too_long", "zero_phase_filter",
         {"sos": lp4, "samples": ramp[:15], "pad": 15}, "samples must be longer than pad"),
     err("zero_phase.default_pad_too_long", "zero_phase_filter",

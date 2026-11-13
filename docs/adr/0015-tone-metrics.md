@@ -37,6 +37,12 @@ those choices, so they are fixed here.
 
 ## Consequences
 
+- Bins at or below `10⁻²⁰` of the total power are set to zero before grouping. FFT rounding
+  leaves bins near −320 dB that differ between implementations; without the floor a constant input
+  would find a "fundamental" in them, and SFDR would list them as spurs. A spectrum that is not
+  finite (huge samples) is an error rather than a NaN result.
+- For complex input a given fundamental of `+fs/2` is the bin at `−fs/2`; groups never wrap
+  around the ends of the spectrum.
 - Results depend on the window and width, which are parameters with stated defaults, so a number
   can always be reproduced.
 - A tone close to DC or Nyquist loses part of its group to clipping or to DC; the centroid is then

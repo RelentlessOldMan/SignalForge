@@ -4,8 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Review pass** over tone metrics, SFDR, band Butterworth and zero-phase filtering.
-2. **Chebyshev type I** IIR design (low-pass, high-pass), ripple in dB, closed-form magnitude
+1. **Chebyshev type I** IIR design (low-pass, high-pass), ripple in dB, closed-form magnitude
    vectors.
 
 ## Built
@@ -186,6 +185,15 @@ Updated with every chunk of work. Dates are absolute.
   the sections' steady state. 12 more `iir.json` cases (two by hand, a constant that must come back
   exactly, five from a direct form I implementation, five errors).
   Python 949 passed, 2 skipped (3.10 too); .NET 732 passed; conformance 523/523 in both.
+- 2026-11-13: review fixes for tone metrics, SFDR, band Butterworth and zero-phase filtering.
+  Tone metrics: bins at or below 1e-20 of the total power are zeroed (rounding error had picked
+  fundamentals and spurs that differed between languages); a non-finite spectrum is an error; the
+  C# half-width is clamped (it overflowed near `int.MaxValue`); a complex fundamental of +fs/2
+  means the -fs/2 bin. Zero-phase filtering rejects non-finite samples. The band generator now
+  checks stability and the denominator product against a polynomial expansion of the analog
+  prototype, independent of the pole algorithm. The C# runner rejects `2.0` for an integer
+  argument. 26 more vectors (tone 9, iir 17); C# band tests match Python's 40 cases.
+  Python 981 passed, 2 skipped (3.10 too); .NET 793 passed; conformance 549/549 in both.
 
 ## Not built
 

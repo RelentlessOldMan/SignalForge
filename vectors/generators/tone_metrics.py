@@ -4,7 +4,9 @@ It does not import NumPy or SignalForge, and it takes no spectrum: every input i
 bin centers, so each group's power is known in closed form (conventions: Tone metrics). A real
 tone `A cos(2 pi k n/N + phi)` off DC and Nyquist has power A^2/2, at Nyquist A^2 cos^2(phi), a
 complex tone `A e^(j...)` |A|^2, a DC offset d its |d|^2. With the rectangular window an on-bin
-tone sits in its own bin; with the periodic Hann window it fills bins k-1, k, k+1 in the ratio
+tone sits in its own bin; with any K-term cosine window it fills bins k-(K-1) … k+(K-1) and, by
+Parseval, those bins add up to the tone's power, so a group that holds them all is exact. With
+the periodic Hann window it fills bins k-1, k, k+1 in the ratio
 1/6 : 2/3 : 1/6 (the DFT of the window is N/2 at 0 and -N/4 at +-1). The dB figures follow from
 the powers by the formulas in the conventions.
 
@@ -105,7 +107,35 @@ named = real_tones(32, 0.0, [(3, 0.1, 0.0), (12, 0.5, 0.5), (6, 0.01, 0.0)])
 # harmonic (bin 16) keep 2/3 of their power and the outer thirds go to noise, with a tone at 25.
 narrow = real_tones(64, 0.0, [(8, 1.0, 0.0), (16, 0.1, 0.0), (25, 0.01, 0.0)])
 
+# Real, default window (Blackman-Harris, half-width 4), N = fs = 256: fundamental at 40, harmonics
+# at 80 and 120 (5 and 6 alias to 56 and 16, empty), noise tones at 30 and 108, DC 0.2; every tone's
+# seven bins lie inside its own group and no group overlaps another tone.
+bh = real_tones(256, 0.2, [(40, 1.0, 0.4), (80, 0.01, 1.0), (120, 0.001, -0.5), (30, 0.003, 0.0),
+                           (108, 0.002, 2.0)])
+
+# Complex, rectangular, N = fs = 64: a tone at -32 Hz (the -fs/2 bin) named as +32 Hz.
+edge = complex_tones(64, 0.0, [(-32, 0.5, 0.3), (10, 0.1, 0.0)])
+
 cases = [
+    case("tone_metrics.default_window", bh, 256.0,
+         figures(40.0, 0.5, (0.01**2 + 0.001**2) / 2, (0.003**2 + 0.002**2) / 2, 0.2**2),
+         "closed form: on-bin tones under the default Blackman-Harris window each fill 7 bins, "
+         "all inside their +-4 groups, which by Parseval hold exactly the tone's power"),
+    case("tone_metrics.complex_negative_fundamental", cx, 64.0,
+         figures(-24.0, 0.05**2, 0.0, 0.8**2 + 0.02**2 + 0.004**2 + 0.002**2, 0.1**2 + 0.05**2),
+         "closed form: the complex_hann_aliased input with the -24 Hz tone named; harmonics 2 "
+         "and 3 alias to 16 and -8 Hz, where no tone's bins are", window="hann",
+         fundamental=-24.0, num_harmonics=2),
+    case("tone_metrics.complex_fundamental_plus_nyquist", edge, 64.0,
+         figures(-32.0, 0.25, 0.0, 0.01, 0.0),
+         "closed form: for complex input +fs/2 aliases to the -fs/2 bin, where the 0.5 tone is",
+         window="rectangular", fundamental=32.0, num_harmonics=0),
+    case("tone_metrics.real_fundamental_nyquist", rect, 64.0,
+         figures(32.0, 0.003**2, 0.0,
+                 0.5 + (0.1**2 + 0.05**2 + 0.02**2 + 0.01**2) / 2, 0.25**2),
+         "closed form: the real_rectangular input with the Nyquist tone (power 0.003^2) named at "
+         "fs/2; its group 31-32 holds only that bin's power", window="rectangular",
+         fundamental=32.0, num_harmonics=0),
     case("tone_metrics.real_rectangular", rect, 64.0,
          figures(5.0, 0.5, 0.1**2 / 2 + 0.05**2 / 2, rect_noise, 0.25**2),
          "closed form: on-bin tones, rectangular window; S = 1/2, H = (0.1^2 + 0.05^2)/2, "
@@ -138,8 +168,18 @@ cases = [
          "with half-width 0 the neighbours are noise", window="hann", width=0, num_harmonics=1),
     err("tone_metrics.one_sample", {"samples": [1.0], "sample_rate": 1.0},
         "at least two samples required"),
-    err("tone_metrics.sample_nan", {"samples": [1.0, "nan", 0.0, 1.0], "sample_rate": 4.0},
-        "samples must be finite"),
+    err("tone_metrics.sample_nan", {"samples": rect[:3] + ["nan"] + rect[4:], "sample_rate": 64.0,
+                                    "window": "rectangular"}, "samples must be finite"),
+    err("tone_metrics.spectrum_overflow", {"samples": [1e160 * v for v in rect],
+                                           "sample_rate": 64.0, "window": "rectangular"},
+        "finite samples whose power overflows: the spectrum must be finite"),
+    err("tone_metrics.dc_only", {"samples": [1.0] * 64, "sample_rate": 64.0},
+        "a constant has power only at DC; every other bin is rounding error, set to zero"),
+    err("tone_metrics.width_covers_spectrum", {"samples": rect, "sample_rate": 64.0, "width": 40},
+        "the DC group takes all 33 bins, none is left for the fundamental"),
+    err("tone_metrics.complex_fundamental_above_nyquist",
+        {"samples": cplx(cx), "sample_rate": 64.0, "fundamental": 32.5},
+        "|fundamental| <= sample_rate/2 required"),
     err("tone_metrics.rate_zero", {"samples": rect, "sample_rate": 0.0},
         "sample_rate must be positive"),
     err("tone_metrics.harmonics_negative", {"samples": rect, "sample_rate": 64.0,
@@ -173,6 +213,11 @@ cases = [
     spurs("sfdr.no_bins_left", real_tones(8, 0.0, [(3, 1.0, 0.0)]), 8.0, (3.0, 0.5), [],
           "by hand: 5 one-sided bins; with half-width 1 DC takes bins 0-1 and the 3 Hz carrier "
           "2-4, so no bin is left for a spur", window="rectangular", width=1, num_spurs=2),
+    spurs("sfdr.default_window", bh, 256.0, (40.0, 0.5),
+          [(80.0, 0.01**2 / 2), (30.0, 0.003**2 / 2), (108.0, 0.002**2 / 2),
+           (120.0, 0.001**2 / 2)],
+          "closed form: the tone_metrics default_window input; spurs strongest first, each a "
+          "whole 7-bin Blackman-Harris group, symmetric so its centroid is its bin", num_spurs=4),
     err("sfdr.no_spurs_asked", {"samples": rect, "sample_rate": 64.0, "num_spurs": 0},
         "num_spurs >= 1 required", op="sfdr"),
     err("sfdr.fundamental_in_dc", {"samples": rect, "sample_rate": 64.0, "window": "rectangular",

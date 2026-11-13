@@ -247,6 +247,9 @@ public static class Measurements
     /// </summary>
     private sealed class ToneGroups
     {
+        /// <summary>Bins at or below this fraction of the total power are rounding error: zero.</summary>
+        private const double Floor = 1e-20;
+
         private readonly int _w;
 
         public ToneGroups(SpectralDensity d, WindowType window, double? beta, int? width, double? fundamental)
@@ -254,11 +257,22 @@ public static class Measurements
             double fs = d.SampleRate;
             if (fundamental is { } given && !(Math.Abs(given) <= fs / 2 && (given >= 0 || !d.OneSided)))
                 throw new ArgumentException("fundamental must satisfy |f| <= sample_rate/2 (and f >= 0 for real input)", nameof(fundamental));
+            if (fundamental is { } f && !d.OneSided)
+                fundamental = FlooredMod(f + fs / 2, fs) - fs / 2; // +fs/2 is the bin at −fs/2
             D = d;
-            _w = width ?? HalfWidth(window, beta);
             P = new double[d.Psd.Length];
+            _w = Math.Min(width ?? HalfWidth(window, beta), P.Length); // wider changes nothing
+            double total = 0;
             for (int k = 0; k < P.Length; k++)
+            {
                 P[k] = d.Psd[k] * d.BinWidth;
+                total += P[k];
+            }
+            if (!double.IsFinite(total))
+                throw new ArgumentException("samples must be finite and small enough for a finite spectrum", nameof(d));
+            for (int k = 0; k < P.Length; k++)
+                if (P[k] <= Floor * total)
+                    P[k] = 0; // rounding error
             Claimed = new bool[P.Length];
             Dc = Group(Nearest(0.0));
             int c;

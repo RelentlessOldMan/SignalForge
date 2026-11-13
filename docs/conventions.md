@@ -189,17 +189,23 @@ C#: `Measurements.ToneMetrics`.
   **(implemented)**
 - **Spectrum:** `welch_psd(samples, sample_rate, window=window, beta=beta)` with the defaults for
   the rest, so one segment of the whole input: one-sided for real input, two-sided shifted for
-  complex. Bin `k` holds power `P_k = PSD_k·bin_width`; its frequency is `f_k`. **(implemented)**
+  complex. Bin `k` holds power `P_k = PSD_k·bin_width`; its frequency is `f_k`. Every `P_k` must
+  be finite (`invalid_argument`: a non-finite sample, or samples so large the spectrum overflows),
+  and a bin with `P_k ≤ 10⁻²⁰·Σ P_k` is set to exactly 0: that is FFT rounding error (about
+  −320 dB for a clean tone), which would otherwise pick fundamentals and spurs from noise that
+  differs between implementations. **(implemented)**
 - **Half-width `w`:** `width` if given, else `K` for a `K`-term cosine-sum window (rectangular 1,
   hann and hamming 2, blackman 3, blackman_harris 4, flattop 5) and `⌈√(1 + (β/π)²)⌉` for kaiser.
   **(implemented)**
 - **Groups**, formed in this order; a group around bin `c` is the bins `max(c−w, 0) …
-  min(c+w, M−1)` (`M` bins in all, no wrap) that no earlier group took:
+  min(c+w, M−1)` (`M` bins in all, no wrap, also for a two-sided spectrum: a complex tone near
+  `±fs/2` loses the part of its group beyond the end) that no earlier group took:
   1. **DC:** around the bin nearest 0 Hz.
   2. **Fundamental:** around the unclaimed bin with the largest `P_k` (the first, on a tie), or, if
      `fundamental` is given, the bin nearest it, which must not be in the DC group
      (`invalid_argument`). A given `fundamental` must be finite with `|f| ≤ fs/2`, and `≥ 0` for
-     real input. Its frequency `f1 = Σ P_k·f_k / Σ P_k` over the group.
+     real input; for complex input it is first aliased as `((f + fs/2) mod fs) − fs/2`, so `+fs/2`
+     means the bin at `−fs/2`. Its frequency `f1 = Σ P_k·f_k / Σ P_k` over the group.
   3. **Harmonics** `h = 2 … num_harmonics + 1`, in order, each around the bin nearest `h·f1`
      aliased into the spectrum: real input `g = (h·f1) mod fs`, then `fs − g` if `g > fs/2`;
      complex input `((h·f1 + fs/2) mod fs) − fs/2`. `mod` is floored (the result has the sign of
@@ -358,8 +364,9 @@ and `SignalForge.IirFilter`.
     (band-stop) for one pole `s` of the band filter and its conjugate, `σ = Re s`, `m = |s|²`;
     through the bilinear transform, with `a0 = 1 − 2σ + m`,
     `a = [1, 2(m − 1)/a0, (1 + 2σ + m)/a0]` and `b = B·[1, 0, −1]/a0` (band-pass) or
-    `b = [1 + W², 2(W² − 1), 1 + W²]/a0` (band-stop). The cascade's gain is then exactly that of
-    the formula above; a single section's gain is whatever its own formula gives.
+    `b = [1 + W², 2(W² − 1), 1 + W²]/a0` (band-stop). The cascade's gain is then that of
+    the formula above, to rounding (see ADR 0016 for poles very near `z = 1`); a single
+    section's gain is whatever its own formula gives.
   - for an odd `order`, first the section from the real prototype pole `−1`: `σ = −B/2`, `m = W²`
     (the quadratic `s² + B·s + W²`, whether its roots are complex or real);
   - then, for `k = ⌊order/2⌋ − 1` down to 0, two sections from the prototype pole `p_k`: its two
@@ -388,7 +395,9 @@ and `SignalForge.IirFilter`.
   3. reverse, run again the same way, reverse back, and keep the middle `N` samples.
   The result has as many samples as the input and its kind (real or complex); in steady state it
   is the input with every frequency scaled by `|H(f)|²` and no delay. Every section needs
-  `1 + a1 + a2 ≠ 0` (no pole at `z = 1`); `pad` is an integer `≥ 0`.
+  `1 + a1 + a2 ≠ 0` (no pole at `z = 1`, after dividing by `a0`); `pad` is an integer `≥ 0`;
+  samples must be finite (one non-finite sample would spoil every output). Near `1 + a1 + a2 = 0`
+  the steady state `g` is huge; that is what the coefficients say, and it is not guarded.
 
 ## Resampling
 

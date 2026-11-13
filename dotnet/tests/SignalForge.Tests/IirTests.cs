@@ -152,21 +152,25 @@ public class IirTests
         Assert.ThrowsAny<ArgumentException>(() => Dsp.SosResponse([[1, 0, 0, 1, 0, 0]], [0.0], 0));
     }
 
+    public static TheoryData<bool, int, double, double> Bands()
+    {
+        var data = new TheoryData<bool, int, double, double>();
+        foreach (bool stop in new[] { false, true })
+            foreach (int order in new[] { 1, 2, 3, 6, 9 })
+                foreach (var (low, high) in new[] { (0.001, 0.002), (0.1, 0.11), (0.05, 0.45), (0.3, 0.4999) })
+                    data.Add(stop, order, low, high);
+        return data;
+    }
+
     [Theory]
-    [InlineData(false, 1, 0.001, 0.002)]
-    [InlineData(false, 3, 0.1, 0.11)]
-    [InlineData(false, 6, 0.05, 0.45)]
-    [InlineData(false, 9, 0.3, 0.4999)]
-    [InlineData(true, 1, 0.3, 0.4999)]
-    [InlineData(true, 2, 0.001, 0.002)]
-    [InlineData(true, 6, 0.1, 0.11)]
-    [InlineData(true, 9, 0.05, 0.45)]
+    [MemberData(nameof(Bands))]
     public void ButterworthBandMagnitudeHasTheClosedForm(bool stop, int order, double low, double high)
     {
         double[][] sos = stop ? Dsp.ButterworthBandstop(order, low * 1000, high * 1000, 1000)
             : Dsp.ButterworthBandpass(order, low * 1000, high * 1000, 1000);
         Assert.Equal(order, sos.Length);
         Assert.All(sos, r => Assert.Equal(1.0, r[3]));
+        Assert.All(sos, r => Assert.True(Math.Abs(r[5]) < 1 && Math.Abs(r[4]) < 1 + r[5], "a pole outside the unit circle"));
         double lo = Math.Tan(Math.PI * low), hi = Math.Tan(Math.PI * high);
         double[] f = [.. Enumerable.Range(0, 301).Select(i => (-0.4999 + 0.9998 * i / 300) * 1000)];
         Complex[] h = Dsp.SosResponse(sos, f, 1000);
@@ -180,6 +184,20 @@ public class IirTests
         }
         foreach (Complex e in Dsp.SosResponse(sos, [low * 1000, high * 1000], 1000))
             Assert.Equal(0.5, e.Magnitude * e.Magnitude, 1e-9);
+    }
+
+    [Fact]
+    public void ButterworthBandpassPassesItsCenterAndBandstopNullsIt()
+    {
+        double f0 = 8000 / Math.PI * Math.Atan(Math.Sqrt(Math.Tan(Math.PI / 8) * Math.Tan(Math.PI / 4)));
+        double[][] bp = Dsp.ButterworthBandpass(4, 1000, 2000, 8000), bs = Dsp.ButterworthBandstop(4, 1000, 2000, 8000);
+        Assert.Equal(1.0, Dsp.SosResponse(bp, [f0], 8000)[0].Magnitude, 1e-12);
+        Assert.True(Dsp.SosResponse(bs, [f0], 8000)[0].Magnitude < 1e-12);
+        Assert.All(Dsp.SosResponse(bs, [0, 4000], 8000), h => Assert.Equal(1.0, h.Magnitude, 1e-12));
+        double[] x = [.. Enumerable.Range(0, 4000).Select(n => Math.Cos(2 * Math.PI * f0 * n / 8000))];
+        double[] y = new IirFilter(bp).Process(x);
+        for (int n = 3000; n < 4000; n++)
+            Assert.True(Math.Abs(y[n] - x[n]) < 1e-9, $"n = {n}"); // unit gain, zero phase at the center
     }
 
     [Fact]
@@ -231,5 +249,8 @@ public class IirTests
         Assert.Throws<ArgumentOutOfRangeException>(() => Dsp.ZeroPhaseFilter(flat, ones, -1));
         Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter(flat, [.. Enumerable.Repeat(1.0, 9)]));
         Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter(flat, ReadOnlySpan<double>.Empty, 0));
+        Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter(flat, [1.0, double.NaN, 1, 1], 0));
+        Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter(flat, [Complex.One, new Complex(1, double.PositiveInfinity), Complex.One], 0));
+        Assert.Throws<ArgumentException>(() => Dsp.ZeroPhaseFilter([[2, 0, 0, 2, -2, 0]], ones, 0));
     }
 }

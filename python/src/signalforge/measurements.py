@@ -177,6 +177,9 @@ def sfdr(
     )
 
 
+_FLOOR = 1e-20  # bins at or below this fraction of the total power are rounding error: zero
+
+
 class _Groups:
     """One windowed spectrum's bins, claimed group by group: DC, then the fundamental
     (conventions: Tone metrics). Later groups are claimed by the caller."""
@@ -194,15 +197,22 @@ class _Groups:
             raise ValueError("tone metrics need at least two samples")
         w_given = None if width is None else count(width, "width")
         given = None if fundamental is None else real(fundamental, "fundamental")
-        d = spectral.welch_psd(samples, sample_rate, window=window, beta=beta)
+        with np.errstate(over="ignore"):  # an overflowing spectrum is rejected below
+            d = spectral.welch_psd(samples, sample_rate, window=window, beta=beta)
         fs = d.sample_rate
         if given is not None and not (abs(given) <= fs / 2 and (given >= 0 or not d.one_sided)):
             raise ValueError(
                 "fundamental must satisfy |f| <= sample_rate/2 (and f >= 0 for real input)"
             )
+        if given is not None and not d.one_sided:
+            given = (given + fs / 2) % fs - fs / 2  # +fs/2 is the bin at -fs/2
         self.d = d
         self.w = _half_width(window, beta) if w_given is None else w_given
-        self.p: NDArray[np.float64] = d.psd * d.bin_width
+        p = d.psd * d.bin_width
+        total = float(np.sum(p))
+        if not math.isfinite(total):
+            raise ValueError("samples must be finite and small enough for a finite spectrum")
+        self.p: NDArray[np.float64] = np.where(p <= _FLOOR * total, 0.0, p)
         self.f = d.frequencies
         self.claimed = np.zeros(self.p.size, dtype=bool)
         self.dc = self.group(self.nearest(0.0))
