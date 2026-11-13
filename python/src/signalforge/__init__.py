@@ -24,7 +24,7 @@ from .dsp import (
 )
 from .files import decode_samples, encode_samples, read_sigmf, write_sigmf
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
-from .measurements import PowerStats, power_stats
+from .measurements import PowerStats, ToneMetrics, power_stats, tone_metrics
 from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
 from .modulation import qpsk_demap_hard, qpsk_map
 from .spectral import (
@@ -55,7 +55,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.24"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.25"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
@@ -69,6 +69,7 @@ __all__ = [
     "Signal",
     "SpectralDensity",
     "Spectrogram",
+    "ToneMetrics",
     "WindowStats",
     "amp_to_db",
     "awgn",
@@ -119,6 +120,7 @@ __all__ = [
     "spectrogram",
     "timing_offset",
     "tone",
+    "tone_metrics",
     "upsample",
     "vrms_to_dbm",
     "w_to_dbm",

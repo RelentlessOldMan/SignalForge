@@ -178,6 +178,44 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
 - Windowed spectra state the window and the correction (coherent gain for tone amplitude, ENBW for
   noise and power) in the result. **(defined)**
 
+## Tone metrics
+
+Decided in [ADR 0015](adr/0015-tone-metrics.md). Python: `signalforge.measurements.tone_metrics`;
+C#: `Measurements.ToneMetrics`.
+
+- **Call:** `tone_metrics(samples, sample_rate, window="blackman_harris", beta=None, width=None,
+  num_harmonics=5, fundamental=None)`. Real or complex samples, at least two, finite;
+  `sample_rate > 0`; `width` and `num_harmonics` non-negative integers; `beta` as for `window`.
+  **(implemented)**
+- **Spectrum:** `welch_psd(samples, sample_rate, window=window, beta=beta)` with the defaults for
+  the rest, so one segment of the whole input: one-sided for real input, two-sided shifted for
+  complex. Bin `k` holds power `P_k = PSD_k·bin_width`; its frequency is `f_k`. **(implemented)**
+- **Half-width `w`:** `width` if given, else `K` for a `K`-term cosine-sum window (rectangular 1,
+  hann and hamming 2, blackman 3, blackman_harris 4, flattop 5) and `⌈√(1 + (β/π)²)⌉` for kaiser.
+  **(implemented)**
+- **Groups**, formed in this order; a group around bin `c` is the bins `max(c−w, 0) …
+  min(c+w, M−1)` (`M` bins in all, no wrap) that no earlier group took:
+  1. **DC:** around the bin nearest 0 Hz.
+  2. **Fundamental:** around the unclaimed bin with the largest `P_k` (the first, on a tie), or, if
+     `fundamental` is given, the bin nearest it, which must not be in the DC group
+     (`invalid_argument`). A given `fundamental` must be finite with `|f| ≤ fs/2`, and `≥ 0` for
+     real input. Its frequency `f1 = Σ P_k·f_k / Σ P_k` over the group.
+  3. **Harmonics** `h = 2 … num_harmonics + 1`, in order, each around the bin nearest `h·f1`
+     aliased into the spectrum: real input `g = (h·f1) mod fs`, then `fs − g` if `g > fs/2`;
+     complex input `((h·f1 + fs/2) mod fs) − fs/2`. `mod` is floored (the result has the sign of
+     `fs`).
+  4. **Noise:** every bin left.
+  - The bin nearest a frequency `f` is `⌊(f − f_0)/bin_width + 0.5⌋`, clipped to `0 … M−1`.
+  **(implemented)**
+- **Result** (`ToneMetrics`): `fundamental_frequency` (`f1`, Hz), `signal_power` `S` (fundamental
+  group), `harmonic_power` `H` (all harmonic groups), `noise_power` `N`, `dc_power` (DC group), all
+  in sample units², and
+  `snr_db = 10·log10(S/N)`, `sinad_db = 10·log10(S/(N + H))`, `thd_db = 10·log10(H/S)`,
+  `enob = (sinad_db − 10·log10 1.5) / (20·log10 2)`.
+  `S = 0` is `invalid_argument`; `N = 0` gives `snr_db = +∞`, `H = 0` gives `thd_db = −∞`, and
+  `N + H = 0` gives `sinad_db` and `enob` `+∞`. Noise is not scaled for the bins the groups took.
+  The four group powers add up to the PSD's total power. **(implemented)**
+
 ## Bits and symbols
 
 - Bits are integers 0 or 1 (`uint8` / `byte`). **(implemented)**

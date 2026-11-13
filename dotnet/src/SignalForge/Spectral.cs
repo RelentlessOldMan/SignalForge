@@ -113,6 +113,9 @@ public static class Spectral
         [WindowType.Flattop] = [0.21557895, 0.41663158, 0.277263158, 0.083578947, 0.006947368],
     };
 
+    /// <summary>Number of terms of a cosine-sum window; 0 for Kaiser.</summary>
+    internal static int CosineTerms(WindowType type) => CosineSums.TryGetValue(type, out var a) ? a.Length : 0;
+
     /// <summary>Forward DFT, unnormalized: X[k] = Σ x[n]·e^{−j2πkn/N}. Any length N ≥ 1.</summary>
     public static Complex[] Fft(ReadOnlySpan<Complex> samples)
     {

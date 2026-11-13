@@ -218,6 +218,7 @@ public static class Conformance
             "power_stats" => a.Get("samples") is Complex[] cs
                 ? () => Measurements.PowerStats(cs)
                 : Bind(Reals(a.Get("samples")), x => Measurements.PowerStats(x)),
+            "tone_metrics" => ToneMetricsOp(a),
             "qpsk_map" => Bind(Bits(a.Get("bits")), b => Modulation.QpskMap(b)),
             "qpsk_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.QpskDemapHard(s)),
             "bit_errors" => Bind((Bits(a.Get("reference")), Bits(a.Get("received"))), t => Metrics.BitErrors(t.Item1, t.Item2)),
@@ -363,6 +364,19 @@ public static class Conformance
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
         return () => Spectral.WelchPsd(x, fs, nperseg, noverlap, window, oneSided, beta);
+    }
+
+    private static Func<object?> ToneMetricsOp(Args a)
+    {
+        object? samples = a.Get("samples");
+        double fs = a.D("sample_rate");
+        var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.BlackmanHarris;
+        var (beta, width, fundamental) = (a.OptD("beta"), a.OptInt("width"), a.OptD("fundamental"));
+        int harmonics = a.Has("num_harmonics") ? a.I("num_harmonics") : 5;
+        if (samples is Complex[] cs)
+            return () => Measurements.ToneMetrics(cs, fs, window, beta, width, harmonics, fundamental);
+        double[] x = Reals(samples);
+        return () => Measurements.ToneMetrics(x, fs, window, beta, width, harmonics, fundamental);
     }
 
     private static Func<object?> SpectrogramOp(Args a)

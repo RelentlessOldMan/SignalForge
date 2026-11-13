@@ -4,8 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Measurements**: SNR, SINAD and THD of a tone from a spectrum, with conventions for which bins
-   count as the tone, its harmonics and noise.
+1. **SFDR and spurs**: the largest spur relative to the carrier (dBc), found from the same bin
+   groups as the tone metrics, and a spur list.
+2. **Band-pass Butterworth** IIR design (low-pass prototype, transformed), with closed-form
+   magnitude vectors.
 
 ## Built
 
@@ -147,13 +149,6 @@ Updated with every chunk of work. Dates are absolute.
   passed; conformance 415/415 in both.
 - 2026-11-13: `build.ps1` runs every vector generator's `--check`, as CI already did, so a stale
   vector file fails locally before a push.
-- 2026-11-13: review of the signal files, spectrogram and IIR slices (no wrong numbers found):
-  the two languages now apply one set of JSON limits to SigMF meta (int64 integers, finite floats,
-  valid Unicode, 64 levels, `null` captures or metadata rejected), and Python checks everything
-  before writing either file, as C# did. Python `write_sigmf` accepts NumPy scalars in the signal,
-  `decode_samples` counts a memoryview's bytes, and a huge JSON integer or a bool sample rate is a
-  `ValueError`. 24 new vectors, 23 of them errors (files, IIR, spectrogram); the C# runner reads an empty `sos`.
-  Python 809 passed, 2 skipped (3.10 too); .NET 655 passed; conformance 468/468 in both.
 - 2026-11-13: more waveforms in both languages: `multitone` (chosen phases, or `newman_phases`),
   linear `chirp` (reaches `stop` at N/fs) and `pulse_train` (whole samples, floored modulo, any
   delay). `tone` now rejects non-finite frequency, amplitude and phase in both. 29 vectors from
@@ -161,6 +156,20 @@ Updated with every chunk of work. Dates are absolute.
   Unit tests: Newman phases cut a 32-tone crest factor below 0.4 of √32, chirp instantaneous
   frequency is linear and two chirps join without a jump. Python 779 passed, 2 skipped (3.10
   too); .NET 627 passed; conformance 444/444 in both.
+- 2026-11-13: review of the signal files, spectrogram and IIR slices (no wrong numbers found):
+  the two languages now apply one set of JSON limits to SigMF meta (int64 integers, finite floats,
+  valid Unicode, 64 levels, `null` captures or metadata rejected), and Python checks everything
+  before writing either file, as C# did. Python `write_sigmf` accepts NumPy scalars in the signal,
+  `decode_samples` counts a memoryview's bytes, and a huge JSON integer or a bool sample rate is a
+  `ValueError`. 24 new vectors, 23 of them errors (files, IIR, spectrogram); the C# runner reads an empty `sos`.
+  Python 809 passed, 2 skipped (3.10 too); .NET 655 passed; conformance 468/468 in both.
+- 2026-11-13: tone metrics in both languages (ADR 0015): `tone_metrics` / `Measurements.ToneMetrics`
+  gives SNR, SINAD, THD and ENOB of the strongest (or a named) tone from one windowed spectrum of
+  the whole input. Bins are grouped DC, fundamental, aliased harmonics, noise, each bin once, with
+  a half-width set by the window; the fundamental's frequency is its group's power centroid.
+  18 vectors (`generators/tone_metrics.py`) built from on-bin tones whose group powers are known
+  in closed form, including aliased harmonics of a complex tone and the Hann 1/6 : 2/3 : 1/6 split.
+  Python 839 passed, 2 skipped (3.10 too); .NET 681 passed; conformance 486/486 in both.
 
 ## Not built
 

@@ -52,6 +52,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "chirp": waveforms.chirp,
     "pulse_train": waveforms.pulse_train,
     "power_stats": measurements.power_stats,
+    "tone_metrics": measurements.tone_metrics,
     "qpsk_map": modulation.qpsk_map,
     "qpsk_demap_hard": modulation.qpsk_demap_hard,
     "bit_errors": metrics.bit_errors,
