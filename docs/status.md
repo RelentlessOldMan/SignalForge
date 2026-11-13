@@ -408,8 +408,9 @@ Updated with every chunk of work. Dates are absolute.
 - 2026-11-13: 8-PSK and 16-QAM (conventions: Bits and symbols; ADR 0035): `psk8_map`,
   `psk8_demap_hard` (point `p` at `e^{jπp/4}`, label `p ⊕ (p >> 1)`), `qam16_map`,
   `qam16_demap_hard` (two Gray 4-PAM axes, first bit 0 positive, over `√10`, thresholds 0 and
-  `2/√10`). 10 vectors by hand in `modulation.json`. Tests: round trips, unit energy, every
-  nearest-neighbor pair differs in one bit, noise under the decision margin changes nothing.
+  `2/√10`). 12 vectors by hand in `modulation.json`. Tests: round trips, unit energy, every
+  nearest-neighbor pair differs in one bit, noise under the decision margin changes nothing. Review: a NaN symbol
+  is `invalid_argument` in both demappers (Python cast it to an arbitrary integer sector).
 
 ## Not built
 

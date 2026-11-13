@@ -296,12 +296,14 @@ groups as the tone metrics (ADR 0015).
   in one bit, around the circle too: `000 → 1`, `001 → e^{jπ/4}`, `011 → j`, `010 → e^{j3π/4}`,
   `110 → −1`, `111 → e^{j5π/4}`, `101 → −j`, `100 → e^{j7π/4}`. Hard decision takes
   `p = ⌊atan2(Q, I)/(π/4) + 1/2⌋ mod 8`; 0 decides `000`. A symbol on a boundary between two
-  sectors may decide either way within the rounding of `atan2`. **(implemented)**
+  sectors may decide either way within the rounding of `atan2`. A NaN in either part is
+  `invalid_argument`. **(implemented)**
 - **16-QAM (Gray)**: four bits `(b0, b1, b2, b3)`, `I` from `(b0, b1)` and `Q` from `(b2, b3)`,
   each `(1 − 2·first)·(3 − 2·second)`: `00 → 3`, `01 → 1`, `11 → −1`, `10 → −3`, divided by `√10`
   for unit average symbol energy. As for QPSK, a first bit of 0 is the positive side. Hard
   decision per component `v`: first bit `v < 0`, second bit `|v| < 2/√10` (that quotient
-  evaluated in double precision); so 0 decides `01` and `±2/√10` decide the outer level.
+  evaluated in double precision); so 0 decides `01` and `±2/√10` decide the outer level. A NaN
+  in either part is `invalid_argument`.
   **(implemented)**
 - Other constellations are normalized to unit average symbol energy unless a standard says otherwise.
   **(defined)**

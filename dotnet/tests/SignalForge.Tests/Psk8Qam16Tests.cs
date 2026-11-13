@@ -75,5 +75,7 @@ public class Psk8Qam16Tests
         Assert.ThrowsAny<ArgumentException>(() => Modulation.Psk8Map([0, 1, 2]));
         Assert.ThrowsAny<ArgumentException>(() => Modulation.Qam16Map([0, 1, 1]));
         Assert.ThrowsAny<ArgumentException>(() => Modulation.Qam16Map([0, 1, 1, 3]));
+        Assert.ThrowsAny<ArgumentException>(() => Modulation.Psk8DemapHard([1, new Complex(0, double.NaN)]));
+        Assert.ThrowsAny<ArgumentException>(() => Modulation.Qam16DemapHard([new Complex(double.NaN, 0)]));
     }
 }

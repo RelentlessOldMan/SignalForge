@@ -51,6 +51,13 @@ public static class Modulation
         return m;
     }
 
+    private static void NotNaN(ReadOnlySpan<Complex> symbols)
+    {
+        foreach (Complex s in symbols)
+            if (double.IsNaN(s.Real) || double.IsNaN(s.Imaginary))
+                throw new ArgumentException("symbols must not be NaN", nameof(symbols));
+    }
+
     private static void CheckLength(ReadOnlySpan<byte> bits, int k, string name)
     {
         if (bits.Length % k != 0)
@@ -74,9 +81,10 @@ public static class Modulation
     }
 
     /// <summary>Hard-decision 8-PSK: the nearest point's label; 0 decides 000.</summary>
-    /// <param name="symbols">Received symbols.</param>
+    /// <param name="symbols">Received symbols, not NaN.</param>
     public static byte[] Psk8DemapHard(ReadOnlySpan<Complex> symbols)
     {
+        NotNaN(symbols);
         var bits = new byte[3 * symbols.Length];
         for (int s = 0; s < symbols.Length; s++)
         {
@@ -107,9 +115,10 @@ public static class Modulation
     }
 
     /// <summary>Hard-decision 16-QAM: per component v, first bit v &lt; 0, second |v| &lt; 2/√10.</summary>
-    /// <param name="symbols">Received symbols.</param>
+    /// <param name="symbols">Received symbols, not NaN.</param>
     public static byte[] Qam16DemapHard(ReadOnlySpan<Complex> symbols)
     {
+        NotNaN(symbols);
         var bits = new byte[4 * symbols.Length];
         for (int s = 0; s < symbols.Length; s++)
         {

@@ -71,6 +71,8 @@ def psk8_demap_hard(symbols: ArrayLike) -> NDArray[np.uint8]:
     s = np.asarray(symbols, dtype=np.complex128)
     if s.ndim != 1:
         raise ValueError("symbols must be one-dimensional")
+    if np.isnan(s).any():
+        raise ValueError("symbols must not be NaN")
     p = np.mod(np.floor(np.arctan2(s.imag, s.real) / (np.pi / 4) + 0.5), 8).astype(np.int64)
     return _bits_of(p ^ (p >> 1), 3)
 
@@ -90,6 +92,8 @@ def qam16_demap_hard(symbols: ArrayLike) -> NDArray[np.uint8]:
     s = np.asarray(symbols, dtype=np.complex128)
     if s.ndim != 1:
         raise ValueError("symbols must be one-dimensional")
+    if np.isnan(s).any():
+        raise ValueError("symbols must not be NaN")
     out = np.empty(4 * s.size, dtype=np.uint8)
     out[0::4] = s.real < 0
     out[1::4] = np.abs(s.real) < _QAM16_THRESHOLD

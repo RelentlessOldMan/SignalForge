@@ -73,6 +73,8 @@ def test_qam16_ties() -> None:
         lambda: sf.qam16_map([0, 1, 1, 0.5]),
         lambda: sf.psk8_demap_hard([[1]]),
         lambda: sf.qam16_demap_hard([[1]]),
+        lambda: sf.psk8_demap_hard([1, complex(0, float("nan"))]),
+        lambda: sf.qam16_demap_hard([complex(float("nan"), 0)]),
     ],
 )
 def test_bad_arguments_raise(call: object) -> None:
