@@ -28,11 +28,23 @@ from .conformance import DEFAULT_TOL, compare, decode, find_vectors_dir, iter_ca
 NOISELESS_TOL = {"abs": 1e-9, "rel": 1e-9}
 
 
+def _fields(a: Any, b: Any, path: str = "") -> list[str]:
+    """Record fields present on one side only, at any depth (``compare`` checks only one side's)."""
+    if not (isinstance(a, dict) and isinstance(b, dict)) or {"re", "im"} == set(a) == set(b):
+        return []
+    out = [f"{path}{k}: only in the first" for k in sorted(a.keys() - b.keys())]
+    out += [f"{path}{k}: only in the second" for k in sorted(b.keys() - a.keys())]
+    for k in sorted(a.keys() & b.keys()):
+        out += _fields(a[k], b[k], f"{path}{k}.")
+    return out
+
+
 def compare_reports(a: dict[str, Any], b: dict[str, Any], vectors_dir: Path) -> list[str]:
     """Differences between two conformance reports.
 
-    Every case must be in both, pass or fail in both, and give actuals that agree within the
-    case's own tolerance. Cases the reports have but the vectors do not are listed too.
+    Every case must be in both, pass or fail in both, and give actuals with the same fields that
+    agree within the case's own tolerance. Cases the reports have but the vectors do not are listed
+    too.
     """
     na, nb = a.get("implementation", "a"), b.get("implementation", "b")
     tols = {(f, c["id"]): {**DEFAULT_TOL, **c.get("tol", {})} for f, c in iter_cases(vectors_dir)}
@@ -54,7 +66,8 @@ def compare_reports(a: dict[str, Any], b: dict[str, Any], vectors_dir: Path) -> 
             if (x.get("actual") is None) != (y.get("actual") is None):
                 out.append(f"{f} {i}: a result in only one of {na} and {nb}")
             continue
-        msgs = compare(decode(x["actual"]), decode(y["actual"]), tols[key])
+        msgs = _fields(x["actual"], y["actual"])
+        msgs = msgs or compare(decode(x["actual"]), decode(y["actual"]), tols[key])
         out += [f"{f} {i}: {na} vs {nb}: {m}" for m in msgs]
     return sorted(out)
 
@@ -65,13 +78,18 @@ def compare_link_reports(a: dict[str, Any], b: dict[str, Any], z_max: float = 4.
     Without noise both runs are deterministic and every field must agree within
     ``NOISELESS_TOL``. With noise the random streams differ, so the counts must match, the frame
     must start at the same symbol, and the bit error rate and the mean squared EVM must agree
-    within ``z_max`` standard deviations (two-sample tests; docs/testing.md).
+    within ``z_max`` standard deviations (two-sample tests; docs/testing.md). The theoretical BER
+    depends only on the config and must agree as closely as a noiseless field.
     """
+    out = _fields(a, b)
+    if out:
+        return out
     out = compare(decode(a["config"]), decode(b["config"]), NOISELESS_TOL)
     if out:
         return ["config: " + m for m in out]
     if a["config"]["eb_n0_db"] is None:
         return compare(decode(a), decode(b), NOISELESS_TOL)
+    out = compare(decode(a["ber_theory"]), decode(b["ber_theory"]), NOISELESS_TOL, "ber_theory")
     ea, eb = a["bit_errors"], b["bit_errors"]
     for k, x, y in [
         ("frame_start", a["frame_start"], b["frame_start"]),
@@ -86,7 +104,7 @@ def compare_link_reports(a: dict[str, Any], b: dict[str, Any], z_max: float = 4.
     p = (ea["errors"] + eb["errors"]) / (2 * n)
     sd = math.sqrt(2 * n * p * (1 - p))
     d = abs(ea["errors"] - eb["errors"])
-    if d > 0 and (sd == 0 or d / sd > z_max):
+    if d > 0 and d / sd > z_max:  # d > 0 means 0 < p < 1, so sd > 0
         out.append(f"bit_errors: {ea['errors']} vs {eb['errors']} of {n} ({d / sd:.1f} sd)")
     # |e|^2 of complex Gaussian error is exponential: its standard deviation equals its mean
     m = a["evm"]["num_symbols"]

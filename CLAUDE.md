@@ -105,7 +105,7 @@ cd ../python
 
 Measured 2026-11-13:
 
-- Python `pytest` (369 tests): about 2 s.
+- Python `pytest` (371 tests): about 2 s.
 - .NET `dotnet test` (incremental build + 330 tests): about 6 s.
 - `build.ps1 -Jobs 1` (everything, incremental): about 20 s before the cross-language steps were
   added; not re-timed since. A clean build with restore takes

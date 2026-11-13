@@ -61,8 +61,9 @@ public static class Conformance
 
     /// <summary>Runs every case and writes the report that <c>python -m signalforge.conformance
     /// --report</c> writes: implementation, passed, failed, and per case file, id, passed, messages
-    /// and the actual result. Returns the number of failures.</summary>
-    public static int WriteReport(string path, string? dir = null, TextWriter? log = null)
+    /// and the actual result (no file when <paramref name="path"/> is null). Returns the number of
+    /// failures.</summary>
+    public static int WriteReport(string? path, string? dir = null, TextWriter? log = null)
     {
         var cases = new JsonArray();
         int passed = 0, failed = 0;
@@ -86,6 +87,8 @@ public static class Conformance
             });
         }
         log?.WriteLine($"{passed}/{passed + failed} cases passed");
+        if (path is null)
+            return failed;
         var report = new JsonObject { ["implementation"] = "dotnet", ["passed"] = passed, ["failed"] = failed, ["cases"] = cases };
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
         File.WriteAllText(path, report.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));

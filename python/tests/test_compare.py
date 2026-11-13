@@ -111,3 +111,22 @@ def test_command_line(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> Non
     cfg.write_text(json.dumps({"num_symbols": 64, "bogus": 1}), encoding="utf-8")
     assert cmp.main(["run-link", str(cfg)]) == 2
     assert cmp.main(["link", str(out), str(tmp_path / "missing.json")]) == 2
+
+
+def test_a_field_on_one_side_only(report: dict[str, Any]) -> None:
+    other = copy.deepcopy(report)
+    rec = next(c for c in other["cases"] if isinstance(c["actual"], dict) and "rms" in c["actual"])
+    rec["actual"]["extra"] = 1.0
+    diffs = cmp.compare_reports(report, other, VECTORS)
+    assert diffs == [f"{rec['file']} {rec['id']}: python vs python: extra: only in the second"]
+    a = _link(num_symbols=50)
+    b = copy.deepcopy(a)
+    del b["evm"]["peak"]
+    assert cmp.compare_link_reports(a, b) == ["evm.peak: only in the first"]
+
+
+def test_noisy_links_must_share_the_theoretical_ber() -> None:
+    a = _link(**NOISY, seed=1)
+    b = copy.deepcopy(a)
+    b["ber_theory"] *= 1.01
+    assert cmp.compare_link_reports(a, b)[0].startswith("ber_theory")

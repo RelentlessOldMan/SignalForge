@@ -101,6 +101,11 @@ Updated with every chunk of work. Dates are absolute.
   noiseless config; `build.ps1` and a new CI job run all of it. Vectors may now give `null`. The
   first diff found a real gap: Python's runner ignored properties, so `SpectralDensity.span` was
   never compared. Python 367 passed, 2 skipped; .NET 330 passed; vectors 237/237; reports agree.
+- 2026-11-13: review of the compare tool. Both diffs compared only the fields on one side, so a
+  field the other side alone had went unseen; they now check both sides' field names first. A
+  noisy link compare also checks the theoretical BER (it depends only on the config). The C# tool
+  printed a stack trace on a bad config or argument and now exits 2 with a message, as the Python
+  one does. Python 369 passed, 2 skipped; .NET 330 passed.
 
 ## Not built
 

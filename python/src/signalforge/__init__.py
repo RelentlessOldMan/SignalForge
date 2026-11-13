@@ -33,7 +33,7 @@ from .units import (
 )
 from .waveforms import prbs, tone
 
-__version__ = "2026.11.13.14"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.15"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",

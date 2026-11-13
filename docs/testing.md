@@ -52,7 +52,8 @@ write a report of every case's actual result (`reports/python.json` from
 diffs them:
 
 - every case is in both reports and in `vectors/cases`, and passes or fails in both;
-- the two actual results, **all** their fields, agree within the case's own tolerance.
+- the two actual results have the same fields, at every depth, and agree within the case's own
+  tolerance.
 
 A record's fields are its public properties in C# and its dataclass fields plus public properties
 in Python, so a computed field such as `SpectralDensity.span` is compared too.
@@ -61,7 +62,7 @@ The link compare (`python -m signalforge.compare link A.json B.json`) takes two 
 reports of one config. Each config in `vectors/links/` is run in both languages
 (`compare run-link` and the C# tool's `link`) and the reports compared:
 
-- the configs must be equal;
+- both reports have the same fields, and the configs are equal;
 - without noise the runs are deterministic, and every field must agree within 1e-9 (absolute plus
   relative);
 - with noise the random streams differ, so the frame start, the bit count and the symbol count
@@ -71,7 +72,8 @@ reports of one config. Each config in `vectors/links/` is run in both languages
   - mean squared EVM: `|e₁² − e₂²| ≤ 4·m̄·√(2/N)`, `m̄` their mean, over `N` symbols each (the
     squared magnitude of complex Gaussian error is exponential, so its standard deviation equals
     its mean).
-  The receiver's estimates (timing, frequency, phase) are noisy and are not judged.
+  The theoretical BER depends only on the config and must agree within 1e-9. The receiver's
+  estimates (timing, frequency, phase) are noisy and are not judged.
 
 ## Running
 

@@ -1,41 +1,57 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SignalForge;
 using SignalForge.Tests;
 
-// Usage:
-//   SignalForge.Conformance [VECTORS_DIR] [--report PATH]   run the vectors; exit 1 if any fail
+// Usage (exit 0 when everything passes, 1 when a vector fails, 2 for bad input):
+//   SignalForge.Conformance [VECTORS_DIR] [--report PATH]   run the vectors
 //   SignalForge.Conformance link CONFIG.json [--out PATH]    run one QPSK link; print or write its JSON report
-if (args is ["link", var configPath, ..] && (args.Length == 2 || args is [_, _, "--out", _]))
-{
-    var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower, UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow };
-    var config = JsonSerializer.Deserialize<QpskLinkConfig>(File.ReadAllText(configPath), options)
-        ?? throw new InvalidDataException("the config is null");
-    string json = Link.QpskLink(config).ToJson();
-    if (args.Length == 4)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(args[3]))!);
-        File.WriteAllText(args[3], json + "\n");
-    }
-    else
-        Console.WriteLine(json);
-    return 0;
-}
+const string Usage = "usage: SignalForge.Conformance [VECTORS_DIR] [--report PATH] | link CONFIG.json [--out PATH]";
 
-string? dir = null, report = null;
-for (int i = 0; i < args.Length; i++)
+try
 {
-    if (args[i] == "--report" && i + 1 < args.Length)
-        report = args[++i];
-    else if (dir is null && !args[i].StartsWith('-'))
-        dir = args[i];
-    else
+    if (args is ["link", ..])
     {
-        Console.Error.WriteLine("usage: SignalForge.Conformance [VECTORS_DIR] [--report PATH] | link CONFIG.json [--out PATH]");
-        return 2;
+        if (args is not ([_, _] or [_, _, "--out", _]))
+        {
+            Console.Error.WriteLine(Usage);
+            return 2;
+        }
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+            UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        };
+        var config = JsonSerializer.Deserialize<QpskLinkConfig>(File.ReadAllText(args[1]), options)
+            ?? throw new InvalidDataException("the config is null");
+        string json = Link.QpskLink(config).ToJson();
+        if (args.Length == 4)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(args[3]))!);
+            File.WriteAllText(args[3], json + "\n");
+        }
+        else
+            Console.WriteLine(json);
+        return 0;
     }
+
+    string? dir = null, report = null;
+    for (int i = 0; i < args.Length; i++)
+    {
+        if (args[i] == "--report" && i + 1 < args.Length)
+            report = args[++i];
+        else if (dir is null && !args[i].StartsWith('-'))
+            dir = args[i];
+        else
+        {
+            Console.Error.WriteLine(Usage);
+            return 2;
+        }
+    }
+    return Conformance.WriteReport(report, dir, Console.Out) > 0 ? 1 : 0;
 }
-string tmp = report ?? Path.Combine(Path.GetTempPath(), $"signalforge-conformance-{Environment.ProcessId}.json");
-int failed = Conformance.WriteReport(tmp, dir, Console.Out);
-if (report is null)
-    File.Delete(tmp);
-return failed > 0 ? 1 : 0;
+catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or ArgumentException or InvalidDataException)
+{
+    Console.Error.WriteLine($"error: {e.GetType().Name}: {e.Message}");
+    return 2;
+}
