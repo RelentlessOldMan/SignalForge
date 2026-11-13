@@ -137,9 +137,13 @@ def fractional_delay(
     h = count(half_width, "half_width")
     if h < 1:
         raise ValueError("half_width must be at least 1")
+    return _read_at(np.asarray(x, dtype=np.complex128), np.arange(x.size, dtype=np.float64) - d, h)
+
+
+def _read_at(x: NDArray[np.complex128], pos: NDArray[np.float64], h: int) -> NDArray[np.complex128]:
+    """``z(t)`` at each position through the fractional-delay kernel, the taps summed in order."""
     n = x.size
-    y = np.zeros(n, dtype=np.complex128)
-    pos = np.arange(n) - d
+    y = np.zeros(pos.size, dtype=np.complex128)
     base = np.floor(pos)
     # the kernel depends on the sample only through its fraction, which takes few distinct
     # values: evaluate it once per fraction (the same arithmetic) and gather
@@ -158,6 +162,24 @@ def fractional_delay(
         if valid.any():
             y[valid] += tap[valid] * x[m[valid].astype(np.int64)]
     return y
+
+
+def clock_offset(samples: ArrayLike, ppm: float, *, half_width: int = 16) -> NDArray[np.complex128]:
+    """The input read every ``1 + ppm/1e6`` samples through the fractional-delay kernel: a
+    receiver whose sample clock is off by ``ppm`` (conventions: Channel, Sample clock offset)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    e = real(ppm, "ppm")
+    if abs(e) > 1e5:
+        raise ValueError("ppm must be within 1e5")
+    h = count(half_width, "half_width")
+    if h < 1:
+        raise ValueError("half_width must be at least 1")
+    r = 1 + e / 1e6
+    pos = np.arange(int((x.size - 1) / r) + 2, dtype=np.float64) * r if x.size else np.zeros(0)
+    pos = pos[pos <= x.size - 1]
+    return _read_at(np.asarray(x, dtype=np.complex128), pos, h)
 
 
 def rician_fading(

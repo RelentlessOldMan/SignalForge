@@ -335,6 +335,7 @@ public static class Conformance
             "qpsk_carrier_tracking" => Bind((Complexes(a.Get("symbols")), a.D("kp"), a.D("ki"), a.Opt("phase", 0)), t => Sync.QpskCarrierTracking(t.Item1, t.Item2, t.Item3, t.Item4)),
             "pi_loop_gains" => Bind((a.D("loop_bandwidth"), a.D("damping"), a.D("detector_gain")), t => Sync.PiLoopGains(t.Item1, t.Item2, t.Item3)),
             "rician_fading" => Bind((Complexes(a.Get("samples")), a.D("k_factor"), a.I("block_length"), a.I("seed")), t => Channel.RicianFading(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "clock_offset" => Bind((Complexes(a.Get("samples")), a.D("ppm"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.ClockOffset(t.Item1, t.Item2, t.Item3)),
             "fractional_delay" => Bind((Complexes(a.Get("samples")), a.D("delay"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.FractionalDelay(t.Item1, t.Item2, t.Item3)),
             "dc_offset" => Bind((Complexes(a.Get("samples")), ComplexScalar(a.Get("offset"))), t => Channel.DcOffset(t.Item1, t.Item2)),
             "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),

@@ -842,6 +842,15 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   `|g|` is Rician; `K = 0` is Rayleigh (`|g|²` exponential of mean 1). `K = ∞` is allowed and
   gives `g = 1` exactly (no draws are used). `k_factor` is `≥ 0` (not NaN), `block_length` an
   integer `≥ 1`; seeded as for AWGN, with streams that differ between languages. **(implemented)**
+- **Sample clock offset** (`clock_offset(samples, ppm, *, half_width=16)`,
+  [ADR 0045](adr/0045-clock-offset.md)): the input read every `r = 1 + ppm/1e6` samples,
+  `y[n] = z(n·r)` with `n·r` computed as written, for every `n ≥ 0` with `n·r ≤ N − 1` (none for
+  empty input), where `z(t)` reads between samples by the Fractional delay kernel exactly as
+  in Tracking loops (`z(t) = Σ_j x[b+j]·h(f−j)`, `b = ⌊t⌋`, `f = t − b`, `j = −H+1 … H` in
+  order, `x` zero outside `0 … N−1`). Positive `ppm` means the receiver's clock is slow: its
+  samples are further apart, so a signal of `sps` samples per symbol comes out at `sps/r`.
+  `ppm` finite with `|ppm| ≤ 1e5`; `half_width` an integer `≥ 1`. `ppm = 0` returns the input.
+  **(implemented)**
 
 ## Synchronization
 

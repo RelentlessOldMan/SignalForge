@@ -7,7 +7,8 @@ Updated with every chunk of work. Dates are absolute.
 1. **Tracking loops in `qpsk_link`**: a receiver option that runs `gardner_timing` and
    `qpsk_carrier_tracking` in place of the block estimators, with a config in `vectors/links/`
    run in both languages and compared (statistics, since the noise streams differ); checks:
-   BER near theory with a clock offset and a carrier offset the block estimators cannot follow.
+   BER near theory with a clock offset (`clock_offset`) and a carrier offset the block
+   estimators cannot follow.
 
 ## Built
 
@@ -481,12 +482,19 @@ Updated with every chunk of work. Dates are absolute.
   (2.3-sample delay, carrier offset 1e-4 cycles per sample, Eb/N0 4 dB) through
   `gardner_timing` then the carrier loop recovers the offset within 5 % and the BER within
   30 % of theory. Python 2072 passed, 2 skipped; .NET 1662 passed.
+- 2026-11-13: sample clock offset (conventions: Channel, Sample clock offset; ADR 0045):
+  `clock_offset(samples, ppm, *, half_width)` reads the input every `1 + ppm/1e6` samples
+  through the `fractional_delay` kernel (Python shares one vectorized reader with
+  `fractional_delay`). 13 vectors from `vectors/generators/clock_offset.py` (stdlib). Tests: a
+  tone comes out at the new rate within 5e-5 from −1e5 to 1e5 ppm with the expected length;
+  `gardner_timing` follows a 200 ppm offset (4.8 samples of drift over 6000 symbols) with no
+  growing lag and no bit errors. Python 2096 passed, 2 skipped; .NET 1683 passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay and block fading, tracking loops for other modulations, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for other modulations, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

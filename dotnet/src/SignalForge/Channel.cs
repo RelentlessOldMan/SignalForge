@@ -255,6 +255,25 @@ public static class Channel
         return y;
     }
 
+    /// <summary>The input read every 1 + ppm/1e6 samples through the fractional-delay kernel: a
+    /// receiver whose sample clock is off by <paramref name="ppm"/> (conventions: Channel, Sample
+    /// clock offset).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="ppm">Clock offset in parts per million, finite, within ±1e5; positive spreads
+    /// the samples further apart.</param>
+    /// <param name="halfWidth">Half the interpolator's length in samples, at least 1.</param>
+    public static Complex[] ClockOffset(ReadOnlySpan<Complex> samples, double ppm, int halfWidth = 16)
+    {
+        if (!(Math.Abs(ppm) <= 1e5))
+            throw new ArgumentOutOfRangeException(nameof(ppm), ppm, "must be finite and within 1e5");
+        ArgumentOutOfRangeException.ThrowIfLessThan(halfWidth, 1);
+        double r = 1 + ppm / 1e6;
+        var y = new List<Complex>();
+        for (int n = 0; n * r <= samples.Length - 1; n++)
+            y.Add(Interpolate(samples, n * r, halfWidth));
+        return [.. y];
+    }
+
     // h(f − j) for j = −H+1 … H (conventions: Channel, Fractional delay).
     private static double[] DelayKernel(double f, int halfWidth, double norm)
     {
