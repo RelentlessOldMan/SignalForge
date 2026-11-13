@@ -70,6 +70,33 @@ def frequency_offset(
     return np.asarray(x * np.exp(1j * arg), dtype=np.complex128)
 
 
+def phase_noise(
+    samples: ArrayLike,
+    linewidth_hz: float,
+    sample_rate: float,
+    *,
+    seed: int | np.random.Generator,
+) -> NDArray[np.complex128]:
+    """Wiener phase noise: ``x[n] * exp(j*phi[n])``, ``phi[0] = 0``, Gaussian increments of
+    variance ``2*pi*linewidth_hz/sample_rate`` (conventions: Channel, Phase noise)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if not 0 < sample_rate < math.inf:
+        raise ValueError("sample_rate must be positive and finite")
+    if not 0 <= linewidth_hz < math.inf:
+        raise ValueError("linewidth_hz must be finite and not negative")
+    rng = (
+        seed
+        if isinstance(seed, np.random.Generator)
+        else np.random.default_rng(count(seed, "seed"))
+    )
+    sigma = math.sqrt(2 * math.pi * linewidth_hz / sample_rate)
+    steps = sigma * rng.standard_normal(max(x.size - 1, 0))
+    phi = np.concatenate([[0.0], np.cumsum(steps)])[: x.size]
+    return np.asarray(x * np.exp(1j * phi), dtype=np.complex128)
+
+
 def _imbalance_gain(gain_db: float, phase: float) -> float:
     if not (math.isfinite(gain_db) and math.isfinite(phase)):
         raise ValueError("gain_db and phase must be finite")

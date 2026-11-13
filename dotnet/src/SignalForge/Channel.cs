@@ -76,6 +76,43 @@ public static class Channel
         return y;
     }
 
+    /// <summary>Wiener phase noise: x[n]·e^{jφ[n]}, φ[0] = 0, Gaussian increments of variance
+    /// 2π·linewidth/fs (conventions: Channel, Phase noise).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="linewidthHz">Full 3 dB width of the Lorentzian line in Hz, finite, not negative.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="seed">Seed for the phase walk; the stream differs from the Python one.</param>
+    public static Complex[] PhaseNoise(ReadOnlySpan<Complex> samples, double linewidthHz, double sampleRate, int seed) =>
+        PhaseNoise(samples, linewidthHz, sampleRate, new Random(seed));
+
+    /// <summary>As <see cref="PhaseNoise(ReadOnlySpan{Complex}, double, double, int)"/>, drawing from
+    /// <paramref name="rng"/>.</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="linewidthHz">Full 3 dB width of the Lorentzian line in Hz, finite, not negative.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="rng">Source of the phase walk.</param>
+    public static Complex[] PhaseNoise(ReadOnlySpan<Complex> samples, double linewidthHz, double sampleRate, Random rng)
+    {
+        ArgumentNullException.ThrowIfNull(rng);
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        if (!(linewidthHz >= 0 && double.IsFinite(linewidthHz)))
+            throw new ArgumentOutOfRangeException(nameof(linewidthHz), linewidthHz, "must be finite and not negative");
+        double sigma = Math.Sqrt(2 * Math.PI * linewidthHz / sampleRate);
+        var y = new Complex[samples.Length];
+        double phi = 0;
+        for (int n = 0; n < y.Length; n++)
+        {
+            if (n > 0)
+            {
+                // Box–Muller, the cosine branch: one pair of uniforms gives one Gaussian step.
+                double r = Math.Sqrt(-2 * Math.Log(1 - rng.NextDouble()));
+                phi += sigma * r * Math.Cos(2 * Math.PI * rng.NextDouble());
+            }
+            y[n] = samples[n] * Complex.FromPolarCoordinates(1, phi);
+        }
+        return y;
+    }
+
     /// <summary>I + j·g·(Q·cos φ + I·sin φ), g = 10^(gainDb/20): the error on the Q branch
     /// (conventions: Channel, IQ imbalance).</summary>
     /// <param name="samples">Complex samples.</param>

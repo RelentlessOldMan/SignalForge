@@ -326,6 +326,7 @@ public static class Conformance
                 t => Channel.FrequencyOffset(t.Item1, t.Item2, t.Item3, t.Item4)),
             "iq_imbalance" => Bind((Complexes(a.Get("samples")), a.D("gain_db"), a.D("phase")), t => Channel.IqImbalance(t.Item1, t.Item2, t.Item3)),
             "iq_image_rejection_db" => Bind((a.D("gain_db"), a.D("phase")), t => Channel.IqImageRejectionDb(t.Item1, t.Item2)),
+            "phase_noise" => Bind((Complexes(a.Get("samples")), a.D("linewidth_hz"), a.D("sample_rate"), a.I("seed")), t => Channel.PhaseNoise(t.Item1, t.Item2, t.Item3, t.Item4)),
             "dc_offset" => Bind((Complexes(a.Get("samples")), ComplexScalar(a.Get("offset"))), t => Channel.DcOffset(t.Item1, t.Item2)),
             "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),
             "qpsk_ber_theory" => Bind(a.D("eb_n0_db"), Metrics.QpskBerTheory),

@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Phase noise**: a Wiener (random-walk) phase impairment set by its 3 dB linewidth, seeded;
-   the increment variance `2π·linewidth/fs` in the conventions first; cross-language checks on
-   the statistics (the variance of the phase difference over a lag).
-2. **Error-rate theory for 8-PSK and 16-QAM**: exact Gray 16-QAM BER and SER, and 8-PSK SER by
+1. **Error-rate theory for 8-PSK and 16-QAM**: exact Gray 16-QAM BER and SER, and 8-PSK SER by
    its integral (with the usual nearest-neighbor BER), next to `qpsk_ber_theory`; expected values
    from the closed forms by hand and an independent numerical integral; Monte-Carlo checks in
    both suites.
+2. **Multipath**: a static tapped delay line, `multipath(samples, delays, gains)` with integer
+   sample delays and complex gains, output as long as the input (the convention for the tail
+   written first); expected values by hand.
 
 ## Built
 
@@ -411,12 +411,17 @@ Updated with every chunk of work. Dates are absolute.
   `2/√10`). 12 vectors by hand in `modulation.json`. Tests: round trips, unit energy, every
   nearest-neighbor pair differs in one bit, noise under the decision margin changes nothing. Review: a NaN symbol
   is `invalid_argument` in both demappers (Python cast it to an arbitrary integer sector).
+- 2026-11-13: phase noise (conventions: Channel; ADR 0036): `phase_noise(samples, linewidth_hz,
+  sample_rate, *, seed)`, a Wiener walk from `φ[0] = 0` with Gaussian steps of variance
+  `2π·linewidth/fs`. Five vectors (zero linewidth, one sample, three errors); the random part is
+  checked in each language against theory: the step variance, the variance over a lag, and
+  `E[e^{jφ[n]}] = e^{−nσ²/2}` over 4000 runs.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance and DC offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset and Wiener phase noise, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

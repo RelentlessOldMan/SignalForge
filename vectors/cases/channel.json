@@ -24,6 +24,11 @@
     {"id": "iq_image_rejection_db.nan_phase", "op": "iq_image_rejection_db", "args": {"gain_db": 0.0, "phase": "nan"}, "error": "invalid_argument", "source": "phase must be finite"},
     {"id": "dc_offset.complex_by_hand", "op": "dc_offset", "args": {"samples": {"re": [1.0, 0.0], "im": [0.0, 1.0]}, "offset": {"re": 0.5, "im": -0.25}}, "expected": {"re": [1.5, 0.5], "im": [-0.25, 0.75]}, "tol": {"abs": 0, "rel": 0}, "source": "by hand: add 0.5 - 0.25j"},
     {"id": "dc_offset.real_by_hand", "op": "dc_offset", "args": {"samples": {"re": [1.0, -0.0], "im": [2.0, -1.0]}, "offset": 2.0}, "expected": {"re": [3.0, 2.0], "im": [2.0, -1.0]}, "tol": {"abs": 0, "rel": 0}, "source": "by hand: a real offset adds to I only"},
-    {"id": "dc_offset.nan_offset", "op": "dc_offset", "args": {"samples": {"re": [1.0], "im": [0.0]}, "offset": {"re": 0.0, "im": "nan"}}, "error": "invalid_argument", "source": "offset must be finite"}
+    {"id": "dc_offset.nan_offset", "op": "dc_offset", "args": {"samples": {"re": [1.0], "im": [0.0]}, "offset": {"re": 0.0, "im": "nan"}}, "error": "invalid_argument", "source": "offset must be finite"},
+    {"id": "phase_noise.zero_linewidth_by_hand", "op": "phase_noise", "args": {"samples": {"re": [1.0, 0.5, -1.0], "im": [0.0, -2.0, 1.0]}, "linewidth_hz": 0.0, "sample_rate": 1000.0, "seed": 1}, "expected": {"re": [1.0, 0.5, -1.0], "im": [0.0, -2.0, 1.0]}, "tol": {"abs": 0, "rel": 0}, "source": "by hand: linewidth 0 gives sigma 0, phi = 0 throughout"},
+    {"id": "phase_noise.first_sample_by_hand", "op": "phase_noise", "args": {"samples": {"re": [0.3], "im": [0.4]}, "linewidth_hz": 5000.0, "sample_rate": 1000.0, "seed": 7}, "expected": {"re": [0.3], "im": [0.4]}, "tol": {"abs": 0, "rel": 0}, "source": "by hand: phi[0] = 0, so one sample is unchanged whatever the seed"},
+    {"id": "phase_noise.negative_linewidth", "op": "phase_noise", "args": {"samples": {"re": [1.0], "im": [0.0]}, "linewidth_hz": -1.0, "sample_rate": 1000.0, "seed": 1}, "error": "invalid_argument", "source": "linewidth must not be negative"},
+    {"id": "phase_noise.inf_linewidth", "op": "phase_noise", "args": {"samples": {"re": [1.0], "im": [0.0]}, "linewidth_hz": "inf", "sample_rate": 1000.0, "seed": 1}, "error": "invalid_argument", "source": "linewidth must be finite"},
+    {"id": "phase_noise.zero_rate", "op": "phase_noise", "args": {"samples": {"re": [1.0], "im": [0.0]}, "linewidth_hz": 1.0, "sample_rate": 0.0, "seed": 1}, "error": "invalid_argument", "source": "sample_rate must be positive"}
   ]
 }

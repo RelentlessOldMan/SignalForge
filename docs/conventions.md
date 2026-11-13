@@ -799,6 +799,13 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
 - **Image rejection** (`iq_image_rejection_db(gain_db, phase)`): `10·log10(|μ|²/|ν|²) =
   10·log10((1 + g² + 2g·cos φ)/(1 + g² − 2g·cos φ))`, the tone-to-image power ratio of that
   imbalance; `+inf` with no imbalance (`g = 1`, `φ = 0`). **(implemented)**
+- **Phase noise** (`phase_noise(samples, linewidth_hz, sample_rate, *, seed)`,
+  [ADR 0036](adr/0036-phase-noise.md)): Wiener (random-walk) phase, `y[n] = x[n]·e^{jφ[n]}` with
+  `φ[0] = 0` and `φ[n] = φ[n−1] + Δ[n]`, the `Δ[n]` independent Gaussian of mean 0 and variance
+  `σ² = 2π·linewidth_hz/sample_rate`. That is the oscillator whose spectrum is a Lorentzian of
+  full 3 dB width `linewidth_hz`; `E[e^{jφ[n]}] = e^{−nσ²/2}`. `linewidth_hz` finite and `≥ 0`
+  (0 is the identity); seeded as for AWGN, with streams that differ between languages.
+  **(implemented)**
 - **DC offset** (`dc_offset(samples, offset)`): `y = x + offset`, `offset` a complex number (a real
   one is `offset + 0j`), finite in both parts. **(implemented)**
 
