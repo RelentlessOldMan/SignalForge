@@ -71,4 +71,8 @@ def qpsk_ber_theory(eb_n0_db: float) -> float:
     """Bit error rate of Gray-coded QPSK in AWGN: ``0.5 * erfc(sqrt(Eb/N0))``."""
     if math.isnan(eb_n0_db):
         raise ValueError("eb_n0_db must not be NaN")
-    return 0.5 * math.erfc(math.sqrt(10 ** (eb_n0_db / 10)))
+    try:
+        eb_n0 = 10 ** (eb_n0_db / 10)
+    except OverflowError:  # above about 3080 dB; C# gets infinity here
+        eb_n0 = math.inf
+    return 0.5 * math.erfc(math.sqrt(eb_n0))

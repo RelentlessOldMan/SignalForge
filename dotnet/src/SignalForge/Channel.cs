@@ -42,7 +42,10 @@ public static class Channel
             sum += x.Real * x.Real + x.Imaginary * x.Imaginary;
         }
         double p = Check.PositiveFinite(signalPower ?? sum / samples.Length, nameof(signalPower));
-        double sigma = Math.Sqrt(p * samplesPerSymbol / Math.Pow(10, esN0Db / 10) / 2);
+        double variance = p * samplesPerSymbol * Math.Pow(10, -esN0Db / 10);
+        if (!double.IsFinite(variance))
+            throw new ArgumentOutOfRangeException(nameof(esN0Db), esN0Db, "so low that the noise variance overflows");
+        double sigma = Math.Sqrt(variance / 2);
         var y = new Complex[samples.Length];
         for (int i = 0; i < y.Length; i++)
         {

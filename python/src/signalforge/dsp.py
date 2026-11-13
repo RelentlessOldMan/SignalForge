@@ -26,7 +26,8 @@ def _vector(x: ArrayLike, what: str) -> NDArray[np.complex128] | NDArray[np.floa
 
 def convolve(x: ArrayLike, h: ArrayLike) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Full linear convolution ``y[n] = sum h[k] x[n-k]``, length ``len(x) + len(h) - 1``."""
-    return np.convolve(_vector(x, "x"), _vector(h, "h"))
+    y = np.convolve(_vector(x, "x"), _vector(h, "h"))
+    return cast("NDArray[np.complex128] | NDArray[np.float64]", y)
 
 
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:

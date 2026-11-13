@@ -188,7 +188,8 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   circular complex Gaussian noise of total variance `σ² = P·sps / 10^(Es/N0 / 10)` (each of I and Q
   gets `σ²/2`), where `P` is `signal_power` or, if not given, the measured mean `|x|²` of the
   samples. So Es is the energy per symbol, `P·sps`, and N0 is the noise power per complex sample.
-  Complex samples only. The seed (an integer, or in Python a `numpy.random.Generator`; in C# an
+  Complex samples only. Es/N0 must be finite and the variance must be finite (so a very low
+  Es/N0, around −3000 dB, is rejected); a very high one gives zero noise. The seed (an integer, or in Python a `numpy.random.Generator`; in C# an
   integer or a `Random`) is required. **(implemented)**
 - **Frequency offset** (`frequency_offset(samples, offset_hz, sample_rate, phase=0)`):
   `y[n] = x[n]·e^{j(2π·Δf·n/fs + φ)}`; a positive offset moves the spectrum up (see Complex
@@ -203,7 +204,8 @@ Python: `signalforge.metrics`; C#: `SignalForge.Metrics`.
   perfect match), `peak = max|e| / √(mean |reference|²)`, `peak_index` its first index, and
   `num_symbols`. Equal non-zero lengths, finite values, reference power `> 0`. **(implemented)**
 - **QPSK BER theory** (`qpsk_ber_theory(eb_n0_db)`): Gray-coded QPSK in AWGN,
-  `Pb = ½·erfc(√(Eb/N0))`, Eb/N0 linear from dB. For QPSK `Es = 2·Eb`, so
+  `Pb = ½·erfc(√(Eb/N0))`, Eb/N0 linear from dB; where that overflows (above about 3080 dB) it
+  is infinite and `Pb = 0`. `−∞` dB gives ½, NaN is rejected. For QPSK `Es = 2·Eb`, so
   `Es/N0 [dB] = Eb/N0 [dB] + 10·log10(2)`. **(implemented)**
 
 ## PRBS

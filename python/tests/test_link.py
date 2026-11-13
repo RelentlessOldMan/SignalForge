@@ -6,6 +6,7 @@ import math
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 from signalforge import (
     awgn,
@@ -97,12 +98,19 @@ def rng_seed() -> np.random.Generator:
         (np.ones(4, dtype=complex), {"samples_per_symbol": 2.0}),
         (np.ones(4, dtype=complex), {"es_n0_db": math.nan}),
         (np.zeros(4, dtype=complex), {}),  # measured power zero
+        (np.ones(4, dtype=complex), {"es_n0_db": -5000.0}),  # variance overflows
+        (np.ones(4, dtype=complex), {"es_n0_db": -3100.0}),
     ],
 )
-def test_awgn_rejects(samples: np.ndarray, kwargs: dict[str, object]) -> None:
+def test_awgn_rejects(samples: NDArray[np.generic], kwargs: dict[str, object]) -> None:
     args: dict[str, object] = {"es_n0_db": 10.0, "seed": 0, **kwargs}
     with pytest.raises(ValueError):
         awgn(samples, **args)  # type: ignore[arg-type]
+
+
+def test_awgn_huge_es_n0_adds_no_noise() -> None:
+    x = np.ones(4, dtype=complex)
+    np.testing.assert_array_equal(awgn(x, 5000.0, seed=0), x)
 
 
 def test_frequency_offset_moves_spectrum() -> None:

@@ -44,7 +44,13 @@ def awgn(
         if isinstance(seed, np.random.Generator)
         else np.random.default_rng(count(seed, "seed"))
     )
-    sigma = math.sqrt(p * sps / 10 ** (es_n0_db / 10) / 2)
+    try:
+        variance = p * sps * 10 ** (-es_n0_db / 10)
+    except OverflowError:
+        variance = math.inf
+    if not math.isfinite(variance):
+        raise ValueError("es_n0_db is so low that the noise variance overflows")
+    sigma = math.sqrt(variance / 2)
     noise = rng.standard_normal(x.size) + 1j * rng.standard_normal(x.size)
     return np.asarray(x + sigma * noise, dtype=np.complex128)
 

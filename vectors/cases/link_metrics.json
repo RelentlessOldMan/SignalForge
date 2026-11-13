@@ -22,6 +22,8 @@
     {"id": "qpsk_ber_theory.15db", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 15}, "expected": 9.12395736262809e-16, "tol": {"abs": 0, "rel": 1e-13}, "source": "0.5 * erfc(sqrt(Eb/N0)), erfc from Python's math module (the C library)"},
     {"id": "qpsk_ber_theory.minus_inf", "op": "qpsk_ber_theory", "args": {"eb_n0_db": "-inf"}, "expected": 0.5, "source": "no signal: erfc(0)/2 = 1/2"},
     {"id": "qpsk_ber_theory.inf", "op": "qpsk_ber_theory", "args": {"eb_n0_db": "inf"}, "expected": 0, "source": "no noise: erfc(inf) = 0"},
+    {"id": "qpsk_ber_theory.huge", "op": "qpsk_ber_theory", "args": {"eb_n0_db": 5000}, "expected": 0, "source": "Eb/N0 = 10^500 overflows to infinity: erfc(inf)/2 = 0"},
+    {"id": "qpsk_ber_theory.very_low", "op": "qpsk_ber_theory", "args": {"eb_n0_db": -5000}, "expected": 0.5, "source": "Eb/N0 = 10^-500 underflows to 0: erfc(0)/2 = 1/2"},
     {"id": "qpsk_ber_theory.nan", "op": "qpsk_ber_theory", "args": {"eb_n0_db": "nan"}, "error": "invalid_argument", "source": "NaN is rejected"}
   ]
 }

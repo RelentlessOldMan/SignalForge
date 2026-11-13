@@ -62,6 +62,11 @@ Updated with every chunk of work. Dates are absolute.
   root-raised-cosine spectrum (Gauss–Legendre), not the closed form. Unit tests check AWGN
   statistics, the matched filter's Nyquist property, and a shaped QPSK link's BER against theory
   at 4 dB Eb/N0 in both languages. Python 278 passed, 2 skipped; .NET 259 passed.
+- 2026-11-13: review of the link blocks. Python raised `OverflowError` (not `ValueError`) for an
+  extreme Es/N0 or Eb/N0, where C# quietly returned infinity: AWGN now rejects an Es/N0 so low the
+  noise variance overflows (both languages), and BER theory returns 0 above about 3080 dB. CI's
+  Python 3.10 mypy (NumPy 2.2 stubs) failed on two annotations; fixed and checked locally on 3.10.
+  2 new vectors (182). Python 283 passed, 2 skipped (also on 3.10); .NET 261 passed.
 
 ## Not built
 

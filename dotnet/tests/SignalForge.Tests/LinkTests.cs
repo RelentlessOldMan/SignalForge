@@ -95,6 +95,9 @@ public class LinkTests
         Assert.ThrowsAny<ArgumentException>(() => Channel.Awgn(ones, 10, 0, 0));
         Assert.ThrowsAny<ArgumentException>(() => Channel.Awgn(ones, double.NaN, 1, 0));
         Assert.ThrowsAny<ArgumentException>(() => Channel.Awgn([Complex.Zero], 10, 1, 0));
+        Assert.ThrowsAny<ArgumentException>(() => Channel.Awgn(ones, -5000, 1, 0));
+        Assert.ThrowsAny<ArgumentException>(() => Channel.Awgn(ones, -3100, 1, 0));
+        Assert.Equal(ones, Channel.Awgn(ones, 5000, 1, 0));
         Assert.Throws<ArgumentNullException>(() => Channel.Awgn(ones, 10, 1, (Random)null!));
     }
 
