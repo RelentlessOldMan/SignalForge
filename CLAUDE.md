@@ -35,8 +35,11 @@ repo docs disagree, the repo docs win.
 
 ## Code rules
 
-- **Licenses are strict.** Only MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0 and ISC, including
-  transitive dependencies and build tools. Anything else needs the user's explicit approval first.
+- **Licenses are strict.** SignalForge must always be shippable commercially under MIT with no
+  restrictions; nothing may ever require our code to be GPL or otherwise copyleft. Only MIT,
+  BSD-2-Clause, BSD-3-Clause, Apache-2.0 and ISC, including transitive dependencies and build
+  tools. Anything else needs the user's explicit approval first; approvals are listed in
+  `docs/dependencies.md`.
   Check the license from the package's own metadata or license file, and record every dependency in
   `docs/dependencies.md` with how it was checked. Don't copy code or text from projects with other
   licenses (the SigMF spec is CC-BY-SA: implement from the description, don't copy it).

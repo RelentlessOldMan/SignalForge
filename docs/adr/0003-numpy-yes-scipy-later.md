@@ -1,6 +1,6 @@
 # 0003: Python builds on NumPy; SciPy waits for a need; C# starts with the base library only
 
-Date: 2026-11-12. Status: accepted, NumPy approval pending (see `docs/dependencies.md`).
+Date: 2026-11-12. Status: accepted. NumPy approved 2026-11-12, see [0004](0004-numpy-gcc-runtime-exception.md).
 
 ## Decision
 

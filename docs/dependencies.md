@@ -6,6 +6,11 @@ user's explicit approval, recorded below with a date. Copyleft and reciprocal li
 AGPL, MPL, EPL, CDDL, SSPL), source-available licenses and unlicensed code are not allowed. The rule
 covers runtime, build, test, native, transitive, optional and copied code alike.
 
+The point of the rule: **SignalForge must always be shippable commercially, under MIT, with no
+restrictions. Nothing we use may ever require any SignalForge code to be licensed under the GPL or
+any other copyleft license.** A dependency that fails this is used only as a test reference, if at
+all.
+
 ## How a dependency gets approved
 
 1. Read the license from an authoritative source: the license file in the source repository or the
@@ -27,7 +32,7 @@ the source repositories.
 
 | Package | Version | Use | License | Verified from | Notes |
 |---|---|---|---|---|---|
-| numpy | 2.5.4 | runtime | BSD-3-Clause (+ 0BSD, MIT, Zlib, CC0-1.0 for vendored parts) | wheel `License-Expression`, `dist-info/licenses/` | **Pending approval**, see "Open questions" |
+| numpy | 2.5.4 | runtime | BSD-3-Clause (+ 0BSD, MIT, Zlib, CC0-1.0 for vendored parts) | wheel `License-Expression`, `dist-info/licenses/` | Approved 2026-11-12 ([ADR 0004](adr/0004-numpy-gcc-runtime-exception.md)). Wheels bundle the GCC Fortran runtime under GPL-3.0-or-later WITH GCC-exception-3.1; no obligation on our code. Bundled distributions must carry NumPy's `LICENSE.txt`. |
 | flit_core | 4.2.0 | build backend | BSD-3-Clause | wheel metadata | no dependencies |
 | pytest | 9.2.0 | test | MIT | wheel metadata | |
 | ↳ iniconfig | 2.3.1 | test (transitive) | MIT | wheel metadata | |
@@ -76,7 +81,7 @@ Researched 2026-11-12. None is in use; each needs the full check above before it
 
 | Candidate | Lang | Capabilities | License (repo) | Status / plan |
 |---|---|---|---|---|
-| SciPy | Py | filter design, resampling, windows, spectral estimation, special functions | BSD-3-Clause | Strong candidate for `signal` and `fft`. Its wheels bundle OpenBLAS and libgfortran like NumPy's, so it inherits the same open question. Also useful as an **independent reference** in tests. |
+| SciPy | Py | filter design, resampling, windows, spectral estimation, special functions | BSD-3-Clause | Strong candidate for `signal` and `fft`. Its wheels bundle OpenBLAS and libgfortran like NumPy's, so it gets the same check as NumPy (ADR 0004). Also useful as an **independent reference** in tests. |
 | Math.NET Numerics | C# | FFT, linear algebra, statistics, interpolation, some filtering | MIT | Candidate for FFT and linear algebra. Last pushed 2025-03: mature but slow-moving. Check the managed provider only; the optional MKL/OpenBLAS native providers are separate packages with their own licenses. |
 | FftSharp | C# | FFT, windows, PSD helpers | MIT | Small and simple; less general than Math.NET. Fallback if Math.NET's FFT is unsuitable. |
 | NWaves | C# | filters, filter design, resampling, windows, audio-oriented DSP | MIT | Last pushed 2022-09: unmaintained. Mine for ideas and test comparisons; do not depend on it. |
@@ -84,14 +89,15 @@ Researched 2026-11-12. None is in use; each needs the full check above before it
 | scikit-dsp-comm | Py | comms helpers: pulse shaping, synchronizers, BER sims | BSD-2-Clause | Depends on matplotlib (PSF-based license) and scipy. Use as an **independent reference** in tests only, if approved. |
 | CommPy | Py | modulation, channel coding, channels | BSD-3-Clause | Last pushed 2023-05. Reference only. |
 
+## Approvals
+
+Licenses and cases outside the allowed list that the user has approved.
+
+| Date | What | Scope | Record |
+|---|---|---|---|
+| 2026-11-12 | GCC runtime (GPL-3.0-or-later WITH GCC-exception-3.1) bundled inside NumPy's wheels | NumPy as a runtime dependency only; not a general approval of GPL code | [ADR 0004](adr/0004-numpy-gcc-runtime-exception.md) |
+
 ## Open questions for the user
 
-1. **NumPy's Windows/Linux wheels bundle libgfortran (GPL-3.0-or-later WITH GCC-exception-3.1)**
-   inside `libscipy_openblas`, as listed in the wheel's own `LICENSE.txt`. The GCC Runtime Library
-   Exception exists so that non-GPL programs can use the runtime, and the NumPy project treats the
-   wheels as BSD-usable, but the strict rule here says no GPL "of any version". NumPy is the
-   foundation of numerical Python, so the choices are: approve NumPy's wheels as they are; or require
-   a NumPy built without the bundled BLAS (more work for every user). Recommendation: **approve the
-   wheels, recorded here, with the exception noted.** Until then NumPy is marked *pending*.
-2. **PSF-2.0** (typing_extensions) is permissive but not on the list. Approving it would let mypy in,
+1. **PSF-2.0** (typing_extensions) is permissive but not on the list. Approving it would let mypy in,
    except mypy also needs pathspec (MPL-2.0), so mypy stays out regardless.
