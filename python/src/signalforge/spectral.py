@@ -346,6 +346,57 @@ def occupied_bandwidth(
     )
 
 
+@dataclass(frozen=True)
+class Acpr:
+    """Adjacent channel power ratio: power in each adjacent channel relative to the main one
+    (conventions: Spectra, ACPR)."""
+
+    main_power: float
+    lower_power: NDArray[np.float64]
+    upper_power: NDArray[np.float64]
+    lower_dbc: NDArray[np.float64]
+    upper_dbc: NDArray[np.float64]
+
+
+def acpr(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    center: float,
+    bandwidth: float,
+    offsets: ArrayLike,
+    *,
+    adjacent_bandwidth: float | None = None,
+    span: Span | ArrayLike | None = None,
+) -> Acpr:
+    """Power in the main channel and in the lower and upper channels at each center-to-center
+    offset, by the channel power rule; every channel must lie inside the spectrum."""
+    c = real(center, "center")
+    b = real(bandwidth, "bandwidth")
+    ba = b if adjacent_bandwidth is None else real(adjacent_bandwidth, "adjacent_bandwidth")
+    if not (b > 0 and ba > 0):
+        raise ValueError("bandwidth and adjacent_bandwidth must be positive")
+    o = np.asarray(offsets, dtype=np.float64)
+    if o.ndim != 1 or o.size == 0 or not np.all(np.isfinite(o) & (o > 0)):
+        raise ValueError("offsets must be a non-empty list of finite values > 0")
+    power, left, right = _bins(frequencies, psd, span)
+
+    def channel(low: float, high: float) -> float:
+        if low < left[0] or high > right[-1]:
+            raise ValueError(
+                f"channel [{low}, {high}] leaves the spectrum [{left[0]}, {right[-1]}]"
+            )
+        overlap = np.clip(np.minimum(right, high) - np.maximum(left, low), 0.0, None)
+        return float(np.sum(power * overlap / (right - left)))
+
+    main = channel(c - b / 2, c + b / 2)
+    if not main > 0:
+        raise ValueError("the main channel has no power")
+    lower = np.array([channel(c - v - ba / 2, c - v + ba / 2) for v in o])
+    upper = np.array([channel(c + v - ba / 2, c + v + ba / 2) for v in o])
+    with np.errstate(divide="ignore"):
+        return Acpr(main, lower, upper, 10 * np.log10(lower / main), 10 * np.log10(upper / main))
+
+
 def channel_power(
     frequencies: ArrayLike,
     psd: ArrayLike,

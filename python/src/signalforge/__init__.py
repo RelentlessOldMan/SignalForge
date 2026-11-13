@@ -33,10 +33,12 @@ from .measurements import PowerStats, Sfdr, ToneMetrics, power_stats, sfdr, tone
 from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
 from .modulation import qpsk_demap_hard, qpsk_map
 from .spectral import (
+    Acpr,
     OccupiedBandwidth,
     SpectralDensity,
     Spectrogram,
     WindowStats,
+    acpr,
     channel_power,
     fft,
     fft_frequencies,
@@ -60,9 +62,10 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.31"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.32"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
+    "Acpr",
     "ErrorCount",
     "Evm",
     "FirFilter",
@@ -77,6 +80,7 @@ __all__ = [
     "Spectrogram",
     "ToneMetrics",
     "WindowStats",
+    "acpr",
     "amp_to_db",
     "awgn",
     "bit_errors",

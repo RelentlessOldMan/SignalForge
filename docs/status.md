@@ -4,9 +4,8 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **ACPR**: adjacent channel power ratio from a PSD, with the channel and offsets stated in
-   conventions, closed-form vectors from on-bin tones and flat noise.
-2. **Chebyshev type II** IIR design (low-pass, high-pass), stop-band attenuation in dB.
+1. **Chebyshev type II** IIR design (low-pass, high-pass), stop-band attenuation in dB.
+2. **Review pass** over the spectral measurements (OBW, channel power, ACPR) and the IIR designs.
 
 ## Built
 
@@ -202,13 +201,19 @@ Updated with every chunk of work. Dates are absolute.
   `iir.json` cases (two designs by hand, eight checked against the closed form, a response, a
   filter run, eight errors).
   Python 1061 passed, 2 skipped (3.10 too); .NET 854 passed; conformance 569/569 in both.
+- 2026-11-13: ACPR in both languages (`acpr` / `Spectral.Acpr`, ADR 0019): main channel and lower
+  and upper channels at each center-to-center offset, by the channel power rule, in dBc; a channel
+  that leaves the spectrum is an error. New `vectors/generators/acpr.py` writes `acpr.json`
+  (15 cases, the powers summed from piecewise-constant bins by hand). Tests: on-bin tones through
+  Welch (-20 and -40 dBc), flat noise (the bandwidth ratio), bad arguments.
+  Python 1086 passed, 2 skipped (3.10 too); .NET 877 passed; conformance 584/584 in both.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth and
 Chebyshev type I (type II, elliptic, band Chebyshev), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
-beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
+beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

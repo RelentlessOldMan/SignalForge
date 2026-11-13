@@ -220,4 +220,47 @@ public class SpectralTests
         Assert.All(peaks[..8], f => Assert.Equal(125, f));
         Assert.All(peaks[8..], f => Assert.Equal(250, f));
     }
+
+    [Fact]
+    public void AcprOfOnBinTones()
+    {
+        // Unit tone at 8 Hz, 0.1 at -2 Hz and 0.01 at 18 Hz: -20 and -40 dBc at offset 10.
+        var x = Enumerable.Range(0, 64).Select(n =>
+            Complex.FromPolarCoordinates(1, 2 * Math.PI * 8 * n / 64)
+            + Complex.FromPolarCoordinates(0.1, 2 * Math.PI * -2 * n / 64)
+            + Complex.FromPolarCoordinates(0.01, 2 * Math.PI * 18 * n / 64)).ToArray();
+        var p = Spectral.WelchPsd(x, 64, window: WindowType.Rectangular);
+        var r = Spectral.Acpr(p.Frequencies, p.Psd, 8, 4, [10.0, 20.0]);
+        Assert.Equal(1.0, r.MainPower, 1e-12);
+        Assert.Equal(-20.0, r.LowerDbc[0], 1e-9);
+        Assert.Equal(-40.0, r.UpperDbc[0], 1e-9);
+        Assert.Equal(0.0, r.LowerPower[1], 1e-20);
+        Assert.Equal(0.0, r.UpperPower[1], 1e-20);
+        Assert.Equal(Spectral.ChannelPower(p.Frequencies, p.Psd, -4, 0), r.LowerPower[0], 1e-15);
+    }
+
+    [Fact]
+    public void AcprOfFlatNoiseIsTheBandwidthRatio()
+    {
+        double[] f = [.. Enumerable.Range(-50, 100).Select(k => (double)k)];
+        var r = Spectral.Acpr(f, [.. Enumerable.Repeat(2.0, 100)], 0, 10, [20.0], adjacentBandwidth: 5);
+        Assert.Equal(20.0, r.MainPower, 1e-12);
+        Assert.Equal(10 * Math.Log10(0.5), r.LowerDbc[0], 1e-12);
+        Assert.Equal(10 * Math.Log10(0.5), r.UpperDbc[0], 1e-12);
+    }
+
+    [Theory]
+    [InlineData(0.0, 10.0, 60.0, null)]
+    [InlineData(0.0, 10.0, -10.0, null)]
+    [InlineData(0.0, double.PositiveInfinity, 10.0, null)]
+    [InlineData(0.0, 10.0, 10.0, 0.0)]
+    [InlineData(double.NaN, 10.0, 10.0, null)]
+    [InlineData(45.0, 1.0, 1.0, null)]
+    public void AcprRejectsBadArguments(double center, double bandwidth, double offset, double? adjacent)
+    {
+        double[] f = [.. Enumerable.Range(-50, 100).Select(k => (double)k)];
+        double[] psd = [.. f.Select(v => v < 40 ? 1.0 : 0.0)];
+        Assert.ThrowsAny<ArgumentException>(() => Spectral.Acpr(f, psd, center, bandwidth, [offset], adjacent));
+        Assert.Throws<ArgumentException>(() => Spectral.Acpr(f, psd, 0, 10, ReadOnlySpan<double>.Empty));
+    }
 }

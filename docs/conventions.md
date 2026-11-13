@@ -175,6 +175,21 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
 - **Channel power** (`channel_power(frequencies, psd, low, high, span=None)`): the PSD integrated
   over `[low, high]`, each bin counted by the fraction of its (clipped) width inside. Finite
   `low < high` required. Result in the PSD's power units. **(implemented)**
+- **ACPR** (`acpr(frequencies, psd, center, bandwidth, offsets, adjacent_bandwidth=None,
+  span=None)`, [ADR 0019](adr/0019-acpr.md)): adjacent channel power ratio. The main channel is
+  `[center − B/2, center + B/2]`, `B = bandwidth`; for each offset `o` the lower and upper
+  adjacent channels are `[center ∓ o − B_a/2, center ∓ o + B_a/2]`, `B_a = adjacent_bandwidth`
+  (default `B`). Each channel's power is its channel power, as above (with the same `span`).
+  - Result (`Acpr`): `main_power`, and per offset, in the order given, `lower_power`,
+    `upper_power`, `lower_dbc = 10·log10(lower_power/main_power)` and `upper_dbc` likewise;
+    an empty adjacent channel gives `−∞` dBc.
+  - Every channel must lie inside the PSD's frequency range, from the first bin's lower edge to
+    the last bin's upper edge (each clipped to `span`); a channel that leaves it would count
+    missing spectrum as zero power, so it is `invalid_argument`. For a one-sided PSD with span
+    `(0, fs/2)` a lower channel below 0 Hz is therefore an error.
+  - `center` finite; `bandwidth` and `adjacent_bandwidth` finite and `> 0`; `offsets` a non-empty
+    list of finite values `> 0`; `main_power > 0`. Channels may overlap one another.
+  **(implemented)**
 - Windowed spectra state the window and the correction (coherent gain for tone amplitude, ENBW for
   noise and power) in the result. **(defined)**
 

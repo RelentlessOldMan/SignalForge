@@ -1,3 +1,6 @@
+import math
+from typing import Any
+
 import numpy as np
 import pytest
 from numpy.typing import NDArray
@@ -186,3 +189,45 @@ def test_a_bool_is_not_a_sample_rate() -> None:
         spectral.welch_psd(np.zeros(8), True)
     with pytest.raises(ValueError):
         spectral.spectrogram(np.zeros(8), True, 4)
+
+
+def test_acpr_of_on_bin_tones() -> None:
+    # Unit tone at 8 Hz, 0.1 at -2 Hz and 0.01 at 18 Hz: -20 and -40 dBc at offset 10.
+    n = np.arange(64)
+    x = sum(a * np.exp(2j * np.pi * f * n / 64) for a, f in ((1, 8), (0.1, -2), (0.01, 18)))
+    p = spectral.welch_psd(x, 64.0, window="rectangular")
+    r = spectral.acpr(p.frequencies, p.psd, 8.0, 4.0, [10.0, 20.0])
+    assert r.main_power == pytest.approx(1.0, rel=1e-12)
+    assert r.lower_dbc[0] == pytest.approx(-20.0, abs=1e-9)
+    assert r.upper_dbc[0] == pytest.approx(-40.0, abs=1e-9)
+    assert r.lower_power[1] == pytest.approx(0.0, abs=1e-20)
+    assert r.upper_power[1] == pytest.approx(0.0, abs=1e-20)
+    assert r.lower_power[0] == pytest.approx(spectral.channel_power(p.frequencies, p.psd, -4, 0))
+
+
+def test_acpr_of_flat_noise_is_the_bandwidth_ratio() -> None:
+    f = np.arange(-50.0, 50.0)
+    r = spectral.acpr(f, np.full(100, 2.0), 0.0, 10.0, [20.0], adjacent_bandwidth=5.0)
+    assert r.main_power == pytest.approx(20.0)
+    assert r.lower_dbc[0] == pytest.approx(10 * math.log10(0.5))
+    assert r.upper_dbc[0] == pytest.approx(10 * math.log10(0.5))
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"offsets": [60.0]},
+        {"offsets": []},
+        {"offsets": [[10.0]]},
+        {"offsets": [-10.0]},
+        {"bandwidth": math.inf},
+        {"adjacent_bandwidth": 0.0},
+        {"center": math.nan},
+        {"center": 45.0, "bandwidth": 1.0, "offsets": [1.0]},
+    ],
+)
+def test_acpr_rejects_bad_arguments(kwargs: dict[str, Any]) -> None:
+    psd = np.where(np.arange(-50.0, 50.0) < 40, 1.0, 0.0)
+    args: dict[str, Any] = {"center": 0.0, "bandwidth": 10.0, "offsets": [10.0]} | kwargs
+    with pytest.raises(ValueError):
+        spectral.acpr(np.arange(-50.0, 50.0), psd, **args)

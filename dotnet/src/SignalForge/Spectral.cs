@@ -94,6 +94,14 @@ public sealed record Spectrogram(
 /// <param name="Fraction">Fraction of the power inside the band.</param>
 public sealed record OccupiedBandwidth(double Bandwidth, double Lower, double Upper, double TotalPower, double Fraction);
 
+/// <summary>Adjacent channel power ratio: power in each adjacent channel relative to the main one.</summary>
+/// <param name="MainPower">Power in the main channel, in the PSD's power units.</param>
+/// <param name="LowerPower">Power in the lower channel at each offset, in the order given.</param>
+/// <param name="UpperPower">Power in the upper channel at each offset.</param>
+/// <param name="LowerDbc">10·log10(lower / main) per offset; −∞ for an empty channel.</param>
+/// <param name="UpperDbc">10·log10(upper / main) per offset; −∞ for an empty channel.</param>
+public sealed record Acpr(double MainPower, double[] LowerPower, double[] UpperPower, double[] LowerDbc, double[] UpperDbc);
+
 /// <summary>
 /// FFT, frequency axes, windows, Welch PSD, occupied bandwidth and channel power. Definitions in
 /// docs/conventions.md (Spectra) and docs/adr/0006-fft-windows-spectra.md.
@@ -388,6 +396,55 @@ public static class Spectral
             sum += power[k] * overlap / (right[k] - left[k]);
         }
         return sum;
+    }
+
+    /// <summary>
+    /// Power in the main channel and in the lower and upper channels at each center-to-center
+    /// offset, by the <see cref="ChannelPower"/> rule (conventions: Spectra, ACPR).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="center">Main channel center in Hz.</param>
+    /// <param name="bandwidth">Main channel width in Hz, positive.</param>
+    /// <param name="offsets">Center-to-center offsets in Hz, at least one, each positive.</param>
+    /// <param name="adjacentBandwidth">Adjacent channel width in Hz; default <paramref name="bandwidth"/>.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <exception cref="ArgumentException">A channel leaves the spectrum, or the main channel has no power.</exception>
+    public static Acpr Acpr(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double center, double bandwidth,
+        ReadOnlySpan<double> offsets, double? adjacentBandwidth = null, (double Low, double High)? span = null)
+    {
+        Check.Finite(center, nameof(center));
+        double b = Check.PositiveFinite(bandwidth, nameof(bandwidth));
+        double ba = adjacentBandwidth is { } a ? Check.PositiveFinite(a, nameof(adjacentBandwidth)) : b;
+        if (offsets.IsEmpty)
+            throw new ArgumentException("at least one offset required", nameof(offsets));
+        foreach (double o in offsets)
+            Check.PositiveFinite(o, nameof(offsets));
+        var (power, left, right) = Bins(frequencies, psd, span);
+
+        double Channel(double low, double high)
+        {
+            if (low < left[0] || high > right[^1])
+                throw new ArgumentException($"channel [{low}, {high}] leaves the spectrum [{left[0]}, {right[^1]}]", nameof(offsets));
+            double sum = 0;
+            for (int k = 0; k < power.Length; k++)
+                sum += power[k] * Math.Max(Math.Min(right[k], high) - Math.Max(left[k], low), 0.0) / (right[k] - left[k]);
+            return sum;
+        }
+
+        double main = Channel(center - b / 2, center + b / 2);
+        if (!(main > 0))
+            throw new ArgumentException("the main channel has no power", nameof(psd));
+        int n = offsets.Length;
+        double[] lower = new double[n], upper = new double[n], lowerDbc = new double[n], upperDbc = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            lower[i] = Channel(center - offsets[i] - ba / 2, center - offsets[i] + ba / 2);
+            upper[i] = Channel(center + offsets[i] - ba / 2, center + offsets[i] + ba / 2);
+            lowerDbc[i] = 10 * Math.Log10(lower[i] / main);
+            upperDbc[i] = 10 * Math.Log10(upper[i] / main);
+        }
+        return new Acpr(main, lower, upper, lowerDbc, upperDbc);
     }
 
     /// <summary>Validates a PSD's bins; returns each bin's power PSD·Δ and its edges, clipped to the span.</summary>
