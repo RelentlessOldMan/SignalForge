@@ -81,7 +81,9 @@ public static partial class Dsp
                 e[k] = wp[k] * (dp[k] - Barycentric(x[k], x, ext, bary, values));
                 top = Math.Max(top, Math.Abs(e[k]));
             }
-            var next = Extrema(e, band, l + 1);
+            for (int i = 0; i <= l; i++)
+                e[ext[i]] = Alt(i) * delta; // exact at the set; the last point is not a node
+            var next = Extrema(e, band, l + 1, ext, delta >= 0 ? 1 : -1);
             if (next.Count < l + 1)
                 break;
             if (next.SequenceEqual(ext) || top <= Math.Abs(delta) * (1 + 1e-9) + slack)
@@ -90,13 +92,13 @@ public static partial class Dsp
                 double worst = 0;
                 for (int k = 0; k < g; k++)
                     worst = Math.Max(worst, Math.Abs(wp[k] * (dp[k] - Clenshaw(c, x[k]))));
-                if (worst > Math.Abs(delta) * (1 + 1e-6) + 100 * slack)
+                if (worst > Math.Abs(delta) * (1 + 1e-3) + 100 * slack)
                     break;
                 return EquirippleTaps(n, c);
             }
             next.CopyTo(ext);
         }
-        throw new ArgumentException("the equiripple design did not converge: its ripple is beyond double precision", nameof(numTaps));
+        throw new ArgumentException("the equiripple design is beyond double precision: its ripple is too small, or its gaps between bands too wide, for double taps to reach", nameof(numTaps));
     }
 
     private static double Alt(int i) => i % 2 == 0 ? 1 : -1;
@@ -117,20 +119,31 @@ public static partial class Dsp
         return num / den;
     }
 
-    /// <summary>The new extremal set from the error on the grid (conventions: Equiripple design).</summary>
-    private static List<int> Extrema(double[] e, int[] band, int want)
+    /// <summary>The new extremal set from the error on the grid (conventions: Equiripple design): the
+    /// old set's points always count, with alternating signs starting at <paramref name="s"/>.</summary>
+    private static List<int> Extrema(double[] e, int[] band, int want, int[] ext, int s)
     {
         int g = e.Length;
+        var sgn = new int[g];
+        var found = new bool[g];
+        for (int k = 0; k < g; k++)
+            sgn[k] = Math.Sign(e[k]);
+        for (int i = 0; i < ext.Length; i++)
+        {
+            // E = ±δ at the old set, so the new set always alternates L + 1 times.
+            sgn[ext[i]] = i % 2 == 0 ? s : -s;
+            found[ext[i]] = true;
+        }
         var cand = new List<int>();
         for (int k = 0; k < g; k++)
         {
             bool hasLeft = k > 0 && band[k - 1] == band[k], hasRight = k + 1 < g && band[k + 1] == band[k];
             bool up = e[k] > 0 && (!hasLeft || e[k] >= e[k - 1]) && (!hasRight || e[k] >= e[k + 1]);
             bool down = e[k] < 0 && (!hasLeft || e[k] <= e[k - 1]) && (!hasRight || e[k] <= e[k + 1]);
-            if (up || down)
+            if (up || down || found[k])
                 cand.Add(k);
         }
-        cand = Merge(cand, e);
+        cand = Merge(cand, e, sgn);
         while (cand.Count > want)
         {
             if (cand.Count == want + 1)
@@ -146,19 +159,19 @@ public static partial class Dsp
                         smallest = i;
                 }
                 cand.RemoveAt(smallest);
-                cand = Merge(cand, e);
+                cand = Merge(cand, e, sgn);
             }
         }
         return cand;
     }
 
     /// <summary>Runs of the same sign keep their largest |E|, the first of equals.</summary>
-    private static List<int> Merge(List<int> cand, double[] e)
+    private static List<int> Merge(List<int> cand, double[] e, int[] sgn)
     {
         var merged = new List<int>(cand.Count);
         foreach (int k in cand)
         {
-            if (merged.Count > 0 && e[k] > 0 == e[merged[^1]] > 0)
+            if (merged.Count > 0 && sgn[k] == sgn[merged[^1]])
             {
                 if (Math.Abs(e[k]) > Math.Abs(e[merged[^1]]))
                     merged[^1] = k;

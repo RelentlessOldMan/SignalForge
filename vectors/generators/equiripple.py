@@ -122,7 +122,10 @@ def remez(n, bands, desired, fs, weights=None, density=16):
     g = len(x)
     ext = [(i * (g - 1)) // big_l for i in range(big_l + 1)]
     for _ in range(100):
-        a = [[*chebyshev_row(x[k], big_l), Decimal((-1) ** i) / wp[k]] for i, k in enumerate(ext)]
+        a = [
+            [*chebyshev_row(x[k], big_l), Decimal((-1) ** i) / wp[k]]
+            for i, k in enumerate(ext)
+        ]
         sol = solve(a, [dp[k] for k in ext])
         c, delta = sol[:big_l], sol[big_l]
         e = [wp[i] * (dp[i] - clenshaw(c, x[i])) for i in range(g)]
@@ -130,12 +133,16 @@ def remez(n, bands, desired, fs, weights=None, density=16):
         if top <= abs(delta) * (1 + Decimal(10) ** -30):
             break
         # Exchange: in-band local extrema, alternating, the L + 1 largest by the usual rules.
+        # The old set's points always count, with their sign (-1)^i sign(delta), even at delta = 0.
+        sgn = [v > 0 for v in e]
+        for i, k in enumerate(ext):
+            sgn[k] = (i % 2 == 0) == (delta >= 0)
         cand = []
         for i in range(g):
             nbr = [e[k] for k in (i - 1, i + 1) if 0 <= k < g and band[k] == band[i]]
             up = e[i] > 0 and all(e[i] >= v for v in nbr)
-            if up or (e[i] < 0 and all(e[i] <= v for v in nbr)):
-                if cand and (e[cand[-1]] > 0) == (e[i] > 0):
+            if up or (e[i] < 0 and all(e[i] <= v for v in nbr)) or i in ext:
+                if cand and sgn[cand[-1]] == sgn[i]:
                     if abs(e[i]) > abs(e[cand[-1]]):
                         cand[-1] = i
                 else:
@@ -196,7 +203,12 @@ def hand(case_id, args, taps, why):
 
 
 def err(case_id, args, why):
-    full = {"num_taps": 21, "bands": [0, 0.1, 0.2, 0.5], "desired": [1, 0], "sample_rate": 1}
+    full = {
+        "num_taps": 21,
+        "bands": [0, 0.1, 0.2, 0.5],
+        "desired": [1, 0],
+        "sample_rate": 1,
+    }
     full.update(args)
     return {"id": case_id, "op": "fir_equiripple", "args": full, "error": "invalid_argument",
             "source": why}  # fmt: skip
@@ -227,9 +239,28 @@ cases = [
     ),
     hand(
         "fir_equiripple.two_taps_weighted",
-        {"num_taps": 2, "bands": LP, "desired": [1, 0], "sample_rate": 1, "weights": [1, 10]},
+        {
+            "num_taps": 2,
+            "bands": LP,
+            "desired": [1, 0],
+            "sample_rate": 1,
+            "weights": [1, 10],
+        },
         [h2w, h2w],
         "hand: as two_taps_analytic with stopband weight 10: 1 - 2h cos(pi/10) = 10*2h cos(2pi/5)",
+    ),
+    hand(
+        "fir_equiripple.zero_delta_start",
+        {
+            "num_taps": 1,
+            "bands": [0, 0.2, 0.25, 0.35, 0.4, 0.5],
+            "desired": [0, 1, 0],
+            "sample_rate": 1,
+        },
+        [0.5],
+        "hand: a constant c minimizing max(|c|, |1 - c|) is 1/2; the first extremal set (the "
+        "first and last grid points) lies only in the 0 bands, so the first delta is 0 and the "
+        "old set's points must still count as extrema",
     ),
     hand(
         "fir_equiripple.one_tap",
@@ -239,7 +270,13 @@ cases = [
     ),
     hand(
         "fir_equiripple.one_tap_weighted",
-        {"num_taps": 1, "bands": LP, "desired": [1, 0], "sample_rate": 1, "weights": [1, 3]},
+        {
+            "num_taps": 1,
+            "bands": LP,
+            "desired": [1, 0],
+            "sample_rate": 1,
+            "weights": [1, 3],
+        },
         [0.25],
         "hand: |1 - c| = 3|c| gives c = 1/4",
     ),
@@ -251,17 +288,32 @@ cases = [
     ),
     hand(
         "fir_equiripple.all_zero_even",
-        {"num_taps": 4, "bands": [0, 0.2, 0.3, 0.5], "desired": [0, 0], "sample_rate": 1},
+        {
+            "num_taps": 4,
+            "bands": [0, 0.2, 0.3, 0.5],
+            "desired": [0, 0],
+            "sample_rate": 1,
+        },
         [0, 0, 0, 0],
         "conventions: every desired value 0 gives zero taps",
     ),
     certified(
         "fir_equiripple.lowpass_21",
-        {"num_taps": 21, "bands": [0, 0.1, 0.2, 0.5], "desired": [1, 0], "sample_rate": 1},
+        {
+            "num_taps": 21,
+            "bands": [0, 0.1, 0.2, 0.5],
+            "desired": [1, 0],
+            "sample_rate": 1,
+        },
     ),
     certified(
         "fir_equiripple.lowpass_24_even",
-        {"num_taps": 24, "bands": [0, 0.1, 0.2, 0.5], "desired": [1, 0], "sample_rate": 1},
+        {
+            "num_taps": 24,
+            "bands": [0, 0.1, 0.2, 0.5],
+            "desired": [1, 0],
+            "sample_rate": 1,
+        },
     ),
     certified(
         "fir_equiripple.lowpass_21_density_4",
@@ -304,7 +356,12 @@ cases = [
     ),
     certified(
         "fir_equiripple.highpass_33",
-        {"num_taps": 33, "bands": [0, 0.3, 0.35, 0.5], "desired": [0, 1], "sample_rate": 1},
+        {
+            "num_taps": 33,
+            "bands": [0, 0.3, 0.35, 0.5],
+            "desired": [0, 1],
+            "sample_rate": 1,
+        },
     ),
     certified(
         "fir_equiripple.even_bandpass_not_from_dc",
@@ -323,9 +380,19 @@ cases = [
         "(a 2e-11 change in them leaves the largest error the same to 7 digits)",
     ),
     err("fir_equiripple.zero_taps", {"num_taps": 0}, "conventions: 1 <= num_taps"),
-    err("fir_equiripple.too_many_taps", {"num_taps": 1002}, "conventions: num_taps <= 1001"),
-    err("fir_equiripple.odd_edges", {"bands": [0, 0.1, 0.2]}, "conventions: edge pairs"),
-    err("fir_equiripple.no_bands", {"bands": [], "desired": []}, "conventions: at least one band"),
+    err(
+        "fir_equiripple.too_many_taps",
+        {"num_taps": 1002},
+        "conventions: num_taps <= 1001",
+    ),
+    err(
+        "fir_equiripple.odd_edges", {"bands": [0, 0.1, 0.2]}, "conventions: edge pairs"
+    ),
+    err(
+        "fir_equiripple.no_bands",
+        {"bands": [], "desired": []},
+        "conventions: at least one band",
+    ),
     err(
         "fir_equiripple.edges_touch",
         {"bands": [0, 0.1, 0.1, 0.5]},
@@ -336,17 +403,51 @@ cases = [
         {"bands": [0, 0.2, 0.1, 0.5]},
         "conventions: increasing edges",
     ),
-    err("fir_equiripple.edge_negative", {"bands": [-0.1, 0.1, 0.2, 0.5]}, "conventions: 0 <= b_0"),
-    err("fir_equiripple.edge_above_nyquist", {"bands": [0, 0.1, 0.2, 0.6]}, "conventions: <= fs/2"),
     err(
-        "fir_equiripple.desired_count", {"desired": [1]}, "conventions: one desired value per band"
+        "fir_equiripple.edge_negative",
+        {"bands": [-0.1, 0.1, 0.2, 0.5]},
+        "conventions: 0 <= b_0",
     ),
-    err("fir_equiripple.weights_count", {"weights": [1]}, "conventions: one weight per band"),
-    err("fir_equiripple.weight_zero", {"weights": [1, 0]}, "conventions: positive weights"),
-    err("fir_equiripple.weight_negative", {"weights": [-1, 1]}, "conventions: positive weights"),
-    err("fir_equiripple.density_zero", {"grid_density": 0}, "conventions: 1 <= grid_density"),
-    err("fir_equiripple.density_too_big", {"grid_density": 65}, "conventions: grid_density <= 64"),
-    err("fir_equiripple.sample_rate_zero", {"sample_rate": 0}, "sample_rate must be positive"),
+    err(
+        "fir_equiripple.edge_above_nyquist",
+        {"bands": [0, 0.1, 0.2, 0.6]},
+        "conventions: <= fs/2",
+    ),
+    err(
+        "fir_equiripple.desired_count",
+        {"desired": [1]},
+        "conventions: one desired value per band",
+    ),
+    err(
+        "fir_equiripple.weights_count",
+        {"weights": [1]},
+        "conventions: one weight per band",
+    ),
+    err(
+        "fir_equiripple.weight_zero",
+        {"weights": [1, 0]},
+        "conventions: positive weights",
+    ),
+    err(
+        "fir_equiripple.weight_negative",
+        {"weights": [-1, 1]},
+        "conventions: positive weights",
+    ),
+    err(
+        "fir_equiripple.density_zero",
+        {"grid_density": 0},
+        "conventions: 1 <= grid_density",
+    ),
+    err(
+        "fir_equiripple.density_too_big",
+        {"grid_density": 65},
+        "conventions: grid_density <= 64",
+    ),
+    err(
+        "fir_equiripple.sample_rate_zero",
+        {"sample_rate": 0},
+        "sample_rate must be positive",
+    ),
     err(
         "fir_equiripple.even_taps_gain_at_nyquist",
         {"num_taps": 20, "bands": [0, 0.3, 0.35, 0.5], "desired": [0, 1]},
@@ -377,21 +478,33 @@ def same(a, b):
         return a.keys() == b.keys() and all(same(a[k], b[k]) for k in a)
     if isinstance(a, list) and isinstance(b, list):
         return len(a) == len(b) and all(same(x, y) for x, y in zip(a, b, strict=True))
-    if isinstance(a, int | float) and isinstance(b, int | float) and not isinstance(a, bool):
+    if (
+        isinstance(a, int | float)
+        and isinstance(b, int | float)
+        and not isinstance(a, bool)
+    ):
         return abs(a - b) <= 1e-14 * max(1.0, abs(b))
     return a == b
 
 
 if "--check" in sys.argv[1:]:
-    if not same(json.loads(out.read_text(encoding="utf-8")), json.loads(json.dumps(doc))):
+    if not same(
+        json.loads(out.read_text(encoding="utf-8")), json.loads(json.dumps(doc))
+    ):
         sys.exit(f"{out} is out of date: run python vectors/generators/equiripple.py")
     print(f"{out} is up to date")
     sys.exit(0)
-out.write_text(head + ',\n  "cases": [\n' + lines + "\n  ]\n}\n", encoding="utf-8", newline="\n")
+out.write_text(
+    head + ',\n  "cases": [\n' + lines + "\n  ]\n}\n", encoding="utf-8", newline="\n"
+)
 
 # Self-check: the hand cases agree with the certified solver.
 for c in cases[:5]:
     a = c["args"]
-    got = remez(a["num_taps"], a["bands"], a["desired"], a["sample_rate"], a.get("weights"))[0]
-    assert all(abs(g - e) < 1e-14 for g, e in zip(got, c["expected"], strict=True)), c["id"]
+    got = remez(
+        a["num_taps"], a["bands"], a["desired"], a["sample_rate"], a.get("weights")
+    )[0]
+    assert all(abs(g - e) < 1e-14 for g, e in zip(got, c["expected"], strict=True)), c[
+        "id"
+    ]
 print(f"wrote {out} ({len(cases)} cases)")

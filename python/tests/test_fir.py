@@ -156,6 +156,15 @@ def test_equiripple_near_the_precision_limit_raises_or_meets_its_bound(n: int) -
         assert max(_worst(h, 0, 0.1, 1), _worst(h, 0.4, 0.5, 0)) < 1e-9
 
 
+def test_equiripple_with_large_coefficients_still_designs() -> None:
+    # Wide unweighted gaps make the taps reach about 1e4, so rounding in the final check is about
+    # 5e-6 of the ripple: the design is usable and must not be rejected (found by a random sweep).
+    b, d, w = [0, 0.23, 0.274, 0.289, 0.476, 0.4786], [1.46, 0, 0.556], [70.7, 2.78, 1.24]
+    h = fir_equiripple(52, b, d, 1, w)
+    errs = [w[j] * _worst(h, b[2 * j], b[2 * j + 1], d[j]) for j in range(3)]
+    assert max(errs) < 1.3 * min(errs)  # level, up to the grid effect between grid points
+
+
 def test_equiripple_bad_arguments() -> None:
     with pytest.raises(ValueError):
         fir_equiripple(21, [0, 0.1, np.nan, 0.5], [1, 0], 1)

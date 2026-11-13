@@ -81,6 +81,18 @@ public class EquirippleTests
     }
 
     [Fact]
+    public void WithLargeCoefficientsStillDesigns()
+    {
+        // Wide unweighted gaps make the taps reach about 1e4, so rounding in the final check is
+        // about 5e-6 of the ripple: the design is usable and must not be rejected (found by a
+        // random sweep).
+        double[] b = [0, 0.23, 0.274, 0.289, 0.476, 0.4786], d = [1.46, 0, 0.556], w = [70.7, 2.78, 1.24];
+        double[] h = Dsp.FirEquiripple(52, b, d, 1, w);
+        double[] errs = [.. Enumerable.Range(0, 3).Select(j => w[j] * Worst(h, b[2 * j], b[2 * j + 1], d[j]))];
+        Assert.True(errs.Max() < 1.3 * errs.Min()); // level, up to the grid effect between grid points
+    }
+
+    [Fact]
     public void BadArgumentsThrow()
     {
         Assert.Throws<ArgumentNullException>(() => Dsp.FirEquiripple(21, null!, [1, 0], 1));

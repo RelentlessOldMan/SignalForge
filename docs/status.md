@@ -4,12 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Review of the equiripple design**: sweep random designs in both languages against the
-   generator's 50-digit solver (lengths to 1001, many bands, extreme weights, densities 1-64),
-   then fix what it finds.
-2. **Bessel IIR design** (low-pass, high-pass): conventions and an ADR first (which
+1. **Bessel IIR design** (low-pass, high-pass): conventions and an ADR first (which
    normalization: delay, phase or magnitude at the cutoff); expected values from the reverse
    Bessel polynomials computed exactly.
+2. **Equiripple start**: with many taps and wide gaps between bands, the first extremal set's
+   `δ` can be below rounding (about 1e-16 against errors near 1) and the exchange cycles in the
+   noise until it raises, though the optimum ripple is ordinary (6.5e-7 in one sweep case). In a
+   sweep of 481 random designs to 400 taps, 2 designs raised in Python only and 7 in C# only for
+   this or the final check. A start that keeps `δ` above rounding (e.g. a first set
+   spaced in `x` rather than by grid index, or a continuation from fewer taps) would fix it; the
+   convention for the start would change, so it needs care.
 
 ## Built
 
@@ -309,6 +313,18 @@ Updated with every chunk of work. Dates are absolute.
   certified, 17 rejections). The library matches to 1e-14, except 2e-11 on a design with
   δ = 3e-9 whose taps are ill-determined in double. Python 1480 passed, 2 skipped; .NET 1166
   passed; conformance 702/702 in both.
+
+- 2026-11-13: equiripple review. A random sweep against the generator's 50-digit solver (300
+  designs to 70 taps) and Python against C# (481 designs to 400 taps) found two defects, both
+  fixed in both languages and the conventions: (1) a first extremal set lying only in bands whose
+  desired value is 0 gives `δ = 0` and too few extrema, and rounding at the set's last point
+  could flip a sign, which raised on ordinary designs: the old set's points now always count in
+  the exchange, with their exact error `±δ`; (2) the final tap check's 1e-6 margin rejected usable
+  designs whose coefficients are large (wide gaps between bands), where rounding alone exceeds
+  it: now 0.1%, which still catches the failures it is for. False rejections in the sweep fell
+  from 205 to 158 of 481 (most of the rest are beyond double precision). Python no longer warns
+  on an IEEE division by zero at the precision limit. New vector `zero_delta_start` (34 cases),
+  a regression test per language. Python 1482 passed, 2 skipped; .NET 1168 passed; conformance 703/703 in both.
 
 ## Not built
 

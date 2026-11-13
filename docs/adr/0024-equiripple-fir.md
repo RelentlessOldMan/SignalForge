@@ -26,7 +26,14 @@ of frequencies the error is measured on.
 - **Taps by a direct solve** at the final set, not by sampling the interpolant on a uniform
   frequency grid and inverting a DFT: the uniform samples fall in the transition gaps, where the
   interpolant magnifies rounding by many orders (a 41-tap design measured 2e-8 stopband error
-  instead of its 3e-11 optimum that way).
+  instead of its 3e-11 optimum that way). The taps are checked on the grid against `|δ|` with a
+  0.1% margin: a first margin of 1e-6 rejected usable designs whose coefficients are large
+  enough (wide gaps between bands) that rounding alone exceeds it, while the failures the check
+  is for (a broken tap conversion, cancellation at the precision limit) miss by far more.
+- **The old extremal set always counts in the exchange**, with its alternating signs: otherwise a
+  first set lying only in bands whose desired value is 0 gives `δ = 0`, zero errors there, and
+  too few extrema; and rounding at the set's last point (not an interpolation node) could flip a
+  sign. A random sweep against the generator's 50-digit solver found both.
 - **Limits**: `num_taps ≤ 1001`, `grid_density ≤ 64`, 250 iterations. Designs whose ripple is
   near or below 1e-13 lose `δ` to cancellation; they raise rather than return something
   wrong. The 1001 limit keeps the Python grid arrays to a few MB.

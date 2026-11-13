@@ -353,14 +353,17 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     `P(x_i) = D'_i − (−1)^i δ/W'_i`, and `P` elsewhere by barycentric interpolation through the
     first `L` points. The new set: every grid point where the error `E = W'(D' − P)` is a
     nonzero local extremum within its band (`E > 0` and not below either in-band neighbour, or
-    the mirror for `E < 0`); runs of the same sign keep their largest `|E|` (the first of
+    the mirror for `E < 0`), plus the old set's points, where `E = (−1)^i δ` exactly and which
+    count with that sign (`+` for `δ = 0` at even `i`), so the new set always alternates at least
+    `L + 1` times; runs of the same sign keep their largest `|E|` (the first of
     equals); while there are more than `L + 1`: if one too many, drop whichever end has the
     smaller `|E|` (the first, if equal), else drop the smallest `|E|` (the first, if equal) and
     merge again. It stops when the set does not change, or when the largest grid `|E|` is at
     most `|δ|·(1 + 1e-9) + 1e-12·max_j |W_j·D_j|` (an optimum with more than `L + 1` equal
-    extrema would otherwise swap between equally good sets). Fewer than `L + 1` points, or 250
-    iterations without stopping, is `invalid_argument`: the design is beyond double precision
-    (its ripple is near or below 1e-13; e.g. a wide transition with many taps).
+    extrema would otherwise swap between equally good sets). 250 iterations without stopping is
+    `invalid_argument`: the design is beyond double precision. (Besides ripples near 1e-13, this
+    happens with many taps and wide gaps between bands: the first set's `δ` can be below
+    rounding, and the exchange then never leaves the noise.)
   - If every `desired` value is 0, or `N` is odd and all are equal, the taps are exact
     (`D·[n = (N−1)/2]`) and there is no iteration.
   - **Taps**: `c_0 … c_{L−1}` (and `δ` again) from the `(L+1)×(L+1)` linear system
@@ -368,9 +371,12 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     (Sampling `P` uniformly and inverting a DFT would read `P` in the gaps between bands, where
     interpolation from the band points magnifies rounding enormously.) The taps are then
     checked: the largest grid `|W'(D' − P)|` with these `c_k` must be at most
-    `|δ|·(1 + 1e-6) + 1e-10·max_j |W_j·D_j|`, else `invalid_argument`. Near the precision limit
-    the two languages may differ in whether a design raises, but anything returned meets this
-    bound. Type I:
+    `|δ|·(1 + 1e-3) + 1e-10·max_j |W_j·D_j|`, else `invalid_argument` (beyond double precision).
+    The excess is the rounding of `P`, about `ε·max W'·Σ|c_k|`; it fails when the ripple is near
+    or below 1e-13, or when gaps between bands are so wide that the optimum needs huge
+    coefficients (its response in the gaps then reaches 1e6 or more, and its taps are
+    ill-determined although its band error is optimal). Near this limit the two languages may
+    differ in whether a design raises, but anything returned meets the bound. Type I:
     `h[(N−1)/2] = c_0`, `h[(N−1)/2 ± k] = c_k/2`. Type II: `A = Σ_{k=1}^{L} β_k cos(2π(k − ½)ν)`
     with `β_1 = c_0 + c_1/2`, `β_k = (c_{k−1} + c_k)/2`, `β_L = c_{L−1}/2` (`β_1 = c_0` if
     `L = 1`), and `h[N/2 − 1 + k] = h[N/2 − k] = β_k/2`.

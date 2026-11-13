@@ -237,9 +237,14 @@ def _equiripple_grid(
     return big_l, np.array(nu), np.array(dd), np.array(ww), np.array(bi, dtype=np.int64)
 
 
-def _extrema(e: NDArray[np.float64], band: NDArray[np.int64], want: int) -> list[int]:
-    """The new extremal set from the error on the grid (conventions: Equiripple design)."""
+def _extrema(
+    e: NDArray[np.float64], band: NDArray[np.int64], want: int, ext: NDArray[np.int64], s: float
+) -> list[int]:
+    """The new extremal set from the error on the grid (conventions: Equiripple design): the old
+    set's points ``ext`` always count, with alternating signs starting at ``s``."""
     g = e.size
+    sgn = np.sign(e)
+    sgn[ext] = s * (-1.0) ** np.arange(ext.size)
     same_left = np.zeros(g, dtype=bool)
     same_left[1:] = band[1:] == band[:-1]
     same_right = np.zeros(g, dtype=bool)
@@ -248,19 +253,21 @@ def _extrema(e: NDArray[np.float64], band: NDArray[np.int64], want: int) -> list
     right = np.concatenate((e[1:], [0.0]))
     up = (e > 0) & (~same_left | (e >= left)) & (~same_right | (e >= right))
     down = (e < 0) & (~same_left | (e <= left)) & (~same_right | (e <= right))
+    found = up | down
+    found[ext] = True  # E = ±δ at the old set, so the new set always alternates L + 1 times
     mag = np.abs(e)
 
     def merge(ks: list[int]) -> list[int]:
         out: list[int] = []
         for k in ks:
-            if out and (e[k] > 0) == (e[out[-1]] > 0):
+            if out and sgn[k] == sgn[out[-1]]:
                 if mag[k] > mag[out[-1]]:
                     out[-1] = k
             else:
                 out.append(k)
         return out
 
-    cand = merge([int(k) for k in np.flatnonzero(up | down)])
+    cand = merge([int(k) for k in np.flatnonzero(found)])
     while len(cand) > want:
         if len(cand) == want + 1:
             cand.pop(0 if mag[cand[0]] <= mag[cand[-1]] else -1)
@@ -284,7 +291,8 @@ def _barycentric(
         hit = t == 0
         t[hit] = 1.0
         r = bary / t
-        p = (r @ vals) / r.sum(axis=1)
+        with np.errstate(divide="ignore", invalid="ignore"):  # ±inf as in IEEE; caught later
+            p = (r @ vals) / r.sum(axis=1)
         rows, cols = np.nonzero(hit)
         p[rows] = vals[cols]
         out[s : s + 1024] = p
@@ -328,7 +336,8 @@ def fir_equiripple(
         bary = gamma[:big_l] * (nodes - xe[big_l])
 
         e = wp * (dp - _barycentric(x, nodes, bary, vals))
-        new = _extrema(e, band, big_l + 1)
+        e[ext] = sign * delta  # exact at the set; the last point is not a node
+        new = _extrema(e, band, big_l + 1, ext, 1.0 if delta >= 0 else -1.0)
         if len(new) < big_l + 1:
             break
         if np.array_equal(new, ext) or np.max(np.abs(e)) <= abs(delta) * (1 + 1e-9) + slack:
@@ -343,7 +352,7 @@ def fir_equiripple(
             for s in range(0, g, 1024):
                 p = np.cos(2 * np.pi * np.outer(nu[s : s + 1024], k)) @ c
                 worst = max(worst, float(np.max(np.abs(wp[s : s + 1024] * (dp[s : s + 1024] - p)))))
-            if worst > abs(delta) * (1 + 1e-6) + 100 * slack:
+            if worst > abs(delta) * (1 + 1e-3) + 100 * slack:
                 break
             if odd:
                 return np.concatenate((c[:0:-1] / 2, c[:1], c[1:] / 2))
@@ -355,7 +364,8 @@ def fir_equiripple(
             return np.concatenate((beta[::-1] / 2, beta / 2))
         ext = np.array(new)
     raise ValueError(
-        "the equiripple design did not converge: its ripple is beyond double precision"
+        "the equiripple design is beyond double precision: its ripple is too small, or its gaps "
+        "between bands too wide, for double taps to reach"
     )
 
 
