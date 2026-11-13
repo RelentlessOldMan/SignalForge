@@ -1,7 +1,7 @@
 """Writes vectors/cases/carrier_loop.json from the definition, using only the Python standard library.
 
-It does not import NumPy or SignalForge. It runs the decision-directed QPSK carrier loop in the
-conventions (Synchronization, Tracking loops) step by step. The by-hand cases are checked here
+It does not import NumPy or SignalForge. It runs the decision-directed QPSK, 8-PSK and 16-QAM
+carrier loops in the conventions (Synchronization, Tracking loops) step by step. The by-hand cases are checked here
 against the closed forms they rely on.
 
 Run from the repo root: python vectors/generators/carrier_loop.py [--check]
@@ -16,7 +16,30 @@ import pathlib
 import sys
 
 
-def loop(z, kp, ki, phase):
+def qpsk(re, im):
+    return (1.0 if re >= 0 else -1.0, 1.0 if im >= 0 else -1.0)
+
+
+C8 = 1 / math.sqrt(2)
+PSK8 = [(1.0, 0.0), (C8, C8), (0.0, 1.0), (-C8, C8), (-1.0, 0.0), (-C8, -C8), (0.0, -1.0), (C8, -C8)]
+
+
+def psk8(re, im):
+    return PSK8[int(math.floor(math.atan2(im, re) / (math.pi / 4) + 0.5)) % 8]
+
+
+INV10 = 1.0 / math.sqrt(10.0)
+THR = 2.0 / math.sqrt(10.0)
+
+
+def qam16(re, im):
+    def level(v):
+        m = 1.0 if abs(v) < THR else 3.0
+        return (m if v >= 0 else -m) * INV10
+    return (level(re), level(im))
+
+
+def loop(z, kp, ki, phase, decide=qpsk):
     out, phases, errors = [], [], []
     phi, v = phase, 0.0
     for x in z:
@@ -24,8 +47,7 @@ def loop(z, kp, ki, phase):
         c, s = math.cos(phi), math.sin(phi)
         re = x.real * c + x.imag * s
         im = x.imag * c - x.real * s
-        dre = 1.0 if re >= 0 else -1.0
-        dim = 1.0 if im >= 0 else -1.0
+        dre, dim = decide(re, im)
         e = dre * im - dim * re
         out.append(complex(re, im))
         phases.append(phi)
@@ -91,11 +113,62 @@ for name, args, why in (("negative_kp", {"kp": -0.1}, "kp must not be negative")
     cases.append({"id": f"qpsk_carrier_tracking.{name}", "op": "qpsk_carrier_tracking",
                   "args": base | args, "error": "invalid_argument", "source": why})
 
+
+
+def add_m(op, decide, name, z, kp, ki, phase=None, source=SRC, tol=None):
+    args = {"symbols": C(z), "kp": kp, "ki": ki}
+    if phase is not None:
+        args["phase"] = phase
+    s, p, e = loop(z, kp, ki, 0.0 if phase is None else phase, decide)
+    cases.append({"id": f"{op}.{name}", "op": op, "args": args,
+                  "expected": {"symbols": C(s), "phases": p, "errors": e},
+                  "tol": tol or {"abs": 1e-12, "rel": 0}, "source": source})
+    return s, p, e
+
+
+P8 = [cmath.rect(1, math.pi / 4 * ((3 * k + k // 2) % 8)) for k in range(40)]
+op = "psk8_carrier_tracking"
+s, p, e = add_m(op, psk8, "one_symbol_by_hand", [cmath.rect(1, 0.1)], 0.5, 0.1,
+                source="by hand: a unit symbol at 0.1 rad decides 1, so e = sin(0.1)",
+                tol={"abs": 1e-15, "rel": 0})
+assert abs(e[0] - math.sin(0.1)) < 1e-15
+s, p, e = add_m(op, psk8, "diagonal_by_hand", [cmath.rect(2, math.pi / 4 - 0.2)], 0.0, 0.0,
+                source="by hand: 2 at pi/4 - 0.2 decides (1+j)/sqrt2, so e = 2*sin(-0.2)",
+                tol={"abs": 1e-15, "rel": 0})
+assert abs(e[0] - 2 * math.sin(-0.2)) < 1e-15
+add_m(op, psk8, "static_rotation", [z * cmath.rect(1, 0.25) for z in P8], 0.2, 0.01)
+add_m(op, psk8, "frequency_offset", [z * cmath.rect(0.9, -0.1 + 0.01 * k) for k, z in enumerate(P8)],
+      0.15, 0.005, phase=-0.05)
+add_m(op, psk8, "empty_by_hand", [], 0.1, 0.01, source="by hand: no symbols in, none out")
+Q16 = [complex(a, b) * INV10 for a, b in
+       [((3 * k) % 4 * 2 - 3, (5 * k + k // 4) % 4 * 2 - 3) for k in range(40)]]
+op = "qam16_carrier_tracking"
+s, p, e = add_m(op, qam16, "one_symbol_by_hand", [complex(3, 3) * INV10 * cmath.rect(1, 0.1)],
+                0.5, 0.1, source="by hand: (3+3j)/sqrt10 turned 0.1 decides itself, so "
+                "e = |s|^2*sin(0.1) = 1.8*sin(0.1)", tol={"abs": 1e-15, "rel": 0})
+assert abs(e[0] - 1.8 * math.sin(0.1)) < 1e-15
+add_m(op, qam16, "static_rotation", [z * cmath.rect(1, 0.15) for z in Q16], 0.2, 0.01)
+add_m(op, qam16, "frequency_offset", [z * cmath.rect(1.1, 0.05 + 0.004 * k) for k, z in
+                                      enumerate(Q16)], 0.1, 0.003, phase=0.02)
+add_m(op, qam16, "ties_by_hand", [0, 2 * INV10 * 1, 1j * 2 * INV10], 0.0, 0.0,
+      source="by hand: 0 decides (1+j)/sqrt10, so e = 0; 2/sqrt10 decides (3+j)/sqrt10, so "
+      "e = -(1/sqrt10)*(2/sqrt10) = -0.2, and 2j/sqrt10 decides (1+3j)/sqrt10, so e = 0.2",
+      tol={"abs": 1e-15, "rel": 0})
+_, _, e = loop([0, 2 * INV10, 2j * INV10], 0, 0, 0.0, qam16)
+assert e[0] == 0 and abs(e[1] + 0.2) < 1e-15 and abs(e[2] - 0.2) < 1e-15, e
+for op in ("psk8_carrier_tracking", "qam16_carrier_tracking"):
+    for name, args, why in (("negative_ki", {"ki": -0.1}, "ki must not be negative"),
+                            ("nan_symbol", {"symbols": {"re": [1.0, "nan"], "im": [0.0, 0.0]}},
+                             "symbols must be finite")):
+        base = {"symbols": C(P8[:2]), "kp": 0.1, "ki": 0.01}
+        cases.append({"id": f"{op}.{name}", "op": op, "args": base | args,
+                      "error": "invalid_argument", "source": why})
+
 doc = {
     "schema": 1,
     "suite": "carrier_loop",
-    "description": "Decision-directed QPSK carrier tracking (conventions: Synchronization, "
-    "Tracking loops).",
+    "description": "Decision-directed QPSK, 8-PSK and 16-QAM carrier tracking (conventions: "
+    "Synchronization, Tracking loops).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "carrier_loop.json"

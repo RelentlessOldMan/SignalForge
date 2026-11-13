@@ -8,6 +8,7 @@ docs/adr/0008-block-synchronization.md.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
@@ -15,6 +16,7 @@ from numpy.typing import ArrayLike, NDArray
 
 from ._checks import count, real
 from .channel import _interpolate
+from .modulation import _INV_SQRT10, _QAM16_THRESHOLD
 
 
 def _complex(x: ArrayLike, what: str, minimum: int) -> NDArray[np.complex128]:
@@ -184,11 +186,14 @@ class CarrierRecovery:
     errors: NDArray[np.float64]
 
 
-def qpsk_carrier_tracking(
-    symbols: ArrayLike, kp: float, ki: float, *, phase: float = 0.0
+def _carrier_loop(
+    symbols: ArrayLike,
+    kp: float,
+    ki: float,
+    phase: float,
+    decide: Callable[[float, float], tuple[float, float]],
 ) -> CarrierRecovery:
-    """Decision-directed QPSK carrier loop: a PI loop on the phase, one update per symbol
-    (conventions: Synchronization, Tracking loops)."""
+    """The decision-directed PI loop shared by the carrier trackers; ``decide`` gives ``d``."""
     z = np.asarray(symbols)
     if z.ndim != 1:
         raise ValueError("symbols must be one-dimensional")
@@ -209,8 +214,7 @@ def qpsk_carrier_tracking(
         s = math.sin(phi)
         re = x.real * c + x.imag * s
         im = x.imag * c - x.real * s
-        dre = 1.0 if re >= 0 else -1.0
-        dim = 1.0 if im >= 0 else -1.0
+        dre, dim = decide(re, im)
         e = dre * im - dim * re
         out.append(complex(re, im))
         phases.append(phi)
@@ -222,3 +226,47 @@ def qpsk_carrier_tracking(
         np.array(phases, dtype=np.float64),
         np.array(errors, dtype=np.float64),
     )
+
+
+def _qpsk_decision(re: float, im: float) -> tuple[float, float]:
+    return (1.0 if re >= 0 else -1.0, 1.0 if im >= 0 else -1.0)
+
+
+_C8 = 1 / math.sqrt(2)
+_PSK8_POINTS = [(1.0, 0.0), (_C8, _C8), (0.0, 1.0), (-_C8, _C8),
+                (-1.0, 0.0), (-_C8, -_C8), (0.0, -1.0), (_C8, -_C8)]  # fmt: skip
+
+
+def _psk8_decision(re: float, im: float) -> tuple[float, float]:
+    return _PSK8_POINTS[math.floor(math.atan2(im, re) / (math.pi / 4) + 0.5) % 8]
+
+
+def _qam16_level(v: float) -> float:
+    m = 1.0 if abs(v) < _QAM16_THRESHOLD else 3.0
+    return (m if v >= 0 else -m) * _INV_SQRT10
+
+
+def _qam16_decision(re: float, im: float) -> tuple[float, float]:
+    return (_qam16_level(re), _qam16_level(im))
+
+
+def qpsk_carrier_tracking(
+    symbols: ArrayLike, kp: float, ki: float, *, phase: float = 0.0
+) -> CarrierRecovery:
+    """Decision-directed QPSK carrier loop: a PI loop on the phase, one update per symbol
+    (conventions: Synchronization, Tracking loops)."""
+    return _carrier_loop(symbols, kp, ki, phase, _qpsk_decision)
+
+
+def psk8_carrier_tracking(
+    symbols: ArrayLike, kp: float, ki: float, *, phase: float = 0.0
+) -> CarrierRecovery:
+    """Decision-directed 8-PSK carrier loop (conventions: Synchronization, Tracking loops)."""
+    return _carrier_loop(symbols, kp, ki, phase, _psk8_decision)
+
+
+def qam16_carrier_tracking(
+    symbols: ArrayLike, kp: float, ki: float, *, phase: float = 0.0
+) -> CarrierRecovery:
+    """Decision-directed 16-QAM carrier loop (conventions: Synchronization, Tracking loops)."""
+    return _carrier_loop(symbols, kp, ki, phase, _qam16_decision)

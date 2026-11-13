@@ -83,7 +83,42 @@ public static class Sync
     /// <param name="kp">Proportional gain, finite, not negative.</param>
     /// <param name="ki">Integral gain, finite, not negative.</param>
     /// <param name="phase">Phase removed from the first symbol, in radians, finite.</param>
-    public static CarrierRecovery QpskCarrierTracking(ReadOnlySpan<Complex> symbols, double kp, double ki, double phase = 0)
+    public static CarrierRecovery QpskCarrierTracking(ReadOnlySpan<Complex> symbols, double kp, double ki, double phase = 0) =>
+        CarrierLoop(symbols, kp, ki, phase, static (re, im) => (re >= 0 ? 1 : -1, im >= 0 ? 1 : -1));
+
+    /// <summary>Decision-directed 8-PSK carrier loop (conventions: Synchronization, Tracking
+    /// loops).</summary>
+    /// <param name="symbols">8-PSK symbols, all finite.</param>
+    /// <param name="kp">Proportional gain, finite, not negative.</param>
+    /// <param name="ki">Integral gain, finite, not negative.</param>
+    /// <param name="phase">Phase removed from the first symbol, in radians, finite.</param>
+    public static CarrierRecovery Psk8CarrierTracking(ReadOnlySpan<Complex> symbols, double kp, double ki, double phase = 0) =>
+        CarrierLoop(symbols, kp, ki, phase, static (re, im) =>
+            Psk8Points[(int)(((long)Math.Floor(Math.Atan2(im, re) / (Math.PI / 4) + 0.5) % 8 + 8) % 8)]);
+
+    /// <summary>Decision-directed 16-QAM carrier loop (conventions: Synchronization, Tracking
+    /// loops).</summary>
+    /// <param name="symbols">16-QAM symbols, all finite.</param>
+    /// <param name="kp">Proportional gain, finite, not negative.</param>
+    /// <param name="ki">Integral gain, finite, not negative.</param>
+    /// <param name="phase">Phase removed from the first symbol, in radians, finite.</param>
+    public static CarrierRecovery Qam16CarrierTracking(ReadOnlySpan<Complex> symbols, double kp, double ki, double phase = 0) =>
+        CarrierLoop(symbols, kp, ki, phase, static (re, im) => (Qam16Level(re), Qam16Level(im)));
+
+    private static readonly double C8 = 1 / Math.Sqrt(2);
+    private static readonly (double, double)[] Psk8Points =
+        [(1, 0), (C8, C8), (0, 1), (-C8, C8), (-1, 0), (-C8, -C8), (0, -1), (C8, -C8)];
+    private static readonly double InvSqrt10 = 1.0 / Math.Sqrt(10.0);
+    private static readonly double Qam16Threshold = 2.0 / Math.Sqrt(10.0);
+
+    private static double Qam16Level(double v)
+    {
+        double m = Math.Abs(v) < Qam16Threshold ? 1 : 3;
+        return (v >= 0 ? m : -m) * InvSqrt10;
+    }
+
+    private static CarrierRecovery CarrierLoop(ReadOnlySpan<Complex> symbols, double kp, double ki, double phase,
+        Func<double, double, (double Re, double Im)> decide)
     {
         foreach (Complex z in symbols)
             if (!double.IsFinite(z.Real) || !double.IsFinite(z.Imaginary))
@@ -102,7 +137,7 @@ public static class Sync
             double c = Math.Cos(phi), s = Math.Sin(phi);
             double re = z.Real * c + z.Imaginary * s;
             double im = z.Imaginary * c - z.Real * s;
-            double dre = re >= 0 ? 1 : -1, dim = im >= 0 ? 1 : -1;
+            var (dre, dim) = decide(re, im);
             double e = dre * im - dim * re;
             output[k] = new Complex(re, im);
             phases[k] = phi;

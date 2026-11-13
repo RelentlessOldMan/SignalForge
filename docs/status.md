@@ -4,10 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Carrier tracking for 8-PSK and 16-QAM**: decision-directed loops like
-   `qpsk_carrier_tracking`, with the decision the nearest constellation point
-   (`psk8_map`/`qam16_map` conventions), vectors from a stdlib generator, and the proportional-lag
-   closed form where one exists.
+1. **8-PSK and 16-QAM through the link**: a `modulation` config field (`qpsk` by default) so the
+   link maps, recovers and measures 8-PSK and 16-QAM with the same chain. It needs a coarse
+   frequency estimate for each (8th power for 8-PSK; 4th power works for 16-QAM), the preamble
+   resolving each loop's ambiguity, and BER against `psk8_ber_theory`/`qam16_ber_theory`. Each
+   gets a link config in `vectors/links/`.
 
 ## Built
 
@@ -503,12 +504,19 @@ Updated with every chunk of work. Dates are absolute.
   wander, which locked the loop to the wrong quadrant). Tests: at 0.15 Hz (0.03 rad per symbol),
   over 5 seeds, the block receiver makes over 300 errors and the loop under 40 (theory about 6).
   Link config `qpsk_phase_noise`. Python 2107 passed, 2 skipped; .NET 1689 passed.
+- 2026-11-13: 8-PSK and 16-QAM carrier loops (conventions: Synchronization, Tracking loops;
+  ADR 0048): `psk8_carrier_tracking` and `qam16_carrier_tracking`, the QPSK loop with the
+  hard demapper's decision (one shared loop in each language). 13 more vectors in
+  `carrier_loop.py`, including by-hand detector values. Tests: the 8-PSK proportional lag is
+  exactly `asin(ω/kp)`; the PI loop removes the lag for both; both track a drifting carrier
+  through noise at Es/N0 22 dB with no bit errors; 8-PSK locks to a multiple of π/4. Python 2136
+  passed, 2 skipped; .NET 1710 passed.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for other modulations, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK and 16-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

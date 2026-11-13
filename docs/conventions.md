@@ -905,6 +905,18 @@ multiplies the block by the power of two that brings its largest real or imagina
     `θ − φ = asin(ω/(√2·A·kp))` with `ki = 0` (if that is below π/4), and none with `ki > 0`.
     The loop locks to the nearest multiple of π/2 to its start; resolving that is the
     caller's. **(implemented)**
+  - `psk8_carrier_tracking` and `qam16_carrier_tracking` (same arguments and result,
+    [ADR 0048](adr/0048-psk8-qam16-carrier-loops.md)): the same recurrence with another
+    decision `d`, the detector still `eₖ = d.re·r.im − d.im·r.re`. 8-PSK: `p = ⌊atan2(r.im,
+    r.re)/(π/4) + 1/2⌋ mod 8` as in the hard demapper, and `d` from the table
+    `(1, 0), (c, c), (0, 1), (−c, c), (−1, 0), (−c, −c), (0, −1), (c, −c)` at `p`, with
+    `c = 1/√2` (not `cos(π/4)`, so both languages use the same number). Its slope is `Kd = |z|`,
+    exactly `|z|·sin(θ − φ)` noise-free, so the proportional lag is `asin(ω/(A·kp))` (below
+    π/8); it locks to a multiple of π/4. 16-QAM: each part of `r` decided as in the hard
+    demapper, level `±1` when `|v| < 2/√10` (`v ≥ 0` positive, so 0 decides `+1`), else `±3`,
+    and `d = level/√10` per part (`1/√10` computed once, as in `qam16_map`). For a point `s`
+    scaled by `A` the detector is `A·|s|²·sin(θ − φ)`, so the mean slope over the constellation
+    is `A`; it locks to a multiple of π/2. **(implemented)**
 - **QPSK phase offset** (`qpsk_phase_offset(symbols)`): `φ = arg(−Σ z⁴) / 4`, in `(−π/4, π/4]`;
   the true phase is `φ + m·π/2`. Correct by multiplying by `e^{−jφ}`
   (`frequency_offset(symbols, 0, 1, −φ)`). At least one symbol. **(implemented)**
