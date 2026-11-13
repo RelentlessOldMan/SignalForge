@@ -130,4 +130,68 @@ public static class Modulation
         }
         return bits;
     }
+
+    private static byte[] LabelBits(int k)
+    {
+        var bits = new byte[k << k];
+        for (int m = 0; m < 1 << k; m++)
+            for (int i = 0; i < k; i++)
+                bits[m * k + i] = (byte)((m >> (k - 1 - i)) & 1);
+        return bits;
+    }
+
+    private static readonly Complex[] QpskPoints = QpskMap(LabelBits(2));
+    private static readonly Complex[] Psk8Points = Psk8Map(LabelBits(3));
+    private static readonly Complex[] Qam16Points = Qam16Map(LabelBits(4));
+
+    /// <summary>Max-log LLRs of QPSK, positive for bit 0 (conventions: Bits and symbols, Soft
+    /// demapping).</summary>
+    /// <param name="symbols">Received symbols, finite.</param>
+    /// <param name="noiseVariance">N0 = E|n|² of the complex noise, positive and finite.</param>
+    public static double[] QpskDemapLlr(ReadOnlySpan<Complex> symbols, double noiseVariance) =>
+        DemapLlr(symbols, noiseVariance, QpskPoints, 2);
+
+    /// <summary>Max-log LLRs of 8-PSK, positive for bit 0 (conventions: Bits and symbols, Soft
+    /// demapping).</summary>
+    /// <param name="symbols">Received symbols, finite.</param>
+    /// <param name="noiseVariance">N0 = E|n|² of the complex noise, positive and finite.</param>
+    public static double[] Psk8DemapLlr(ReadOnlySpan<Complex> symbols, double noiseVariance) =>
+        DemapLlr(symbols, noiseVariance, Psk8Points, 3);
+
+    /// <summary>Max-log LLRs of 16-QAM, positive for bit 0 (conventions: Bits and symbols, Soft
+    /// demapping).</summary>
+    /// <param name="symbols">Received symbols, finite.</param>
+    /// <param name="noiseVariance">N0 = E|n|² of the complex noise, positive and finite.</param>
+    public static double[] Qam16DemapLlr(ReadOnlySpan<Complex> symbols, double noiseVariance) =>
+        DemapLlr(symbols, noiseVariance, Qam16Points, 4);
+
+    private static double[] DemapLlr(ReadOnlySpan<Complex> symbols, double noiseVariance, Complex[] points, int k)
+    {
+        if (!(noiseVariance > 0 && double.IsFinite(noiseVariance)))
+            throw new ArgumentOutOfRangeException(nameof(noiseVariance), noiseVariance, "must be positive and finite");
+        foreach (Complex s in symbols)
+            if (!double.IsFinite(s.Real) || !double.IsFinite(s.Imaginary))
+                throw new ArgumentException("symbols must be finite", nameof(symbols));
+        var llr = new double[k * symbols.Length];
+        Span<double> min0 = stackalloc double[k], min1 = stackalloc double[k];
+        for (int n = 0; n < symbols.Length; n++)
+        {
+            min0.Fill(double.PositiveInfinity);
+            min1.Fill(double.PositiveInfinity);
+            for (int m = 0; m < points.Length; m++)
+            {
+                double dr = symbols[n].Real - points[m].Real, di = symbols[n].Imaginary - points[m].Imaginary;
+                double d2 = dr * dr + di * di;
+                for (int i = 0; i < k; i++)
+                {
+                    Span<double> mins = ((m >> (k - 1 - i)) & 1) == 1 ? min1 : min0;
+                    if (d2 < mins[i])
+                        mins[i] = d2;
+                }
+            }
+            for (int i = 0; i < k; i++)
+                llr[n * k + i] = (min1[i] - min0[i]) / noiseVariance;
+        }
+        return llr;
+    }
 }

@@ -72,10 +72,13 @@ from .metrics import (
 )
 from .modulation import (
     psk8_demap_hard,
+    psk8_demap_llr,
     psk8_map,
     qam16_demap_hard,
+    qam16_demap_llr,
     qam16_map,
     qpsk_demap_hard,
+    qpsk_demap_llr,
     qpsk_map,
 )
 from .spectral import (
@@ -108,7 +111,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.55"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.56"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -190,17 +193,20 @@ __all__ = [
     "prbs",
     "psk8_ber_theory",
     "psk8_demap_hard",
+    "psk8_demap_llr",
     "psk8_map",
     "psk8_ser_theory",
     "pulse_shape",
     "pulse_train",
     "qam16_ber_theory",
     "qam16_demap_hard",
+    "qam16_demap_llr",
     "qam16_map",
     "qam16_ser_theory",
     "qpsk_ber_theory",
     "qpsk_block_phases",
     "qpsk_demap_hard",
+    "qpsk_demap_llr",
     "qpsk_frequency_offset",
     "qpsk_link",
     "qpsk_map",

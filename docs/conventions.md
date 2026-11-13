@@ -305,6 +305,15 @@ groups as the tone metrics (ADR 0015).
   evaluated in double precision); so 0 decides `01` and `±2/√10` decide the outer level. A NaN
   in either part is `invalid_argument`.
   **(implemented)**
+- **Soft demapping** (`qpsk_demap_llr`, `psk8_demap_llr`, `qam16_demap_llr`, each
+  `(symbols, noise_variance)`, [ADR 0039](adr/0039-soft-demapping.md)): max-log LLRs, one per
+  bit in the hard demapper's order. For bit `i` of a received `y`,
+  `LLR = (min_{s: bᵢ=1} |y − s|² − min_{s: bᵢ=0} |y − s|²) / noise_variance` over the
+  constellation's points, so **positive means bit 0 is likelier** and the hard decision is the
+  sign (0 counts as bit 0). `noise_variance` is `N0 = E|n|²` of the complex noise (both parts
+  together), positive and finite. `|y − s|²` is `Δre·Δre + Δim·Δim`. Symbols must be finite.
+  The exact LLR, `ln(Σ_{bᵢ=0} e^{−|y−s|²/N0} / Σ_{bᵢ=1} e^{−|y−s|²/N0})`, differs from this by at
+  most `ln(M/2)`; for QPSK they are equal, `2√2·Re(y)/N0` and `2√2·Im(y)/N0`. **(implemented)**
 - Other constellations are normalized to unit average symbol energy unless a standard says otherwise.
   **(defined)**
 

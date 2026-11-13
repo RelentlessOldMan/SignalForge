@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Soft demapping**: max-log LLRs for QPSK, 8-PSK and 16-QAM (`qpsk_demap_llr` and the like,
-   given the noise variance), sign convention written first (positive means bit 0 is likelier);
-   expected values by hand from the nearest points of each bit set; tests that the hard decision
-   is the sign, and that the exact log-sum LLR agrees at high SNR.
-2. **Fractional-delay multipath**: per-path fractional delays through a windowed-sinc
+1. **Fractional-delay multipath**: per-path fractional delays through a windowed-sinc
    interpolator, on top of the integer-delay `multipath`; expected values from the sinc sum.
+2. **LLR statistics in the link**: in AWGN the QPSK LLR of a sent 0 is Gaussian with mean
+   `2·Es/N0` and variance twice that (the consistency condition); check it through `qpsk_link`'s
+   pieces (shaping, matched filter, sampling) in both suites, which tests the receive chain's
+   scaling end to end.
 
 ## Built
 
@@ -427,6 +427,12 @@ Updated with every chunk of work. Dates are absolute.
   gains)`, a tapped delay line with integer delays and complex gains, output as long as the input
   (tail dropped), gains not normalized. 12 vectors by hand in `channel.json`; tests against a
   dense convolution. Python 1919 passed, 2 skipped; .NET 1533 passed.
+- 2026-11-13: soft demapping (conventions: Bits and symbols; ADR 0039): `qpsk_demap_llr`,
+  `psk8_demap_llr`, `qam16_demap_llr` `(symbols, noise_variance)`, max-log LLRs by a search over
+  the points, positive for bit 0, `noise_variance = N0`. 22 vectors (4 by hand, the rest empty
+  input and errors); tests: the sign is the hard decision, QPSK equals `2√2·Re(y)/N0` exactly,
+  within `ln(M/2)` of the exact log-sum LLR, scaling with `N0`. Python 1952 passed, 2 skipped;
+  .NET 1563 passed.
 
 ## Not built
 

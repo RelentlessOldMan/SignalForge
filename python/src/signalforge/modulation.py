@@ -7,6 +7,8 @@ import math
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from ._checks import real
+
 _INV_SQRT2 = 1.0 / np.sqrt(2.0)
 _INV_SQRT10 = 1.0 / math.sqrt(10.0)
 _QAM16_THRESHOLD = 2.0 / math.sqrt(10.0)
@@ -100,3 +102,52 @@ def qam16_demap_hard(symbols: ArrayLike) -> NDArray[np.uint8]:
     out[2::4] = s.imag < 0
     out[3::4] = np.abs(s.imag) < _QAM16_THRESHOLD
     return out
+
+
+def _label_bits(k: int) -> NDArray[np.uint8]:
+    m = np.arange(1 << k)
+    return ((m[:, None] >> np.arange(k - 1, -1, -1)) & 1).astype(np.uint8).reshape(-1)
+
+
+def _demap_llr(
+    symbols: ArrayLike, noise_variance: float, points: NDArray[np.complex128], k: int
+) -> NDArray[np.float64]:
+    s = np.asarray(symbols, dtype=np.complex128)
+    if s.ndim != 1:
+        raise ValueError("symbols must be one-dimensional")
+    if not np.isfinite(s).all():
+        raise ValueError("symbols must be finite")
+    nv = real(noise_variance, "noise_variance")
+    if not nv > 0:
+        raise ValueError("noise_variance must be positive and finite")
+    dr = s.real[:, None] - points.real[None, :]
+    di = s.imag[:, None] - points.imag[None, :]
+    d2 = dr * dr + di * di
+    labels = np.arange(points.size)
+    out = np.empty((s.size, k))
+    for i in range(k):
+        one = ((labels >> (k - 1 - i)) & 1) == 1
+        if s.size:
+            out[:, i] = (d2[:, one].min(axis=1) - d2[:, ~one].min(axis=1)) / nv
+    return out.reshape(-1)
+
+
+_QPSK_POINTS = qpsk_map(_label_bits(2))
+_PSK8_POINTS = psk8_map(_label_bits(3))
+_QAM16_POINTS = qam16_map(_label_bits(4))
+
+
+def qpsk_demap_llr(symbols: ArrayLike, noise_variance: float) -> NDArray[np.float64]:
+    """Max-log LLRs of QPSK, positive for bit 0 (conventions: Bits and symbols, Soft demapping)."""
+    return _demap_llr(symbols, noise_variance, _QPSK_POINTS, 2)
+
+
+def psk8_demap_llr(symbols: ArrayLike, noise_variance: float) -> NDArray[np.float64]:
+    """Max-log LLRs of 8-PSK, positive for bit 0 (conventions: Bits and symbols, Soft demapping)."""
+    return _demap_llr(symbols, noise_variance, _PSK8_POINTS, 3)
+
+
+def qam16_demap_llr(symbols: ArrayLike, noise_variance: float) -> NDArray[np.float64]:
+    """Max-log LLRs of 16-QAM, positive for bit 0 (conventions: Bits and symbols, Soft
+    demapping)."""
+    return _demap_llr(symbols, noise_variance, _QAM16_POINTS, 4)

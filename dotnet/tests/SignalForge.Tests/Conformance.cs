@@ -231,10 +231,13 @@ public static class Conformance
             "sfdr" => SfdrOp(a),
             "qpsk_map" => Bind(Bits(a.Get("bits")), b => Modulation.QpskMap(b)),
             "qpsk_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.QpskDemapHard(s)),
+            "qpsk_demap_llr" => Bind((Complexes(a.Get("symbols")), a.D("noise_variance")), t => Modulation.QpskDemapLlr(t.Item1, t.Item2)),
             "psk8_map" => Bind(Bits(a.Get("bits")), b => Modulation.Psk8Map(b)),
             "psk8_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.Psk8DemapHard(s)),
+            "psk8_demap_llr" => Bind((Complexes(a.Get("symbols")), a.D("noise_variance")), t => Modulation.Psk8DemapLlr(t.Item1, t.Item2)),
             "qam16_map" => Bind(Bits(a.Get("bits")), b => Modulation.Qam16Map(b)),
             "qam16_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.Qam16DemapHard(s)),
+            "qam16_demap_llr" => Bind((Complexes(a.Get("symbols")), a.D("noise_variance")), t => Modulation.Qam16DemapLlr(t.Item1, t.Item2)),
             "bit_errors" => Bind((Bits(a.Get("reference")), Bits(a.Get("received"))), t => Metrics.BitErrors(t.Item1, t.Item2)),
             "fft" => a.Get("samples") is Complex[] fc
                 ? () => Spectral.Fft(fc)
