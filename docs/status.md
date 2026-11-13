@@ -4,16 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Bessel IIR design** (low-pass, high-pass): conventions and an ADR first (which
-   normalization: delay, phase or magnitude at the cutoff); expected values from the reverse
-   Bessel polynomials computed exactly.
-2. **Equiripple start**: with many taps and wide gaps between bands, the first extremal set's
+1. **Equiripple start**: with many taps and wide gaps between bands, the first extremal set's
    `δ` can be below rounding (about 1e-16 against errors near 1) and the exchange cycles in the
    noise until it raises, though the optimum ripple is ordinary (6.5e-7 in one sweep case). In a
    sweep of 481 random designs to 400 taps, 2 designs raised in Python only and 7 in C# only for
    this or the final check. A start that keeps `δ` above rounding (e.g. a first set
    spaced in `x` rather than by grid index, or a continuation from fewer taps) would fix it; the
    convention for the start would change, so it needs care.
+2. **Hilbert transformers and differentiators** (equiripple types III and IV, odd symmetry):
+   conventions and an ADR first (the weighting for a differentiator, which types are allowed for
+   each); expected values from the 50-digit exchange in `vectors/generators/equiripple.py`.
 
 ## Built
 
@@ -325,10 +325,17 @@ Updated with every chunk of work. Dates are absolute.
   from 205 to 158 of 481 (most of the rest are beyond double precision). Python no longer warns
   on an IEEE division by zero at the precision limit. New vector `zero_delta_start` (34 cases),
   a regression test per language. Python 1482 passed, 2 skipped; .NET 1168 passed; conformance 703/703 in both.
+- 2026-11-13: Bessel IIR design, `bessel_lowpass` and `bessel_highpass` (`BesselLowpass`,
+  `BesselHighpass`), ADR 0025: maximally flat delay, normalized to −3 dB at the cutoff, order 1 to
+  10 (the reverse Bessel polynomial's roots lose digits fast beyond), poles by Aberth's iteration
+  on the recurrence, through the existing cascade. Vectors: order 1 and 2 by hand, the rest from
+  50-digit roots of the exact integer coefficients and a 50-digit `ω₀`, each checked against the
+  closed-form `|H|²`; tests check −3 dB, monotonic magnitude, the flat delay against
+  Butterworth's and the order-2 delay at DC (`ω₀/(2K)`).
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II and elliptic (Bessel, all-pass), FIR design beyond windowed sinc and equiripple (differentiators, Hilbert transformers), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic and Bessel (all-pass, Bessel band-pass), FIR design beyond windowed sinc and equiripple (differentiators, Hilbert transformers), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

@@ -4,7 +4,8 @@ It does not import NumPy or SignalForge. Butterworth sections come from the real
 conventions: IIR filters (each pole pair's Q, prewarped K, bilinear transform), not from mapping
 complex poles as the library does. Chebyshev type I sections come from each analog pole pair's real
 quadratic through the bilinear transform, checked against the closed-form magnitude and for
-stability. Band-pass and band-stop sections come from the quadratic formula
+stability; Bessel likewise, from 50-digit roots of the reverse Bessel polynomial. Band-pass and
+band-stop sections come from the quadratic formula
 on each prototype pole's image, and every band design is checked here against the closed-form
 magnitude of conventions: IIR filters before it is written. Responses evaluate each section's rational function at
 e^(j 2 pi f / fs); filter outputs run each section's difference equation in direct form I, and
@@ -20,6 +21,7 @@ import json
 import math
 import pathlib
 import sys
+from decimal import Decimal, localcontext
 
 TOL = {"abs": 1e-12, "rel": 1e-12}
 SRC = "vectors/generators/iir.py (stdlib only): "
@@ -378,6 +380,106 @@ def ell_design(case_id, order, ripple, atten, cutoff, fs, high, rows=None, src=N
             "|H|^2 and stability"}
 
 
+def bessel_coeffs(n):
+    """The reverse Bessel polynomial's exact integer coefficients, lowest power first."""
+    return [math.factorial(2 * n - k) // (2 ** (n - k) * math.factorial(k) * math.factorial(n - k))
+            for k in range(n + 1)]
+
+
+def bessel_mag2(n):
+    """|theta_N(j w)|^2 as exact integer coefficients in w^2, lowest power first: theta(s)theta(-s)
+    is even in s, and s^2 = -w^2."""
+    a = bessel_coeffs(n)
+    prod = [0] * (2 * n + 1)
+    for i, x in enumerate(a):
+        for j, y in enumerate(a):
+            prod[i + j] += x * y * (-1) ** j
+    return [prod[2 * m] * (-1) ** m for m in range(n + 1)]
+
+
+def bessel_proto(n):
+    """The prototype: the roots of theta_N (a start in double, then Newton in 50-digit Decimal on
+    the exact integer coefficients) and w0 (bisection in 50 digits on the exact |theta(jw)|^2)."""
+    a = bessel_coeffs(n)
+    m2 = bessel_mag2(n)
+    with localcontext() as ctx:
+        ctx.prec = 50
+        roots = []
+        for z in poly_roots([float(v) for v in reversed(a)]):
+            x, y = Decimal(z.real), Decimal(z.imag)
+            for _ in range(8):  # Newton: p(z)/p'(z) by Horner in (re, im) pairs
+                pr, pi, dr, di = Decimal(0), Decimal(0), Decimal(0), Decimal(0)
+                for c in reversed(a):
+                    dr, di = dr * x - di * y + pr, dr * y + di * x + pi
+                    pr, pi = pr * x - pi * y + c, pr * y + pi * x
+                den = dr * dr + di * di
+                x, y = x - (pr * dr + pi * di) / den, y - (pi * dr - pr * di) / den
+            roots.append((x, y))
+        top = Decimal(4 * n * n)  # in w^2; checked below to be past the root
+        target = 2 * a[0] * a[0]
+        assert sum(c * top**k for k, c in enumerate(m2)) > target
+        lo, hi = Decimal(0), top
+        for _ in range(200):
+            mid = (lo + hi) / 2
+            if sum(c * mid**k for k, c in enumerate(m2)) < target:
+                lo = mid
+            else:
+                hi = mid
+        w0 = ((lo + hi) / 2).sqrt()
+        tiny = Decimal("1e-30")
+        real = [complex(float(x / w0), 0.0) for x, y in roots if abs(y) < tiny]
+        pairs = sorted((complex(float(x / w0), float(y / w0)) for x, y in roots if y > tiny),
+                       key=lambda p: p.imag / -p.real)
+        assert len(real) == n % 2 and len(pairs) == n // 2, (n, roots)
+        return real, pairs, float(w0), m2
+
+
+def bessel(order, cutoff, fs, high):
+    """Bessel low-pass or high-pass: each analog section's real quadratic through the bilinear
+    transform, lowest Q first. Checked: the closed-form |H|^2, -3 dB at the cutoff, stability."""
+    real, pairs, w0, m2 = bessel_proto(order)
+    kc = math.tan(math.pi * cutoff / fs)
+    rows = []
+    for p in real:
+        qq = kc / -p.real if high else kc * -p.real
+        if high:
+            rows.append([1 / (1 + qq), -1 / (1 + qq), 0.0, 1.0, (qq - 1) / (qq + 1), 0.0])
+        else:
+            rows.append([qq / (1 + qq), qq / (1 + qq), 0.0, 1.0, (qq - 1) / (qq + 1), 0.0])
+    for p in pairs:
+        sp = kc / p if high else kc * p
+        sigma, m = sp.real, abs(sp) ** 2
+        a0 = 1 - 2 * sigma + m
+        b = [1 / a0, -2 / a0, 1 / a0] if high else [m / a0, 2 * m / a0, m / a0]
+        rows.append(b + [1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
+    for row in rows:
+        assert abs(row[5]) < 1 and abs(row[4]) < 1 + row[5], (order, row)
+    freqs = [fs * j / 128 for j in range(1, 64)] + [cutoff]
+    for f, h in zip(freqs, response(rows, freqs, fs)):
+        t = math.tan(math.pi * f / fs)
+        u = (w0 * (kc / t if high else t / kc)) ** 2
+        want = m2[0] / sum(c * u**k for k, c in enumerate(m2))
+        assert abs(abs(h) ** 2 - want) < 1e-12, (order, high, f, abs(h) ** 2, want)
+    assert abs(abs(response(rows, [cutoff], fs)[0]) ** 2 - 0.5) < 1e-12
+    return rows
+
+
+def bessel_design(case_id, order, cutoff, fs, high, rows=None, src=None):
+    return {"id": case_id, "op": "bessel_highpass" if high else "bessel_lowpass",
+            "args": {"order": order, "cutoff": cutoff, "sample_rate": fs},
+            "expected": rows if rows is not None else bessel(order, cutoff, fs, high),
+            "tol": TOL, "source": src or SRC + "roots of the reverse Bessel polynomial's exact "
+            "integer coefficients polished to 50 digits, w0 by 50-digit bisection on the exact "
+            "|theta(jw)|^2, sections from each real quadratic through the bilinear transform; "
+            "checked against the closed-form |H|^2, -3 dB at the cutoff and stability"}
+
+
+BW2 = 3 * (math.sqrt(5) - 1) / 2  # Bessel order 2: w0^4 + 3 w0^2 - 9 = 0
+BW = math.sqrt(BW2)
+BA = BW2 + 3 * BW + 3
+BHAND = ("by hand: theta_2 = s^2 + 3s + 3, |theta_2(jw)|^2 = w^4 + 3w^2 + 9 = 18 gives "
+         "w0^2 = 3(sqrt5 - 1)/2; H(s) = 3/(w0^2 s^2 + 3 w0 s + 3) (high-pass: s -> 1/s) and "
+         "fs = 4, cutoff 1 make K = 1, so s = (1 - z^-1)/(1 + z^-1); A = w0^2 + 3 w0 + 3")
 ELL_B = math.sqrt(8 * math.sqrt(5) - 16)
 ELL_A0 = math.sqrt(10) + ELL_B + 2 * math.sqrt(2)
 HAND2 = "by hand: 10 log10(2) dB ripple (eps_p = 1) and 10 dB attenuation (eps_s = 3): R_2(x) = ((k'+1)x^2 - 1)/((k'-1)x^2 + 1) reaches (1+k')/(1-k') = eps_s/eps_p = 3 at infinity, so k' = 1/2 and R_2 = (3x^2 - 2)/(2 - x^2); |H|^2 = (2 - x^2)^2/(10x^4 - 16x^2 + 8)... in s: (s^2 + 2)/(sqrt10 s^2 + b s + 2 sqrt2), b = sqrt(8 sqrt5 - 16); fs = 4 and cutoff 1 make K = 1"
@@ -832,6 +934,38 @@ cases = [
         {"order": 1000, "ripple_db": 1.0, "attenuation_db": 2.0, "cutoff": 0.1, "sample_rate": 1.0},
         "order 1000 with 1 dB and 2 dB: K'(k)/K(k) is about 1e-3, so k' = 4 exp(-pi/tau)... "
         "underflows to 0, below the k' >= 1e-6 limit"),
+    bessel_design("bessel.lowpass_1_by_hand", 1, 1.0, 4.0, False,
+                  rows=[[0.5, 0.5, 0.0, 1.0, 0.0, 0.0]],
+                  src="by hand: theta_1 = s + 1 has |theta_1(jw)|^2 = 1 + w^2 = 2 at w0 = 1, the "
+                  "Butterworth order 1; K = 1 gives (1 + z^-1)/2"),
+    bessel_design("bessel.lowpass_2_by_hand", 2, 1.0, 4.0, False,
+                  rows=[[3 / BA, 6 / BA, 3 / BA, 1.0, (6 - 2 * BW2) / BA, (BW2 - 3 * BW + 3) / BA]],
+                  src=BHAND),
+    bessel_design("bessel.highpass_2_by_hand", 2, 1.0, 4.0, True,
+                  rows=[[3 / BA, -6 / BA, 3 / BA, 1.0, (2 * BW2 - 6) / BA,
+                         (BW2 - 3 * BW + 3) / BA]], src=BHAND),
+    bessel_design("bessel.lowpass_2", 2, 0.1, 1.0, False),
+    bessel_design("bessel.lowpass_3", 3, 1000.0, 8000.0, False),
+    bessel_design("bessel.lowpass_4", 4, 0.2, 1.0, False),
+    bessel_design("bessel.lowpass_5", 5, 0.05, 1.0, False),
+    bessel_design("bessel.lowpass_8", 8, 0.25, 1.0, False),
+    bessel_design("bessel.lowpass_10", 10, 0.1, 1.0, False),
+    bessel_design("bessel.highpass_3", 3, 0.3, 1.0, True),
+    bessel_design("bessel.highpass_6", 6, 2000.0, 48000.0, True),
+    bessel_design("bessel.highpass_9", 9, 0.15, 1.0, True),
+    bessel_design("bessel.highpass_10", 10, 0.4, 1.0, True),
+    err("bessel.lowpass_order_zero", "bessel_lowpass",
+        {"order": 0, "cutoff": 0.1, "sample_rate": 1.0}, "order >= 1 required"),
+    err("bessel.lowpass_order_11", "bessel_lowpass",
+        {"order": 11, "cutoff": 0.1, "sample_rate": 1.0},
+        "order <= 10 required (conventions: Bessel design)"),
+    err("bessel.highpass_order_11", "bessel_highpass",
+        {"order": 11, "cutoff": 0.1, "sample_rate": 1.0},
+        "order <= 10 required (conventions: Bessel design)"),
+    err("bessel.highpass_cutoff_nyquist", "bessel_highpass",
+        {"order": 4, "cutoff": 0.5, "sample_rate": 1.0}, "cutoff < fs/2 required"),
+    err("bessel.lowpass_cutoff_zero", "bessel_lowpass",
+        {"order": 4, "cutoff": 0.0, "sample_rate": 1.0}, "cutoff > 0 required"),
     ell_band_design("elliptic.bandpass_1_by_hand", 1, 10 * math.log10(2), 40.0, 1.0, 3.0, 8.0,
                     False, [[0.5, 0.0, -0.5, 1.0, 0.0, 0.0]],
                     "by hand: fs = 8, edges 1 and 3 give L = tan(pi/8), H = 1/L, so W^2 = 1 and B = 2; 10 log10(2) dB ripple makes eps_p = 1, and order 1 has no zeros and the real pole -1/eps_p = -1 (k = k1, R_1(x) = x), so the section is B s/(s^2 + 2s + 1) -> a0 = 4, [2, 0, -2]/4 over [4, 0, 0]/4"),

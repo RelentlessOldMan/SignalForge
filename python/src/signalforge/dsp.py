@@ -490,6 +490,58 @@ def _butterworth(order: int, cutoff: float, sample_rate: float, high: bool) -> N
     return _cascade(n, cutoff, sample_rate, high, lambda i: cmath.exp(1j * _theta(i, n)))
 
 
+def _bessel_theta(n: int, s: complex) -> tuple[complex, complex]:
+    """The reverse Bessel polynomial and its derivative at ``s``, by the recurrence."""
+    t0, t1, d0, d1 = 1 + 0j, s + 1, 0j, 1 + 0j
+    for k in range(2, n + 1):
+        t0, t1, d0, d1 = (
+            t1,
+            (2 * k - 1) * t1 + s * s * t0,
+            d1,
+            (2 * k - 1) * d1 + 2 * s * t0 + s * s * d0,
+        )
+    return t1, d1
+
+
+def _bessel_prototype(n: int) -> list[complex]:
+    """The Bessel prototype's poles normalized to -3 dB at 1 (conventions: Bessel design): pair
+    ``i``'s upper pole for ``i < n // 2``, from the highest Q, then the real pole for an odd
+    ``n``."""
+    a0 = math.factorial(2 * n) / (2**n * math.factorial(n))
+    r = a0 ** (1 / n)  # the roots' geometric mean; Aberth starts on Butterworth's angles
+    z = [r * cmath.exp(1j * _theta(i, n)) for i in range(n)]
+    for _ in range(100):
+        steps = []
+        for i, zi in enumerate(z):
+            t, dt = _bessel_theta(n, zi)
+            w = t / dt
+            steps.append(w / (1 - w * sum(1 / (zi - zj) for j, zj in enumerate(z) if j != i)))
+        z = [zi - st for zi, st in zip(z, steps, strict=True)]
+        if max(abs(st) / abs(zi) for zi, st in zip(z, steps, strict=True)) <= 1e-15:
+            break
+    z = [zi - _bessel_theta(n, zi)[0] / _bessel_theta(n, zi)[1] for zi in z]  # a Newton step
+    lo, hi = 0.0, 1.0  # omega_0: |theta(j w)|^2 = 2 theta(0)^2, increasing in w
+    while abs(_bessel_theta(n, 1j * hi)[0]) ** 2 < 2 * a0 * a0:
+        hi *= 2
+    while lo < (mid := (lo + hi) / 2) < hi:
+        if abs(_bessel_theta(n, 1j * mid)[0]) ** 2 < 2 * a0 * a0:
+            lo = mid
+        else:
+            hi = mid
+    w0 = (lo + hi) / 2
+    real = [p for p in z if abs(p.imag) <= 1e-12 * abs(p)]  # the real pole: zero to rounding
+    pairs = sorted((p for p in z if p.imag > 1e-12 * abs(p)), key=lambda p: -p.imag / -p.real)
+    return [p / w0 for p in pairs] + [complex(p.real / w0, 0) for p in real]
+
+
+def _bessel(order: int, cutoff: float, sample_rate: float, high: bool) -> NDArray[np.float64]:
+    n = count(order, "order")
+    if not 1 <= n <= 10:
+        raise ValueError("order must be between 1 and 10: higher Bessel poles are lost to rounding")
+    poles = _bessel_prototype(n)
+    return _cascade(n, cutoff, sample_rate, high, lambda i: poles[i])
+
+
 def _chebyshev1(
     order: int, ripple_db: float, cutoff: float, sample_rate: float, high: bool
 ) -> NDArray[np.float64]:
@@ -658,6 +710,18 @@ def butterworth_highpass(order: int, cutoff: float, sample_rate: float) -> NDArr
     """Butterworth high-pass by the bilinear transform, as second-order sections (conventions: IIR
     filters)."""
     return _butterworth(order, cutoff, sample_rate, high=True)
+
+
+def bessel_lowpass(order: int, cutoff: float, sample_rate: float) -> NDArray[np.float64]:
+    """Bessel (maximally flat delay) low-pass by the bilinear transform, as second-order sections,
+    -3 dB at ``cutoff`` (conventions: IIR filters)."""
+    return _bessel(order, cutoff, sample_rate, high=False)
+
+
+def bessel_highpass(order: int, cutoff: float, sample_rate: float) -> NDArray[np.float64]:
+    """Bessel high-pass by the bilinear transform, as second-order sections, -3 dB at ``cutoff``
+    (conventions: IIR filters)."""
+    return _bessel(order, cutoff, sample_rate, high=True)
 
 
 def chebyshev1_lowpass(

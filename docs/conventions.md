@@ -503,6 +503,28 @@ and `SignalForge.IirFilter`.
     would start within `1/k − 1 ≈ k'²/2 < 5e-13` of the cutoff (high order, or `A − R` small for
     the order), where the poles sit on the unit circle to rounding; one whose poles round
     onto the unit circle is too, as for every IIR design.
+- **Bessel (Thomson) design** (`bessel_lowpass(order, cutoff, sample_rate)` and
+  `bessel_highpass(...)`, [ADR 0025](adr/0025-bessel.md)): the analog Bessel filter, maximally
+  flat group delay, through the same prewarped bilinear transform as Butterworth, normalized so
+  that the **cutoff is the −3 dB point**: `|H|² = 1/2` exactly there, as for Butterworth.
+  - With the reverse Bessel polynomial `θ_N(s) = Σ_{k=0}^{N} a_k s^k`,
+    `a_k = (2N − k)!/(2^(N−k)·k!·(N − k)!)` (so `θ_1 = s + 1`, `θ_2 = s² + 3s + 3`, and
+    `θ_N = (2N − 1)θ_{N−1} + s²θ_{N−2}`), the prototype is `H(s) = θ_N(0)/θ_N(ω₀·s)`, where `ω₀ > 0`
+    solves `|θ_N(jω₀)|² = 2·θ_N(0)²` (`|θ_N(jω)|²` is a polynomial in `ω²` with positive
+    coefficients, so the root is unique). Its poles are `p/ω₀` for the roots `p` of `θ_N`.
+    Then `|H(f)|² = θ_N(0)²/|θ_N(jω₀·t/K)|²` for the low-pass and the same with `K/t` for the
+    high-pass (`K = tan(π·f_c/fs)`, `t = tan(πf/fs)`).
+  - Sections in the Butterworth order: the real pole first for an odd order, then the pairs from
+    the lowest Q to the highest (pair 0 is the root with the largest `Im p/|Re p|`), with the
+    Butterworth zeros (at `z = −1` for the low-pass, `z = 1` for the high-pass) and unit gain at
+    DC (low-pass) or `fs/2` (high-pass). The roots are found to double precision by any method
+    (this code: Aberth's iteration, evaluating `θ_N` and `θ_N'` by the recurrence, then a
+    Newton step); `ω₀` likewise (this code: bisection).
+  - `order` is an integer, `1 ≤ order ≤ 10`; `0 < cutoff < fs/2`, finite. The roots of `θ_N` are
+    sensitive to rounding: in double they hold about 1e-12 relative at order 10, 1e-9 at 15 and
+    1e-4 at 25, so higher orders are `invalid_argument`.
+  - The bilinear transform keeps the magnitude's shape (warped in frequency) but not the flat
+    group delay: the digital filter's delay is flat only while the cutoff is well below `fs/2`.
 - **Band-pass and band-stop Butterworth** (`butterworth_bandpass(order, low, high, sample_rate)`,
   `butterworth_bandstop(...)`, [ADR 0016](adr/0016-band-butterworth.md)): the low-pass prototype
   of that `order` (cutoff 1, poles `p_k = e^(jθ_k)` as above) transformed to the band, through the

@@ -11,6 +11,8 @@ from numpy.typing import NDArray
 
 from signalforge import (
     IirFilter,
+    bessel_highpass,
+    bessel_lowpass,
     butterworth_bandpass,
     butterworth_bandstop,
     butterworth_highpass,
@@ -608,5 +610,60 @@ def test_elliptic_band_reference_gains() -> None:
     ],
 )
 def test_elliptic_band_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
+    with pytest.raises(ValueError):
+        design(*args)
+
+
+@pytest.mark.parametrize("high", [False, True])
+@pytest.mark.parametrize("order", range(1, 11))
+def test_bessel_is_3db_at_the_cutoff_and_monotonic(high: bool, order: int) -> None:
+    design = bessel_highpass if high else bessel_lowpass
+    sos = design(order, 0.15, 1.0)
+    assert np.abs(sos_response(sos, [0.15], 1.0)[0]) ** 2 == pytest.approx(0.5, abs=1e-12)
+    assert np.abs(sos_response(sos, [0.5 if high else 0.0], 1.0)[0]) == pytest.approx(1, abs=1e-13)
+    h = np.abs(sos_response(sos, np.linspace(0.0, 0.5, 501), 1.0))
+    assert np.all(np.diff(h) > 0) if high else np.all(np.diff(h) < 0)
+
+
+def test_bessel_order_1_is_butterworth() -> None:
+    for design, other in (
+        (bessel_lowpass, butterworth_lowpass),
+        (bessel_highpass, butterworth_highpass),
+    ):
+        np.testing.assert_allclose(design(1, 100.0, 1000.0), other(1, 100.0, 1000.0), rtol=1e-15)
+
+
+def _group_delay(sos: NDArray[np.float64], f: NDArray[np.float64]) -> NDArray[np.float64]:
+    df = 1e-6
+    hi, lo = sos_response(sos, f + df, 1.0), sos_response(sos, f - df, 1.0)
+    return np.asarray(-np.angle(hi / lo) / (2 * np.pi * 2 * df), dtype=np.float64)
+
+
+def test_bessel_delay_is_flat_where_butterworths_is_not() -> None:
+    # At a cutoff well below fs/2 the bilinear transform keeps the analog delay's shape: the
+    # Bessel delay is flat over half the pass band, the Butterworth's is not.
+    f = np.linspace(0.0005, 0.01, 40)
+    for order in (4, 6, 10):
+        gd = _group_delay(bessel_lowpass(order, 0.02, 1.0), f)
+        assert np.ptp(gd) / gd.mean() < 0.005
+        gb = _group_delay(butterworth_lowpass(order, 0.02, 1.0), f)
+        assert np.ptp(gb) / gb.mean() > 0.05
+
+
+def test_bessel_order_2_delay_at_dc() -> None:
+    # theta_2(w0 s) has delay w0 a_1/a_0 = w0 at DC; the bilinear map adds a factor 1/(2K).
+    k = math.tan(math.pi * 0.02)
+    w0 = math.sqrt(3 * (math.sqrt(5) - 1) / 2)
+    gd = _group_delay(bessel_lowpass(2, 0.02, 1.0), np.array([1e-5]))
+    assert gd[0] == pytest.approx(w0 / (2 * k), rel=1e-6)
+
+
+@pytest.mark.parametrize("design", [bessel_lowpass, bessel_highpass])
+@pytest.mark.parametrize(
+    "args",
+    [(0, 0.1, 1.0), (11, 0.1, 1.0), (-1, 0.1, 1.0), (4, 0.5, 1.0), (4, 0.0, 1.0),
+     (4, math.nan, 1.0), (4, 0.1, math.inf), (4, 0.1, 0.0)],
+)  # fmt: skip
+def test_bessel_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
     with pytest.raises(ValueError):
         design(*args)

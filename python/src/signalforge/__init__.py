@@ -5,6 +5,8 @@ from .core import Signal
 from .dsp import (
     FirFilter,
     IirFilter,
+    bessel_highpass,
+    bessel_lowpass,
     butterworth_bandpass,
     butterworth_bandstop,
     butterworth_highpass,
@@ -73,7 +75,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.39"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.40"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -94,6 +96,8 @@ __all__ = [
     "acpr",
     "amp_to_db",
     "awgn",
+    "bessel_highpass",
+    "bessel_lowpass",
     "bit_errors",
     "butterworth_bandpass",
     "butterworth_bandstop",
