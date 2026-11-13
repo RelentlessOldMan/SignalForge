@@ -138,6 +138,175 @@ def cheb2_design(case_id, order, atten, cutoff, fs, high, rows=None, src=None):
             "and for stability"}
 
 
+def agm_k(kc):
+    """K of the modulus whose complement is kc, by the arithmetic-geometric mean."""
+    a, b = 1.0, kc
+    for _ in range(40):  # quadratic convergence: a few steps reach the last bit
+        a, b = (a + b) / 2, math.sqrt(a * b)
+    return math.pi / (2 * a)
+
+
+def thetas(q, z=0.0):
+    """Jacobi theta_2(z), theta_3(z), theta_4(0) of nome q, by their series."""
+    t2 = 2 * sum(q ** ((n + 0.5) ** 2) * math.cos((2 * n + 1) * z) for n in range(60))
+    t3 = 1 + 2 * sum(q ** (n * n) * math.cos(2 * n * z) for n in range(1, 60))
+    t4 = 1 + 2 * sum((-1) ** n * q ** (n * n) for n in range(1, 60))
+    return t2, t3, t4
+
+
+def poly_roots(c):
+    """Roots of the polynomial with coefficients c (highest power first) by Durand-Kerner, then
+    Newton polishing."""
+    c = [v / c[0] for v in c]
+    n = len(c) - 1
+    ev = lambda x: sum(v * x ** (n - j) for j, v in enumerate(c))  # noqa: E731
+    dv = lambda x: sum(v * (n - j) * x ** (n - j - 1) for j, v in enumerate(c[:-1]))  # noqa: E731
+    r = [(0.4 + 0.9j) ** j for j in range(n)]
+    for _ in range(2000):
+        new = []
+        for i, x in enumerate(r):
+            d = 1
+            for j, y in enumerate(r):
+                if j != i:
+                    d *= x - y
+            new.append(x - ev(x) / d)
+        done = max(abs(a - b) for a, b in zip(new, r)) < 1e-15 * max(1, max(map(abs, r)))
+        r = new
+        if done:
+            break
+    for _ in range(3):
+        r = [x - ev(x) / dv(x) for x in r]
+    return r
+
+
+def elliptic(order, ripple, atten, cutoff, fs, high):
+    """Elliptic design by a route independent of the library: k and cd from theta series, the
+    elliptic rational function R_N from its zeros and poles, the poles as the left-half-plane roots
+    of D(w)^2 + eps^2 c^2 N(w)^2 (w = omega^2 = -s^2), each section from its analog quadratics
+    through the bilinear transform. Checked: R_N's equiripple bounds in both bands (the definition
+    of the elliptic filter), the closed-form |H|^2 of the rows, and stability."""
+    n, ep2 = order, 10 ** (ripple / 10) - 1
+    es2 = 10 ** (atten / 10) - 1
+    k1 = math.sqrt(ep2 / es2)
+    tau = agm_k(k1) / (n * agm_k(math.sqrt(1 - k1 * k1)))  # K'(k)/K(k) from the degree equation
+    q = math.exp(-math.pi * tau)
+    t2, t3, t4 = thetas(q)
+    k, kp = (t2 / t3) ** 2, (t4 / t3) ** 2
+    assert abs(k * k + kp * kp - 1) < 1e-13
+    cd = lambda u: (t3 / t2) * thetas(q, math.pi * u / 2)[0] / thetas(q, math.pi * u / 2)[1]  # noqa: E731
+    xs = [cd((2 * i + 1) / n) for i in range(n // 2)]  # R_N's zeros, descending
+    om = [1 / (k * x) for x in xs]  # its poles, ascending
+
+    def r_raw(w):
+        v = w if n % 2 else 1.0
+        for x, o in zip(xs, om):
+            v *= (w * w - x * x) / (w * w - o * o)
+        return v
+
+    c = 1 / r_raw(1.0)
+    rn = lambda w: c * r_raw(w)  # noqa: E731
+
+    def extreme(f, a, b, sign):  # golden-section search for the extremum of sign*f on [a, b]
+        g = (math.sqrt(5) - 1) / 2
+        for _ in range(200):
+            m1, m2 = b - g * (b - a), a + g * (b - a)
+            if sign * f(m1) > sign * f(m2):
+                b = m2
+            else:
+                a = m1
+        return f((a + b) / 2)
+
+    # Pass band: |R| <= 1 with the bound reached between zeros and at the edge.
+    pts = [0.0] + sorted(xs) + [1.0]
+    peaks = [extreme(lambda w: abs(rn(w)), a, b, 1) for a, b in zip(pts, pts[1:])]
+    for p in peaks[1:-1] + ([peaks[0]] if n % 2 == 0 else []):
+        assert abs(p - 1) < 1e-11, (order, ripple, atten, peaks)
+    assert all(p <= 1 + 1e-12 for p in peaks) and abs(rn(1.0) - 1) < 1e-14
+    # Stop band: |R| >= eps_s/eps_p with the bound reached at 1/k, between poles, and at infinity
+    # for an even order.
+    big = math.sqrt(es2 / ep2)
+    assert abs(abs(rn(1 / k)) / big - 1) < 1e-10, (order, abs(rn(1 / k)), big)
+    for a, b in zip(om, om[1:]):
+        assert abs(extreme(lambda w: abs(rn(w)), a, b, -1) / big - 1) < 1e-10
+    if n % 2 == 0:
+        assert abs(abs(rn(1e9)) / big - 1) < 1e-8
+    # Poles: D(w)^2 + ep2 c^2 N(w)^2 in w = omega^2, as polynomials (lowest power first).
+    num = [c] if n % 2 == 0 else [0.0, c]  # N(omega) in omega, then squared in w below
+    den = [1.0]
+    for x, o in zip(xs, om):
+        num = pmul(num, [-x * x, 0.0, 1.0])
+        den = pmul(den, [-o * o, 0.0, 1.0])
+    sq = lambda p: [v for v in pmul(p, p)[::2]]  # noqa: E731  (even powers only: omega^2 = w)
+    poly = padd(sq(den), [ep2 * v for v in sq(num)])
+    roots = poly_roots(poly[::-1])
+
+    def f_df(w):  # D^2 + ep2 c^2 N^2 and its derivative, in product form (well conditioned)
+        d, dd = 1, 0
+        for o in om:
+            d, dd = d * (w - o * o), dd * (w - o * o) + d
+        m, dm = c * c * (w if n % 2 else 1), c * c * (1 if n % 2 else 0)
+        for x in xs:
+            m, dm = m * (w - x * x) ** 2, dm * (w - x * x) ** 2 + m * 2 * (w - x * x)
+        return d * d + ep2 * m, 2 * d * dd + ep2 * dm
+
+    for _ in range(8):  # Newton polishing of the expanded polynomial's roots
+        roots = [w - (lambda v: v[0] / v[1])(f_df(w)) for w in roots]
+    poles = []
+    for w in roots:  # s^2 = -w, the left-half-plane root
+        s = cmath.sqrt(-w)
+        poles.append(s if s.real < 0 else -s)
+    real = [p for p in poles if abs(p.imag) < 1e-9]
+    pairs = sorted([p for p in poles if p.imag > 1e-9], key=lambda p: p.imag)  # rising |Im|
+    assert len(real) == n % 2 and len(pairs) == n // 2, (order, poles)
+    kc = math.tan(math.pi * cutoff / fs)
+    rows = []
+    if n % 2:
+        a = -real[0].real  # pole at -a
+        qq = kc / a if high else kc * a
+        if high:
+            rows.append([1 / (1 + qq), -1 / (1 + qq), 0.0, 1.0, (qq - 1) / (qq + 1), 0.0])
+        else:
+            rows.append([qq / (1 + qq), qq / (1 + qq), 0.0, 1.0, (qq - 1) / (qq + 1), 0.0])
+    for p, o in zip(pairs, sorted(om, reverse=True)):  # lowest Q with the highest zero
+        if high:
+            sp, w = kc / p, (kc / o) ** 2
+        else:
+            sp, w = kc * p, (kc * o) ** 2
+        sigma, m = sp.real, abs(sp) ** 2
+        a0 = 1 - 2 * sigma + m
+        g = 1 / a0 if high else m / w / a0  # unit gain at s = infinity or s = 0
+        rows.append([g * (1 + w), g * 2 * (w - 1), g * (1 + w), 1.0, 2 * (m - 1) / a0,
+                     (1 + 2 * sigma + m) / a0])
+    if n % 2 == 0:
+        rows[0][:3] = [v * 10 ** (-ripple / 20) for v in rows[0][:3]]
+    for row in rows:
+        assert abs(row[5]) < 1 and abs(row[4]) < 1 + row[5], (order, row)
+    freqs = [fs * j / 128 for j in range(1, 64)] + [cutoff]
+    for f, h in zip(freqs, response(rows, freqs, fs)):
+        t = math.tan(math.pi * f / fs)
+        want = 1 / (1 + ep2 * rn(kc / t if high else t / kc) ** 2)
+        assert abs(abs(h) ** 2 - want) < 1e-12, (order, ripple, atten, high, f, abs(h) ** 2, want)
+    assert abs(abs(response(rows, [cutoff], fs)[0]) ** 2 - 1 / (1 + ep2)) < 1e-12
+    return rows
+
+
+def ell_design(case_id, order, ripple, atten, cutoff, fs, high, rows=None, src=None):
+    return {"id": case_id, "op": "elliptic_highpass" if high else "elliptic_lowpass",
+            "args": {"order": order, "ripple_db": ripple, "attenuation_db": atten,
+                     "cutoff": cutoff, "sample_rate": fs},
+            "expected": rows if rows is not None else elliptic(order, ripple, atten, cutoff, fs,
+                                                               high),
+            "tol": TOL, "source": src or SRC + "theta-function series for k and cd, poles "
+            "as roots of D^2 + eps^2 N^2 found numerically, sections through the bilinear "
+            "transform; checked against R_N's equiripple bounds in both bands, the closed-form "
+            "|H|^2 and stability"}
+
+
+ELL_B = math.sqrt(8 * math.sqrt(5) - 16)
+ELL_A0 = math.sqrt(10) + ELL_B + 2 * math.sqrt(2)
+HAND2 = "by hand: 10 log10(2) dB ripple (eps_p = 1) and 10 dB attenuation (eps_s = 3): R_2(x) = ((k'+1)x^2 - 1)/((k'-1)x^2 + 1) reaches (1+k')/(1-k') = eps_s/eps_p = 3 at infinity, so k' = 1/2 and R_2 = (3x^2 - 2)/(2 - x^2); |H|^2 = (2 - x^2)^2/(10x^4 - 16x^2 + 8)... in s: (s^2 + 2)/(sqrt10 s^2 + b s + 2 sqrt2), b = sqrt(8 sqrt5 - 16); fs = 4 and cutoff 1 make K = 1"
+
+
 def pmul(p, q):
     out = [0.0] * (len(p) + len(q) - 1)
     for i, a in enumerate(p):
@@ -545,6 +714,48 @@ cases = [
     err("chebyshev2.bandpass_edges_1e-9", "chebyshev2_bandpass",
         {"order": 4, "attenuation_db": 40.0, "low": 1e-9, "high": 2e-9, "sample_rate": 1.0},
         "the design rounds to a pole on the unit circle (band edges within ~1e-8 fs of 0)"),
+    ell_design("elliptic.lowpass_1_by_hand", 1, 10 * math.log10(2), 40.0, 1.0, 4.0, False,
+               [[0.5, 0.5, 0.0, 1.0, 0.0, 0.0]],
+               "by hand: order 1 is R_1(x) = x, so with eps_p = 1 the pole is -1 and fs = 4, "
+               "cutoff 1 make K = 1: 1/(s + 1) -> [1, 1]/2 over [2, 0]/2"),
+    ell_design("elliptic.lowpass_2_by_hand", 2, 10 * math.log10(2), 10.0, 1.0, 4.0, False,
+               [[3 / ELL_A0, 2 / ELL_A0, 3 / ELL_A0, 1.0, (4 * math.sqrt(2) - 2 * math.sqrt(10))
+                 / ELL_A0, (math.sqrt(10) - ELL_B + 2 * math.sqrt(2)) / ELL_A0]],
+               HAND2 + " -> numerator (1 - z)^2 + 2(1 + z)^2 = [3, 2, 3] over "
+               "[sqrt10 + b + 2 sqrt2, 4 sqrt2 - 2 sqrt10, sqrt10 - b + 2 sqrt2], divided by a0"),
+    ell_design("elliptic.highpass_2_by_hand", 2, 10 * math.log10(2), 10.0, 1.0, 4.0, True,
+               [[3 / ELL_A0, -2 / ELL_A0, 3 / ELL_A0, 1.0, (2 * math.sqrt(10) - 4 * math.sqrt(2))
+                 / ELL_A0, (math.sqrt(10) - ELL_B + 2 * math.sqrt(2)) / ELL_A0]],
+               HAND2 + "; the high-pass maps s to 1/s: (2s^2 + 1)/(2 sqrt2 s^2 + b s + sqrt10) -> "
+               "[3, -2, 3] over [sqrt10 + b + 2 sqrt2, 2 sqrt10 - 4 sqrt2, sqrt10 - b + 2 sqrt2], "
+               "divided by a0"),
+    ell_design("elliptic.lowpass_3", 3, 0.5, 40.0, 1000.0, 8000.0, False),
+    ell_design("elliptic.lowpass_4", 4, 1.0, 60.0, 0.2, 1.0, False),
+    ell_design("elliptic.lowpass_5", 5, 0.1, 80.0, 0.1, 1.0, False),
+    ell_design("elliptic.lowpass_6_sharp", 6, 3.0, 30.0, 0.3, 1.0, False),
+    ell_design("elliptic.lowpass_8", 8, 0.05, 100.0, 0.25, 1.0, False),
+    ell_design("elliptic.highpass_3", 3, 1.0, 50.0, 0.3, 1.0, True),
+    ell_design("elliptic.highpass_4", 4, 0.5, 70.0, 2000.0, 48000.0, True),
+    ell_design("elliptic.highpass_7", 7, 0.2, 90.0, 0.15, 1.0, True),
+    err("elliptic.lowpass_ripple_equals_attenuation", "elliptic_lowpass",
+        {"order": 4, "ripple_db": 20.0, "attenuation_db": 20.0, "cutoff": 0.1, "sample_rate": 1.0},
+        "ripple_db < attenuation_db required"),
+    err("elliptic.lowpass_ripple_zero", "elliptic_lowpass",
+        {"order": 4, "ripple_db": 0.0, "attenuation_db": 40.0, "cutoff": 0.1, "sample_rate": 1.0},
+        "0 < ripple_db required"),
+    err("elliptic.highpass_attenuation_over_200", "elliptic_highpass",
+        {"order": 4, "ripple_db": 1.0, "attenuation_db": 250.0, "cutoff": 0.1, "sample_rate": 1.0},
+        "attenuation_db <= 200 required"),
+    err("elliptic.highpass_order_zero", "elliptic_highpass",
+        {"order": 0, "ripple_db": 1.0, "attenuation_db": 40.0, "cutoff": 0.1, "sample_rate": 1.0},
+        "order >= 1 required"),
+    err("elliptic.lowpass_cutoff_nyquist", "elliptic_lowpass",
+        {"order": 4, "ripple_db": 1.0, "attenuation_db": 40.0, "cutoff": 0.5, "sample_rate": 1.0},
+        "cutoff < fs/2 required"),
+    err("elliptic.lowpass_transition_rounds_to_zero", "elliptic_lowpass",
+        {"order": 1000, "ripple_db": 1.0, "attenuation_db": 2.0, "cutoff": 0.1, "sample_rate": 1.0},
+        "order 1000 with 1 dB and 2 dB: K'(k)/K(k) is about 1e-3, so k' = 4 exp(-pi/tau)... "
+        "underflows to 0, below the k' >= 1e-6 limit"),
     band_design("butterworth.bandpass_2", 2, 1000.0, 2000.0, 8000.0, False),
     band_design("butterworth.bandpass_3", 3, 1000.0, 3000.0, 16000.0, False),
     band_design("butterworth.bandpass_4_narrow", 4, 0.1, 0.11, 1.0, False),

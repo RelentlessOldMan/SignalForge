@@ -90,6 +90,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "chebyshev1_highpass": dsp.chebyshev1_highpass,
     "chebyshev2_lowpass": dsp.chebyshev2_lowpass,
     "chebyshev2_highpass": dsp.chebyshev2_highpass,
+    "elliptic_lowpass": dsp.elliptic_lowpass,
+    "elliptic_highpass": dsp.elliptic_highpass,
     "chebyshev1_bandpass": dsp.chebyshev1_bandpass,
     "chebyshev1_bandstop": dsp.chebyshev1_bandstop,
     "chebyshev2_bandpass": dsp.chebyshev2_bandpass,

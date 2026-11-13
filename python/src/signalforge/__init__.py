@@ -19,6 +19,8 @@ from .dsp import (
     chebyshev2_lowpass,
     convolve,
     decimate,
+    elliptic_highpass,
+    elliptic_lowpass,
     fir_bandpass,
     fir_highpass,
     fir_lowpass,
@@ -68,7 +70,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.35"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.36"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -111,6 +113,8 @@ __all__ = [
     "dbm_to_w",
     "decimate",
     "decode_samples",
+    "elliptic_highpass",
+    "elliptic_lowpass",
     "encode_samples",
     "evm",
     "fft",

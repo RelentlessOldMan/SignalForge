@@ -4,10 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Elliptic (Cauer) low-pass and high-pass** design: conventions and an ADR first (needs the
-   Jacobi elliptic functions and the degree equation; expected values from the closed-form
-   |H|² = 1/(1 + ε²R²) and published pole-zero tables computed independently).
-2. **Review pass** over the elliptic designs once built.
+1. **Review pass** over the elliptic designs: edge cases (order 1, levels near 200 dB, tiny
+   ripple), the `k' ≥ 1e-6` limit, and the docs.
+2. **Elliptic band-pass and band-stop** on the shared band transform.
 
 ## Built
 
@@ -251,10 +250,22 @@ Updated with every chunk of work. Dates are absolute.
   800 random designs (a temporary check, not vectors). They accept and reject the same designs
   and agree to 1e-12 on random designs, 1e-6 at the extremes. No code defects found; the
   conventions now state the bandwidth and dB conditioning limits.
+- 2026-11-13: elliptic (Cauer) low-pass and high-pass ([ADR 0022](adr/0022-elliptic.md)):
+  `elliptic_lowpass`, `elliptic_highpass` (`EllipticLowpass`, `EllipticHighpass`), with ripple and
+  attenuation in dB. Elliptic functions by the descending Landen ladder, the degree equation by
+  the nome q-product, `v0` by the ladder; conventions give every step. Designs with `k' < 1e-6`
+  are rejected. 17 new `iir.json` cases: three by hand (order 1 and the order-2 design with
+  ε = 1 in closed form, low-pass and high-pass), eight computed (orders 3-8), six rejections
+  (including the transition limit). The generator is independent of the library: it builds the rational
+  function R_N from theta functions and the AGM, finds the poles as roots of D² + ε²N² (polished
+  by Newton on the product form), and checks the equiripple bounds, |H|² against the closed form
+  to 1e-12, and stability. A temporary sweep of 600 random designs (orders 1-1000) agreed in both
+  languages to 1e-10, accepting and rejecting the same ones. Python 1388 passed, 2 skipped; .NET
+  1086 passed; conformance 655/655 in both.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth and Chebyshev I/II (elliptic), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II and elliptic low/high-pass (elliptic band designs), FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and

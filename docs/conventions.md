@@ -417,6 +417,40 @@ and `SignalForge.IirFilter`.
   - Sections in the Butterworth order, pair `k` with its own zeros, each with unit gain at DC
     (low-pass) or `fs/2` (high-pass); with no pass-band ripple there is no extra factor.
   - `order` is an integer, `1 ≤ order ≤ 1000`; `0 < attenuation_db ≤ 200`; `0 < cutoff < fs/2`, finite.
+- **Elliptic (Cauer) design** (`elliptic_lowpass(order, ripple_db, attenuation_db, cutoff,
+  sample_rate)` and `elliptic_highpass(...)`, [ADR 0022](adr/0022-elliptic.md)): equiripple in
+  both bands, pass-band ripple `ripple_db` (`R`) and stop-band peaks at `−attenuation_db` (`A`).
+  With `ε_p = √(10^(R/10) − 1)`, `ε_s = √(10^(A/10) − 1)` (both as `expm1`), `K`, `t` as for
+  type I, and `x = t/K` (low-pass) or `K/t` (high-pass): `|H(f)|² = 1/(1 + ε_p²·R_N(x)²)`. Here
+  `R_N` is the elliptic rational function of order `N` with `|R_N| ≤ 1` on `[0, 1]`, `R_N(1) = 1`,
+  and `|R_N| ≥ ε_s/ε_p` from `1/k` on, each bound reached `N` times (and at `x = 1/k`). The
+  cutoff is the **pass-band edge**, where `|H|²` last equals `10^(−R/10)`; the stop band starts at
+  `x = 1/k`, so the low-pass stop-band edge is `fs/π·atan(K/k)`.
+  - Moduli: `k₁ = ε_p/ε_s` (`k₁' = √((1 − k₁)(1 + k₁))`) and the selectivity `k` from the degree
+    equation `K'(k)/K(k) = K'(k₁)/(N·K(k₁))`, written `τ`. `K` is the complete elliptic integral
+    of the first kind, `K'(m) = K(m')`. With the nome `q = e^(−πτ)`: if `τ ≥ 1`,
+    `k = 4√q·∏_{m≥1}((1 + q^(2m))/(1 + q^(2m−1)))⁴` and `k' = √((1 − k)(1 + k))`; else the same
+    product of `q' = e^(−π/τ)` gives `k'`, and `k = √((1 − k')(1 + k'))`. Factors are taken while
+    `q^(2m−1) > 1e-18`.
+  - Landen ladder of a modulus `m` (with its complement `m'` given separately): `m_{j+1} =
+    (m_j/(1 + m_j'))²`, `m'_{j+1} = 2√m_j'/(1 + m_j')`, while `m_j > 1e-12`. Then
+    `K(m) = π/2·∏(1 + m_j)` over `j ≥ 1`, and `cd(uK, m)` (`u` real or complex) starts from
+    `w = cos(uπ/2)` and runs `w ← (1 + m_j)·w/(1 + m_j·w²)` from the last `j` down to 1.
+  - `v₀` (the imaginary offset): `y = 1/ε_p`, then for each `j ≥ 1` of `k₁`'s ladder
+    `y ← 2y/((1 + k₁_j)(1 + √(1 + k₁_{j−1}²·y²)))`; `v₀ = 2/π·asinh(y)/N`. (This is
+    `−j·sn⁻¹(j/ε_p, k₁)/N` normalized by `K₁`; for `k₁ → 0` it is type I's `μ`·2/π.)
+  - Prototype (pass-band edge 1): pole `i`, for `0 ≤ i ≤ (N − 1)/2`, is
+    `p_i = j·cd((u_i − j·v₀)K, k)` with `u_i = (2i + 1)/N`; for an odd order `i = (N − 1)/2`
+    (`u = 1`) is the real pole, taken as the real part. Pair `i`'s zeros are at
+    `s = ±j/(k·cd(u_iK, k))`; the real pole's zero is at infinity. Order 1 is the order-1 type I.
+  - Low-pass and high-pass transform, sections, zero placement and gains exactly as for type II
+    (pair `i` with its own zeros, unit gain at DC or `fs/2` per section, in the Butterworth order
+    of `i`); an even order then multiplies the first section's `b` by `10^(−R/20)`, as type I.
+  - `order` is an integer, `1 ≤ order ≤ 1000`; `0 < ripple_db < attenuation_db ≤ 200`;
+    `0 < cutoff < fs/2`, finite. A design with `k' < 1e-6` is `invalid_argument`: its stop band
+    would start within `1/k − 1 ≈ k'²/2 < 5e-13` of the cutoff (high order, or `A − R` small for
+    the order), where the poles sit on the unit circle to rounding; one whose poles round
+    onto the unit circle is too, as for every IIR design.
 - **Band-pass and band-stop Butterworth** (`butterworth_bandpass(order, low, high, sample_rate)`,
   `butterworth_bandstop(...)`, [ADR 0016](adr/0016-band-butterworth.md)): the low-pass prototype
   of that `order` (cutoff 1, poles `p_k = e^(jθ_k)` as above) transformed to the band, through the

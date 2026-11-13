@@ -424,6 +424,26 @@ public static class Dsp
     public static double[][] Chebyshev2Highpass(int order, double attenuationDb, double cutoff, double sampleRate) =>
         Chebyshev2(order, attenuationDb, cutoff, sampleRate, true);
 
+    /// <summary>Elliptic (Cauer) low-pass by the bilinear transform, as second-order sections
+    /// <c>[b0, b1, b2, a0, a1, a2]</c>: equiripple in both bands (conventions: IIR filters).</summary>
+    /// <param name="order">Filter order, 1 to 1000.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, in (0, <paramref name="attenuationDb"/>).</param>
+    /// <param name="attenuationDb">Stop-band attenuation in dB (the stop-band peaks are at −attenuationDb), at most 200.</param>
+    /// <param name="cutoff">Pass-band edge in Hz (where the ripple band ends), between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] EllipticLowpass(int order, double rippleDb, double attenuationDb, double cutoff, double sampleRate) =>
+        Elliptic(order, rippleDb, attenuationDb, cutoff, sampleRate, false);
+
+    /// <summary>Elliptic (Cauer) high-pass by the bilinear transform, as second-order sections
+    /// <c>[b0, b1, b2, a0, a1, a2]</c>: equiripple in both bands (conventions: IIR filters).</summary>
+    /// <param name="order">Filter order, 1 to 1000.</param>
+    /// <param name="rippleDb">Pass-band ripple in dB, in (0, <paramref name="attenuationDb"/>).</param>
+    /// <param name="attenuationDb">Stop-band attenuation in dB (the stop-band peaks are at −attenuationDb), at most 200.</param>
+    /// <param name="cutoff">Pass-band edge in Hz (where the ripple band starts), between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] EllipticHighpass(int order, double rippleDb, double attenuationDb, double cutoff, double sampleRate) =>
+        Elliptic(order, rippleDb, attenuationDb, cutoff, sampleRate, true);
+
     /// <summary>Chebyshev type I band-pass from the low-pass prototype of that order, by the bilinear
     /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>:
     /// pass band [low, high] rippling by rippleDb (conventions: IIR filters).</summary>
@@ -499,6 +519,87 @@ public static class Dsp
         return Cascade(order, cutoff, sampleRate, high,
             i => 1 / new Complex(sh * Math.Cos(Theta(i, order)), ch * Math.Sin(Theta(i, order))),
             i => 1 / Math.Sin(Theta(i, order)));
+    }
+
+    // Descending Landen moduli m_1, m_2, ... of m (complement mp given separately).
+    private static List<double> Landen(double m, double mp)
+    {
+        var ladder = new List<double>();
+        while (m > 1e-12)
+        {
+            (m, mp) = (Math.Pow(m / (1 + mp), 2), 2 * Math.Sqrt(mp) / (1 + mp));
+            ladder.Add(m);
+        }
+        return ladder;
+    }
+
+    // Complete elliptic integral of the first kind K(m).
+    private static double EllipK(double m, double mp)
+    {
+        double k = Math.PI / 2;
+        foreach (double v in Landen(m, mp))
+            k *= 1 + v;
+        return k;
+    }
+
+    // Jacobi cd(u·K, m) from m's Landen ladder.
+    private static Complex Cd(Complex u, List<double> ladder)
+    {
+        Complex w = Complex.Cos(u * Math.PI / 2);
+        for (int j = ladder.Count - 1; j >= 0; j--)
+            w = (1 + ladder[j]) * w / (1 + ladder[j] * w * w);
+        return w;
+    }
+
+    // k and k' from the degree equation K'(k)/K(k) = K'(k1)/(n·K(k1)).
+    private static (double K, double Kp) Selectivity(int n, double k1, double k1p)
+    {
+        double tau = EllipK(k1p, k1) / (n * EllipK(k1, k1p));
+        static double Product(double q)
+        {
+            double p = 4 * Math.Sqrt(q);
+            for (int m = 1; Math.Pow(q, 2 * m - 1) > 1e-18; m++)
+                p *= Math.Pow((1 + Math.Pow(q, 2 * m)) / (1 + Math.Pow(q, 2 * m - 1)), 4);
+            return p;
+        }
+        if (tau >= 1)
+        {
+            double k = Product(Math.Exp(-Math.PI * tau));
+            return (k, Math.Sqrt((1 - k) * (1 + k)));
+        }
+        double kp = Product(Math.Exp(-Math.PI / tau));
+        return (Math.Sqrt((1 - kp) * (1 + kp)), kp);
+    }
+
+    private static double[][] Elliptic(int order, double rippleDb, double attenuationDb, double cutoff, double sampleRate, bool high)
+    {
+        Order(order);
+        double ep = Math.Sqrt(DbPowerRatio(rippleDb, nameof(rippleDb)));
+        double es = Math.Sqrt(DbPowerRatio(attenuationDb, nameof(attenuationDb)));
+        if (!(rippleDb < attenuationDb))
+            throw new ArgumentException("rippleDb must be less than attenuationDb.", nameof(attenuationDb));
+        double k1 = ep / es, k1p = Math.Sqrt((1 - k1) * (1 + k1));
+        var (k, kp) = Selectivity(order, k1, k1p);
+        if (!(kp >= 1e-6)) // the stop band would start within k'²/2 (5e-13) of the cutoff
+            throw new ArgumentException("The transition band is too narrow for double precision (k' < 1e-6): the order is too high for rippleDb and attenuationDb.", nameof(order));
+        double y = 1 / ep, prev = k1;
+        foreach (double v in Landen(k1, k1p))
+        {
+            y = 2 * y / ((1 + v) * (1 + Math.Sqrt(1 + prev * prev * y * y)));
+            prev = v;
+        }
+        double v0 = 2 / Math.PI * Math.Asinh(y) / order;
+        List<double> ladder = Landen(k, kp);
+        double[][] rows = Cascade(order, cutoff, sampleRate, high,
+            i => Complex.ImaginaryOne * Cd(new Complex((2.0 * i + 1) / order, -v0), ladder),
+            i => 1 / (k * Cd((2.0 * i + 1) / order, ladder).Real));
+        if (order % 2 == 0)
+        {
+            double g = Math.Pow(10, -rippleDb / 20); // the ripple's low point at DC (or fs/2)
+            for (int j = 0; j < 3; j++)
+                rows[0][j] *= g;
+        }
+        return rows;
     }
 
     // 10^(x/10) − 1 for 0 < x ≤ 200 dB, without losing digits for small x.

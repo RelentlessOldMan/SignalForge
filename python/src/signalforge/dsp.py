@@ -341,6 +341,86 @@ def _chebyshev2(
     )
 
 
+def _landen(m: float, mp: float) -> list[float]:
+    """Descending Landen moduli ``m_1, m_2, ...`` of ``m`` (complement ``mp`` given separately)."""
+    out = []
+    while m > 1e-12:
+        m, mp = (m / (1 + mp)) ** 2, 2 * math.sqrt(mp) / (1 + mp)
+        out.append(m)
+    return out
+
+
+def _ellip_k(m: float, mp: float) -> float:
+    """Complete elliptic integral of the first kind ``K(m)``."""
+    return math.pi / 2 * math.prod(1 + v for v in _landen(m, mp))
+
+
+def _cd(u: complex, ladder: list[float]) -> complex:
+    """Jacobi ``cd(u K, m)`` from ``m``'s Landen ladder."""
+    w = cmath.cos(u * math.pi / 2)
+    for v in reversed(ladder):
+        w = (1 + v) * w / (1 + v * w * w)
+    return w
+
+
+def _selectivity(n: int, k1: float, k1p: float) -> tuple[float, float]:
+    """``k`` and ``k'`` from the degree equation ``K'(k)/K(k) = K'(k1)/(n K(k1))``."""
+    tau = _ellip_k(k1p, k1) / (n * _ellip_k(k1, k1p))
+
+    def product(q: float) -> float:
+        p, m = 4 * math.sqrt(q), 1
+        while q ** (2 * m - 1) > 1e-18:
+            p *= ((1 + q ** (2 * m)) / (1 + q ** (2 * m - 1))) ** 4
+            m += 1
+        return p
+
+    if tau >= 1:
+        k = product(math.exp(-math.pi * tau))
+        return k, math.sqrt((1 - k) * (1 + k))
+    kp = product(math.exp(-math.pi / tau))
+    return math.sqrt((1 - kp) * (1 + kp)), kp
+
+
+def _elliptic(
+    order: int,
+    ripple_db: float,
+    attenuation_db: float,
+    cutoff: float,
+    sample_rate: float,
+    high: bool,
+) -> NDArray[np.float64]:
+    n = _order(order)
+    ep = math.sqrt(_db_power_ratio(ripple_db, "ripple_db"))
+    es = math.sqrt(_db_power_ratio(attenuation_db, "attenuation_db"))
+    if not float(ripple_db) < float(attenuation_db):
+        raise ValueError("ripple_db must be less than attenuation_db")
+    k1 = ep / es
+    k1p = math.sqrt((1 - k1) * (1 + k1))
+    k, kp = _selectivity(n, k1, k1p)
+    if not kp >= 1e-6:  # the stop band would start within k'^2/2 (5e-13) of the cutoff
+        raise ValueError(
+            "the transition band is too narrow for double precision (k' < 1e-6): the order is "
+            "too high for ripple_db and attenuation_db"
+        )
+    y, prev = 1 / ep, k1
+    for v in _landen(k1, k1p):
+        y = 2 * y / ((1 + v) * (1 + math.sqrt(1 + prev * prev * y * y)))
+        prev = v
+    v0 = 2 / math.pi * math.asinh(y) / n
+    ladder = _landen(k, kp)
+    rows = _cascade(
+        n,
+        cutoff,
+        sample_rate,
+        high,
+        lambda i: 1j * _cd((2 * i + 1) / n - 1j * v0, ladder),
+        lambda i: 1 / (k * _cd((2 * i + 1) / n, ladder).real),
+    )
+    if n % 2 == 0:
+        rows[0, :3] *= 10 ** (-float(ripple_db) / 20)  # the ripple's low point at DC (or fs/2)
+    return rows
+
+
 def _cascade(
     n: int,
     cutoff: float,
@@ -422,6 +502,24 @@ def chebyshev2_highpass(
     band, stop band up to ``cutoff`` with peaks at ``-attenuation_db`` (conventions: IIR
     filters)."""
     return _chebyshev2(order, attenuation_db, cutoff, sample_rate, high=True)
+
+
+def elliptic_lowpass(
+    order: int, ripple_db: float, attenuation_db: float, cutoff: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Elliptic (Cauer) low-pass by the bilinear transform, as second-order sections: pass-band
+    ripple ``ripple_db``, which ``cutoff`` ends, and stop-band peaks at ``-attenuation_db``
+    (conventions: IIR filters)."""
+    return _elliptic(order, ripple_db, attenuation_db, cutoff, sample_rate, high=False)
+
+
+def elliptic_highpass(
+    order: int, ripple_db: float, attenuation_db: float, cutoff: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Elliptic (Cauer) high-pass by the bilinear transform, as second-order sections: pass-band
+    ripple ``ripple_db`` from ``cutoff``, and stop-band peaks at ``-attenuation_db`` (conventions:
+    IIR filters)."""
+    return _elliptic(order, ripple_db, attenuation_db, cutoff, sample_rate, high=True)
 
 
 def _butterworth_band(

@@ -23,6 +23,8 @@ from signalforge import (
     chebyshev2_bandstop,
     chebyshev2_highpass,
     chebyshev2_lowpass,
+    elliptic_highpass,
+    elliptic_lowpass,
     sos_response,
     zero_phase_filter,
 )
@@ -477,5 +479,68 @@ def test_chebyshev_band_reference_gains() -> None:
     ],
 )
 def test_chebyshev_band_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
+    with pytest.raises(ValueError):
+        design(*args)
+
+
+@pytest.mark.parametrize("high", [False, True])
+@pytest.mark.parametrize(
+    ("order", "ripple", "atten", "cutoff"),
+    [(1, 1.0, 40.0, 0.1), (2, 0.5, 20.0, 0.2), (3, 0.1, 60.0, 0.05), (5, 1.0, 80.0, 0.3),
+     (6, 3.0, 30.0, 0.25), (9, 0.01, 120.0, 0.1), (12, 0.5, 100.0, 0.4)],
+)  # fmt: skip
+def test_elliptic_is_equiripple_in_both_bands(
+    high: bool, order: int, ripple: float, atten: float, cutoff: float
+) -> None:
+    sos = (elliptic_highpass if high else elliptic_lowpass)(order, ripple, atten, cutoff, 1.0)
+    assert sos.shape == ((order + 1) // 2, 6)
+    for row in sos:
+        assert np.all(np.abs(np.roots(row[3:])) < 1)
+    pass_lo, stop_hi = 10 ** (-ripple / 10), 10 ** (-atten / 10)
+    f = np.linspace(0.0, 0.5, 200001)
+    h2 = np.abs(sos_response(sos, f, 1.0)) ** 2
+    passband = f >= cutoff if high else f <= cutoff
+    assert np.all(h2[passband] <= 1 + 1e-12) and np.all(h2[passband] >= pass_lo * (1 - 1e-12))
+    assert h2[passband].max() == pytest.approx(1.0, abs=1e-6)
+    edge = np.abs(sos_response(sos, [cutoff], 1.0)[0]) ** 2
+    assert edge == pytest.approx(pass_lo, rel=1e-10)
+    # Stop band: from the first frequency (moving away from the pass band) at the stop level on.
+    order_f = np.argsort(-f) if high else np.argsort(f)
+    below = np.flatnonzero(h2[order_f] <= stop_hi * (1 + 1e-9))
+    stop = order_f[below[0] :]
+    assert np.all(h2[stop] <= stop_hi * (1 + 1e-6))
+    if order > 1:
+        assert h2[stop].max() == pytest.approx(stop_hi, rel=1e-3)
+    ref = np.abs(sos_response(sos, [0.5 if high else 0.0], 1.0)[0])
+    assert ref == pytest.approx(1.0 if order % 2 else 10 ** (-ripple / 20), rel=1e-12)
+
+
+def test_elliptic_order_1_is_chebyshev1() -> None:
+    np.testing.assert_allclose(
+        elliptic_lowpass(1, 1.0, 40.0, 100.0, 1000.0),
+        chebyshev1_lowpass(1, 1.0, 100.0, 1000.0),
+        rtol=1e-13,
+        atol=1e-15,
+    )
+
+
+@pytest.mark.parametrize("design", [elliptic_lowpass, elliptic_highpass])
+@pytest.mark.parametrize(
+    "args",
+    [
+        (0, 1.0, 40.0, 0.1, 1.0),
+        (1001, 1.0, 40.0, 0.1, 1.0),
+        (4, 0.0, 40.0, 0.1, 1.0),
+        (4, 40.0, 40.0, 0.1, 1.0),
+        (4, 50.0, 40.0, 0.1, 1.0),
+        (4, 1.0, 250.0, 0.1, 1.0),
+        (4, math.nan, 40.0, 0.1, 1.0),
+        (4, 1.0, math.inf, 0.1, 1.0),
+        (4, 1.0, 40.0, 0.5, 1.0),
+        (4, 1.0, 40.0, 0.0, 1.0),
+        (1000, 1.0, 2.0, 0.1, 1.0),
+    ],
+)
+def test_elliptic_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
     with pytest.raises(ValueError):
         design(*args)

@@ -483,4 +483,74 @@ public class IirTests
                 Assert.ThrowsAny<ArgumentException>(() => BandChebyshev(kind, stop, 4, 1, 1e-9, 2e-9, 1));
             }
     }
+
+    [Theory]
+    [InlineData(false, 1, 1.0, 40.0, 0.1)]
+    [InlineData(false, 2, 0.5, 20.0, 0.2)]
+    [InlineData(false, 3, 0.1, 60.0, 0.05)]
+    [InlineData(false, 5, 1.0, 80.0, 0.3)]
+    [InlineData(false, 6, 3.0, 30.0, 0.25)]
+    [InlineData(false, 9, 0.01, 120.0, 0.1)]
+    [InlineData(false, 12, 0.5, 100.0, 0.4)]
+    [InlineData(true, 1, 1.0, 40.0, 0.1)]
+    [InlineData(true, 3, 0.1, 60.0, 0.05)]
+    [InlineData(true, 6, 3.0, 30.0, 0.25)]
+    [InlineData(true, 12, 0.5, 100.0, 0.4)]
+    public void EllipticIsEquirippleInBothBands(bool high, int order, double ripple, double atten, double cutoff)
+    {
+        double[][] sos = high ? Dsp.EllipticHighpass(order, ripple, atten, cutoff, 1) : Dsp.EllipticLowpass(order, ripple, atten, cutoff, 1);
+        Assert.Equal((order + 1) / 2, sos.Length);
+        Assert.All(sos, r => Assert.True(Math.Abs(r[5]) < 1 && Math.Abs(r[4]) < 1 + r[5], "a pole outside the unit circle"));
+        double passLo = Math.Pow(10, -ripple / 10), stopHi = Math.Pow(10, -atten / 10);
+        // Frequencies from the pass band outwards.
+        double[] f = [.. Enumerable.Range(0, 200001).Select(i => high ? 0.5 - 0.5 * i / 200000 : 0.5 * i / 200000)];
+        double[] h2 = [.. Dsp.SosResponse(sos, f, 1).Select(h => h.Magnitude * h.Magnitude)];
+        double passMax = 0;
+        int first = -1;
+        for (int i = 0; i < f.Length; i++)
+        {
+            if (high ? f[i] >= cutoff : f[i] <= cutoff)
+            {
+                Assert.True(h2[i] <= 1 + 1e-12 && h2[i] >= passLo * (1 - 1e-12), $"pass band at {f[i]}: {h2[i]}");
+                passMax = Math.Max(passMax, h2[i]);
+            }
+            else if (first < 0 && h2[i] <= stopHi * (1 + 1e-9))
+                first = i;
+        }
+        Assert.Equal(1.0, passMax, 1e-6);
+        Complex edge = Dsp.SosResponse(sos, [cutoff], 1)[0];
+        Assert.True(Math.Abs(edge.Magnitude * edge.Magnitude / passLo - 1) < 1e-10);
+        double stopMax = h2[first..].Max();
+        Assert.True(stopMax <= stopHi * (1 + 1e-6), $"stop band peak {stopMax}");
+        if (order > 1)
+            Assert.True(Math.Abs(stopMax / stopHi - 1) < 1e-3, $"stop band peak {stopMax} vs {stopHi}");
+        double reference = Dsp.SosResponse(sos, [high ? 0.5 : 0.0], 1)[0].Magnitude;
+        Assert.Equal(order % 2 == 1 ? 1.0 : Math.Pow(10, -ripple / 20), reference, 1e-12);
+    }
+
+    [Fact]
+    public void EllipticOrder1IsChebyshev1()
+    {
+        double[] e = Dsp.EllipticLowpass(1, 1, 40, 100, 1000)[0], c = Dsp.Chebyshev1Lowpass(1, 1, 100, 1000)[0];
+        for (int j = 0; j < 6; j++)
+            Assert.Equal(c[j], e[j], 1e-13);
+    }
+
+    [Theory]
+    [InlineData(0, 1.0, 40.0, 0.1, 1.0)]
+    [InlineData(1001, 1.0, 40.0, 0.1, 1.0)]
+    [InlineData(4, 0.0, 40.0, 0.1, 1.0)]
+    [InlineData(4, 40.0, 40.0, 0.1, 1.0)]
+    [InlineData(4, 50.0, 40.0, 0.1, 1.0)]
+    [InlineData(4, 1.0, 250.0, 0.1, 1.0)]
+    [InlineData(4, double.NaN, 40.0, 0.1, 1.0)]
+    [InlineData(4, 1.0, double.PositiveInfinity, 0.1, 1.0)]
+    [InlineData(4, 1.0, 40.0, 0.5, 1.0)]
+    [InlineData(4, 1.0, 40.0, 0.0, 1.0)]
+    [InlineData(1000, 1.0, 2.0, 0.1, 1.0)]
+    public void EllipticRejectsBadArguments(int order, double ripple, double atten, double cutoff, double fs)
+    {
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.EllipticLowpass(order, ripple, atten, cutoff, fs));
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.EllipticHighpass(order, ripple, atten, cutoff, fs));
+    }
 }
