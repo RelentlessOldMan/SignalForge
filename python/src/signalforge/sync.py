@@ -23,7 +23,13 @@ def _complex(x: ArrayLike, what: str, minimum: int) -> NDArray[np.complex128]:
     a = np.asarray(a, dtype=np.complex128)
     if not np.all(np.isfinite(a)):
         raise ValueError(f"{what} must be finite")
-    return a
+    # The estimates do not depend on scale. Scaling by a power of two is exact and keeps |z|^4
+    # from overflowing or underflowing.
+    m = float(np.max(np.maximum(np.abs(a.real), np.abs(a.imag)), initial=0.0))
+    if m > 0:
+        e = -math.frexp(m)[1]
+        a = np.ldexp(a.real, e) + 1j * np.ldexp(a.imag, e)
+    return np.asarray(a, dtype=np.complex128)
 
 
 def _arg(s: complex) -> float:

@@ -72,6 +72,10 @@ Updated with every chunk of work. Dates are absolute.
   where each estimator is exact. Unit tests run a shaped QPSK link with delay, carrier offset, phase
   and noise, recover it, and check BER against theory at 6 dB. Python 312 passed, 2 skipped; .NET
   290 passed.
+- 2026-11-13: review of `sync`. The estimators are scale-invariant, but `z⁴` underflowed to 0 for
+  symbols near 1e-90 (estimate 0) and overflowed near 1e80 (NaN). Both languages now scale each block
+  by a power of two first, which is exact, so earlier results are bit-identical. 6 new vectors
+  (212); five of them fail on the old code. Python 318 passed, 2 skipped; .NET 296 passed.
 
 ## Not built
 

@@ -201,7 +201,9 @@ Decided in [ADR 0008](adr/0008-block-synchronization.md). Python: `signalforge.s
 `SignalForge.Sync`. All are block estimators over finite complex samples; they estimate, they do
 not correct. Where a sum below is exactly zero there is no information and the estimate is 0. `arg`
 is in `(−π, π]`. The timing sum uses `e^{−j2π(n mod sps)/sps}`, the same value with a small
-argument.
+argument. The estimates do not depend on the input's scale: each implementation first
+multiplies the block by the power of two that brings its largest real or imaginary part into
+`[0.5, 1)` (exact), so `|z|⁴` and `|y|²` neither overflow nor underflow for any finite input.
 
 - **Timing offset** (`timing_offset(samples, samples_per_symbol)`), Oerder–Meyr: with
   `S = Σₙ |y[n]|²·e^{−j2πn/sps}`, `τ = −sps·arg(S)/(2π)`, wrapped into `[0, sps)` (add `sps` if

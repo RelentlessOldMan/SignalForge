@@ -13,11 +13,11 @@ public static class Sync
     public static double TimingOffset(ReadOnlySpan<Complex> samples, int samplesPerSymbol)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(samplesPerSymbol, 2);
-        CheckFinite(samples, 1, nameof(samples));
+        double scale = CheckFinite(samples, 1, nameof(samples));
         Complex s = Complex.Zero;
         for (int n = 0; n < samples.Length; n++)
         {
-            Complex y = samples[n];
+            Complex y = samples[n] * scale;
             double p = y.Real * y.Real + y.Imaginary * y.Imaginary;
             s += p * Complex.FromPolarCoordinates(1, -2 * Math.PI * (n % samplesPerSymbol) / samplesPerSymbol);
         }
@@ -34,11 +34,11 @@ public static class Sync
     public static double QpskFrequencyOffset(ReadOnlySpan<Complex> symbols, double symbolRate)
     {
         Check.PositiveFinite(symbolRate, nameof(symbolRate));
-        CheckFinite(symbols, 2, nameof(symbols));
-        Complex s = Complex.Zero, prev = Fourth(symbols[0]);
+        double scale = CheckFinite(symbols, 2, nameof(symbols));
+        Complex s = Complex.Zero, prev = Fourth(symbols[0] * scale);
         for (int k = 1; k < symbols.Length; k++)
         {
-            Complex w = Fourth(symbols[k]);
+            Complex w = Fourth(symbols[k] * scale);
             s += w * Complex.Conjugate(prev);
             prev = w;
         }
@@ -50,10 +50,10 @@ public static class Sync
     /// <param name="symbols">One complex value per symbol, at least one, all finite.</param>
     public static double QpskPhaseOffset(ReadOnlySpan<Complex> symbols)
     {
-        CheckFinite(symbols, 1, nameof(symbols));
+        double scale = CheckFinite(symbols, 1, nameof(symbols));
         Complex s = Complex.Zero;
         foreach (var z in symbols)
-            s += Fourth(z);
+            s += Fourth(z * scale);
         return Arg(-s) / 4;
     }
 
@@ -72,12 +72,20 @@ public static class Sync
         return a == -Math.PI ? Math.PI : a;
     }
 
-    private static void CheckFinite(ReadOnlySpan<Complex> x, int minimum, string name)
+    /// <summary>Checks the length and that every value is finite; returns the power of two that
+    /// brings the largest component into [0.5, 1). The estimates do not depend on scale, and the
+    /// exact scaling keeps |z|⁴ from overflowing or underflowing.</summary>
+    private static double CheckFinite(ReadOnlySpan<Complex> x, int minimum, string name)
     {
         if (x.Length < minimum)
             throw new ArgumentException($"needs at least {minimum} value(s)", name);
+        double m = 0;
         foreach (var z in x)
+        {
             if (!double.IsFinite(z.Real) || !double.IsFinite(z.Imaginary))
                 throw new ArgumentException("values must be finite", name);
+            m = Math.Max(m, Math.Max(Math.Abs(z.Real), Math.Abs(z.Imaginary)));
+        }
+        return m > 0 ? Math.ScaleB(1.0, -(Math.ILogB(m) + 1)) : 1.0;
     }
 }

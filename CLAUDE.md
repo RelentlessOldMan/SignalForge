@@ -99,8 +99,8 @@ dotnet format SignalForge.slnx --verify-no-changes
 
 Measured 2026-11-13:
 
-- Python `pytest` (314 tests): about 2 s.
-- .NET `dotnet test` (incremental build + 290 tests): about 6 s.
+- Python `pytest` (320 tests): about 2 s.
+- .NET `dotnet test` (incremental build + 296 tests): about 6 s.
 - `build.ps1 -Jobs 1` (everything, incremental): about 20 s. A clean build with restore takes
   longer (not yet timed).
 
