@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import math
+import numbers
 import operator
+
+import numpy as np
 
 
 def count(value: int, what: str) -> int:
@@ -14,3 +18,14 @@ def count(value: int, what: str) -> int:
     if n < 0:
         raise ValueError(f"{what} must be non-negative")
     return n
+
+
+def real(value: float, what: str) -> float:
+    """A finite real number (any ``numbers.Real`` but a bool) as a ``float``."""
+    if (
+        isinstance(value, bool | np.bool_)
+        or not isinstance(value, numbers.Real)
+        or not math.isfinite(value)
+    ):
+        raise ValueError(f"{what} must be a finite number")
+    return float(value)

@@ -28,6 +28,8 @@ jobs:
       - run: mypy
       - run: pytest -q
       - run: python -m signalforge.conformance
+      - name: Generated vectors match their generators
+        run: for g in ../vectors/generators/*.py; do python "$g" --check; done
 
   dotnet:
     runs-on: ubuntu-latest

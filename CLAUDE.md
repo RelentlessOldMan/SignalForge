@@ -105,8 +105,9 @@ cd ../python
 
 Measured 2026-11-13:
 
-- Python `pytest` (371 tests): about 2 s.
-- .NET `dotnet test` (incremental build + 330 tests): about 6 s.
+- Python `pytest` (424 tests): about 3 s.
+- .NET `dotnet test` (incremental build + 376 tests): about 6 s.
+- `vectors/generators/fir.py`: about 3 s.
 - `build.ps1 -Jobs 1` (everything, incremental): about 20 s before the cross-language steps were
   added; not re-timed since. A clean build with restore takes
   longer (not yet timed).
@@ -125,6 +126,7 @@ Memory not measured yet; nothing holds more than a few MB of samples. No job use
 | `docs/versioning.md`, `VERSION`, `build.ps1` | Version scheme, the version, the build. |
 | `docs/adr/` | Architecture decision records. |
 | `vectors/README.md`, `vectors/cases/` | Shared vector format and cases. |
+| `vectors/generators/` | Stdlib-only scripts that compute vector files from first principles. |
 | `vectors/selftest/` | Deliberately wrong cases both runners must fail. |
 | `vectors/links/` | `qpsk_link` configs run in both languages and compared. |
 | `python/src/signalforge/compare.py` | Cross-language compare: conformance reports, link reports. |

@@ -2,7 +2,18 @@
 
 from .channel import awgn, frequency_offset
 from .core import Signal
-from .dsp import convolve, pulse_shape, rrc_taps, upsample
+from .dsp import (
+    FirFilter,
+    convolve,
+    fir_bandpass,
+    fir_highpass,
+    fir_lowpass,
+    fir_response,
+    kaiser_parameters,
+    pulse_shape,
+    rrc_taps,
+    upsample,
+)
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import PowerStats, power_stats
 from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
@@ -33,11 +44,12 @@ from .units import (
 )
 from .waveforms import prbs, tone
 
-__version__ = "2026.11.13.15"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.18"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
     "Evm",
+    "FirFilter",
     "OccupiedBandwidth",
     "PowerStats",
     "QpskLinkConfig",
@@ -57,8 +69,13 @@ __all__ = [
     "evm",
     "fft",
     "fft_frequencies",
+    "fir_bandpass",
+    "fir_highpass",
+    "fir_lowpass",
+    "fir_response",
     "frequency_offset",
     "ifft",
+    "kaiser_parameters",
     "lin_to_db",
     "occupied_bandwidth",
     "power_stats",

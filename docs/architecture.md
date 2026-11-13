@@ -35,7 +35,7 @@ module moves into its own project/package only when it brings a dependency the r
 | Metrics | `signalforge.metrics` | `SignalForge.Metrics` | bit error counts, EVM, QPSK BER theory ([ADR 0007](adr/0007-pulse-shaping-channel-evm.md)) | started |
 | Conformance | `signalforge.conformance` | test project | loads and runs `vectors/` cases | built |
 | Spectral | `signalforge.spectral` | `SignalForge.Spectral` | FFT (C#: own radix-2 + Bluestein), frequency axes, windows, Welch PSD, occupied bandwidth, channel power ([ADR 0006](adr/0006-fft-windows-spectra.md)) | started |
-| DSP | `signalforge.dsp` | `SignalForge.Dsp` | convolution, upsampling, RRC taps and pulse shaping ([ADR 0007](adr/0007-pulse-shaping-channel-evm.md)); later FIR/IIR design, resampling, mixing | started |
+| DSP | `signalforge.dsp` | `SignalForge.Dsp` | convolution, upsampling, RRC taps and pulse shaping ([ADR 0007](adr/0007-pulse-shaping-channel-evm.md)); windowed-sinc FIR design, Kaiser parameters, frequency response and the streaming `FirFilter` ([ADR 0010](adr/0010-fir-design-streaming.md)); later IIR design, resampling, mixing | started |
 | Channel | `signalforge.channel` | `SignalForge.Channel` | AWGN at Es/N0, frequency offset; later phase noise, multipath | started |
 | Sync | `signalforge.sync` | `SignalForge.Sync` | block timing, QPSK frequency, phase and block-phase estimates ([ADR 0008](adr/0008-block-synchronization.md)); later tracking loops | started |
 | Link | `signalforge.link` | `SignalForge.Link` | end-to-end QPSK link run and its JSON report ([ADR 0009](adr/0009-qpsk-link-report.md)) | started |

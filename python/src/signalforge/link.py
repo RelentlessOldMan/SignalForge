@@ -8,13 +8,12 @@ from __future__ import annotations
 import dataclasses
 import json
 import math
-import numbers
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
-from ._checks import count
+from ._checks import count, real
 from .channel import awgn, frequency_offset
 from .dsp import convolve, pulse_shape, rrc_taps
 from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
@@ -73,12 +72,6 @@ def _encode(v: Any) -> Any:
     return v
 
 
-def _finite(x: float, what: str) -> float:
-    if isinstance(x, bool | np.bool_) or not isinstance(x, numbers.Real) or not math.isfinite(x):
-        raise ValueError(f"{what} must be a finite number")
-    return float(x)
-
-
 def _wrap(phi: float) -> float:
     """Into ``(-pi, pi]``."""
     phi = math.remainder(phi, 2 * math.pi)
@@ -101,20 +94,20 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         raise ValueError("preamble_symbols must be between 1 and num_symbols")
     if blk < 1:
         raise ValueError("phase_block_symbols must be at least 1")
-    rs = _finite(config.symbol_rate, "symbol_rate")
+    rs = real(config.symbol_rate, "symbol_rate")
     if rs <= 0:
         raise ValueError("symbol_rate must be positive")
     # the report carries the config with plain int and float values, so it always serializes
     c = QpskLinkConfig(
         num_symbols=n,
-        eb_n0_db=None if config.eb_n0_db is None else _finite(config.eb_n0_db, "eb_n0_db"),
+        eb_n0_db=None if config.eb_n0_db is None else real(config.eb_n0_db, "eb_n0_db"),
         symbol_rate=rs,
         samples_per_symbol=sps,
-        rolloff=_finite(config.rolloff, "rolloff"),
+        rolloff=real(config.rolloff, "rolloff"),
         span_symbols=span,
         delay_samples=delay,
-        frequency_offset_hz=_finite(config.frequency_offset_hz, "frequency_offset_hz"),
-        phase=_finite(config.phase, "phase"),
+        frequency_offset_hz=real(config.frequency_offset_hz, "frequency_offset_hz"),
+        phase=real(config.phase, "phase"),
         preamble_symbols=pre,
         phase_block_symbols=blk,
         prbs_order=count(config.prbs_order, "prbs_order"),

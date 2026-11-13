@@ -4,11 +4,8 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **FIR design and filtering**: windowed-sinc low-pass, band-pass and high-pass design, and a
-   stateful streaming FIR filter (the first operation with state across chunks, per the
-   architecture).
-2. **Resampling**: integer decimation and interpolation with that FIR, then rational resampling.
-3. **Signal files**: write and read samples with their metadata (SigMF-style, implemented from the
+1. **Resampling**: integer decimation and interpolation with that FIR, then rational resampling.
+2. **Signal files**: write and read samples with their metadata (SigMF-style, implemented from the
    description), so one language can generate a noisy signal and the other analyse it
    (`docs/testing.md`, the planned cross-generation).
 
@@ -106,10 +103,21 @@ Updated with every chunk of work. Dates are absolute.
   noisy link compare also checks the theoretical BER (it depends only on the config). The C# tool
   printed a stack trace on a bad config or argument and now exits 2 with a message, as the Python
   one does. Python 369 passed, 2 skipped; .NET 330 passed.
+- 2026-11-13: FIR filters in both languages (ADR 0010): windowed-sinc low-pass, high-pass (odd
+  length) and band-pass design scaled to unit gain at DC, fs/2 or the band center; Kaiser's
+  length and beta formulas; the complex frequency response; and `FirFilter`, the first operation
+  with state across chunks (any split of a signal gives the same output as one call). The 38
+  vectors come from `vectors/generators/fir.py`, standard library only, which integrates the
+  ideal spectrum numerically rather than using the sinc formula; CI checks the file still
+  matches it. The Python runner now treats a tuple result as a real array, as C# already did.
+  A design whose taps have no gain to scale (a length-2 Hann window) raises instead of returning
+  NaN. `link._finite` moved to `_checks.real` for reuse. A unit test caught Python's `FirFilter`
+  keeping the caller's array instead of a copy. Python 422 passed, 2 skipped; .NET 376 passed;
+  vectors 275/275; reports and links agree.
 
 ## Not built
 
-Everything else in the brief: filter design (FIR/IIR beyond RRC), resampling, spectrograms and spectral options beyond Welch
+Everything else in the brief: IIR filter design, FIR design beyond windowed sinc (equiripple), resampling, spectrograms and spectral options beyond Welch
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
 SFDR, phase noise, NF), standards waveforms, file formats (SigMF, WAV, raw IQ), plotting, CLI,
@@ -149,3 +157,6 @@ packaging and publishing.
   value. A vector checks only the fields it lists, so a field one runner never sees (a Python
   property, where C# reflection sees every property) passes everywhere until the results are
   compared with each other.
+- 2026-11-13: `np.asarray` returns the caller's own array when it already has the right dtype,
+  so an object that keeps an argument (filter taps) must copy it with `np.array`. C# copies
+  with `ToArray()` by habit; Python needs the same care, and a test that mutates the input.

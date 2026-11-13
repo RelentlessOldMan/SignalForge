@@ -21,6 +21,10 @@ An expected value in `vectors/` must come from something **other than** the code
 
 Never generate expected values by running SignalForge and pasting the output: a bug shared by both
 languages would then pass. If a case's value was produced by a tool, `source` says which.
+Scripts that compute a whole vector file live in `vectors/generators/`: Python standard library
+only (never NumPy or SignalForge), by a different method from the library where there is one (the
+FIR taps integrate the ideal spectrum numerically instead of using the sinc closed form). CI runs
+each with `--check` so a file can't drift from its generator.
 
 ## Vector format
 

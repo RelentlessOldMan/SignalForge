@@ -21,7 +21,7 @@ rule for code not written yet.
 - Sample rates and impedances must be positive and **finite**; NaN and infinity are rejected.
   **(implemented)**
 - Counts (`n`, `num_samples`, `num_bits`, `order`, `seed`, `nperseg`, `noverlap`, `factor`,
-  `samples_per_symbol`, `span_symbols`, `block_symbols`, and the link's `num_symbols`,
+  `samples_per_symbol`, `span_symbols`, `block_symbols`, `num_taps`, and the link's `num_symbols`,
   `delay_samples`, `preamble_symbols`, `phase_block_symbols`) are integers ≥ 0.
   Python accepts anything with `__index__` (so NumPy integers) and rejects floats, even whole ones
   like `3.0`; C# takes `int`. **(implemented)**
@@ -180,6 +180,51 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
 - **Matched filter:** convolve with the same taps (RRC is real and symmetric). After shaping and
   matched filtering, symbol `k` is at sample `k·sps + N − 1`, with unit gain (unit-energy taps).
   **(implemented)**
+
+## FIR filters
+
+Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.dsp`; C#:
+`SignalForge.Dsp` and `SignalForge.FirFilter`.
+
+- **Windowed-sinc design.** `N = num_taps` taps, `n = 0 … N−1`, centered at `t = n − (N−1)/2`;
+  frequencies in Hz at `sample_rate = fs`, written normalized as `ν = f/fs`; `sinc(x) = sin(πx)/(πx)`,
+  `sinc(0) = 1`. Each design is the ideal response `d[n]`, times the **symmetric** window
+  `w = window(name, N, symmetric=True, beta)` (default `hamming`), then scaled so its zero-phase
+  gain `A(f) = Σ h[n]·cos(2π·f·t/fs)` (real, because the taps are symmetric) is exactly 1 at a
+  reference frequency:
+  - `fir_lowpass(num_taps, cutoff, sample_rate, window="hamming", beta=None)`:
+    `d = 2ν_c·sinc(2ν_c·t)`; unit gain at `f = 0` (so `Σh = 1`). `N ≥ 1`.
+  - `fir_highpass(num_taps, cutoff, sample_rate, window="hamming", beta=None)`:
+    `d = sinc(t) − 2ν_c·sinc(2ν_c·t)`; unit gain at `fs/2`. `N` must be **odd** (an even-length
+    symmetric filter has a zero at `fs/2`).
+  - `fir_bandpass(num_taps, low, high, sample_rate, window="hamming", beta=None)`:
+    `d = 2ν_h·sinc(2ν_h·t) − 2ν_l·sinc(2ν_l·t)`; unit gain at the band center `(low + high)/2`.
+    `N ≥ 1`.
+  - Frequencies satisfy `0 < cutoff < fs/2` and `0 < low < high < fs/2`, all finite. `beta` is the
+    Kaiser window's, and only allowed with `window="kaiser"` (as for `window`).
+  - If `|A(ref)|` before scaling is not above `1e-6·Σ|h|`, the design raises: the taps are all
+    zero (the symmetric Hann window of length 2 is exactly `[0, 0]`), or too few for the band,
+    so the scaling would blow up.
+  - The taps are linear phase with a delay of `(N−1)/2` samples.
+- **Kaiser parameters** (`kaiser_parameters(attenuation_db, transition_width, sample_rate)`,
+  returns `(num_taps, beta)`): Kaiser's formulas as given in Oppenheim and Schafer,
+  *Discrete-Time Signal Processing* (3rd ed., the Kaiser window design method), with
+  `A = attenuation_db` and `Δω = 2π·transition_width/fs`:
+  - `β = 0.1102·(A − 8.7)` for `A > 50`; `0.5842·(A − 21)^0.4 + 0.07886·(A − 21)` for
+    `21 ≤ A ≤ 50`; `0` for `A < 21`;
+  - order `M = ⌈(A − 8)/(2.285·Δω)⌉`, at least 0, and `num_taps = M + 1`.
+  - `A > 0`, `0 < transition_width < fs/2`, all finite; a `num_taps` above 2³¹ − 1 raises. For a
+    high-pass, round `num_taps` up to odd.
+- **Frequency response** (`fir_response(taps, frequencies, sample_rate)`): the complex
+  `H(f) = Σ h[n]·e^(−j2π·f·n/fs)` at each frequency (`n` from 0, so it includes the delay).
+  Real taps, non-empty and finite; frequencies finite.
+- **Streaming filter** (`FirFilter(taps)`, method `process(chunk)`, `reset()`): causal direct
+  form, `y[n] = Σₖ h[k]·x[n−k]` over the concatenation of every chunk since the start or the last
+  reset, with `x` zero before the first sample. Each call returns as many samples as it is given,
+  so the outputs of any split of a signal concatenate to the first `len(x)` samples of
+  `convolve(x, h)`. Taps are real, non-empty and finite. The first non-empty chunk fixes the
+  filter as real or complex; a chunk of the other kind raises, until `reset()`. An empty chunk
+  returns an empty output and changes nothing.
 
 ## Channel
 

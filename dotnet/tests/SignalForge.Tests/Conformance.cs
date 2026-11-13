@@ -239,6 +239,17 @@ public static class Conformance
                 ? Bind((ps, Reals(a.Get("taps")), a.I("samples_per_symbol")), t => Dsp.PulseShape(t.Item1, t.Item2, t.Item3))
                 : Bind((Reals(a.Get("symbols")), Reals(a.Get("taps")), a.I("samples_per_symbol")),
                     t => Dsp.PulseShape(t.Item1, t.Item2, t.Item3)),
+            "fir_lowpass" => Bind((a.I("num_taps"), a.D("cutoff"), a.D("sample_rate"), FirWindow(a), a.OptD("beta")),
+                t => Dsp.FirLowpass(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "fir_highpass" => Bind((a.I("num_taps"), a.D("cutoff"), a.D("sample_rate"), FirWindow(a), a.OptD("beta")),
+                t => Dsp.FirHighpass(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "fir_bandpass" => Bind((a.I("num_taps"), a.D("low"), a.D("high"), a.D("sample_rate"), FirWindow(a), a.OptD("beta")),
+                t => Dsp.FirBandpass(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
+            "kaiser_parameters" => Bind((a.D("attenuation_db"), a.D("transition_width"), a.D("sample_rate")),
+                t => Dsp.KaiserParameters(t.Item1, t.Item2, t.Item3)),
+            "fir_response" => Bind((Reals(a.Get("taps")), Reals(a.Get("frequencies")), a.D("sample_rate")),
+                t => Dsp.FirResponse(t.Item1, t.Item2, t.Item3)),
+            "fir_filter" => FirFilterOp(a),
             "frequency_offset" => Bind((Complexes(a.Get("samples")), a.D("offset_hz"), a.D("sample_rate"), a.Opt("phase", 0)),
                 t => Channel.FrequencyOffset(t.Item1, t.Item2, t.Item3, t.Item4)),
             "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),
@@ -326,6 +337,43 @@ public static class Conformance
             return h is Complex[] ch ? () => Dsp.Convolve(cx, ch) : Bind(Reals(h), rh => Dsp.Convolve(cx, rh));
         }
         return Bind((Reals(x), Reals(h)), t => Dsp.Convolve(t.Item1, t.Item2));
+    }
+
+    private static WindowType FirWindow(Args a) => a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hamming;
+
+    /// <summary>Runs the samples through one <see cref="FirFilter"/> in chunks of the given lengths.</summary>
+    private static Func<object?> FirFilterOp(Args a)
+    {
+        double[] taps = Reals(a.Get("taps"));
+        object? samples = a.Get("samples");
+        int[] sizes = [.. Reals(a.Get("chunks")).Select(c => c >= 0 && c == Math.Floor(c) && c <= int.MaxValue
+            ? (int)c : throw new InvalidDataException("chunks must be non-negative whole numbers"))];
+        int total = samples is Complex[] zc ? zc.Length : Reals(samples).Length;
+        if (sizes.Sum() != total)
+            throw new InvalidDataException("chunks must add up to the number of samples");
+        return () =>
+        {
+            var f = new FirFilter(taps);
+            int at = 0;
+            if (samples is Complex[] z)
+            {
+                var yz = new List<Complex>();
+                foreach (int c in sizes)
+                {
+                    yz.AddRange(f.Process(z.AsSpan(at, c)));
+                    at += c;
+                }
+                return yz.ToArray();
+            }
+            double[] x = (double[])samples!;
+            var y = new List<double>();
+            foreach (int c in sizes)
+            {
+                y.AddRange(f.Process(x.AsSpan(at, c)));
+                at += c;
+            }
+            return y.ToArray();
+        };
     }
 
     private static (double Low, double High)? Span(Args a)

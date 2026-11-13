@@ -53,6 +53,12 @@ come from are in [docs/testing.md](../docs/testing.md): never from SignalForge's
 
 Structured results use the Python field names (`mean_power`, `peak_index`, …).
 
+## Generators
+
+`generators/*.py` compute a whole case file from first principles with the Python standard
+library only (`fir.py` writes `cases/fir.json`). Run one from the repo root to rewrite its file;
+`--check` compares instead and exits 1 on any difference. CI runs every generator with `--check`.
+
 ## Link configs
 
 `links/*.json` are `qpsk_link` configs (the config's field names) that `build.ps1` and CI run in

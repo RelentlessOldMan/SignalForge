@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import itertools
 import json
 import math
 import sys
@@ -60,6 +61,12 @@ OPS: dict[str, Callable[..., Any]] = {
     "upsample": dsp.upsample,
     "rrc_taps": dsp.rrc_taps,
     "pulse_shape": dsp.pulse_shape,
+    "fir_lowpass": dsp.fir_lowpass,
+    "fir_highpass": dsp.fir_highpass,
+    "fir_bandpass": dsp.fir_bandpass,
+    "kaiser_parameters": dsp.kaiser_parameters,
+    "fir_response": dsp.fir_response,
+    "fir_filter": lambda taps, samples, chunks: _fir_filter(taps, samples, chunks),
     "frequency_offset": channel.frequency_offset,
     "evm": metrics.evm,
     "qpsk_ber_theory": metrics.qpsk_ber_theory,
@@ -69,6 +76,18 @@ OPS: dict[str, Callable[..., Any]] = {
     "qpsk_block_phases": sync.qpsk_block_phases,
     "qpsk_link": lambda **kw: link.qpsk_link(link.QpskLinkConfig(**kw)),
 }
+
+
+def _fir_filter(taps: Any, samples: Any, chunks: Any) -> Any:
+    """Run ``samples`` through one :class:`dsp.FirFilter` in chunks of the given lengths."""
+    sizes = [int(c) for c in chunks]
+    if any(c < 0 or c != float(x) for c, x in zip(sizes, chunks, strict=True)):
+        raise BadCase("chunks must be non-negative whole numbers")
+    if sum(sizes) != len(samples):
+        raise BadCase("chunks must add up to the number of samples")
+    f = dsp.FirFilter(taps)
+    edges = np.cumsum([0, *sizes])
+    return np.concatenate([f.process(samples[i:j]) for i, j in itertools.pairwise(edges)])
 
 
 class BadCase(Exception):
@@ -110,6 +129,8 @@ def encode(v: Any) -> Any:
         return {k: encode(x) for k, x in _record(v).items()}
     if isinstance(v, dict):
         return {k: encode(x) for k, x in v.items()}
+    if isinstance(v, tuple):
+        return [encode(float(x)) for x in v]
     if isinstance(v, np.ndarray):
         if np.iscomplexobj(v):
             return {
@@ -168,6 +189,8 @@ def compare(actual: Any, expected: Any, tol: dict[str, float], path: str = "") -
             p = f"{path}.{k}" if path else k
             out += compare(actual[k], e, tol, p) if k in actual else [f"{p}: missing"]
         return out
+    if isinstance(actual, tuple):  # a tuple of numbers is a real array, as in the C# runner
+        actual = np.asarray(actual, dtype=np.float64)
     if isinstance(actual, np.ndarray) and not np.iscomplexobj(actual) and actual.dtype != np.bool_:
         actual = np.asarray(actual, dtype=np.float64)  # uint8 bits and int arrays are real arrays
     ka, ke = _kind(actual), _kind(expected)
