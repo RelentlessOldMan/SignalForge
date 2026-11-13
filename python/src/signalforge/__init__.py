@@ -3,6 +3,7 @@
 from .channel import awgn, frequency_offset
 from .core import Signal
 from .dsp import convolve, pulse_shape, rrc_taps, upsample
+from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import PowerStats, power_stats
 from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
 from .modulation import qpsk_demap_hard, qpsk_map
@@ -19,7 +20,7 @@ from .spectral import (
     window,
     window_stats,
 )
-from .sync import qpsk_frequency_offset, qpsk_phase_offset, timing_offset
+from .sync import qpsk_block_phases, qpsk_frequency_offset, qpsk_phase_offset, timing_offset
 from .units import (
     amp_to_db,
     db_to_amp,
@@ -32,13 +33,15 @@ from .units import (
 )
 from .waveforms import prbs, tone
 
-__version__ = "2026.11.13.8"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.10"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "ErrorCount",
     "Evm",
     "OccupiedBandwidth",
     "PowerStats",
+    "QpskLinkConfig",
+    "QpskLinkReport",
     "Signal",
     "SpectralDensity",
     "WindowStats",
@@ -62,8 +65,10 @@ __all__ = [
     "prbs",
     "pulse_shape",
     "qpsk_ber_theory",
+    "qpsk_block_phases",
     "qpsk_demap_hard",
     "qpsk_frequency_offset",
+    "qpsk_link",
     "qpsk_map",
     "qpsk_phase_offset",
     "rrc_taps",

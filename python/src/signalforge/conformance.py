@@ -18,7 +18,18 @@ from typing import Any
 
 import numpy as np
 
-from . import channel, dsp, measurements, metrics, modulation, spectral, sync, units, waveforms
+from . import (
+    channel,
+    dsp,
+    link,
+    measurements,
+    metrics,
+    modulation,
+    spectral,
+    sync,
+    units,
+    waveforms,
+)
 
 DEFAULT_TOL = {"abs": 1e-12, "rel": 1e-12}
 
@@ -55,6 +66,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "timing_offset": sync.timing_offset,
     "qpsk_frequency_offset": sync.qpsk_frequency_offset,
     "qpsk_phase_offset": sync.qpsk_phase_offset,
+    "qpsk_block_phases": sync.qpsk_block_phases,
+    "qpsk_link": lambda **kw: link.qpsk_link(link.QpskLinkConfig(**kw)),
 }
 
 

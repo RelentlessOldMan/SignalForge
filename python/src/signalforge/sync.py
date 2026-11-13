@@ -71,3 +71,22 @@ def qpsk_phase_offset(symbols: ArrayLike) -> float:
     z2 = z * z
     w = z2 * z2
     return _arg(-complex(np.sum(w))) / 4
+
+
+def qpsk_block_phases(symbols: ArrayLike, block_symbols: int) -> NDArray[np.float64]:
+    """QPSK carrier phase of each block of ``block_symbols`` symbols, unwrapped in steps of pi/2.
+
+    The first block's phase is in ``(-pi/4, pi/4]``; each later one is moved by a multiple of pi/2
+    to within pi/4 of the one before. A last, shorter block is included.
+    """
+    b = count(block_symbols, "block_symbols")
+    if b < 1:
+        raise ValueError("block_symbols must be at least 1")
+    z = _complex(symbols, "symbols", 1)
+    out = np.empty((z.size + b - 1) // b)
+    for i in range(out.size):
+        phi = qpsk_phase_offset(z[i * b : (i + 1) * b])
+        if i > 0:
+            phi += (math.pi / 2) * round((out[i - 1] - phi) / (math.pi / 2))
+        out[i] = phi
+    return out

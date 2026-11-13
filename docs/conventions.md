@@ -21,7 +21,8 @@ rule for code not written yet.
 - Sample rates and impedances must be positive and **finite**; NaN and infinity are rejected.
   **(implemented)**
 - Counts (`n`, `num_samples`, `num_bits`, `order`, `seed`, `nperseg`, `noverlap`, `factor`,
-  `samples_per_symbol`, `span_symbols`) are integers ≥ 0.
+  `samples_per_symbol`, `span_symbols`, `block_symbols`, and the link's `num_symbols`,
+  `delay_samples`, `preamble_symbols`, `phase_block_symbols`) are integers ≥ 0.
   Python accepts anything with `__index__` (so NumPy integers) and rejects floats, even whole ones
   like `3.0`; C# takes `int`. **(implemented)**
 - Measurements reject non-finite input where a NaN would otherwise pass through silently
@@ -217,6 +218,12 @@ multiplies the block by the power of two that brings its largest real or imagina
 - **QPSK phase offset** (`qpsk_phase_offset(symbols)`): `φ = arg(−Σ z⁴) / 4`, in `(−π/4, π/4]`;
   the true phase is `φ + m·π/2`. Correct by multiplying by `e^{−jφ}`
   (`frequency_offset(symbols, 0, 1, −φ)`). At least one symbol. **(implemented)**
+- **QPSK block phases** (`qpsk_block_phases(symbols, block_symbols)`): block `b` holds symbols
+  `b·B … min((b+1)·B, N) − 1` (the last block may be shorter), and `θ_b` is its
+  `qpsk_phase_offset`. Unwrapped: `φ₀ = θ₀`, and `φ_b = θ_b + (π/2)·round((φ_{b−1} − θ_b)/(π/2))`,
+  rounding half to even. Returns one value per block. `block_symbols ≥ 1`, at least one symbol.
+  On `z_k = a_k·e^{j(θ + ωk)}` each block gives the phase at its middle, `θ + ω·(first + last)/2`,
+  as long as consecutive blocks differ by less than π/4. **(implemented)**
 
 ## EVM and BER
 
@@ -230,6 +237,51 @@ Python: `signalforge.metrics`; C#: `SignalForge.Metrics`.
   `Pb = ½·erfc(√(Eb/N0))`, Eb/N0 linear from dB; where that overflows (above about 3080 dB) it
   is infinite and `Pb = 0`. `−∞` dB gives ½, NaN is rejected. For QPSK `Es = 2·Eb`, so
   `Es/N0 [dB] = Eb/N0 [dB] + 10·log10(2)`. **(implemented)**
+
+## QPSK link
+
+Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`; C#:
+`SignalForge.Link`. `qpsk_link(config)` runs one block and returns `QpskLinkReport`.
+
+- **Config** (`QpskLinkConfig`, defaults in brackets): `num_symbols` (≥ 2), `eb_n0_db` [none: no
+  noise], `symbol_rate` [1000] Hz, `samples_per_symbol` [4] (≥ 2), `rolloff` [0.35],
+  `span_symbols` [10], `delay_samples` [0], `frequency_offset_hz` [0], `phase` [0] rad,
+  `preamble_symbols` [32] (1 to `num_symbols`), `phase_block_symbols` [32] (≥ 1), `prbs_order`
+  [15], `seed` [0]. Numbers must be finite. **(implemented)**
+- **Transmitter:** `bits = prbs(prbs_order, 2·num_symbols)`, `a = qpsk_map(bits)`,
+  `h = rrc_taps(rolloff, sps, span_symbols)`, `tx` = `delay_samples` zeros followed by
+  `pulse_shape(a, h, sps)`. **(implemented)**
+- **Channel:** `frequency_offset(tx, frequency_offset_hz, symbol_rate·sps, phase)`, then, with
+  `eb_n0_db`, `awgn(·, eb_n0_db + 10·log10 2, sps, seed, signal_power = 1/sps)` (the shaped
+  signal's nominal power). **(implemented)**
+- **Receiver**, with `N = num_symbols`, `P = preamble_symbols`, `B = phase_block_symbols`:
+  1. `y = convolve(rx, h)`; `τ = timing_offset(y, sps)`; `r = y[round(τ) mod sps :: sps]`
+     (round half to even).
+  2. `f₁ = qpsk_frequency_offset(r, symbol_rate)`; `c = frequency_offset(r, −f₁, symbol_rate)`.
+  3. Frame start `k₀`: the first `k` in `0 … len(r) − N` that maximizes
+     `|Σ_{i<P} conj(a[i])·c[k+i]|`.
+  4. `z = frequency_offset(r[k₀ : k₀+N], −f₁, symbol_rate)`; `φ_b = qpsk_block_phases(z, B)` at
+     `x_b` = the middle of block `b`, `(first + last)/2`.
+  5. With more than one block, the least-squares line `φ ≈ φ₀ + s·x`:
+     `s = Σ(x−x̄)(φ−φ̄) / Σ(x−x̄)²`, `φ₀ = φ̄ − s·x̄`; with one block, `s = 0` and `φ₀ = φ_0`.
+  6. `m = round(arg(Σ_{i<P} conj(a[i])·z[i]·e^{−j(φ₀ + s·i)}) / (π/2))` (half to even);
+     the phase is `φ = φ₀ + m·π/2` wrapped into `(−π, π]`, and the frequency
+     `f = f₁ + s·symbol_rate/(2π)`.
+  7. The symbols are `frequency_offset(r[k₀ : k₀+N], −f, symbol_rate, −φ)`; they are compared with
+     `a` by `evm` and, after `qpsk_demap_hard`, with `bits` by `bit_errors`. The preamble counts.
+  **(implemented)**
+- **Report** (`QpskLinkReport`): `config`, `timing_offset` (τ, samples), `frame_start` (`k₀`,
+  symbols into `r`), `frequency_offset_hz` (`f`), `phase_offset` (`φ`, rad: the carrier phase at the
+  frame's first symbol), `evm` (an EVM record), `bit_errors` (an error-count record), `ber_theory`
+  (`qpsk_ber_theory(eb_n0_db)`, or none without noise). **(implemented)**
+- **JSON** (`to_json()` / `ToJson()`): an object with exactly those field names, nested records as
+  objects, none as `null`, integers as integers, and non-finite numbers as the strings `"inf"`,
+  `"-inf"`, `"nan"`. Compare reports as JSON values, not text. **(implemented)**
+- For a noiseless link the true values are known from the channel: the first symbol's peak is at
+  `y[L − 1 + delay_samples]` (`L` = number of taps), so `frame_start = ⌊(L − 1 + delay)/sps⌋`, and
+  `φ = phase + 2π·frequency_offset_hz·(delay + (L−1)/2)/(symbol_rate·sps)`, the carrier phase at
+  the middle of the first transmitted pulse. Truncated taps and an offset applied before the matched
+  filter leave a little inter-symbol interference, so these hold to a tolerance, not exactly.
 
 ## PRBS
 

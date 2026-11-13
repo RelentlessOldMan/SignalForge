@@ -183,6 +183,8 @@ public static class Conformance
             "timing_offset" => Bind((Complexes(a.Get("samples")), a.I("samples_per_symbol")), t => Sync.TimingOffset(t.Item1, t.Item2)),
             "qpsk_frequency_offset" => Bind((Complexes(a.Get("symbols")), a.D("symbol_rate")), t => Sync.QpskFrequencyOffset(t.Item1, t.Item2)),
             "qpsk_phase_offset" => Bind(Complexes(a.Get("symbols")), s => Sync.QpskPhaseOffset(s)),
+            "qpsk_block_phases" => Bind((Complexes(a.Get("symbols")), a.I("block_symbols")), t => Sync.QpskBlockPhases(t.Item1, t.Item2)),
+            "qpsk_link" => Bind(LinkConfig(a), Link.QpskLink),
             _ => throw new InvalidDataException($"unknown op {op}"),
         };
         a.CheckAllUsed();
@@ -197,6 +199,26 @@ public static class Conformance
     }
 
     private static Func<object?> Bind<T, TResult>(T args, Func<T, TResult> f) => () => f(args);
+
+    private static QpskLinkConfig LinkConfig(Args a)
+    {
+        var d = new QpskLinkConfig { NumSymbols = a.I("num_symbols") };
+        return d with
+        {
+            EbN0Db = a.OptD("eb_n0_db"),
+            SymbolRate = a.Opt("symbol_rate", d.SymbolRate),
+            SamplesPerSymbol = a.OptInt("samples_per_symbol") ?? d.SamplesPerSymbol,
+            Rolloff = a.Opt("rolloff", d.Rolloff),
+            SpanSymbols = a.OptInt("span_symbols") ?? d.SpanSymbols,
+            DelaySamples = a.OptInt("delay_samples") ?? d.DelaySamples,
+            FrequencyOffsetHz = a.Opt("frequency_offset_hz", d.FrequencyOffsetHz),
+            Phase = a.Opt("phase", d.Phase),
+            PreambleSymbols = a.OptInt("preamble_symbols") ?? d.PreambleSymbols,
+            PhaseBlockSymbols = a.OptInt("phase_block_symbols") ?? d.PhaseBlockSymbols,
+            PrbsOrder = a.OptInt("prbs_order") ?? d.PrbsOrder,
+            Seed = a.OptInt("seed") ?? d.Seed,
+        };
+    }
 
     private static Func<object?> Tone(Args a)
     {

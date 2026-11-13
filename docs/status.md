@@ -4,10 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **End-to-end QPSK link function**, in both languages: bits → shaping → channel → recovery
-   (the `sync` estimators) → EVM/BER, returning a machine-readable JSON report.
-2. **Cross-language compare tool**: C# conformance report (to match the Python
-   `--report` output) and a small script that diffs the two reports.
+1. **Cross-language compare tool**: C# conformance report (to match the Python
+   `--report` output) and a small script that diffs the two reports, plus a link-report compare:
+   the same noisy `qpsk_link` config run in both languages, BER and EVM compared statistically.
+2. **FIR design and filtering**: windowed-sinc low-pass, band-pass and high-pass design, and a
+   stateful streaming FIR filter (the first operation with state across chunks, per the
+   architecture).
+3. **Resampling**: integer decimation and interpolation with that FIR, then rational resampling.
 
 ## Built
 
@@ -76,12 +79,22 @@ Updated with every chunk of work. Dates are absolute.
   symbols near 1e-90 (estimate 0) and overflowed near 1e80 (NaN). Both languages now scale each block
   by a power of two first, which is exact, so earlier results are bit-identical. 6 new vectors
   (212); five of them fail on the old code. Python 318 passed, 2 skipped; .NET 296 passed.
+- 2026-11-13: end-to-end QPSK link ([ADR 0009](adr/0009-qpsk-link-report.md)), new module `link`
+  in both languages: `qpsk_link(QpskLinkConfig)` runs PRBS bits through RRC shaping, delay, carrier
+  offset and AWGN, recovers timing, frame start (preamble search), frequency and phase, and returns
+  `QpskLinkReport` with EVM, bit errors and theory BER, writing the same JSON in both languages.
+  The coarse fourth-power frequency estimate alone left BER 200 times theory at 6 dB, so the
+  receiver adds `sync.qpsk_block_phases` (new) and a line fit through the block phases for fine
+  frequency and phase. 24 new vectors (236): exact block phases, and noiseless links checked against
+  the channel's own delay, offset and phase. Unit tests check BER against theory at 6 dB with three
+  offsets, and the JSON field names (the same list in both languages). Python 354 passed, 2
+  skipped; .NET 327 passed.
 
 ## Not built
 
 Everything else in the brief: filter design (FIR/IIR beyond RRC), resampling, spectrograms and spectral options beyond Welch
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
-beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, synchronization, RF measurements (ACPR,
+beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,
 SFDR, phase noise, NF), standards waveforms, file formats (SigMF, WAV, raw IQ), plotting, CLI,
 packaging and publishing.
 
@@ -111,3 +124,7 @@ packaging and publishing.
   library before trusting it. The naive `exp(-x*x)` in erfc costs about 1e-13 near x = 25 from
   the rounding of x²; splitting x into a short `z` plus a remainder fixes it. Below about 1e-308
   results are subnormal and relative error stops meaning anything.
+- 2026-11-13: Test an estimator inside the whole chain, at the SNR it will be used at, before
+  trusting it. The fourth-power frequency estimate looked fine at 20 dB and on clean vectors, but
+  at 6 dB its error (0.1 to 0.5 Hz at Rs = 1000) turned a long frame by whole turns. A link test
+  that skips a step when its parameter is zero (no frequency correction at 0 Hz) hides exactly this.

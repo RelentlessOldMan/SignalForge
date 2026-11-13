@@ -37,13 +37,14 @@ module moves into its own project/package only when it brings a dependency the r
 | Spectral | `signalforge.spectral` | `SignalForge.Spectral` | FFT (C#: own radix-2 + Bluestein), frequency axes, windows, Welch PSD, occupied bandwidth, channel power ([ADR 0006](adr/0006-fft-windows-spectra.md)) | started |
 | DSP | `signalforge.dsp` | `SignalForge.Dsp` | convolution, upsampling, RRC taps and pulse shaping ([ADR 0007](adr/0007-pulse-shaping-channel-evm.md)); later FIR/IIR design, resampling, mixing | started |
 | Channel | `signalforge.channel` | `SignalForge.Channel` | AWGN at Es/N0, frequency offset; later phase noise, multipath | started |
-| Sync | `signalforge.sync` | `SignalForge.Sync` | block timing, QPSK frequency and phase estimates ([ADR 0008](adr/0008-block-synchronization.md)); later tracking loops | started |
+| Sync | `signalforge.sync` | `SignalForge.Sync` | block timing, QPSK frequency, phase and block-phase estimates ([ADR 0008](adr/0008-block-synchronization.md)); later tracking loops | started |
+| Link | `signalforge.link` | `SignalForge.Link` | end-to-end QPSK link run and its JSON report ([ADR 0009](adr/0009-qpsk-link-report.md)) | started |
 | IO | | | raw IQ files, SigMF, WAV, NumPy | planned |
 | Standards | | | one subpackage per standard, versioned, never mixed into generic code | planned |
 | Hardware | | | separate package, never a dependency of the core | planned |
 
-Demodulation sits with modulation until it grows; synchronization and recovery get their own module
-when the first real (not known-parameter) recovery loop lands.
+Demodulation sits with modulation until it grows. Synchronization has its own module (`sync`), and
+end-to-end runs that string the modules together live in `link`.
 
 ## Signals
 

@@ -57,6 +57,27 @@ public static class Sync
         return Arg(-s) / 4;
     }
 
+    /// <summary>QPSK carrier phase of each block of <paramref name="blockSymbols"/> symbols,
+    /// unwrapped in steps of π/2: the first is in (−π/4, π/4], each later one within π/4 of the one
+    /// before. A last, shorter block is included.</summary>
+    /// <param name="symbols">One complex value per symbol, at least one, all finite.</param>
+    /// <param name="blockSymbols">Symbols per block, at least 1.</param>
+    public static double[] QpskBlockPhases(ReadOnlySpan<Complex> symbols, int blockSymbols)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(blockSymbols, 1);
+        CheckFinite(symbols, 1, nameof(symbols));
+        var phases = new double[(symbols.Length + blockSymbols - 1) / blockSymbols];
+        for (int b = 0; b < phases.Length; b++)
+        {
+            int start = b * blockSymbols;
+            double phi = QpskPhaseOffset(symbols.Slice(start, Math.Min(blockSymbols, symbols.Length - start)));
+            if (b > 0)
+                phi += Math.PI / 2 * Math.Round((phases[b - 1] - phi) / (Math.PI / 2));
+            phases[b] = phi;
+        }
+        return phases;
+    }
+
     private static Complex Fourth(Complex z)
     {
         Complex z2 = z * z;
