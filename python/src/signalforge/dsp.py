@@ -480,6 +480,31 @@ def fir_response(
     return np.asarray(np.exp(-2j * np.pi * np.outer(f / fs, n)) @ h, dtype=np.complex128)
 
 
+def fir_group_delay(
+    taps: ArrayLike, frequencies: ArrayLike, sample_rate: float
+) -> NDArray[np.float64]:
+    """Group delay ``-d(phase)/d(omega)`` in samples at each frequency, in closed form; NaN where
+    the response is within rounding of 0 (conventions: FIR filters, Group delay)."""
+    h = _taps(taps)
+    fs = _rate(sample_rate)
+    f = np.asarray(frequencies, dtype=np.float64)
+    if f.ndim != 1 or not np.all(np.isfinite(f)):
+        raise ValueError("frequencies must be a finite 1-D array")
+    return _poly_delay(h, f / fs)
+
+
+def _poly_delay(c: NDArray[np.float64], nu: NDArray[np.float64]) -> NDArray[np.float64]:
+    """``Re(R/P)`` for ``P = sum c_n e^(-j 2 pi nu n)``, ``R = sum n c_n e^(-j 2 pi nu n)``; NaN
+    where ``|P| <= 1e-10 sum |c_n|``."""
+    n = np.arange(c.size, dtype=np.float64)
+    e = np.exp(-2j * np.pi * np.outer(nu, n))
+    p = e @ c
+    r = e @ (n * c)
+    small = np.abs(p) <= 1e-10 * np.sum(np.abs(c))
+    tau = np.real(r / np.where(small, 1.0, p))
+    return np.asarray(np.where(small, np.nan, tau), dtype=np.float64)
+
+
 class FirFilter:
     """Causal direct-form FIR filter that keeps its state across chunks (conventions: FIR filters).
 
@@ -1074,6 +1099,25 @@ def sos_response(
     for b0, b1, b2, a0, a1, a2 in s:
         h *= (b0 + zi * (b1 + zi * b2)) / (a0 + zi * (a1 + zi * a2))
     return h
+
+
+def sos_group_delay(
+    sos: ArrayLike, frequencies: ArrayLike, sample_rate: float
+) -> NDArray[np.float64]:
+    """Group delay in samples of a cascade of second-order sections: the sum of each section's
+    numerator delay minus its denominator's (conventions: IIR filters, Group delay)."""
+    s = _sos(sos)
+    fs = _rate(sample_rate)
+    raw = np.asarray(frequencies)
+    if raw.dtype.kind not in "iuf":
+        raise ValueError("frequencies must be real numbers")
+    f = raw.astype(np.float64)
+    if f.ndim != 1 or not np.all(np.isfinite(f)):
+        raise ValueError("frequencies must be a finite 1-D array")
+    tau = np.zeros(f.size)
+    for row in s:
+        tau += _poly_delay(row[:3], f / fs) - _poly_delay(row[3:], f / fs)
+    return tau
 
 
 class IirFilter:

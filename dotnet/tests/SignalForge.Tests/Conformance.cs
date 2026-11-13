@@ -273,6 +273,8 @@ public static class Conformance
                 t => Dsp.KaiserParameters(t.Item1, t.Item2, t.Item3)),
             "fir_response" => Bind((Reals(a.Get("taps")), Reals(a.Get("frequencies")), a.D("sample_rate")),
                 t => Dsp.FirResponse(t.Item1, t.Item2, t.Item3)),
+            "fir_group_delay" => Bind((Reals(a.Get("taps")), Reals(a.Get("frequencies")), a.D("sample_rate")),
+                t => Dsp.FirGroupDelay(t.Item1, t.Item2, t.Item3)),
             "fir_filter" => ChunkedOp(a, Reals(a.Get("taps")), t => new FirFilter(t), (f, x) => f.Process(x), (f, z) => f.Process(z)),
             "iir_filter" => ChunkedOp(a, Rows(a.Get("sos")), c => new IirFilter(c), (f, x) => f.Process(x), (f, z) => f.Process(z)),
             "resampler" => ChunkedOp(a, (a.I("up"), a.I("down"), a.Has("taps") ? Reals(a.Get("taps")) : null),
@@ -298,6 +300,7 @@ public static class Conformance
             "zero_phase_filter" => a.Get("samples") is Complex[] zs
                 ? Bind((Rows(a.Get("sos")), zs, a.OptInt("pad")), t => Dsp.ZeroPhaseFilter(t.Item1, t.Item2, t.Item3))
                 : Bind((Rows(a.Get("sos")), Reals(a.Get("samples")), a.OptInt("pad")), t => Dsp.ZeroPhaseFilter(t.Item1, t.Item2, t.Item3)),
+            "sos_group_delay" => Bind((Rows(a.Get("sos")), Reals(a.Get("frequencies")), a.D("sample_rate")), t => Dsp.SosGroupDelay(t.Item1, t.Item2, t.Item3)),
             "sos_response" => Bind((Rows(a.Get("sos")), Reals(a.Get("frequencies")), a.D("sample_rate")), t => Dsp.SosResponse(t.Item1, t.Item2, t.Item3)),
             "encode_samples" => a.Get("x") is Complex[] z
                 ? Bind((z, Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2)))

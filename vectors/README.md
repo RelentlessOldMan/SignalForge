@@ -56,7 +56,7 @@ Structured results use the Python field names (`mean_power`, `peak_index`, …).
 ## Generators
 
 `generators/*.py` compute a whole case file from first principles with the Python standard
-library only (`fir.py` writes `cases/fir.json`, `resample.py` writes `cases/resample.json`, `spectrogram.py` writes `cases/spectrogram.json`, `iir.py` writes `cases/iir.json`, `equiripple.py` writes `cases/equiripple.json`, `stimuli.py` writes `cases/stimuli.json`, `tone_metrics.py` writes `cases/tone_metrics.json`, `files.py` writes `cases/files.json` and the
+library only (`fir.py` writes `cases/fir.json`, `resample.py` writes `cases/resample.json`, `spectrogram.py` writes `cases/spectrogram.json`, `iir.py` writes `cases/iir.json`, `equiripple.py` writes `cases/equiripple.json`, `group_delay.py` writes `cases/group_delay.json`, `stimuli.py` writes `cases/stimuli.json`, `tone_metrics.py` writes `cases/tone_metrics.json`, `files.py` writes `cases/files.json` and the
 recordings in `files/`). Run one from the repo root to rewrite its file;
 `--check` compares instead and exits 1 on any difference. CI runs every generator with `--check`.
 

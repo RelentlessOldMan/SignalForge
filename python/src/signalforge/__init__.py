@@ -28,6 +28,7 @@ from .dsp import (
     elliptic_lowpass,
     fir_bandpass,
     fir_equiripple,
+    fir_group_delay,
     fir_highpass,
     fir_lowpass,
     fir_response,
@@ -37,6 +38,7 @@ from .dsp import (
     resample,
     resample_taps,
     rrc_taps,
+    sos_group_delay,
     sos_response,
     upsample,
     zero_phase_filter,
@@ -76,7 +78,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.43"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.44"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -132,6 +134,7 @@ __all__ = [
     "fft_frequencies",
     "fir_bandpass",
     "fir_equiripple",
+    "fir_group_delay",
     "fir_highpass",
     "fir_lowpass",
     "fir_response",
@@ -159,6 +162,7 @@ __all__ = [
     "resample_taps",
     "rrc_taps",
     "sfdr",
+    "sos_group_delay",
     "sos_response",
     "spectrogram",
     "timing_offset",

@@ -418,6 +418,13 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
 - **Frequency response** (`fir_response(taps, frequencies, sample_rate)`): the complex
   `H(f) = Σ h[n]·e^(−j2π·f·n/fs)` at each frequency (`n` from 0, so it includes the delay).
   Real taps, non-empty and finite; frequencies finite.
+- **Group delay** (`fir_group_delay(taps, frequencies, sample_rate)`,
+  [ADR 0028](adr/0028-group-delay.md)): `τ(f) = −dφ/dω` in **samples** (`ω = 2πf/fs`, `φ` the
+  phase of `H`), so a pure delay of `d` samples gives `+d` and linear-phase taps give `(N − 1)/2`.
+  It is computed in closed form, never by unwrapping a phase: for a polynomial
+  `P(ω) = Σ c_n·e^(−jωn)` and `R(ω) = Σ n·c_n·e^(−jωn)`, `τ_P = Re(R/P)`. Where
+  `|P| ≤ 1e-10·Σ|c_n|` (a zero on or within rounding of the unit circle, where the phase jumps)
+  the result is NaN. Arguments as for `fir_response`.
 - **Streaming filter** (`FirFilter(taps)`, method `process(chunk)`, `reset()`): causal direct
   form, `y[n] = Σₖ h[k]·x[n−k]` over the concatenation of every chunk since the start or the last
   reset, with `x` zero before the first sample. Each call returns as many samples as it is given,
@@ -625,6 +632,11 @@ and `SignalForge.IirFilter`.
   maps to `|x| = ∞`, where `|H|²` is 0 (odd order) or `10^(−A/10)` (even).
 - **Frequency response** (`sos_response(sos, frequencies, sample_rate)`): the complex
   `H(f) = Π_i H_i(e^(j2π·f/fs))` at each frequency. Frequencies finite.
+- **Group delay** (`sos_group_delay(sos, frequencies, sample_rate)`,
+  [ADR 0028](adr/0028-group-delay.md)): the sum over sections of `τ_B − τ_A`, each by the FIR
+  rule (FIR filters, Group delay) for `B = b0 + b1·e^(−jω) + b2·e^(−j2ω)` and `A` likewise, after
+  dividing by `a0`. NaN where any section's `B` or `A` meets the NaN rule. Arguments as for
+  `sos_response`.
 - **Streaming filter** (`IirFilter(sos)`, method `process(chunk)`, `reset()`, property `sections`,
   a copy with `a0 = 1`): each section is the causal difference equation
   `y[n] = b0·x[n] + b1·x[n−1] + b2·x[n−2] − a1·y[n−1] − a2·y[n−2]` (after dividing by `a0`), with

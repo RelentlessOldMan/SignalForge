@@ -76,6 +76,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "fir_bandpass": dsp.fir_bandpass,
     "fir_equiripple": dsp.fir_equiripple,
     "kaiser_parameters": dsp.kaiser_parameters,
+    "fir_group_delay": dsp.fir_group_delay,
     "fir_response": dsp.fir_response,
     "resample": dsp.resample,
     "resample_taps": dsp.resample_taps,
@@ -101,6 +102,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "chebyshev1_bandstop": dsp.chebyshev1_bandstop,
     "chebyshev2_bandpass": dsp.chebyshev2_bandpass,
     "chebyshev2_bandstop": dsp.chebyshev2_bandstop,
+    "sos_group_delay": dsp.sos_group_delay,
     "sos_response": dsp.sos_response,
     "iir_filter": lambda sos, samples, chunks: _chunked(dsp.IirFilter(sos), samples, chunks),
     "resampler": lambda up, down, samples, chunks, taps=None: _chunked(

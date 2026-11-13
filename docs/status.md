@@ -4,9 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Group delay**: `group_delay` of FIR taps and of second-order sections, in samples, computed
-   per section in closed form (no phase unwrapping); conventions first (sign, what happens at a
-   zero on the unit circle). It also checks the Bessel designs' flat delay directly.
+1. **Least-squares FIR design**: `fir_least_squares(num_taps, bands, desired, sample_rate,
+   weights=None)`, symmetric taps minimizing the weighted integral squared error over the bands
+   with a desired gain that is linear across each band (given at both edges); conventions first
+   (the integral, not a grid; how the linear system is solved; even `num_taps`), expected values
+   from closed-form integrals in a stdlib generator.
+2. **Welch options**: `detrend` ("constant", "linear" or none) per segment and median averaging
+   (with its bias correction), in `welch` and the spectrogram where it applies; conventions first.
 
 ## Built
 
@@ -349,6 +353,15 @@ Updated with every chunk of work. Dates are absolute.
   Vectors: one by hand, seven from the generator's term-by-term causal sum (cross-checked there
   against its delayed-taps `resample`), three errors. Tests: the identity with `resample` over
   random splits, complex input with even taps, reset, the real/complex kind fixed until reset.
+- 2026-11-13: group delay (conventions: FIR filters and IIR filters, Group delay; ADR 0028):
+  `fir_group_delay(taps, frequencies, sample_rate)` and `sos_group_delay(sos, ...)`, in samples,
+  closed form per polynomial (`Re(R/P)`, sections add as numerator minus denominator), NaN where a
+  polynomial is within rounding of 0 (a zero on the unit circle). Vectors: nine by hand (pure
+  delay, linear phase, the NaN points, first-order and all-pass sections, `a0` scaling), four from
+  a stdlib generator that expands chosen roots into taps and sums each root's own closed-form
+  delay, six errors. Tests: both agree with a numerical phase derivative, sections add, linear
+  phase taps give `(N − 1)/2`, and the Bessel low-pass delay is flat to 1% up to half the cutoff
+  where the Butterworth's varies by 30% and more.
 
 ## Not built
 

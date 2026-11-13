@@ -204,6 +204,42 @@ public static partial class Dsp
         return h;
     }
 
+    /// <summary>Group delay −dφ/dω in samples at each frequency, in closed form; NaN where the
+    /// response is within rounding of 0 (conventions: FIR filters, Group delay; ADR 0028).</summary>
+    /// <param name="taps">Real taps, non-empty and finite.</param>
+    /// <param name="frequencies">Frequencies in Hz, finite.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[] FirGroupDelay(ReadOnlySpan<double> taps, ReadOnlySpan<double> frequencies, double sampleRate)
+    {
+        CheckTaps(taps);
+        double fs = Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        var tau = new double[frequencies.Length];
+        for (int i = 0; i < frequencies.Length; i++)
+        {
+            if (!double.IsFinite(frequencies[i]))
+                throw new ArgumentException("frequencies must be finite", nameof(frequencies));
+            tau[i] = PolyDelay(taps, frequencies[i] / fs);
+        }
+        return tau;
+    }
+
+    /// <summary>Re(R/P) for P = Σ c_n·e^(−j2πνn), R = Σ n·c_n·e^(−j2πνn); NaN where
+    /// |P| ≤ 1e-10·Σ|c_n|.</summary>
+    private static double PolyDelay(ReadOnlySpan<double> c, double nu)
+    {
+        Complex p = Complex.Zero, r = Complex.Zero;
+        double size = 0;
+        for (int n = 0; n < c.Length; n++)
+        {
+            double ph = -2 * Math.PI * nu * n;
+            var e = new Complex(Math.Cos(ph), Math.Sin(ph));
+            p += c[n] * e;
+            r += n * c[n] * e;
+            size += Math.Abs(c[n]);
+        }
+        return Complex.Abs(p) <= 1e-10 * size ? double.NaN : (r / p).Real;
+    }
+
     /// <summary>Default anti-aliasing taps for <see cref="Resample(ReadOnlySpan{double}, int, int, double[])"/>:
     /// FirLowpass(20R + 1, 1/(2R), 1) with R = max(up, down) after reducing by their gcd
     /// (conventions: Resampling).</summary>
@@ -365,6 +401,29 @@ public static partial class Dsp
             h[i] = r;
         }
         return h;
+    }
+
+    /// <summary>Group delay in samples of a cascade of second-order sections: the sum of each
+    /// section's numerator delay minus its denominator's (conventions: IIR filters, Group delay;
+    /// ADR 0028).</summary>
+    /// <param name="sos">Sections <c>[b0, b1, b2, a0, a1, a2]</c>, at least one, finite, a0 ≠ 0.</param>
+    /// <param name="frequencies">Frequencies in Hz, finite.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[] SosGroupDelay(double[][] sos, ReadOnlySpan<double> frequencies, double sampleRate)
+    {
+        double[][] s = CheckSos(sos);
+        double fs = Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        var tau = new double[frequencies.Length];
+        for (int i = 0; i < frequencies.Length; i++)
+        {
+            if (!double.IsFinite(frequencies[i]))
+                throw new ArgumentException("frequencies must be finite", nameof(frequencies));
+            double nu = frequencies[i] / fs, t = 0;
+            foreach (double[] c in s)
+                t += PolyDelay(c.AsSpan(0, 3), nu) - PolyDelay(c.AsSpan(3, 3), nu);
+            tau[i] = t;
+        }
+        return tau;
     }
 
     /// <summary>A copy of the sections, each row divided by its a0; throws unless valid.</summary>
