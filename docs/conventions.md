@@ -291,6 +291,18 @@ groups as the tone metrics (ADR 0015).
   `00 → (+1+j)/√2`, `01 → (+1−j)/√2`, `10 → (−1+j)/√2`, `11 → (−1−j)/√2`. Average symbol energy is 1.
   Hard decision takes the sign of I for `b0` and the sign of Q for `b1`; a value of exactly 0 decides
   bit 0. **(implemented)**
+- **8-PSK (Gray)** ([ADR 0035](adr/0035-psk8-qam16.md)): three bits, MSB first, form the label
+  `m`. Point `p` (0…7) is `e^{jπp/4}` and carries the label `p ⊕ (p >> 1)`, so neighbors differ
+  in one bit, around the circle too: `000 → 1`, `001 → e^{jπ/4}`, `011 → j`, `010 → e^{j3π/4}`,
+  `110 → −1`, `111 → e^{j5π/4}`, `101 → −j`, `100 → e^{j7π/4}`. Hard decision takes
+  `p = ⌊atan2(Q, I)/(π/4) + 1/2⌋ mod 8`; 0 decides `000`. A symbol on a boundary between two
+  sectors may decide either way within the rounding of `atan2`. **(implemented)**
+- **16-QAM (Gray)**: four bits `(b0, b1, b2, b3)`, `I` from `(b0, b1)` and `Q` from `(b2, b3)`,
+  each `(1 − 2·first)·(3 − 2·second)`: `00 → 3`, `01 → 1`, `11 → −1`, `10 → −3`, divided by `√10`
+  for unit average symbol energy. As for QPSK, a first bit of 0 is the positive side. Hard
+  decision per component `v`: first bit `v < 0`, second bit `|v| < 2/√10` (that quotient
+  evaluated in double precision); so 0 decides `01` and `±2/√10` decide the outer level.
+  **(implemented)**
 - Other constellations are normalized to unit average symbol energy unless a standard says otherwise.
   **(defined)**
 

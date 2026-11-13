@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **PSK and QAM beyond QPSK**: 8-PSK and 16-QAM mapping and hard-decision demapping with Gray
-   codes, unit average symbol energy; the bit order and constellation in the conventions first,
-   expected values by hand.
-2. **Phase noise**: a Wiener (random-walk) phase impairment set by its 3 dB linewidth, seeded;
+1. **Phase noise**: a Wiener (random-walk) phase impairment set by its 3 dB linewidth, seeded;
    the increment variance `2π·linewidth/fs` in the conventions first; cross-language checks on
    the statistics (the variance of the phase difference over a lag).
+2. **Error-rate theory for 8-PSK and 16-QAM**: exact Gray 16-QAM BER and SER, and 8-PSK SER by
+   its integral (with the usual nearest-neighbor BER), next to `qpsk_ber_theory`; expected values
+   from the closed forms by hand and an independent numerical integral; Monte-Carlo checks in
+   both suites.
 
 ## Built
 
@@ -404,12 +405,17 @@ Updated with every chunk of work. Dates are absolute.
   `dc_offset(samples, offset)`. 17 vectors in `channel.json`: by hand, and from the widely
   linear form `μx + νx̄` (independent of the branch form). Tests: a tone's DFT image matches the
   image rejection, the Q branch is `g·sin(θ + φ)`, no other bin is touched.
+- 2026-11-13: 8-PSK and 16-QAM (conventions: Bits and symbols; ADR 0035): `psk8_map`,
+  `psk8_demap_hard` (point `p` at `e^{jπp/4}`, label `p ⊕ (p >> 1)`), `qam16_map`,
+  `qam16_demap_hard` (two Gray 4-PAM axes, first bit 0 positive, over `√10`, thresholds 0 and
+  `2/√10`). 10 vectors by hand in `modulation.json`. Tests: round trips, unit energy, every
+  nearest-neighbor pair differs in one bit, noise under the decision margin changes nothing.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance and DC offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK and 16-QAM, FSK, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance and DC offset, tracking loops (timing, carrier), RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
 multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

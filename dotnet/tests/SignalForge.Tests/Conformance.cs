@@ -231,6 +231,10 @@ public static class Conformance
             "sfdr" => SfdrOp(a),
             "qpsk_map" => Bind(Bits(a.Get("bits")), b => Modulation.QpskMap(b)),
             "qpsk_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.QpskDemapHard(s)),
+            "psk8_map" => Bind(Bits(a.Get("bits")), b => Modulation.Psk8Map(b)),
+            "psk8_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.Psk8DemapHard(s)),
+            "qam16_map" => Bind(Bits(a.Get("bits")), b => Modulation.Qam16Map(b)),
+            "qam16_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.Qam16DemapHard(s)),
             "bit_errors" => Bind((Bits(a.Get("reference")), Bits(a.Get("received"))), t => Metrics.BitErrors(t.Item1, t.Item2)),
             "fft" => a.Get("samples") is Complex[] fc
                 ? () => Spectral.Fft(fc)

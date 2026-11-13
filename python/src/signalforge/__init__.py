@@ -52,7 +52,14 @@ from .files import decode_samples, encode_samples, read_sigmf, write_sigmf
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import PowerStats, Sfdr, ToneMetrics, power_stats, sfdr, tone_metrics
 from .metrics import ErrorCount, Evm, bit_errors, evm, qpsk_ber_theory
-from .modulation import qpsk_demap_hard, qpsk_map
+from .modulation import (
+    psk8_demap_hard,
+    psk8_map,
+    qam16_demap_hard,
+    qam16_map,
+    qpsk_demap_hard,
+    qpsk_map,
+)
 from .spectral import (
     Acpr,
     OccupiedBandwidth,
@@ -83,7 +90,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.50"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.51"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -161,8 +168,12 @@ __all__ = [
     "occupied_bandwidth",
     "power_stats",
     "prbs",
+    "psk8_demap_hard",
+    "psk8_map",
     "pulse_shape",
     "pulse_train",
+    "qam16_demap_hard",
+    "qam16_map",
     "qpsk_ber_theory",
     "qpsk_block_phases",
     "qpsk_demap_hard",
