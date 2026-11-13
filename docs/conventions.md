@@ -375,7 +375,12 @@ and `SignalForge.IirFilter`.
     finite and strictly stable (`|a2| < 1`, `|a1| < 1 + a2`). A cutoff or band edge within about
     1e-8·fs of 0 or `fs/2` rounds a pole onto the unit circle (and the gain to 0), so such a
     design is `invalid_argument`; accuracy is already reduced near that limit (below about
-    1e-6·fs). dB arguments enter as `10^(x/10) − 1`, computed as `expm1(x·ln10/10)` so small
+    1e-6·fs). Band designs have the same limit for the bandwidth: poles sit about `high − low`
+    from the unit circle, so a band narrower than about 1e-8·fs is `invalid_argument` or loses
+    digits (a 1e-12·fs band matches the closed form only to about 1e-3), and extreme dB values
+    (ripple near 200 dB, attenuation near 0) push poles closer still. Designs near these limits
+    are not used as cross-language vectors: which side of the limit they land on depends on
+    the last bit of `tan` and `sinh`. dB arguments enter as `10^(x/10) − 1`, computed as `expm1(x·ln10/10)` so small
     values keep their digits.
 - **Chebyshev type I design** (`chebyshev1_lowpass(order, ripple_db, cutoff, sample_rate)` and
   `chebyshev1_highpass(...)`, [ADR 0018](adr/0018-chebyshev-type-1.md)): the analog Chebyshev

@@ -4,9 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Review pass** over the band Chebyshevs: numerical edge cases (narrow and near-Nyquist
-   bands, high orders, extreme ripple and attenuation), API and docs agreement across languages.
-2. **Elliptic (Cauer) low-pass and high-pass** design: conventions and an ADR first.
+1. **Elliptic (Cauer) low-pass and high-pass** design: conventions and an ADR first (needs the
+   Jacobi elliptic functions and the degree equation; expected values from the closed-form
+   |H|² = 1/(1 + ε²R²) and published pole-zero tables computed independently).
+2. **Review pass** over the elliptic designs once built.
 
 ## Built
 
@@ -243,6 +244,13 @@ Updated with every chunk of work. Dates are absolute.
   stability, and the product of the denominators against the prototype expanded by polynomial
   substitution (independent of the pole-pair split). Python 1334 passed, 2 skipped; .NET 1046
   passed; conformance 638/638 in both.
+- 2026-11-13: review of the band Chebyshevs. A sweep of 1568 designs (orders 1-1000, dB 1e-9 to
+  200, bands from 1e-12·fs wide to near Nyquist): each design either raises `ValueError` or
+  matches the closed-form |H|² to 1e-6, except where second-order-section coefficients can't hold
+  the poles (a 1e-12·fs band; 200 dB ripple). Both languages were run on the same grid and on
+  800 random designs (a temporary check, not vectors). They accept and reject the same designs
+  and agree to 1e-12 on random designs, 1e-6 at the extremes. No code defects found; the
+  conventions now state the bandwidth and dB conditioning limits.
 
 ## Not built
 
