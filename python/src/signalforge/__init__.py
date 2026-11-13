@@ -4,6 +4,19 @@ from .core import Signal
 from .measurements import PowerStats, power_stats
 from .metrics import ErrorCount, bit_errors
 from .modulation import qpsk_demap_hard, qpsk_map
+from .spectral import (
+    OccupiedBandwidth,
+    SpectralDensity,
+    WindowStats,
+    channel_power,
+    fft,
+    fft_frequencies,
+    ifft,
+    occupied_bandwidth,
+    welch_psd,
+    window,
+    window_stats,
+)
 from .units import (
     amp_to_db,
     db_to_amp,
@@ -20,15 +33,23 @@ __version__ = "0.1.0"
 
 __all__ = [
     "ErrorCount",
+    "OccupiedBandwidth",
     "PowerStats",
     "Signal",
+    "SpectralDensity",
+    "WindowStats",
     "amp_to_db",
     "bit_errors",
+    "channel_power",
     "db_to_amp",
     "db_to_lin",
     "dbm_to_vrms",
     "dbm_to_w",
+    "fft",
+    "fft_frequencies",
+    "ifft",
     "lin_to_db",
+    "occupied_bandwidth",
     "power_stats",
     "prbs",
     "qpsk_demap_hard",
@@ -36,4 +57,7 @@ __all__ = [
     "tone",
     "vrms_to_dbm",
     "w_to_dbm",
+    "welch_psd",
+    "window",
+    "window_stats",
 ]

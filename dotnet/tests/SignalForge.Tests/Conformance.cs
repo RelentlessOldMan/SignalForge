@@ -78,6 +78,8 @@ public static class Conformance
         double D(string k) => Convert.ToDouble(a[k], CultureInfo.InvariantCulture);
         double Opt(string k, double dflt) => a.ContainsKey(k) ? D(k) : dflt;
         int I(string k) => checked((int)D(k));
+        int? OptInt(string k) => a.ContainsKey(k) ? I(k) : null;
+        bool Flag(string k) => a.TryGetValue(k, out var f) && f is true;
         return op switch
         {
             "lin_to_db" => Units.LinToDb(D("x")),
@@ -97,9 +99,25 @@ public static class Conformance
             "qpsk_map" => Modulation.QpskMap(Bits(a["bits"])),
             "qpsk_demap_hard" => Modulation.QpskDemapHard(Complexes(a["symbols"])),
             "bit_errors" => Metrics.BitErrors(Bits(a["reference"]), Bits(a["received"])),
+            "fft" => a["samples"] is Complex[] fc ? Spectral.Fft(fc) : Spectral.Fft(Reals(a["samples"])),
+            "ifft" => Spectral.Ifft(Complexes(a["spectrum"])),
+            "fft_frequencies" => Spectral.FftFrequencies(I("n"), D("sample_rate"), Flag("shifted")),
+            "window" => Spectral.Window(WindowName(a["name"]), I("n"), Flag("symmetric"),
+                a.ContainsKey("beta") ? D("beta") : null),
+            "window_stats" => Spectral.WindowStats(Reals(a["w"])),
+            "welch_psd" => a["samples"] is Complex[] ws
+                ? Spectral.WelchPsd(ws, D("sample_rate"), OptInt("nperseg"), OptInt("noverlap"), WindowName(a.GetValueOrDefault("window", "hann")))
+                : Spectral.WelchPsd(Reals(a["samples"]), D("sample_rate"), OptInt("nperseg"), OptInt("noverlap"),
+                    WindowName(a.GetValueOrDefault("window", "hann")), !a.TryGetValue("one_sided", out var os) || os is true),
+            "occupied_bandwidth" => Spectral.OccupiedBandwidth(Reals(a["frequencies"]), Reals(a["psd"]), Opt("fraction", 0.99)),
+            "channel_power" => Spectral.ChannelPower(Reals(a["frequencies"]), Reals(a["psd"]), D("low"), D("high")),
             _ => throw new InvalidOperationException($"unknown op {op}"),
         };
     }
+
+    /// <summary>Vector window name (snake_case) to the enum; unknown names throw ArgumentException.</summary>
+    private static WindowType WindowName(object? v) =>
+        Enum.Parse<WindowType>(((string)v!).Replace("_", "", StringComparison.Ordinal), ignoreCase: true);
 
     private static double[] Reals(object? v) => v as double[] ?? throw new InvalidDataException("expected a real array");
 
@@ -198,6 +216,9 @@ public static class Conformance
                 return;
             case Complex[] ec when actual is Complex[] ac:
                 CompareArrays(ac, ec, abs, rel, where, msgs);
+                return;
+            case bool eb when actual is bool ab:
+                if (ab != eb) msgs.Add($"{where}: {ab} != expected {eb}");
                 return;
             case double ed when actual is double ad:
                 if (!Close(ad, ed, abs, rel)) msgs.Add($"{where}: {ad:R} != expected {ed:R}");

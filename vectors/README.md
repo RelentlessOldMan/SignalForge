@@ -31,6 +31,9 @@ come from are in [docs/testing.md](../docs/testing.md): never from SignalForge's
 - `tol`: optional. Passes when `|actual − expected| ≤ abs + rel·|expected|`. Defaults: `abs` 1e-12,
   `rel` 1e-12. For complex values the difference is the complex modulus.
 - `source`: required. How the expected value was obtained.
+- Records compare only the fields listed in `expected`; booleans compare exactly. Enumerated choices
+  (such as a window name) are strings in their Python spelling (`"blackman_harris"`); the C# runner
+  maps them to its enum.
 
 ### Values
 

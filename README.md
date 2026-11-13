@@ -4,7 +4,8 @@ Signal generation, DSP and measurement, built twice: once in Python, once in C#/
 implementations share nothing at runtime. They share test vectors and conventions, and both must
 produce the same numbers.
 
-> Early days. The foundation is in: signals, units, tones, PRBS, power measurements, QPSK mapping
+> Early days. The foundation is in: signals, units, tones, PRBS, power measurements, spectra (FFT,
+> windows, Welch PSD, occupied bandwidth, channel power), QPSK mapping
 > and bit errors, all checked against shared vectors in both languages. The first end-to-end slice
 > (a QPSK link with EVM and BER) is next. See [docs/status.md](docs/status.md).
 

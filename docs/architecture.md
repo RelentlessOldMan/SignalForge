@@ -34,7 +34,8 @@ module moves into its own project/package only when it brings a dependency the r
 | Modulation | `signalforge.modulation` | `SignalForge.Modulation` | QPSK map and hard demap; later PSK/QAM, pulse shaping, demodulators | started |
 | Metrics | `signalforge.metrics` | `SignalForge.Metrics` | bit/symbol error counts; later EVM | started |
 | Conformance | `signalforge.conformance` | test project | loads and runs `vectors/` cases | built |
-| DSP | | | FFT, windows, FIR/IIR, resampling, mixing | next |
+| Spectral | `signalforge.spectral` | `SignalForge.Spectral` | FFT (C#: own radix-2 + Bluestein), frequency axes, windows, Welch PSD, occupied bandwidth, channel power ([ADR 0006](adr/0006-fft-windows-spectra.md)) | started |
+| DSP | | | FIR/IIR, pulse shaping filters, resampling, mixing | next |
 | IO | | | raw IQ files, SigMF, WAV, NumPy | planned |
 | Standards | | | one subpackage per standard, versioned, never mixed into generic code | planned |
 | Hardware | | | separate package, never a dependency of the core | planned |

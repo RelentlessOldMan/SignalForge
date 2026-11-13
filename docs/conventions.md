@@ -62,16 +62,61 @@ rule for code not written yet.
 
 ## Spectra
 
+Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spectral`; C#:
+`SignalForge.Spectral`.
+
 - **FFT:** forward transform unnormalized, `X[k] = Σ x[n]·e^{−j2πkn/N}`; inverse scaled by `1/N`.
-  This is NumPy's default (`norm="backward"`). **(defined)**
-- **Frequency axis:** complex signals use a two-sided, centered axis from `−fs/2` to just under
-  `+fs/2` (bin `k` at `(k − ⌊N/2⌋)·fs/N` after an FFT shift), offset by `center_frequency` when
-  reporting absolute frequency. Real signals may use a one-sided axis `0 … fs/2`; a function that
-  returns one says so in its name or result. **(defined)**
-- **PSD** is in power units per Hz (W/Hz when units are volts and impedance is known, otherwise
-  sample-units²/Hz). It is window-corrected with the window's noise-equivalent bandwidth, so the
-  integral of the PSD over frequency equals the mean power. One-sided PSD doubles every bin except DC
-  and Nyquist. **(defined)**
+  This is NumPy's default (`norm="backward"`). Any length `N ≥ 1`. **(implemented)**
+- **Frequency axis** (`fft_frequencies(n, sample_rate, shifted)`): unshifted, bin `k` is at
+  `k·fs/N` for `k ≤ ⌊(N−1)/2⌋` and `(k−N)·fs/N` above that (NumPy `fftfreq` order). Shifted, index
+  `i` is at `(i − ⌊N/2⌋)·fs/N`, ascending from `−fs/2` (even `N`) to just under `+fs/2` (NumPy
+  `fftshift` order). Frequencies are baseband; add `center_frequency` for absolute frequency.
+  **(implemented)**
+- **Windows** (`window(name, n, symmetric=False, beta=None)`): with `D = N` (periodic, the default,
+  for spectral analysis) or `D = N − 1` (symmetric, for filter design), `n = 0 … N−1`:
+  - cosine sums `w[n] = Σₖ (−1)ᵏ·aₖ·cos(2πkn/D)`:
+    `rectangular` (a₀ = 1), `hann` (0.5, 0.5), `hamming` (0.54, 0.46),
+    `blackman` (0.42, 0.5, 0.08), `blackman_harris` (0.35875, 0.48829, 0.14128, 0.01168),
+    `flattop` (0.21557895, 0.41663158, 0.277263158, 0.083578947, 0.006947368; the five-term
+    flat-top from D'Antona and Ferrero, *Digital Signal Processing for Measurement Systems*, 2006);
+  - `kaiser`: `w[n] = I₀(β·√(1 − (2n/D − 1)²)) / I₀(β)`, `β ≥ 0` required (and only allowed here).
+  - `N = 0` gives an empty window; `N = 1` gives `[1]`. Unknown names raise.
+  **(implemented)**
+- **Window figures** (`window_stats(w)`): coherent gain `CG = Σw / N` (a tone at a bin center reads
+  `CG` times its amplitude); equivalent noise bandwidth in bins `ENBW = N·Σw² / (Σw)²`. Hann has
+  CG 0.5 and ENBW exactly 1.5. **(implemented)**
+- **PSD** (`welch_psd(samples, sample_rate, nperseg=None, noverlap=None, window="hann",
+  one_sided=None)`), Welch's method:
+  - `nperseg` defaults to the whole input; `noverlap` defaults to `⌊nperseg/2⌋`, `0 ≤ noverlap <
+    nperseg`. Segments start at `0, step, 2·step, …` with `step = nperseg − noverlap`, as many as fit
+    whole: `num_segments = ⌊(L − nperseg)/step⌋ + 1`. No detrending, no zero padding.
+  - Each segment is multiplied by the window `w` (periodic, length `nperseg`) and transformed. The
+    two-sided PSD is the mean over segments of `|X[k]|² / (fs·Σw²)`, in sample-units²/Hz. Its sum
+    times `fs/N` is the mean power of the windowed segments, equal to the signal's mean power for
+    the rectangular window and for noise in expectation.
+  - Complex input: two-sided, shifted order (frequencies from `fft_frequencies(shifted=True)`).
+    Real input: one-sided by default, bins `0 … ⌊N/2⌋` at `k·fs/N`, with every bin doubled except DC
+    and, for even `N`, Nyquist. Real input with `one_sided=False` gives the two-sided shifted PSD;
+    complex input with `one_sided=True` raises.
+  - The result carries `frequencies`, `psd`, `sample_rate`, `nperseg`, `num_segments`,
+    `one_sided`, `bin_width = fs/N` and `enbw_hz = ENBW·fs/N` (the resolution bandwidth).
+  **(implemented)**
+- **PSD units:** W/Hz when the samples are volts and an impedance is known (divide by the
+  impedance), otherwise sample-units²/Hz. The functions above work in sample units. **(defined)**
+- **Bins as rectangles:** OBW and channel power treat PSD bin `k` (center `f_k`, uniform spacing
+  `Δ`) as constant over `[f_k − Δ/2, f_k + Δ/2]`, holding power `PSD_k·Δ`. So cumulative power is
+  piecewise linear in frequency and band edges are interpolated within a bin. Frequencies must be
+  ascending and evenly spaced (relative error ≤ 1e-6), at least two bins, PSD finite and ≥ 0.
+  **(implemented)**
+- **Occupied bandwidth** (`occupied_bandwidth(frequencies, psd, fraction=0.99)`), the ITU-R SM.328
+  β/2 method: the band outside which lies `(1 − fraction)/2` of the total power on each side. With
+  `C(f)` the cumulative power and `P` the total, `lower` is the smallest `f` where `C(f)` exceeds
+  `(1 − fraction)/2·P` and `upper` the largest `f` where `C(f)` is still below `(1 + fraction)/2·P`.
+  `0 < fraction ≤ 1`; `P > 0` required. Result: `bandwidth = upper − lower`, `lower`, `upper`,
+  `total_power`, `fraction`. **(implemented)**
+- **Channel power** (`channel_power(frequencies, psd, low, high)`): the PSD integrated over
+  `[low, high]`, partial bins counted by their overlap. `low < high` required. Result in the PSD's
+  power units. **(implemented)**
 - Windowed spectra state the window and the correction (coherent gain for tone amplitude, ENBW for
   noise and power) in the result. **(defined)**
 

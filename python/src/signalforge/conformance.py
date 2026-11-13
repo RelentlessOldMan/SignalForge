@@ -18,7 +18,7 @@ from typing import Any
 
 import numpy as np
 
-from . import measurements, metrics, modulation, units, waveforms
+from . import measurements, metrics, modulation, spectral, units, waveforms
 
 DEFAULT_TOL = {"abs": 1e-12, "rel": 1e-12}
 
@@ -37,6 +37,14 @@ OPS: dict[str, Callable[..., Any]] = {
     "qpsk_map": modulation.qpsk_map,
     "qpsk_demap_hard": modulation.qpsk_demap_hard,
     "bit_errors": metrics.bit_errors,
+    "fft": spectral.fft,
+    "ifft": spectral.ifft,
+    "fft_frequencies": spectral.fft_frequencies,
+    "window": spectral.window,
+    "window_stats": spectral.window_stats,
+    "welch_psd": spectral.welch_psd,
+    "occupied_bandwidth": spectral.occupied_bandwidth,
+    "channel_power": spectral.channel_power,
 }
 
 

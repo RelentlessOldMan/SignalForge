@@ -1,0 +1,365 @@
+{
+  "schema": 1,
+  "suite": "spectral",
+  "description": "FFT, frequency axes, windows, window figures, Welch PSD, occupied bandwidth and channel power. Definitions in docs/conventions.md (Spectra). Expected values are closed-form DFTs and hand integrals.",
+  "cases": [
+    {
+      "id": "fft.ramp4", "op": "fft",
+      "args": {"samples": [1, 2, 3, 4]},
+      "expected": {"re": [10, -2, -2, -2], "im": [0, 2, 0, -2]},
+      "source": "direct DFT: X0 = sum = 10; X1 = 1 - 2j - 3 + 4j = -2+2j; X2 = 1-2+3-4 = -2; X3 = conj(X1)"
+    },
+    {
+      "id": "fft.impulse8", "op": "fft",
+      "args": {"samples": [1, 0, 0, 0, 0, 0, 0, 0]},
+      "expected": {"re": [1, 1, 1, 1, 1, 1, 1, 1], "im": [0, 0, 0, 0, 0, 0, 0, 0]},
+      "source": "DFT of a unit impulse at n = 0 is 1 at every bin"
+    },
+    {
+      "id": "fft.complex_tone_bin2_n8", "op": "fft",
+      "args": {"samples": {"re": [1, 0, -1, 0, 1, 0, -1, 0], "im": [0, 1, 0, -1, 0, 1, 0, -1]}},
+      "expected": {"re": [0, 0, 8, 0, 0, 0, 0, 0], "im": [0, 0, 0, 0, 0, 0, 0, 0]},
+      "source": "x = exp(j*2*pi*2n/8) = j^n: all energy in bin 2, X2 = N*A = 8 (unnormalized forward FFT)"
+    },
+    {
+      "id": "fft.complex_tone_bin1_n6", "op": "fft",
+      "args": {"samples": {"re": [1, 0.5, -0.5, -1, -0.5, 0.5], "im": [0, 0.8660254037844386, 0.8660254037844386, 0, -0.8660254037844386, -0.8660254037844386]}},
+      "expected": {"re": [0, 6, 0, 0, 0, 0], "im": [0, 0, 0, 0, 0, 0]},
+      "tol": {"abs": 1e-12, "rel": 1e-12},
+      "source": "x = exp(j*2*pi*n/6), cos/sin of multiples of 60 degrees: X1 = N = 6. N = 6 is not a power of two."
+    },
+    {
+      "id": "fft.delayed_impulse_n5", "op": "fft",
+      "args": {"samples": [0, 1, 0, 0, 0]},
+      "expected": {"re": [1, 0.30901699437494745, -0.8090169943749475, -0.8090169943749475, 0.30901699437494745],
+                   "im": [0, -0.9510565162951535, -0.5877852522924731, 0.5877852522924731, 0.9510565162951535]},
+      "tol": {"abs": 1e-12, "rel": 1e-12},
+      "source": "delta[n-1] -> X[k] = exp(-j*2*pi*k/5); cos 72 = (sqrt5-1)/4, cos 144 = -(sqrt5+1)/4. Prime length."
+    },
+    {
+      "id": "fft.ones_n3", "op": "fft",
+      "args": {"samples": [1, 1, 1]},
+      "expected": {"re": [3, 0, 0], "im": [0, 0, 0]},
+      "source": "constant: X0 = N, other bins sum a full turn of roots of unity = 0"
+    },
+    {
+      "id": "fft.single_sample", "op": "fft",
+      "args": {"samples": {"re": [2.5], "im": [-1]}},
+      "expected": {"re": [2.5], "im": [-1]},
+      "source": "a 1-point DFT is the identity"
+    },
+    {
+      "id": "fft.empty", "op": "fft",
+      "args": {"samples": []},
+      "error": "invalid_argument",
+      "source": "conventions: N >= 1"
+    },
+    {
+      "id": "ifft.ramp4", "op": "ifft",
+      "args": {"spectrum": {"re": [10, -2, -2, -2], "im": [0, 2, 0, -2]}},
+      "expected": {"re": [1, 2, 3, 4], "im": [0, 0, 0, 0]},
+      "source": "inverse of fft.ramp4, scaled by 1/N"
+    },
+    {
+      "id": "ifft.ones_n5", "op": "ifft",
+      "args": {"spectrum": [1, 1, 1, 1, 1]},
+      "expected": {"re": [1, 0, 0, 0, 0], "im": [0, 0, 0, 0, 0]},
+      "source": "(1/N) * sum of exp(j*2*pi*kn/N) over k is the unit impulse; checks the 1/N scaling"
+    },
+    {
+      "id": "fft_frequencies.n4_unshifted", "op": "fft_frequencies",
+      "args": {"n": 4, "sample_rate": 8},
+      "expected": [0, 2, -4, -2],
+      "source": "bin k at k*fs/N for k <= (N-1)//2, (k-N)*fs/N above (NumPy fftfreq order)"
+    },
+    {
+      "id": "fft_frequencies.n4_shifted", "op": "fft_frequencies",
+      "args": {"n": 4, "sample_rate": 8, "shifted": true},
+      "expected": [-4, -2, 0, 2],
+      "source": "index i at (i - N//2)*fs/N, from -fs/2 for even N"
+    },
+    {
+      "id": "fft_frequencies.n5_unshifted", "op": "fft_frequencies",
+      "args": {"n": 5, "sample_rate": 10},
+      "expected": [0, 2, 4, -4, -2],
+      "source": "odd N: bins 0..2 positive, 3..4 negative"
+    },
+    {
+      "id": "fft_frequencies.n5_shifted", "op": "fft_frequencies",
+      "args": {"n": 5, "sample_rate": 10, "shifted": true},
+      "expected": [-4, -2, 0, 2, 4],
+      "source": "odd N: symmetric about 0, no Nyquist bin"
+    },
+    {
+      "id": "fft_frequencies.n0", "op": "fft_frequencies",
+      "args": {"n": 0, "sample_rate": 10},
+      "error": "invalid_argument",
+      "source": "n >= 1"
+    },
+    {
+      "id": "window.hann_periodic_4", "op": "window",
+      "args": {"name": "hann", "n": 4},
+      "expected": [0, 0.5, 1, 0.5],
+      "source": "0.5 - 0.5*cos(2*pi*n/4)"
+    },
+    {
+      "id": "window.hann_symmetric_5", "op": "window",
+      "args": {"name": "hann", "n": 5, "symmetric": true},
+      "expected": [0, 0.5, 1, 0.5, 0],
+      "source": "0.5 - 0.5*cos(2*pi*n/4), D = N-1"
+    },
+    {
+      "id": "window.hamming_periodic_4", "op": "window",
+      "args": {"name": "hamming", "n": 4},
+      "expected": [0.08, 0.54, 1, 0.54],
+      "source": "0.54 - 0.46*cos(2*pi*n/4)"
+    },
+    {
+      "id": "window.blackman_periodic_4", "op": "window",
+      "args": {"name": "blackman", "n": 4},
+      "expected": [0, 0.34, 1, 0.34],
+      "source": "0.42 - 0.5*cos(pi*n/2) + 0.08*cos(pi*n): 0.42-0.5+0.08, 0.42-0.08, 1, 0.34"
+    },
+    {
+      "id": "window.blackman_harris_periodic_2", "op": "window",
+      "args": {"name": "blackman_harris", "n": 2},
+      "expected": [0.00006, 1],
+      "source": "n=0: a0-a1+a2-a3 = 0.00006; n=1: cos(k*pi) = (-1)^k so a0+a1+a2+a3 = 1"
+    },
+    {
+      "id": "window.flattop_periodic_2", "op": "window",
+      "args": {"name": "flattop", "n": 2},
+      "expected": [-0.000421051, 1.000000003],
+      "source": "n=0: a0-a1+a2-a3+a4; n=1: sum of the coefficients (the flat-top dips slightly below 0 at its ends)"
+    },
+    {
+      "id": "window.rectangular_3", "op": "window",
+      "args": {"name": "rectangular", "n": 3},
+      "expected": [1, 1, 1],
+      "source": "all ones"
+    },
+    {
+      "id": "window.kaiser_beta1_symmetric_3", "op": "window",
+      "args": {"name": "kaiser", "n": 3, "symmetric": true, "beta": 1},
+      "expected": [0.789848314825112, 1, 0.789848314825112],
+      "source": "ends: I0(0)/I0(1) = 1/1.2660658777520082 (Abramowitz and Stegun table 9.8); middle: I0(1)/I0(1)"
+    },
+    {
+      "id": "window.kaiser_beta0", "op": "window",
+      "args": {"name": "kaiser", "n": 4, "beta": 0},
+      "expected": [1, 1, 1, 1],
+      "source": "I0(0)/I0(0) = 1 everywhere: beta 0 is rectangular"
+    },
+    {
+      "id": "window.length1", "op": "window",
+      "args": {"name": "hann", "n": 1},
+      "expected": [1],
+      "source": "conventions: N = 1 gives [1]"
+    },
+    {
+      "id": "window.length0", "op": "window",
+      "args": {"name": "hann", "n": 0},
+      "expected": [],
+      "source": "conventions: N = 0 gives an empty window"
+    },
+    {
+      "id": "window.unknown", "op": "window",
+      "args": {"name": "triangle", "n": 4},
+      "error": "invalid_argument",
+      "source": "unknown names raise"
+    },
+    {
+      "id": "window.kaiser_needs_beta", "op": "window",
+      "args": {"name": "kaiser", "n": 4},
+      "error": "invalid_argument",
+      "source": "kaiser requires beta"
+    },
+    {
+      "id": "window.beta_only_for_kaiser", "op": "window",
+      "args": {"name": "hann", "n": 4, "beta": 2},
+      "error": "invalid_argument",
+      "source": "beta is only allowed for kaiser"
+    },
+    {
+      "id": "window_stats.hann4", "op": "window_stats",
+      "args": {"w": [0, 0.5, 1, 0.5]},
+      "expected": {"coherent_gain": 0.5, "enbw_bins": 1.5},
+      "source": "sum 2, sum of squares 1.5: CG = 2/4, ENBW = 4*1.5/2^2"
+    },
+    {
+      "id": "window_stats.hamming4", "op": "window_stats",
+      "args": {"w": [0.08, 0.54, 1, 0.54]},
+      "expected": {"coherent_gain": 0.54, "enbw_bins": 1.3628257887517146},
+      "source": "periodic cosine sum: CG = a0, ENBW = (a0^2 + a1^2/2)/a0^2 = 0.3974/0.2916"
+    },
+    {
+      "id": "window_stats.rectangular", "op": "window_stats",
+      "args": {"w": [1, 1, 1, 1, 1]},
+      "expected": {"coherent_gain": 1, "enbw_bins": 1},
+      "source": "rectangular: CG 1, ENBW 1 bin"
+    },
+    {
+      "id": "window_stats.zero_sum", "op": "window_stats",
+      "args": {"w": [1, -1]},
+      "error": "invalid_argument",
+      "source": "a window that sums to zero has no coherent gain"
+    },
+    {
+      "id": "welch_psd.complex_tone_rect", "op": "welch_psd",
+      "args": {"samples": {"re": [1, 0, -1, 0], "im": [0, 1, 0, -1]}, "sample_rate": 4, "window": "rectangular"},
+      "expected": {"frequencies": [-2, -1, 0, 1], "psd": [0, 0, 0, 1], "num_segments": 1, "nperseg": 4, "one_sided": false, "bin_width": 1, "enbw_hz": 1},
+      "source": "unit tone at bin 1: |X1|^2/(fs*sum w^2) = 16/(4*4) = A^2*N/fs = 1. Sum*df = 1 = mean power."
+    },
+    {
+      "id": "welch_psd.complex_tone_hann", "op": "welch_psd",
+      "args": {"samples": {"re": [1, 0, -1, 0, 1, 0, -1, 0], "im": [0, 1, 0, -1, 0, 1, 0, -1]}, "sample_rate": 8},
+      "expected": {"frequencies": [-4, -3, -2, -1, 0, 1, 2, 3], "psd": [0, 0, 0, 0, 0, 0.16666666666666666, 0.6666666666666666, 0.16666666666666666], "enbw_hz": 1.5},
+      "source": "hann (periodic, the default) on a bin-2 tone: X = N/2 at the bin, -N/4 at each neighbour; sum w^2 = 3N/8. PSD (2/3)A^2N/fs at the bin, A^2N/(6fs) beside it; total 1 = mean power."
+    },
+    {
+      "id": "welch_psd.real_cosine_one_sided", "op": "welch_psd",
+      "args": {"samples": [2, 0, -2, 0], "sample_rate": 4, "window": "rectangular"},
+      "expected": {"frequencies": [0, 1, 2], "psd": [0, 2, 0], "one_sided": true},
+      "source": "2*cos(2*pi*n/4): X1 = X3 = A*N/2 = 4, two-sided 1 each; one-sided doubles bin 1: A^2*N/(2fs) = 2 = mean power A^2/2"
+    },
+    {
+      "id": "welch_psd.real_dc_and_nyquist", "op": "welch_psd",
+      "args": {"samples": [2, 0, 2, 0], "sample_rate": 4, "window": "rectangular"},
+      "expected": {"frequencies": [0, 1, 2], "psd": [1, 0, 1]},
+      "source": "1 + cos(pi*n): X0 = X2 = 4, PSD 16/16 = 1; DC and Nyquist are not doubled. Total 2 = mean power."
+    },
+    {
+      "id": "welch_psd.real_cosine_odd_n", "op": "welch_psd",
+      "args": {"samples": [1, 0.30901699437494745, -0.8090169943749475, -0.8090169943749475, 0.30901699437494745], "sample_rate": 5, "window": "rectangular"},
+      "expected": {"frequencies": [0, 1, 2], "psd": [0, 0.5, 0]},
+      "tol": {"abs": 1e-12, "rel": 1e-12},
+      "source": "cos(2*pi*n/5): X1 = X4 = 2.5, two-sided 6.25/25 = 0.25; odd N has no Nyquist bin, so bins 1 and 2 are doubled. Total 0.5."
+    },
+    {
+      "id": "welch_psd.two_segments_averaged", "op": "welch_psd",
+      "args": {"samples": {"re": [1, 0, -1, 0, 2, 0, -2, 0], "im": [0, 1, 0, -1, 0, 2, 0, -2]}, "sample_rate": 4, "nperseg": 4, "noverlap": 0, "window": "rectangular"},
+      "expected": {"psd": [0, 0, 0, 2.5], "num_segments": 2},
+      "source": "segments are bin-1 tones of amplitude 1 and 2: PSD A^2*N/fs = 1 and 4, mean 2.5"
+    },
+    {
+      "id": "welch_psd.default_overlap_segments", "op": "welch_psd",
+      "args": {"samples": [1, 1, 1, 1, 1, 1, 1, 1, 1], "sample_rate": 4, "nperseg": 4, "window": "rectangular"},
+      "expected": {"psd": [1, 0, 0], "num_segments": 3, "nperseg": 4},
+      "source": "noverlap defaults to 2, step 2: floor((9-4)/2)+1 = 3 whole segments; DC of 1 gives |X0|^2/(fs*N) = 16/16 = 1"
+    },
+    {
+      "id": "welch_psd.real_two_sided", "op": "welch_psd",
+      "args": {"samples": [2, 0, -2, 0], "sample_rate": 4, "window": "rectangular", "one_sided": false},
+      "expected": {"frequencies": [-2, -1, 0, 1], "psd": [0, 1, 0, 1], "one_sided": false},
+      "source": "the two-sided form of welch_psd.real_cosine_one_sided: 1 at -1 Hz and +1 Hz"
+    },
+    {
+      "id": "welch_psd.nperseg_too_long", "op": "welch_psd",
+      "args": {"samples": [1, 2, 3], "sample_rate": 1, "nperseg": 4},
+      "error": "invalid_argument",
+      "source": "fewer samples than one segment"
+    },
+    {
+      "id": "welch_psd.overlap_not_below_nperseg", "op": "welch_psd",
+      "args": {"samples": [1, 2, 3, 4], "sample_rate": 1, "nperseg": 2, "noverlap": 2},
+      "error": "invalid_argument",
+      "source": "0 <= noverlap < nperseg"
+    },
+    {
+      "id": "welch_psd.zero_sample_rate", "op": "welch_psd",
+      "args": {"samples": [1, 2, 3, 4], "sample_rate": 0},
+      "error": "invalid_argument",
+      "source": "sample_rate must be positive"
+    },
+    {
+      "id": "occupied_bandwidth.flat_99", "op": "occupied_bandwidth",
+      "args": {"frequencies": [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4], "psd": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]},
+      "expected": {"bandwidth": 9.9, "lower": -5.45, "upper": 4.45, "total_power": 10, "fraction": 0.99},
+      "source": "flat over [-5.5, 4.5], total 10; 0.05 left out at each edge, i.e. 0.05 Hz in from each end"
+    },
+    {
+      "id": "occupied_bandwidth.flat_50", "op": "occupied_bandwidth",
+      "args": {"frequencies": [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4], "psd": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "fraction": 0.5},
+      "expected": {"bandwidth": 5, "lower": -3, "upper": 2},
+      "source": "2.5 of 10 out on each side: 2.5 Hz in from -5.5 and from 4.5"
+    },
+    {
+      "id": "occupied_bandwidth.single_bin", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2, 3, 4], "psd": [0, 0, 4, 0, 0]},
+      "expected": {"bandwidth": 0.99, "lower": 1.505, "upper": 2.495, "total_power": 4},
+      "source": "all power in the bin [1.5, 2.5], spread evenly: 0.5% in from each edge"
+    },
+    {
+      "id": "occupied_bandwidth.single_bin_all", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2, 3, 4], "psd": [0, 0, 4, 0, 0], "fraction": 1},
+      "expected": {"bandwidth": 1, "lower": 1.5, "upper": 2.5},
+      "source": "fraction 1: the edges of the occupied bin"
+    },
+    {
+      "id": "occupied_bandwidth.half_hz_bins", "op": "occupied_bandwidth",
+      "args": {"frequencies": [10, 10.5, 11, 11.5], "psd": [0, 2, 2, 0], "fraction": 0.5},
+      "expected": {"bandwidth": 0.5, "lower": 10.5, "upper": 11, "total_power": 2},
+      "source": "power 2 flat over [10.25, 11.25]: 0.5 out on each side is 0.25 Hz in from each edge"
+    },
+    {
+      "id": "occupied_bandwidth.fraction_zero", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2], "psd": [1, 1, 1], "fraction": 0},
+      "error": "invalid_argument",
+      "source": "0 < fraction <= 1"
+    },
+    {
+      "id": "occupied_bandwidth.fraction_above_one", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2], "psd": [1, 1, 1], "fraction": 1.5},
+      "error": "invalid_argument",
+      "source": "0 < fraction <= 1"
+    },
+    {
+      "id": "occupied_bandwidth.uneven_bins", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 3], "psd": [1, 1, 1]},
+      "error": "invalid_argument",
+      "source": "frequencies must be evenly spaced"
+    },
+    {
+      "id": "occupied_bandwidth.descending", "op": "occupied_bandwidth",
+      "args": {"frequencies": [2, 1, 0], "psd": [1, 1, 1]},
+      "error": "invalid_argument",
+      "source": "frequencies must be ascending"
+    },
+    {
+      "id": "occupied_bandwidth.no_power", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2], "psd": [0, 0, 0]},
+      "error": "invalid_argument",
+      "source": "total power must be positive"
+    },
+    {
+      "id": "occupied_bandwidth.negative_psd", "op": "occupied_bandwidth",
+      "args": {"frequencies": [0, 1, 2], "psd": [1, -1, 1]},
+      "error": "invalid_argument",
+      "source": "psd must be non-negative"
+    },
+    {
+      "id": "channel_power.partial_bins", "op": "channel_power",
+      "args": {"frequencies": [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4], "psd": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "low": -1.25, "high": 0.75},
+      "expected": 2,
+      "source": "flat density 1 over a 2 Hz range: bins at -1, 0, 1 contribute 0.75, 1, 0.25"
+    },
+    {
+      "id": "channel_power.covers_everything", "op": "channel_power",
+      "args": {"frequencies": [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4], "psd": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "low": -100, "high": 100},
+      "expected": 10,
+      "source": "a range wider than the PSD gives the total power"
+    },
+    {
+      "id": "channel_power.half_hz_bins", "op": "channel_power",
+      "args": {"frequencies": [0, 0.5, 1, 1.5], "psd": [2, 2, 2, 2], "low": 0, "high": 1},
+      "expected": 2,
+      "source": "density 2 over 1 Hz; bins at 0 and 1 are half inside"
+    },
+    {
+      "id": "channel_power.empty_range", "op": "channel_power",
+      "args": {"frequencies": [0, 1, 2], "psd": [1, 1, 1], "low": 1, "high": 1},
+      "error": "invalid_argument",
+      "source": "low < high"
+    }
+  ]
+}
