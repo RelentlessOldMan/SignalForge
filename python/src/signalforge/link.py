@@ -8,6 +8,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import math
+import numbers
 from dataclasses import dataclass
 from typing import Any
 
@@ -73,7 +74,7 @@ def _encode(v: Any) -> Any:
 
 
 def _finite(x: float, what: str) -> float:
-    if isinstance(x, bool) or not isinstance(x, int | float) or not math.isfinite(x):
+    if isinstance(x, bool | np.bool_) or not isinstance(x, numbers.Real) or not math.isfinite(x):
         raise ValueError(f"{what} must be a finite number")
     return float(x)
 
@@ -86,17 +87,12 @@ def _wrap(phi: float) -> float:
 
 def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     """Run one shaped QPSK link through delay, carrier offset and AWGN, then recover it."""
-    c = config
-    n = count(c.num_symbols, "num_symbols")
-    sps = count(c.samples_per_symbol, "samples_per_symbol")
-    span = count(c.span_symbols, "span_symbols")
-    delay = count(c.delay_samples, "delay_samples")
-    pre = count(c.preamble_symbols, "preamble_symbols")
-    blk = count(c.phase_block_symbols, "phase_block_symbols")
-    seed = count(c.seed, "seed")
-    rs = _finite(c.symbol_rate, "symbol_rate")
-    df = _finite(c.frequency_offset_hz, "frequency_offset_hz")
-    phase = _finite(c.phase, "phase")
+    n = count(config.num_symbols, "num_symbols")
+    sps = count(config.samples_per_symbol, "samples_per_symbol")
+    span = count(config.span_symbols, "span_symbols")
+    delay = count(config.delay_samples, "delay_samples")
+    pre = count(config.preamble_symbols, "preamble_symbols")
+    blk = count(config.phase_block_symbols, "phase_block_symbols")
     if n < 2:
         raise ValueError("num_symbols must be at least 2")
     if sps < 2:
@@ -105,9 +101,26 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         raise ValueError("preamble_symbols must be between 1 and num_symbols")
     if blk < 1:
         raise ValueError("phase_block_symbols must be at least 1")
+    rs = _finite(config.symbol_rate, "symbol_rate")
     if rs <= 0:
         raise ValueError("symbol_rate must be positive")
-    eb_n0_db = None if c.eb_n0_db is None else _finite(c.eb_n0_db, "eb_n0_db")
+    # the report carries the config with plain int and float values, so it always serializes
+    c = QpskLinkConfig(
+        num_symbols=n,
+        eb_n0_db=None if config.eb_n0_db is None else _finite(config.eb_n0_db, "eb_n0_db"),
+        symbol_rate=rs,
+        samples_per_symbol=sps,
+        rolloff=_finite(config.rolloff, "rolloff"),
+        span_symbols=span,
+        delay_samples=delay,
+        frequency_offset_hz=_finite(config.frequency_offset_hz, "frequency_offset_hz"),
+        phase=_finite(config.phase, "phase"),
+        preamble_symbols=pre,
+        phase_block_symbols=blk,
+        prbs_order=count(config.prbs_order, "prbs_order"),
+        seed=count(config.seed, "seed"),
+    )
+    df, phase, eb_n0_db, seed = c.frequency_offset_hz, c.phase, c.eb_n0_db, c.seed
 
     # transmitter
     bits = prbs(c.prbs_order, 2 * n)

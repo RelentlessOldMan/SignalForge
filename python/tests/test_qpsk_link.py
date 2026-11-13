@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 
+import numpy as np
 import pytest
 
 from signalforge import QpskLinkConfig, qpsk_link
@@ -100,3 +101,18 @@ def test_non_finite_numbers_are_strings() -> None:
 def test_rejects(bad: dict[str, object]) -> None:
     with pytest.raises(ValueError):
         qpsk_link(QpskLinkConfig(**bad))  # type: ignore[arg-type]
+
+
+def test_numpy_scalars_are_accepted_and_serialize() -> None:
+    cfg = QpskLinkConfig(
+        num_symbols=np.int64(50),  # type: ignore[arg-type]
+        eb_n0_db=np.int64(8),  # type: ignore[arg-type]
+        phase=np.float32(0.5),  # type: ignore[arg-type]
+        symbol_rate=2000,
+    )
+    r = qpsk_link(cfg)
+    d = json.loads(r.to_json())
+    assert d["config"]["num_symbols"] == 50
+    assert d["config"]["eb_n0_db"] == 8.0
+    assert type(r.config.num_symbols) is int
+    assert type(r.config.symbol_rate) is float

@@ -89,6 +89,10 @@ Updated with every chunk of work. Dates are absolute.
   the channel's own delay, offset and phase. Unit tests check BER against theory at 6 dB with three
   offsets, and the JSON field names (the same list in both languages). Python 354 passed, 2
   skipped; .NET 327 passed.
+- 2026-11-13: review of `link`. In Python a NumPy integer in the config made `to_json` raise
+  (`dataclasses.asdict` keeps `np.int64`), and NumPy floats or an integer Eb/N0 were rejected. The
+  link now accepts any real number (not bool) and stores the config in the report as plain `int`
+  and `float`. Python 355 passed, 2 skipped; .NET 327 passed.
 
 ## Not built
 
