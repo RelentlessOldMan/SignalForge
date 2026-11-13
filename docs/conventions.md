@@ -345,6 +345,27 @@ and `SignalForge.IirFilter`.
     `b = [1, −2, 1]/D`; the first-order low-pass is `b = K·[1, 1, 0]/(K + 1)`,
     `a = [1, (K − 1)/(K + 1), 0]`, the high-pass the same `a` with `b = [1, −1, 0]/(K + 1)`.
   - `order` is an integer `≥ 1`; `0 < cutoff < fs/2`, finite.
+- **Band-pass and band-stop Butterworth** (`butterworth_bandpass(order, low, high, sample_rate)`,
+  `butterworth_bandstop(...)`, [ADR 0016](adr/0016-band-butterworth.md)): the low-pass prototype
+  of that `order` (cutoff 1, poles `p_k = e^(jθ_k)` as above) transformed to the band, through the
+  bilinear transform `s = (1 − z⁻¹)/(1 + z⁻¹)` (the factor `2·fs` cancels against the prewarping).
+  With `L = tan(π·low/fs)`, `H = tan(π·high/fs)`, `W² = L·H` and `B = H − L`, and
+  `t = tan(π·f/fs)`, `x = (t² − W²)/(B·t)`:
+  `|H(f)|² = 1/(1 + x^(2·order))` for the band-pass and `x^(2·order)/(1 + x^(2·order))` for the
+  band-stop, so exactly `1/2` at `low` and `high`, and `1` (band-pass) or `0` (band-stop) at the
+  center `f_0 = (fs/π)·atan(W)`. The design has `order` sections, filter order `2·order`:
+  - each section is the analog `B·s/(s² − 2σs + m)` (band-pass) or `(s² + W²)/(s² − 2σs + m)`
+    (band-stop) for one pole `s` of the band filter and its conjugate, `σ = Re s`, `m = |s|²`;
+    through the bilinear transform, with `a0 = 1 − 2σ + m`,
+    `a = [1, 2(m − 1)/a0, (1 + 2σ + m)/a0]` and `b = B·[1, 0, −1]/a0` (band-pass) or
+    `b = [1 + W², 2(W² − 1), 1 + W²]/a0` (band-stop). The cascade's gain is then exactly that of
+    the formula above; a single section's gain is whatever its own formula gives.
+  - for an odd `order`, first the section from the real prototype pole `−1`: `σ = −B/2`, `m = W²`
+    (the quadratic `s² + B·s + W²`, whether its roots are complex or real);
+  - then, for `k = ⌊order/2⌋ − 1` down to 0, two sections from the prototype pole `p_k`: its two
+    images, the roots `s = (c ± √(c² − 4W²))/2` of `s² − c·s + W²`, with `c = B·p_k` (band-pass) or
+    `c = B/p_k` (band-stop), the root with the smaller `|s|` first.
+  - `order` is an integer `≥ 1`; `0 < low < high < fs/2`, finite.
 - **Frequency response** (`sos_response(sos, frequencies, sample_rate)`): the complex
   `H(f) = Π_i H_i(e^(j2π·f/fs))` at each frequency. Frequencies finite.
 - **Streaming filter** (`IirFilter(sos)`, method `process(chunk)`, `reset()`, property `sections`,

@@ -307,6 +307,57 @@ def butterworth_highpass(order: int, cutoff: float, sample_rate: float) -> NDArr
     return _butterworth(order, cutoff, sample_rate, high=True)
 
 
+def _butterworth_band(
+    order: int, low: float, high: float, sample_rate: float, stop: bool
+) -> NDArray[np.float64]:
+    n = count(order, "order")
+    if n < 1:
+        raise ValueError("order must be at least 1")
+    fs = _rate(sample_rate)
+    lo = math.tan(math.pi * _band_edge(low, fs, "low"))
+    hi = math.tan(math.pi * _band_edge(high, fs, "high"))
+    if lo >= hi:
+        raise ValueError("low must be below high")
+    w2, bw = lo * hi, hi - lo  # center squared and width, prewarped
+    rows: list[list[float]] = []
+
+    def section(sigma: float, m: float) -> None:
+        """Analog section with poles at ``s`` and its conjugate (``sigma = Re s``, ``m = |s|^2``)
+        through the bilinear transform ``s = (1 - z^-1)/(1 + z^-1)``, divided by ``a0``."""
+        a0 = 1 - 2 * sigma + m
+        if stop:  # (s^2 + w2) / ...
+            b = [(1 + w2) / a0, 2 * (w2 - 1) / a0, (1 + w2) / a0]
+        else:  # bw * s / ...
+            b = [bw / a0, 0.0, -bw / a0]
+        rows.append([*b, 1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
+
+    if n % 2:  # the real pole -1 maps to s^2 + bw*s + w2 in both transforms
+        section(-bw / 2, w2)
+    for i in range(n // 2 - 1, -1, -1):
+        p = cmath.exp(1j * (math.pi / 2 + math.pi * (2 * i + 1) / (2 * n)))
+        c = bw / p if stop else bw * p  # the pole's two images: roots of s^2 - c*s + w2
+        r = cmath.sqrt(c * c - 4 * w2)
+        for s in sorted([(c + r) / 2, (c - r) / 2], key=abs):
+            section(s.real, abs(s) ** 2)
+    return np.array(rows, dtype=np.float64)
+
+
+def butterworth_bandpass(
+    order: int, low: float, high: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Butterworth band-pass from the low-pass prototype of that order, by the bilinear transform,
+    as ``order`` second-order sections (conventions: IIR filters)."""
+    return _butterworth_band(order, low, high, sample_rate, stop=False)
+
+
+def butterworth_bandstop(
+    order: int, low: float, high: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Butterworth band-stop from the low-pass prototype of that order, by the bilinear transform,
+    as ``order`` second-order sections (conventions: IIR filters)."""
+    return _butterworth_band(order, low, high, sample_rate, stop=True)
+
+
 def sos_response(
     sos: ArrayLike, frequencies: ArrayLike, sample_rate: float
 ) -> NDArray[np.complex128]:

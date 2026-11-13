@@ -2,7 +2,9 @@
 
 It does not import NumPy or SignalForge. Butterworth sections come from the real biquad formulas of
 conventions: IIR filters (each pole pair's Q, prewarped K, bilinear transform), not from mapping
-complex poles as the library does. Responses evaluate each section's rational function at
+complex poles as the library does. Band-pass and band-stop sections come from the quadratic formula
+on each prototype pole's image, and every band design is checked here against the closed-form
+magnitude of conventions: IIR filters before it is written. Responses evaluate each section's rational function at
 e^(j 2 pi f / fs); filter outputs run each section's difference equation in direct form I.
 
 Run from the repo root: python vectors/generators/iir.py [--check]
@@ -35,6 +37,42 @@ def butterworth(order, cutoff, fs, high):
         b = [1 / d, -2 / d, 1 / d] if high else [k * k / d, 2 * k * k / d, k * k / d]
         rows.append(b + a)
     return rows
+
+
+def band(order, low, high, fs, stop):
+    lo, hi = math.tan(math.pi * low / fs), math.tan(math.pi * high / fs)
+    w2, bw = lo * hi, hi - lo
+    poles = []  # (Re s, |s|^2) of each section's analog pole pair, in section order
+    if order % 2:
+        poles.append((-bw / 2, w2))  # s^2 + bw s + w2, real or complex roots alike
+    for i in range(order // 2 - 1, -1, -1):
+        theta = math.pi / 2 + math.pi * (2 * i + 1) / (2 * order)
+        p = complex(math.cos(theta), math.sin(theta))
+        c = bw / p if stop else bw * p
+        d = cmath.sqrt(c * c - 4 * w2)
+        pair = [(c + d) / 2, (c - d) / 2]
+        poles += [(s.real, abs(s) ** 2) for s in sorted(pair, key=abs)]
+    rows = []
+    for sigma, m in poles:
+        a0 = 1 - 2 * sigma + m
+        b = [(1 + w2) / a0, 2 * (w2 - 1) / a0, (1 + w2) / a0] if stop else [bw / a0, 0.0, -bw / a0]
+        rows.append(b + [1.0, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0])
+    freqs = [fs * k / 64 for k in range(1, 32)] + [low, high, fs / math.pi * math.atan(w2 ** 0.5)]
+    for f, h in zip(freqs, response(rows, freqs, fs)):
+        t = math.tan(math.pi * f / fs)
+        x = (t * t - w2) / (bw * t)
+        want = x ** (2 * order) / (1 + x ** (2 * order)) if stop else 1 / (1 + x ** (2 * order))
+        assert abs(abs(h) ** 2 - want) < 1e-12, (order, low, high, fs, stop, f)
+    return rows
+
+
+def band_design(case_id, order, low, high, fs, stop, rows=None, src=None):
+    op = "butterworth_bandstop" if stop else "butterworth_bandpass"
+    return {"id": case_id, "op": op,
+            "args": {"order": order, "low": low, "high": high, "sample_rate": fs},
+            "expected": rows if rows is not None else band(order, low, high, fs, stop),
+            "tol": TOL, "source": src or SRC + "quadratic formula on each prototype pole's image, "
+            "checked against the closed-form |H|^2"}
 
 
 def response(sos, freqs, fs):
@@ -100,6 +138,8 @@ chirp = [cmath.exp(1j * (0.3 * i + 0.02 * i * i)) * (1 + 0.1 * i) for i in range
 lp4 = butterworth(4, 1000.0, 8000.0, False)
 hp3 = butterworth(3, 0.15, 1.0, True)
 pole_half = [[1.0, 0.0, 0.0, 1.0, -0.5, 0.0]]
+bp3 = band(3, 1000.0, 3000.0, 16000.0, False)
+bs2 = band(2, 0.2, 0.3, 1.0, True)
 bad_a0 = [[1.0, 0.0, 0.0, 0.0, -0.5, 0.0]]
 short_row = [[1.0, 0.0, 0.0, 1.0, -0.5]]
 edges = [0.0, 500.0, 1000.0, 2500.0, 4000.0, -1000.0]
@@ -133,6 +173,38 @@ cases = [
         {"order": 2, "cutoff": "nan", "sample_rate": 8.0}, "the cutoff must be finite"),
     err("butterworth.rate_nan", "butterworth_lowpass",
         {"order": 2, "cutoff": 1.0, "sample_rate": "nan"}, "sample_rate must be finite"),
+    band_design("butterworth.bandpass_1_by_hand", 1, 1.0, 3.0, 8.0, False,
+                rows=[[0.5, 0.0, -0.5, 1.0, 0.0, 0.0]],
+                src="by hand: tan(pi/8) tan(3 pi/8) = 1 and tan(3 pi/8) - tan(pi/8) = 2, so the "
+                "analog section is 2s/(s^2 + 2s + 1); with s = (1 - z^-1)/(1 + z^-1) that is "
+                "2(1 - z^-2)/4"),
+    band_design("butterworth.bandstop_1_by_hand", 1, 1.0, 3.0, 8.0, True,
+                rows=[[0.5, 0.0, 0.5, 1.0, 0.0, 0.0]],
+                src="by hand: as bandpass_1_by_hand, the analog section (s^2 + 1)/(s^2 + 2s + 1) "
+                "is (2 + 2 z^-2)/4"),
+    band_design("butterworth.bandpass_2", 2, 1000.0, 2000.0, 8000.0, False),
+    band_design("butterworth.bandpass_3", 3, 1000.0, 3000.0, 16000.0, False),
+    band_design("butterworth.bandpass_4_narrow", 4, 0.1, 0.11, 1.0, False),
+    band_design("butterworth.bandpass_5_wide", 5, 0.02, 0.45, 1.0, False),
+    band_design("butterworth.bandstop_2", 2, 0.2, 0.3, 1.0, True),
+    band_design("butterworth.bandstop_3", 3, 50.0, 70.0, 1000.0, True),
+    band_design("butterworth.bandstop_6", 6, 3000.0, 9000.0, 48000.0, True),
+    err("butterworth.band_low_above_high", "butterworth_bandpass",
+        {"order": 2, "low": 2.0, "high": 1.0, "sample_rate": 8.0}, "low < high required"),
+    err("butterworth.band_low_equals_high", "butterworth_bandstop",
+        {"order": 2, "low": 1.0, "high": 1.0, "sample_rate": 8.0}, "low < high required"),
+    err("butterworth.band_low_zero", "butterworth_bandpass",
+        {"order": 2, "low": 0.0, "high": 1.0, "sample_rate": 8.0}, "0 < low required"),
+    err("butterworth.band_high_nyquist", "butterworth_bandstop",
+        {"order": 2, "low": 1.0, "high": 4.0, "sample_rate": 8.0}, "high < sample_rate/2 required"),
+    err("butterworth.band_order_zero", "butterworth_bandpass",
+        {"order": 0, "low": 1.0, "high": 2.0, "sample_rate": 8.0}, "order >= 1 required"),
+    err("butterworth.band_high_nan", "butterworth_bandpass",
+        {"order": 2, "low": 1.0, "high": "nan", "sample_rate": 8.0}, "the edges must be finite"),
+    resp("sos_response.butterworth_bandpass_3", bp3,
+         [0.0, 500.0, 1000.0, 1732.0, 3000.0, 5000.0, 8000.0], 16000.0),
+    resp("sos_response.butterworth_bandstop_2", bs2, [0.0, 0.2, 0.245, 0.3, 0.5], 1.0),
+    filt("iir_filter.butterworth_bandpass_chunks", bp3, ramp, [5, 19]),
     resp("sos_response.one_pole", pole_half, [0.0, 0.25, 0.5], 1.0,
          expected=[2 + 0j, 1 / (1 + 0.5j), 2 / 3 + 0j],
          src="by hand: H = 1/(1 - 0.5 z^-1); z^-1 = 1, -j, -1 at f = 0, fs/4, fs/2 gives 2, "

@@ -8,7 +8,14 @@ from typing import Any
 import numpy as np
 import pytest
 
-from signalforge import IirFilter, butterworth_highpass, butterworth_lowpass, sos_response
+from signalforge import (
+    IirFilter,
+    butterworth_bandpass,
+    butterworth_bandstop,
+    butterworth_highpass,
+    butterworth_lowpass,
+    sos_response,
+)
 
 DESIGNS = [butterworth_lowpass, butterworth_highpass]
 
@@ -136,3 +143,60 @@ def test_sos_response_rejects_bad_frequencies() -> None:
         sos_response([[1, 0, 0, 1, 0, 0]], [[0.0]], 1.0)
     with pytest.raises(ValueError):
         sos_response([[1, 0, 0, 1, 0, 0]], [0.0], 0.0)
+
+
+@pytest.mark.parametrize("stop", [False, True])
+@pytest.mark.parametrize("order", [1, 2, 3, 6, 9])
+@pytest.mark.parametrize("band", [(0.001, 0.002), (0.1, 0.11), (0.05, 0.45), (0.3, 0.4999)])
+def test_butterworth_band_magnitude_has_the_closed_form(
+    stop: bool, order: int, band: tuple[float, float]
+) -> None:
+    design = butterworth_bandstop if stop else butterworth_bandpass
+    sos = design(order, band[0] * 1000, band[1] * 1000, 1000.0)
+    assert sos.shape == (order, 6)
+    assert np.all(sos[:, 3] == 1)
+    for row in sos:
+        assert np.all(np.abs(np.roots(row[3:])) < 1)
+    lo, hi = math.tan(math.pi * band[0]), math.tan(math.pi * band[1])
+    f = np.linspace(-0.4999, 0.4999, 301) * 1000
+    t = np.abs(np.tan(np.pi * f / 1000))
+    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
+        x = (t * t - lo * hi) / ((hi - lo) * t)
+        x2 = x ** (2 * order)
+        expected = np.where(np.isinf(x2), 1.0, x2 / (1 + x2)) if stop else 1 / (1 + x2)
+    got = np.abs(sos_response(sos, f, 1000.0)) ** 2
+    assert np.allclose(got, expected, rtol=1e-9, atol=1e-11)
+    edges = np.abs(sos_response(sos, [band[0] * 1000, band[1] * 1000], 1000.0)) ** 2
+    assert edges == pytest.approx([0.5, 0.5], rel=1e-9)
+
+
+def test_butterworth_bandpass_passes_its_center_and_bandstop_nulls_it() -> None:
+    f0 = 8000 / math.pi * math.atan(math.sqrt(math.tan(math.pi / 8) * math.tan(math.pi / 4)))
+    bp = butterworth_bandpass(4, 1000.0, 2000.0, 8000.0)
+    bs = butterworth_bandstop(4, 1000.0, 2000.0, 8000.0)
+    assert abs(sos_response(bp, [f0], 8000.0)[0]) == pytest.approx(1.0, abs=1e-12)
+    assert abs(sos_response(bs, [f0], 8000.0)[0]) < 1e-12
+    assert abs(sos_response(bs, [0.0, 4000.0], 8000.0)) == pytest.approx([1.0, 1.0], abs=1e-12)
+    n = np.arange(4000)
+    x = np.cos(2 * np.pi * f0 * n / 8000)
+    y = IirFilter(bp).process(x)
+    assert np.max(np.abs(y[3000:] - x[3000:])) < 1e-9  # unit gain, zero phase at the center
+
+
+@pytest.mark.parametrize("design", [butterworth_bandpass, butterworth_bandstop])
+@pytest.mark.parametrize(
+    "args",
+    [
+        (0, 1.0, 2.0, 8.0),
+        (2, 2.0, 1.0, 8.0),
+        (2, 1.0, 1.0, 8.0),
+        (2, 0.0, 1.0, 8.0),
+        (2, 1.0, 4.0, 8.0),
+        (2, 1.0, math.nan, 8.0),
+        (2, 1.0, 2.0, 0.0),
+        (2.0, 1.0, 2.0, 8.0),
+    ],
+)
+def test_butterworth_band_rejects_bad_arguments(design: Any, args: tuple[Any, ...]) -> None:
+    with pytest.raises(ValueError):
+        design(*args)

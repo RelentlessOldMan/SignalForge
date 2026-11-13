@@ -81,6 +81,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "decimate": dsp.decimate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
     "butterworth_lowpass": dsp.butterworth_lowpass,
+    "butterworth_bandpass": dsp.butterworth_bandpass,
+    "butterworth_bandstop": dsp.butterworth_bandstop,
     "butterworth_highpass": dsp.butterworth_highpass,
     "sos_response": dsp.sos_response,
     "iir_filter": lambda sos, samples, chunks: _chunked(dsp.IirFilter(sos), samples, chunks),

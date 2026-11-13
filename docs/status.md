@@ -4,8 +4,8 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Band-pass Butterworth** IIR design (low-pass prototype, transformed), with closed-form
-   magnitude vectors.
+1. **Zero-phase filtering**: forward-backward IIR (`filtfilt`-style) with a stated edge rule, so
+   a filtered measurement has no group delay.
 
 ## Built
 
@@ -174,9 +174,16 @@ Updated with every chunk of work. Dates are absolute.
   closed-form vectors in `tone_metrics.json`, among them a named carrier below its spur (negative
   SFDR) and a spectrum with no bin left for a spur.
   Python 851 passed, 2 skipped (3.10 too); .NET 689 passed; conformance 493/493 in both.
+- 2026-11-13: band-pass and band-stop Butterworth in both languages (`butterworth_bandpass`,
+  `butterworth_bandstop`; ADR 0016): the low-pass prototype transformed to the band, one section
+  per band pole pair, scaled by the analog factors so the cascade's gain is exactly the closed form.
+  16 more `iir.json` cases (two by hand, seven designs the generator checks against the closed-form
+  magnitude before writing, responses, a filter run, six errors).
+  Python 926 passed, 2 skipped (3.10 too); .NET 716 passed; conformance 511/511 in both.
+
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth low-pass and high-pass (band-pass,
+Everything else in the brief: IIR designs beyond Butterworth (
 Chebyshev, elliptic), zero-phase filtering, FIR design beyond windowed sinc (equiripple), streaming (stateful) resampling, spectral options beyond Welch and the spectrogram
 (zero padding, detrending, median averaging), the rest of modulation (PSK/QAM
 beyond QPSK, FSK, OFDM, analog), impairments beyond AWGN and frequency offset, tracking loops (timing, carrier), RF measurements (ACPR,

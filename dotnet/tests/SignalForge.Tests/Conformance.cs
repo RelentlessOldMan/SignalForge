@@ -262,6 +262,8 @@ public static class Conformance
             "iir_filter" => ChunkedOp(a, Rows(a.Get("sos")), c => new IirFilter(c), (f, x) => f.Process(x), (f, z) => f.Process(z)),
             "butterworth_lowpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthLowpass(t.Item1, t.Item2, t.Item3)),
             "butterworth_highpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthHighpass(t.Item1, t.Item2, t.Item3)),
+            "butterworth_bandpass" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.ButterworthBandpass(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "butterworth_bandstop" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.ButterworthBandstop(t.Item1, t.Item2, t.Item3, t.Item4)),
             "sos_response" => Bind((Rows(a.Get("sos")), Reals(a.Get("frequencies")), a.D("sample_rate")), t => Dsp.SosResponse(t.Item1, t.Item2, t.Item3)),
             "encode_samples" => a.Get("x") is Complex[] z
                 ? Bind((z, Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2)))

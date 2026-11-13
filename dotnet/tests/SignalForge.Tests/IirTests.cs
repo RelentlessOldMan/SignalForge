@@ -151,4 +151,49 @@ public class IirTests
         Assert.Throws<ArgumentException>(() => Dsp.SosResponse([[1, 0, 0, 1, 0, 0]], [double.NaN], 1));
         Assert.ThrowsAny<ArgumentException>(() => Dsp.SosResponse([[1, 0, 0, 1, 0, 0]], [0.0], 0));
     }
+
+    [Theory]
+    [InlineData(false, 1, 0.001, 0.002)]
+    [InlineData(false, 3, 0.1, 0.11)]
+    [InlineData(false, 6, 0.05, 0.45)]
+    [InlineData(false, 9, 0.3, 0.4999)]
+    [InlineData(true, 1, 0.3, 0.4999)]
+    [InlineData(true, 2, 0.001, 0.002)]
+    [InlineData(true, 6, 0.1, 0.11)]
+    [InlineData(true, 9, 0.05, 0.45)]
+    public void ButterworthBandMagnitudeHasTheClosedForm(bool stop, int order, double low, double high)
+    {
+        double[][] sos = stop ? Dsp.ButterworthBandstop(order, low * 1000, high * 1000, 1000)
+            : Dsp.ButterworthBandpass(order, low * 1000, high * 1000, 1000);
+        Assert.Equal(order, sos.Length);
+        Assert.All(sos, r => Assert.Equal(1.0, r[3]));
+        double lo = Math.Tan(Math.PI * low), hi = Math.Tan(Math.PI * high);
+        double[] f = [.. Enumerable.Range(0, 301).Select(i => (-0.4999 + 0.9998 * i / 300) * 1000)];
+        Complex[] h = Dsp.SosResponse(sos, f, 1000);
+        for (int i = 0; i < f.Length; i++)
+        {
+            double t = Math.Abs(Math.Tan(Math.PI * f[i] / 1000));
+            double x2 = Math.Pow((t * t - lo * hi) / ((hi - lo) * t), 2 * order);
+            double expected = stop ? (double.IsInfinity(x2) ? 1 : x2 / (1 + x2)) : 1 / (1 + x2);
+            double got = h[i].Magnitude * h[i].Magnitude;
+            Assert.True(Math.Abs(got - expected) <= 1e-11 + 1e-9 * expected, $"f = {f[i]}: {got} vs {expected}");
+        }
+        foreach (Complex e in Dsp.SosResponse(sos, [low * 1000, high * 1000], 1000))
+            Assert.Equal(0.5, e.Magnitude * e.Magnitude, 1e-9);
+    }
+
+    [Fact]
+    public void ButterworthBandRejectsBadArguments()
+    {
+        foreach (var design in new Func<int, double, double, double, double[][]>[] { Dsp.ButterworthBandpass, Dsp.ButterworthBandstop })
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => design(0, 1, 2, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 2, 1, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 1, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 0, 1, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 4, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 1, double.NaN, 8));
+            Assert.ThrowsAny<ArgumentException>(() => design(2, 1, 2, 0));
+        }
+    }
 }

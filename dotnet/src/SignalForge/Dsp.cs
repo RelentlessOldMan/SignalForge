@@ -324,6 +324,26 @@ public static class Dsp
     public static double[][] ButterworthHighpass(int order, double cutoff, double sampleRate) =>
         Butterworth(order, cutoff, sampleRate, true);
 
+    /// <summary>Butterworth band-pass from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>
+    /// (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, at least 1; the filter's order is twice it.</param>
+    /// <param name="low">Lower −3 dB frequency in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper −3 dB frequency in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] ButterworthBandpass(int order, double low, double high, double sampleRate) =>
+        ButterworthBand(order, low, high, sampleRate, false);
+
+    /// <summary>Butterworth band-stop from the low-pass prototype of that order, by the bilinear
+    /// transform, as <paramref name="order"/> second-order sections <c>[b0, b1, b2, a0, a1, a2]</c>
+    /// (conventions: IIR filters).</summary>
+    /// <param name="order">Order of the low-pass prototype, at least 1; the filter's order is twice it.</param>
+    /// <param name="low">Lower −3 dB frequency in Hz, between 0 and sampleRate/2.</param>
+    /// <param name="high">Upper −3 dB frequency in Hz, above <paramref name="low"/> and below sampleRate/2.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    public static double[][] ButterworthBandstop(int order, double low, double high, double sampleRate) =>
+        ButterworthBand(order, low, high, sampleRate, true);
+
     /// <summary>Complex response of a cascade of second-order sections at each frequency
     /// (conventions: IIR filters).</summary>
     /// <param name="sos">Sections <c>[b0, b1, b2, a0, a1, a2]</c>, at least one, finite, a0 ≠ 0.</param>
@@ -397,6 +417,45 @@ public static class Dsp
             double a1 = -2 * z.Real, a2 = z.Magnitude * z.Magnitude;
             double g = (1 - zero * a1 + a2) / 4; // unit gain at the reference z = -zero
             rows.Add([g, -2 * zero * g, g, 1, a1, a2]);
+        }
+        return [.. rows];
+    }
+
+    private static double[][] ButterworthBand(int order, double low, double high, double sampleRate, bool stop)
+    {
+        if (order < 1)
+            throw new ArgumentOutOfRangeException(nameof(order), order, "must be at least 1");
+        double fs = Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        double lo = Math.Tan(Math.PI * BandEdge(low, fs, nameof(low)));
+        double hi = Math.Tan(Math.PI * BandEdge(high, fs, nameof(high)));
+        if (lo >= hi)
+            throw new ArgumentException("low must be below high", nameof(low));
+        double w2 = lo * hi, bw = hi - lo; // center squared and width, prewarped
+        var rows = new List<double[]>();
+
+        // Analog section with poles at s and its conjugate (sigma = Re s, m = |s|²) through the
+        // bilinear transform s = (1 − z⁻¹)/(1 + z⁻¹), divided by a0.
+        void Section(double sigma, double m)
+        {
+            double a0 = 1 - 2 * sigma + m;
+            double[] b = stop // (s² + w2) / ... or bw·s / ...
+                ? [(1 + w2) / a0, 2 * (w2 - 1) / a0, (1 + w2) / a0]
+                : [bw / a0, 0, -bw / a0];
+            rows.Add([.. b, 1, 2 * (m - 1) / a0, (1 + 2 * sigma + m) / a0]);
+        }
+
+        if (order % 2 == 1) // the real pole −1 maps to s² + bw·s + w2 in both transforms
+            Section(-bw / 2, w2);
+        for (int i = order / 2 - 1; i >= 0; i--)
+        {
+            Complex p = Complex.FromPolarCoordinates(1, Math.PI / 2 + Math.PI * (2 * i + 1) / (2.0 * order));
+            Complex c = stop ? bw / p : bw * p; // the pole's two images: roots of s² − c·s + w2
+            Complex r = Complex.Sqrt(c * c - 4 * w2);
+            Complex s1 = (c + r) / 2, s2 = (c - r) / 2;
+            if (s2.Magnitude < s1.Magnitude)
+                (s1, s2) = (s2, s1);
+            Section(s1.Real, s1.Magnitude * s1.Magnitude);
+            Section(s2.Real, s2.Magnitude * s2.Magnitude);
         }
         return [.. rows];
     }
