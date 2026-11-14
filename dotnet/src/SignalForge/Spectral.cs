@@ -389,19 +389,19 @@ public static class Spectral
         var conc = new double[tapers.Length];
         for (int j = 0; j < tapers.Length; j++)
         {
+            // the autocorrelation r_d by an FFT of length 2N, exact up to rounding
             double[] v = tapers[j];
             int n = v.Length;
-            double r0 = 0;
+            var buf = new Complex[2 * n];
             for (int i = 0; i < n; i++)
-                r0 += v[i] * v[i];
-            double lam = 2 * w * r0;
+                buf[i] = v[i];
+            Transform(buf);
+            for (int i = 0; i < buf.Length; i++)
+                buf[i] = (buf[i].Real * buf[i].Real) + (buf[i].Imaginary * buf[i].Imaginary);
+            Complex[] r = Ifft(buf);
+            double lam = 2 * w * r[0].Real;
             for (int lag = 1; lag < n; lag++)
-            {
-                double r = 0;
-                for (int i = 0; i + lag < n; i++)
-                    r += v[i] * v[i + lag];
-                lam += 2 * (Math.Sin(2 * Math.PI * w * lag) / (Math.PI * lag)) * r;
-            }
+                lam += 2 * (Math.Sin(2 * Math.PI * w * lag) / (Math.PI * lag)) * r[lag].Real;
             conc[j] = lam;
         }
         return conc;

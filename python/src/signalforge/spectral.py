@@ -293,11 +293,9 @@ def _concentrations(tapers: NDArray[np.float64], w: float) -> NDArray[np.float64
     n = tapers.shape[1]
     lag = np.arange(1, n)
     sinc = np.sin(2 * math.pi * w * lag) / (math.pi * lag)
-    conc = [
-        2 * w * r[0] + 2 * float(np.dot(sinc, r[1:]))
-        for r in (np.correlate(v, v, "full")[n - 1 :] for v in tapers)
-    ]
-    return np.array(conc, dtype=np.float64)
+    # each autocorrelation r_d by an FFT of length >= 2N, exact up to rounding
+    r = np.fft.irfft(np.abs(np.fft.rfft(tapers, 2 * n, axis=1)) ** 2, 2 * n, axis=1)[:, :n]
+    return np.asarray(2 * w * r[:, 0] + 2 * (r[:, 1:] @ sinc), dtype=np.float64)
 
 
 def _dpss(n: int, w: float, k: int) -> NDArray[np.float64]:

@@ -802,6 +802,12 @@ Updated with every chunk of work. Dates are absolute.
   rectangular window rather than claiming less leakage than any window. Vector suite
   `multitaper` now 28 cases (3 by hand). Python 3127 passed, 2 skipped; .NET 2591 passed;
   conformance 1560/1560 in both. Version 2026.11.13.110.
+- 2026-11-13: review of the multitaper code for size: the concentrations were an `O(N²)`
+  autocorrelation per taper (93 s at N 65536 in Python, `np.correlate` not using an FFT), and
+  adaptive mode always needs them. Both languages now take each autocorrelation by an FFT of
+  length `2N`, within 2e-15 of the direct sum; N 65536 with seven tapers now takes about 6 s in
+  Python, nearly all in the pure-Python taper solve (linear in N). Python 3127 passed, 2
+  skipped; .NET 2591 passed; conformance 1560/1560 in both. Version 2026.11.13.111.
 
 ## Not built
 
