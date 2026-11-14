@@ -59,7 +59,14 @@ from .dsp import (
     upsample,
     zero_phase_filter,
 )
-from .files import decode_samples, encode_samples, read_sigmf, write_sigmf
+from .files import (
+    decode_samples,
+    encode_samples,
+    read_sigmf,
+    read_wav,
+    write_sigmf,
+    write_wav,
+)
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import PowerStats, Sfdr, ToneMetrics, power_stats, sfdr, tone_metrics
 from .metrics import (
@@ -140,7 +147,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.76"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.77"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -264,6 +271,7 @@ __all__ = [
     "qpsk_map",
     "qpsk_phase_offset",
     "read_sigmf",
+    "read_wav",
     "resample",
     "resample_taps",
     "rician_fading",
@@ -282,5 +290,6 @@ __all__ = [
     "window",
     "window_stats",
     "write_sigmf",
+    "write_wav",
     "zero_phase_filter",
 ]

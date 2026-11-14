@@ -284,7 +284,7 @@ for name, text, data, _, _ in recs:
 if "--check" in sys.argv[1:]:
     stale = [p for p, b in outputs.items() if not p.is_file() or p.read_bytes() != b]
     known = set(outputs)
-    stale += [p for p in (ROOT / "files").glob("*") if p not in known]
+    stale += [p for p in (ROOT / "files").glob("*.sigmf-*") if p not in known]
     if stale:
         sys.exit("out of date (run python vectors/generators/files.py): "
                  + ", ".join(str(p.relative_to(ROOT)) for p in stale))

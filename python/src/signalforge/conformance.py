@@ -13,6 +13,7 @@ import itertools
 import json
 import math
 import sys
+import tempfile
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,6 +34,7 @@ from . import (
     units,
     waveforms,
 )
+from .core import Signal
 
 DEFAULT_TOL = {"abs": 1e-12, "rel": 1e-12}
 
@@ -162,7 +164,28 @@ OPS: dict[str, Callable[..., Any]] = {
     "encode_samples": lambda x, datatype: files.encode_samples(x, datatype).hex(),
     "decode_samples": lambda data, datatype: files.decode_samples(_hex(data), datatype),
     "read_sigmf": lambda file: _signal_record(files.read_sigmf(_fixture(file))),
+    "write_wav": lambda channels, sample_rate, sample_format: _write_wav(
+        channels, sample_rate, sample_format
+    ),
+    "read_wav": lambda file: _wav_record(files.read_wav(_fixture(file))),
 }
+
+
+def _write_wav(channels: Any, sample_rate: Any, sample_format: Any) -> str:
+    """The bytes of a WAV file written from rows of samples, as hex."""
+    sigs = [Signal(np.asarray(c, dtype=np.float64), sample_rate) for c in channels]
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "case.wav"
+        files.write_wav(path, sigs, sample_format)
+        return path.read_bytes().hex()
+
+
+def _wav_record(sigs: list[Any]) -> dict[str, Any]:
+    return {
+        "channels": np.stack([s.samples for s in sigs]),
+        "sample_rate": sigs[0].sample_rate,
+        "units": sigs[0].units,
+    }
 
 
 def _hex(data: Any) -> bytes:

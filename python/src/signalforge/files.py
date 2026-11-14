@@ -6,7 +6,8 @@ import json
 import math
 import os
 import re
-from collections.abc import Mapping
+import struct
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -255,3 +256,128 @@ def read_sigmf(path: str | os.PathLike[str]) -> Signal:
         impedance=None if impedance is None else _finite(impedance, "signalforge:impedance"),
         metadata=metadata,
     )
+
+
+_WAV_BITS = {"u8": 8, "i16": 16, "i24": 24, "i32": 32, "f32": 32, "f64": 64}
+_WAV_FORMATS = {1: {8: "u8", 16: "i16", 24: "i24", 32: "i32"}, 3: {32: "f32", 64: "f64"}}
+_GUID_TAIL = bytes.fromhex("000000001000800000aa00389b71")
+_U32 = 2**32 - 1
+
+
+def _chunk(cid: bytes, body: bytes) -> bytes:
+    return cid + struct.pack("<I", len(body)) + body + b"\0" * (len(body) % 2)
+
+
+def _wav_encode(x: NDArray[np.float64], fmt: str) -> bytes:
+    if fmt == "f32":
+        with np.errstate(over="ignore"):
+            return x.astype("<f4").tobytes()
+    if fmt == "f64":
+        return x.astype("<f8").tobytes()
+    bits = _WAV_BITS[fmt]
+    if not np.all(np.isfinite(x)):
+        raise ValueError(f"{fmt} cannot hold non-finite samples")
+    codes = np.rint(x * 2.0 ** (bits - 1))
+    if codes.size and (codes.min() < -(2 ** (bits - 1)) or codes.max() > 2 ** (bits - 1) - 1):
+        raise ValueError(f"a sample is outside the range of {fmt} (full scale is 1.0)")
+    if fmt == "u8":
+        return (codes + 128).astype(np.uint8).tobytes()
+    if fmt == "i24":
+        return codes.astype("<i4").view(np.uint8).reshape(-1, 4)[:, :3].tobytes()
+    return codes.astype("<i2" if fmt == "i16" else "<i4").tobytes()
+
+
+def write_wav(
+    path: str | os.PathLike[str], channels: Signal | Sequence[Signal], sample_format: str = "f32"
+) -> None:
+    """Write real signals, one per channel, as a PCM or IEEE float WAV file (conventions: Signal
+    files, WAV). Only the samples and the sample rate are stored."""
+    if not isinstance(sample_format, str) or sample_format not in _WAV_BITS:
+        raise ValueError(f"unknown WAV sample format {sample_format!r}")
+    sigs = [channels] if isinstance(channels, Signal) else list(channels)
+    if not sigs or not all(isinstance(s, Signal) for s in sigs):
+        raise ValueError("channels must be one signal or a non-empty list of them")
+    if any(s.is_complex for s in sigs):
+        raise ValueError("WAV channels must be real signals")
+    rate, n = sigs[0].sample_rate, len(sigs[0])
+    if any(s.sample_rate != rate or len(s) != n for s in sigs):
+        raise ValueError("every channel must have the same sample rate and length")
+    if not (float(rate).is_integer() and rate <= _U32):
+        raise ValueError("sample_rate must be a whole number of hertz below 2^32")
+    bits, is_float = _WAV_BITS[sample_format], sample_format[0] == "f"
+    block = len(sigs) * bits // 8
+    if block > 0xFFFF:
+        raise ValueError("too many channels: the block align must fit 16 bits")
+    if int(rate) * block > _U32:
+        raise ValueError("the byte rate (sample rate x block align) must fit 32 bits")
+    nbytes = n * block
+    if 4 + (26 + 12 if is_float else 24) + 8 + nbytes + nbytes % 2 > _U32:
+        raise ValueError("too many samples for a WAV file")
+    x = np.stack([s.samples.astype(np.float64) for s in sigs], axis=1).reshape(-1)
+    data = _wav_encode(x, sample_format)
+    fmt = struct.pack(
+        "<HHIIHH", 3 if is_float else 1, len(sigs), int(rate), int(rate) * block, block, bits
+    )
+    if is_float:
+        body = _chunk(b"fmt ", fmt + bytes(2)) + _chunk(b"fact", struct.pack("<I", n))
+    else:
+        body = _chunk(b"fmt ", fmt)
+    body = b"WAVE" + body + _chunk(b"data", data)
+    Path(os.fspath(path)).write_bytes(b"RIFF" + struct.pack("<I", len(body)) + body)
+
+
+def _wav_decode(data: bytes, fmt: str) -> NDArray[np.float64]:
+    if fmt == "u8":
+        return (np.frombuffer(data, np.uint8).astype(np.float64) - 128) / 128
+    if fmt == "i24":
+        b = np.frombuffer(data, np.uint8).reshape(-1, 3).astype(np.int64)
+        v = b[:, 0] | b[:, 1] << 8 | b[:, 2] << 16
+        return (v - (v >> 23 << 24)).astype(np.float64) / 2.0**23
+    codes = {"i16": "<i2", "i32": "<i4", "f32": "<f4", "f64": "<f8"}[fmt]
+    x = np.frombuffer(data, codes).astype(np.float64)
+    return x / 2.0 ** (_WAV_BITS[fmt] - 1) if fmt[0] == "i" else x
+
+
+def read_wav(path: str | os.PathLike[str]) -> list[Signal]:
+    """Read a PCM or IEEE float WAV file as real signals, one per channel, in units ``"FS"``."""
+    raw = Path(os.fspath(path)).read_bytes()
+    if len(raw) < 12 or raw[:4] != b"RIFF" or raw[8:12] != b"WAVE":
+        raise ValueError("not a RIFF WAVE file")
+    pos, fmt = 12, None
+    while True:
+        if pos + 8 > len(raw):
+            raise ValueError("no data chunk" if fmt is not None else "no fmt chunk")
+        cid, (size,) = raw[pos : pos + 4], struct.unpack("<I", raw[pos + 4 : pos + 8])
+        start, end = pos + 8, pos + 8 + size
+        if end > len(raw):
+            raise ValueError(f"the {cid.decode('latin-1')!r} chunk runs past the end of the file")
+        if cid == b"data":
+            if fmt is None:
+                raise ValueError("the fmt chunk must come before the data chunk")
+            data = raw[start:end]
+            break
+        if cid == b"fmt " and fmt is None:
+            fmt = raw[start:end]
+        pos = end + size % 2
+    if len(fmt) < 16:
+        raise ValueError("the fmt chunk is shorter than 16 bytes")
+    tag, nch, rate, _, block, bits = struct.unpack("<HHIIHH", fmt[:16])
+    if tag == 0xFFFE:
+        if len(fmt) < 40:
+            raise ValueError("an extensible fmt chunk needs at least 40 bytes")
+        guid = fmt[24:40]
+        if guid[2:] != _GUID_TAIL or guid[:2] not in (b"\x01\x00", b"\x03\x00"):
+            raise ValueError("the extensible sub-format is not PCM or IEEE float")
+        tag = guid[0]
+    if tag not in _WAV_FORMATS:
+        raise ValueError(f"WAV format {tag} is not PCM or IEEE float")
+    if bits not in _WAV_FORMATS[tag]:
+        raise ValueError(f"{bits}-bit {'PCM' if tag == 1 else 'float'} is not supported")
+    if nch < 1 or rate < 1:
+        raise ValueError("a WAV file needs at least one channel and a sample rate of at least 1")
+    if block != nch * bits // 8:
+        raise ValueError(f"block align {block} does not match {nch} channels of {bits} bits")
+    if len(data) % block:
+        raise ValueError(f"{len(data)} data bytes is not a whole number of {block}-byte frames")
+    x = _wav_decode(data, _WAV_FORMATS[tag][bits])
+    return [Signal(x[c::nch], float(rate), units="FS") for c in range(nch)]

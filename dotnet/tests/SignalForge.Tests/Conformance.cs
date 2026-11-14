@@ -328,6 +328,8 @@ public static class Conformance
                 : Bind((Reals(a.Get("x")), Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2))),
             "decode_samples" => DecodeSamplesOp(Convert.FromHexString(Str(a, "data")), Str(a, "datatype")),
             "read_sigmf" => ReadSigmfOp(Str(a, "file")),
+            "write_wav" => WriteWavOp(Rows(a.Get("channels")), a.D("sample_rate"), Str(a, "sample_format")),
+            "read_wav" => ReadWavOp(Str(a, "file")),
             "resample" => ResampleOp(a, a.I("up"), a.I("down")),
             "interpolate" => ResampleOp(a, a.I("factor"), 1),
             "decimate" => ResampleOp(a, 1, a.I("factor")),
@@ -551,6 +553,37 @@ public static class Conformance
         return isComplex
             ? () => SignalRecord(SignalFiles.ReadSigmf<Complex>(path))
             : () => SignalRecord(SignalFiles.ReadSigmf<double>(path));
+    }
+
+    private static Func<object?> WriteWavOp(double[][] rows, double rate, string format) => () =>
+    {
+        string path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".wav");
+        try
+        {
+            SignalFiles.WriteWav(path, [.. rows.Select(r => new Signal<double>(r, rate))], format);
+            return Convert.ToHexStringLower(File.ReadAllBytes(path));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    };
+
+    private static Func<object?> ReadWavOp(string name)
+    {
+        if (Path.GetFileName(name) != name)
+            throw new InvalidDataException("file must be a bare file name in vectors/files");
+        string path = Path.Combine(VectorsDir(), "..", "files", name);
+        return () =>
+        {
+            Signal<double>[] s = SignalFiles.ReadWav(path);
+            return new Dictionary<string, object?>
+            {
+                ["channels"] = s.Select(c => c.Samples.ToArray()).ToArray(),
+                ["sample_rate"] = s[0].SampleRate,
+                ["units"] = s[0].Units,
+            };
+        };
     }
 
     private static Dictionary<string, object?> SignalRecord<T>(Signal<T> s) where T : struct => new()

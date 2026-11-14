@@ -405,4 +405,201 @@ public static class SignalFiles
                 return null;
         }
     }
+
+    private static readonly byte[] GuidTail = Convert.FromHexString("000000001000800000AA00389B71");
+
+    private static int WavBits(string? format) => format switch
+    {
+        "u8" => 8,
+        "i16" => 16,
+        "i24" => 24,
+        "i32" or "f32" => 32,
+        "f64" => 64,
+        _ => 0,
+    };
+
+    /// <summary>Writes one real signal as a mono WAV file (conventions: Signal files, WAV).</summary>
+    /// <param name="path">The file to write.</param>
+    /// <param name="signal">The signal; only its samples and sample rate are stored.</param>
+    /// <param name="sampleFormat"><c>u8</c>, <c>i16</c>, <c>i24</c>, <c>i32</c> (PCM), <c>f32</c> or <c>f64</c> (IEEE float).</param>
+    public static void WriteWav(string path, Signal<double> signal, string sampleFormat = "f32")
+    {
+        ArgumentNullException.ThrowIfNull(signal);
+        WriteWav(path, [signal], sampleFormat);
+    }
+
+    /// <summary>Writes real signals, one per channel, as a PCM or IEEE float WAV file (conventions: Signal files, WAV).
+    /// Only the samples and the sample rate are stored.</summary>
+    /// <param name="path">The file to write.</param>
+    /// <param name="channels">One or more signals with the same length and the same whole-number sample rate.</param>
+    /// <param name="sampleFormat"><c>u8</c>, <c>i16</c>, <c>i24</c>, <c>i32</c> (PCM), <c>f32</c> or <c>f64</c> (IEEE float).</param>
+    public static void WriteWav(string path, IReadOnlyList<Signal<double>> channels, string sampleFormat = "f32")
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        ArgumentNullException.ThrowIfNull(channels);
+        int bits = WavBits(sampleFormat);
+        if (bits == 0)
+            throw new ArgumentException($"unknown WAV sample format '{sampleFormat}'", nameof(sampleFormat));
+        if (channels.Count == 0 || channels.Any(s => s is null))
+            throw new ArgumentException("channels must be one signal or a non-empty list of them", nameof(channels));
+        double rate = channels[0].SampleRate;
+        int n = channels[0].Length, nch = channels.Count, w = bits / 8;
+        if (channels.Any(s => s.SampleRate != rate || s.Length != n))
+            throw new ArgumentException("every channel must have the same sample rate and length", nameof(channels));
+        if (rate != Math.Floor(rate) || rate > uint.MaxValue)
+            throw new ArgumentException("the sample rate must be a whole number of hertz below 2^32", nameof(channels));
+        bool isFloat = sampleFormat[0] == 'f';
+        long block = (long)nch * w;
+        if (block > ushort.MaxValue)
+            throw new ArgumentException("too many channels: the block align must fit 16 bits", nameof(channels));
+        if ((long)rate * block > uint.MaxValue)
+            throw new ArgumentException("the byte rate (sample rate x block align) must fit 32 bits", nameof(channels));
+        long nbytes = n * block;
+        long riffSize = 4 + (isFloat ? 38 : 24) + 8 + nbytes + nbytes % 2;
+        if (riffSize > uint.MaxValue)
+            throw new ArgumentException("too many samples for a WAV file", nameof(channels));
+        var data = new byte[checked((int)nbytes)];
+        double scale = Math.ScaleB(1.0, bits - 1);
+        for (int c = 0; c < nch; c++)
+        {
+            ReadOnlySpan<double> x = channels[c].Samples;
+            for (int i = 0; i < n; i++)
+            {
+                Span<byte> b = data.AsSpan((i * nch + c) * w, w);
+                double v = x[i];
+                if (isFloat)
+                {
+                    if (bits == 64) BinaryPrimitives.WriteDoubleLittleEndian(b, v);
+                    else BinaryPrimitives.WriteSingleLittleEndian(b, (float)v);
+                    continue;
+                }
+                if (!double.IsFinite(v))
+                    throw new ArgumentException($"{sampleFormat} cannot hold non-finite samples", nameof(channels));
+                double code = Math.Round(v * scale, MidpointRounding.ToEven);
+                if (code < -scale || code > scale - 1)
+                    throw new ArgumentException($"a sample is outside the range of {sampleFormat} (full scale is 1.0)", nameof(channels));
+                int k = (int)code;
+                switch (bits)
+                {
+                    case 8: b[0] = (byte)(k + 128); break;
+                    case 16: BinaryPrimitives.WriteInt16LittleEndian(b, (short)k); break;
+                    case 24: b[0] = (byte)k; b[1] = (byte)(k >> 8); b[2] = (byte)(k >> 16); break;
+                    default: BinaryPrimitives.WriteInt32LittleEndian(b, k); break;
+                }
+            }
+        }
+        using var ms = new MemoryStream();
+        using (var bw = new BinaryWriter(ms, System.Text.Encoding.ASCII, leaveOpen: true))
+        {
+            bw.Write("RIFF"u8);
+            bw.Write((uint)riffSize);
+            bw.Write("WAVE"u8);
+            bw.Write("fmt "u8);
+            bw.Write(isFloat ? 18 : 16);
+            bw.Write((ushort)(isFloat ? 3 : 1));
+            bw.Write((ushort)nch);
+            bw.Write((uint)rate);
+            bw.Write((uint)(rate * block));
+            bw.Write((ushort)block);
+            bw.Write((ushort)bits);
+            if (isFloat)
+            {
+                bw.Write((ushort)0);
+                bw.Write("fact"u8);
+                bw.Write(4);
+                bw.Write((uint)n);
+            }
+            bw.Write("data"u8);
+            bw.Write((uint)nbytes);
+            bw.Write(data);
+            if (nbytes % 2 == 1)
+                bw.Write((byte)0);
+        }
+        File.WriteAllBytes(path, ms.ToArray());
+    }
+
+    /// <summary>Reads a PCM or IEEE float WAV file as real signals, one per channel, in units <c>"FS"</c>
+    /// (conventions: Signal files, WAV).</summary>
+    /// <param name="path">The file to read.</param>
+    /// <returns>One signal per channel, all with the file's sample rate.</returns>
+    /// <exception cref="ArgumentException">The file is not a WAV file this reads exactly.</exception>
+    public static Signal<double>[] ReadWav(string path)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        byte[] raw = File.ReadAllBytes(path);
+        ArgumentException Bad(string message) => new(message, nameof(path));
+        if (raw.Length < 12 || !raw.AsSpan(0, 4).SequenceEqual("RIFF"u8) || !raw.AsSpan(8, 4).SequenceEqual("WAVE"u8))
+            throw Bad("not a RIFF WAVE file");
+        long pos = 12;
+        byte[]? fmt = null;
+        int dataStart, dataLength;
+        while (true)
+        {
+            if (pos + 8 > raw.Length)
+                throw Bad(fmt is null ? "no fmt chunk" : "no data chunk");
+            ReadOnlySpan<byte> id = raw.AsSpan((int)pos, 4);
+            uint size = BinaryPrimitives.ReadUInt32LittleEndian(raw.AsSpan((int)pos + 4, 4));
+            long start = pos + 8, end = start + size;
+            if (end > raw.Length)
+                throw Bad($"the '{System.Text.Encoding.Latin1.GetString(id)}' chunk runs past the end of the file");
+            if (id.SequenceEqual("data"u8))
+            {
+                if (fmt is null)
+                    throw Bad("the fmt chunk must come before the data chunk");
+                (dataStart, dataLength) = ((int)start, (int)size);
+                break;
+            }
+            if (id.SequenceEqual("fmt "u8) && fmt is null)
+                fmt = raw[(int)start..(int)end];
+            pos = end + size % 2;
+        }
+        if (fmt.Length < 16)
+            throw Bad("the fmt chunk is shorter than 16 bytes");
+        int tag = BinaryPrimitives.ReadUInt16LittleEndian(fmt);
+        int nch = BinaryPrimitives.ReadUInt16LittleEndian(fmt.AsSpan(2));
+        uint rate = BinaryPrimitives.ReadUInt32LittleEndian(fmt.AsSpan(4));
+        int block = BinaryPrimitives.ReadUInt16LittleEndian(fmt.AsSpan(12));
+        int bits = BinaryPrimitives.ReadUInt16LittleEndian(fmt.AsSpan(14));
+        if (tag == 0xFFFE)
+        {
+            if (fmt.Length < 40)
+                throw Bad("an extensible fmt chunk needs at least 40 bytes");
+            ReadOnlySpan<byte> guid = fmt.AsSpan(24, 16);
+            if (!guid[2..].SequenceEqual(GuidTail) || guid[1] != 0 || guid[0] is not (1 or 3))
+                throw Bad("the extensible sub-format is not PCM or IEEE float");
+            tag = guid[0];
+        }
+        if (tag is not (1 or 3))
+            throw Bad($"WAV format {tag} is not PCM or IEEE float");
+        if (tag == 1 ? bits is not (8 or 16 or 24 or 32) : bits is not (32 or 64))
+            throw Bad($"{bits}-bit {(tag == 1 ? "PCM" : "float")} is not supported");
+        if (nch < 1 || rate < 1)
+            throw Bad("a WAV file needs at least one channel and a sample rate of at least 1");
+        if (block != nch * bits / 8)
+            throw Bad($"block align {block} does not match {nch} channels of {bits} bits");
+        if (dataLength % block != 0)
+            throw Bad($"{dataLength} data bytes is not a whole number of {block}-byte frames");
+        int w = bits / 8, frames = dataLength / block;
+        double scale = Math.ScaleB(1.0, bits - 1);
+        var result = new Signal<double>[nch];
+        var x = new double[frames];
+        for (int c = 0; c < nch; c++)
+        {
+            for (int i = 0; i < frames; i++)
+            {
+                ReadOnlySpan<byte> b = raw.AsSpan(dataStart + (i * nch + c) * w, w);
+                x[i] = (tag, bits) switch
+                {
+                    (3, 32) => BinaryPrimitives.ReadSingleLittleEndian(b),
+                    (3, _) => BinaryPrimitives.ReadDoubleLittleEndian(b),
+                    (_, 8) => (b[0] - 128) / scale,
+                    (_, 16) => BinaryPrimitives.ReadInt16LittleEndian(b) / scale,
+                    (_, 24) => (b[0] | b[1] << 8 | (sbyte)b[2] << 16) / scale,
+                    _ => BinaryPrimitives.ReadInt32LittleEndian(b) / scale,
+                };
+            }
+            result[c] = new Signal<double>(x, rate, units: "FS");
+        }
+        return result;
+    }
 }

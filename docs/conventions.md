@@ -1164,6 +1164,32 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
   without a `:` (inside `signalforge:metadata`) starts at level 4 and one with a `:` at level 3.
   Writing checks everything before either file is touched, so a rejected write leaves an existing
   recording as it was. **(implemented)**
+- **WAV** ([ADR 0055](adr/0055-wav.md)): `write_wav(path, channels, sample_format="f32")`,
+  `read_wav(path)` (C# `WriteWav`, `ReadWav`). A file is a list of real signals, one per channel.
+  - Sample formats: `u8`, `i16`, `i24`, `i32` (PCM, little-endian two's complement except `u8`,
+    which is unsigned: code `u` is the sample `(u − 128)/128`) and `f32`, `f64` (IEEE float,
+    little-endian). Integer scaling, rounding and the rejected range are those of **Integer
+    scaling** above; floats as **Floats** above (non-finite values stored as they are).
+  - Writing: `channels` is one `Signal` or a non-empty list of them, all real, with the same
+    length and the same sample rate, which must be a whole number from 1 to `2^32 − 1`. Block
+    align (channels × bytes per sample) must fit 16 bits, the byte rate (sample rate × block
+    align) and the RIFF size 32 bits. Samples are interleaved frame by
+    frame (channel 0 first). Bytes, all little-endian: `RIFF`, the size of the rest, `WAVE`; a
+    `fmt ` chunk with format tag, channels, sample rate, byte rate, block align (channels × bytes
+    per sample) and bits per sample, 16 bytes for PCM (tag 1) or 18 for float (tag 3, then
+    `cbSize` 0); for float, a `fact` chunk holding the number of frames; then `data`, padded with a
+    zero byte to an even length (the pad is counted in the RIFF size, not the data size). Units,
+    impedance, center frequency, time origin and metadata are not stored.
+  - Reading: `RIFF` and `WAVE` are required, the RIFF size is ignored. Chunks follow from byte 12,
+    each an id, a 32-bit size and the body, padded to even; unknown ones are skipped. The first
+    `fmt ` must come before the first `data`, which ends the walk. `fmt ` is at least 16 bytes;
+    tag 1 takes 8, 16, 24 or 32 bits, tag 3 takes 32 or 64, and tag `0xFFFE` (extensible, at least
+    40 bytes) takes either by its sub-format GUID (`01 00` or `03 00` then
+    `00 00 00 00 10 00 80 00 00 AA 00 38 9B 71`), its valid-bits and channel-mask fields not read.
+    Channels and sample rate must be at least 1 and block align must be channels × bits / 8; the
+    byte rate is not checked. Rejected: anything else, a chunk running past the end of the file,
+    and a data size that is not whole frames. Each signal has units `"FS"`, center frequency 0,
+    time origin 0, no metadata. A missing file is an OS error, as for SigMF. **(implemented)**
 
 ## PRBS
 

@@ -4,11 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **WAV read and write**: PCM 16/24/32-bit integer and 32/64-bit float, mono and multi-channel,
-   to and from `Signal`; stdlib-only vectors.
-2. **NumPy `.npy` read and write**: version 1.0 headers, little-endian `float64` and
+1. **NumPy `.npy` read and write**: version 1.0 headers, little-endian `float64` and
    `complex128` 1-D arrays, so both languages exchange samples without SigMF; stdlib-only vectors.
-3. **FSK in the link**: `modulation` `"fsk2"`/`"fsk4"` through the same channel (rectangular
+2. **FSK in the link**: `modulation` `"fsk2"`/`"fsk4"` through the same channel (rectangular
    symbols, no RRC), noncoherent detection after preamble timing, error counts against
    `fsk_ber_theory`.
 
@@ -555,14 +553,24 @@ Updated with every chunk of work. Dates are absolute.
   detector's Rician/Rayleigh error integral to 1e-9. Monte Carlo within 15 % in both languages
   (about 500 symbol errors each; over 10 seeds C# averages 0.97–1.03 of theory). Python 2345
   passed, 2 skipped; .NET 1895 passed.
+- 2026-11-13: WAV files in both languages (ADR 0055): `write_wav(path, channels, sample_format)`
+  and `read_wav(path)`, one real `Signal` per channel; PCM `u8`/`i16`/`i24`/`i32` with the SigMF
+  integer scaling (nothing clipped) and IEEE `f32`/`f64`. Writing uses one fixed layout (plain PCM
+  or float `fmt `, `fact` for float, pad byte); reading also takes `WAVE_FORMAT_EXTENSIBLE`,
+  unknown chunks and a wrong RIFF size, and rejects compressed formats, other bit depths, a wrong
+  block align and partial frames. New generator `vectors/generators/wav.py` writes
+  `cases/wav.json` (67 cases: exact file bytes for writes, 34 fixture files for reads); its PCM
+  headers are checked against Python's `wave` module, an independent writer. `files.py --check`
+  now only looks at SigMF files in `vectors/files/`. Python 2448 passed, 2 skipped; .NET 1979
+  passed; conformance 1241/1241 in both. Version 2026.11.13.77.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond noncoherent detection with known timing, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF (WAV, NumPy, streaming reads and writes, multi-channel and
-multi-capture recordings, SigMF annotations, unsigned sample types), plotting, CLI,
+phase noise, NF), standards waveforms, file formats beyond SigMF and WAV (NumPy, streaming reads and writes, multi-channel and
+multi-capture SigMF recordings, WAV metadata chunks, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.
 
 ## Lessons
