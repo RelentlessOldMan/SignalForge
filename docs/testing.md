@@ -40,6 +40,12 @@ Default when a case gives none: `abs = 1e-12, rel = 1e-12`. Rules of thumb:
 - Sums over N samples: allow ~N·1e-16 relative.
 - Anything involving an FFT, a filter, or an estimator: set per case from the algorithm's error
   analysis, and write down why in `source`.
+- Monte Carlo BER tests in the unit suites bracket the rate between theory and theory with the
+  known losses taken out of Eb/N₀ (a channel estimate from `P` blocks costs `10·log10(1 + 1/P)` dB),
+  widened by 4 binomial standard deviations. Where a loss has no closed form (the OFDM tracking
+  loops' jitter and the leakage a clock offset or phase noise causes between subcarriers), the
+  test adds a fixed allowance in dB, named as an allowance in the test (0.5 dB for ADR 0065), not
+  a derived value.
 
 ## Random signals
 
