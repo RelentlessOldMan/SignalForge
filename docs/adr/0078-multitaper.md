@@ -7,8 +7,11 @@ Status: accepted, 2026-11-13
 Welch's method trades resolution for variance by cutting the record into segments. Thomson's
 multitaper method keeps the whole record and averages the spectra of the record under `K`
 orthogonal tapers instead, the discrete prolate spheroidal sequences (Slepian), which hold the
-most energy inside a chosen band `[−W, W]`. It has lower leakage than any single window at the
-same resolution, and about `2K` degrees of freedom.
+most energy inside a chosen band `[−W, W]`. The first taper leaks far less than the usual windows
+at the same resolution (at NW 4, 4e-11 of the peak 6 bins out, where Hann leaks 1e-6); the plain
+average over all `2NW − 1` tapers leaks near the rectangular window's level, because the last
+taper keeps only about 94% of its energy in the band (measured; [ADR 0079](0079-adaptive-multitaper.md)
+weights them adaptively). The estimate has about `2K` degrees of freedom.
 
 ## Decision
 

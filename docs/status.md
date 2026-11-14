@@ -4,11 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Thomson's adaptive weights for the multitaper PSD**: the per-frequency weights
-   `d_k = √λ_k S / (λ_k S + (1 − λ_k) σ²)` iterated to a fixed point, which cut the broadband
-   leakage of the higher tapers (the plain average with all `2NW − 1` tapers leaks near the
-   rectangular window's level; ADR 0078). Expected values from a stdlib generator iterating the
-   definition, with a by-hand case where every λ is 1.
+1. **Multitaper F-test for line components** (Thomson's harmonic F-test): per bin, the
+   regression of the tapered spectra on the tapers' DC values, giving the line amplitude and an
+   F statistic with 2 and `2K − 2` degrees of freedom, for finding sinusoids in colored noise.
+   Expected values from a stdlib generator and a by-hand pure-tone case at a bin center.
 
 ## Built
 
@@ -793,11 +792,21 @@ Updated with every chunk of work. Dates are absolute.
   hand). The result type is `TaperSet`, not `Tapers`: a C# record cannot have a property of its
   own name. Python 3118 passed, 2 skipped; .NET 2582 passed; conformance 1554/1554 in both.
   Version 2026.11.13.109.
+- 2026-11-13: Thomson's adaptive weights for the multitaper PSD ([ADR
+  0079](adr/0079-adaptive-multitaper.md)): `multitaper_psd(..., adaptive=True)` (C# `adaptive:
+  true`) combines the eigenspectra bin by bin with the weights
+  `λ_j / (λ_j S + (1 − λ_j) σ²/fs)²`, iterated from the mean of the first two to a per-bin fixed
+  point (`1e-10`, at most 1000 repeats). On a tone at N 1024, NW 4 with seven tapers the leakage
+  6 bins out falls from 3.6e-3 of the peak to 5.8e-7, and 50 bins out from 4.2e-5 to 2.9e-12;
+  white noise keeps its level. ADR 0078's context now says the plain average leaks near the
+  rectangular window rather than claiming less leakage than any window. Vector suite
+  `multitaper` now 28 cases (3 by hand). Python 3127 passed, 2 skipped; .NET 2591 passed;
+  conformance 1560/1560 in both. Version 2026.11.13.110.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
-(multitaper adaptive weights and the F-test; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
+(the multitaper F-test; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,

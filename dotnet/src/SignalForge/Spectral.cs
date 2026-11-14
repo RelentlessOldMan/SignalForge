@@ -380,26 +380,31 @@ public static class Spectral
         if (length < 1)
             throw new ArgumentOutOfRangeException(nameof(length), length, "must be at least 1");
         var (nw, k) = TaperArgs(length, halfBandwidth, numTapers);
-        double w = nw / length;
-        double[][] tapers = Dpss(length, w, k);
-        var conc = new double[k];
-        for (int j = 0; j < k; j++)
+        double[][] tapers = Dpss(length, nw / length, k);
+        return new TaperSet(tapers, Concentrations(tapers, nw / length));
+    }
+
+    private static double[] Concentrations(double[][] tapers, double w)
+    {
+        var conc = new double[tapers.Length];
+        for (int j = 0; j < tapers.Length; j++)
         {
             double[] v = tapers[j];
+            int n = v.Length;
             double r0 = 0;
-            for (int i = 0; i < length; i++)
+            for (int i = 0; i < n; i++)
                 r0 += v[i] * v[i];
             double lam = 2 * w * r0;
-            for (int lag = 1; lag < length; lag++)
+            for (int lag = 1; lag < n; lag++)
             {
                 double r = 0;
-                for (int i = 0; i + lag < length; i++)
+                for (int i = 0; i + lag < n; i++)
                     r += v[i] * v[i + lag];
                 lam += 2 * (Math.Sin(2 * Math.PI * w * lag) / (Math.PI * lag)) * r;
             }
             conc[j] = lam;
         }
-        return new TaperSet(tapers, conc);
+        return conc;
     }
 
     /// <summary>
@@ -412,9 +417,10 @@ public static class Spectral
     /// <param name="halfBandwidth">NW: above 0 and below the input length over 2.</param>
     /// <param name="numTapers">K, 1 … N; null for max(1, ⌊2NW⌋ − 1).</param>
     /// <param name="nfft">Transform length, at least the input length; null for the input length.</param>
+    /// <param name="adaptive">Thomson's adaptive weights instead of the plain mean (ADR 0079).</param>
     public static SpectralDensity MultitaperPsd(ReadOnlySpan<Complex> samples, double sampleRate,
-        double halfBandwidth, int? numTapers = null, int? nfft = null) =>
-        Multitaper(samples, sampleRate, halfBandwidth, numTapers, oneSided: false, nfft);
+        double halfBandwidth, int? numTapers = null, int? nfft = null, bool adaptive = false) =>
+        Multitaper(samples, sampleRate, halfBandwidth, numTapers, oneSided: false, nfft, adaptive);
 
     /// <summary>
     /// Thomson's multitaper PSD of real samples: one-sided unless <paramref name="oneSided"/> is
@@ -426,12 +432,13 @@ public static class Spectral
     /// <param name="numTapers">K, 1 … N; null for max(1, ⌊2NW⌋ − 1).</param>
     /// <param name="oneSided">Fold to bins 0 … ⌊nfft/2⌋, as Welch.</param>
     /// <param name="nfft">Transform length, at least the input length; null for the input length.</param>
+    /// <param name="adaptive">Thomson's adaptive weights instead of the plain mean (ADR 0079).</param>
     public static SpectralDensity MultitaperPsd(ReadOnlySpan<double> samples, double sampleRate,
-        double halfBandwidth, int? numTapers = null, bool oneSided = true, int? nfft = null) =>
-        Multitaper(ToComplex(samples), sampleRate, halfBandwidth, numTapers, oneSided, nfft);
+        double halfBandwidth, int? numTapers = null, bool oneSided = true, int? nfft = null, bool adaptive = false) =>
+        Multitaper(ToComplex(samples), sampleRate, halfBandwidth, numTapers, oneSided, nfft, adaptive);
 
     private static SpectralDensity Multitaper(ReadOnlySpan<Complex> x, double sampleRate, double halfBandwidth,
-        int? numTapers, bool oneSided, int? nfft)
+        int? numTapers, bool oneSided, int? nfft, bool adaptive)
     {
         Check.PositiveFinite(sampleRate, nameof(sampleRate));
         int n = x.Length;
@@ -443,19 +450,68 @@ public static class Spectral
         var (nw, k) = TaperArgs(n, halfBandwidth, numTapers);
         double[][] tapers = Dpss(n, nw / n, k);
         var buf = new Complex[m];
-        var acc = new double[m];
-        foreach (double[] v in tapers)
+        var eigen = new double[k][];
+        for (int j = 0; j < k; j++)
         {
             for (int i = 0; i < n; i++)
-                buf[i] = x[i] * v[i];
+                buf[i] = x[i] * tapers[j][i];
             Array.Clear(buf, n, m - n);
             Transform(buf);
+            eigen[j] = new double[m];
             for (int i = 0; i < m; i++)
-                acc[i] += buf[i].Real * buf[i].Real + buf[i].Imaginary * buf[i].Imaginary;
+                eigen[j][i] = (buf[i].Real * buf[i].Real + buf[i].Imaginary * buf[i].Imaginary) / sampleRate;
+        }
+        var two = new double[m];
+        if (adaptive)
+        {
+            double power = 0;
+            for (int i = 0; i < n; i++)
+                power += (x[i].Real * x[i].Real) + (x[i].Imaginary * x[i].Imaginary);
+            Adaptive(eigen, Concentrations(tapers, nw / n), power / n / sampleRate, two);
+        }
+        else
+        {
+            for (int i = 0; i < m; i++)
+            {
+                double s = 0;
+                for (int j = 0; j < k; j++)
+                    s += eigen[j][i];
+                two[i] = s / k;
+            }
         }
         var g = new Segments(n, n, 1, tapers[0], sampleRate, 1.0, Detrend.None, m);
-        return new SpectralDensity(g.Frequencies(oneSided), g.Fold(acc, 1.0 / (k * sampleRate), oneSided), sampleRate,
+        return new SpectralDensity(g.Frequencies(oneSided), g.Fold(two, 1.0, oneSided), sampleRate,
             n, k, oneSided, sampleRate / m, 2 * nw / n * sampleRate, m);
+    }
+
+    /// <summary>Thomson's adaptive combination, each bin iterated on its own (ADR 0079).</summary>
+    private static void Adaptive(double[][] eigen, double[] lam, double noise, double[] s)
+    {
+        int k = lam.Length;
+        for (int i = 0; i < s.Length; i++)
+        {
+            double cur = k == 1 ? eigen[0][i] : (eigen[0][i] + eigen[1][i]) / 2;
+            if (k > 1 && noise != 0)
+            {
+                for (int it = 0; it < 1000 && cur > 0; it++)
+                {
+                    double num = 0, den = 0;
+                    for (int j = 0; j < k; j++)
+                    {
+                        double a = (lam[j] * cur) + ((1 - lam[j]) * noise);
+                        double w = lam[j] / (a * a);
+                        num += w * eigen[j][i];
+                        den += w;
+                    }
+                    double next = num / den;
+                    bool done = Math.Abs(next - cur) <= 1e-10 * next;
+                    cur = next;
+                    if (done)
+                        break;
+                }
+            }
+            s[i] = cur;
+        }
     }
 
     private static (double Nw, int K) TaperArgs(int n, double halfBandwidth, int? numTapers)

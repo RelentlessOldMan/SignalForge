@@ -286,13 +286,18 @@ def dpss_tapers(length: int, half_bandwidth: float, num_tapers: int | None = Non
         raise ValueError("length must be at least 1")
     nw, k = _taper_args(n, half_bandwidth, num_tapers)
     tapers = _dpss(n, nw / n, k)
+    return TaperSet(tapers, _concentrations(tapers, nw / n))
+
+
+def _concentrations(tapers: NDArray[np.float64], w: float) -> NDArray[np.float64]:
+    n = tapers.shape[1]
     lag = np.arange(1, n)
-    sinc = np.sin(2 * math.pi * (nw / n) * lag) / (math.pi * lag)
+    sinc = np.sin(2 * math.pi * w * lag) / (math.pi * lag)
     conc = [
-        2 * (nw / n) * r[0] + 2 * float(np.dot(sinc, r[1:]))
+        2 * w * r[0] + 2 * float(np.dot(sinc, r[1:]))
         for r in (np.correlate(v, v, "full")[n - 1 :] for v in tapers)
     ]
-    return TaperSet(tapers, np.array(conc, dtype=np.float64))
+    return np.array(conc, dtype=np.float64)
 
 
 def _dpss(n: int, w: float, k: int) -> NDArray[np.float64]:
@@ -413,9 +418,11 @@ def multitaper_psd(
     num_tapers: int | None = None,
     one_sided: bool | None = None,
     nfft: int | None = None,
+    adaptive: bool = False,
 ) -> SpectralDensity:
     """Thomson's multitaper PSD: the mean of the periodograms of the whole input under the DPSS
-    tapers, in the Welch scaling (conventions: Spectra, Multitaper PSD; ADR 0078)."""
+    tapers, in the Welch scaling, or with ``adaptive`` Thomson's adaptive weights (conventions:
+    Spectra, Multitaper PSD; ADRs 0078, 0079)."""
     x = _vector(samples, "samples")
     if not real(sample_rate, "sample_rate") > 0:
         raise ValueError("sample_rate must be positive and finite")
@@ -432,13 +439,17 @@ def multitaper_psd(
         raise ValueError("nfft must be at least the input length")
     nw, k = _taper_args(n, half_bandwidth, num_tapers)
     tapers = _dpss(n, nw / n, k)
-    acc = np.zeros(m)
-    for v in tapers:
-        acc += np.abs(np.fft.fft(v * x, m)) ** 2
+    eigen = np.array([np.abs(np.fft.fft(v * x, m)) ** 2 / sample_rate for v in tapers])
+    if adaptive:
+        lam = _concentrations(tapers, nw / n)
+        noise = float(np.sum(np.abs(x) ** 2)) / n / sample_rate
+        two = _adaptive(eigen, lam, noise)
+    else:
+        two = np.sum(eigen, axis=0) / k
     g = _Segments(x, n, n, 1, tapers[0], 1.0, bool(one_sided), "none", m)
     return SpectralDensity(
         frequencies=g.frequencies(sample_rate),
-        psd=np.asarray(g.fold(acc / (k * sample_rate)), dtype=np.float64),
+        psd=np.asarray(g.fold(two), dtype=np.float64),
         sample_rate=float(sample_rate),
         nperseg=n,
         num_segments=k,
@@ -447,6 +458,27 @@ def multitaper_psd(
         enbw_hz=2 * nw / n * sample_rate,
         nfft=m,
     )
+
+
+def _adaptive(
+    eigen: NDArray[np.float64], lam: NDArray[np.float64], noise: float
+) -> NDArray[np.float64]:
+    """Thomson's adaptive combination, each bin iterated on its own (ADR 0079)."""
+    s: NDArray[np.float64] = np.array(eigen[0] if len(lam) == 1 else (eigen[0] + eigen[1]) / 2)
+    if noise == 0 or len(lam) == 1:
+        return s
+    live = s > 0
+    for _ in range(1000):
+        if not live.any():
+            break
+        cur = s[live]
+        w = lam[:, None] / (lam[:, None] * cur + (1 - lam[:, None]) * noise) ** 2
+        new = np.sum(w * eigen[:, live], axis=0) / np.sum(w, axis=0)
+        s[live] = new
+        done = np.abs(new - cur) <= 1e-10 * new
+        idx = np.flatnonzero(live)
+        live[idx[done]] = False
+    return s
 
 
 def spectrogram(

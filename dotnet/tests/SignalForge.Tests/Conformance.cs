@@ -532,15 +532,16 @@ public static class Conformance
     {
         object? samples = a.Get("samples");
         var (fs, nw, k, nfft) = (a.D("sample_rate"), a.D("half_bandwidth"), a.OptInt("num_tapers"), a.OptInt("nfft"));
+        bool adaptive = a.Flag("adaptive");
         if (samples is Complex[] cs)
         {
             if (a.Flag("one_sided"))
                 throw new InvalidDataException("one_sided=true with complex samples has no C# form");
-            return () => Spectral.MultitaperPsd(cs, fs, nw, k, nfft);
+            return () => Spectral.MultitaperPsd(cs, fs, nw, k, nfft, adaptive);
         }
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
-        return () => Spectral.MultitaperPsd(x, fs, nw, k, oneSided, nfft);
+        return () => Spectral.MultitaperPsd(x, fs, nw, k, oneSided, nfft, adaptive);
     }
 
     private static Func<object?> SpectrogramOp(Args a)

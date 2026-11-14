@@ -6,7 +6,8 @@ the whole matrix (not the library's bisection and inverse iteration). Every tape
 against the definition itself: A v = lambda v for the sinc matrix A[n][m] = sin(2 pi W (n - m)) /
 (pi (n - m)), to 1e-10, and the tapers are checked orthonormal. Each concentration is v'Av summed
 directly. Multitaper PSDs are the DFT of each tapered input summed term by term, averaged, scaled
-by 1/(K fs) and folded as Welch (conventions: Spectra, Multitaper PSD).
+by 1/(K fs) and folded as Welch, or combined by iterating Thomson's adaptive weights bin by bin
+(conventions: Spectra, Multitaper PSD; ADR 0079).
 
 Run from the repo root: python vectors/generators/multitaper.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write (numbers
@@ -89,20 +90,41 @@ def dpss(n, nw, k=None):
     return tapers, conc
 
 
-def multitaper(x, fs, nw, k=None, one_sided=None, nfft=None):
+def adaptive(eigen, lam, noise):
+    """Thomson's adaptive combination of one bin's eigenspectra (ADR 0079)."""
+    s = eigen[0] if len(lam) == 1 else (eigen[0] + eigen[1]) / 2
+    if len(lam) == 1 or noise == 0:
+        return s
+    for _ in range(1000):
+        if s <= 0:
+            break
+        w = [lj / (lj * s + (1 - lj) * noise) ** 2 for lj in lam]
+        new = math.fsum(wj * ej for wj, ej in zip(w, eigen)) / math.fsum(w)
+        done = abs(new - s) <= 1e-10 * new
+        s = new
+        if done:
+            break
+    return s
+
+
+def multitaper(x, fs, nw, k=None, one_sided=None, nfft=None, adapt=False):
     is_complex = any(isinstance(v, complex) for v in x)
     if one_sided is None:
         one_sided = not is_complex
     n = len(x)
     m = n if nfft is None else nfft
-    tapers, _ = dpss(n, nw, k)
+    tapers, lam = dpss(n, nw, k)
     kk = len(tapers)
-    p = [0.0] * m
+    eigen = []
     for v in tapers:
         seg = [v[i] * x[i] for i in range(n)]
-        for b in range(m):
-            p[b] += abs(sum(seg[i] * cmath.exp(-2j * math.pi * b * i / m) for i in range(n))) ** 2
-    p = [q / (kk * fs) for q in p]
+        eigen.append([abs(sum(seg[i] * cmath.exp(-2j * math.pi * b * i / m) for i in range(n))) ** 2
+                      / fs for b in range(m)])
+    if adapt:
+        noise = math.fsum(abs(v) ** 2 for v in x) / n / fs
+        p = [adaptive([e[b] for e in eigen], lam, noise) for b in range(m)]
+    else:
+        p = [math.fsum(e[b] for e in eigen) / kk for b in range(m)]
     if one_sided:
         h = m // 2 + 1
         last = h - 1 if m % 2 == 0 else h
@@ -122,6 +144,7 @@ def cplx(z):
 SRC = ("vectors/generators/multitaper.py (stdlib only): eigenvectors of the commuting tridiagonal "
        "matrix by cyclic Jacobi, each checked against the sinc eigen-equation to 1e-10")
 PSRC = SRC + "; each tapered DFT summed term by term, averaged and folded per conventions: Spectra"
+ASRC = PSRC.replace("averaged", "combined by iterating Thomson's adaptive weights per bin (ADR 0079)")
 
 
 def taper_case(case_id, n, nw, k=None, src=SRC, expected=None):
@@ -136,7 +159,8 @@ def taper_case(case_id, n, nw, k=None, src=SRC, expected=None):
 def psd_case(case_id, x, fs, nw, src=PSRC, psd=None, **kw):
     args = {"samples": cplx(x) if any(isinstance(v, complex) for v in x) else x, "sample_rate": fs,
             "half_bandwidth": nw} | kw
-    expected = multitaper(x, fs, nw, kw.get("num_tapers"), kw.get("one_sided"), kw.get("nfft"))
+    expected = multitaper(x, fs, nw, kw.get("num_tapers"), kw.get("one_sided"), kw.get("nfft"),
+                          kw.get("adaptive", False))
     if psd is not None:  # a hand derivation replaces the sums
         assert max(abs(a - b) for a, b in zip(psd, expected["psd"])) < 1e-12
         expected["psd"] = psd
@@ -150,6 +174,8 @@ def err(case_id, op, args, why):
 
 R2 = 1 / math.sqrt(2)
 ramp = [float(i % 5) - 2 + 0.25 * math.sin(0.7 * i) for i in range(40)]
+tone = [math.sin(2 * math.pi * 0.1013 * i) + 1e-4 * math.cos(2 * math.pi * 0.37 * i)
+        for i in range(48)]
 chirp = [cmath.exp(1j * (0.3 * i + 0.02 * i * i)) * (1 + 0.05 * i) for i in range(24)]
 
 cases = [
@@ -173,6 +199,22 @@ cases = [
     psd_case("multitaper.constant_two", [3.0, 3.0], 2.0, 0.4, num_tapers=2, psd=[4.5, 4.5],
              src="by hand: the two N = 2 tapers put 2c^2 in bin 0 and 2c^2 in bin 1; over K fs "
              "= 4 that is c^2/fs = 4.5 in each, and neither bin is doubled at nfft 2"),
+    psd_case("multitaper.adaptive_real_tone", tone, 1.0, 3.0, adaptive=True,
+             src=ASRC),
+    psd_case("multitaper.adaptive_real_two_sided_padded", ramp, 1000.0, 2.5, adaptive=True,
+             one_sided=False, nfft=48, src=ASRC),
+    psd_case("multitaper.adaptive_complex", chirp, 1e6, 3.0, num_tapers=5, adaptive=True,
+             src=ASRC),
+    psd_case("multitaper.adaptive_one_taper", ramp[:21], 2.0, 2.0, num_tapers=1, adaptive=True,
+             psd=multitaper(ramp[:21], 2.0, 2.0, 1)["psd"],
+             src="by hand: with one taper the adaptive estimate is the plain one (here the plain "
+             "estimate from this generator's sums)"),
+    psd_case("multitaper.adaptive_equal_eigenspectra", [3.0, 0.0], 2.0, 0.4, num_tapers=2,
+             adaptive=True, psd=[2.25, 2.25],
+             src="by hand: both N = 2 tapers times (3, 0) are (3/sqrt 2, 0), so both eigenspectra "
+             "are 4.5/fs = 2.25 in each bin and any weighted mean of them is 2.25"),
+    psd_case("multitaper.adaptive_zeros", [0.0] * 8, 2.0, 2.0, adaptive=True,
+             psd=[0.0] * 5, src="by hand: all-zero input gives zeros"),
     err("multitaper.dpss_length_zero", "dpss_tapers", {"length": 0, "half_bandwidth": 0.5},
         "length >= 1 required"),
     err("multitaper.dpss_nw_zero", "dpss_tapers", {"length": 8, "half_bandwidth": 0.0},
@@ -201,8 +243,8 @@ cases = [
 doc = {
     "schema": 1,
     "suite": "multitaper",
-    "description": "DPSS tapers and Thomson's multitaper PSD (conventions: Spectra, DPSS tapers, "
-    "Multitaper PSD).",
+    "description": "DPSS tapers and Thomson's multitaper PSD, plain and adaptive (conventions: "
+    "Spectra, DPSS tapers, Multitaper PSD).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "multitaper.json"

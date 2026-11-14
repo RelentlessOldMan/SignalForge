@@ -145,6 +145,71 @@ public sealed class MultitaperTests
     }
 
     [Fact]
+    public void AdaptiveIsAFixedPoint()
+    {
+        // ADR 0079: each two-sided bin satisfies S = Σ w_j S_j / Σ w_j at its own weights
+        const int n = 200;
+        const double fs = 10, nw = 3;
+        var rng = new Random(9);
+        double[] x = [.. Enumerable.Range(0, n).Select(i => Math.Sin(0.9 * i) + (0.01 * (rng.NextDouble() - 0.5)))];
+        TaperSet t = Spectral.DpssTapers(n, nw);
+        double[] shifted = Spectral.MultitaperPsd(x, fs, nw, oneSided: false, adaptive: true).Psd;
+        double noise = x.Sum(v => v * v) / n / fs;
+        for (int b = 0; b < n; b++)
+        {
+            double s = shifted[(b + (n / 2)) % n]; // FFT bin b sits at shifted index b + n/2
+            double num = 0, den = 0;
+            for (int j = 0; j < t.Tapers.Length; j++)
+            {
+                Complex xb = Complex.Zero;
+                for (int i = 0; i < n; i++)
+                    xb += t.Tapers[j][i] * x[i] * Complex.FromPolarCoordinates(1, -2 * Math.PI * b * i / n);
+                double lam = t.Concentrations[j];
+                double a = (lam * s) + ((1 - lam) * noise);
+                double w = lam / (a * a);
+                num += w * (xb.Magnitude * xb.Magnitude / fs);
+                den += w;
+            }
+            Assert.True(Math.Abs((num / den) - s) <= 1e-9 * s);
+        }
+    }
+
+    [Fact]
+    public void AdaptiveCutsTheLeakage()
+    {
+        // measured (ADR 0079): 3.6e-3 of the peak 6 bins out falls to 5.8e-7, 4.2e-5 at 50 to 2.9e-12
+        const int n = 1024;
+        const double f0 = 0.1013;
+        double[] x = [.. Enumerable.Range(0, n).Select(i => Math.Sin(2 * Math.PI * f0 * i))];
+        SpectralDensity a = Spectral.MultitaperPsd(x, 1.0, 4.0, adaptive: true);
+        foreach (var (bins, most) in new[] { (6.0, 1e-6), (50.0, 1e-11) })
+        {
+            double far = 0;
+            for (int i = 0; i < a.Psd.Length; i++)
+            {
+                if (Math.Abs(a.Frequencies[i] - f0) > bins / n)
+                    far = Math.Max(far, a.Psd[i]);
+            }
+            Assert.True(far < most * a.Psd.Max());
+        }
+    }
+
+    [Fact]
+    public void AdaptiveNoiseLevelAndOneTaper()
+    {
+        var rng = new Random(3);
+        var x = new double[4096];
+        for (int i = 0; i < x.Length; i++)
+            x[i] = Math.Sqrt(-2 * Math.Log(1 - rng.NextDouble())) * Math.Cos(2 * Math.PI * rng.NextDouble());
+        SpectralDensity a = Spectral.MultitaperPsd(x, 1.0, 4.0, oneSided: false, adaptive: true);
+        Assert.True(Math.Abs(a.Psd.Average() - 1) < 0.03);
+        double[] head = x[..300];
+        Assert.Equal(Spectral.MultitaperPsd(head, 1.0, 3.0, numTapers: 1).Psd,
+            Spectral.MultitaperPsd(head, 1.0, 3.0, numTapers: 1, adaptive: true).Psd);
+        Assert.All(Spectral.MultitaperPsd(new double[9], 1.0, 2.0, adaptive: true).Psd, v => Assert.Equal(0.0, v));
+    }
+
+    [Fact]
     public void Rejects()
     {
         double[] x = new double[16];

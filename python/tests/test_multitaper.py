@@ -121,3 +121,39 @@ def test_rejects() -> None:
         sf.multitaper_psd(x, 0.0, 2.0)
     with pytest.raises(ValueError):
         sf.multitaper_psd(x, 1.0, 8.0)
+
+
+def test_adaptive_is_a_fixed_point() -> None:
+    # ADR 0079: each two-sided bin satisfies S = sum w_j S_j / sum w_j at its own weights
+    rng = np.random.default_rng(9)
+    n, fs, nw = 200, 10.0, 3.0
+    x = np.sin(0.9 * np.arange(n)) + 0.01 * rng.standard_normal(n)
+    t = sf.dpss_tapers(n, nw)
+    eigen = np.array([np.abs(np.fft.fft(v * x)) ** 2 / fs for v in t.tapers])
+    noise = np.sum(x**2) / n / fs
+    s = np.fft.ifftshift(sf.multitaper_psd(x, fs, nw, one_sided=False, adaptive=True).psd)
+    lam = t.concentrations[:, None]
+    w = lam / (lam * s + (1 - lam) * noise) ** 2
+    np.testing.assert_allclose(np.sum(w * eigen, axis=0) / np.sum(w, axis=0), s, rtol=1e-9)
+
+
+def test_adaptive_cuts_the_leakage() -> None:
+    # measured (ADR 0079): 3.6e-3 of the peak 6 bins out falls to 5.8e-7, 4.2e-5 at 50 to 2.9e-12
+    n, f0 = 1024, 0.1013
+    x = np.sin(2 * math.pi * f0 * np.arange(n))
+    a = sf.multitaper_psd(x, 1.0, 4.0, adaptive=True)
+    for bins, most in ((6, 1e-6), (50, 1e-11)):
+        far = np.abs(a.frequencies - f0) > bins / n
+        assert np.max(a.psd[far]) < most * np.max(a.psd)
+
+
+def test_adaptive_noise_level_and_one_taper() -> None:
+    rng = np.random.default_rng(3)
+    x = rng.standard_normal(4096)
+    a = sf.multitaper_psd(x, 1.0, 4.0, adaptive=True, one_sided=False)
+    assert np.mean(a.psd) == pytest.approx(1.0, rel=0.02)
+    one = sf.multitaper_psd(x[:300], 1.0, 3.0, num_tapers=1)
+    np.testing.assert_array_equal(
+        sf.multitaper_psd(x[:300], 1.0, 3.0, num_tapers=1, adaptive=True).psd, one.psd
+    )
+    np.testing.assert_array_equal(sf.multitaper_psd(np.zeros(9), 1.0, 2.0, adaptive=True).psd, 0)

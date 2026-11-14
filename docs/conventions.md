@@ -191,13 +191,22 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
     sin(2πW)/π` and `(1, −1)/√2` with `λ = 2W − sin(2πW)/π`.
   **(implemented)**
 - **Multitaper PSD** (`multitaper_psd(samples, sample_rate, half_bandwidth, *, num_tapers=None,
-  one_sided=None, nfft=None)`, [ADR 0078](adr/0078-multitaper.md)): with `N` the input length and
+  one_sided=None, nfft=None, adaptive=False)`, [ADR 0078](adr/0078-multitaper.md)): with `N` the input length and
   the `K` tapers `dpss_tapers(N, half_bandwidth, num_tapers)`, the two-sided PSD is
   `S[k] = (1/K)·Σ_j |X_j[k]|²/fs`, `X_j` the length-`M` DFT (`M = nfft ≥ N`, default `N`, zero
   padded at the end) of `v_j[n]·x[n]`, the sum in order of `j`. Since `Σv² = 1` this is the Welch
   scaling. Sidedness, folding and the frequency axis are as for the PSD above. The result is a
   PSD with `nperseg = N`, `num_segments = K`, `bin_width = fs/M`, `enbw_hz = 2W·fs` and the PSD's
   `span`.
+  With `adaptive=True` ([ADR 0079](adr/0079-adaptive-multitaper.md)), Thomson's adaptive weights
+  replace the plain mean, bin by bin on the two-sided FFT-order bins before folding. With the
+  eigenspectra `S_j[k] = |X_j[k]|²/fs`, the concentrations `λ_j` and `σ² = Σ|x[n]|²/N`, start at
+  `S = (S_0 + S_1)/2` (`S_0` when `K = 1`) and repeat
+  `S' = Σ_j w_j·S_j / Σ_j w_j`, `w_j = λ_j / (λ_j·S + (1 − λ_j)·σ²/fs)²` (Thomson's `d_j²` with
+  the common factor `S²` taken out), sums in order of `j`, until `|S' − S| ≤ 1e-10·S'` or 1000
+  repeats, taking `S'` each time; a bin whose `S` is 0 stays 0 (the limit as `S → 0`, which puts
+  the weight on the most concentrated taper), and all-zero input gives zeros. Each bin iterates on
+  its own. With `K = 1` this is the plain estimate. `num_segments` stays `K` and `enbw_hz` `2W·fs`.
   **(implemented)**
 - **Lomb-Scargle periodogram** (`lomb_scargle(times, values, frequencies, center=True,
   normalization="standard")`, [ADR 0059](adr/0059-lomb-scargle.md)), for unevenly sampled real
