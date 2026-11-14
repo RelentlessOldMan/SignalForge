@@ -297,7 +297,16 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         z_raw = y[round(tau) % sps :: sps]
     else:
         z_raw = gardner_timing(y, sps, *c.timing_loop_gains, start=tau).symbols
-    f_hat = coarse(z_raw, rs)
+    if c.equalizer_taps is None or pre < 2:
+        f_hat = coarse(z_raw, rs)
+    else:
+        # data-aided: the preamble's symbol-to-symbol phase steps, whose peak over the start does
+        # not depend on the frequency (ADR 0071)
+        e = np.conj(a[1:pre] * np.conj(a[: pre - 1]))
+        d = z_raw[1:] * np.conj(z_raw[:-1])
+        dk = [complex(np.sum(e * d[k : k + pre - 1])) for k in range(z_raw.size - n + 1)]
+        q1 = dk[int(np.argmax(np.abs(dk)))]
+        f_hat = math.atan2(q1.imag, q1.real) * rs / (2 * math.pi)
     f_1 = f_hat
     # frame start: the first maximum of the preamble correlation, its blocks' magnitudes added so
     # a residual frequency error cannot turn a long preamble through a cycle (ADR 0068)

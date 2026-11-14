@@ -88,7 +88,7 @@ public sealed class LinkEqualizerTests
         var without = Link.QpskLink(Flat(Eq()) with { EqualizerTaps = null });
         Assert.Equal(without.TimingOffset, with.TimingOffset);
         Assert.Equal(without.FrameStart, with.FrameStart);
-        Assert.Equal(without.PhaseOffset, with.PhaseOffset);
+        Assert.Equal(without.PhaseOffset!.Value, with.PhaseOffset!.Value, 1e-6); // f₁ differs (ADR 0071)
     }
 
     public static TheoryData<int[], double[][], double> Bounds() => new()

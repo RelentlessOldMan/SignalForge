@@ -44,4 +44,5 @@ it never converges.
   and the forward filter's noise come on top, and no closed form gives them. Tests bracket the
   BER between the bound and the linear equalizer's.
 - **8-PSK through that echo is not solved**: its blind estimate (8th power) is about 50 Hz off,
-  outside the preamble estimate's range. A data-aided coarse search is later work.
+  outside the preamble estimate's range. A data-aided coarse search is later work ([ADR
+  0071](0071-link-data-aided-coarse-frequency.md) made it).

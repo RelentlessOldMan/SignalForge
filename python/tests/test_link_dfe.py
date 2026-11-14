@@ -59,17 +59,34 @@ def test_noiseless_flat_preamble_frequency() -> None:
     assert with_eq.frequency_offset_hz == pytest.approx(5.0, abs=1e-3)
     assert with_eq.timing_offset == without.timing_offset
     assert with_eq.frame_start == without.frame_start
-    assert with_eq.phase_offset == without.phase_offset
+    assert with_eq.phase_offset == pytest.approx(
+        without.phase_offset, abs=1e-6
+    )  # f₁ differs (ADR 0071)
 
 
 def test_fewer_than_two_full_blocks_keep_the_chain_frequency() -> None:
-    # P = 40 and B = 32 leave one full block: the chain's own frequency stands
-    kw = {"preamble_symbols": 40, "multipath_delays": None, "multipath_gains": None}
-    with_eq, without = (
-        qpsk_link(_dfe(**kw)),
-        qpsk_link(_dfe(equalizer_taps=None, equalizer_feedback=0, **kw)),
-    )
+    # P = 40 and B = 32 leave one full block: steps 2-6 give the frequency, from the data-aided f1
+    flat = {"multipath_delays": None, "multipath_gains": None}
+    r = qpsk_link(_dfe(preamble_symbols=40, **flat))
+    assert r.frequency_offset_hz == pytest.approx(5.0, abs=1e-5)  # a test allowance, not derived
+
+
+def test_one_preamble_symbol_keeps_the_blind_estimate() -> None:
+    # no symbol-to-symbol step to correlate: f1 is the blind estimate (ADR 0071)
+    kw = {"preamble_symbols": 1, "multipath_delays": None, "multipath_gains": None}
+    with_eq = qpsk_link(_dfe(**kw))
+    without = qpsk_link(_dfe(equalizer_taps=None, equalizer_feedback=0, **kw))
     assert with_eq.frequency_offset_hz == without.frequency_offset_hz
+
+
+def test_data_aided_coarse_frequency_for_8psk() -> None:
+    # the 8th-power estimate is 31.25 Hz off here without the preamble (ADR 0071)
+    for seed, f0 in ((71, 5.0), (72, 37.0), (73, -120.0)):
+        kw = {"modulation": "psk8", "eb_n0_db": 12.0, "num_symbols": 20000, "seed": seed}
+        r = qpsk_link(_dfe(frequency_offset_hz=f0, **kw))
+        assert r.frequency_offset_hz is not None
+        assert abs(r.frequency_offset_hz - f0) < 0.05  # a test allowance, not derived
+        assert r.bit_errors.rate < 0.002  # measured 0.0002-0.0011 over four seeds (ADR 0071)
 
 
 @pytest.mark.parametrize(("mod", "eb"), [("qpsk", 8.0), ("qam16", 14.0)])

@@ -65,16 +65,33 @@ public sealed class LinkDfeTests
         Assert.Equal(5, with.FrequencyOffsetHz!.Value, 1e-3);
         Assert.Equal(without.TimingOffset, with.TimingOffset);
         Assert.Equal(without.FrameStart, with.FrameStart);
-        Assert.Equal(without.PhaseOffset, with.PhaseOffset);
+        Assert.Equal(without.PhaseOffset!.Value, with.PhaseOffset!.Value, 1e-6); // f₁ differs (ADR 0071)
     }
 
     [Fact]
-    public void FewerThanTwoFullBlocksKeepTheChainFrequency()
+    public void FewerThanTwoFullBlocksKeepTheChainFrequency() =>
+        // P = 40 and B = 32 leave one full block: steps 2-6 give the frequency, from the data-aided f1
+        Assert.Equal(5, Link.QpskLink(Flat(Dfe()) with { PreambleSymbols = 40 }).FrequencyOffsetHz!.Value, 1e-5); // a test allowance
+
+    [Fact]
+    public void OnePreambleSymbolKeepsTheBlindEstimate()
     {
-        // P = 40 and B = 32 leave one full block: the chain's own frequency stands
-        var c = Flat(Dfe()) with { PreambleSymbols = 40 };
+        // no symbol-to-symbol step to correlate: f1 is the blind estimate (ADR 0071)
+        var c = Flat(Dfe()) with { PreambleSymbols = 1 };
         Assert.Equal(Link.QpskLink(c with { EqualizerTaps = null, EqualizerFeedback = 0 }).FrequencyOffsetHz,
             Link.QpskLink(c).FrequencyOffsetHz);
+    }
+
+    [Theory]
+    [InlineData(71, 5.0)]
+    [InlineData(72, 37.0)]
+    [InlineData(73, -120.0)]
+    public void DataAidedCoarseFrequencyFor8Psk(int seed, double f0)
+    {
+        // the 8th-power estimate is 31.25 Hz off here without the preamble (ADR 0071)
+        var r = Link.QpskLink(Dfe("psk8") with { EbN0Db = 12, NumSymbols = 20000, Seed = seed, FrequencyOffsetHz = f0 });
+        Assert.InRange(r.FrequencyOffsetHz!.Value, f0 - 0.05, f0 + 0.05); // a test allowance, not derived
+        Assert.True(r.BitErrors.Rate < 0.002); // measured 0.0002-0.0011 over four seeds (ADR 0071)
     }
 
     [Theory]

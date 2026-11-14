@@ -254,7 +254,7 @@ public static class Link
             for (int k = 0; k < r.Length; k++)
                 r[k] = y[p + k * sps];
         }
-        double f = mod switch
+        double f = c.EqualizerTaps is not null && pre >= 2 ? PreambleStepFrequency(r, a, pre, n, rs) : mod switch
         {
             1 or 3 => Sync.PowerFrequencyOffset(r, rs, 4),
             2 => Sync.PowerFrequencyOffset(r, rs, 8),
@@ -498,6 +498,32 @@ public static class Link
     }
 
     // the multipath fields, checked for every modulation; the gains, or null (ADR 0064)
+    // data-aided: the preamble's symbol-to-symbol phase steps, whose peak over the start does not
+    // depend on the frequency (ADR 0071)
+    private static double PreambleStepFrequency(Complex[] r, Complex[] a, int pre, int n, double rs)
+    {
+        var e = new Complex[pre - 1];
+        for (int i = 0; i < e.Length; i++)
+            e[i] = Complex.Conjugate(a[i + 1] * Complex.Conjugate(a[i]));
+        var d = new Complex[r.Length - 1];
+        for (int i = 0; i < d.Length; i++)
+            d[i] = r[i + 1] * Complex.Conjugate(r[i]);
+        Complex best = Complex.Zero;
+        double bestMag = -1;
+        for (int k = 0; k <= r.Length - n; k++)
+        {
+            Complex s = Complex.Zero;
+            for (int i = 0; i < e.Length; i++)
+                s += e[i] * d[k + i];
+            if (s.Magnitude > bestMag)
+            {
+                bestMag = s.Magnitude;
+                best = s;
+            }
+        }
+        return Math.Atan2(best.Imaginary, best.Real) * rs / (2 * Math.PI);
+    }
+
     private static Complex[]? MultipathGainsOf(QpskLinkConfig c)
     {
         IReadOnlyList<int>? dl = c.MultipathDelays;

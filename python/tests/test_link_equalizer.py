@@ -77,7 +77,9 @@ def test_estimates_before_the_equalizer_are_unchanged() -> None:
     with_eq, without = qpsk_link(_eq(**kw)), qpsk_link(_eq(equalizer_taps=None, **kw))
     assert with_eq.timing_offset == without.timing_offset
     assert with_eq.frame_start == without.frame_start
-    assert with_eq.phase_offset == without.phase_offset
+    assert with_eq.phase_offset == pytest.approx(
+        without.phase_offset, abs=1e-6
+    )  # f₁ differs (ADR 0071)
 
 
 @pytest.mark.parametrize(

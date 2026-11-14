@@ -1249,6 +1249,11 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
      the same, and so are they for 64-QAM (`E[s⁴] = 2·E[I⁴] − 6·E[I²]² = −0.62`), which uses
      power 4 like 16-QAM. For 8-PSK, `f₁ = power_frequency_offset(r, symbol_rate, 8)`, step 4 uses
      `psk8_block_phases`, and step 6 rounds to multiples of π/4 instead of π/2.
+     With `equalizer_taps` and `P ≥ 2`, `f₁` is instead data-aided, for every modulation: with
+     `d[i] = r[i+1]·conj(r[i])` and `e[i] = a[i+1]·conj(a[i])`, `D(k) = Σ_{i=0}^{P−2}
+     conj(e[i])·d[k+i]` for `k = 0 … len(r) − N`, `k₁` the first `k` with the
+     largest `|D(k)|`, and `f₁ = arg(D(k₁))·symbol_rate/(2π)`
+     ([ADR 0071](adr/0071-link-data-aided-coarse-frequency.md)). `k₁` sets only `f₁`.
   3. Frame start `k₀`: the first `k` in `0 … len(r) − N` that maximizes
      `q(k) = Σ_b |Σ_{i=bB}^{min((b+1)B, P)−1} conj(a[i])·c[k+i]|`, over the blocks
      `b = 0 … ⌈P/B⌉ − 1` of the preamble ([ADR 0068](adr/0068-block-frame-search.md): a residual

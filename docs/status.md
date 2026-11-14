@@ -4,11 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **A data-aided coarse frequency for 8-PSK through strong interference**: through an echo
-   of 0.9 one symbol late its 8th-power estimate is about 50 Hz off at 12 dB, outside the
-   preamble estimate's ±R/(2B) range (ADR 0070). Search the preamble correlation over a grid of
-   frequencies, or correlate shorter blocks first.
-2. **A training-free (blind) equalizer start** (constant modulus) or a step schedule, so a short
+1. **A training-free (blind) equalizer start** (constant modulus) or a step schedule, so a short
    preamble is enough (ADR 0067: about 2000 symbols to converge at step 0.1).
 
 ## Built
@@ -714,6 +710,13 @@ Updated with every chunk of work. Dates are absolute.
   0.0002; noiseless, all four modulations decode (64-QAM with a 2000-symbol preamble). Three link
   configs. 8-PSK through it at 12 dB still fails (Next). Python 2925 passed, 2 skipped; .NET
   2417 passed; conformance 1444/1444 in both. Version 2026.11.13.100.
+- 2026-11-13: a data-aided coarse frequency with the link equalizer ([ADR
+  0071](adr/0071-link-data-aided-coarse-frequency.md)): with `equalizer_taps` and a preamble of 2
+  or more, step 2's `f₁` is the angle of the preamble's lag-1 symbol-step correlation at its
+  peak over the start, which does not depend on the frequency (range ±R/2). Through the 0.9 echo
+  8-PSK at 12 dB now decodes at offsets of 5, 37 and −120 Hz (BER 0.0001–0.001; before, half the
+  runs failed with the estimate 31.25 Hz off). One more link config. Python 2927 passed, 2
+  skipped; .NET 2421 passed; conformance 1444/1444 in both. Version 2026.11.13.101.
 
 ## Not built
 
