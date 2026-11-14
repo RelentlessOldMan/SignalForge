@@ -1,0 +1,9 @@
+{
+  "num_symbols": 20000,
+  "eb_n0_db": 7.0,
+  "modulation": "fsk4",
+  "frequency_offset_hz": -10.0,
+  "phase": 2.0,
+  "delay_samples": 9,
+  "seed": 32
+}

@@ -34,7 +34,7 @@ public class LinkTrackingTests
             QpskLinkReport r = Link.QpskLink(cfg);
             // theory is about 14 errors in 6000 bits; 5 sd of a Poisson count is about 19
             Assert.True(r.BitErrors.Errors < 14 + 19, $"{r.BitErrors.Errors} errors");
-            Assert.True(r.Evm.Rms < 0.4);
+            Assert.True(r.Evm!.Rms < 0.4);
         }
     }
 
@@ -44,7 +44,7 @@ public class LinkTrackingTests
         var cfg = new QpskLinkConfig { NumSymbols = 2000, EbN0Db = 8, FrequencyOffsetHz = -15, Seed = 5 };
         QpskLinkReport plain = Link.QpskLink(cfg);
         QpskLinkReport looped = Link.QpskLink(cfg with { TimingLoopGains = [Timing.Kp, Timing.Ki], CarrierLoopGains = [Carrier.Kp, Carrier.Ki] });
-        Assert.True(Math.Abs(looped.Evm.Rms - plain.Evm.Rms) < 0.02);
+        Assert.True(Math.Abs(looped.Evm!.Rms - plain.Evm!.Rms) < 0.02);
         Assert.True(Math.Abs(looped.BitErrors.Errors - plain.BitErrors.Errors) <= 10);
     }
 

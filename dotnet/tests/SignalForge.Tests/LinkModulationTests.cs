@@ -40,7 +40,7 @@ public class LinkModulationTests
         });
         double expected = r.BerTheory!.Value * r.BitErrors.Compared; // about 740
         Assert.InRange(r.BitErrors.Errors, 0.85 * expected, 1.2 * expected);
-        Assert.InRange(r.FrequencyOffsetHz, 14.95, 15.05);
+        Assert.InRange(r.FrequencyOffsetHz!.Value, 14.95, 15.05);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class LinkModulationTests
         });
         double expected = r.BerTheory!.Value * r.BitErrors.Compared; // about 61
         Assert.InRange(r.BitErrors.Errors, 0.6 * expected, 1.5 * expected);
-        Assert.InRange(r.FrequencyOffsetHz, -22.05, -21.95);
+        Assert.InRange(r.FrequencyOffsetHz!.Value, -22.05, -21.95);
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public class LinkModulationTests
         });
         double expected = r.BerTheory!.Value * r.BitErrors.Compared; // about 258
         Assert.InRange(r.BitErrors.Errors, 0.85 * expected, 1.25 * expected);
-        Assert.InRange(r.FrequencyOffsetHz, 8.95, 9.05);
+        Assert.InRange(r.FrequencyOffsetHz!.Value, 8.95, 9.05);
     }
 
     [Fact]

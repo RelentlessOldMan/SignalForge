@@ -61,6 +61,7 @@ def test_ber_matches_theory_at_6_db(df: float, phase: float, delay: int) -> None
     # theory 2.39e-3 over 200k bits is about 480 errors; offsets before the matched filter add a
     # little interference, so allow 20%
     assert abs(r.bit_errors.rate / r.ber_theory - 1) < 0.2
+    assert r.frequency_offset_hz is not None and r.evm is not None
     assert abs(r.frequency_offset_hz - df) < 0.01
     assert r.evm.num_symbols == 100_000
 
@@ -159,6 +160,7 @@ def test_timing_loop_follows_a_clock_offset() -> None:
         assert r.ber_theory is not None
         # theory is about 14 errors in 6000 bits; 5 sd of a Poisson count is about 19
         assert r.bit_errors.errors < 14 + 19
+        assert r.evm is not None
         assert r.evm.rms < 0.4
 
 
@@ -170,6 +172,7 @@ def test_loops_off_by_default_and_without_offset_change_little() -> None:
     looped = qpsk_link(
         QpskLinkConfig(**cfg, timing_loop_gains=TIMING, carrier_loop_gains=CARRIER)  # type: ignore[arg-type]
     )
+    assert looped.evm is not None and plain.evm is not None
     assert abs(looped.evm.rms - plain.evm.rms) < 0.02
     assert abs(looped.bit_errors.errors - plain.bit_errors.errors) <= 10
 
@@ -241,6 +244,7 @@ def test_qam16_ber_near_theory() -> None:
     assert r.ber_theory is not None
     expected = r.ber_theory * r.bit_errors.compared  # about 740
     assert 0.85 * expected < r.bit_errors.errors < 1.2 * expected
+    assert r.frequency_offset_hz is not None
     assert abs(r.frequency_offset_hz - 15.0) < 0.05
 
 
@@ -298,6 +302,7 @@ def test_psk8_ber_near_theory() -> None:
     assert r.ber_theory is not None
     expected = r.ber_theory * r.bit_errors.compared  # about 61
     assert 0.6 * expected < r.bit_errors.errors < 1.5 * expected
+    assert r.frequency_offset_hz is not None
     assert abs(r.frequency_offset_hz + 22.0) < 0.05
 
 
@@ -348,6 +353,7 @@ def test_qam64_ber_near_theory() -> None:
     assert r.ber_theory is not None
     expected = r.ber_theory * r.bit_errors.compared  # about 258
     assert 0.85 * expected < r.bit_errors.errors < 1.25 * expected
+    assert r.frequency_offset_hz is not None
     assert abs(r.frequency_offset_hz - 9.0) < 0.05
 
 

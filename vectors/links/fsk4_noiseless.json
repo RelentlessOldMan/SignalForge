@@ -1,0 +1,8 @@
+{
+  "num_symbols": 400,
+  "modulation": "fsk4",
+  "samples_per_symbol": 8,
+  "frequency_offset_hz": -15.0,
+  "phase": -2.2,
+  "delay_samples": 11
+}

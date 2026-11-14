@@ -4,9 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **FSK in the link**: `modulation` `"fsk2"`/`"fsk4"` through the same channel (rectangular
-   symbols, no RRC), noncoherent detection after preamble timing, error counts against
-   `fsk_ber_theory`.
+1. **Unsigned SigMF sample types**: `cu8`, `ru8`, `cu16_le`/`_be`, `ru16_le`/`_be`, `cu32`/`ru32`
+   read and write with the SigMF offset-binary scaling, in both languages, with fixture files.
+2. **Lomb-Scargle periodogram** for unevenly sampled data, with analytical vectors (a pure tone
+   on random times; the classic normalization).
+3. **OFDM modulate and demodulate**: IFFT size, cyclic prefix, used subcarriers; round trip and
+   vectors from the DFT definition.
 
 ## Built
 
@@ -572,12 +575,25 @@ Updated with every chunk of work. Dates are absolute.
   sign bit set and Python's NaN does not, so a written NaN's bytes differ between the languages;
   shared write vectors use only infinities. Python 2539 passed, 2 skipped; .NET 2055
   passed; conformance 1286/1286 in both. Version 2026.11.13.78.
+- 2026-11-13: FSK in the link (ADR 0057): `modulation` `"fsk2"` and `"fsk4"` (index 1) run
+  `fsk_modulate` through the same channel (AWGN signal power 1). The receiver finds the sample
+  timing from the detector's largest tone energy over the whole stream, then the frame from the
+  preamble's known tones at that phase, then runs `fsk_demod_noncoherent`. `ber_theory` is
+  `fsk_ber_theory`; `frequency_offset_hz`, `phase_offset` and `evm` are now optional and none for
+  FSK (C# `double?`, `Evm?`), and the link compare skips EVM for them. Gains are rejected with
+  FSK, `sps` must be at least `M`. Found while building it: a preamble-only search often lands a
+  sample early under noise (with continuous phase the energy one sample off is only a few
+  percent lower), costing several times the errors, so the timing comes from the whole stream
+  as in the PSK chain; offsets `delay` and `delay + 1` decide the same bits, so noisy FSK link
+  configs keep `delay mod sps < sps − 1`. New link configs `fsk2_noiseless`, `fsk4_noiseless`,
+  `fsk2_8db`, `fsk4_7db`. Python 2566 passed, 2 skipped; .NET 2082 passed; conformance
+  1286/1286 in both. Version 2026.11.13.79.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond noncoherent detection with known timing, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.

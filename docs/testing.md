@@ -77,7 +77,10 @@ reports of one config. Each config in `vectors/links/` is run in both languages
     squared magnitude of complex Gaussian error is exponential, so its standard deviation equals
     its mean).
   The theoretical BER depends only on the config and must agree within 1e-9. The receiver's
-  estimates (timing, frequency, phase) are noisy and are not judged.
+  estimates (timing, frequency, phase) are noisy and are not judged. FSK reports have no EVM
+  (both must say `null`, and the EVM test is skipped). An FSK receiver may land on `delay` or
+  `delay + 1` equally well, so noisy FSK configs keep `delay_samples mod sps < sps − 1`, where
+  both give the same frame start.
 
 The file exchange: each language writes one recording per datatype into one directory
 (`compare write-files` and the C# tool's `write-files`; 64 samples of a raised-cosine-shaped tone,

@@ -88,7 +88,8 @@ def compare_link_reports(a: dict[str, Any], b: dict[str, Any], z_max: float = 4.
     ``NOISELESS_TOL``. With noise the random streams differ, so the counts must match, the frame
     must start at the same symbol, and the bit error rate and the mean squared EVM must agree
     within ``z_max`` standard deviations (two-sample tests; docs/testing.md). The theoretical BER
-    depends only on the config and must agree as closely as a noiseless field.
+    depends only on the config and must agree as closely as a noiseless field. FSK reports have no
+    EVM (``null``); both must agree on that.
     """
     out = _fields(a, b)
     if out:
@@ -100,10 +101,13 @@ def compare_link_reports(a: dict[str, Any], b: dict[str, Any], z_max: float = 4.
         return compare(decode(a), decode(b), NOISELESS_TOL)
     out = compare(decode(a["ber_theory"]), decode(b["ber_theory"]), NOISELESS_TOL, "ber_theory")
     ea, eb = a["bit_errors"], b["bit_errors"]
+    va, vb = a["evm"], b["evm"]
+    if (va is None) != (vb is None):
+        return [*out, f"evm: {va} != {vb}"]
     for k, x, y in [
         ("frame_start", a["frame_start"], b["frame_start"]),
         ("bit_errors.compared", ea["compared"], eb["compared"]),
-        ("evm.num_symbols", a["evm"]["num_symbols"], b["evm"]["num_symbols"]),
+        ("evm.num_symbols", va and va["num_symbols"], vb and vb["num_symbols"]),
     ]:
         if x != y:
             out.append(f"{k}: {x} != {y}")
@@ -115,12 +119,14 @@ def compare_link_reports(a: dict[str, Any], b: dict[str, Any], z_max: float = 4.
     d = abs(ea["errors"] - eb["errors"])
     if d > 0 and d / sd > z_max:  # d > 0 means 0 < p < 1, so sd > 0
         out.append(f"bit_errors: {ea['errors']} vs {eb['errors']} of {n} ({d / sd:.1f} sd)")
+    if va is None:
+        return out
     # |e|^2 of complex Gaussian error is exponential: its standard deviation equals its mean
-    m = a["evm"]["num_symbols"]
-    sa, sb = float(a["evm"]["rms"]) ** 2, float(b["evm"]["rms"]) ** 2
+    m = va["num_symbols"]
+    sa, sb = float(va["rms"]) ** 2, float(vb["rms"]) ** 2
     sd = (sa + sb) / 2 * math.sqrt(2 / m)
     if sd > 0 and abs(sa - sb) / sd > z_max:
-        out.append(f"evm.rms: {a['evm']['rms']} vs {b['evm']['rms']} ({abs(sa - sb) / sd:.1f} sd)")
+        out.append(f"evm.rms: {va['rms']} vs {vb['rms']} ({abs(sa - sb) / sd:.1f} sd)")
     return out
 
 

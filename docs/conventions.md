@@ -1047,13 +1047,46 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   noise], `symbol_rate` [1000] Hz, `samples_per_symbol` [4] (≥ 2), `rolloff` [0.35],
   `span_symbols` [10], `delay_samples` [0], `frequency_offset_hz` [0], `phase` [0] rad,
   `preamble_symbols` [32] (1 to `num_symbols`), `phase_block_symbols` [32] (≥ 1; 64-QAM wants 64 or more, [ADR 0053](adr/0053-qam64-link.md)), `prbs_order`
-  [15], `seed` [0], `modulation` [`"qpsk"`] (`"qpsk"`, `"qam16"`, `"psk8"` or `"qam64"`,
-  [ADR 0051](adr/0051-psk8-link.md), [ADR 0053](adr/0053-qam64-link.md),
+  [15], `seed` [0], `modulation` [`"qpsk"`] (`"qpsk"`, `"qam16"`, `"psk8"`, `"qam64"`, `"fsk2"`
+  or `"fsk4"`, [ADR 0051](adr/0051-psk8-link.md), [ADR 0053](adr/0053-qam64-link.md),
+  [ADR 0057](adr/0057-fsk-link.md),
   [ADR 0050](adr/0050-link-modulation.md)), `phase_noise_linewidth_hz` [0] (`≥ 0`,
   [ADR 0047](adr/0047-link-phase-noise.md)), `clock_offset_ppm` [0] (`|·| ≤ 1e5`),
   `timing_loop_gains` [none] and
   `carrier_loop_gains` [none], each none or a pair `[kp, ki]` of numbers `≥ 0`
   ([ADR 0046](adr/0046-link-tracking-loops.md)). Numbers must be finite. **(implemented)**
+- **FSK** (`"fsk2"`, `"fsk4"`: `M` = 2 or 4, `k = log2 M`, modulation index 1;
+  [ADR 0057](adr/0057-fsk-link.md)) replaces the transmitter and receiver below; the checks above
+  still apply, `rrc_taps(rolloff, sps, span_symbols)` must accept its arguments, and `rolloff`,
+  `span_symbols` and `phase_block_symbols` are otherwise unused. `samples_per_symbol` must be at
+  least `M`; `timing_loop_gains` and `carrier_loop_gains` must be none.
+  - Transmitter: `bits = prbs(prbs_order, k·N)`; `tx` = `delay_samples` zeros followed by
+    `fsk_modulate(bits, M, sps, 1)`.
+  - Channel: as below, but the AWGN is `awgn(·, eb_n0_db + 10·log10 k, sps, signal_power = 1)`.
+  - Receiver. `rx` gets zeros appended up to `len(tx) + sps` samples if it is shorter (a clock
+    offset can shorten it), so the frame fits at the true offset and the one after it. The
+    energy of tone level `a` in the `sps` samples from `d` is
+    `E(d, a) = |Σ_{n<sps} rx[d + n]·e^{−jψ(n)}|²`, `ψ(n) = π·(a·n/sps)`, as
+    `fsk_demod_noncoherent` computes it.
+    1. Timing: `τ` is the first `t` in `0 … sps − 1` that maximizes
+       `g(t) = Σ_j max_a E(t + j·sps, a)` over every `j ≥ 0` with `t + (j + 1)·sps ≤ len(rx)` (the
+       detector's energy over the whole stream; `a` over the `M` levels).
+    2. Frame: with `a_i` the tone level of symbol `i` (conventions: Bits and symbols, FSK), `d₀`
+       is the first `d` in `τ, τ + sps, …, ≤ len(rx) − N·sps` that maximizes
+       `q(d) = Σ_{i<P} E(d + i·sps, a_i)`.
+    3. The decided bits are `fsk_demod_noncoherent(rx[d₀ : d₀ + N·sps], M, sps, 1)`, compared
+       with `bits` by `bit_errors`; the preamble counts.
+    The preamble alone does not fix the timing to a sample: with continuous phase the first
+    sample of a symbol also continues the tone before it, so `q(delay + 1) = q(delay)` when
+    noiseless, and `q(delay − 1)` is only a few percent lower. Offsets `delay` and `delay + 1`
+    decide the same bits; earlier ones cost many. Timing from the whole stream first, as the
+    PSK chain does, keeps a short preamble's noise out of the sample choice. Noiseless, `g(delay
+    mod sps)` beats `g(delay + 1 mod sps)` by `2·(sps − 1)`.
+  - Report: `timing_offset = d₀ mod sps` (as a float), `frame_start = ⌊d₀/sps⌋`,
+    `frequency_offset_hz`, `phase_offset` and `evm` none, `ber_theory = fsk_ber_theory(eb_n0_db,
+    M)` or none without noise. Noiseless and without carrier or clock offset, `d₀ =
+    delay_samples` and there are no bit errors.
+  **(implemented)**
 - **Transmitter:** with `k` bits per symbol (2 for QPSK, 4 for 16-QAM, 3 for 8-PSK, 6 for
   64-QAM), `bits = prbs(prbs_order, k·num_symbols)`, `a = qpsk_map(bits)`, `qam16_map(bits)`,
   `psk8_map(bits)` or `qam64_map(bits)`,
@@ -1099,7 +1132,8 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   symbols into `r`), `frequency_offset_hz` (`f`), `phase_offset` (`φ`, rad: the carrier phase at the
   frame's first symbol), `evm` (an EVM record), `bit_errors` (an error-count record), `ber_theory`
   (`qpsk_ber_theory`, `qam16_ber_theory`, `psk8_ber_theory` or `qam64_ber_theory` of
-  `eb_n0_db`, or none without noise). **(implemented)**
+  `eb_n0_db`, or none without noise). For FSK see above: `frequency_offset_hz`, `phase_offset`
+  and `evm` are none. **(implemented)**
 - **JSON** (`to_json()` / `ToJson()`): an object with exactly those field names, nested records as
   objects, none as `null`, integers as integers, and non-finite numbers as the strings `"inf"`,
   `"-inf"`, `"nan"`. Compare reports as JSON values, not text. **(implemented)**

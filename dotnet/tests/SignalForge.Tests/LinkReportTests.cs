@@ -39,8 +39,8 @@ public class LinkReportTests
         // theory 2.39e-3 over 200k bits is about 480 errors; offsets before the matched filter add a
         // little interference, so allow 20%
         Assert.True(Math.Abs(r.BitErrors.Rate / r.BerTheory.Value - 1) < 0.2, $"ber {r.BitErrors.Rate}");
-        Assert.True(Math.Abs(r.FrequencyOffsetHz - df) < 0.01, $"f {r.FrequencyOffsetHz}");
-        Assert.Equal(100_000, r.Evm.NumSymbols);
+        Assert.True(Math.Abs(r.FrequencyOffsetHz!.Value - df) < 0.01, $"f {r.FrequencyOffsetHz}");
+        Assert.Equal(100_000, r.Evm!.NumSymbols);
     }
 
     [Fact]

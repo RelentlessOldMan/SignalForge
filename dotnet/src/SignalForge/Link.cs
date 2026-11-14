@@ -69,18 +69,19 @@ public sealed record QpskLinkConfig
 /// <param name="Config">The run's configuration.</param>
 /// <param name="TimingOffset">Symbol timing estimate in samples, in [0, sps).</param>
 /// <param name="FrameStart">Frame start in symbols into the sampled stream.</param>
-/// <param name="FrequencyOffsetHz">Carrier frequency estimate in Hz.</param>
-/// <param name="PhaseOffset">Carrier phase at the frame's first symbol in radians, in (−π, π].</param>
-/// <param name="Evm">EVM of the recovered symbols.</param>
+/// <param name="FrequencyOffsetHz">Carrier frequency estimate in Hz; null for FSK.</param>
+/// <param name="PhaseOffset">Carrier phase at the frame's first symbol in radians, in (−π, π]; null
+/// for FSK.</param>
+/// <param name="Evm">EVM of the recovered symbols; null for FSK.</param>
 /// <param name="BitErrors">Bit errors over the frame, preamble included.</param>
 /// <param name="BerTheory">Theoretical BER at the configured Eb/N0; null without noise.</param>
 public sealed record QpskLinkReport(
     QpskLinkConfig Config,
     double TimingOffset,
     int FrameStart,
-    double FrequencyOffsetHz,
-    double PhaseOffset,
-    Evm Evm,
+    double? FrequencyOffsetHz,
+    double? PhaseOffset,
+    Evm? Evm,
     ErrorCount BitErrors,
     double? BerTheory)
 {
@@ -117,7 +118,8 @@ public sealed record QpskLinkReport(
     }
 }
 
-/// <summary>End-to-end QPSK link: bits, shaping, channel, recovery, EVM and BER.</summary>
+/// <summary>End-to-end link (QPSK, QAM, 8-PSK, FSK): bits, shaping, channel, recovery, EVM and
+/// BER.</summary>
 public static class Link
 {
     /// <summary>Runs one shaped QPSK link through delay, carrier offset, phase noise, clock offset
@@ -140,14 +142,17 @@ public static class Link
         double rs = Check.PositiveFinite(c.SymbolRate, nameof(config));
         if (!double.IsFinite(c.FrequencyOffsetHz) || !double.IsFinite(c.Phase) || c.EbN0Db is { } e && !double.IsFinite(e))
             throw new ArgumentOutOfRangeException(nameof(config), "numbers must be finite");
-        // 0 QPSK, 1 16-QAM, 2 8-PSK, 3 64-QAM
+        // 0 QPSK, 1 16-QAM, 2 8-PSK, 3 64-QAM, 4 2-FSK, 5 4-FSK
         int mod = c.Modulation switch
         {
             "qpsk" => 0,
             "qam16" => 1,
             "psk8" => 2,
             "qam64" => 3,
-            _ => throw new ArgumentException("Modulation must be \"qpsk\", \"qam16\", \"psk8\" or \"qam64\"", nameof(config)),
+            "fsk2" => 4,
+            "fsk4" => 5,
+            _ => throw new ArgumentException(
+                "Modulation must be \"fsk2\", \"fsk4\", \"psk8\", \"qam16\", \"qam64\" or \"qpsk\"", nameof(config)),
         };
         int bps = mod switch { 1 => 4, 2 => 3, 3 => 6, _ => 2 };
         double step = mod == 2 ? Math.PI / 4 : Math.PI / 2;
@@ -157,6 +162,8 @@ public static class Link
             throw new ArgumentOutOfRangeException(nameof(config), c.ClockOffsetPpm, "ClockOffsetPpm must be finite and within 1e5");
         Gains(c.TimingLoopGains, nameof(c.TimingLoopGains), nameof(config));
         Gains(c.CarrierLoopGains, nameof(c.CarrierLoopGains), nameof(config));
+        if (mod >= 4)
+            return FskLink(c, mod == 4 ? 2 : 4);
 
         // transmitter
         byte[] bits = Waveforms.Prbs(c.PrbsOrder, bps * n);
@@ -171,15 +178,7 @@ public static class Link
         Complex[] shaped = Dsp.PulseShape(a, h, sps);
         var tx = new Complex[c.DelaySamples + shaped.Length];
         shaped.CopyTo(tx, c.DelaySamples);
-        // channel
-        Complex[] rx = Channel.FrequencyOffset(tx, c.FrequencyOffsetHz, rs * sps, c.Phase);
-        var rng = new Random(c.Seed);
-        if (c.PhaseNoiseLinewidthHz > 0)
-            rx = Channel.PhaseNoise(rx, c.PhaseNoiseLinewidthHz, rs * sps, rng);
-        if (c.ClockOffsetPpm != 0)
-            rx = Channel.ClockOffset(rx, c.ClockOffsetPpm);
-        if (c.EbN0Db is { } ebN0Db)
-            rx = Channel.Awgn(rx, ebN0Db + 10 * Math.Log10(bps), sps, rng, signalPower: 1.0 / sps);
+        Complex[] rx = ChannelOf(c, tx, bps, 1.0 / sps);
         // receiver
         Complex[] y = Dsp.Convolve(rx, h);
         double tau = Sync.TimingOffset(y, sps);
@@ -269,6 +268,96 @@ public static class Link
             _ => Metrics.QpskBerTheory(eb),
         };
         return new QpskLinkReport(c, tau, k0, f, phi, Metrics.Evm(z, a), Metrics.BitErrors(bits, got), theory);
+    }
+
+    // carrier offset, phase noise, clock offset and AWGN (conventions: QPSK link, Channel)
+    private static Complex[] ChannelOf(QpskLinkConfig c, Complex[] tx, int bps, double signalPower)
+    {
+        double fs = c.SymbolRate * c.SamplesPerSymbol;
+        Complex[] rx = Channel.FrequencyOffset(tx, c.FrequencyOffsetHz, fs, c.Phase);
+        var rng = new Random(c.Seed);
+        if (c.PhaseNoiseLinewidthHz > 0)
+            rx = Channel.PhaseNoise(rx, c.PhaseNoiseLinewidthHz, fs, rng);
+        if (c.ClockOffsetPpm != 0)
+            rx = Channel.ClockOffset(rx, c.ClockOffsetPpm);
+        if (c.EbN0Db is { } ebN0Db)
+            rx = Channel.Awgn(rx, ebN0Db + 10 * Math.Log10(bps), c.SamplesPerSymbol, rng, signalPower);
+        return rx;
+    }
+
+    // the FSK link (conventions: QPSK link, FSK; ADR 0057)
+    private static QpskLinkReport FskLink(QpskLinkConfig c, int m)
+    {
+        int n = c.NumSymbols, sps = c.SamplesPerSymbol, pre = c.PreambleSymbols;
+        if (sps < m)
+            throw new ArgumentOutOfRangeException(nameof(c), sps, $"{c.Modulation} needs SamplesPerSymbol of at least {m}");
+        if (c.TimingLoopGains is not null || c.CarrierLoopGains is not null)
+            throw new ArgumentException($"{c.Modulation} takes no TimingLoopGains or CarrierLoopGains", nameof(c));
+        Dsp.RrcTaps(c.Rolloff, sps, c.SpanSymbols); // checked as for the other modulations
+        int k = m == 2 ? 1 : 2;
+        byte[] bits = Waveforms.Prbs(c.PrbsOrder, k * n);
+        Complex[] fsk = SignalForge.Modulation.FskModulate(bits, m, sps, 1);
+        var tx = new Complex[c.DelaySamples + fsk.Length];
+        fsk.CopyTo(tx, c.DelaySamples);
+        Complex[] rx = ChannelOf(c, tx, k, 1);
+        if (rx.Length < tx.Length + sps)
+            Array.Resize(ref rx, tx.Length + sps);
+        // row l is tone level 2l - (m - 1)
+        var re = new double[m, sps];
+        var im = new double[m, sps];
+        for (int l = 0; l < m; l++)
+            for (int t = 0; t < sps; t++)
+            {
+                double psi = Math.PI * ((2 * l - (m - 1)) * t / (double)sps);
+                (re[l, t], im[l, t]) = (Math.Cos(psi), -Math.Sin(psi));
+            }
+        // timing: the sample phase with the most detector energy over the whole stream
+        int tau = 0;
+        double bestG = -1;
+        for (int t = 0; t < sps; t++)
+        {
+            double g = 0;
+            for (int d = t; d + sps <= rx.Length; d += sps)
+            {
+                double top = 0;
+                for (int l = 0; l < m; l++)
+                    top = Math.Max(top, Energy(rx, d, l, re, im));
+                g += top;
+            }
+            if (g > bestG)
+                (bestG, tau) = (g, t);
+        }
+        // frame: the offset at that phase with the most energy in the preamble's known tones
+        var labels = new int[pre];
+        for (int i = 0; i < pre; i++)
+            for (int j = 0; j < k; j++)
+                labels[i] = 2 * labels[i] + bits[i * k + j];
+        int d0 = tau;
+        double best = -1;
+        for (int d = tau; d <= rx.Length - n * sps; d += sps)
+        {
+            double q = 0;
+            for (int i = 0; i < pre; i++)
+                q += Energy(rx, d + i * sps, labels[i], re, im);
+            if (q > best)
+                (best, d0) = (q, d);
+        }
+        byte[] got = SignalForge.Modulation.FskDemodNoncoherent(rx.AsSpan(d0, n * sps), m, sps, 1);
+        double? theory = c.EbN0Db is { } eb ? Metrics.FskBerTheory(eb, m) : null;
+        return new QpskLinkReport(c, d0 % sps, d0 / sps, null, null, null, Metrics.BitErrors(bits, got), theory);
+    }
+
+    // |Σ_n x[d + n]·e^{−jψ_l(n)}|² over one symbol, as FskDemodNoncoherent computes it
+    private static double Energy(Complex[] x, int d, int l, double[,] re, double[,] im)
+    {
+        double sr = 0, si = 0;
+        for (int t = 0; t < re.GetLength(1); t++)
+        {
+            Complex v = x[d + t];
+            sr += v.Real * re[l, t] - v.Imaginary * im[l, t];
+            si += v.Real * im[l, t] + v.Imaginary * re[l, t];
+        }
+        return sr * sr + si * si;
     }
 
     private static void Gains(IReadOnlyList<double>? g, string name, string paramName)

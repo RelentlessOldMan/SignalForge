@@ -1,4 +1,5 @@
-"""End-to-end QPSK link: bits, shaping, channel, recovery, EVM and BER, with a JSON report.
+"""End-to-end link (QPSK, QAM, 8-PSK, FSK): bits, shaping, channel, recovery, EVM and BER, with a
+JSON report.
 
 Definitions are in docs/conventions.md (QPSK link) and docs/adr/0009-qpsk-link-report.md.
 """
@@ -21,12 +22,15 @@ from .metrics import (
     Evm,
     bit_errors,
     evm,
+    fsk_ber_theory,
     psk8_ber_theory,
     qam16_ber_theory,
     qam64_ber_theory,
     qpsk_ber_theory,
 )
 from .modulation import (
+    fsk_demod_noncoherent,
+    fsk_modulate,
     psk8_demap_hard,
     psk8_map,
     qam16_demap_hard,
@@ -77,14 +81,15 @@ class QpskLinkConfig:
 
 @dataclass(frozen=True)
 class QpskLinkReport:
-    """What the receiver estimated and measured. ``ber_theory`` is None without noise."""
+    """What the receiver estimated and measured. ``ber_theory`` is None without noise;
+    ``frequency_offset_hz``, ``phase_offset`` and ``evm`` are None for FSK."""
 
     config: QpskLinkConfig
     timing_offset: float
     frame_start: int
-    frequency_offset_hz: float
-    phase_offset: float
-    evm: Evm
+    frequency_offset_hz: float | None
+    phase_offset: float | None
+    evm: Evm | None
     bit_errors: ErrorCount
     ber_theory: float | None
 
@@ -162,6 +167,9 @@ _MODULATIONS: dict[str, tuple[int, Any, Any, Any, Any, Any, Any, float]] = {
 }
 
 
+_FSK_ORDERS = {"fsk2": 2, "fsk4": 4}
+
+
 def _gains(g: Any, what: str) -> tuple[float, float] | None:
     """None, or a pair of finite numbers ``>= 0`` as plain floats."""
     if g is None:
@@ -195,11 +203,9 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     rs = real(config.symbol_rate, "symbol_rate")
     if rs <= 0:
         raise ValueError("symbol_rate must be positive")
-    if not isinstance(config.modulation, str) or config.modulation not in _MODULATIONS:
-        raise ValueError(f"modulation must be one of {sorted(_MODULATIONS)}")
-    bps, mapper, demap, carrier_loop, theory, coarse, block_phases, step = _MODULATIONS[
-        config.modulation
-    ]
+    names = sorted([*_MODULATIONS, *_FSK_ORDERS])
+    if not isinstance(config.modulation, str) or config.modulation not in names:
+        raise ValueError(f"modulation must be one of {names}")
     lw = real(config.phase_noise_linewidth_hz, "phase_noise_linewidth_hz")
     if lw < 0:
         raise ValueError("phase_noise_linewidth_hz must not be negative")
@@ -227,7 +233,12 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         timing_loop_gains=_gains(config.timing_loop_gains, "timing_loop_gains"),
         carrier_loop_gains=_gains(config.carrier_loop_gains, "carrier_loop_gains"),
     )
-    df, phase, eb_n0_db, seed = c.frequency_offset_hz, c.phase, c.eb_n0_db, c.seed
+    if c.modulation in _FSK_ORDERS:
+        return _fsk_link(c)
+    bps, mapper, demap, carrier_loop, theory, coarse, block_phases, step = _MODULATIONS[
+        c.modulation
+    ]
+    eb_n0_db = c.eb_n0_db
 
     # transmitter
     bits = prbs(c.prbs_order, bps * n)
@@ -235,14 +246,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     h = rrc_taps(c.rolloff, sps, span)
     tx = np.concatenate([np.zeros(delay, dtype=np.complex128), pulse_shape(a, h, sps)])
     # channel
-    rx = frequency_offset(tx, df, rs * sps, phase)
-    rng = np.random.default_rng(seed)
-    if lw > 0:
-        rx = phase_noise(rx, lw, rs * sps, seed=rng)
-    if ppm != 0:
-        rx = clock_offset(rx, ppm)
-    if eb_n0_db is not None:
-        rx = awgn(rx, eb_n0_db + 10 * math.log10(bps), sps, seed=rng, signal_power=1 / sps)
+    rx = _channel(c, tx, bps, 1 / sps)
     # receiver
     y = np.asarray(convolve(rx, h), dtype=np.complex128)
     tau = timing_offset(y, sps)
@@ -288,4 +292,73 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         evm=evm(z, a),
         bit_errors=bit_errors(bits, demap(z)),
         ber_theory=None if eb_n0_db is None else theory(eb_n0_db),
+    )
+
+
+def _channel(c: QpskLinkConfig, tx: Any, bps: int, signal_power: float) -> Any:
+    """Carrier offset, phase noise, clock offset and AWGN (conventions: QPSK link, Channel)."""
+    fs = c.symbol_rate * c.samples_per_symbol
+    rx = frequency_offset(tx, c.frequency_offset_hz, fs, c.phase)
+    rng = np.random.default_rng(c.seed)
+    if c.phase_noise_linewidth_hz > 0:
+        rx = phase_noise(rx, c.phase_noise_linewidth_hz, fs, seed=rng)
+    if c.clock_offset_ppm != 0:
+        rx = clock_offset(rx, c.clock_offset_ppm)
+    if c.eb_n0_db is not None:
+        es_n0_db = c.eb_n0_db + 10 * math.log10(bps)
+        rx = awgn(rx, es_n0_db, c.samples_per_symbol, seed=rng, signal_power=signal_power)
+    return rx
+
+
+def _fsk_link(c: QpskLinkConfig) -> QpskLinkReport:
+    """The FSK link (conventions: QPSK link, FSK; ADR 0057)."""
+    m, n, sps, pre = (
+        _FSK_ORDERS[c.modulation],
+        c.num_symbols,
+        c.samples_per_symbol,
+        c.preamble_symbols,
+    )
+    if sps < m:
+        raise ValueError(f"{c.modulation} needs samples_per_symbol of at least {m}")
+    rrc_taps(c.rolloff, sps, c.span_symbols)  # checked as for the other modulations
+    if c.timing_loop_gains is not None or c.carrier_loop_gains is not None:
+        raise ValueError(f"{c.modulation} takes no timing_loop_gains or carrier_loop_gains")
+    k = 1 if m == 2 else 2
+    bits = prbs(c.prbs_order, k * n)
+    tx = np.concatenate(
+        [np.zeros(c.delay_samples, dtype=np.complex128), fsk_modulate(bits, m, sps, 1)]
+    )
+    rx = np.asarray(_channel(c, tx, k, 1.0), dtype=np.complex128)
+    if rx.size < tx.size + sps:
+        rx = np.concatenate([rx, np.zeros(tx.size + sps - rx.size, dtype=np.complex128)])
+    psi = np.pi * ((np.arange(-(m - 1), m, 2)[:, None] * np.arange(sps)[None, :]) / sps)
+    tones = np.cos(psi) - 1j * np.sin(psi)  # row l is level 2l - (m - 1)
+
+    def energy(x: Any) -> Any:  # E(d, a) of each block of sps samples, one column per level
+        corr = x.reshape(-1, sps) @ tones.T
+        return corr.real * corr.real + corr.imag * corr.imag
+
+    # timing: the sample phase with the most detector energy over the whole stream
+    g = [
+        float(np.sum(np.max(energy(rx[t : t + (rx.size - t) // sps * sps]), axis=1)))
+        for t in range(sps)
+    ]
+    tau = int(np.argmax(g))
+    # frame: the offset at that phase with the most energy in the preamble's known tones
+    labels = bits[: k * pre].reshape(pre, k).astype(np.int64) @ (1 << np.arange(k - 1, -1, -1))
+    q = [
+        float(np.sum(energy(rx[d : d + pre * sps])[np.arange(pre), labels]))
+        for d in range(tau, rx.size - n * sps + 1, sps)
+    ]
+    d0 = tau + sps * int(np.argmax(q))
+    decided = fsk_demod_noncoherent(rx[d0 : d0 + n * sps], m, sps, 1)
+    return QpskLinkReport(
+        config=c,
+        timing_offset=float(d0 % sps),
+        frame_start=d0 // sps,
+        frequency_offset_hz=None,
+        phase_offset=None,
+        evm=None,
+        bit_errors=bit_errors(bits, decided),
+        ber_theory=None if c.eb_n0_db is None else fsk_ber_theory(c.eb_n0_db, m),
     )
