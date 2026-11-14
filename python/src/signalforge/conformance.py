@@ -79,6 +79,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "window": spectral.window,
     "window_stats": spectral.window_stats,
     "welch_psd": spectral.welch_psd,
+    "dpss_tapers": spectral.dpss_tapers,
+    "multitaper_psd": spectral.multitaper_psd,
     "spectrogram": spectral.spectrogram,
     "lomb_scargle": spectral.lomb_scargle,
     "lomb_scargle_false_alarm": spectral.lomb_scargle_false_alarm,

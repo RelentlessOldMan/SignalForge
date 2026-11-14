@@ -110,15 +110,18 @@ from .spectral import (
     OccupiedBandwidth,
     SpectralDensity,
     Spectrogram,
+    TaperSet,
     WindowStats,
     acpr,
     channel_power,
+    dpss_tapers,
     fft,
     fft_frequencies,
     ifft,
     lomb_scargle,
     lomb_scargle_false_alarm,
     lomb_scargle_frequencies,
+    multitaper_psd,
     occupied_bandwidth,
     spectrogram,
     welch_psd,
@@ -162,7 +165,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.108"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.109"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -183,6 +186,7 @@ __all__ = [
     "Signal",
     "SpectralDensity",
     "Spectrogram",
+    "TaperSet",
     "TimingRecovery",
     "ToneMetrics",
     "WindowStats",
@@ -222,6 +226,7 @@ __all__ = [
     "decode_samples",
     "dfe_equalizer",
     "dfe_least_squares",
+    "dpss_tapers",
     "elliptic_bandpass",
     "elliptic_bandstop",
     "elliptic_highpass",
@@ -255,6 +260,7 @@ __all__ = [
     "lomb_scargle_false_alarm",
     "lomb_scargle_frequencies",
     "multipath",
+    "multitaper_psd",
     "multitone",
     "newman_phases",
     "occupied_bandwidth",

@@ -123,6 +123,14 @@ public sealed record Spectrogram(
     public (double Low, double High)? Span => OneSided ? (0.0, SampleRate / 2) : null;
 }
 
+/// <summary>
+/// DPSS (Slepian) tapers, one per row, and the fraction of each one's energy in [−W, W]
+/// (conventions: Spectra, DPSS tapers; ADR 0078).
+/// </summary>
+/// <param name="Tapers">K rows of N values, each of unit norm, most concentrated first.</param>
+/// <param name="Concentrations">The fraction of each taper's energy inside [−W, W], W = NW/N.</param>
+public sealed record TaperSet(double[][] Tapers, double[] Concentrations);
+
 /// <summary>Occupied bandwidth by the β/2 method, in the PSD's frequency axis.</summary>
 /// <param name="Bandwidth">Upper minus lower, in Hz.</param>
 /// <param name="Lower">Lower band edge in Hz.</param>
@@ -356,6 +364,260 @@ public static class Spectral
         }
         return new Spectrogram(g.Frequencies(oneSided), times, rows, sampleRate, g.N, g.Count, oneSided,
             sampleRate / g.Nfft, WindowStats(g.W).EnbwBins * sampleRate / g.N, g.Nfft);
+    }
+
+    /// <summary>
+    /// The <paramref name="numTapers"/> discrete prolate spheroidal sequences of
+    /// <paramref name="length"/> samples most concentrated in [−W, W], W =
+    /// <paramref name="halfBandwidth"/>/<paramref name="length"/> (conventions: Spectra, DPSS tapers;
+    /// ADR 0078).
+    /// </summary>
+    /// <param name="length">N, at least 1.</param>
+    /// <param name="halfBandwidth">NW, the time–half-bandwidth product: above 0 and below N/2.</param>
+    /// <param name="numTapers">K, 1 … N; null for max(1, ⌊2NW⌋ − 1).</param>
+    public static TaperSet DpssTapers(int length, double halfBandwidth, int? numTapers = null)
+    {
+        if (length < 1)
+            throw new ArgumentOutOfRangeException(nameof(length), length, "must be at least 1");
+        var (nw, k) = TaperArgs(length, halfBandwidth, numTapers);
+        double w = nw / length;
+        double[][] tapers = Dpss(length, w, k);
+        var conc = new double[k];
+        for (int j = 0; j < k; j++)
+        {
+            double[] v = tapers[j];
+            double r0 = 0;
+            for (int i = 0; i < length; i++)
+                r0 += v[i] * v[i];
+            double lam = 2 * w * r0;
+            for (int lag = 1; lag < length; lag++)
+            {
+                double r = 0;
+                for (int i = 0; i + lag < length; i++)
+                    r += v[i] * v[i + lag];
+                lam += 2 * (Math.Sin(2 * Math.PI * w * lag) / (Math.PI * lag)) * r;
+            }
+            conc[j] = lam;
+        }
+        return new TaperSet(tapers, conc);
+    }
+
+    /// <summary>
+    /// Thomson's multitaper PSD of complex samples: the mean of the periodograms of the whole input
+    /// under the DPSS tapers, two-sided in shifted order (conventions: Spectra, Multitaper PSD; ADR
+    /// 0078).
+    /// </summary>
+    /// <param name="samples">At least one sample.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="halfBandwidth">NW: above 0 and below the input length over 2.</param>
+    /// <param name="numTapers">K, 1 … N; null for max(1, ⌊2NW⌋ − 1).</param>
+    /// <param name="nfft">Transform length, at least the input length; null for the input length.</param>
+    public static SpectralDensity MultitaperPsd(ReadOnlySpan<Complex> samples, double sampleRate,
+        double halfBandwidth, int? numTapers = null, int? nfft = null) =>
+        Multitaper(samples, sampleRate, halfBandwidth, numTapers, oneSided: false, nfft);
+
+    /// <summary>
+    /// Thomson's multitaper PSD of real samples: one-sided unless <paramref name="oneSided"/> is
+    /// false, which gives the two-sided shifted PSD (conventions: Spectra, Multitaper PSD; ADR 0078).
+    /// </summary>
+    /// <param name="samples">At least one sample.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="halfBandwidth">NW: above 0 and below the input length over 2.</param>
+    /// <param name="numTapers">K, 1 … N; null for max(1, ⌊2NW⌋ − 1).</param>
+    /// <param name="oneSided">Fold to bins 0 … ⌊nfft/2⌋, as Welch.</param>
+    /// <param name="nfft">Transform length, at least the input length; null for the input length.</param>
+    public static SpectralDensity MultitaperPsd(ReadOnlySpan<double> samples, double sampleRate,
+        double halfBandwidth, int? numTapers = null, bool oneSided = true, int? nfft = null) =>
+        Multitaper(ToComplex(samples), sampleRate, halfBandwidth, numTapers, oneSided, nfft);
+
+    private static SpectralDensity Multitaper(ReadOnlySpan<Complex> x, double sampleRate, double halfBandwidth,
+        int? numTapers, bool oneSided, int? nfft)
+    {
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        int n = x.Length;
+        if (n < 1)
+            throw new ArgumentException("samples needs at least 1", nameof(x));
+        int m = nfft ?? n;
+        if (m < n)
+            throw new ArgumentException("nfft must be at least the input length", nameof(nfft));
+        var (nw, k) = TaperArgs(n, halfBandwidth, numTapers);
+        double[][] tapers = Dpss(n, nw / n, k);
+        var buf = new Complex[m];
+        var acc = new double[m];
+        foreach (double[] v in tapers)
+        {
+            for (int i = 0; i < n; i++)
+                buf[i] = x[i] * v[i];
+            Array.Clear(buf, n, m - n);
+            Transform(buf);
+            for (int i = 0; i < m; i++)
+                acc[i] += buf[i].Real * buf[i].Real + buf[i].Imaginary * buf[i].Imaginary;
+        }
+        var g = new Segments(n, n, 1, tapers[0], sampleRate, 1.0, Detrend.None, m);
+        return new SpectralDensity(g.Frequencies(oneSided), g.Fold(acc, 1.0 / (k * sampleRate), oneSided), sampleRate,
+            n, k, oneSided, sampleRate / m, 2 * nw / n * sampleRate, m);
+    }
+
+    private static (double Nw, int K) TaperArgs(int n, double halfBandwidth, int? numTapers)
+    {
+        if (!(halfBandwidth > 0 && halfBandwidth < n / 2.0))
+            throw new ArgumentOutOfRangeException(nameof(halfBandwidth), halfBandwidth, "must be above 0 and below length/2");
+        int k = numTapers ?? Math.Max(1, (int)Math.Floor(2 * halfBandwidth) - 1);
+        if (k < 1 || k > n)
+            throw new ArgumentOutOfRangeException(nameof(numTapers), k, "must be between 1 and length");
+        return (halfBandwidth, k);
+    }
+
+    /// <summary>The tapers: Sturm bisection for each eigenvalue of the commuting tridiagonal matrix,
+    /// then inverse iteration (conventions: Spectra, DPSS tapers).</summary>
+    private static double[][] Dpss(int n, double w, int k)
+    {
+        double cw = Math.Cos(2 * Math.PI * w);
+        var d = new double[n];
+        var e = new double[n]; // e[i] couples i − 1 and i; e[0] = 0
+        for (int i = 0; i < n; i++)
+        {
+            d[i] = ((n - 1) / 2.0 - i) * ((n - 1) / 2.0 - i) * cw;
+            e[i] = i == 0 ? 0 : i * (double)(n - i) / 2;
+        }
+        var rows = new double[k][];
+        for (int j = 0; j < k; j++)
+            rows[j] = InverseIteration(d, e, TridiagonalEigenvalue(d, e, n - 1 - j), j, rows.AsSpan(0, j));
+        return rows;
+    }
+
+    /// <summary>How many eigenvalues of the tridiagonal matrix are below <paramref name="x"/>.</summary>
+    private static int Sturm(double[] d, double[] e, double x)
+    {
+        int below = 0;
+        double q = 1.0;
+        for (int i = 0; i < d.Length; i++)
+        {
+            q = d[i] - x - (i > 0 ? e[i] * e[i] / q : 0.0);
+            if (q == 0.0)
+                q = -1e-300;
+            if (q < 0)
+                below++;
+        }
+        return below;
+    }
+
+    /// <summary>The <paramref name="index"/>-th smallest eigenvalue (from 0), by bisection on the Sturm count.</summary>
+    private static double TridiagonalEigenvalue(double[] d, double[] e, int index)
+    {
+        int n = d.Length;
+        double lo = double.PositiveInfinity, hi = double.NegativeInfinity;
+        for (int i = 0; i < n; i++)
+        {
+            double r = Math.Abs(e[i]) + (i + 1 < n ? Math.Abs(e[i + 1]) : 0.0);
+            lo = Math.Min(lo, d[i] - r);
+            hi = Math.Max(hi, d[i] + r);
+        }
+        for (int it = 0; it < 200; it++)
+        {
+            double mid = 0.5 * (lo + hi);
+            if (mid == lo || mid == hi)
+                break;
+            if (Sturm(d, e, mid) > index)
+                hi = mid;
+            else
+                lo = mid;
+        }
+        return 0.5 * (lo + hi);
+    }
+
+    /// <summary>The unit eigenvector for <paramref name="theta"/>, with the sign rule for taper <paramref name="k"/>.</summary>
+    private static double[] InverseIteration(double[] d, double[] e, double theta, int k, ReadOnlySpan<double[]> earlier)
+    {
+        int n = d.Length;
+        double mid = (n - 1) / 2.0;
+        var v = new double[n];
+        for (int i = 0; i < n; i++)
+            v[i] = k % 2 == 0 ? 1.0 : mid - i;
+        double scale = 1.0;
+        for (int i = 0; i < n; i++)
+            scale = Math.Max(scale, Math.Max(Math.Abs(d[i]), Math.Abs(e[i])));
+        for (int it = 0; it < 4; it++)
+        {
+            v = ShiftedSolve(d, e, theta, v, scale);
+            foreach (double[] u in earlier) // against rounding drift toward a neighbor
+            {
+                double dot = 0;
+                for (int i = 0; i < n; i++)
+                    dot += u[i] * v[i];
+                for (int i = 0; i < n; i++)
+                    v[i] -= dot * u[i];
+            }
+            double norm = 0;
+            for (int i = 0; i < n; i++)
+                norm += v[i] * v[i];
+            norm = Math.Sqrt(norm);
+            for (int i = 0; i < n; i++)
+                v[i] /= norm;
+        }
+        double sign = 0;
+        for (int i = 0; i < n; i++)
+            sign += k % 2 == 0 ? v[i] : (mid - i) * v[i];
+        if (sign < 0)
+        {
+            for (int i = 0; i < n; i++)
+                v[i] = -v[i];
+        }
+        return v;
+    }
+
+    /// <summary>(T − θI)x = b by Gaussian elimination with partial pivoting (as LAPACK's gttrf); a
+    /// zero pivot is replaced by a tiny one, as inverse iteration wants.</summary>
+    private static double[] ShiftedSolve(double[] d, double[] e, double theta, double[] b, double scale)
+    {
+        int n = d.Length;
+        double eps = Math.Pow(2, -52) * scale;
+        var dd = new double[n];
+        var du = new double[n]; // row i, column i + 1
+        var dl = new double[n]; // row i + 1, column i
+        var du2 = new double[n]; // row i, column i + 2, after a swap
+        var y = (double[])b.Clone();
+        for (int i = 0; i < n; i++)
+        {
+            dd[i] = d[i] - theta;
+            du[i] = i + 1 < n ? e[i + 1] : 0.0;
+            dl[i] = i + 1 < n ? e[i + 1] : 0.0;
+        }
+        for (int i = 0; i < n - 1; i++)
+        {
+            if (Math.Abs(dd[i]) >= Math.Abs(dl[i]))
+            {
+                if (dd[i] == 0.0)
+                    dd[i] = eps;
+                double f = dl[i] / dd[i];
+                dd[i + 1] -= f * du[i];
+                y[i + 1] -= f * y[i];
+            }
+            else
+            {
+                double f = dd[i] / dl[i];
+                dd[i] = dl[i];
+                double t = du[i];
+                du[i] = dd[i + 1];
+                dd[i + 1] = t - (f * dd[i + 1]);
+                du2[i] = du[i + 1];
+                du[i + 1] = -f * du[i + 1];
+                (y[i], y[i + 1]) = (y[i + 1], y[i] - (f * y[i + 1]));
+            }
+        }
+        if (dd[n - 1] == 0.0)
+            dd[n - 1] = eps;
+        var x = new double[n];
+        for (int i = n - 1; i >= 0; i--)
+        {
+            double s = y[i];
+            if (i + 1 < n)
+                s -= du[i] * x[i + 1];
+            if (i + 2 < n)
+                s -= du2[i] * x[i + 2];
+            x[i] = s / dd[i];
+        }
+        return x;
     }
 
     private static Segments Prepare(ReadOnlySpan<Complex> x, double sampleRate, int? nperseg, int? noverlap,

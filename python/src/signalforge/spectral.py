@@ -268,6 +268,187 @@ def welch_psd(
     )
 
 
+@dataclass(frozen=True)
+class TaperSet:
+    """DPSS (Slepian) tapers, one per row, and the fraction of each one's energy in ``[-W, W]``;
+    see docs/conventions.md (Spectra, DPSS tapers)."""
+
+    tapers: NDArray[np.float64]
+    concentrations: NDArray[np.float64]
+
+
+def dpss_tapers(length: int, half_bandwidth: float, num_tapers: int | None = None) -> TaperSet:
+    """The ``num_tapers`` discrete prolate spheroidal sequences of ``length`` samples most
+    concentrated in ``[-W, W]``, ``W = half_bandwidth/length`` (conventions: Spectra, DPSS tapers;
+    ADR 0078)."""
+    n = count(length, "length")
+    if n < 1:
+        raise ValueError("length must be at least 1")
+    nw, k = _taper_args(n, half_bandwidth, num_tapers)
+    tapers = _dpss(n, nw / n, k)
+    lag = np.arange(1, n)
+    sinc = np.sin(2 * math.pi * (nw / n) * lag) / (math.pi * lag)
+    conc = [
+        2 * (nw / n) * r[0] + 2 * float(np.dot(sinc, r[1:]))
+        for r in (np.correlate(v, v, "full")[n - 1 :] for v in tapers)
+    ]
+    return TaperSet(tapers, np.array(conc, dtype=np.float64))
+
+
+def _dpss(n: int, w: float, k: int) -> NDArray[np.float64]:
+    cw = math.cos(2 * math.pi * w)
+    d = [((n - 1) / 2 - i) ** 2 * cw for i in range(n)]
+    e = [0.0] + [i * (n - i) / 2 for i in range(1, n)]  # e[i] couples i - 1 and i
+    rows: list[list[float]] = []
+    for j in range(k):
+        theta = _tridiagonal_eigenvalue(d, e, n - 1 - j)
+        rows.append(_inverse_iteration(d, e, theta, j, rows))
+    return np.array(rows, dtype=np.float64).reshape(k, n)
+
+
+def _taper_args(n: int, half_bandwidth: float, num_tapers: int | None) -> tuple[float, int]:
+    nw = real(half_bandwidth, "half_bandwidth")
+    if not 0 < nw < n / 2:
+        raise ValueError("half_bandwidth must be above 0 and below length/2")
+    k = max(1, math.floor(2 * nw) - 1) if num_tapers is None else count(num_tapers, "num_tapers")
+    if not 1 <= k <= n:
+        raise ValueError("num_tapers must be between 1 and length")
+    return nw, k
+
+
+def _sturm(d: list[float], e: list[float], x: float) -> int:
+    """How many eigenvalues of the tridiagonal matrix are below ``x``."""
+    below = 0
+    q = 1.0
+    tiny = 1e-300
+    for i in range(len(d)):
+        q = d[i] - x - (e[i] * e[i] / q if i else 0.0)
+        if q == 0.0:
+            q = -tiny
+        if q < 0:
+            below += 1
+    return below
+
+
+def _tridiagonal_eigenvalue(d: list[float], e: list[float], index: int) -> float:
+    """The ``index``-th smallest eigenvalue (from 0), by bisection on the Sturm count."""
+    lo = min(d[i] - abs(e[i]) - (abs(e[i + 1]) if i + 1 < len(d) else 0.0) for i in range(len(d)))
+    hi = max(d[i] + abs(e[i]) + (abs(e[i + 1]) if i + 1 < len(d) else 0.0) for i in range(len(d)))
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        if mid in (lo, hi):
+            break
+        if _sturm(d, e, mid) > index:
+            hi = mid
+        else:
+            lo = mid
+    return 0.5 * (lo + hi)
+
+
+def _inverse_iteration(
+    d: list[float], e: list[float], theta: float, k: int, earlier: list[list[float]]
+) -> list[float]:
+    """The unit eigenvector for ``theta``, with the sign rule for taper ``k``."""
+    n = len(d)
+    mid = (n - 1) / 2
+    v = [1.0 if k % 2 == 0 else mid - i for i in range(n)]
+    scale = max(max(abs(x) for x in d), max(abs(x) for x in e), 1.0)
+    for _ in range(4):
+        v = _shifted_solve(d, e, theta, v, scale)
+        for u in earlier:  # against rounding drift toward a neighbor
+            dot = sum(a * b for a, b in zip(u, v, strict=True))
+            v = [a - dot * b for a, b in zip(v, u, strict=True)]
+        norm = math.sqrt(sum(x * x for x in v))
+        v = [x / norm for x in v]
+    sign = sum(v) if k % 2 == 0 else sum((mid - i) * x for i, x in enumerate(v))
+    return [-x for x in v] if sign < 0 else v
+
+
+def _shifted_solve(
+    d: list[float], e: list[float], theta: float, b: list[float], scale: float
+) -> list[float]:
+    """``(T - theta I) x = b`` by Gaussian elimination with partial pivoting (as LAPACK's gttrf);
+    a zero pivot is replaced by a tiny one, as inverse iteration wants."""
+    n = len(d)
+    eps = 2.0**-52 * scale
+    dd = [d[i] - theta for i in range(n)]
+    du = [e[i + 1] for i in range(n - 1)] + [0.0]  # row i, column i + 1
+    dl = [e[i + 1] for i in range(n - 1)]  # row i + 1, column i
+    du2 = [0.0] * n  # row i, column i + 2, after a swap
+    y = list(b)
+    for i in range(n - 1):
+        if abs(dd[i]) >= abs(dl[i]):
+            if dd[i] == 0.0:
+                dd[i] = eps
+            f = dl[i] / dd[i]
+            dd[i + 1] -= f * du[i]
+            y[i + 1] -= f * y[i]
+        else:
+            f = dd[i] / dl[i]
+            dd[i] = dl[i]
+            t = du[i]
+            du[i] = dd[i + 1]
+            dd[i + 1] = t - f * dd[i + 1]
+            du2[i] = du[i + 1]
+            du[i + 1] = -f * du[i + 1]
+            y[i], y[i + 1] = y[i + 1], y[i] - f * y[i + 1]
+    if dd[n - 1] == 0.0:
+        dd[n - 1] = eps
+    x = [0.0] * n
+    for i in range(n - 1, -1, -1):
+        s = y[i]
+        if i + 1 < n:
+            s -= du[i] * x[i + 1]
+        if i + 2 < n:
+            s -= du2[i] * x[i + 2]
+        x[i] = s / dd[i]
+    return x
+
+
+def multitaper_psd(
+    samples: ArrayLike,
+    sample_rate: float,
+    half_bandwidth: float,
+    *,
+    num_tapers: int | None = None,
+    one_sided: bool | None = None,
+    nfft: int | None = None,
+) -> SpectralDensity:
+    """Thomson's multitaper PSD: the mean of the periodograms of the whole input under the DPSS
+    tapers, in the Welch scaling (conventions: Spectra, Multitaper PSD; ADR 0078)."""
+    x = _vector(samples, "samples")
+    if not real(sample_rate, "sample_rate") > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    is_complex = np.iscomplexobj(x)
+    if one_sided is None:
+        one_sided = not is_complex
+    elif one_sided and is_complex:
+        raise ValueError("a one-sided PSD needs real samples")
+    n = x.size
+    if n < 1:
+        raise ValueError("samples needs at least 1")
+    m = n if nfft is None else count(nfft, "nfft")
+    if m < n:
+        raise ValueError("nfft must be at least the input length")
+    nw, k = _taper_args(n, half_bandwidth, num_tapers)
+    tapers = _dpss(n, nw / n, k)
+    acc = np.zeros(m)
+    for v in tapers:
+        acc += np.abs(np.fft.fft(v * x, m)) ** 2
+    g = _Segments(x, n, n, 1, tapers[0], 1.0, bool(one_sided), "none", m)
+    return SpectralDensity(
+        frequencies=g.frequencies(sample_rate),
+        psd=np.asarray(g.fold(acc / (k * sample_rate)), dtype=np.float64),
+        sample_rate=float(sample_rate),
+        nperseg=n,
+        num_segments=k,
+        one_sided=bool(one_sided),
+        bin_width=sample_rate / m,
+        enbw_hz=2 * nw / n * sample_rate,
+        nfft=m,
+    )
+
+
 def spectrogram(
     samples: ArrayLike,
     sample_rate: float,

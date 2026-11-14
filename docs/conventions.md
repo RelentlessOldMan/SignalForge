@@ -172,6 +172,33 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   - The result carries `frequencies`, `times`, `psd`, `sample_rate`, `nperseg`, `nfft`,
     `num_segments`, `one_sided`, `bin_width`, `enbw_hz` and `span`, with the PSD's meanings.
   **(implemented)**
+- **DPSS tapers** (`dpss_tapers(length, half_bandwidth, num_tapers=None)` → `TaperSet(tapers,
+  concentrations)`, [ADR 0078](adr/0078-multitaper.md)): `N = length ≥ 1`, `NW = half_bandwidth`
+  finite with `0 < NW < N/2`, `W = NW/N`; `K = num_tapers` with `1 ≤ K ≤ N`, default
+  `max(1, ⌊2NW⌋ − 1)`.
+  - The tridiagonal matrix `T` (`N × N`, symmetric): `T[n][n] = ((N − 1)/2 − n)²·cos(2πW)` and
+    `T[n−1][n] = T[n][n−1] = n·(N − n)/2` for `n = 1 … N − 1`.
+  - Taper `k = 0 … K − 1` is the eigenvector of `T` for its `(k + 1)`-th largest eigenvalue, with
+    `Σ_n v_k[n]² = 1` and the sign that makes `Σ_n v_k[n] > 0` for even `k` and
+    `Σ_n ((N − 1)/2 − n)·v_k[n] > 0` for odd `k`. Each value is accurate to about `1e-12`; how it
+    is computed is not part of the convention.
+  - `tapers` has `K` rows of `N` values (Python a 2-D array, C# an array of rows).
+  - Concentration `λ_k = Σ_n Σ_m v[n]·A[n][m]·v[m]`, `A[n][m] = sin(2πW(n − m))/(π(n − m))`,
+    `A[n][n] = 2W`: the fraction of the taper's energy in `[−W, W]` (cycles per sample), equal to
+    `2W·r_0 + 2·Σ_{d=1}^{N−1} (sin(2πWd)/(πd))·r_d` with `r_d = Σ_{n=0}^{N−1−d} v[n]·v[n + d]`,
+    accurate to about `1e-12`.
+  - By hand: `N = 1` gives `[[1]]` with `λ = 2W`; `N = 2` gives `(1, 1)/√2` with `λ = 2W +
+    sin(2πW)/π` and `(1, −1)/√2` with `λ = 2W − sin(2πW)/π`.
+  **(implemented)**
+- **Multitaper PSD** (`multitaper_psd(samples, sample_rate, half_bandwidth, *, num_tapers=None,
+  one_sided=None, nfft=None)`, [ADR 0078](adr/0078-multitaper.md)): with `N` the input length and
+  the `K` tapers `dpss_tapers(N, half_bandwidth, num_tapers)`, the two-sided PSD is
+  `S[k] = (1/K)·Σ_j |X_j[k]|²/fs`, `X_j` the length-`M` DFT (`M = nfft ≥ N`, default `N`, zero
+  padded at the end) of `v_j[n]·x[n]`, the sum in order of `j`. Since `Σv² = 1` this is the Welch
+  scaling. Sidedness, folding and the frequency axis are as for the PSD above. The result is a
+  PSD with `nperseg = N`, `num_segments = K`, `bin_width = fs/M`, `enbw_hz = 2W·fs` and the PSD's
+  `span`.
+  **(implemented)**
 - **Lomb-Scargle periodogram** (`lomb_scargle(times, values, frequencies, center=True,
   normalization="standard")`, [ADR 0059](adr/0059-lomb-scargle.md)), for unevenly sampled real
   data. `times` and `values` are finite reals of the same length `N ≥ 2` (times in any order,

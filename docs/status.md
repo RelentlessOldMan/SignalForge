@@ -4,10 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Multitaper spectral estimate**: the discrete prolate spheroidal (Slepian) tapers, from the
-   symmetric tridiagonal eigenproblem, and the averaged multitaper PSD in the `welch` scaling.
-   Expected tapers from an independent stdlib solve (bisection with inverse iteration) and their
-   defining concentration property.
+1. **Thomson's adaptive weights for the multitaper PSD**: the per-frequency weights
+   `d_k = √λ_k S / (λ_k S + (1 − λ_k) σ²)` iterated to a fixed point, which cut the broadband
+   leakage of the higher tapers (the plain average with all `2NW − 1` tapers leaks near the
+   rectangular window's level; ADR 0078). Expected values from a stdlib generator iterating the
+   definition, with a by-hand case where every λ is 1.
 
 ## Built
 
@@ -778,11 +779,25 @@ Updated with every chunk of work. Dates are absolute.
   cases (two checked against the direct least-squares solve); link config `qpsk_dfe_rls_8db`.
   Python 3085 passed, 2 skipped; .NET 2549 passed; conformance 1532/1532 in both. Version
   2026.11.13.108.
+- 2026-11-13: multitaper spectra ([ADR 0078](adr/0078-multitaper.md)):
+  `dpss_tapers(length, half_bandwidth, num_tapers=None)` (C# `Spectral.DpssTapers`) returns a
+  `TaperSet` of the Slepian tapers and their concentrations, by Sturm bisection and inverse
+  iteration on the commuting tridiagonal matrix (no dense eigen-solver, so no dependency);
+  `multitaper_psd(samples, sample_rate, half_bandwidth, *, num_tapers=None, one_sided=None,
+  nfft=None)` (C# `Spectral.MultitaperPsd`) averages the tapered periodograms of the whole input
+  in the Welch scaling and folding. The tapers meet the sinc eigen-equation to 1e-11 up to N = 512;
+  4096 samples take about 0.5 s in Python. Measured: the first taper at NW 4 leaks 4e-11 of the
+  peak from 6 bins out where Hann leaks 1e-6, but all seven tapers leak near the rectangular
+  window, which is what the adaptive weights (Next) are for. Vector suite `multitaper` (22 cases:
+  tapers by cyclic Jacobi in the generator, each checked against the sinc eigen-equation, two by
+  hand). The result type is `TaperSet`, not `Tapers`: a C# record cannot have a property of its
+  own name. Python 3118 passed, 2 skipped; .NET 2582 passed; conformance 1554/1554 in both.
+  Version 2026.11.13.109.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
-(multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
+(multitaper adaptive weights and the F-test; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,

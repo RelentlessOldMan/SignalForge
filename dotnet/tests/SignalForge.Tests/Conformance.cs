@@ -261,6 +261,8 @@ public static class Conformance
                 t => Spectral.Window(t.Item1, t.Item2, t.Item3, t.Item4)),
             "window_stats" => Bind(Reals(a.Get("w")), w => Spectral.WindowStats(w)),
             "welch_psd" => Welch(a),
+            "dpss_tapers" => Bind((a.I("length"), a.D("half_bandwidth"), a.OptInt("num_tapers")), t => Spectral.DpssTapers(t.Item1, t.Item2, t.Item3)),
+            "multitaper_psd" => MultitaperOp(a),
             "spectrogram" => SpectrogramOp(a),
             "lomb_scargle_false_alarm" => Bind((a.D("power"), a.I("num_samples"), a.Has("num_frequencies") ? a.I("num_frequencies") : 1, a.Flag("center", true)),
                 t => Spectral.LombScargleFalseAlarm(t.Item1, t.Item2, t.Item3, t.Item4)),
@@ -524,6 +526,21 @@ public static class Conformance
             return () => Measurements.Sfdr(cs, fs, window, beta, width, fundamental, spurs);
         double[] x = Reals(samples);
         return () => Measurements.Sfdr(x, fs, window, beta, width, fundamental, spurs);
+    }
+
+    private static Func<object?> MultitaperOp(Args a)
+    {
+        object? samples = a.Get("samples");
+        var (fs, nw, k, nfft) = (a.D("sample_rate"), a.D("half_bandwidth"), a.OptInt("num_tapers"), a.OptInt("nfft"));
+        if (samples is Complex[] cs)
+        {
+            if (a.Flag("one_sided"))
+                throw new InvalidDataException("one_sided=true with complex samples has no C# form");
+            return () => Spectral.MultitaperPsd(cs, fs, nw, k, nfft);
+        }
+        double[] x = Reals(samples);
+        bool oneSided = a.Flag("one_sided", dflt: true);
+        return () => Spectral.MultitaperPsd(x, fs, nw, k, oneSided, nfft);
     }
 
     private static Func<object?> SpectrogramOp(Args a)
