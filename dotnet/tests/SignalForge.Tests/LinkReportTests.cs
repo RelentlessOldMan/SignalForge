@@ -16,7 +16,7 @@ public class LinkReportTests
         "frequency_offset_hz", "phase", "preamble_symbols", "phase_block_symbols", "prbs_order", "seed", "modulation", "phase_noise_linewidth_hz",
         "clock_offset_ppm",
         "timing_loop_gains", "carrier_loop_gains", "ofdm_nfft", "ofdm_cp_len", "ofdm_subcarriers",
-        "multipath_delays", "multipath_gains", "equalizer_taps", "equalizer_step", "equalizer_feedback", "equalizer_start",
+        "multipath_delays", "multipath_gains", "equalizer_taps", "equalizer_step", "equalizer_feedback", "equalizer_start", "equalizer_loop_gains",
     ];
 
     private static string[] Keys(JsonElement e) => e.EnumerateObject().Select(p => p.Name).ToArray();

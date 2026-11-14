@@ -49,7 +49,7 @@ DECIDE = {"qpsk": qpsk, "psk8": psk8, "qam16": qam16, "qam64": qam64}
 
 
 def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
-        initial_feedback=None):
+        initial_feedback=None, phase_loop_gains=None):
     c = (taps - 1) // 2 if center is None else center
     w = [0j] * taps
     w[c] = 1 + 0j
@@ -59,13 +59,16 @@ def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
     if initial_feedback is not None:
         b = [complex(z) for z in initial_feedback]
     past = [0j] * m  # past[j - 1] is d_{n-j}
+    theta = nu = 0.0
     ys, es = [], []
     for n in range(-(-len(x) // sps)):
         base = n * sps + c
         u = [x[base - i] if 0 <= base - i < len(x) else 0j for i in range(taps)]
-        y = 0j
+        v = 0j
         for wi, ui in zip(w, u):
-            y += wi * ui
+            v += wi * ui
+        r = complex(math.cos(theta), -math.sin(theta))
+        y = v * r if phase_loop_gains else v
         for bj, pj in zip(b, past):
             y += bj * pj
         ys.append(y)
@@ -75,13 +78,23 @@ def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
             continue
         e = d - y
         es.append(e)
+        f = 0j
+        for bj, pj in zip(b, past):
+            f += bj * pj
         p = 0.0
         for z in u + past:
             p += z.real * z.real + z.imag * z.imag
         if p > 0:
             g = mu / p
-            w = [wi + g * e * ui.conjugate() for wi, ui in zip(w, u)]
+            ef = e * r.conjugate() if phase_loop_gains else e
+            w = [wi + g * ef * ui.conjugate() for wi, ui in zip(w, u)]
             b = [bj + g * e * pj.conjugate() for bj, pj in zip(b, past)]
+        if phase_loop_gains:
+            q = d - f
+            cc = (v * r) * q.conjugate()
+            ph = math.atan2(cc.imag, cc.real) if v != 0 and q != 0 else 0.0
+            nu += phase_loop_gains[1] * ph
+            theta += phase_loop_gains[0] * ph + nu
         if m:
             past = [d] + past[:-1]
     return ys, es, w, b
@@ -187,7 +200,35 @@ A = points("qam16", 60, 31)
 add("initial_start_adapts", channel(A, H2), A[:20], 3, 2, 0.3, decision="qam16",
     initial_taps=W0, initial_feedback=[complex(-0.5, 0.25), 0j])
 
+# the phase loop (ADR 0073): a channel that turns 0.01 rad per symbol
+A = points("qpsk", 300, 37)
+X = [z * cmath.exp(0.01j * n) for n, z in enumerate(channel(A, H2))]
+plain = dfe(X, A[:40], 5, 3, 0.1, decision="qpsk")
+ys, es, w, b = add("phase_loop_zero_gains_is_no_loop", X, A[:40], 5, 3, 0.1, decision="qpsk",
+                   phase_loop_gains=[0.0, 0.0],
+                   source="by hand: with gains (0, 0) theta stays 0, the turn is exactly 1 and the "
+                   "result is the equalizer without the loop (checked here against it)")
+assert (ys, es, w, b) == plain
+ys, es, w, b = add("phase_loop_follows_a_turn", X, A[:40], 5, 3, 0.1, decision="qpsk",
+                   phase_loop_gains=[0.05, 0.001], tol={"abs": 1e-10, "rel": 0},
+                   source="the conventions recurrence run step by step (this generator); the "
+                   "mean squared error over the last 100 outputs is checked here to be under 0.02, "
+                   "against 0.19 without the loop")
+tail = sum(abs(e) ** 2 for e in es[200:]) / 100
+assert tail < 0.02 < sum(abs(e) ** 2 for e in plain[1][200:]) / 100  # the loop follows it
+HF2 = [0.1 + 0j, 0.9 + 0j, complex(0.3, 0.2), complex(-0.1, 0.15)]
+A = points("qam16", 120, 41)
+X = [z * cmath.exp(-0.004j * n) for n, z in enumerate(channel(A, HF2, 2))]
+add("phase_loop_qam16_fractional", X, A[:60], 7, 2, 0.2, sps=2, decision="qam16",
+    phase_loop_gains=[0.03, 0.0003], tol={"abs": 1e-10, "rel": 0})
+add("phase_loop_trained_throughout", channel(A[:30], H2), A[:30], 3, 1, 0.3,
+    phase_loop_gains=[0.05, 0.001], tol={"abs": 1e-10, "rel": 0})
+
 for name, args, why in (
+    ("phase_loop_negative_gain", {"phase_loop_gains": [0.1, -0.01]},
+     "phase_loop_gains must not be negative"),
+    ("phase_loop_gain_not_finite", {"phase_loop_gains": ["nan", 0.0]},
+     "phase_loop_gains must be finite"),
     ("initial_feedback_wrong_length", {"initial_feedback": C([0])},
      "initial_feedback must hold num_feedback"),
     ("initial_taps_wrong_length", {"initial_taps": C([1, 0])}, "initial_taps must hold num_taps"),

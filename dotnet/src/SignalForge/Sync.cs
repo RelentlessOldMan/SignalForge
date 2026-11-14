@@ -152,7 +152,7 @@ public static class Sync
     public static Equalization LmsEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
         double step, int samplesPerSymbol = 1, int? center = null, string? decision = null, Complex[]? initialTaps = null)
     {
-        DfeEqualization r = Equalize(samples, training, numTaps, 0, step, samplesPerSymbol, center, decision, initialTaps, null);
+        DfeEqualization r = Equalize(samples, training, numTaps, 0, step, samplesPerSymbol, center, decision, initialTaps, null, null);
         return new Equalization(r.Symbols, r.Errors, r.Taps);
     }
 
@@ -175,10 +175,13 @@ public static class Sync
     /// values; null for the unit impulse at <paramref name="center"/> (ADR 0072).</param>
     /// <param name="initialFeedback">The feedback taps to start from, <paramref name="numFeedback"/>
     /// finite values; null for zeros.</param>
+    /// <param name="phaseLoopGains">(kp, ki) of a second-order carrier loop on the forward part,
+    /// finite, not negative; null for none (ADR 0073).</param>
     public static DfeEqualization DfeEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
         int numFeedback, double step, int samplesPerSymbol = 1, int? center = null, string? decision = null,
-        Complex[]? initialTaps = null, Complex[]? initialFeedback = null) =>
-        Equalize(samples, training, numTaps, numFeedback, step, samplesPerSymbol, center, decision, initialTaps, initialFeedback);
+        Complex[]? initialTaps = null, Complex[]? initialFeedback = null, (double Kp, double Ki)? phaseLoopGains = null) =>
+        Equalize(samples, training, numTaps, numFeedback, step, samplesPerSymbol, center, decision, initialTaps, initialFeedback,
+            phaseLoopGains);
 
     /// <summary>The forward and feedback taps that minimize the squared error over the training,
     /// by Gaussian elimination on the normal equations (conventions: Synchronization, Least-squares
@@ -291,8 +294,10 @@ public static class Sync
 
     private static DfeEqualization Equalize(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
         int numFeedback, double step, int samplesPerSymbol, int? center, string? decision, Complex[]? initialTaps,
-        Complex[]? initialFeedback)
+        Complex[]? initialFeedback, (double Kp, double Ki)? loop)
     {
+        if (loop is { } lg && !(double.IsFinite(lg.Kp) && double.IsFinite(lg.Ki) && lg.Kp >= 0 && lg.Ki >= 0))
+            throw new ArgumentOutOfRangeException(nameof(loop), lg, "phase loop gains must be finite and not negative");
         int c = CheckEqualizer(samples, training, numTaps, numFeedback, samplesPerSymbol, center);
         if (!(step >= 0 && step <= 2))
             throw new ArgumentOutOfRangeException(nameof(step), step, "must be in [0, 2]");
@@ -323,15 +328,18 @@ public static class Sync
         var u = new Complex[numTaps];
         var output = new Complex[n];
         var errors = new Complex[n];
+        double theta = 0, nu = 0;
         for (int k = 0; k < n; k++)
         {
             int b = k * samplesPerSymbol + c;
-            Complex y = Complex.Zero;
+            Complex v = Complex.Zero;
             for (int i = 0; i < numTaps; i++)
             {
                 u[i] = b - i >= 0 && b - i < samples.Length ? samples[b - i] : Complex.Zero;
-                y += w[i] * u[i];
+                v += w[i] * u[i];
             }
+            var rot = new Complex(Math.Cos(theta), -Math.Sin(theta));
+            Complex y = loop is null ? v : v * rot;
             for (int j = 0; j < numFeedback; j++)
                 y += fb[j] * past[j];
             output[k] = y;
@@ -340,6 +348,9 @@ public static class Sync
                 continue;
             Complex e = r - y;
             errors[k] = e;
+            Complex f = Complex.Zero;
+            for (int j = 0; j < numFeedback; j++)
+                f += fb[j] * past[j];
             double p = 0;
             foreach (Complex x in u)
                 p += x.Real * x.Real + x.Imaginary * x.Imaginary;
@@ -348,10 +359,19 @@ public static class Sync
             if (p > 0)
             {
                 double g = step / p;
+                Complex ef = loop is null ? e : e * Complex.Conjugate(rot);
                 for (int i = 0; i < numTaps; i++)
-                    w[i] += g * e * Complex.Conjugate(u[i]);
+                    w[i] += g * ef * Complex.Conjugate(u[i]);
                 for (int j = 0; j < numFeedback; j++)
                     fb[j] += g * e * Complex.Conjugate(past[j]);
+            }
+            if (loop is { } gains)
+            {
+                Complex q = r - f;
+                Complex cc = v * rot * Complex.Conjugate(q);
+                double ph = v != Complex.Zero && q != Complex.Zero ? Math.Atan2(cc.Imaginary, cc.Real) : 0;
+                nu += gains.Ki * ph;
+                theta += gains.Kp * ph + nu;
             }
             if (numFeedback > 0)
             {

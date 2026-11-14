@@ -91,6 +91,7 @@ class QpskLinkConfig:
     equalizer_step: float = 0.1
     equalizer_feedback: int = 0
     equalizer_start: str = "impulse"
+    equalizer_loop_gains: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -254,6 +255,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         equalizer_step=real(config.equalizer_step, "equalizer_step"),
         equalizer_feedback=count(config.equalizer_feedback, "equalizer_feedback"),
         equalizer_start=config.equalizer_start,
+        equalizer_loop_gains=_gains(config.equalizer_loop_gains, "equalizer_loop_gains"),
     )
     if c.equalizer_taps is not None and c.equalizer_taps < 1:
         raise ValueError("equalizer_taps must be at least 1")
@@ -267,6 +269,8 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         raise ValueError("equalizer_start must be 'impulse' or 'least_squares'")
     if c.equalizer_start != "impulse" and c.equalizer_taps is None:
         raise ValueError("equalizer_start needs equalizer_taps")
+    if c.equalizer_loop_gains is not None and c.equalizer_taps is None:
+        raise ValueError("equalizer_loop_gains needs equalizer_taps")
     if (
         c.equalizer_start == "least_squares"
         and c.equalizer_taps is not None
@@ -389,6 +393,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
             decision=c.modulation,
             initial_taps=None if start is None else start.taps,
             initial_feedback=None if start is None else start.feedback_taps,
+            phase_loop_gains=c.equalizer_loop_gains,
         ).symbols[pre:]
         # the preamble is the equalizer's training, so it does not count
         a, bits = a[pre:], bits[bps * pre :]

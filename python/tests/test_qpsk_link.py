@@ -50,6 +50,7 @@ CONFIG_KEYS = [
     "equalizer_step",
     "equalizer_feedback",
     "equalizer_start",
+    "equalizer_loop_gains",
 ]
 
 

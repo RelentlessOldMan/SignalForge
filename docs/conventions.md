@@ -1035,7 +1035,8 @@ multiplies the block by the power of two that brings its largest real or imagina
   `y_{n+1}` uses the tap that makes `w·x[n·sps] = d_n` exactly, so a scalar channel `x = g·a` is
   inverted after one training symbol. **(implemented)**
 - **Decision-feedback equalizer** (`dfe_equalizer(samples, training, num_taps, num_feedback, step,
-  *, samples_per_symbol=1, center=None, decision=None, initial_taps=None, initial_feedback=None)`,
+  *, samples_per_symbol=1, center=None, decision=None, initial_taps=None, initial_feedback=None,
+  phase_loop_gains=None)`,
   [ADR 0069](adr/0069-decision-feedback-equalizer.md)): the LMS equalizer above with `M =
   num_feedback ≥ 0` feedback taps `b_1 … b_M`, all starting at 0 (or at `initial_feedback`, `M`
   finite values), on the past references
@@ -1049,7 +1050,17 @@ multiplies the block by the power of two that brings its largest real or imagina
   - the reference `d_n` then becomes `p_1` of the next output.
   The result has `symbols`, `errors`, `taps` (`w`) and `feedback_taps` (`b`, `M` of them). With
   `M = 0` it is `lms_equalizer` exactly. With `μ = 1` the updated taps give `d_n` exactly on the
-  regressor they were updated on (the a posteriori error is 0). **(implemented)**
+  regressor they were updated on (the a posteriori error is 0).
+  With `phase_loop_gains = [kp, ki]` (finite, `≥ 0`; [ADR 0073](adr/0073-equalizer-phase-loop.md))
+  a second-order carrier loop turns the forward part, starting at `θ = 0`, `ν = 0`. Each output,
+  with `r = cos θ − j·sin θ`:
+  - `v = Σ_i w_i·u_i` (in order of `i`), and `y_n = v·r` with the feedback terms then added in
+    order of `j`; `f = Σ_j b_j·p_j` (in order of `j`, before the update) is the feedback part;
+  - the forward update uses `e_n·conj(r)` in place of `e_n` (the feedback update is unchanged);
+  - with `q = d_n − f`, the phase error is `φ = atan2(Im c, Re c)` of `c = (v·r)·conj(q)`, or 0
+    when `v` or `q` is 0; then `ν ← ν + ki·φ` and `θ ← θ + kp·φ + ν`.
+  Without a reference there is no update and no loop step. With gains `[0, 0]` it is the
+  equalizer without the loop exactly. **(implemented)**
 - **Least-squares equalizer taps** (`dfe_least_squares(samples, training, num_taps, num_feedback,
   *, samples_per_symbol=1, center=None)` → `DfeTaps(taps, feedback_taps)`, [ADR
   0072](adr/0072-least-squares-equalizer-start.md)): the arguments as for `dfe_equalizer`, with
@@ -1157,7 +1168,9 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   `equalizer_feedback` [0] (an integer `≥ 0`, nonzero only with `equalizer_taps`; [ADR
   0070](adr/0070-link-dfe-preamble-frequency.md)) and `equalizer_start` [`"impulse"`] (or
   `"least_squares"`; anything else only with `equalizer_taps`; [ADR
-  0072](adr/0072-least-squares-equalizer-start.md)). Numbers must be finite.
+  0072](adr/0072-least-squares-equalizer-start.md)) and `equalizer_loop_gains` [none] (none or a
+  pair `[kp, ki]` of numbers `≥ 0`, only with `equalizer_taps`; [ADR
+  0073](adr/0073-equalizer-phase-loop.md)). Numbers must be finite.
   **(implemented)**
 - **FSK** (`"fsk2"`, `"fsk4"`: `M` = 2 or 4, `k = log2 M`, modulation index 1;
   [ADR 0057](adr/0057-fsk-link.md)) replaces the transmitter and receiver below; the checks above
@@ -1299,7 +1312,8 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
      samples_per_symbol=2, decision=modulation).symbols` with `M = equalizer_feedback` (`M = 0`
      is `lms_equalizer`); with `equalizer_start = "least_squares"` it also passes the
      `dfe_least_squares(x, a[:P], L, M, samples_per_symbol=2)` taps as `initial_taps` and
-     `initial_feedback` (`P ≥ L + M` is then needed), where `v = frequency_offset(y, −f, symbol_rate·sps)`, `s₀ = (round(τ) mod sps) + k₀·sps`, and `x` the `2N` samples
+     `initial_feedback` (`P ≥ L + M` is then needed), and `equalizer_loop_gains` as
+     `phase_loop_gains`, where `v = frequency_offset(y, −f, symbol_rate·sps)`, `s₀ = (round(τ) mod sps) + k₀·sps`, and `x` the `2N` samples
      `x[m] = v[s₀ + m·sps/2]`, 0 past the end of `v`. Output `n` then starts as `v[s₀ + n·sps]`,
      the sample the steps above take. With the equalizer the preamble does not count: `evm` and
      `bit_errors` compare symbols `P … N − 1` only (the bits from `k·P` on). With the equalizer

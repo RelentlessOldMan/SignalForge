@@ -364,7 +364,7 @@ public static class Conformance
             "gardner_timing" => Bind((Complexes(a.Get("samples")), a.I("samples_per_symbol"), a.D("kp"), a.D("ki"), a.Opt("start", 0), a.Has("half_width") ? a.I("half_width") : 8), t => Sync.GardnerTiming(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "qpsk_carrier_tracking" => Bind((Complexes(a.Get("symbols")), a.D("kp"), a.D("ki"), a.Opt("phase", 0)), t => Sync.QpskCarrierTracking(t.Item1, t.Item2, t.Item3, t.Item4)),
             "lms_equalizer" => Bind((Complexes(a.Get("samples")), Complexes(a.Get("training")), a.I("num_taps"), a.D("step"), a.Has("samples_per_symbol") ? a.I("samples_per_symbol") : 1, a.OptInt("center"), a.Has("decision") ? Str(a, "decision") : null, a.Has("initial_taps") ? Complexes(a.Get("initial_taps")) : null), t => Sync.LmsEqualizer(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Rest.Item1)),
-            "dfe_equalizer" => Bind((Complexes(a.Get("samples")), Complexes(a.Get("training")), a.I("num_taps"), a.I("num_feedback"), a.D("step"), a.Has("samples_per_symbol") ? a.I("samples_per_symbol") : 1, a.OptInt("center"), a.Has("decision") ? Str(a, "decision") : null, a.Has("initial_taps") ? Complexes(a.Get("initial_taps")) : null, a.Has("initial_feedback") ? Complexes(a.Get("initial_feedback")) : null), t => Sync.DfeEqualizer(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Rest.Item1, t.Rest.Item2, t.Rest.Item3)),
+            "dfe_equalizer" => Bind((Complexes(a.Get("samples")), Complexes(a.Get("training")), a.I("num_taps"), a.I("num_feedback"), a.D("step"), a.Has("samples_per_symbol") ? a.I("samples_per_symbol") : 1, a.OptInt("center"), a.Has("decision") ? Str(a, "decision") : null, a.Has("initial_taps") ? Complexes(a.Get("initial_taps")) : null, a.Has("initial_feedback") ? Complexes(a.Get("initial_feedback")) : null, a.Has("phase_loop_gains") ? Pair(Reals(a.Get("phase_loop_gains"))) : null), t => Sync.DfeEqualizer(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Rest.Item1, t.Rest.Item2, t.Rest.Item3, t.Rest.Item4)),
             "dfe_least_squares" => Bind((Complexes(a.Get("samples")), Complexes(a.Get("training")), a.I("num_taps"), a.I("num_feedback"), a.Has("samples_per_symbol") ? a.I("samples_per_symbol") : 1, a.OptInt("center")), t => Sync.DfeLeastSquares(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "psk8_carrier_tracking" => Bind((Complexes(a.Get("symbols")), a.D("kp"), a.D("ki"), a.Opt("phase", 0)), t => Sync.Psk8CarrierTracking(t.Item1, t.Item2, t.Item3, t.Item4)),
             "qam16_carrier_tracking" => Bind((Complexes(a.Get("symbols")), a.D("kp"), a.D("ki"), a.Opt("phase", 0)), t => Sync.Qam16CarrierTracking(t.Item1, t.Item2, t.Item3, t.Item4)),
@@ -407,6 +407,9 @@ public static class Conformance
     }
 
     private static Func<object?> Bind<T, TResult>(T args, Func<T, TResult> f) => () => f(args);
+
+    private static (double, double)? Pair(double[] v) =>
+        v.Length == 2 ? (v[0], v[1]) : throw new ArgumentException("must be a pair", nameof(v));
 
     private static QpskLinkConfig LinkConfig(Args a)
     {

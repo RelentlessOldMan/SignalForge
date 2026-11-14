@@ -98,6 +98,10 @@ public sealed record QpskLinkConfig
     /// taps solved on the preamble, which then needs <see cref="EqualizerTaps"/> and at least
     /// EqualizerTaps + EqualizerFeedback preamble symbols (ADR 0072).</summary>
     public string EqualizerStart { get; init; } = "impulse";
+
+    /// <summary>(kp, ki) of the phase loop inside the equalizer, each finite and not negative, as
+    /// a pair; null [the default] for none; only with <see cref="EqualizerTaps"/> (ADR 0073).</summary>
+    public IReadOnlyList<double>? EqualizerLoopGains { get; init; }
 }
 
 /// <summary>What the receiver estimated and measured on one link run.</summary>
@@ -207,6 +211,9 @@ public static class Link
             throw new ArgumentException("EqualizerStart must be impulse or least_squares", nameof(config));
         if (c.EqualizerStart != "impulse" && c.EqualizerTaps is null)
             throw new ArgumentException("EqualizerStart needs EqualizerTaps", nameof(config));
+        Gains(c.EqualizerLoopGains, nameof(c.EqualizerLoopGains), nameof(config));
+        if (c.EqualizerLoopGains is not null && c.EqualizerTaps is null)
+            throw new ArgumentException("EqualizerLoopGains needs EqualizerTaps", nameof(config));
         if (c.EqualizerStart == "least_squares" && c.EqualizerTaps is { } lt && c.PreambleSymbols < lt + c.EqualizerFeedback)
             throw new ArgumentException("EqualizerStart least_squares needs PreambleSymbols of at least EqualizerTaps + EqualizerFeedback", nameof(config));
         if (c.EqualizerTaps is { } et)
@@ -358,7 +365,8 @@ public static class Link
                 ? Sync.DfeLeastSquares(xe, a.AsSpan(0, pre), taps, c.EqualizerFeedback, 2)
                 : null;
             Complex[] eq = Sync.DfeEqualizer(xe, a.AsSpan(0, pre), taps, c.EqualizerFeedback, c.EqualizerStep, 2, null, c.Modulation,
-                start?.Taps, start?.FeedbackTaps).Symbols;
+                start?.Taps, start?.FeedbackTaps,
+                c.EqualizerLoopGains is { } lg ? (lg[0], lg[1]) : null).Symbols;
             // the preamble is the equalizer's training, so it does not count
             z = eq[pre..];
             a = a[pre..];

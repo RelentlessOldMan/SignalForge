@@ -434,11 +434,13 @@ def dfe_equalizer(
     decision: str | None = None,
     initial_taps: ArrayLike | None = None,
     initial_feedback: ArrayLike | None = None,
+    phase_loop_gains: tuple[float, float] | None = None,
 ) -> DfeEqualization:
     """Decision-feedback equalizer: the LMS equalizer plus feedback taps on the past references,
     one normalized LMS update over both (conventions: Synchronization, Decision-feedback
     equalizer; ADR 0069). ``initial_taps`` and ``initial_feedback`` replace the unit impulse and
-    the zeros it starts from (ADR 0072)."""
+    the zeros it starts from (ADR 0072). ``phase_loop_gains`` ``(kp, ki)`` adds a second-order
+    carrier loop on the forward part (ADR 0073)."""
     out, errors, w, b = _equalize(
         samples,
         training,
@@ -450,6 +452,7 @@ def dfe_equalizer(
         decision,
         initial_taps,
         initial_feedback,
+        phase_loop_gains,
     )
     return DfeEqualization(out, errors, w, b)
 
@@ -528,6 +531,7 @@ def _equalize(
     decision: str | None,
     initial_taps: ArrayLike | None = None,
     initial_feedback: ArrayLike | None = None,
+    phase_loop_gains: tuple[float, float] | None = None,
 ) -> tuple[
     NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128]
 ]:
@@ -549,15 +553,27 @@ def _equalize(
     fb = [0j] * m
     if initial_feedback is not None:
         fb = _start(initial_feedback, m, "initial_feedback")
+    loop = None
+    if phase_loop_gains is not None:
+        if isinstance(phase_loop_gains, str | bytes) or len(phase_loop_gains) != 2:
+            raise ValueError("phase_loop_gains must be None or a pair (kp, ki)")
+        kp = real(phase_loop_gains[0], "phase_loop_gains")
+        ki = real(phase_loop_gains[1], "phase_loop_gains")
+        if kp < 0 or ki < 0:
+            raise ValueError("phase_loop_gains must not be negative")
+        loop = (kp, ki)
+    theta = nu = 0.0
     past = [0j] * m  # past[j - 1] is d_{n-j}
     out: list[complex] = []
     errors: list[complex] = []
     for n in range(n_out):
         base = n * sps + c
         u = [xs[base - i] if 0 <= base - i < len(xs) else 0j for i in range(taps)]
-        y = 0j
+        v = 0j
         for wi, ui in zip(w, u, strict=True):
-            y += wi * ui
+            v += wi * ui
+        r = complex(math.cos(theta), -math.sin(theta))
+        y = v * r if loop else v
         for bj, pj in zip(fb, past, strict=True):
             y += bj * pj
         out.append(y)
@@ -573,6 +589,9 @@ def _equalize(
             continue
         e = d - y
         errors.append(e)
+        f = 0j
+        for bj, pj in zip(fb, past, strict=True):
+            f += bj * pj
         p = 0.0
         for ui in u:
             p += ui.real * ui.real + ui.imag * ui.imag
@@ -580,8 +599,15 @@ def _equalize(
             p += pj.real * pj.real + pj.imag * pj.imag
         if p > 0:
             g = mu / p
-            w = [wi + g * e * ui.conjugate() for wi, ui in zip(w, u, strict=True)]
+            ef = e * r.conjugate() if loop else e
+            w = [wi + g * ef * ui.conjugate() for wi, ui in zip(w, u, strict=True)]
             fb = [bj + g * e * pj.conjugate() for bj, pj in zip(fb, past, strict=True)]
+        if loop:
+            q = d - f
+            cc = (v * r) * q.conjugate()
+            ph = math.atan2(cc.imag, cc.real) if v != 0 and q != 0 else 0.0
+            nu += loop[1] * ph
+            theta += loop[0] * ph + nu
         if m:
             past = [d, *past[:-1]]
     return (
