@@ -262,8 +262,19 @@ def decode(v: Any) -> Any:
             return complex(decode(re), decode(im))
         return {k: decode(x) for k, x in v.items()}
     if isinstance(v, list):
+        if any(_is_item(x) for x in v):  # a list of records or strings, not an array
+            return [decode(x) for x in v]
         return np.asarray([decode(x) for x in v])
     return v
+
+
+def _is_item(x: Any) -> bool:
+    """Whether ``x`` makes the JSON array holding it a list rather than a number array."""
+    if isinstance(x, str):
+        return x not in ("inf", "-inf", "nan")
+    if isinstance(x, dict):
+        return set(x) != {"re", "im"}
+    return x is None or isinstance(x, bool)
 
 
 def _record(v: Any) -> dict[str, Any]:
@@ -283,6 +294,8 @@ def encode(v: Any) -> Any:
         return {k: encode(x) for k, x in v.items()}
     if isinstance(v, tuple):
         return [encode(float(x)) for x in v]
+    if isinstance(v, list):
+        return [encode(x) for x in v]
     if isinstance(v, np.ndarray):
         if np.iscomplexobj(v):
             return {
@@ -346,6 +359,18 @@ def compare(actual: Any, expected: Any, tol: dict[str, float], path: str = "") -
         return out
     if isinstance(expected, str):
         return [] if actual == expected else [f"{where}: {actual!r} != expected {expected!r}"]
+    if isinstance(expected, list):
+        if not isinstance(actual, list | tuple):
+            return [f"{where}: expected a list, got {type(actual).__name__}"]
+        if len(actual) != len(expected):
+            return [f"{where}: length {len(actual)} != expected {len(expected)}"]
+        return [
+            d
+            for i, (a, e) in enumerate(zip(actual, expected, strict=True))
+            for d in compare(a, e, tol, f"{where}[{i}]")
+        ]
+    if isinstance(actual, list) and isinstance(expected, np.ndarray):
+        actual = np.asarray(actual)
     if isinstance(actual, tuple):  # a tuple of numbers is a real array, as in the C# runner
         actual = np.asarray(actual, dtype=np.float64)
     if isinstance(actual, np.ndarray) and not np.iscomplexobj(actual) and actual.dtype != np.bool_:

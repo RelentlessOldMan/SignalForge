@@ -1206,7 +1206,7 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     `signalforge:units` and `signalforge:impedance` when they are set, `signalforge:metadata` (an
     object) for metadata keys without a `:`, and every metadata key with a `:` as its own field.
   - `captures`: one, `{"core:sample_start": 0, "core:frequency": center_frequency}`.
-  - `annotations`: empty.
+  - `annotations`: the metadata key `core:annotations` when it is set, otherwise empty (below).
   Rejected on write: a datatype of the other kind, a non-finite `center_frequency` or
   `time_origin`, metadata that is not JSON (strings, finite numbers, bools, null, lists, string-keyed
   objects), and a metadata key that would replace a field above (`core:datatype`, `core:version`,
@@ -1217,13 +1217,21 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
   integer 1, `core:dataset` or `core:metadata_only`, a capture whose `core:header_bytes` is not the
   integer 0, captures with
   different `core:frequency` (a missing one is 0), a data file that is not a whole number of
-  samples, JSON with duplicate keys or the non-standard `NaN`/`Infinity`. Other global fields go to
-  `metadata` under their own names; annotations and the rest of each capture are not read.
+  samples, JSON with duplicate keys or the non-standard `NaN`/`Infinity`, `annotations: null`, and
+  a global field named `core:annotations`. Other global fields go to `metadata` under their own
+  names; the rest of each capture is not read.
   JSON numbers without a fraction or exponent are integers (`int` / `long`), others floats;
   writing, a float always gets a fraction or an exponent (`2.0`, not `2`), so the kind survives a
   trip through the other language. `captures` and `signalforge:metadata` may be missing, but `null`
   is not an array or an object and is rejected. A missing or unreadable file is an OS error
   (`OSError` / `IOException`), not `invalid_argument`. **(implemented)**
+- **Annotations** ([ADR 0061](adr/0061-sigmf-annotations.md)): the metadata key
+  `core:annotations` is a list of JSON objects, written to the top-level `annotations` array (not
+  to `global`) and read back from it, in file order; an empty or missing array gives no key. Each
+  needs `core:sample_start`, an integer ≥ 0, and may have `core:sample_count`, an integer ≥ 0
+  (a bool or `2.0` is not an integer); other fields are kept as they are. The list must be sorted
+  by `core:sample_start` (ties in any order); unsorted is rejected on writing and reading, not
+  sorted. Whether an annotation runs past the samples is not checked. **(implemented)**
 - **JSON limits**, the same reading and writing, so whatever one language writes the other reads:
   integers within signed 64 bits (`−2^63 … 2^63 − 1`); floats finite (a literal that overflows a
   double, such as `1e400`, is rejected, not read as infinity); strings and keys valid Unicode (no

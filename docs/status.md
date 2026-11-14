@@ -4,11 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **SigMF annotations**: read and write `core:annotations` (sample start, count, label) as
-   Signal metadata, in both languages.
-2. **OFDM in the link**: a `"ofdm"` modulation in `qpsk_link` with a subcarrier plan, a known
+1. **OFDM in the link**: a `"ofdm"` modulation in `qpsk_link` with a subcarrier plan, a known
    preamble block for timing and a per-subcarrier channel estimate, BER against QPSK theory.
-3. **Lomb-Scargle false-alarm probability** (Scargle's exponential form for the standard
+2. **Lomb-Scargle false-alarm probability** (Scargle's exponential form for the standard
    normalization) and a frequency-grid helper from the time span.
 
 ## Built
@@ -611,6 +609,16 @@ Updated with every chunk of work. Dates are absolute.
   gain per subcarrier. Also from review: `lomb_scargle` now rejects strings of digits instead of
   converting them. Python 2685 passed, 2 skipped; .NET 2193 passed; conformance 1370/1370
   in both. Version 2026.11.13.83.
+- 2026-11-13: SigMF annotations (ADR 0061): the metadata key `core:annotations`, a list of JSON
+  objects, is written to the top-level `annotations` array and read back from it in file order;
+  each needs an integer `core:sample_start` ≥ 0 and may have an integer `core:sample_count` ≥ 0,
+  other fields kept as they are; the list must be sorted by start (rejected, not sorted, both
+  ways); an empty or missing array gives no key. `annotations: null` and a global
+  `core:annotations` are rejected on reading. The cross-language file exchange now carries two
+  annotations. Both conformance runners compare a JSON list (an array holding a record, a string,
+  a bool or null) element by element; the `files` generator gained 12 annotation cases and
+  `foreign_ci16` now expects its annotation. Python 2711 passed, 2 skipped; .NET 2221
+  passed; conformance 1382/1382 in both. Version 2026.11.13.85. (The first build of this, .84, failed: the C# report writer could not encode a list; fixed.)
 
 ## Not built
 
@@ -618,7 +626,7 @@ Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, el
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond modulate and demodulate (pilots, preambles, synchronization, equalization, OFDM in the link), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
-multi-capture SigMF recordings, WAV metadata chunks, SigMF annotations, `f16` samples), plotting, CLI,
+multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.
 
 ## Lessons

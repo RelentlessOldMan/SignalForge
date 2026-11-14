@@ -27,6 +27,8 @@ public static class SignalFiles
         "core:num_channels", "core:dataset", "core:metadata_only",
     ];
 
+    private const string AnnotationsKey = "core:annotations";
+
     private readonly record struct Format(bool IsComplex, bool IsInteger, int Bits, bool BigEndian, bool Unsigned)
     {
         public int PartBytes => Bits / 8;
@@ -197,6 +199,8 @@ public static class SignalFiles
             : EncodeSamples(MemoryMarshal.Cast<T, double>(signal.Samples), datatype);
         Check.Finite(signal.TimeOrigin, nameof(signal));
         Check.Finite(signal.CenterFrequency, nameof(signal));
+        object? annotations = signal.Metadata.TryGetValue(AnnotationsKey, out var av) ? av : new List<object?>();
+        CheckAnnotations(annotations, $"metadata {AnnotationsKey}");
 
         var buffer = new MemoryStream();
         var options = new JsonWriterOptions { Indented = true, NewLine = "\n", Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
@@ -235,7 +239,7 @@ public static class SignalFiles
                 }
                 w.WriteEndObject();
             }
-            foreach (var (k, v) in signal.Metadata.Where(kv => kv.Key.Contains(':', StringComparison.Ordinal)))
+            foreach (var (k, v) in signal.Metadata.Where(kv => kv.Key.Contains(':', StringComparison.Ordinal) && kv.Key != AnnotationsKey))
             {
                 if (Reserved.Contains(k) || k.StartsWith("signalforge:", StringComparison.Ordinal))
                     throw new ArgumentException($"metadata key '{k}' is reserved", nameof(signal));
@@ -250,14 +254,47 @@ public static class SignalFiles
             WriteDouble(w, signal.CenterFrequency);
             w.WriteEndObject();
             w.WriteEndArray();
-            w.WriteStartArray("annotations");
-            w.WriteEndArray();
+            w.WritePropertyName("annotations");
+            WriteValue(w, annotations, AnnotationsKey, 2);
             w.WriteEndObject();
         }
         buffer.WriteByte((byte)'\n');
         var (meta, dataPath) = Files(path);
         File.WriteAllBytes(dataPath, data);
         File.WriteAllBytes(meta, buffer.ToArray());
+    }
+
+    /// <summary>Checks <paramref name="v"/> as a SigMF annotations list (conventions: Signal files, Annotations).</summary>
+    private static void CheckAnnotations(object? v, string what)
+    {
+        if (v is not IEnumerable items || v is string or IDictionary)
+            throw new ArgumentException($"{what} must be a JSON array");
+        long last = 0;
+        int i = 0;
+        foreach (object? a in items)
+        {
+            if (a is not IDictionary map)
+                throw new ArgumentException($"{what}[{i}] must be a JSON object");
+            long start = SampleIndex(map["core:sample_start"], $"{what}[{i}] core:sample_start");
+            if (map.Contains("core:sample_count"))
+                SampleIndex(map["core:sample_count"], $"{what}[{i}] core:sample_count");
+            if (start < last)
+                throw new ArgumentException($"{what} must be sorted by core:sample_start");
+            last = start;
+            i++;
+        }
+    }
+
+    /// <summary>An annotation's integer field, which must be at least 0.</summary>
+    private static long SampleIndex(object? n, string what)
+    {
+        long? k = n switch
+        {
+            sbyte or byte or short or ushort or int or uint or long => Convert.ToInt64(n, CultureInfo.InvariantCulture),
+            ulong u when u <= long.MaxValue => (long)u,
+            _ => null,
+        };
+        return k is >= 0 ? k.Value : throw new ArgumentException($"{what} must be an integer >= 0");
     }
 
     /// <summary>A float with a fraction or an exponent, so a reader sees a float, not an integer.</summary>
@@ -356,6 +393,10 @@ public static class SignalFiles
         }
         if (freqs.Count > 1)
             throw new ArgumentException("captures at different frequencies are not supported", nameof(path));
+        if (glob.ContainsKey(AnnotationsKey))
+            throw new ArgumentException($"{AnnotationsKey} belongs at the top level, not in global", nameof(path));
+        object? annotations = top.TryGetValue("annotations", out var av) ? av : new List<object?>();
+        CheckAnnotations(annotations, "annotations");
         object? units = glob.GetValueOrDefault("signalforge:units");
         if (units is not (null or string))
             throw new ArgumentException("signalforge:units must be a string", nameof(path));
@@ -365,6 +406,8 @@ public static class SignalFiles
         foreach (var (k, v) in glob)
             if (!Reserved.Contains(k) && !k.StartsWith("signalforge:", StringComparison.Ordinal))
                 metadata[k] = v;
+        if (annotations is List<object?> { Count: > 0 })
+            metadata[AnnotationsKey] = annotations;
         double timeOrigin = glob.TryGetValue("signalforge:time_origin", out var t0) ? Num(t0, "signalforge:time_origin") : 0.0;
         T[] samples = DecodeSamples<T>(File.ReadAllBytes(dataPath), datatype);
         return new Signal<T>(samples, rate, freqs.Count == 1 ? freqs.First() : 0.0, timeOrigin, (string?)units,

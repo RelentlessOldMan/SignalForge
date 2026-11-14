@@ -47,6 +47,7 @@ come from are in [docs/testing.md](../docs/testing.md): never from SignalForge's
 | `"inf"`, `"-inf"`, `"nan"` | special floats; NaN matches only NaN |
 | `null` | no value (`None` / `null`); matches only null |
 | `[1, 2, 3]` | real or integer array |
+| `[{..}, "a", null]` | a list, when any element is a string (other than the special floats), a bool, `null` or an object other than a complex number; compared element by element |
 | `{"re": 1, "im": 2}` | complex number |
 | `{"re": [..], "im": [..]}` | complex array |
 | any other object | a structured result; **only the fields listed are compared** |

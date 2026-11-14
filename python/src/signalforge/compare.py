@@ -160,7 +160,16 @@ def exchange_signal(datatype: str, writer: str) -> Signal:
         time_origin=-0.25,
         units="V",
         impedance=50.0,
-        metadata={"writer": writer, "run": 7, "gains": [1, 2.5], "core:author": "signalforge"},
+        metadata={
+            "writer": writer,
+            "run": 7,
+            "gains": [1, 2.5],
+            "core:author": "signalforge",
+            "core:annotations": [
+                {"core:sample_start": 8, "core:sample_count": 16, "core:label": "burst"},
+                {"core:sample_start": 40, "core:comment": "marker"},
+            ],
+        },
     )
 
 

@@ -195,9 +195,35 @@ recs.append((
     {"samples": {"re": [i / 32768 for i, _ in ci16], "im": [q / 32768 for _, q in ci16]},
      "sample_rate": 48000, "center_frequency": 915000000, "time_origin": 0, "units": None,
      "impedance": None,
-     "metadata": {"core:author": "a test", "core:description": "four samples"}},
+     "metadata": {"core:author": "a test", "core:description": "four samples",
+                  "core:annotations": [{"core:sample_start": 0, "core:sample_count": 2,
+                                        "core:label": "burst"}]}},
     "a file laid out as another tool writes one: codes over 2^15, frequency from the capture, "
-    "core:author and core:description kept as metadata, annotations not read",
+    "core:author and core:description kept as metadata, the annotation under core:annotations",
+))
+labelled = [
+    {"core:sample_start": 0, "core:label": "start", "x:score": 0.75},
+    {"core:sample_start": 1, "core:sample_count": 0, "core:comment": "empty span"},
+    {"core:sample_start": 1, "core:sample_count": 9, "core:freq_lower_edge": -1.5e3,
+     "core:freq_upper_edge": 1.5e3, "x:tags": ["a", {"b": None}]},
+]
+recs.append((
+    "annotations_ri16",
+    meta(base("ri16_le"), None, labelled),
+    struct.pack("<2h", 8192, -8192),
+    {"samples": [0.25, -0.25], "sample_rate": 1000, "center_frequency": 0, "time_origin": 0,
+     "units": None, "impedance": None, "metadata": {"core:annotations": labelled}},
+    "annotations kept in file order with every field: a tie at sample 1, a zero count, a span "
+    "past the two samples (not checked), nested values",
+))
+recs.append((
+    "annotations_missing",
+    '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '
+    '"core:sample_rate": 1000}, "captures": []}\n',
+    struct.pack("<h", 16384),
+    {"samples": [0.5], "sample_rate": 1000, "center_frequency": 0, "time_origin": 0,
+     "units": None, "impedance": None, "metadata": {}},
+    "no annotations array: no core:annotations key, as for an empty one",
 ))
 recs.append((
     "signalforge_rf32_be",
@@ -298,6 +324,30 @@ for name, text, why in (
     ("header_bytes_float",
      meta(base("ri16_le"), [{"core:sample_start": 0, "core:header_bytes": 0.0}]),
      "core:header_bytes must be the integer 0, and 0.0 is a float"),
+    ("annotations_null", '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '
+     '"core:sample_rate": 1000}, "captures": [], "annotations": null}\n',
+     "annotations, when present, must be an array; null is not one"),
+    ("annotations_object", meta(base("ri16_le"), None, {"core:sample_start": 0}),
+     "annotations must be an array"),
+    ("annotation_not_object", meta(base("ri16_le"), None, [5]), "each annotation is an object"),
+    ("annotation_no_start", meta(base("ri16_le"), None, [{"core:label": "x"}]),
+     "core:sample_start is required"),
+    ("annotation_start_float", meta(base("ri16_le"), None, [{"core:sample_start": 2.0}]),
+     "core:sample_start must be an integer, and 2.0 is a float"),
+    ("annotation_start_negative", meta(base("ri16_le"), None, [{"core:sample_start": -1}]),
+     "core:sample_start must be at least 0"),
+    ("annotation_count_bool",
+     meta(base("ri16_le"), None, [{"core:sample_start": 0, "core:sample_count": True}]),
+     "core:sample_count must be an integer, and a bool is not one"),
+    ("annotation_count_negative",
+     meta(base("ri16_le"), None, [{"core:sample_start": 0, "core:sample_count": -2}]),
+     "core:sample_count must be at least 0"),
+    ("annotations_unsorted",
+     meta(base("ri16_le"), None, [{"core:sample_start": 5}, {"core:sample_start": 4}]),
+     "annotations must be sorted by core:sample_start; they are not sorted for the caller"),
+    ("annotations_in_global",
+     meta(base("ri16_le", **{"core:annotations": [{"core:sample_start": 0}]})),
+     "core:annotations is the top-level array, not a global field"),
 ):
     recs.append((name, text, one, None, why))
 recs.append(("partial_sample", meta(base("ri16_le")), b"\x01\x00\x02", None,

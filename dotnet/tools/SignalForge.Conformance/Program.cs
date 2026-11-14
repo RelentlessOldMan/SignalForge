@@ -106,6 +106,11 @@ internal static class Exchange
             ["run"] = 7,
             ["gains"] = new object[] { 1, 2.5 },
             ["core:author"] = "signalforge",
+            ["core:annotations"] = new object[]
+            {
+                new Dictionary<string, object?> { ["core:sample_start"] = 8, ["core:sample_count"] = 16, ["core:label"] = "burst" },
+                new Dictionary<string, object?> { ["core:sample_start"] = 40, ["core:comment"] = "marker" },
+            },
         };
         foreach (string dt in Datatypes())
         {

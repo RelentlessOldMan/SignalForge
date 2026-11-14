@@ -1,0 +1,36 @@
+{
+  "global": {
+    "core:datatype": "ri16_le",
+    "core:version": "1.0.0",
+    "core:sample_rate": 1000
+  },
+  "captures": [
+    {
+      "core:sample_start": 0
+    }
+  ],
+  "annotations": [
+    {
+      "core:sample_start": 0,
+      "core:label": "start",
+      "x:score": 0.75
+    },
+    {
+      "core:sample_start": 1,
+      "core:sample_count": 0,
+      "core:comment": "empty span"
+    },
+    {
+      "core:sample_start": 1,
+      "core:sample_count": 9,
+      "core:freq_lower_edge": -1500.0,
+      "core:freq_upper_edge": 1500.0,
+      "x:tags": [
+        "a",
+        {
+          "b": null
+        }
+      ]
+    }
+  ]
+}

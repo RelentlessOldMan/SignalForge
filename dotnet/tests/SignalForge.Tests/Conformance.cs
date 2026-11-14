@@ -112,6 +112,7 @@ public static class Conformance
         double[] ds => new JsonArray([.. ds.Select(d => Encode(d))]),
         double[][] rows => new JsonArray([.. rows.Select(r => Encode(r))]),
         Dictionary<string, object?> m => new JsonObject(m.Select(kv => KeyValuePair.Create(kv.Key, Encode(kv.Value)))),
+        List<object?> l => new JsonArray([.. l.Select(Encode)]),
         _ => throw new InvalidOperationException($"cannot encode {v.GetType()}"),
     };
 
@@ -774,6 +775,8 @@ public static class Conformance
                     var s => s,
                 };
             case JsonValueKind.Array:
+                if (v.EnumerateArray().Any(IsItem)) // a list of records or strings, not an array
+                    return v.EnumerateArray().Select(Decode).ToList();
                 if (v.GetArrayLength() > 0 && v[0].ValueKind == JsonValueKind.Array)
                     return v.EnumerateArray().Select(e => (double[])Decode(e)!).ToArray(); // rows of a 2-D result
                 return v.EnumerateArray().Select(e => (double)Decode(e)!).ToArray();
@@ -797,6 +800,15 @@ public static class Conformance
         }
     }
 
+    /// <summary>Whether <paramref name="x"/> makes the JSON array holding it a list rather than a number array.</summary>
+    private static bool IsItem(JsonElement x) => x.ValueKind switch
+    {
+        JsonValueKind.String => x.GetString() is not ("inf" or "-inf" or "nan"),
+        JsonValueKind.Object => !(x.EnumerateObject().Count() == 2 && x.TryGetProperty("re", out _) && x.TryGetProperty("im", out _)),
+        JsonValueKind.Null or JsonValueKind.True or JsonValueKind.False => true,
+        _ => false,
+    };
+
     /// <summary>Result to the decoded-vector shape: numbers as double, arrays as double[]/Complex[], records as snake_case dictionaries.</summary>
     public static object? Canonical(object? v) => v switch
     {
@@ -804,6 +816,8 @@ public static class Conformance
         double or Complex or Complex[] or double[] or double[][] or bool or string => v,
         long l => (double)l,
         Dictionary<string, object?> m => m.ToDictionary(kv => kv.Key, kv => Canonical(kv.Value)),
+        List<object?> l when l.All(x => x is long or double) => l.Select(x => Convert.ToDouble(x, CultureInfo.InvariantCulture)).ToArray(),
+        List<object?> l => l.Select(Canonical).ToList(),
         int i => (double)i,
         byte[] b => b.Select(x => (double)x).ToArray(),
         System.Runtime.CompilerServices.ITuple t => Enumerable.Range(0, t.Length).Select(i => Convert.ToDouble(t[i], CultureInfo.InvariantCulture)).ToArray(),
@@ -861,6 +875,15 @@ public static class Conformance
                 return;
             case Complex[] ec when actual is Complex[] ac:
                 CompareArrays(ac, ec, abs, rel, where, msgs);
+                return;
+            case List<object?> el:
+                if (actual is not List<object?> al)
+                    msgs.Add($"{where}: expected a list, got {actual?.GetType().Name ?? "null"}");
+                else if (al.Count != el.Count)
+                    msgs.Add($"{where}: length {al.Count} != expected {el.Count}");
+                else
+                    for (int i = 0; i < el.Count; i++)
+                        Compare(al[i], el[i], abs, rel, $"{where}[{i}]", msgs);
                 return;
             case string es:
                 if (actual as string != es) msgs.Add($"{where}: {actual ?? "null"} != expected {es}");

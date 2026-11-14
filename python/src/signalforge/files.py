@@ -154,6 +154,27 @@ def _finite(v: float, what: str) -> float:
     return real(v, what)
 
 
+_ANNOTATIONS = "core:annotations"
+
+
+def _annotations(v: Any, what: str) -> list[dict[str, Any]]:
+    """``v`` checked as a SigMF annotations list (conventions: Signal files, Annotations)."""
+    if not isinstance(v, list):
+        raise ValueError(f"{what} must be a JSON array")
+    last = 0
+    for i, a in enumerate(v):
+        a = _object(a, f"{what}[{i}]")
+        for k in ("core:sample_start", "core:sample_count"):
+            if k == "core:sample_start" or k in a:
+                n = a.get(k)
+                if not isinstance(n, int) or isinstance(n, bool) or n < 0:
+                    raise ValueError(f"{what}[{i}] {k} must be an integer >= 0")
+        if a["core:sample_start"] < last:
+            raise ValueError(f"{what} must be sorted by core:sample_start")
+        last = a["core:sample_start"]
+    return v
+
+
 def write_sigmf(path: str | os.PathLike[str], signal: Signal, datatype: str | None = None) -> None:
     """Write ``signal`` as ``<base>.sigmf-data`` and ``<base>.sigmf-meta``. ``datatype`` defaults
     to ``cf64_le`` or ``rf64_le``, which lose nothing."""
@@ -177,6 +198,7 @@ def write_sigmf(path: str | os.PathLike[str], signal: Signal, datatype: str | No
     plain = {k: v for k, v in meta.items() if ":" not in k}
     if plain:
         glob["signalforge:metadata"] = plain
+    annotations = _annotations(meta.pop(_ANNOTATIONS, []), f"metadata {_ANNOTATIONS}")
     for k, v in meta.items():
         if ":" in k:
             if k in _RESERVED or k.startswith("signalforge:"):
@@ -186,7 +208,7 @@ def write_sigmf(path: str | os.PathLike[str], signal: Signal, datatype: str | No
         "core:sample_start": 0,
         "core:frequency": _finite(signal.center_frequency, "center_frequency"),
     }
-    doc = _json({"global": glob, "captures": [capture], "annotations": []}, "the metadata")
+    doc = _json({"global": glob, "captures": [capture], "annotations": annotations}, "the metadata")
     text = json.dumps(doc, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
     meta_path, data_path = _files(path)
     data_path.write_bytes(data)  # only once nothing above can fail
@@ -253,6 +275,9 @@ def read_sigmf(path: str | os.PathLike[str]) -> Signal:
         freqs.add(_finite(c.get("core:frequency", 0), f"captures[{i}] core:frequency"))
     if len(freqs) > 1:
         raise ValueError("captures at different frequencies are not supported")
+    if _ANNOTATIONS in glob:
+        raise ValueError(f"{_ANNOTATIONS} belongs at the top level, not in global")
+    annotations = _annotations(doc.get("annotations", []), "annotations")
     units = glob.get("signalforge:units")
     if units is not None and not isinstance(units, str):
         raise ValueError("signalforge:units must be a string")
@@ -261,6 +286,8 @@ def read_sigmf(path: str | os.PathLike[str]) -> Signal:
     metadata.update(
         {k: v for k, v in glob.items() if k not in _RESERVED and not k.startswith("signalforge:")}
     )
+    if annotations:
+        metadata[_ANNOTATIONS] = annotations
     return Signal(
         decode_samples(data_path.read_bytes(), datatype),
         rate,
