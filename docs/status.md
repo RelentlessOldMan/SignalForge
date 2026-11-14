@@ -4,12 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Multitaper line removal** (Thomson 1982): at the bins where the harmonic F-test (ADR 0080)
-   rejects at a chosen probability, subtract the fitted line `μ·U_k(f − f₀)` from each
-   eigencoefficient over the band `|f − f₀| ≤ W`. Then return the line-free multitaper PSD and
-   the removed lines (frequency, complex amplitude). Expected values from a stdlib generator
-   that builds the tapers and spectra independently, plus a by-hand case: a pure bin-centred
-   tone leaves only round-off.
+1. **Bessel IIR design**: a lowpass and highpass from the Bessel polynomial's poles. Its
+   normalization (delay, phase or −3 dB at the cutoff) is a convention to fix first. The analog
+   prototype goes through the same bilinear path as Butterworth and Chebyshev. Expected values
+   from a stdlib generator that finds the polynomial's roots independently (Durand-Kerner, each
+   checked against the polynomial), with by-hand orders 1 and 2.
 
 ## Built
 
@@ -841,11 +840,24 @@ Updated with every chunk of work. Dates are absolute.
   round trip near `z = 1` is only as good as `1 − z` after rounding `z`, so those cases get a
   looser tolerance. Python 3197 passed, 2 skipped; .NET 2661 passed; conformance
   1616/1616 in both. Version 2026.11.13.114.
+- 2026-11-13: multitaper line removal ([ADR 0083](adr/0083-multitaper-line-removal.md)):
+  `multitaper_line_removal(samples, sample_rate, half_bandwidth, *, probability, num_tapers,
+  one_sided, nfft, adaptive)` (C# `Spectral.MultitaperLineRemoval`, real and complex, returning
+  `LineRemovalResult<T>`) is Thomson's reshaping. A bin is a line when its F-test `p` is below
+  `probability` (default `1/N`) and its `F` peaks within the half-bandwidth. Each line comes off
+  the samples, which is the same as subtracting `μ·V_k(f − f₀)` from every eigencoefficient
+  (tested against the DPSS DFTs directly). The PSD is then recomputed with every
+  `multitaper_psd` option. The F-test's peak rule keeps one line per peak when padding puts
+  several bins over the threshold. `multitaper` gains 12 cases (7 removal, 3 of them by hand:
+  pure complex tone, DC, Nyquist; 5 errors), all at least 1.7× from their thresholds. Lesson: at
+  the default `1/N` a spectrum expects about one noise line, so tests that count lines set a
+  strict probability. Python 3214 passed, 2 skipped; .NET 2678 passed; conformance
+  1628/1628 in both. Version 2026.11.13.115.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
-(multitaper line removal; weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
+(weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,

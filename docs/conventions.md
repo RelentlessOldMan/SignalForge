@@ -219,6 +219,19 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `μ·e^{2πi f n/fs}` with `n` counted from 0. Real input gives bins `0 … ⌊M/2⌋` with frequencies
   `b·fs/M`. Complex input gives all `M` bins on the PSD's two-sided axis. Nothing is folded or
   scaled by `fs`. **(implemented)**
+- **Multitaper line removal** (`multitaper_line_removal(samples, sample_rate, half_bandwidth, *,
+  probability=None, num_tapers=None, one_sided=None, nfft=None, adaptive=False)` →
+  `LineRemoval(spectrum, line_frequencies, line_amplitudes, residual)`, C# `LineRemovalResult`,
+  [ADR 0083](adr/0083-multitaper-line-removal.md)).
+  - Detection: a bin of the harmonic F-test is a line when `p < probability` (default `1/N`,
+    range `(0, 1]`) and its `F` is the largest within `r = ⌊NW·M/N⌋` bins either side. Bins are
+    taken circularly mod `M`. For real input a bin past `M/2` stands for its mirror. A tie goes
+    to the bin first in the returned order.
+  - Removal: every line comes off the samples at once, using the F-test's `μ`. For complex input
+    that is `μ·e^{iθ}`. For real input at `0 < b < M/2` it is `2·Re(μ·e^{iθ})`. At DC and at
+    `b = M/2` it is `Re μ·cos θ`. Here `θ = 2π·((b·n) mod M)/M`.
+  - Outputs: `spectrum` is `multitaper_psd` of the residual with the same arguments. The lines'
+    frequencies and `μ` are in the returned order. **(implemented)**
 - **Lomb-Scargle periodogram** (`lomb_scargle(times, values, frequencies, center=True,
   normalization="standard")`, [ADR 0059](adr/0059-lomb-scargle.md)), for unevenly sampled real
   data. `times` and `values` are finite reals of the same length `N ≥ 2` (times in any order,

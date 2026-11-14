@@ -264,6 +264,7 @@ public static class Conformance
             "dpss_tapers" => Bind((a.I("length"), a.D("half_bandwidth"), a.OptInt("num_tapers")), t => Spectral.DpssTapers(t.Item1, t.Item2, t.Item3)),
             "multitaper_psd" => MultitaperOp(a),
             "harmonic_f_test" => FTestOp(a),
+            "multitaper_line_removal" => LineRemovalOp(a),
             "spectrogram" => SpectrogramOp(a),
             "lomb_scargle_false_alarm" => Bind((a.D("power"), a.I("num_samples"), a.Has("num_frequencies") ? a.I("num_frequencies") : 1, a.Flag("center", true)),
                 t => Spectral.LombScargleFalseAlarm(t.Item1, t.Item2, t.Item3, t.Item4)),
@@ -564,6 +565,22 @@ public static class Conformance
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
         return () => Spectral.MultitaperPsd(x, fs, nw, k, oneSided, nfft, adaptive);
+    }
+
+    private static Func<object?> LineRemovalOp(Args a)
+    {
+        object? samples = a.Get("samples");
+        var (fs, nw, k, nfft) = (a.D("sample_rate"), a.D("half_bandwidth"), a.OptInt("num_tapers"), a.OptInt("nfft"));
+        var (probability, adaptive) = (a.OptD("probability"), a.Flag("adaptive"));
+        if (samples is Complex[] cs)
+        {
+            if (a.Flag("one_sided"))
+                throw new InvalidDataException("one_sided=true with complex samples has no C# form");
+            return () => Spectral.MultitaperLineRemoval(cs, fs, nw, probability, k, nfft, adaptive);
+        }
+        double[] x = Reals(samples);
+        bool oneSided = a.Flag("one_sided", dflt: true);
+        return () => Spectral.MultitaperLineRemoval(x, fs, nw, probability, k, oneSided, nfft, adaptive);
     }
 
     private static Func<object?> SpectrogramOp(Args a)

@@ -517,6 +517,85 @@ def harmonic_f_test(
     )
 
 
+@dataclass(frozen=True)
+class LineRemoval:
+    """Lines found by the harmonic F-test and the multitaper PSD left once they are removed
+    (conventions: Spectra, Multitaper line removal; ADR 0083)."""
+
+    spectrum: SpectralDensity
+    line_frequencies: NDArray[np.float64]
+    line_amplitudes: NDArray[np.complex128]
+    residual: NDArray[np.float64] | NDArray[np.complex128]
+
+
+def multitaper_line_removal(
+    samples: ArrayLike,
+    sample_rate: float,
+    half_bandwidth: float,
+    *,
+    probability: float | None = None,
+    num_tapers: int | None = None,
+    one_sided: bool | None = None,
+    nfft: int | None = None,
+    adaptive: bool = False,
+) -> LineRemoval:
+    """Thomson's line removal: subtract the lines the harmonic F-test finds, then the multitaper
+    PSD of what remains (conventions: Spectra, Multitaper line removal; ADR 0083)."""
+    x = _vector(samples, "samples")
+    test = harmonic_f_test(x, sample_rate, half_bandwidth, num_tapers=num_tapers, nfft=nfft)
+    n = x.size
+    alpha = 1 / n if probability is None else real(probability, "probability")
+    if not 0 < alpha <= 1:
+        raise ValueError("probability must be in (0, 1]")
+    m = n if nfft is None else int(nfft)
+    nw, _ = _taper_args(n, half_bandwidth, num_tapers)
+    r = math.floor(nw * m / n)
+    is_complex = np.iscomplexobj(x)
+
+    def pos(b: int) -> int:
+        b %= m
+        if is_complex:
+            return (b + m // 2) % m
+        return b if b <= m // 2 else m - b
+
+    f, p = test.f_statistic, test.p_values
+    lines = []
+    for j in range(f.size):
+        if not p[j] < alpha:
+            continue
+        b = (j - m // 2) % m if is_complex else j
+        window = (pos(b + d) for d in range(-r, r + 1) if d)
+        if all(f[j] > f[i] if i < j else f[j] >= f[i] for i in window if i != j):
+            lines.append(j)
+    t = np.arange(n)
+    residual = x.copy()
+    for j in lines:
+        b = (j - m // 2) % m if is_complex else j
+        e = np.exp(2j * np.pi * ((b * t) % m) / m)
+        mu = test.amplitudes[j]
+        if is_complex:
+            residual -= mu * e
+        elif b == 0 or 2 * b == m:
+            residual -= mu.real * e.real
+        else:
+            residual -= 2 * (mu * e).real
+    spectrum = multitaper_psd(
+        residual,
+        sample_rate,
+        half_bandwidth,
+        num_tapers=num_tapers,
+        one_sided=one_sided,
+        nfft=nfft,
+        adaptive=adaptive,
+    )
+    return LineRemoval(
+        spectrum=spectrum,
+        line_frequencies=np.asarray(test.frequencies[lines], dtype=np.float64),
+        line_amplitudes=np.asarray(test.amplitudes[lines], dtype=np.complex128),
+        residual=residual,
+    )
+
+
 def _adaptive(
     eigen: NDArray[np.float64], lam: NDArray[np.float64], noise: float
 ) -> NDArray[np.float64]:

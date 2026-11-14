@@ -142,6 +142,18 @@ public sealed record TaperSet(double[][] Tapers, double[] Concentrations);
 public sealed record HarmonicFTestResult(double[] Frequencies, Complex[] Amplitudes, double[] FStatistic,
     double[] PValues, int NumTapers);
 
+/// <summary>
+/// Lines found by the harmonic F-test and the multitaper PSD left once they are removed
+/// (conventions: Spectra, Multitaper line removal; ADR 0083).
+/// </summary>
+/// <typeparam name="T">The sample type: <see cref="double"/> for real input, <see cref="Complex"/> for complex.</typeparam>
+/// <param name="Spectrum">The multitaper PSD of the residual.</param>
+/// <param name="LineFrequencies">The lines' bin frequencies in Hz, in the F-test's order.</param>
+/// <param name="LineAmplitudes">Each line's μ, the amplitude of μ·e^{2πi f n/fs}.</param>
+/// <param name="Residual">The samples with the lines removed.</param>
+public sealed record LineRemovalResult<T>(SpectralDensity Spectrum, double[] LineFrequencies, Complex[] LineAmplitudes,
+    T[] Residual);
+
 /// <summary>Occupied bandwidth by the β/2 method, in the PSD's frequency axis.</summary>
 /// <param name="Bandwidth">Upper minus lower, in Hz.</param>
 /// <param name="Lower">Lower band edge in Hz.</param>
@@ -576,6 +588,98 @@ public static class Spectral
             [.. Enumerable.Range(0, count).Select(i => mu[Bin(i)])],
             [.. Enumerable.Range(0, count).Select(i => f[Bin(i)])],
             [.. Enumerable.Range(0, count).Select(i => p[Bin(i)])], k);
+    }
+
+    /// <summary>
+    /// Thomson's line removal on a real input: subtract the lines the harmonic F-test finds, then the
+    /// multitaper PSD of what remains (conventions: Spectra, Multitaper line removal; ADR 0083).
+    /// </summary>
+    /// <param name="samples">The input, at least one sample.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="halfBandwidth">NW, in (0, N/2).</param>
+    /// <param name="probability">A bin is a line when its p-value is below this, in (0, 1]; null for 1/N.</param>
+    /// <param name="numTapers">K, at least 2; null for max(1, ⌊2NW⌋ − 1), which must then be at least 2.</param>
+    /// <param name="oneSided">Whether the spectrum is one-sided.</param>
+    /// <param name="nfft">Transform length, at least the input length; null for the input length.</param>
+    /// <param name="adaptive">Whether the spectrum uses Thomson's adaptive weights.</param>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static LineRemovalResult<double> MultitaperLineRemoval(ReadOnlySpan<double> samples, double sampleRate,
+        double halfBandwidth, double? probability = null, int? numTapers = null, bool oneSided = true, int? nfft = null,
+        bool adaptive = false)
+    {
+        var (freqs, amps, residual) = RemoveLines(ToComplex(samples), sampleRate, halfBandwidth, probability, numTapers, nfft, real: true);
+        double[] r = [.. residual.Select(z => z.Real)];
+        return new LineRemovalResult<double>(MultitaperPsd(r, sampleRate, halfBandwidth, numTapers, oneSided, nfft, adaptive),
+            freqs, amps, r);
+    }
+
+    /// <summary>
+    /// Thomson's line removal on a complex input: subtract the lines the harmonic F-test finds, then the
+    /// two-sided multitaper PSD of what remains (conventions: Spectra, Multitaper line removal; ADR 0083).
+    /// </summary>
+    /// <param name="samples">The input, at least one sample.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="halfBandwidth">NW, in (0, N/2).</param>
+    /// <param name="probability">A bin is a line when its p-value is below this, in (0, 1]; null for 1/N.</param>
+    /// <param name="numTapers">K, at least 2; null for max(1, ⌊2NW⌋ − 1), which must then be at least 2.</param>
+    /// <param name="nfft">Transform length, at least the input length; null for the input length.</param>
+    /// <param name="adaptive">Whether the spectrum uses Thomson's adaptive weights.</param>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static LineRemovalResult<Complex> MultitaperLineRemoval(ReadOnlySpan<Complex> samples, double sampleRate,
+        double halfBandwidth, double? probability = null, int? numTapers = null, int? nfft = null, bool adaptive = false)
+    {
+        var (freqs, amps, residual) = RemoveLines(samples, sampleRate, halfBandwidth, probability, numTapers, nfft, real: false);
+        return new LineRemovalResult<Complex>(MultitaperPsd(residual, sampleRate, halfBandwidth, numTapers, nfft, adaptive),
+            freqs, amps, residual);
+    }
+
+    private static (double[] Frequencies, Complex[] Amplitudes, Complex[] Residual) RemoveLines(ReadOnlySpan<Complex> x,
+        double sampleRate, double halfBandwidth, double? probability, int? numTapers, int? nfft, bool real)
+    {
+        HarmonicFTestResult test = FTest(x, sampleRate, halfBandwidth, numTapers, nfft, oneSided: real);
+        int n = x.Length, m = nfft ?? n;
+        double alpha = probability ?? 1.0 / n;
+        if (!(alpha > 0 && alpha <= 1))
+            throw new ArgumentOutOfRangeException(nameof(probability), probability, "must be in (0, 1]");
+        var (nw, _) = TaperArgs(n, halfBandwidth, numTapers);
+        int r = (int)Math.Floor(nw * m / n);
+        int Pos(int b)
+        {
+            b = ((b % m) + m) % m;
+            return real ? (b <= m / 2 ? b : m - b) : (b + (m / 2)) % m;
+        }
+        int BinOf(int j) => real ? j : (((j - (m / 2)) % m) + m) % m;
+        double[] f = test.FStatistic;
+        var lines = new List<int>();
+        for (int j = 0; j < f.Length; j++)
+        {
+            if (!(test.PValues[j] < alpha))
+                continue;
+            int b = BinOf(j);
+            bool peak = true;
+            for (int d = -r; d <= r && peak; d++)
+            {
+                int i = Pos(b + d);
+                if (d != 0 && i != j)
+                    peak = i < j ? f[j] > f[i] : f[j] >= f[i];
+            }
+            if (peak)
+                lines.Add(j);
+        }
+        var residual = x.ToArray();
+        foreach (int j in lines)
+        {
+            int b = BinOf(j);
+            Complex mu = test.Amplitudes[j];
+            for (int t = 0; t < n; t++)
+            {
+                Complex e = Complex.FromPolarCoordinates(1, 2 * Math.PI * (int)((long)b * t % m) / m);
+                residual[t] -= real
+                    ? (b == 0 || 2 * b == m ? mu.Real * e.Real : 2 * (mu * e).Real)
+                    : mu * e;
+            }
+        }
+        return ([.. lines.Select(j => test.Frequencies[j])], [.. lines.Select(j => test.Amplitudes[j])], residual);
     }
 
     /// <summary>Thomson's adaptive combination, each bin iterated on its own (ADR 0079).</summary>

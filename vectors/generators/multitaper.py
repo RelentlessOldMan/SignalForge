@@ -19,6 +19,7 @@ import cmath
 import json
 import math
 import pathlib
+import random
 import sys
 
 TOL = {"abs": 1e-10, "rel": 1e-10}
@@ -167,6 +168,50 @@ def f_test(x, fs, nw, k=None, nfft=None):
             "num_tapers": kk}
 
 
+def removal(x, fs, nw, probability=None, k=None, one_sided=None, nfft=None, adapt=False):
+    """Thomson's line removal (ADR 0083): the detection rule of conventions: Multitaper line
+    removal on this generator's F-test, each line subtracted sample by sample, then this
+    generator's PSD of the residual."""
+    is_complex = any(isinstance(v, complex) for v in x)
+    n = len(x)
+    m = n if nfft is None else nfft
+    test = f_test(x, fs, nw, k, nfft)
+    alpha = 1 / n if probability is None else probability
+    r = math.floor(nw * m / n)
+    big_f, ps = test["f_statistic"], test["p_values"]
+    mus = [complex(a, b) for a, b in zip(test["amplitudes"]["re"], test["amplitudes"]["im"])]
+
+    def bin_of(j):
+        return (j - m // 2) % m if is_complex else j
+
+    def pos(b):
+        b %= m
+        return (b + m // 2) % m if is_complex else (b if b <= m // 2 else m - b)
+
+    lines = []
+    for j in range(len(big_f)):
+        if not ps[j] < alpha:
+            continue
+        others = {pos(bin_of(j) + d) for d in range(-r, r + 1) if d} - {j}
+        if all(big_f[j] > big_f[i] if i < j else big_f[j] >= big_f[i] for i in others):
+            lines.append(j)
+    res = list(x)
+    for j in lines:
+        b, mu = bin_of(j), mus[j]
+        for i in range(n):
+            e = cmath.exp(2j * math.pi * ((b * i) % m) / m)
+            if is_complex:
+                res[i] -= mu * e
+            elif b == 0 or 2 * b == m:
+                res[i] -= mu.real * e.real
+            else:
+                res[i] -= 2 * (mu * e).real
+    return {"spectrum": multitaper(res, fs, nw, k, one_sided, nfft, adapt),
+            "line_frequencies": [test["frequencies"][j] for j in lines],
+            "line_amplitudes": cplx([mus[j] for j in lines]),
+            "residual": cplx(res) if is_complex else res}
+
+
 def same(a, b, tol=1e-14):
     if isinstance(a, dict) and isinstance(b, dict):
         return a.keys() == b.keys() and all(same(a[k], b[k], tol) for k in a)
@@ -186,6 +231,8 @@ SRC = ("vectors/generators/multitaper.py (stdlib only): eigenvectors of the comm
 PSRC = SRC + "; each tapered DFT summed term by term, averaged and folded per conventions: Spectra"
 FSRC = SRC + ("; each tapered DFT summed term by term, regressed on the tapers' sums per "
                "conventions: Harmonic F-test")
+RSRC = SRC + ("; this generator's F-test, the detection rule of conventions: Multitaper line "
+               "removal, each line subtracted sample by sample and the residual's PSD by direct sums")
 ASRC = PSRC.replace("averaged", "combined by iterating Thomson's adaptive weights per bin (ADR 0079)")
 
 
@@ -221,6 +268,17 @@ def f_case(case_id, x, fs, nw, src=FSRC, expected=None, **kw):
             "source": src}
 
 
+def removal_case(case_id, x, fs, nw, src=RSRC, check=None, **kw):
+    args = {"samples": cplx(x) if any(isinstance(v, complex) for v in x) else x, "sample_rate": fs,
+            "half_bandwidth": nw} | kw
+    computed = removal(x, fs, nw, kw.get("probability"), kw.get("num_tapers"), kw.get("one_sided"),
+                       kw.get("nfft"), kw.get("adaptive", False))
+    if check is not None:  # a hand derivation the sums must agree with
+        check(computed)
+    return {"id": case_id, "op": "multitaper_line_removal", "args": args, "expected": computed,
+            "tol": TOL, "source": src}
+
+
 def err(case_id, op, args, why):
     return {"id": case_id, "op": op, "args": args, "error": "invalid_argument", "source": why}
 
@@ -230,6 +288,27 @@ ramp = [float(i % 5) - 2 + 0.25 * math.sin(0.7 * i) for i in range(40)]
 tone = [math.sin(2 * math.pi * 0.1013 * i) + 1e-4 * math.cos(2 * math.pi * 0.37 * i)
         for i in range(48)]
 chirp = [cmath.exp(1j * (0.3 * i + 0.02 * i * i)) * (1 + 0.05 * i) for i in range(24)]
+noise = random.Random(83)
+lined = [1.2 * math.cos(2 * math.pi * 10 / 48 * i + 0.4) + 0.3 * math.cos(2 * math.pi * 0.31 * i)
+         + 0.2 * noise.gauss(0, 1) for i in range(48)]
+cline = [0.8 * cmath.exp(-2j * math.pi * 5 / 32 * i) + 0.15 * complex(noise.gauss(0, 1),
+         noise.gauss(0, 1)) for i in range(32)]
+twolines = [1.5 * math.cos(2 * math.pi * 0.2 * i) + 0.7 * math.sin(2 * math.pi * 0.42 * i)
+            + 0.3 * noise.gauss(0, 1) for i in range(40)]
+calm = [0.5 * noise.gauss(0, 1) for _ in range(30)]
+pure = [(0.5 + 0.5j) * cmath.exp(2j * math.pi * 3 / 16 * i) for i in range(16)]
+
+
+def leaves_round_off(freqs, amps):
+    def check(c):
+        assert same(c["line_frequencies"], freqs, 1e-15), c["line_frequencies"]
+        got = [complex(a, b) for a, b in zip(c["line_amplitudes"]["re"],
+                                              c["line_amplitudes"]["im"])]
+        assert len(got) == len(amps) and all(abs(g - a) < 1e-12 for g, a in zip(got, amps)), got
+        res = c["residual"]
+        res = res["re"] + res["im"] if isinstance(res, dict) else res
+        assert max(abs(v) for v in res) < 1e-12 and max(c["spectrum"]["psd"]) < 1e-24
+    return check
 
 cases = [
     taper_case("multitaper.dpss_length_one", 1, 0.3, src="by hand: N = 1 gives the taper [1] and "
@@ -283,6 +362,39 @@ cases = [
                      "amplitudes": {"re": [0.0] * 5, "im": [0.0] * 5},
                      "f_statistic": [0.0] * 5, "p_values": [1.0] * 5, "num_tapers": 3},
            src="by hand: all-zero input has mu = 0 and residual 0, so F = 0 and p = 1"),
+    removal_case("multitaper.lines_real", lined, 1.0, 3.0),
+    removal_case("multitaper.lines_complex_padded", cline, 1e6, 2.5, num_tapers=4, nfft=40,
+                 probability=0.01),
+    removal_case("multitaper.lines_real_two_sided_adaptive", twolines, 100.0, 2.5, nfft=50,
+                 one_sided=False, adaptive=True),
+    removal_case("multitaper.lines_none", calm, 1.0, 2.0, probability=1e-6),
+    removal_case("multitaper.lines_pure_complex", pure, 16.0, 2.0,
+                 check=leaves_round_off([3.0], [0.5 + 0.5j]),
+                 src=RSRC + "; by hand: a bin-centred complex tone c e^{2 pi i 3n/16} has "
+                 "X_j = c U_j at bin 3, so mu = c and the residual is 0, and removing it leaves "
+                 "round-off"),
+    removal_case("multitaper.lines_dc", [2.0] * 12, 1.0, 2.0, check=leaves_round_off([0.0], [2]),
+                 src=RSRC + "; by hand: a constant 2 has X_j = 2 U_j at DC, so mu = 2 and "
+                 "subtracting Re mu leaves round-off"),
+    removal_case("multitaper.lines_nyquist", [1.5 * (-1) ** i for i in range(12)], 1.0, 2.0,
+                 check=leaves_round_off([0.5], [1.5]),
+                 src=RSRC + "; by hand: 1.5 (-1)^n is the real exponential at bin M/2, so "
+                 "mu = 1.5 and subtracting Re mu cos(pi n) leaves round-off"),
+    err("multitaper.lines_probability_zero", "multitaper_line_removal",
+        {"samples": ramp, "sample_rate": 1.0, "half_bandwidth": 2.0, "probability": 0.0},
+        "probability in (0, 1] required"),
+    err("multitaper.lines_probability_above_one", "multitaper_line_removal",
+        {"samples": ramp, "sample_rate": 1.0, "half_bandwidth": 2.0, "probability": 1.5},
+        "probability in (0, 1] required"),
+    err("multitaper.lines_probability_nan", "multitaper_line_removal",
+        {"samples": ramp, "sample_rate": 1.0, "half_bandwidth": 2.0, "probability": "nan"},
+        "probability in (0, 1] required"),
+    err("multitaper.lines_one_taper", "multitaper_line_removal",
+        {"samples": ramp, "sample_rate": 1.0, "half_bandwidth": 2.0, "num_tapers": 1},
+        "the F-test needs at least 2 tapers"),
+    err("multitaper.lines_nfft_short", "multitaper_line_removal",
+        {"samples": ramp, "sample_rate": 1.0, "half_bandwidth": 2.0, "nfft": 39},
+        "nfft >= number of samples required"),
     err("multitaper.f_test_one_taper", "harmonic_f_test",
         {"samples": ramp, "sample_rate": 1.0, "half_bandwidth": 2.0, "num_tapers": 1},
         "the F-test needs at least 2 tapers"),
@@ -325,8 +437,9 @@ cases = [
 doc = {
     "schema": 1,
     "suite": "multitaper",
-    "description": "DPSS tapers, Thomson's multitaper PSD (plain and adaptive) and harmonic "
-    "F-test (conventions: Spectra, DPSS tapers, Multitaper PSD, Harmonic F-test).",
+    "description": "DPSS tapers, Thomson's multitaper PSD (plain and adaptive), harmonic F-test "
+    "and line removal (conventions: Spectra, DPSS tapers, Multitaper PSD, Harmonic F-test, "
+    "Multitaper line removal).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "multitaper.json"

@@ -108,6 +108,7 @@ from .modulation import (
 from .spectral import (
     Acpr,
     HarmonicFTest,
+    LineRemoval,
     OccupiedBandwidth,
     SpectralDensity,
     Spectrogram,
@@ -125,6 +126,7 @@ from .spectral import (
     lomb_scargle_false_alarm,
     lomb_scargle_false_alarm_level,
     lomb_scargle_frequencies,
+    multitaper_line_removal,
     multitaper_psd,
     occupied_bandwidth,
     spectrogram,
@@ -169,7 +171,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.114"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.115"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -182,6 +184,7 @@ __all__ = [
     "FirFilter",
     "HarmonicFTest",
     "IirFilter",
+    "LineRemoval",
     "OccupiedBandwidth",
     "PowerStats",
     "QpskLinkConfig",
@@ -268,6 +271,7 @@ __all__ = [
     "lomb_scargle_false_alarm_level",
     "lomb_scargle_frequencies",
     "multipath",
+    "multitaper_line_removal",
     "multitaper_psd",
     "multitone",
     "newman_phases",
