@@ -702,7 +702,7 @@ Updated with every chunk of work. Dates are absolute.
   feedback taps it is `lms_equalizer` exactly (the two share one implementation). Vectors in
   `vectors/cases/dfe.json` (14 cases, `generators/dfe.py`). On `1 + 0.95 z⁻¹` at N₀ = 0.01 its
   MSE is within 15% of the MMSE-DFE bound (closed form), a fifth of the MMSE linear bound. Python
-  PYCOUNT passed, 2 skipped; .NET 2402 passed; conformance 1444/1444 in both. Version 2026.11.13.99.
+  2910 passed, 2 skipped; .NET 2402 passed; conformance 1444/1444 in both. Version 2026.11.13.99.
 
 ## Not built
 
