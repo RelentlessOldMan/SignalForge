@@ -149,6 +149,7 @@ public sealed class LinkEqualizerTests
         Eq() with { EqualizerStep = -0.1 },
         Eq() with { EqualizerStep = double.NaN },
         Eq() with { SamplesPerSymbol = 5 },
+        Eq() with { PreambleSymbols = 4000 },
         Eq() with { TimingLoopGains = [0.01, 0] },
         Eq() with { CarrierLoopGains = [0.05, 0.001] },
         Eq("fsk2"),

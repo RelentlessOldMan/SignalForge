@@ -200,6 +200,8 @@ public static class Link
                 throw new ArgumentException("EqualizerTaps is for the single-carrier modulations only", nameof(config));
             if (sps % 2 != 0)
                 throw new ArgumentException("the equalizer needs an even SamplesPerSymbol", nameof(config));
+            if (pre >= n)
+                throw new ArgumentException("the equalizer needs PreambleSymbols below NumSymbols", nameof(config));
             if (c.TimingLoopGains is not null || c.CarrierLoopGains is not null)
                 throw new ArgumentException("the equalizer takes no TimingLoopGains or CarrierLoopGains", nameof(config));
         }
@@ -251,17 +253,23 @@ public static class Link
             2 => Sync.PowerFrequencyOffset(r, rs, 8),
             _ => Sync.QpskFrequencyOffset(r, rs),
         };
-        // frame start: the first maximum of the preamble correlation
+        // frame start: the first maximum of the preamble correlation, its blocks' magnitudes added so
+        // a residual frequency error cannot turn a long preamble through a cycle (ADR 0068)
         Complex[] cr = Channel.FrequencyOffset(r, -f, rs);
         int k0 = 0;
         double best = -1;
         for (int k = 0; k <= cr.Length - n; k++)
         {
-            Complex s = Complex.Zero;
-            for (int i = 0; i < pre; i++)
-                s += Complex.Conjugate(a[i]) * cr[k + i];
-            if (s.Magnitude > best)
-                (best, k0) = (s.Magnitude, k);
+            double q = 0;
+            for (int b0 = 0; b0 < pre; b0 += blk)
+            {
+                Complex s = Complex.Zero;
+                for (int i = b0; i < Math.Min(b0 + blk, pre); i++)
+                    s += Complex.Conjugate(a[i]) * cr[k + i];
+                q += s.Magnitude;
+            }
+            if (q > best)
+                (best, k0) = (q, k);
         }
         // fine frequency and phase: a line through the unwrapped block phases at each block's middle
         Complex[] z = Channel.FrequencyOffset(r.AsSpan(k0, n), -f, rs);

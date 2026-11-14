@@ -4,13 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **A frame search robust to a frequency error** in the single-carrier chains: step 3 correlates
-   the whole preamble coherently, so a long preamble (as the equalizer wants) turns through a
-   cycle under the coarse estimate's error (about 0.7 Hz rms for QPSK at 6 dB on a 1 kHz link,
-   twice that through strong ISI) and can pick the wrong start (ADR 0067). Correlate in blocks
-   and add the blocks' magnitudes, or estimate the frequency from the preamble first.
-2. **A decision-feedback equalizer** beside the linear one, for channels with deep spectral
-   nulls where the linear equalizer's noise enhancement dominates.
+1. **A decision-feedback equalizer** beside the linear one, for channels with deep spectral
+   nulls where the linear equalizer's noise enhancement dominates: a feedback filter on past
+   decisions, its own ADR and vectors as the LMS block had, then an option in the link.
 
 ## Built
 
@@ -691,6 +687,14 @@ Updated with every chunk of work. Dates are absolute.
   channel; tests allow 1 dB. New link configs `qpsk_equalizer_noiseless`, `qpsk_multipath_6db`,
   `qam16_multipath_12db`. Python 2884 passed, 2 skipped; .NET 2376 passed; conformance
   1430/1430 in both. Version 2026.11.13.96.
+- 2026-11-13: frame search in blocks ([ADR 0068](adr/0068-block-frame-search.md)): step 3 of the
+  single-carrier receiver adds the magnitudes of the preamble correlation over blocks of
+  `phase_block_symbols`, so a residual frequency error no longer turns a long preamble's sum
+  through a cycle; with the default `P = B` it is the old search. On a strong-ISI channel at
+  6 dB with a 1000-symbol preamble, 10 of 10 seeds now find the frame (4 of 10 missed). Review
+  fix: with the equalizer, `preamble_symbols` must be below `num_symbols` (it raised from the
+  EVM on an empty span). Python 2889 passed, 2 skipped; .NET 2381 passed; conformance
+  1430/1430 in both. Version 2026.11.13.98.
 
 ## Not built
 

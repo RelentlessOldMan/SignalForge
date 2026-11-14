@@ -22,7 +22,8 @@ inter-symbol interference is in the way, where no closed form gives a linear equ
   would have taken, so the estimates before it (timing, frame start, frequency) are unchanged.
 - With the equalizer, EVM and bit errors are measured **from symbol P on**: the preamble is its
   training, and its outputs there are from taps still converging (noiseless, every error of a
-  run falls in the first few hundred symbols). Without it the preamble still counts.
+  run falls in the first few hundred symbols), so the preamble must be shorter than the frame.
+  Without it the preamble still counts.
 - `timing_loop_gains` and `carrier_loop_gains` are rejected with the equalizer: it follows a
   slowly moving phase itself, and two loops on one error would fight.
 - With multipath the transmit signal gets `max(multipath_delays)` zeros after it (room for the
@@ -47,7 +48,7 @@ inter-symbol interference is in the way, where no closed form gives a linear equ
   coarse frequency error: the QPSK estimate is off by about 0.7 Hz rms on a flat 1 kHz link at
   6 dB, and about twice that through strong inter-symbol interference, which over a one-second
   preamble turns the correlation through a full cycle and can pick the wrong start. The tests
-  use a moderate channel; a frame search robust to frequency error is later work.
+  use a moderate channel; [ADR 0068](0068-block-frame-search.md) then made the search work in blocks.
 - Measured on a moderate channel (delays 0, 2, 5; gains 1, 0.3 + 0.2j, −0.1) at step 0.1, the
   BER is 0.2–0.4 dB from the bound for QPSK at 6 dB and 16-QAM at 12 dB; the tests allow 1 dB.
 - Decision feedback, a training-free (blind) start and a step schedule are later work.

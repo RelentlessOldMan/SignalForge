@@ -259,6 +259,8 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
             raise ValueError("equalizer_taps is for the single-carrier modulations only")
         if sps % 2:
             raise ValueError("the equalizer needs an even samples_per_symbol")
+        if pre >= n:
+            raise ValueError("the equalizer needs preamble_symbols below num_symbols")
         if c.timing_loop_gains is not None or c.carrier_loop_gains is not None:
             raise ValueError("the equalizer takes no timing_loop_gains or carrier_loop_gains")
     elif c.multipath_delays is not None and c.modulation != "ofdm":
@@ -290,11 +292,18 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     else:
         z_raw = gardner_timing(y, sps, *c.timing_loop_gains, start=tau).symbols
     f_hat = coarse(z_raw, rs)
-    # frame start: the first maximum of the preamble correlation
+    # frame start: the first maximum of the preamble correlation, its blocks' magnitudes added so
+    # a residual frequency error cannot turn a long preamble through a cycle (ADR 0068)
     ref = np.conj(a[:pre])
     zc = frequency_offset(z_raw, -f_hat, rs)
+    edges = np.arange(0, pre, blk)
     k0 = int(
-        np.argmax([abs(complex(np.sum(ref * zc[k : k + pre]))) for k in range(zc.size - n + 1)])
+        np.argmax(
+            [
+                float(np.sum(np.abs(np.add.reduceat(ref * zc[k : k + pre], edges))))
+                for k in range(zc.size - n + 1)
+            ]
+        )
     )
     # fine frequency and phase: a line through the unwrapped block phases at each block's middle
     z = frequency_offset(z_raw[k0 : k0 + n], -f_hat, rs)

@@ -150,6 +150,7 @@ def test_ber_between_the_bound_and_the_allowance(mod: str, eb: float) -> None:
         ({"equalizer_step": -0.1}, "equalizer_step"),
         ({"equalizer_step": math.nan}, "equalizer_step"),
         ({"samples_per_symbol": 5}, "even"),
+        ({"preamble_symbols": 4000}, "below num_symbols"),
         ({"timing_loop_gains": (0.01, 0.0)}, "loop"),
         ({"carrier_loop_gains": (0.05, 0.001)}, "loop"),
         ({"modulation": "fsk2"}, "single-carrier"),

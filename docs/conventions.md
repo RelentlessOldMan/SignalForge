@@ -1211,7 +1211,8 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   `pulse_shape(a, h, sps)`, and with multipath `max(multipath_delays)` zeros after that.
   **(implemented)**
 - **Equalizer** ([ADR 0067](adr/0067-link-equalizer.md)): `equalizer_taps` is for the
-  single-carrier chains only (FSK and `"ofdm"` reject it), needs an even `samples_per_symbol`, and
+  single-carrier chains only (FSK and `"ofdm"` reject it), needs an even `samples_per_symbol` and
+  `preamble_symbols < num_symbols` (the preamble does not count, so something must be left), and
   rejects `timing_loop_gains` and `carrier_loop_gains`. Multipath in those chains needs it. With
   multipath the channel first makes `tx` `multipath(tx, multipath_delays, gains)`.
   **(implemented)**
@@ -1233,7 +1234,10 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
      power 4 like 16-QAM. For 8-PSK, `f₁ = power_frequency_offset(r, symbol_rate, 8)`, step 4 uses
      `psk8_block_phases`, and step 6 rounds to multiples of π/4 instead of π/2.
   3. Frame start `k₀`: the first `k` in `0 … len(r) − N` that maximizes
-     `|Σ_{i<P} conj(a[i])·c[k+i]|`.
+     `q(k) = Σ_b |Σ_{i=bB}^{min((b+1)B, P)−1} conj(a[i])·c[k+i]|`, over the blocks
+     `b = 0 … ⌈P/B⌉ − 1` of the preamble ([ADR 0068](adr/0068-block-frame-search.md): a residual
+     frequency error turns a long coherent sum through a cycle). With `P ≤ B` it is the one
+     coherent sum `|Σ_{i<P} conj(a[i])·c[k+i]|`.
   4. `z = frequency_offset(r[k₀ : k₀+N], −f₁, symbol_rate)`; `φ_b = qpsk_block_phases(z, B)` at
      `x_b` = the middle of block `b`, `(first + last)/2`.
   5. With more than one block, the least-squares line `φ ≈ φ₀ + s·x`:
