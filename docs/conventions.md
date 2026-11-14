@@ -1034,6 +1034,22 @@ multiplies the block by the power of two that brings its largest real or imagina
   the last output). With `μ = 0` the output is `x[n·sps]`. With `L = 1`, `μ = 1` and a reference,
   `y_{n+1}` uses the tap that makes `w·x[n·sps] = d_n` exactly, so a scalar channel `x = g·a` is
   inverted after one training symbol. **(implemented)**
+- **RLS equalizer** (`rls_equalizer(samples, training, num_taps, forgetting, *, delta=0.01,
+  samples_per_symbol=1, center=None, decision=None, initial_taps=None)`, [ADR
+  0076](adr/0076-rls-equalizer.md)): exponentially weighted recursive least squares. `x`, `L`,
+  `c`, `sps`, the start, the training, `decision`, the regressor `u` and the output
+  `y_n = Σ_i w_i·u_i` are those of the LMS equalizer; the reference `d_n` is the training symbol
+  for `n < T`, then the decision, else none. `λ = forgetting` is in `(0, 1]` and `δ = delta` is
+  finite and above 0. `P` is an `L × L` complex matrix that starts at `I/δ`. For each output with
+  a reference and `Σ_i |u_i|² > 0`, `e_n = d_n − y_n` and, every sum in order of its index:
+  - `q_i = Σ_j P_ij·conj(u_j)`; `s = λ + Σ_i u_i·q_i`; `g_i = q_i / s`;
+  - `w_i ← w_i + g_i·e_n`;
+  - `r_j = Σ_i u_i·P_ij`; `P_ij ← (P_ij − g_i·r_j)/λ`.
+  Otherwise nothing changes, and `e_n = 0` when there is no reference. The result is the LMS
+  equalizer's: `symbols` (`y_n`), `errors` (`e_n`), `taps`. With `λ = 1` and every output
+  trained, the taps after the last update are `(δI + Σ_k conj(u_k)·u_kᵀ)⁻¹(δ·w₀ + Σ_k
+  conj(u_k)·d_k)`, `w₀` the start; with `λ < 1`, the same with `λ^{n−k}` on term `k` of `n`
+  updates and `λⁿ` on both `δ` terms. **(implemented)**
 - **Constant-modulus equalizer** (`cma_equalizer(samples, num_taps, step, *, samples_per_symbol=1,
   center=None, modulus=1.0, initial_taps=None)`, [ADR 0074](adr/0074-constant-modulus-equalizer.md)):
   blind, normalized. `x`, `L`, `c`, `sps`, `μ`, the start, the regressor `u` and the output
@@ -1045,7 +1061,7 @@ multiplies the block by the power of two that brings its largest real or imagina
   update is `w·(1 + μ·(1 − |w·g|²))`. **(implemented)**
 - **Decision-feedback equalizer** (`dfe_equalizer(samples, training, num_taps, num_feedback, step,
   *, samples_per_symbol=1, center=None, decision=None, initial_taps=None, initial_feedback=None,
-  phase_loop_gains=None)`,
+  phase_loop_gains=None, pilots=None, pilot_interval=None, slip_window=2)`,
   [ADR 0069](adr/0069-decision-feedback-equalizer.md)): the LMS equalizer above with `M =
   num_feedback ≥ 0` feedback taps `b_1 … b_M`, all starting at 0 (or at `initial_feedback`, `M`
   finite values), on the past references

@@ -4,8 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **An RLS equalizer**, for channels where normalized LMS converges too slowly for the preamble
-   (a zero near the unit circle, ADR 0074's harder channel).
+1. **RLS in the link** (ADR 0076): an `equalizer_forgetting` option that trains the link's
+   equalizer by RLS instead of LMS. Measure it on the short-preamble echo channel against LMS and
+   the least-squares start first; it has no feedback taps or phase loop yet, so it may need them
+   to be worth having there.
 
 ## Built
 
@@ -755,12 +757,22 @@ Updated with every chunk of work. Dates are absolute.
   noise. ADR 0073's "every run" claim corrected (seed 84 slips at its gains). Pilot cases in the
   `dfe` vectors (one by hand), one more link config. Python 3036 passed, 2 skipped; .NET
   2505 passed; conformance 1501/1501 in both. Version 2026.11.13.106.
+- 2026-11-13: an RLS equalizer ([ADR 0076](adr/0076-rls-equalizer.md)):
+  `rls_equalizer(samples, training, num_taps, forgetting, *, delta=0.01, samples_per_symbol=1,
+  center=None, decision=None, initial_taps=None)` (C# `Sync.RlsEqualizer`), exponentially
+  weighted recursive least squares with the LMS equalizer's regressor, start, spacing, training
+  and decisions. On a zero at radius 0.9 (QPSK, 15 taps) it is at 0.06 mean square error by
+  symbols 25–49, where normalized LMS is at 0.32, and at 0.03 after 400, where LMS is at 0.11.
+  Its taps are the weighted, regularized least-squares solution, checked against a direct solve
+  in the generator and both test suites. The link does not use it yet. Vector suite `rls` (21
+  cases, 3 by hand). The architecture's Sync row now lists ADRs 0072–0076. Python 3069
+  passed, 2 skipped; .NET 2532 passed; conformance 1522/1522 in both. Version 2026.11.13.107.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction and the constant-modulus (blind) form (RLS), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS (RLS in the link, RLS with feedback), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.

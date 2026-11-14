@@ -156,6 +156,101 @@ public static class Sync
         return new Equalization(r.Symbols, r.Errors, r.Taps);
     }
 
+    /// <summary>Exponentially weighted recursive-least-squares equalizer, fractionally spaced,
+    /// trained on known symbols and then on its own decisions (conventions: Synchronization, RLS
+    /// equalizer; ADR 0076). Converges in a few times <paramref name="numTaps"/> symbols however
+    /// the channel is conditioned.</summary>
+    /// <param name="samples">The input, at least one sample, all finite.</param>
+    /// <param name="training">Known symbols for the first outputs, at most the output count.</param>
+    /// <param name="numTaps">Number of taps, at least 1.</param>
+    /// <param name="forgetting">The forgetting factor λ, in (0, 1]; 1 is growing-window least
+    /// squares.</param>
+    /// <param name="delta">δ, finite and above 0: the inverse correlation starts at I/δ.</param>
+    /// <param name="samplesPerSymbol">Input samples per output symbol, at least 1.</param>
+    /// <param name="center">The tap that starts at 1, in [0, numTaps); null for (numTaps − 1)/2.</param>
+    /// <param name="decision">After training, adapt to the hard decision of this modulation
+    /// ("qpsk", "psk8", "qam16", "qam64"); null holds the taps.</param>
+    /// <param name="initialTaps">The taps to start from, <paramref name="numTaps"/> finite values;
+    /// null for the unit impulse at <paramref name="center"/>.</param>
+    public static Equalization RlsEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
+        double forgetting, double delta = 0.01, int samplesPerSymbol = 1, int? center = null, string? decision = null,
+        Complex[]? initialTaps = null)
+    {
+        int c = CheckEqualizer(samples, training, numTaps, 0, samplesPerSymbol, center);
+        if (!(forgetting > 0 && forgetting <= 1))
+            throw new ArgumentOutOfRangeException(nameof(forgetting), forgetting, "must be in (0, 1]");
+        if (!(double.IsFinite(delta) && delta > 0))
+            throw new ArgumentOutOfRangeException(nameof(delta), delta, "must be finite and above 0");
+        Func<Complex, Complex>? decide = Decider(decision);
+        Complex[] w;
+        if (initialTaps is null)
+        {
+            w = new Complex[numTaps];
+            w[c] = 1;
+        }
+        else
+        {
+            w = StartTaps(initialTaps, numTaps, nameof(initialTaps));
+        }
+        var p = new Complex[numTaps, numTaps];
+        for (int i = 0; i < numTaps; i++)
+            p[i, i] = 1 / delta;
+        int n = (samples.Length + samplesPerSymbol - 1) / samplesPerSymbol;
+        var u = new Complex[numTaps];
+        var q = new Complex[numTaps];
+        var g = new Complex[numTaps];
+        var r = new Complex[numTaps];
+        var output = new Complex[n];
+        var errors = new Complex[n];
+        for (int k = 0; k < n; k++)
+        {
+            int b = k * samplesPerSymbol + c;
+            Complex y = Complex.Zero;
+            for (int i = 0; i < numTaps; i++)
+            {
+                u[i] = b - i >= 0 && b - i < samples.Length ? samples[b - i] : Complex.Zero;
+                y += w[i] * u[i];
+            }
+            output[k] = y;
+            Complex? d = k < training.Length ? training[k] : decide?.Invoke(y);
+            if (d is not { } dk)
+                continue;
+            Complex e = dk - y;
+            errors[k] = e;
+            double power = 0;
+            for (int i = 0; i < numTaps; i++)
+                power += (u[i].Real * u[i].Real) + (u[i].Imaginary * u[i].Imaginary);
+            if (!(power > 0))
+                continue;
+            Complex s = forgetting;
+            for (int i = 0; i < numTaps; i++)
+            {
+                Complex qi = Complex.Zero;
+                for (int j = 0; j < numTaps; j++)
+                    qi += p[i, j] * Complex.Conjugate(u[j]);
+                q[i] = qi;
+            }
+            for (int i = 0; i < numTaps; i++)
+                s += u[i] * q[i];
+            for (int i = 0; i < numTaps; i++)
+            {
+                g[i] = q[i] / s;
+                w[i] += g[i] * e;
+            }
+            for (int j = 0; j < numTaps; j++)
+            {
+                Complex rj = Complex.Zero;
+                for (int i = 0; i < numTaps; i++)
+                    rj += u[i] * p[i, j];
+                r[j] = rj;
+            }
+            for (int i = 0; i < numTaps; i++)
+                for (int j = 0; j < numTaps; j++)
+                    p[i, j] = (p[i, j] - (g[i] * r[j])) / forgetting;
+        }
+        return new Equalization(output, errors, w);
+    }
+
     /// <summary>Blind constant-modulus equalizer, normalized, fractionally spaced; its output
     /// keeps the channel's phase (conventions: Synchronization, Constant-modulus equalizer; ADR
     /// 0074).</summary>
@@ -359,6 +454,16 @@ public static class Sync
         return (Complex[])values.Clone();
     }
 
+    private static Func<Complex, Complex>? Decider(string? decision) => decision switch
+    {
+        null => null,
+        "qpsk" => static y => Modulation.QpskMap(Modulation.QpskDemapHard([y]))[0],
+        "psk8" => static y => Modulation.Psk8Map(Modulation.Psk8DemapHard([y]))[0],
+        "qam16" => static y => Modulation.Qam16Map(Modulation.Qam16DemapHard([y]))[0],
+        "qam64" => static y => Modulation.Qam64Map(Modulation.Qam64DemapHard([y]))[0],
+        _ => throw new ArgumentException("must be null, qpsk, psk8, qam16 or qam64", nameof(decision)),
+    };
+
     private static DfeEqualization Equalize(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
         int numFeedback, double step, int samplesPerSymbol, int? center, string? decision, Complex[]? initialTaps,
         Complex[]? initialFeedback, (double Kp, double Ki)? loop, Complex[]? pilots = null, int? pilotInterval = null,
@@ -369,15 +474,7 @@ public static class Sync
         int c = CheckEqualizer(samples, training, numTaps, numFeedback, samplesPerSymbol, center);
         if (!(step >= 0 && step <= 2))
             throw new ArgumentOutOfRangeException(nameof(step), step, "must be in [0, 2]");
-        Func<Complex, Complex>? decide = decision switch
-        {
-            null => null,
-            "qpsk" => static y => Modulation.QpskMap(Modulation.QpskDemapHard([y]))[0],
-            "psk8" => static y => Modulation.Psk8Map(Modulation.Psk8DemapHard([y]))[0],
-            "qam16" => static y => Modulation.Qam16Map(Modulation.Qam16DemapHard([y]))[0],
-            "qam64" => static y => Modulation.Qam64Map(Modulation.Qam64DemapHard([y]))[0],
-            _ => throw new ArgumentException("must be null, qpsk, psk8, qam16 or qam64", nameof(decision)),
-        };
+        Func<Complex, Complex>? decide = Decider(decision);
         int n = (samples.Length + samplesPerSymbol - 1) / samplesPerSymbol;
         if (numFeedback > 0 && decide is null && training.Length < n)
             throw new ArgumentException("with feedback taps, needs a decision or training for every output", nameof(decision));

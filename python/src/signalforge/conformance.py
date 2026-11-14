@@ -150,6 +150,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "lms_equalizer": sync.lms_equalizer,
     "dfe_equalizer": sync.dfe_equalizer,
     "cma_equalizer": sync.cma_equalizer,
+    "rls_equalizer": sync.rls_equalizer,
     "dfe_least_squares": sync.dfe_least_squares,
     "evm": metrics.evm,
     "qpsk_ber_theory": metrics.qpsk_ber_theory,

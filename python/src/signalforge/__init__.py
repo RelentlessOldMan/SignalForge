@@ -147,6 +147,7 @@ from .sync import (
     qpsk_carrier_tracking,
     qpsk_frequency_offset,
     qpsk_phase_offset,
+    rls_equalizer,
     timing_offset,
 )
 from .units import (
@@ -161,7 +162,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.106"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.107"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -302,6 +303,7 @@ __all__ = [
     "resample",
     "resample_taps",
     "rician_fading",
+    "rls_equalizer",
     "rrc_taps",
     "sfdr",
     "sos_group_delay",

@@ -411,6 +411,88 @@ def lms_equalizer(
     return Equalization(out, errors, w)
 
 
+def rls_equalizer(
+    samples: ArrayLike,
+    training: ArrayLike,
+    num_taps: int,
+    forgetting: float,
+    *,
+    delta: float = 0.01,
+    samples_per_symbol: int = 1,
+    center: int | None = None,
+    decision: str | None = None,
+    initial_taps: ArrayLike | None = None,
+) -> Equalization:
+    """Exponentially weighted recursive-least-squares equalizer, fractionally spaced, trained on
+    known symbols and then on its own decisions (conventions: Synchronization, RLS equalizer; ADR
+    0076). Converges in a few times ``num_taps`` symbols however the channel is conditioned."""
+    xs, ts, taps, _, sps, c = _equalizer_args(
+        samples, training, num_taps, 0, samples_per_symbol, center
+    )
+    lam = real(forgetting, "forgetting")
+    if not 0 < lam <= 1:
+        raise ValueError("forgetting must be in (0, 1]")
+    dl = real(delta, "delta")
+    if not dl > 0:
+        raise ValueError("delta must be above 0")
+    if decision is not None and decision not in _DECISIONS:
+        raise ValueError(f"decision must be None or one of {sorted(_DECISIONS)}")
+    w = [0j] * taps
+    w[c] = 1 + 0j
+    if initial_taps is not None:
+        w = _start(initial_taps, taps, "initial_taps")
+    pm = [[(1 / dl if i == j else 0.0) + 0j for j in range(taps)] for i in range(taps)]
+    out: list[complex] = []
+    errors: list[complex] = []
+    for n in range(-(-len(xs) // sps)):
+        base = n * sps + c
+        u = [xs[base - i] if 0 <= base - i < len(xs) else 0j for i in range(taps)]
+        y = 0j
+        for wi, ui in zip(w, u, strict=True):
+            y += wi * ui
+        out.append(y)
+        if n < len(ts):
+            d: complex | None = ts[n]
+        elif decision is not None:
+            demap, mapper = _DECISIONS[decision]
+            d = complex(mapper(demap(np.array([y])))[0])
+        else:
+            d = None
+        if d is None:
+            errors.append(0j)
+            continue
+        e = d - y
+        errors.append(e)
+        p = 0.0
+        for ui in u:
+            p += ui.real * ui.real + ui.imag * ui.imag
+        if not p > 0:
+            continue
+        q = []
+        for row in pm:
+            qi = 0j
+            for pij, uj in zip(row, u, strict=True):
+                qi += pij * uj.conjugate()
+            q.append(qi)
+        s = complex(lam)
+        for ui, qi in zip(u, q, strict=True):
+            s += ui * qi
+        g = [qi / s for qi in q]
+        w = [wi + gi * e for wi, gi in zip(w, g, strict=True)]
+        r = []
+        for j in range(taps):
+            rj = 0j
+            for i in range(taps):
+                rj += u[i] * pm[i][j]
+            r.append(rj)
+        pm = [[(pm[i][j] - g[i] * r[j]) / lam for j in range(taps)] for i in range(taps)]
+    return Equalization(
+        np.array(out, dtype=np.complex128),
+        np.array(errors, dtype=np.complex128),
+        np.array(w, dtype=np.complex128),
+    )
+
+
 def cma_equalizer(
     samples: ArrayLike,
     num_taps: int,
