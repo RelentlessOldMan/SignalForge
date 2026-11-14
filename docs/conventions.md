@@ -172,6 +172,22 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   - The result carries `frequencies`, `times`, `psd`, `sample_rate`, `nperseg`, `nfft`,
     `num_segments`, `one_sided`, `bin_width`, `enbw_hz` and `span`, with the PSD's meanings.
   **(implemented)**
+- **Lomb-Scargle periodogram** (`lomb_scargle(times, values, frequencies, center=True,
+  normalization="standard")`, [ADR 0059](adr/0059-lomb-scargle.md)), for unevenly sampled real
+  data. `times` and `values` are finite reals of the same length `N ≥ 2` (times in any order,
+  repeats allowed); `frequencies` are finite and `> 0`, in Hz (cyclic), and may be empty. With
+  `y = values − mean(values)` when `center` (else `y = values`), for each frequency `f`,
+  `ω = 2πf`:
+  - `τ = atan2(Σ sin 2ωtₙ, Σ cos 2ωtₙ) / (2ω)` (any τ serves when both sums are 0);
+  - `C = Σ yₙ cos ω(tₙ − τ)`, `S = Σ yₙ sin ω(tₙ − τ)`, `CC = Σ cos² ω(tₙ − τ)`,
+    `SS = Σ sin² ω(tₙ − τ)`;
+  - `P = ½(C²/CC + S²/SS)`, where a term whose denominator is below `1e-12·N` is 0.
+  - `normalization="power"` returns `P` (value units squared); `"standard"` returns `2P / Σyₙ²`,
+    which needs `Σyₙ² > 0`. Anything else raises.
+  `P` equals `½(Σy² − χ²_min)`, with `χ²_min` the residual of the least-squares fit of
+  `a cos ωt + b sin ωt` to `y`; it does not change when every time is shifted by the same amount.
+  On `N` even samples with `f` at a bin `k·fs/N` (`0 < k < N/2`), a sinusoid of amplitude `A` at
+  that bin gives `P = A²N/4` and standard 1. **(implemented)**
 - **PSD units:** W/Hz when the samples are volts and an impedance is known (divide by the
   impedance), otherwise sample-units²/Hz. The functions above work in sample units. **(defined)**
 - **Bins as rectangles:** OBW and channel power treat PSD bin `k` (center `f_k`, uniform spacing

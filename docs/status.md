@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Lomb-Scargle periodogram** for unevenly sampled data, with analytical vectors (a pure tone
-   on random times; the classic normalization).
-2. **OFDM modulate and demodulate**: IFFT size, cyclic prefix, used subcarriers; round trip and
+1. **OFDM modulate and demodulate**: IFFT size, cyclic prefix, used subcarriers; round trip and
    vectors from the DFT definition.
-3. **SigMF annotations**: read and write `core:annotations` (sample start, count, label) as
+2. **SigMF annotations**: read and write `core:annotations` (sample start, count, label) as
    Signal metadata, in both languages.
+3. **Lomb-Scargle false-alarm probability** (Scargle's exponential form for the standard
+   normalization) and a frequency-grid helper from the time span.
 
 ## Built
 
@@ -595,11 +595,18 @@ Updated with every chunk of work. Dates are absolute.
   `receiver_cu8` recording replace the old "unsigned is rejected" cases; the cross-language file
   exchange now covers 28 datatypes. Python 2607 passed, 2 skipped; .NET 2123 passed; conformance
   1317/1317 in both. Version 2026.11.13.80.
+- 2026-11-13: Lomb-Scargle periodogram (ADR 0059): `lomb_scargle(times, values, frequencies,
+  center=True, normalization="standard")`, the classic form with Scargle's τ, real values,
+  caller-given frequencies; `"power"` is `P`, `"standard"` is `2P/Σy²`. A sum of squared cosines
+  or sines below `1e-12·N` drops its term (Nyquist of even samples). New generator
+  `lomb_scargle.py` (23 cases): closed forms on even samples and, on uneven times, the
+  least-squares sinusoid fit solved from its normal equations with no τ. Python 2641 passed,
+  2 skipped; .NET 2155 passed; conformance 1340/1340 in both. Version 2026.11.13.82.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
-(multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
+(multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, SigMF annotations, `f16` samples), plotting, CLI,

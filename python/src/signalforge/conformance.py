@@ -78,6 +78,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "window_stats": spectral.window_stats,
     "welch_psd": spectral.welch_psd,
     "spectrogram": spectral.spectrogram,
+    "lomb_scargle": spectral.lomb_scargle,
     "occupied_bandwidth": spectral.occupied_bandwidth,
     "channel_power": spectral.channel_power,
     "acpr": spectral.acpr,

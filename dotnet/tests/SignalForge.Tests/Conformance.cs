@@ -257,6 +257,14 @@ public static class Conformance
             "window_stats" => Bind(Reals(a.Get("w")), w => Spectral.WindowStats(w)),
             "welch_psd" => Welch(a),
             "spectrogram" => SpectrogramOp(a),
+            "lomb_scargle" => Bind((Reals(a.Get("times")), Reals(a.Get("values")), Reals(a.Get("frequencies")), a.Flag("center", true),
+                a.Has("normalization") ? Str(a, "normalization") switch
+                {
+                    "standard" => LombScargleNormalization.Standard,
+                    "power" => LombScargleNormalization.Power,
+                    _ => (LombScargleNormalization)(-1), // the library rejects it, as Python does
+                } : LombScargleNormalization.Standard),
+                t => Spectral.LombScargle(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "occupied_bandwidth" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Opt("fraction", 0.99), Span(a)),
                 t => Spectral.OccupiedBandwidth(t.Item1, t.Item2, t.Item3, t.Item4)),
             "channel_power" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.D("low"), a.D("high"), Span(a)),

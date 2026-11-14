@@ -1,4 +1,4 @@
-"""FFT, frequency axes, windows, Welch PSD, occupied bandwidth and channel power.
+"""FFT, frequency axes, windows, Welch PSD, Lomb-Scargle, occupied bandwidth and channel power.
 
 Definitions are in docs/conventions.md (Spectra) and docs/adr/0006-fft-windows-spectra.md.
 """
@@ -297,6 +297,62 @@ def spectrogram(
         enbw_hz=window_stats(g.w).enbw_bins * sample_rate / g.n,
         nfft=g.nfft,
     )
+
+
+def _finite_reals(x: ArrayLike, what: str) -> NDArray[np.float64]:
+    a = np.asarray(x)
+    if a.ndim != 1 or np.iscomplexobj(a) or a.dtype == np.bool_:
+        raise ValueError(f"{what} must be a 1-D array of real numbers")
+    try:
+        f = a.astype(np.float64)
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"{what} must be a 1-D array of real numbers") from e
+    if not np.all(np.isfinite(f)):
+        raise ValueError(f"{what} must be finite")
+    return f
+
+
+def lomb_scargle(
+    times: ArrayLike,
+    values: ArrayLike,
+    frequencies: ArrayLike,
+    *,
+    center: bool = True,
+    normalization: str = "standard",
+) -> NDArray[np.float64]:
+    """Lomb-Scargle periodogram of real ``values`` taken at ``times``, one value per frequency
+    (Hz): Scargle's ``P``, or ``2P/sum(y^2)`` for ``"standard"`` (conventions: Spectra)."""
+    t = _finite_reals(times, "times")
+    y = _finite_reals(values, "values")
+    f = _finite_reals(frequencies, "frequencies")
+    if t.size != y.size or t.size < 2:
+        raise ValueError("times and values must have the same length, at least 2")
+    if np.any(f <= 0):
+        raise ValueError("frequencies must be positive")
+    if normalization not in ("standard", "power"):
+        raise ValueError('normalization must be "standard" or "power"')
+    if center:
+        y = y - np.mean(y)
+    out = np.empty(f.size)
+    small = 1e-12 * t.size
+    for i, fi in enumerate(f):
+        w = 2 * math.pi * float(fi)
+        s2, c2 = float(np.sum(np.sin(2 * w * t))), float(np.sum(np.cos(2 * w * t)))
+        tau = math.atan2(s2, c2) / (2 * w)
+        c, s = np.cos(w * (t - tau)), np.sin(w * (t - tau))
+        cc, ss = float(np.dot(c, c)), float(np.dot(s, s))
+        p = 0.0
+        if cc >= small:
+            p += float(np.dot(y, c)) ** 2 / cc
+        if ss >= small:
+            p += float(np.dot(y, s)) ** 2 / ss
+        out[i] = p / 2
+    if normalization == "standard":
+        total = float(np.dot(y, y))
+        if not total > 0:
+            raise ValueError("the standard normalization needs values that are not all equal")
+        out = out * 2 / total
+    return out
 
 
 def _median_bias(k: int) -> float:

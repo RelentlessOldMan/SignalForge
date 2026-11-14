@@ -25,6 +25,16 @@ public enum WelchAverage
     Median,
 }
 
+/// <summary>How <see cref="Spectral.LombScargle"/> scales its result (conventions: Spectra, Lomb-Scargle).</summary>
+public enum LombScargleNormalization
+{
+    /// <summary><c>2P / Σy²</c>: the fraction of the data's sum of squares the sinusoid explains, 0 to 1.</summary>
+    Standard,
+
+    /// <summary>Scargle's <c>P</c>, in value units squared.</summary>
+    Power,
+}
+
 /// <summary>Named windows. Formulas in docs/conventions.md (Spectra).</summary>
 public enum WindowType
 {
@@ -371,6 +381,72 @@ public static class Spectral
             throw new ArgumentException($"{window} window of length {n} is all zeros", nameof(window));
         return new Segments(n, step, (x.Length - n) / step + 1, w, sampleRate, 1.0 / (sampleRate * w.Sum(v => v * v)),
             detrend, m);
+    }
+
+    /// <summary>
+    /// Lomb-Scargle periodogram of real <paramref name="values"/> taken at <paramref name="times"/>, one
+    /// value per frequency (conventions: Spectra, Lomb-Scargle; ADR 0059).
+    /// </summary>
+    /// <param name="times">Sample times, finite, in any order; at least two.</param>
+    /// <param name="values">Finite values, one per time.</param>
+    /// <param name="frequencies">Trial frequencies in Hz, finite and positive; may be empty.</param>
+    /// <param name="center">Subtract the mean of the values first.</param>
+    /// <param name="normalization">Scargle's power or the standard <c>2P / Σy²</c>.</param>
+    /// <returns>The periodogram at each frequency, in their order.</returns>
+    public static double[] LombScargle(ReadOnlySpan<double> times, ReadOnlySpan<double> values, ReadOnlySpan<double> frequencies,
+        bool center = true, LombScargleNormalization normalization = LombScargleNormalization.Standard)
+    {
+        int n = times.Length;
+        if (values.Length != n || n < 2)
+            throw new ArgumentException("times and values must have the same length, at least 2", nameof(values));
+        foreach (double v in times)
+            if (!double.IsFinite(v)) throw new ArgumentException("times must be finite", nameof(times));
+        foreach (double v in values)
+            if (!double.IsFinite(v)) throw new ArgumentException("values must be finite", nameof(values));
+        foreach (double v in frequencies)
+            if (!(double.IsFinite(v) && v > 0)) throw new ArgumentException("frequencies must be finite and positive", nameof(frequencies));
+        if (normalization is not (LombScargleNormalization.Standard or LombScargleNormalization.Power))
+            throw new ArgumentException($"unknown normalization {normalization}", nameof(normalization));
+        double mean = 0;
+        if (center)
+        {
+            foreach (double v in values) mean += v;
+            mean /= n;
+        }
+        var y = new double[n];
+        double total = 0;
+        for (int i = 0; i < n; i++)
+        {
+            y[i] = values[i] - mean;
+            total += y[i] * y[i];
+        }
+        if (normalization == LombScargleNormalization.Standard && !(total > 0))
+            throw new ArgumentException("the standard normalization needs values that are not all equal", nameof(values));
+        var out_ = new double[frequencies.Length];
+        double small = 1e-12 * n;
+        for (int k = 0; k < out_.Length; k++)
+        {
+            double w = 2 * Math.PI * frequencies[k];
+            double s2 = 0, c2 = 0;
+            foreach (double t in times)
+            {
+                s2 += Math.Sin(2 * w * t);
+                c2 += Math.Cos(2 * w * t);
+            }
+            double tau = Math.Atan2(s2, c2) / (2 * w);
+            double yc = 0, ys = 0, cc = 0, ss = 0;
+            for (int i = 0; i < n; i++)
+            {
+                double c = Math.Cos(w * (times[i] - tau)), s = Math.Sin(w * (times[i] - tau));
+                yc += y[i] * c;
+                ys += y[i] * s;
+                cc += c * c;
+                ss += s * s;
+            }
+            double p = (cc >= small ? yc * yc / cc : 0) + (ss >= small ? ys * ys / ss : 0);
+            out_[k] = normalization == LombScargleNormalization.Standard ? p / total : p / 2;
+        }
+        return out_;
     }
 
     /// <summary>The expected median of <paramref name="k"/> independent unit-mean exponential values
