@@ -10,10 +10,12 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from . import modulation as _mod
 from ._checks import count, real
 from .channel import _interpolate
 from .modulation import _INV_SQRT10, _QAM16_THRESHOLD
@@ -370,3 +372,94 @@ def qam64_carrier_tracking(
 ) -> CarrierRecovery:
     """Decision-directed 64-QAM carrier loop (conventions: Synchronization, Tracking loops)."""
     return _carrier_loop(symbols, kp, ki, phase, _qam64_decision)
+
+
+@dataclass(frozen=True)
+class Equalization:
+    """What an equalizer gave: the output symbols, the error each update used, the final taps."""
+
+    symbols: NDArray[np.complex128]
+    errors: NDArray[np.complex128]
+    taps: NDArray[np.complex128]
+
+
+_DECISIONS: dict[str, tuple[Callable[[ArrayLike], NDArray[np.uint8]], Callable[..., Any]]] = {
+    "qpsk": (_mod.qpsk_demap_hard, _mod.qpsk_map),
+    "psk8": (_mod.psk8_demap_hard, _mod.psk8_map),
+    "qam16": (_mod.qam16_demap_hard, _mod.qam16_map),
+    "qam64": (_mod.qam64_demap_hard, _mod.qam64_map),
+}
+
+
+def lms_equalizer(
+    samples: ArrayLike,
+    training: ArrayLike,
+    num_taps: int,
+    step: float,
+    *,
+    samples_per_symbol: int = 1,
+    center: int | None = None,
+    decision: str | None = None,
+) -> Equalization:
+    """Normalized LMS equalizer, fractionally spaced, trained on known symbols and then on its own
+    decisions (conventions: Synchronization, LMS equalizer; ADR 0066)."""
+    x = np.asarray(samples)
+    t = np.asarray(training)
+    if x.ndim != 1 or t.ndim != 1:
+        raise ValueError("samples and training must be one-dimensional")
+    x = np.asarray(x, dtype=np.complex128)
+    t = np.asarray(t, dtype=np.complex128)
+    if x.size < 1:
+        raise ValueError("samples needs at least 1")
+    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(t))):
+        raise ValueError("samples and training must be finite")
+    taps = count(num_taps, "num_taps")
+    sps = count(samples_per_symbol, "samples_per_symbol")
+    if taps < 1 or sps < 1:
+        raise ValueError("num_taps and samples_per_symbol must be at least 1")
+    c = (taps - 1) // 2 if center is None else count(center, "center")
+    if c >= taps:
+        raise ValueError("center must be below num_taps")
+    mu = real(step, "step")
+    if not 0 <= mu <= 2:
+        raise ValueError("step must be between 0 and 2")
+    if decision is not None and decision not in _DECISIONS:
+        raise ValueError(f"decision must be None or one of {sorted(_DECISIONS)}")
+    n_out = -(-x.size // sps)
+    if t.size > n_out:
+        raise ValueError(f"training must be at most {n_out} symbols (the output count)")
+    xs, ts = x.tolist(), t.tolist()
+    w = [0j] * taps
+    w[c] = 1 + 0j
+    out: list[complex] = []
+    errors: list[complex] = []
+    for n in range(n_out):
+        base = n * sps + c
+        u = [xs[base - i] if 0 <= base - i < len(xs) else 0j for i in range(taps)]
+        y = 0j
+        for wi, ui in zip(w, u, strict=True):
+            y += wi * ui
+        out.append(y)
+        if n < len(ts):
+            d: complex | None = ts[n]
+        elif decision is not None:
+            demap, mapper = _DECISIONS[decision]
+            d = complex(mapper(demap(np.array([y])))[0])
+        else:
+            d = None
+        if d is None:
+            errors.append(0j)
+            continue
+        e = d - y
+        errors.append(e)
+        p = 0.0
+        for ui in u:
+            p += ui.real * ui.real + ui.imag * ui.imag
+        if p > 0:
+            g = mu / p
+            w = [wi + g * e * ui.conjugate() for wi, ui in zip(w, u, strict=True)]
+    return Equalization(
+        np.array(out, dtype=np.complex128),
+        np.array(errors, dtype=np.complex128),
+        np.array(w, dtype=np.complex128),
+    )

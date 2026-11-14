@@ -127,8 +127,10 @@ from .spectral import (
 )
 from .sync import (
     CarrierRecovery,
+    Equalization,
     TimingRecovery,
     gardner_timing,
+    lms_equalizer,
     pi_loop_gains,
     power_frequency_offset,
     psk8_block_phases,
@@ -154,11 +156,12 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.93"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.94"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
     "CarrierRecovery",
+    "Equalization",
     "ErrorCount",
     "Evm",
     "FirFilter",
@@ -236,6 +239,7 @@ __all__ = [
     "iq_imbalance",
     "kaiser_parameters",
     "lin_to_db",
+    "lms_equalizer",
     "lomb_scargle",
     "lomb_scargle_false_alarm",
     "lomb_scargle_frequencies",

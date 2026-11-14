@@ -4,8 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **An equalizer for the single-carrier chains** (LMS, fractionally spaced) so they can take
-   `multipath_delays` too; the expected BER then needs a bound rather than a closed form.
+1. **The LMS equalizer in the single-carrier link chains** (ADR 0066 built the block) so they can
+   take `multipath_delays` too: trained on the preamble after the matched filter, fractionally
+   spaced at 2 samples per symbol; the expected BER then needs a bound rather than a closed form.
 
 ## Built
 
@@ -667,12 +668,21 @@ Updated with every chunk of work. Dates are absolute.
   use guard subcarriers. New link configs `ofdm_clock_noiseless`, `ofdm_clock_6db` and
   `ofdm_phase_noise_6db` (52 subcarriers). Python 2817 passed, 2 skipped; .NET 2320 passed;
   conformance 1412/1412 in both. Version 2026.11.13.93.
+- 2026-11-13: LMS equalizer ([ADR 0066](adr/0066-lms-equalizer.md)): `lms_equalizer(samples,
+  training, num_taps, step, *, samples_per_symbol=1, center=None, decision=None)` in `sync`
+  (C# `Sync.LmsEqualizer`), normalized LMS with fractionally spaced taps that start as a unit
+  impulse at `center`, trained on the given symbols and then, with `decision`, on the hard
+  decisions of QPSK, 8-PSK, 16-QAM or 64-QAM; the result `Equalization` has the symbols, the
+  errors and the final taps. New generator `equalizer.py` (18 cases: pass-through at step 0,
+  one-tap inversion of a gain at step 1, zero input, the recurrence for each decision and
+  spacing, rejects). Python 2854 passed, 2 skipped; .NET 2346 passed; conformance
+  1430/1430 in both. Version 2026.11.13.94.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS (RLS, decision feedback, blind) and any equalizer in the single-carrier link, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.

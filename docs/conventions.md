@@ -1015,6 +1015,24 @@ multiplies the block by the power of two that brings its largest real or imagina
     `4 + (1 − 2·[a < T₄])·(3 − 2·[T₂ < a < T₆])` with `a = |v|`, negative when `v < 0`), times
     `1/√42` (computed once, as in `qam64_map`). Mean slope `A`, locks to a multiple of π/2.
     **(implemented)**
+- **LMS equalizer** (`lms_equalizer(samples, training, num_taps, step, *, samples_per_symbol=1,
+  center=None, decision=None)`, [ADR 0066](adr/0066-lms-equalizer.md)): normalized LMS, taps
+  fractionally spaced by `sps = samples_per_symbol`. `x` the samples (finite, at least one),
+  `L = num_taps ≥ 1`, `c = center` in `0 … L − 1` (default `⌊(L − 1)/2⌋`), `μ = step` finite in
+  `[0, 2]`, `t` the training symbols (finite, `T = len(t)` at most the output count). The taps
+  start `w_c = 1`, every other `w_i = 0`. For `n = 0 … N − 1`, `N = ⌈len(x)/sps⌉`:
+  - the regressor `u_i = x[n·sps + c − i]` for `i = 0 … L − 1`, 0 outside `0 … len(x) − 1`;
+  - the output `y_n = Σ_i w_i·u_i`, summed in order of `i`;
+  - the reference `d_n = t_n` for `n < T`; for `n ≥ T` with `decision` `"qpsk"`, `"psk8"`,
+    `"qam16"` or `"qam64"`, `d_n` is that modulation's map of its hard demap of `y_n`; otherwise
+    there is none;
+  - with a reference, `e_n = d_n − y_n`, `P = Σ_i |u_i|²` (as `re² + im²`, in order), and if
+    `P > 0` every `w_i ← w_i + (μ/P)·e_n·conj(u_i)` (the factor `μ/P` computed once); without one,
+    `e_n = 0` and the taps stay.
+  The result has `symbols` (`y_n`) and `errors` (`e_n`), one each per output, and `taps` (`w` after
+  the last output). With `μ = 0` the output is `x[n·sps]`. With `L = 1`, `μ = 1` and a reference,
+  `y_{n+1}` uses the tap that makes `w·x[n·sps] = d_n` exactly, so a scalar channel `x = g·a` is
+  inverted after one training symbol. **(implemented)**
 - **QPSK phase offset** (`qpsk_phase_offset(symbols)`): `φ = arg(−Σ z⁴) / 4`, in `(−π/4, π/4]`;
   the true phase is `φ + m·π/2`. Correct by multiplying by `e^{−jφ}`
   (`frequency_offset(symbols, 0, 1, −φ)`). At least one symbol. **(implemented)**

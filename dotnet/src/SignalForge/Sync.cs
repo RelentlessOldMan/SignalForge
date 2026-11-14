@@ -14,6 +14,13 @@ public sealed record TimingRecovery(Complex[] Symbols, double[] Positions, doubl
 /// <param name="Errors">The phase detector's output at each symbol.</param>
 public sealed record CarrierRecovery(Complex[] Symbols, double[] Phases, double[] Errors);
 
+/// <summary>What an equalizer gave (conventions: Synchronization, LMS equalizer).</summary>
+/// <param name="Symbols">The output symbols, one per <c>samples_per_symbol</c> input samples.</param>
+/// <param name="Errors">The reference minus the output at each symbol, before the update; 0 where
+/// there is no reference.</param>
+/// <param name="Taps">The taps after the last output.</param>
+public sealed record Equalization(Complex[] Symbols, Complex[] Errors, Complex[] Taps);
+
 /// <summary>Synchronization: block estimators of symbol timing, QPSK carrier frequency and phase,
 /// and tracking loops. Definitions in docs/conventions.md (Synchronization).</summary>
 public static class Sync
@@ -113,6 +120,80 @@ public static class Sync
     /// <param name="phase">Phase removed from the first symbol, in radians, finite.</param>
     public static CarrierRecovery Qam64CarrierTracking(ReadOnlySpan<Complex> symbols, double kp, double ki, double phase = 0) =>
         CarrierLoop(symbols, kp, ki, phase, static (re, im) => (Qam64Level(re), Qam64Level(im)));
+
+    /// <summary>Normalized LMS equalizer, fractionally spaced, trained on known symbols and then on
+    /// its own decisions (conventions: Synchronization, LMS equalizer; ADR 0066).</summary>
+    /// <param name="samples">The input, at least one sample, all finite.</param>
+    /// <param name="training">Known symbols for the first outputs, finite, at most the output
+    /// count.</param>
+    /// <param name="numTaps">Number of taps, at least 1.</param>
+    /// <param name="step">Normalized step size, in [0, 2].</param>
+    /// <param name="samplesPerSymbol">Input samples per output symbol, at least 1.</param>
+    /// <param name="center">The tap that starts at 1, in [0, numTaps); null for (numTaps − 1)/2.</param>
+    /// <param name="decision">After training, adapt to the hard decision of this modulation
+    /// ("qpsk", "psk8", "qam16", "qam64"); null holds the taps.</param>
+    public static Equalization LmsEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
+        double step, int samplesPerSymbol = 1, int? center = null, string? decision = null)
+    {
+        if (samples.IsEmpty)
+            throw new ArgumentException("needs at least 1 sample", nameof(samples));
+        foreach (Complex z in samples)
+            if (!double.IsFinite(z.Real) || !double.IsFinite(z.Imaginary))
+                throw new ArgumentException("must be finite", nameof(samples));
+        foreach (Complex z in training)
+            if (!double.IsFinite(z.Real) || !double.IsFinite(z.Imaginary))
+                throw new ArgumentException("must be finite", nameof(training));
+        ArgumentOutOfRangeException.ThrowIfLessThan(numTaps, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(samplesPerSymbol, 1);
+        int c = center ?? (numTaps - 1) / 2;
+        if (c < 0 || c >= numTaps)
+            throw new ArgumentOutOfRangeException(nameof(center), center, "must be in [0, numTaps)");
+        if (!(step >= 0 && step <= 2))
+            throw new ArgumentOutOfRangeException(nameof(step), step, "must be in [0, 2]");
+        Func<Complex, Complex>? decide = decision switch
+        {
+            null => null,
+            "qpsk" => static y => Modulation.QpskMap(Modulation.QpskDemapHard([y]))[0],
+            "psk8" => static y => Modulation.Psk8Map(Modulation.Psk8DemapHard([y]))[0],
+            "qam16" => static y => Modulation.Qam16Map(Modulation.Qam16DemapHard([y]))[0],
+            "qam64" => static y => Modulation.Qam64Map(Modulation.Qam64DemapHard([y]))[0],
+            _ => throw new ArgumentException("must be null, qpsk, psk8, qam16 or qam64", nameof(decision)),
+        };
+        int n = (samples.Length + samplesPerSymbol - 1) / samplesPerSymbol;
+        if (training.Length > n)
+            throw new ArgumentException($"must be at most {n} symbols (the output count)", nameof(training));
+        var w = new Complex[numTaps];
+        w[c] = Complex.One;
+        var u = new Complex[numTaps];
+        var output = new Complex[n];
+        var errors = new Complex[n];
+        for (int k = 0; k < n; k++)
+        {
+            int b = k * samplesPerSymbol + c;
+            Complex y = Complex.Zero;
+            for (int i = 0; i < numTaps; i++)
+            {
+                u[i] = b - i >= 0 && b - i < samples.Length ? samples[b - i] : Complex.Zero;
+                y += w[i] * u[i];
+            }
+            output[k] = y;
+            Complex? d = k < training.Length ? training[k] : decide?.Invoke(y);
+            if (d is not { } r)
+                continue;
+            Complex e = r - y;
+            errors[k] = e;
+            double p = 0;
+            foreach (Complex x in u)
+                p += x.Real * x.Real + x.Imaginary * x.Imaginary;
+            if (p > 0)
+            {
+                double g = step / p;
+                for (int i = 0; i < numTaps; i++)
+                    w[i] += g * e * Complex.Conjugate(u[i]);
+            }
+        }
+        return new Equalization(output, errors, w);
+    }
 
     private static readonly double InvSqrt42 = 1.0 / Math.Sqrt(42.0);
     private static readonly double Qam64T2 = 2.0 / Math.Sqrt(42.0);
