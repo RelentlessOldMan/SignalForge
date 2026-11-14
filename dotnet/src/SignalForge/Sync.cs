@@ -338,12 +338,18 @@ public static class Sync
     /// <param name="pilotInterval">K, at least 1: output n ≥ T is a pilot when (n − T) mod K =
     /// K − 1; null for none, with <paramref name="pilots"/>.</param>
     /// <param name="slipWindow">Pilots summed per slip correction, at least 1.</param>
+    /// <param name="forgetting">λ in (0, 1]: train the forward and feedback taps by recursive least
+    /// squares instead of LMS (<paramref name="step"/> is then not used); null for LMS (ADR
+    /// 0077).</param>
+    /// <param name="delta">δ for <paramref name="forgetting"/>, finite and above 0: the inverse
+    /// correlation starts at I/δ.</param>
     public static DfeEqualization DfeEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
         int numFeedback, double step, int samplesPerSymbol = 1, int? center = null, string? decision = null,
         Complex[]? initialTaps = null, Complex[]? initialFeedback = null, (double Kp, double Ki)? phaseLoopGains = null,
-        Complex[]? pilots = null, int? pilotInterval = null, int slipWindow = 2) =>
+        Complex[]? pilots = null, int? pilotInterval = null, int slipWindow = 2, double? forgetting = null,
+        double delta = 0.01) =>
         Equalize(samples, training, numTaps, numFeedback, step, samplesPerSymbol, center, decision, initialTaps, initialFeedback,
-            phaseLoopGains, pilots, pilotInterval, slipWindow);
+            phaseLoopGains, pilots, pilotInterval, slipWindow, forgetting, delta);
 
     /// <summary>The forward and feedback taps that minimize the squared error over the training,
     /// by Gaussian elimination on the normal equations (conventions: Synchronization, Least-squares
@@ -467,7 +473,7 @@ public static class Sync
     private static DfeEqualization Equalize(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
         int numFeedback, double step, int samplesPerSymbol, int? center, string? decision, Complex[]? initialTaps,
         Complex[]? initialFeedback, (double Kp, double Ki)? loop, Complex[]? pilots = null, int? pilotInterval = null,
-        int slipWindow = 2)
+        int slipWindow = 2, double? forgetting = null, double delta = 0.01)
     {
         if (loop is { } lg && !(double.IsFinite(lg.Kp) && double.IsFinite(lg.Ki) && lg.Kp >= 0 && lg.Ki >= 0))
             throw new ArgumentOutOfRangeException(nameof(loop), lg, "phase loop gains must be finite and not negative");
@@ -494,6 +500,22 @@ public static class Sync
             known = StartTaps(pilots, Math.Max(n - training.Length, 0) / kp, nameof(pilots));
         }
         double sigma = decision == "psk8" ? Math.PI / 4 : Math.PI / 2;
+        int all = numTaps + numFeedback;
+        Complex[,]? qm = null;
+        if (forgetting is { } lam0)
+        {
+            if (!(lam0 > 0 && lam0 <= 1))
+                throw new ArgumentOutOfRangeException(nameof(forgetting), lam0, "must be in (0, 1]");
+            if (!(double.IsFinite(delta) && delta > 0))
+                throw new ArgumentOutOfRangeException(nameof(delta), delta, "must be finite and above 0");
+            qm = new Complex[all, all];
+            for (int i = 0; i < all; i++)
+                qm[i, i] = 1 / delta;
+        }
+        var z = new Complex[all];
+        var qv = new Complex[all];
+        var gv = new Complex[all];
+        var tv = new Complex[all];
         Complex sp = Complex.Zero;
         int cp = 0;
         var fb = initialFeedback is null ? new Complex[numFeedback] : StartTaps(initialFeedback, numFeedback, nameof(initialFeedback));
@@ -540,7 +562,40 @@ public static class Sync
                 p += x.Real * x.Real + x.Imaginary * x.Imaginary;
             foreach (Complex x in past)
                 p += x.Real * x.Real + x.Imaginary * x.Imaginary;
-            if (p > 0)
+            if (p > 0 && qm is not null && forgetting is { } lam)
+            {
+                for (int i = 0; i < numTaps; i++)
+                    z[i] = loop is null ? u[i] : u[i] * rot;
+                for (int j = 0; j < numFeedback; j++)
+                    z[numTaps + j] = past[j];
+                Complex s = lam;
+                for (int i = 0; i < all; i++)
+                {
+                    Complex qi = Complex.Zero;
+                    for (int j = 0; j < all; j++)
+                        qi += qm[i, j] * Complex.Conjugate(z[j]);
+                    qv[i] = qi;
+                }
+                for (int i = 0; i < all; i++)
+                    s += z[i] * qv[i];
+                for (int i = 0; i < all; i++)
+                    gv[i] = qv[i] / s;
+                for (int i = 0; i < numTaps; i++)
+                    w[i] += gv[i] * e;
+                for (int j = 0; j < numFeedback; j++)
+                    fb[j] += gv[numTaps + j] * e;
+                for (int j = 0; j < all; j++)
+                {
+                    Complex tj = Complex.Zero;
+                    for (int i = 0; i < all; i++)
+                        tj += z[i] * qm[i, j];
+                    tv[j] = tj;
+                }
+                for (int i = 0; i < all; i++)
+                    for (int j = 0; j < all; j++)
+                        qm[i, j] = (qm[i, j] - (gv[i] * tv[j])) / lam;
+            }
+            else if (p > 0)
             {
                 double g = step / p;
                 Complex ef = loop is null ? e : e * Complex.Conjugate(rot);

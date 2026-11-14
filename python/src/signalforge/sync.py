@@ -567,13 +567,17 @@ def dfe_equalizer(
     pilots: ArrayLike | None = None,
     pilot_interval: int | None = None,
     slip_window: int = 2,
+    forgetting: float | None = None,
+    delta: float = 0.01,
 ) -> DfeEqualization:
     """Decision-feedback equalizer: the LMS equalizer plus feedback taps on the past references,
     one normalized LMS update over both (conventions: Synchronization, Decision-feedback
     equalizer; ADR 0069). ``initial_taps`` and ``initial_feedback`` replace the unit impulse and
     the zeros it starts from (ADR 0072). ``phase_loop_gains`` ``(kp, ki)`` adds a second-order
     carrier loop on the forward part (ADR 0073); ``pilots`` every ``pilot_interval`` outputs
-    after the training are references and correct its cycle slips (ADR 0075)."""
+    after the training are references and correct its cycle slips (ADR 0075). With
+    ``forgetting`` the update is recursive least squares over both, ``delta`` its start (ADR
+    0077)."""
     out, errors, w, b = _equalize(
         samples,
         training,
@@ -589,6 +593,8 @@ def dfe_equalizer(
         pilots,
         pilot_interval,
         slip_window,
+        forgetting,
+        delta,
     )
     return DfeEqualization(out, errors, w, b)
 
@@ -671,6 +677,8 @@ def _equalize(
     pilots: ArrayLike | None = None,
     pilot_interval: int | None = None,
     slip_window: int = 2,
+    forgetting: float | None = None,
+    delta: float = 0.01,
 ) -> tuple[
     NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128]
 ]:
@@ -716,6 +724,17 @@ def _equalize(
         if loop is None or decision is None:
             raise ValueError("pilots need phase_loop_gains and decision")
         g_p = _start(pilots, max(n_out - len(ts), 0) // k_p, "pilots")
+    lam = 0.0
+    q_m: list[list[complex]] = []
+    if forgetting is not None:
+        lam = real(forgetting, "forgetting")
+        if not 0 < lam <= 1:
+            raise ValueError("forgetting must be in (0, 1]")
+        dl = real(delta, "delta")
+        if not dl > 0:
+            raise ValueError("delta must be above 0")
+        k_all = taps + m
+        q_m = [[(1 / dl) + 0j if i == j else 0j for j in range(k_all)] for i in range(k_all)]
     s_p = 0j
     c_p = 0
     theta = nu = 0.0
@@ -756,7 +775,32 @@ def _equalize(
             p += ui.real * ui.real + ui.imag * ui.imag
         for pj in past:
             p += pj.real * pj.real + pj.imag * pj.imag
-        if p > 0:
+        if p > 0 and q_m:
+            z = [ui * r for ui in u] if loop else list(u)
+            z += past
+            qv = []
+            for row in q_m:
+                qi = 0j
+                for qij, zj in zip(row, z, strict=True):
+                    qi += qij * zj.conjugate()
+                qv.append(qi)
+            sv = complex(lam)
+            for zi, qi in zip(z, qv, strict=True):
+                sv += zi * qi
+            gv = [qi / sv for qi in qv]
+            w = [wi + gi * e for wi, gi in zip(w, gv[:taps], strict=True)]
+            fb = [bj + gj * e for bj, gj in zip(fb, gv[taps:], strict=True)]
+            tv = []
+            for j in range(len(z)):
+                tj = 0j
+                for zi, row in zip(z, q_m, strict=True):
+                    tj += zi * row[j]
+                tv.append(tj)
+            q_m = [
+                [(qij - gi * tj) / lam for qij, tj in zip(row, tv, strict=True)]
+                for row, gi in zip(q_m, gv, strict=True)
+            ]
+        elif p > 0:
             g = mu / p
             ef = e * r.conjugate() if loop else e
             w = [wi + g * ef * ui.conjugate() for wi, ui in zip(w, u, strict=True)]

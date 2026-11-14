@@ -107,6 +107,11 @@ public sealed record QpskLinkConfig
     /// it corrects the phase loop's cycle slips and does not count in the errors; null [the
     /// default] for none; only with <see cref="EqualizerLoopGains"/> (ADR 0075).</summary>
     public int? PilotInterval { get; init; }
+
+    /// <summary>λ in (0, 1]: train the equalizer by recursive least squares with this forgetting
+    /// factor instead of LMS; null [the default] for LMS; only with <see cref="EqualizerTaps"/>
+    /// (ADR 0077).</summary>
+    public double? EqualizerForgetting { get; init; }
 }
 
 /// <summary>What the receiver estimated and measured on one link run.</summary>
@@ -223,6 +228,10 @@ public static class Link
             throw new ArgumentException("PilotInterval must be at least 1", nameof(config));
         if (c.PilotInterval is not null && c.EqualizerLoopGains is null)
             throw new ArgumentException("PilotInterval needs EqualizerLoopGains", nameof(config));
+        if (c.EqualizerForgetting is { } lf && !(lf > 0 && lf <= 1))
+            throw new ArgumentException("EqualizerForgetting must be in (0, 1]", nameof(config));
+        if (c.EqualizerForgetting is not null && c.EqualizerTaps is null)
+            throw new ArgumentException("EqualizerForgetting needs EqualizerTaps", nameof(config));
         if (c.EqualizerStart == "least_squares" && c.EqualizerTaps is { } lt && c.PreambleSymbols < lt + c.EqualizerFeedback)
             throw new ArgumentException("EqualizerStart least_squares needs PreambleSymbols of at least EqualizerTaps + EqualizerFeedback", nameof(config));
         if (c.EqualizerTaps is { } et)
@@ -382,7 +391,7 @@ public static class Link
             }
             Complex[] eq = Sync.DfeEqualizer(xe, a.AsSpan(0, pre), taps, c.EqualizerFeedback, c.EqualizerStep, 2, null, c.Modulation,
                 start?.Taps, start?.FeedbackTaps,
-                c.EqualizerLoopGains is { } lg ? (lg[0], lg[1]) : null, pilots, c.PilotInterval).Symbols;
+                c.EqualizerLoopGains is { } lg ? (lg[0], lg[1]) : null, pilots, c.PilotInterval, 2, c.EqualizerForgetting).Symbols;
             // the preamble is the equalizer's training and the pilots are known, so neither counts
             var kz = new List<Complex>(n - pre);
             var ka = new List<Complex>(n - pre);

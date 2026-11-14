@@ -4,10 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **RLS in the link** (ADR 0076): an `equalizer_forgetting` option that trains the link's
-   equalizer by RLS instead of LMS. Measure it on the short-preamble echo channel against LMS and
-   the least-squares start first; it has no feedback taps or phase loop yet, so it may need them
-   to be worth having there.
+1. **Multitaper spectral estimate**: the discrete prolate spheroidal (Slepian) tapers, from the
+   symmetric tridiagonal eigenproblem, and the averaged multitaper PSD in the `welch` scaling.
+   Expected tapers from an independent stdlib solve (bisection with inverse iteration) and their
+   defining concentration property.
 
 ## Built
 
@@ -767,12 +767,23 @@ Updated with every chunk of work. Dates are absolute.
   in the generator and both test suites. The link does not use it yet. Vector suite `rls` (21
   cases, 3 by hand). The architecture's Sync row now lists ADRs 0072–0076. Python 3069
   passed, 2 skipped; .NET 2532 passed; conformance 1522/1522 in both. Version 2026.11.13.107.
+- 2026-11-13: RLS training for the decision-feedback equalizer and the link ([ADR
+  0077](adr/0077-rls-decision-feedback.md)): `dfe_equalizer(..., forgetting=None, delta=0.01)`
+  (C# `forgetting`, `delta`) trains the forward and feedback taps by RLS over the rotated forward
+  samples and the past references, with the phase loop, pilots, training and starts unchanged;
+  the link's `equalizer_forgetting` passes it. On the two-path echo with a 100-symbol preamble and
+  a 5 Hz offset, LMS from the impulse fails on every seed for 16-QAM (0.24–0.45) and 8-PSK (0.32),
+  RLS (λ 0.999) gets 0.0001–0.0027; for 8-PSK it also beats the least-squares start, which fails
+  on 4 of 6 seeds. Forward-only RLS (ADR 0076) barely helps the link. Vector suite `dfe` now 45
+  cases (two checked against the direct least-squares solve); link config `qpsk_dfe_rls_8db`.
+  Python 3085 passed, 2 skipped; .NET 2549 passed; conformance 1532/1532 in both. Version
+  2026.11.13.108.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS (RLS in the link, RLS with feedback), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.

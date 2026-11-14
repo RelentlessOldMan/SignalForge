@@ -1061,8 +1061,8 @@ multiplies the block by the power of two that brings its largest real or imagina
   update is `w·(1 + μ·(1 − |w·g|²))`. **(implemented)**
 - **Decision-feedback equalizer** (`dfe_equalizer(samples, training, num_taps, num_feedback, step,
   *, samples_per_symbol=1, center=None, decision=None, initial_taps=None, initial_feedback=None,
-  phase_loop_gains=None, pilots=None, pilot_interval=None, slip_window=2)`,
-  [ADR 0069](adr/0069-decision-feedback-equalizer.md)): the LMS equalizer above with `M =
+  phase_loop_gains=None, pilots=None, pilot_interval=None, slip_window=2, forgetting=None,
+  delta=0.01)`, [ADR 0069](adr/0069-decision-feedback-equalizer.md)): the LMS equalizer above with `M =
   num_feedback ≥ 0` feedback taps `b_1 … b_M`, all starting at 0 (or at `initial_feedback`, `M`
   finite values), on the past references
   `p_j = d_{n−j}` (0 for `n − j < 0`). With `M ≥ 1` every output needs a reference: `decision`
@@ -1095,6 +1095,14 @@ multiplies the block by the power of two that brings its largest real or imagina
   - after the loop step, `s ← s + y_n·conj(g_j)` (`s` starts at 0) and one more pilot is counted;
     when the count reaches `W`, `θ ← θ + k·σ` with `k` the integer nearest `atan2(Im s, Re s)/σ`
     (ties to even), and `s` and the count go back to 0.
+  With `forgetting = λ` in `(0, 1]` (and `delta = δ`, finite and above 0; [ADR
+  0077](adr/0077-rls-decision-feedback.md)) the tap update is RLS in place of LMS (`step` is
+  checked but not used). The regressor is `z = (u_0·r, …, u_{L−1}·r, p_1, …, p_M)`, `K = L + M`
+  values, with `r` as above (`z_i = u_i` without the loop), and the coefficients `θ = (w, b)`;
+  `Q` (`K × K`) starts at `I/δ`. Where the LMS update would run (a reference and `P > 0`):
+  `q_i = Σ_j Q_ij·conj(z_j)`, `s = λ + Σ_i z_i·q_i`, `g_i = q_i/s`, `θ_i ← θ_i + g_i·e_n`,
+  `t_j = Σ_i z_i·Q_ij`, `Q_ij ← (Q_ij − g_i·t_j)/λ`, every sum in order of its index (as for
+  `rls_equalizer`). The output, the loop step and the pilots are unchanged.
   **(implemented)**
 - **Least-squares equalizer taps** (`dfe_least_squares(samples, training, num_taps, num_feedback,
   *, samples_per_symbol=1, center=None)` → `DfeTaps(taps, feedback_taps)`, [ADR
@@ -1206,8 +1214,9 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   0072](adr/0072-least-squares-equalizer-start.md)) and `equalizer_loop_gains` [none] (none or a
   pair `[kp, ki]` of numbers `≥ 0`, only with `equalizer_taps`; [ADR
   0073](adr/0073-equalizer-phase-loop.md)) and `pilot_interval` [none] (an integer `≥ 1`, only
-  with `equalizer_loop_gains`; [ADR 0075](adr/0075-pilot-slip-correction.md)). Numbers must be
-  finite.
+  with `equalizer_loop_gains`; [ADR 0075](adr/0075-pilot-slip-correction.md)) and
+  `equalizer_forgetting` [none] (a number in `(0, 1]`, only with `equalizer_taps`; [ADR
+  0077](adr/0077-rls-decision-feedback.md)). Numbers must be finite.
   **(implemented)**
 - **FSK** (`"fsk2"`, `"fsk4"`: `M` = 2 or 4, `k = log2 M`, modulation index 1;
   [ADR 0057](adr/0057-fsk-link.md)) replaces the transmitter and receiver below; the checks above
@@ -1350,7 +1359,7 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
      is `lms_equalizer`); with `equalizer_start = "least_squares"` it also passes the
      `dfe_least_squares(x, a[:P], L, M, samples_per_symbol=2)` taps as `initial_taps` and
      `initial_feedback` (`P ≥ L + M` is then needed), `equalizer_loop_gains` as
-     `phase_loop_gains`, and with `pilot_interval = K` that as `pilot_interval` with `pilots` the
+     `phase_loop_gains`, `equalizer_forgetting` as `forgetting`, and with `pilot_interval = K` that as `pilot_interval` with `pilots` the
      symbols `a[P + (j + 1)·K − 1]`, `j < ⌊(N − P)/K⌋`, where `v = frequency_offset(y, −f, symbol_rate·sps)`, `s₀ = (round(τ) mod sps) + k₀·sps`, and `x` the `2N` samples
      `x[m] = v[s₀ + m·sps/2]`, 0 past the end of `v`. Output `n` then starts as `v[s₀ + n·sps]`,
      the sample the steps above take. With the equalizer the preamble does not count: `evm` and

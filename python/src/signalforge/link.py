@@ -93,6 +93,7 @@ class QpskLinkConfig:
     equalizer_start: str = "impulse"
     equalizer_loop_gains: tuple[float, float] | None = None
     pilot_interval: int | None = None
+    equalizer_forgetting: float | None = None
 
 
 @dataclass(frozen=True)
@@ -260,6 +261,9 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         pilot_interval=None
         if config.pilot_interval is None
         else count(config.pilot_interval, "pilot_interval"),
+        equalizer_forgetting=None
+        if config.equalizer_forgetting is None
+        else real(config.equalizer_forgetting, "equalizer_forgetting"),
     )
     if c.equalizer_taps is not None and c.equalizer_taps < 1:
         raise ValueError("equalizer_taps must be at least 1")
@@ -279,6 +283,10 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         raise ValueError("pilot_interval must be at least 1")
     if c.pilot_interval is not None and c.equalizer_loop_gains is None:
         raise ValueError("pilot_interval needs equalizer_loop_gains")
+    if c.equalizer_forgetting is not None and not 0 < c.equalizer_forgetting <= 1:
+        raise ValueError("equalizer_forgetting must be in (0, 1]")
+    if c.equalizer_forgetting is not None and c.equalizer_taps is None:
+        raise ValueError("equalizer_forgetting needs equalizer_taps")
     if (
         c.equalizer_start == "least_squares"
         and c.equalizer_taps is not None
@@ -406,6 +414,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
             phase_loop_gains=c.equalizer_loop_gains,
             pilots=None if at is None else a[at],
             pilot_interval=k_p,
+            forgetting=c.equalizer_forgetting,
         ).symbols
         # the preamble is the equalizer's training and the pilots are known, so neither counts
         keep = np.ones(n, dtype=bool)

@@ -52,6 +52,7 @@ CONFIG_KEYS = [
     "equalizer_start",
     "equalizer_loop_gains",
     "pilot_interval",
+    "equalizer_forgetting",
 ]
 
 

@@ -50,8 +50,10 @@ DECIDE = {"qpsk": qpsk, "psk8": psk8, "qam16": qam16, "qam64": qam64}
 
 def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
         initial_feedback=None, phase_loop_gains=None, pilots=None, pilot_interval=None,
-        slip_window=2):
+        slip_window=2, forgetting=None, delta=0.01):
     c = (taps - 1) // 2 if center is None else center
+    k_all = taps + m
+    qm = [[1 / delta + 0j if i == j else 0j for j in range(k_all)] for i in range(k_all)]
     w = [0j] * taps
     w[c] = 1 + 0j
     b = [0j] * m
@@ -90,7 +92,21 @@ def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
         p = 0.0
         for z in u + past:
             p += z.real * z.real + z.imag * z.imag
-        if p > 0:
+        if p > 0 and forgetting:
+            # RLS over z = (u r, past) (ADR 0077)
+            z = [ui * r if phase_loop_gains else ui for ui in u] + past
+            q = [sum((qm[i][j] * z[j].conjugate() for j in range(k_all)), 0j)
+                 for i in range(k_all)]
+            s = complex(forgetting)
+            for zi, qi in zip(z, q):
+                s += zi * qi
+            gv = [qi / s for qi in q]
+            w = [wi + gi * e for wi, gi in zip(w, gv[:taps])]
+            b = [bj + gj * e for bj, gj in zip(b, gv[taps:])]
+            tv = [sum((z[i] * qm[i][j] for i in range(k_all)), 0j) for j in range(k_all)]
+            qm = [[(qm[i][j] - gv[i] * tv[j]) / forgetting for j in range(k_all)]
+                  for i in range(k_all)]
+        elif p > 0:
             g = mu / p
             ef = e * r.conjugate() if phase_loop_gains else e
             w = [wi + g * ef * ui.conjugate() for wi, ui in zip(w, u)]
@@ -263,6 +279,62 @@ add("pilots_psk8_window_one", X, A[:20], 5, 1, 0.1, decision="psk8",
     phase_loop_gains=[0.01, 0.0001], pilots=[A[n] for n in range(24, 150, 5)], pilot_interval=5,
     slip_window=1, tol={"abs": 1e-10, "rel": 0})
 
+# RLS training (ADR 0077)
+def solve(a, y):
+    """a x = y by Gaussian elimination with partial pivoting, on copies."""
+    a = [row[:] for row in a]
+    y = y[:]
+    k = len(y)
+    for i in range(k):
+        r = max(range(i, k), key=lambda j: abs(a[j][i]))
+        a[i], a[r], y[i], y[r] = a[r], a[i], y[r], y[i]
+        for j in range(i + 1, k):
+            f = a[j][i] / a[i][i]
+            a[j] = [ajl - f * ail for ajl, ail in zip(a[j], a[i])]
+            y[j] -= f * y[i]
+    x = [0j] * k
+    for i in reversed(range(k)):
+        x[i] = (y[i] - sum(a[i][j] * x[j] for j in range(i + 1, k))) / a[i][i]
+    return x
+
+
+def least_squares(x, t, taps, m, lam, delta, c):
+    """The weighted, regularized least-squares taps over the combined regressor."""
+    k_all, n_t = taps + m, len(t)
+    big = [[lam**n_t * delta if i == j else 0j for j in range(k_all)] for i in range(k_all)]
+    rhs = [lam**n_t * delta if i == c else 0j for i in range(k_all)]
+    for n in range(n_t):
+        z = [x[n + c - i] if 0 <= n + c - i < len(x) else 0j for i in range(taps)]
+        z += [t[n - j] if n - j >= 0 else 0j for j in range(1, m + 1)]
+        f = lam ** (n_t - 1 - n)
+        for i in range(k_all):
+            rhs[i] += f * z[i].conjugate() * t[n]
+            for j in range(k_all):
+                big[i][j] += f * z[i].conjugate() * z[j]
+    return solve(big, rhs)
+
+
+A = points("qpsk", 40, 59)
+X = channel(A, H2)
+for name, lam, dl in (("rls_growing_window_matches_least_squares", 1.0, 0.01),
+                      ("rls_forgetting_matches_weighted_least_squares", 0.9, 0.5)):
+    ys, es, w, b = add(name, X, A, 4, 2, 0.5, forgetting=lam, delta=dl, center=1,
+                       tol={"abs": 1e-10, "rel": 0},
+                       source=f"{SRC}; the final taps checked here against the direct solve of "
+                       f"the weighted regularized normal equations (lambda {lam}, delta {dl})")
+    ls = least_squares(X, A, 4, 2, lam, dl, 1)
+    assert max(abs(p - q) for p, q in zip(w + b, ls)) < 1e-9, name
+A = points("qpsk", 200, 61)
+X = [z * cmath.exp(0.01j * n) for n, z in enumerate(channel(A, H2, 2))]
+add("rls_phase_loop_qpsk_fractional", X, A[:30], 6, 2, 0.0, sps=2, decision="qpsk",
+    phase_loop_gains=[0.02, 0.0002], forgetting=0.999, tol={"abs": 1e-10, "rel": 0},
+    source=f"{SRC}; step 0 is not used with forgetting")
+A = points("psk8", 150, 67)
+X = [z * cmath.exp(0.03j * n) for n, z in enumerate(channel(A, H2))]
+add("rls_psk8_pilots", X, A[:20], 5, 1, 0.1, decision="psk8", phase_loop_gains=[0.01, 0.0001],
+    pilots=[A[n] for n in range(24, 150, 5)], pilot_interval=5, forgetting=0.99, delta=0.1,
+    tol={"abs": 1e-10, "rel": 0})
+
 PILOT3 = {"phase_loop_gains": [0.1, 0.0], "pilot_interval": 1, "pilots": C([1, 1j, -1])}
 for name, args, why in (
     ("pilots_without_interval", PILOT3 | {"pilot_interval": None},
@@ -289,6 +361,12 @@ for name, args, why in (
     ("feedback_without_references", {"decision": None},
      "with feedback every output needs a reference: training covers 1 of 4, no decision"),
     ("step_above_two", {"step": 2.5}, "step must be between 0 and 2"),
+    ("rls_step_still_checked", {"step": 2.5, "forgetting": 0.99}, "step must be between 0 and 2"),
+    ("rls_forgetting_zero", {"forgetting": 0.0}, "forgetting must be in (0, 1]"),
+    ("rls_forgetting_above_one", {"forgetting": 1.5}, "forgetting must be in (0, 1]"),
+    ("rls_forgetting_not_finite", {"forgetting": "nan"}, "forgetting must be finite"),
+    ("rls_delta_zero", {"forgetting": 0.99, "delta": 0.0}, "delta must be above 0"),
+    ("rls_delta_not_finite", {"forgetting": 0.99, "delta": "inf"}, "delta must be finite"),
     ("no_taps", {"num_taps": 0}, "num_taps must be at least 1"),
     ("training_too_long", {"training": C([1] * 5)}, "training is at most the output count (4)"),
 ):
@@ -301,8 +379,8 @@ for name, args, why in (
 doc = {
     "schema": 1,
     "suite": "dfe",
-    "description": "Decision-feedback equalizer: normalized LMS over forward and feedback taps "
-    "(conventions: Synchronization, Decision-feedback equalizer).",
+    "description": "Decision-feedback equalizer: normalized LMS, or RLS, over forward and "
+    "feedback taps (conventions: Synchronization, Decision-feedback equalizer).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "dfe.json"
