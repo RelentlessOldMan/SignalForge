@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace SignalForge;
 
-/// <summary>Symbol mapping. Definitions in docs/conventions.md.</summary>
+/// <summary>Symbol mapping, FSK and OFDM. Definitions in docs/conventions.md.</summary>
 public static class Modulation
 {
     private static readonly double InvSqrt2 = 1.0 / Math.Sqrt(2.0);
@@ -341,5 +341,87 @@ public static class Modulation
                 bits[i * k + b] = (byte)((best >> (k - 1 - b)) & 1);
         }
         return bits;
+    }
+
+    /// <summary>OFDM blocks: symbols on the listed subcarriers, unitary inverse DFT of <paramref name="nfft"/>,
+    /// cyclic prefix of <paramref name="cpLen"/> (conventions: Bits and symbols, OFDM; ADR 0060).</summary>
+    /// <param name="symbols">Finite symbols, a whole number of blocks of the used subcarriers.</param>
+    /// <param name="nfft">DFT size, at least 1.</param>
+    /// <param name="cpLen">Cyclic prefix length, 0 to <paramref name="nfft"/>.</param>
+    /// <param name="subcarriers">Distinct signed subcarrier indices, −⌊N/2⌋ to N − 1 − ⌊N/2⌋, filled in this
+    /// order; null for all of them, ascending.</param>
+    /// <returns>The blocks in order, nfft + cpLen samples each.</returns>
+    public static Complex[] OfdmModulate(ReadOnlySpan<Complex> symbols, int nfft, int cpLen, int[]? subcarriers = null)
+    {
+        int[] bins = OfdmBins(nfft, cpLen, subcarriers);
+        int u = bins.Length, w = nfft + cpLen;
+        if (symbols.Length % u != 0)
+            throw new ArgumentException("symbols must fill a whole number of blocks", nameof(symbols));
+        CheckFinite(symbols, nameof(symbols));
+        double scale = Math.Sqrt(nfft);
+        var output = new Complex[symbols.Length / u * w];
+        var spectrum = new Complex[nfft];
+        for (int b = 0; b < symbols.Length / u; b++)
+        {
+            Array.Clear(spectrum);
+            for (int i = 0; i < u; i++)
+                spectrum[bins[i]] = symbols[b * u + i];
+            Complex[] x = Spectral.Ifft(spectrum);
+            for (int n = 0; n < w; n++)
+                output[b * w + n] = x[(n + nfft - cpLen) % nfft] * scale;
+        }
+        return output;
+    }
+
+    /// <summary>Drop each block's cyclic prefix, take the unitary DFT of <paramref name="nfft"/>, and read the
+    /// listed subcarriers in order (conventions: Bits and symbols, OFDM; ADR 0060).</summary>
+    /// <param name="samples">Finite samples, a whole number of blocks of nfft + cpLen.</param>
+    /// <param name="nfft">DFT size, at least 1.</param>
+    /// <param name="cpLen">Cyclic prefix length, 0 to <paramref name="nfft"/>.</param>
+    /// <param name="subcarriers">Distinct signed subcarrier indices, as for <see cref="OfdmModulate"/>; null for
+    /// all of them, ascending.</param>
+    /// <returns>The symbols on the listed subcarriers, block after block.</returns>
+    public static Complex[] OfdmDemodulate(ReadOnlySpan<Complex> samples, int nfft, int cpLen, int[]? subcarriers = null)
+    {
+        int[] bins = OfdmBins(nfft, cpLen, subcarriers);
+        int u = bins.Length, w = nfft + cpLen;
+        if (samples.Length % w != 0)
+            throw new ArgumentException("samples must be a whole number of blocks of nfft + cpLen", nameof(samples));
+        CheckFinite(samples, nameof(samples));
+        double scale = 1 / Math.Sqrt(nfft);
+        var output = new Complex[samples.Length / w * u];
+        for (int b = 0; b < samples.Length / w; b++)
+        {
+            Complex[] y = Spectral.Fft(samples.Slice(b * w + cpLen, nfft));
+            for (int i = 0; i < u; i++)
+                output[b * u + i] = y[bins[i]] * scale;
+        }
+        return output;
+    }
+
+    /// <summary>The DFT bins of the subcarriers, after checking the OFDM arguments.</summary>
+    private static int[] OfdmBins(int nfft, int cpLen, int[]? subcarriers)
+    {
+        if (nfft < 1)
+            throw new ArgumentOutOfRangeException(nameof(nfft), "nfft must be at least 1");
+        if (cpLen < 0 || cpLen > nfft)
+            throw new ArgumentOutOfRangeException(nameof(cpLen), "cpLen must be 0 to nfft");
+        int low = -(nfft / 2);
+        if (subcarriers is null)
+            return [.. Enumerable.Range(low, nfft).Select(k => ((k % nfft) + nfft) % nfft)];
+        if (subcarriers.Length == 0)
+            throw new ArgumentException("subcarriers must not be empty", nameof(subcarriers));
+        if (subcarriers.Any(k => k < low || k > low + nfft - 1))
+            throw new ArgumentException($"subcarriers must lie in {low} ... {low + nfft - 1}", nameof(subcarriers));
+        if (subcarriers.Distinct().Count() != subcarriers.Length)
+            throw new ArgumentException("subcarriers must be distinct", nameof(subcarriers));
+        return [.. subcarriers.Select(k => ((k % nfft) + nfft) % nfft)];
+    }
+
+    private static void CheckFinite(ReadOnlySpan<Complex> x, string paramName)
+    {
+        foreach (Complex z in x)
+            if (!double.IsFinite(z.Real) || !double.IsFinite(z.Imaginary))
+                throw new ArgumentException($"{paramName} must be finite", paramName);
     }
 }

@@ -59,6 +59,7 @@ def test_frequency_order_kept() -> None:
         {"times": [[0, 1]], "values": [[1, 2]], "frequencies": [0.1]},
         {"times": [0, 1], "values": [True, False], "frequencies": [0.1]},
         {"times": [0, 1], "values": ["a", "b"], "frequencies": [0.1]},
+        {"times": [0, 1], "values": ["1", "2"], "frequencies": [0.1]},
         {"times": [0, 1], "values": [1, 2], "frequencies": [0.1], "normalization": "psd"},
     ],
 )

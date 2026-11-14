@@ -4,10 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **OFDM modulate and demodulate**: IFFT size, cyclic prefix, used subcarriers; round trip and
-   vectors from the DFT definition.
-2. **SigMF annotations**: read and write `core:annotations` (sample start, count, label) as
+1. **SigMF annotations**: read and write `core:annotations` (sample start, count, label) as
    Signal metadata, in both languages.
+2. **OFDM in the link**: a `"ofdm"` modulation in `qpsk_link` with a subcarrier plan, a known
+   preamble block for timing and a per-subcarrier channel estimate, BER against QPSK theory.
 3. **Lomb-Scargle false-alarm probability** (Scargle's exponential form for the standard
    normalization) and a frequency-grid helper from the time span.
 
@@ -602,12 +602,21 @@ Updated with every chunk of work. Dates are absolute.
   `lomb_scargle.py` (23 cases): closed forms on even samples and, on uneven times, the
   least-squares sinusoid fit solved from its normal equations with no τ. Python 2641 passed,
   2 skipped; .NET 2155 passed; conformance 1340/1340 in both. Version 2026.11.13.82.
+- 2026-11-13: OFDM modulate and demodulate (ADR 0060): `ofdm_modulate(symbols, nfft, cp_len,
+  subcarriers=None)` and `ofdm_demodulate`, unitary DFT both ways, signed subcarrier indices
+  (`−⌊N/2⌋ … N − 1 − ⌊N/2⌋`, filled in the order listed, default all ascending), cyclic prefix
+  from the block's tail, whole blocks only. New generator `ofdm.py` (30 cases): blocks by hand,
+  the definition as direct sums with cmath (no FFT), round trips, and the prefix dropped on
+  samples that are not OFDM. Tests show a multipath channel within the prefix demodulates as one
+  gain per subcarrier. Also from review: `lomb_scargle` now rejects strings of digits instead of
+  converting them. Python 2685 passed, 2 skipped; .NET 2193 passed; conformance 1370/1370
+  in both. Version 2026.11.13.83.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond modulate and demodulate (pilots, preambles, synchronization, equalization, OFDM in the link), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, SigMF annotations, `f16` samples), plotting, CLI,
 packaging and publishing.

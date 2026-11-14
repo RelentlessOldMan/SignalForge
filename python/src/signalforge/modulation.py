@@ -1,4 +1,4 @@
-"""Symbol mapping. Definitions in docs/conventions.md."""
+"""Symbol mapping, FSK and OFDM. Definitions in docs/conventions.md."""
 
 from __future__ import annotations
 
@@ -242,3 +242,66 @@ def fsk_demod_noncoherent(
     c = x.reshape(-1, sps) @ ref.T
     energy = c.real * c.real + c.imag * c.imag
     return _bits_of(np.argmax(energy, axis=1).astype(np.int64), k)
+
+
+def _ofdm_args(
+    nfft: int, cp_len: int, subcarriers: ArrayLike | None
+) -> tuple[int, int, NDArray[np.int64]]:
+    n = count(nfft, "nfft")
+    if n < 1:
+        raise ValueError("nfft must be at least 1")
+    cp = count(cp_len, "cp_len")
+    if cp > n:
+        raise ValueError("cp_len must be at most nfft")
+    low = -(n // 2)
+    if subcarriers is None:
+        return n, cp, np.arange(low, low + n, dtype=np.int64)
+    k = np.asarray(subcarriers)
+    if k.ndim != 1 or k.size == 0 or k.dtype.kind not in "iu":
+        raise ValueError("subcarriers must be a non-empty list of integers")
+    if np.any(k < low) or np.any(k > low + n - 1):
+        raise ValueError(f"subcarriers must lie in {low} ... {low + n - 1}")
+    if np.unique(k).size != k.size:
+        raise ValueError("subcarriers must be distinct")
+    return n, cp, k.astype(np.int64)
+
+
+def _finite_complex(x: ArrayLike, what: str) -> NDArray[np.complex128]:
+    a = np.asarray(x)
+    if a.ndim != 1 or (a.size and a.dtype.kind not in "iufc"):
+        raise ValueError(f"{what} must be a 1-D array of numbers")
+    z = a.astype(np.complex128)
+    if not np.isfinite(z).all():
+        raise ValueError(f"{what} must be finite")
+    return z
+
+
+def ofdm_modulate(
+    symbols: ArrayLike, nfft: int, cp_len: int, subcarriers: ArrayLike | None = None
+) -> NDArray[np.complex128]:
+    """OFDM blocks: symbols on the listed subcarriers, unitary inverse DFT of ``nfft``, cyclic
+    prefix of ``cp_len`` (conventions: Bits and symbols, OFDM; ADR 0060)."""
+    n, cp, k = _ofdm_args(nfft, cp_len, subcarriers)
+    s = _finite_complex(symbols, "symbols")
+    if s.size % k.size:
+        raise ValueError("symbols must fill a whole number of blocks")
+    spectra = np.zeros((s.size // k.size, n), dtype=np.complex128)
+    spectra[:, k % n] = s.reshape(-1, k.size)
+    blocks = np.fft.ifft(spectra, axis=1) * math.sqrt(n)
+    out: NDArray[np.complex128] = np.concatenate([blocks[:, n - cp :], blocks], axis=1).reshape(-1)
+    return out
+
+
+def ofdm_demodulate(
+    samples: ArrayLike, nfft: int, cp_len: int, subcarriers: ArrayLike | None = None
+) -> NDArray[np.complex128]:
+    """Drop each block's cyclic prefix, take the unitary DFT of ``nfft``, and read the listed
+    subcarriers in order (conventions: Bits and symbols, OFDM; ADR 0060)."""
+    n, cp, k = _ofdm_args(nfft, cp_len, subcarriers)
+    x = _finite_complex(samples, "samples")
+    if x.size % (n + cp):
+        raise ValueError("samples must be a whole number of blocks of nfft + cp_len")
+    blocks = x.reshape(-1, n + cp)[:, cp:]
+    spectra = np.fft.fft(blocks, axis=1) / math.sqrt(n)
+    out: NDArray[np.complex128] = spectra[:, k % n].reshape(-1)
+    return out

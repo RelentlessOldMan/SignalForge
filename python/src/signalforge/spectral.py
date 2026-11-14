@@ -301,12 +301,9 @@ def spectrogram(
 
 def _finite_reals(x: ArrayLike, what: str) -> NDArray[np.float64]:
     a = np.asarray(x)
-    if a.ndim != 1 or np.iscomplexobj(a) or a.dtype == np.bool_:
+    if a.ndim != 1 or (a.size and a.dtype.kind not in "iuf"):
         raise ValueError(f"{what} must be a 1-D array of real numbers")
-    try:
-        f = a.astype(np.float64)
-    except (TypeError, ValueError) as e:
-        raise ValueError(f"{what} must be a 1-D array of real numbers") from e
+    f = a.astype(np.float64)
     if not np.all(np.isfinite(f)):
         raise ValueError(f"{what} must be finite")
     return f

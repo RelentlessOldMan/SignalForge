@@ -90,6 +90,8 @@ from .metrics import (
 from .modulation import (
     fsk_demod_noncoherent,
     fsk_modulate,
+    ofdm_demodulate,
+    ofdm_modulate,
     psk8_demap_hard,
     psk8_demap_llr,
     psk8_map,
@@ -150,7 +152,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.82"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.83"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -237,6 +239,8 @@ __all__ = [
     "multitone",
     "newman_phases",
     "occupied_bandwidth",
+    "ofdm_demodulate",
+    "ofdm_modulate",
     "phase_noise",
     "pi_loop_gains",
     "power_frequency_offset",

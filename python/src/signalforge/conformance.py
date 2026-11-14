@@ -69,6 +69,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "qam64_demap_hard": modulation.qam64_demap_hard,
     "qam64_demap_llr": modulation.qam64_demap_llr,
     "fsk_modulate": modulation.fsk_modulate,
+    "ofdm_modulate": modulation.ofdm_modulate,
+    "ofdm_demodulate": modulation.ofdm_demodulate,
     "fsk_demod_noncoherent": modulation.fsk_demod_noncoherent,
     "bit_errors": metrics.bit_errors,
     "fft": spectral.fft,

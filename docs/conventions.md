@@ -360,6 +360,20 @@ groups as the tone metrics (ADR 0015).
     is a whole number and `sps > h·(M − 1)` (no tone aliases onto another). The sample count
     must be a multiple of `sps`; samples must be finite.
   **(implemented)**
+- **OFDM** ([ADR 0060](adr/0060-ofdm.md)): `nfft` `N ≥ 1`, `cp_len` `L` with `0 ≤ L ≤ N`.
+  `subcarriers` are distinct integers in `−⌊N/2⌋ … N − 1 − ⌊N/2⌋`, at least one; subcarrier `k`
+  is DFT bin `k mod N`, at `k·fs/N`. The default is all `N`, ascending from `−⌊N/2⌋`. With `U`
+  used subcarriers:
+  - `ofdm_modulate(symbols, nfft, cp_len, subcarriers=None)`: the finite complex symbols, a
+    multiple of `U` (possibly none), fill block `b` in order: `X_b[subcarriers[i] mod N] =
+    symbols[b·U + i]`, every other bin 0. Each block is `x_b[n] = (1/√N)·Σ_k X_b[k]·e^{j2πkn/N}`
+    (`n = 0 … N−1`), sent as `x_b[N−L … N−1]` followed by `x_b[0 … N−1]`; the output is the blocks
+    in order, `(N + L)` samples each.
+  - `ofdm_demodulate(samples, nfft, cp_len, subcarriers=None)`: the finite complex samples, a
+    multiple of `N + L`, split into blocks; each drops its first `L` samples, `Y_b[k] =
+    (1/√N)·Σ_n y_b[n]·e^{−j2πkn/N}` of the remaining `N`, and gives `Y_b[subcarriers[i] mod N]`
+    for each `i` in order. So `ofdm_demodulate` of `ofdm_modulate` returns the symbols.
+  **(implemented)**
 - Other constellations are normalized to unit average symbol energy unless a standard says otherwise.
   **(defined)**
 
