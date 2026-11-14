@@ -4,9 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **A training-free (blind) equalizer start** (constant modulus), for links with no preamble.
-2. **8-PSK cycle slips in the equalizer's phase loop** (ADR 0073): at some gains one run in six
+1. **8-PSK cycle slips in the equalizer's phase loop** (ADR 0073): at some gains one run in six
    locks a π/4 step off. Pilots, or a slip detector on the decisions, would catch it.
+2. **An RLS equalizer**, for channels where normalized LMS converges too slowly for the preamble
+   (a zero near the unit circle, ADR 0074's harder channel).
 
 ## Built
 
@@ -736,12 +737,21 @@ Updated with every chunk of work. Dates are absolute.
   14 dB and 8-PSK at 12 dB all decode (BER ≤ 0.0013, from up to 0.55); noiseless 16-QAM goes
   from 4574 bit errors to none. Loop cases in the `dfe` vectors, one more link config. Python
   2983 passed, 2 skipped; .NET 2463 passed; conformance 1470/1470 in both. Version 2026.11.13.104.
+- 2026-11-13: a blind equalizer ([ADR 0074](adr/0074-constant-modulus-equalizer.md)):
+  `cma_equalizer(samples, num_taps, step, *, samples_per_symbol=1, center=None, modulus=1.0,
+  initial_taps=None)` (C# `Sync.CmaEqualizer`), the normalized constant-modulus algorithm with
+  the LMS equalizer's regressor, start and spacing, and no training. Through a mild three-tap
+  channel turned 0.7 rad it opens the eye with no known symbols (QPSK 0.006, 16-QAM 0.013 after
+  the best rotation), and its taps, turned by the π/2 the known symbols give, start a
+  decision-directed LMS that does as well as one trained on every symbol. The link does not use
+  it. Vector suite `cma` (20 cases, 3 by hand). Python 3011 passed, 2 skipped; .NET 2488
+  passed; conformance 1490/1490 in both. Version 2026.11.13.105.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start and the phase loop (RLS, blind), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop and the constant-modulus (blind) form (RLS), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.

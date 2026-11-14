@@ -131,6 +131,7 @@ from .sync import (
     DfeTaps,
     Equalization,
     TimingRecovery,
+    cma_equalizer,
     dfe_equalizer,
     dfe_least_squares,
     gardner_timing,
@@ -160,7 +161,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.104"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.105"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -209,6 +210,7 @@ __all__ = [
     "chebyshev2_lowpass",
     "chirp",
     "clock_offset",
+    "cma_equalizer",
     "convolve",
     "db_to_amp",
     "db_to_lin",

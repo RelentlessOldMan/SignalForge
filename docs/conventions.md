@@ -1034,6 +1034,15 @@ multiplies the block by the power of two that brings its largest real or imagina
   the last output). With `μ = 0` the output is `x[n·sps]`. With `L = 1`, `μ = 1` and a reference,
   `y_{n+1}` uses the tap that makes `w·x[n·sps] = d_n` exactly, so a scalar channel `x = g·a` is
   inverted after one training symbol. **(implemented)**
+- **Constant-modulus equalizer** (`cma_equalizer(samples, num_taps, step, *, samples_per_symbol=1,
+  center=None, modulus=1.0, initial_taps=None)`, [ADR 0074](adr/0074-constant-modulus-equalizer.md)):
+  blind, normalized. `x`, `L`, `c`, `sps`, `μ`, the start, the regressor `u` and the output
+  `y_n = Σ_i w_i·u_i` are those of the LMS equalizer, with no training. `R = modulus` is finite and
+  above 0. For every output `n = 0 … N − 1`: `e_n = y_n·(R − |y_n|²)`, with `|y_n|²` as
+  `re² + im²`; `P = Σ_i |u_i|²` (in order), and if `P > 0` every `w_i ← w_i + (μ/P)·e_n·conj(u_i)`
+  (the factor `μ/P` computed once). The result is the LMS equalizer's: `symbols` (`y_n`), `errors`
+  (`e_n`), `taps`. With `L = 1`, input `x = g·a` with `|a| = 1` and `R = 1`, the tap after one
+  update is `w·(1 + μ·(1 − |w·g|²))`. **(implemented)**
 - **Decision-feedback equalizer** (`dfe_equalizer(samples, training, num_taps, num_feedback, step,
   *, samples_per_symbol=1, center=None, decision=None, initial_taps=None, initial_feedback=None,
   phase_loop_gains=None)`,

@@ -411,6 +411,53 @@ def lms_equalizer(
     return Equalization(out, errors, w)
 
 
+def cma_equalizer(
+    samples: ArrayLike,
+    num_taps: int,
+    step: float,
+    *,
+    samples_per_symbol: int = 1,
+    center: int | None = None,
+    modulus: float = 1.0,
+    initial_taps: ArrayLike | None = None,
+) -> Equalization:
+    """Blind constant-modulus equalizer, normalized, fractionally spaced; its output keeps the
+    channel's phase (conventions: Synchronization, Constant-modulus equalizer; ADR 0074)."""
+    xs, _, taps, _, sps, c = _equalizer_args(samples, [], num_taps, 0, samples_per_symbol, center)
+    mu = real(step, "step")
+    if not 0 <= mu <= 2:
+        raise ValueError("step must be between 0 and 2")
+    rr = real(modulus, "modulus")
+    if not rr > 0:
+        raise ValueError("modulus must be above 0")
+    w = [0j] * taps
+    w[c] = 1 + 0j
+    if initial_taps is not None:
+        w = _start(initial_taps, taps, "initial_taps")
+    out: list[complex] = []
+    errors: list[complex] = []
+    for n in range(-(-len(xs) // sps)):
+        base = n * sps + c
+        u = [xs[base - i] if 0 <= base - i < len(xs) else 0j for i in range(taps)]
+        y = 0j
+        for wi, ui in zip(w, u, strict=True):
+            y += wi * ui
+        out.append(y)
+        e = y * (rr - (y.real * y.real + y.imag * y.imag))
+        errors.append(e)
+        p = 0.0
+        for ui in u:
+            p += ui.real * ui.real + ui.imag * ui.imag
+        if p > 0:
+            g = mu / p
+            w = [wi + g * e * ui.conjugate() for wi, ui in zip(w, u, strict=True)]
+    return Equalization(
+        np.array(out, dtype=np.complex128),
+        np.array(errors, dtype=np.complex128),
+        np.array(w, dtype=np.complex128),
+    )
+
+
 @dataclass(frozen=True)
 class DfeEqualization:
     """What a decision-feedback equalizer gave: the output symbols, the error each update used, the

@@ -156,6 +156,65 @@ public static class Sync
         return new Equalization(r.Symbols, r.Errors, r.Taps);
     }
 
+    /// <summary>Blind constant-modulus equalizer, normalized, fractionally spaced; its output
+    /// keeps the channel's phase (conventions: Synchronization, Constant-modulus equalizer; ADR
+    /// 0074).</summary>
+    /// <param name="samples">The input, at least one sample, all finite.</param>
+    /// <param name="numTaps">Number of taps, at least 1.</param>
+    /// <param name="step">Normalized step size, in [0, 2].</param>
+    /// <param name="samplesPerSymbol">Input samples per output symbol, at least 1.</param>
+    /// <param name="center">The tap that starts at 1, in [0, numTaps); null for (numTaps − 1)/2.</param>
+    /// <param name="modulus">The modulus R the output is pulled to, finite and above 0:
+    /// E|a|⁴ / E|a|² of the constellation.</param>
+    /// <param name="initialTaps">The taps to start from, <paramref name="numTaps"/> finite values;
+    /// null for the unit impulse at <paramref name="center"/>.</param>
+    public static Equalization CmaEqualizer(ReadOnlySpan<Complex> samples, int numTaps, double step,
+        int samplesPerSymbol = 1, int? center = null, double modulus = 1.0, Complex[]? initialTaps = null)
+    {
+        int c = CheckEqualizer(samples, [], numTaps, 0, samplesPerSymbol, center);
+        if (!(step >= 0 && step <= 2))
+            throw new ArgumentOutOfRangeException(nameof(step), step, "must be in [0, 2]");
+        if (!(double.IsFinite(modulus) && modulus > 0))
+            throw new ArgumentOutOfRangeException(nameof(modulus), modulus, "must be finite and above 0");
+        Complex[] w;
+        if (initialTaps is null)
+        {
+            w = new Complex[numTaps];
+            w[c] = 1;
+        }
+        else
+        {
+            w = StartTaps(initialTaps, numTaps, nameof(initialTaps));
+        }
+        int n = (samples.Length + samplesPerSymbol - 1) / samplesPerSymbol;
+        var u = new Complex[numTaps];
+        var output = new Complex[n];
+        var errors = new Complex[n];
+        for (int k = 0; k < n; k++)
+        {
+            int b = k * samplesPerSymbol + c;
+            Complex y = Complex.Zero;
+            for (int i = 0; i < numTaps; i++)
+            {
+                u[i] = b - i >= 0 && b - i < samples.Length ? samples[b - i] : Complex.Zero;
+                y += w[i] * u[i];
+            }
+            output[k] = y;
+            Complex e = y * (modulus - ((y.Real * y.Real) + (y.Imaginary * y.Imaginary)));
+            errors[k] = e;
+            double p = 0;
+            for (int i = 0; i < numTaps; i++)
+                p += (u[i].Real * u[i].Real) + (u[i].Imaginary * u[i].Imaginary);
+            if (p > 0)
+            {
+                double g = step / p;
+                for (int i = 0; i < numTaps; i++)
+                    w[i] += g * e * Complex.Conjugate(u[i]);
+            }
+        }
+        return new Equalization(output, errors, w);
+    }
+
     /// <summary>Decision-feedback equalizer: the LMS equalizer plus feedback taps on the past
     /// references, one normalized LMS update over both (conventions: Synchronization,
     /// Decision-feedback equalizer; ADR 0069).</summary>
