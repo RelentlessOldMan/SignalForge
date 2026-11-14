@@ -4,10 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **The decision-feedback equalizer in the link**: an `equalizer_feedback` count beside
-   `equalizer_taps` in the single-carrier chains (ADR 0067's step 7 with `dfe_equalizer`, the
-   feedback at the symbol rate), a link config on a deep-null channel, and the question of what
-   `ber_theory` says there (the matched-filter bound still holds; error propagation sits on top).
+1. **A data-aided coarse frequency for 8-PSK through strong interference**: through an echo
+   of 0.9 one symbol late its 8th-power estimate is about 50 Hz off at 12 dB, outside the
+   preamble estimate's ±R/(2B) range (ADR 0070). Search the preamble correlation over a grid of
+   frequencies, or correlate shorter blocks first.
+2. **A training-free (blind) equalizer start** (constant modulus) or a step schedule, so a short
+   preamble is enough (ADR 0067: about 2000 symbols to converge at step 0.1).
 
 ## Built
 
@@ -703,6 +705,15 @@ Updated with every chunk of work. Dates are absolute.
   `vectors/cases/dfe.json` (14 cases, `generators/dfe.py`). On `1 + 0.95 z⁻¹` at N₀ = 0.01 its
   MSE is within 15% of the MMSE-DFE bound (closed form), a fifth of the MMSE linear bound. Python
   2910 passed, 2 skipped; .NET 2402 passed; conformance 1444/1444 in both. Version 2026.11.13.99.
+- 2026-11-13: decision feedback and a preamble frequency in the link ([ADR
+  0070](adr/0070-link-dfe-preamble-frequency.md)): `equalizer_feedback` runs step 7 as
+  `dfe_equalizer`; with the equalizer the frequency is a least-squares line through the
+  preamble's full blocks' phases (data-aided), as the blind estimators are about 1 Hz off through
+  strong interference. Through an echo of 0.9 one symbol late, at QPSK 8 dB the BER falls from
+  0.015 (linear) to 0.0002–0.0007 with two feedback taps, and at 16-QAM 14 dB from 0.34 to under
+  0.0002; noiseless, all four modulations decode (64-QAM with a 2000-symbol preamble). Three link
+  configs. 8-PSK through it at 12 dB still fails (Next). Python 2925 passed, 2 skipped; .NET
+  2417 passed; conformance 1444/1444 in both. Version 2026.11.13.100.
 
 ## Not built
 

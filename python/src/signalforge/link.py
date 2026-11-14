@@ -44,8 +44,8 @@ from .modulation import (
     qpsk_map,
 )
 from .sync import (
+    dfe_equalizer,
     gardner_timing,
-    lms_equalizer,
     power_frequency_offset,
     psk8_block_phases,
     psk8_carrier_tracking,
@@ -88,6 +88,7 @@ class QpskLinkConfig:
     multipath_gains: tuple[tuple[float, float], ...] | None = None
     equalizer_taps: int | None = None
     equalizer_step: float = 0.1
+    equalizer_feedback: int = 0
 
 
 @dataclass(frozen=True)
@@ -249,11 +250,16 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         if config.equalizer_taps is None
         else count(config.equalizer_taps, "equalizer_taps"),
         equalizer_step=real(config.equalizer_step, "equalizer_step"),
+        equalizer_feedback=count(config.equalizer_feedback, "equalizer_feedback"),
     )
     if c.equalizer_taps is not None and c.equalizer_taps < 1:
         raise ValueError("equalizer_taps must be at least 1")
     if not 0 <= c.equalizer_step <= 2:
         raise ValueError("equalizer_step must be between 0 and 2")
+    if c.equalizer_feedback < 0:
+        raise ValueError("equalizer_feedback must not be negative")
+    if c.equalizer_feedback and c.equalizer_taps is None:
+        raise ValueError("equalizer_feedback needs equalizer_taps")
     if c.equalizer_taps is not None:
         if c.modulation not in _MODULATIONS:
             raise ValueError("equalizer_taps is for the single-carrier modulations only")
@@ -292,6 +298,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     else:
         z_raw = gardner_timing(y, sps, *c.timing_loop_gains, start=tau).symbols
     f_hat = coarse(z_raw, rs)
+    f_1 = f_hat
     # frame start: the first maximum of the preamble correlation, its blocks' magnitudes added so
     # a residual frequency error cannot turn a long preamble through a cycle (ADR 0068)
     ref = np.conj(a[:pre])
@@ -320,16 +327,31 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     c_pre = complex(np.sum(ref * frequency_offset(z[:pre], -slope * rs / (2 * math.pi), rs, -phi)))
     phi = _wrap(phi + step * round(math.atan2(c_pre.imag, c_pre.real) / step))
     if c.equalizer_taps is not None:
+        nb = pre // blk
+        if nb >= 2:
+            # the frequency from the preamble's known symbols: a line through its full blocks'
+            # phases, far less hurt by interference than the blind estimators (ADR 0070)
+            q = np.add.reduceat(ref[: nb * blk] * zc[k0 : k0 + nb * blk], edges[:nb])
+            th = [math.atan2(q[0].imag, q[0].real)]
+            for b in range(1, nb):
+                t = complex(q[b] * np.conj(q[b - 1]))
+                th.append(th[-1] + math.atan2(t.imag, t.real))
+            xb = np.arange(nb, dtype=np.float64) * blk
+            thb = np.array(th)
+            xm, ym = float(np.mean(xb)), float(np.mean(thb))
+            s_q = float(np.sum((xb - xm) * (thb - ym)) / np.sum((xb - xm) ** 2))
+            f_hat = f_1 + s_q * rs / (2 * math.pi)
         # fractionally spaced at 2 per symbol, its center on the sample the chain takes (ADR 0067)
         v = frequency_offset(y, -f_hat, rs * sps)
         s0 = round(tau) % sps + k0 * sps
         xe = np.zeros(2 * n, dtype=np.complex128)
         tail = v[s0 :: sps // 2][: 2 * n]
         xe[: tail.size] = tail
-        z = lms_equalizer(
+        z = dfe_equalizer(
             xe,
             a[:pre],
             c.equalizer_taps,
+            c.equalizer_feedback,
             c.equalizer_step,
             samples_per_symbol=2,
             decision=c.modulation,

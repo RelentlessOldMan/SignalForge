@@ -1134,8 +1134,9 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   bullet says), `multipath_delays` and `multipath_gains` [none] (both none or of equal non-zero
   length: integers `≥ 0`, and `[re, im]` pairs; `"ofdm"`, or a single-carrier chain with
   `equalizer_taps`, [ADR 0064](adr/0064-link-multipath.md)), `equalizer_taps` [none] (an integer
-  `≥ 1`) and `equalizer_step` [0.1] (in `[0, 2]`; [ADR 0067](adr/0067-link-equalizer.md)).
-  Numbers must be finite.
+  `≥ 1`), `equalizer_step` [0.1] (in `[0, 2]`; [ADR 0067](adr/0067-link-equalizer.md)) and
+  `equalizer_feedback` [0] (an integer `≥ 0`, nonzero only with `equalizer_taps`; [ADR
+  0070](adr/0070-link-dfe-preamble-frequency.md)). Numbers must be finite.
   **(implemented)**
 - **FSK** (`"fsk2"`, `"fsk4"`: `M` = 2 or 4, `k = log2 M`, modulation index 1;
   [ADR 0057](adr/0057-fsk-link.md)) replaces the transmitter and receiver below; the checks above
@@ -1268,12 +1269,17 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
      to the frame start). Either way they are compared with
      `a` by `evm` and, after `qpsk_demap_hard` (`qam16_demap_hard`, `psk8_demap_hard`, `qam64_demap_hard`), with `bits` by `bit_errors`.
      The preamble counts.
-     With `equalizer_taps = L` they are instead `lms_equalizer(x, a[:P], L, equalizer_step,
-     samples_per_symbol=2, decision=modulation).symbols`, where `v = frequency_offset(y, −f,
-     symbol_rate·sps)`, `s₀ = (round(τ) mod sps) + k₀·sps`, and `x` the `2N` samples
+     With `equalizer_taps = L` they are instead `dfe_equalizer(x, a[:P], L, M, equalizer_step,
+     samples_per_symbol=2, decision=modulation).symbols` with `M = equalizer_feedback` (`M = 0`
+     is `lms_equalizer`), where `v = frequency_offset(y, −f, symbol_rate·sps)`, `s₀ = (round(τ) mod sps) + k₀·sps`, and `x` the `2N` samples
      `x[m] = v[s₀ + m·sps/2]`, 0 past the end of `v`. Output `n` then starts as `v[s₀ + n·sps]`,
      the sample the steps above take. With the equalizer the preamble does not count: `evm` and
-     `bit_errors` compare symbols `P … N − 1` only (the bits from `k·P` on).
+     `bit_errors` compare symbols `P … N − 1` only (the bits from `k·P` on). With the equalizer
+     and `n_b = ⌊P/B⌋ ≥ 2`, `f` here (and as reported) is instead the preamble's: `q_b =
+     Σ_{i=bB}^{(b+1)B−1} conj(a[i])·c[k₀+i]` for `b < n_b`, each summed in order of `i`; their
+     phases unwrapped as `θ₀ = arg q₀`, `θ_b = θ_{b−1} + arg(q_b·conj(q_{b−1}))`; `s` the
+     least-squares slope of `θ_b` on `x_b = b·B` (step 5's formula); and `f = f₁ +
+     s·symbol_rate/(2π)` ([ADR 0070](adr/0070-link-dfe-preamble-frequency.md)).
   **(implemented)**
 - **Report** (`QpskLinkReport`): `config`, `timing_offset` (τ, samples; the loop's start when it
   runs), `frame_start` (`k₀`,

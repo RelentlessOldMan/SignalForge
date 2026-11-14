@@ -89,6 +89,10 @@ public sealed record QpskLinkConfig
 
     /// <summary>The equalizer's normalized step, 0 to 2.</summary>
     public double EqualizerStep { get; init; } = 0.1;
+
+    /// <summary>Decision-feedback taps on the equalizer, at the symbol rate; not negative, nonzero
+    /// only with <see cref="EqualizerTaps"/>; 0 [the default] for a linear equalizer (ADR 0070).</summary>
+    public int EqualizerFeedback { get; init; }
 }
 
 /// <summary>What the receiver estimated and measured on one link run.</summary>
@@ -191,6 +195,9 @@ public static class Link
         Gains(c.CarrierLoopGains, nameof(c.CarrierLoopGains), nameof(config));
         int[] subcarriers = OfdmSubcarriersOf(c);
         Complex[]? paths = MultipathGainsOf(c);
+        ArgumentOutOfRangeException.ThrowIfNegative(c.EqualizerFeedback, nameof(config));
+        if (c.EqualizerFeedback > 0 && c.EqualizerTaps is null)
+            throw new ArgumentException("EqualizerFeedback needs EqualizerTaps", nameof(config));
         if (c.EqualizerTaps is { } et)
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(et, 1, nameof(config));
@@ -253,6 +260,7 @@ public static class Link
             2 => Sync.PowerFrequencyOffset(r, rs, 8),
             _ => Sync.QpskFrequencyOffset(r, rs),
         };
+        double f1 = f;
         // frame start: the first maximum of the preamble correlation, its blocks' magnitudes added so
         // a residual frequency error cannot turn a long preamble through a cycle (ADR 0068)
         Complex[] cr = Channel.FrequencyOffset(r, -f, rs);
@@ -298,13 +306,44 @@ public static class Link
         phi = Wrap(phi + step * Math.Round(Math.Atan2(cp.Imaginary, cp.Real) / step));
         if (c.EqualizerTaps is { } taps)
         {
+            int nb = pre / blk;
+            if (nb >= 2)
+            {
+                // the frequency from the preamble's known symbols: a line through its full blocks'
+                // phases, far less hurt by interference than the blind estimators (ADR 0070)
+                var th = new double[nb];
+                Complex prev = Complex.Zero;
+                for (int b = 0; b < nb; b++)
+                {
+                    Complex q = Complex.Zero;
+                    for (int i = b * blk; i < (b + 1) * blk; i++)
+                        q += Complex.Conjugate(a[i]) * cr[k0 + i];
+                    if (b == 0)
+                    {
+                        th[0] = Math.Atan2(q.Imaginary, q.Real);
+                    }
+                    else
+                    {
+                        Complex t = q * Complex.Conjugate(prev);
+                        th[b] = th[b - 1] + Math.Atan2(t.Imaginary, t.Real);
+                    }
+                    prev = q;
+                }
+                double xm = (nb - 1) * blk / 2.0, ym = th.Average(), sxy = 0, sxx = 0;
+                for (int b = 0; b < nb; b++)
+                {
+                    sxy += (b * blk - xm) * (th[b] - ym);
+                    sxx += (b * blk - xm) * (b * blk - xm);
+                }
+                f = f1 + sxy / sxx * rs / (2 * Math.PI);
+            }
             // fractionally spaced at 2 per symbol, its center on the sample the chain takes (ADR 0067)
             Complex[] v = Channel.FrequencyOffset(y, -f, rs * sps);
             int s0 = (int)Math.Round(tau) % sps + k0 * sps, half = sps / 2;
             var xe = new Complex[2 * n];
             for (int m = 0; m < xe.Length && s0 + m * half < v.Length; m++)
                 xe[m] = v[s0 + m * half];
-            Complex[] eq = Sync.LmsEqualizer(xe, a.AsSpan(0, pre), taps, c.EqualizerStep, 2, null, c.Modulation).Symbols;
+            Complex[] eq = Sync.DfeEqualizer(xe, a.AsSpan(0, pre), taps, c.EqualizerFeedback, c.EqualizerStep, 2, null, c.Modulation).Symbols;
             // the preamble is the equalizer's training, so it does not count
             z = eq[pre..];
             a = a[pre..];

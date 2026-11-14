@@ -1,0 +1,14 @@
+{
+  "modulation": "qam16",
+  "num_symbols": 20000,
+  "preamble_symbols": 1000,
+  "eb_n0_db": 14.0,
+  "frequency_offset_hz": -7.0,
+  "phase": 2.0,
+  "delay_samples": 2,
+  "seed": 71,
+  "equalizer_taps": 11,
+  "equalizer_feedback": 2,
+  "multipath_delays": [0, 4],
+  "multipath_gains": [[1.0, 0.0], [0.9, 0.0]]
+}

@@ -1,0 +1,12 @@
+{
+  "modulation": "psk8",
+  "num_symbols": 4000,
+  "preamble_symbols": 1000,
+  "frequency_offset_hz": 5.0,
+  "phase": 0.7,
+  "delay_samples": 3,
+  "equalizer_taps": 11,
+  "equalizer_feedback": 3,
+  "multipath_delays": [0, 4],
+  "multipath_gains": [[1.0, 0.0], [0.9, 0.0]]
+}

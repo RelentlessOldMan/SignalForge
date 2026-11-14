@@ -19,7 +19,8 @@ inter-symbol interference is in the way, where no closed form gives a linear equ
   `samples_per_symbol` must be even. It takes the samples from the symbol at the frame start
   (`round(τ) mod sps + k₀·sps`) on, derotated by the estimated frequency, trains on the preamble
   and then decides with the chain's own demapper. Its center tap starts on the sample the chain
-  would have taken, so the estimates before it (timing, frame start, frequency) are unchanged.
+  would have taken, so the estimates before it (timing, frame start, frequency) are unchanged
+  ([ADR 0070](0070-link-dfe-preamble-frequency.md) later took the frequency from the preamble).
 - With the equalizer, EVM and bit errors are measured **from symbol P on**: the preamble is its
   training, and its outputs there are from taps still converging (noiseless, every error of a
   run falls in the first few hundred symbols), so the preamble must be shorter than the frame.

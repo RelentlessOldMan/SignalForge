@@ -82,12 +82,12 @@ public sealed class LinkEqualizerTests
     [Fact]
     public void EstimatesBeforeTheEqualizerAreUnchanged()
     {
-        // the equalizer only replaces step 7: timing, frame start, frequency and phase are the chain's
+        // the equalizer replaces step 7: timing, frame start and phase are the chain's (the frequency
+        // is the preamble's, ADR 0070: LinkDfeTests)
         var with = Link.QpskLink(Flat(Eq()));
         var without = Link.QpskLink(Flat(Eq()) with { EqualizerTaps = null });
         Assert.Equal(without.TimingOffset, with.TimingOffset);
         Assert.Equal(without.FrameStart, with.FrameStart);
-        Assert.Equal(without.FrequencyOffsetHz, with.FrequencyOffsetHz);
         Assert.Equal(without.PhaseOffset, with.PhaseOffset);
     }
 

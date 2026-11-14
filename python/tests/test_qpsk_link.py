@@ -48,6 +48,7 @@ CONFIG_KEYS = [
     "multipath_gains",
     "equalizer_taps",
     "equalizer_step",
+    "equalizer_feedback",
 ]
 
 

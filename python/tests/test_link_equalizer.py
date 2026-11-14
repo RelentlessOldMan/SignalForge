@@ -71,12 +71,12 @@ def test_flat_channel_with_the_equalizer() -> None:
 
 
 def test_estimates_before_the_equalizer_are_unchanged() -> None:
-    # the equalizer only replaces step 7: timing, frame start, frequency and phase are the chain's
+    # the equalizer replaces step 7: timing, frame start and phase are the chain's (the frequency
+    # is the preamble's, ADR 0070: test_link_dfe.py)
     kw = {"multipath_delays": None, "multipath_gains": None}
     with_eq, without = qpsk_link(_eq(**kw)), qpsk_link(_eq(equalizer_taps=None, **kw))
     assert with_eq.timing_offset == without.timing_offset
     assert with_eq.frame_start == without.frame_start
-    assert with_eq.frequency_offset_hz == without.frequency_offset_hz
     assert with_eq.phase_offset == without.phase_offset
 
 
