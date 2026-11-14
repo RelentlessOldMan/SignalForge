@@ -1098,7 +1098,9 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   `carrier_loop_gains` [none], each none or a pair `[kp, ki]` of numbers `≥ 0`
   ([ADR 0046](adr/0046-link-tracking-loops.md)), `ofdm_nfft` [64], `ofdm_cp_len` [16] and
   `ofdm_subcarriers` [none] (used by `"ofdm"` only, checked for every modulation as the OFDM
-  bullet says). Numbers must be finite.
+  bullet says), `multipath_delays` and `multipath_gains` [none] (both none or of equal non-zero
+  length: integers `≥ 0`, and `[re, im]` pairs; `"ofdm"` only, [ADR
+  0064](adr/0064-link-multipath.md)). Numbers must be finite.
   **(implemented)**
 - **FSK** (`"fsk2"`, `"fsk4"`: `M` = 2 or 4, `k = log2 M`, modulation index 1;
   [ADR 0057](adr/0057-fsk-link.md)) replaces the transmitter and receiver below; the checks above
@@ -1142,7 +1144,8 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   `rolloff`, `span_symbols` and `phase_block_symbols` are otherwise unused.
   - Transmitter: `bits = prbs(prbs_order, 2·num_symbols)`, `a = qpsk_map(bits)`, `tx` =
     `delay_samples` zeros followed by `ofdm_modulate(a, N, cp, K)` (`L = B·(N + cp)` samples).
-  - Channel: as below, but the AWGN is `awgn(·, eb_n0_db + 10·log10 2, sps, signal_power =
+  - Channel: with multipath, `tx` followed by `max(multipath_delays)` zeros (room for every echo)
+    first becomes `multipath(·, multipath_delays, gains)` (each pair `[re, im]` as `re + j·im`), which needs `max(multipath_delays) ≤ ⌊cp/2⌋`; then as below, but the AWGN is `awgn(·, eb_n0_db + 10·log10 2, sps, signal_power =
     1/sps)`: variance `N₀ = 1/(2·10^(eb_n0_db/10))` per sample, so every used subcarrier sees
     `Es/N₀ = 2·Eb/N₀` (the prefix and empty subcarriers not counted).
   - Receiver:
@@ -1154,16 +1157,20 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
        `+ (N + cp)`, …, `≤ len(rx) − L` maximizing `|Σ_i conj(x[i])·rx[d + i]·e^{−j2πf̂i/fs}|`
        (the prefix ties noiseless one block early when the delay is longer than a block). The
        steps below use `d₁` for `d₀`.
-    2. `y = frequency_offset(rx[d₀ : d₀ + L], −f̂, fs)` (phase 0 at `d₀`), `Z = ofdm_demodulate(y,
-       N, cp, K)` as `B` rows of `U`, `A` the same of `a`.
+    2. Back off half a prefix: `d₂ = max(d₁ − ⌊cp/2⌋, 0)`, `s = d₁ − d₂`. `y =
+       frequency_offset(rx[d₂ : d₂ + L], −f̂, fs, 2π·f̂·s/fs)` (phase 0 at `d₁`), `Z =
+       ofdm_demodulate(y, N, cp, K)` as `B` rows of `U`, `A` the same of `a`.
     3. `Ĥ_k = (1/P)·Σ_{b<P} Z[b, k]/A[b, k]`, `W[b, k] = Z[b, k]/Ĥ_k`.
     4. Block by block, `θ_b = atan2(Σ_k W[b, k]·conj(q(W[b, k]·e^{−jθ_{b−1}})))` with
        `θ_{−1} = 0` and `q(x) = qpsk_map(qpsk_demap(x))`; `z[b, k] = W[b, k]·e^{−jθ_b}`.
   - Report: `timing_offset = d₀ mod sps` (as a float), `frame_start = ⌊d₀/sps⌋`,
-    `frequency_offset_hz = f̂`, `phase_offset = atan2(Σ_k Ĥ_k)` wrapped into `(−π, π]`,
+    `frequency_offset_hz = f̂`, `phase_offset = atan2(Σ_k Ĥ_k·e^{j2πk·s/N})` wrapped into
+    `(−π, π]` (the window shift's ramp taken out),
     `evm = evm(z, a)`, `bit_errors(bits, qpsk_demap(z))` (the preamble counts), `ber_theory =
     qpsk_ber_theory(eb_n0_db)` or none without noise (exact channel knowledge; the estimate from
-    `P` blocks costs roughly `10·log10(1 + 1/P)` dB). Noiseless, `d₀ = delay_samples`, `f̂` is the
+    `P` blocks costs roughly `10·log10(1 + 1/P)` dB). With multipath it is the mean over `k` in `K`
+    of `qpsk_ber_theory(eb_n0_db + 10·log10|H_k|²)`, `1/2` where `H_k = 0`, with
+    `H_k = Σᵢ gᵢ·e^{−j2πk·dᵢ/N}`. Noiseless, `d₀ = delay_samples`, `f̂` is the
     channel offset to rounding, `phase_offset = phase + 2π·f·delay_samples/fs` wrapped, and there
     are no bit errors. **(implemented)**
 - **Transmitter:** with `k` bits per symbol (2 for QPSK, 4 for 16-QAM, 3 for 8-PSK, 6 for

@@ -1,0 +1,10 @@
+{
+  "num_symbols": 1260,
+  "preamble_symbols": 63,
+  "modulation": "ofdm",
+  "frequency_offset_hz": 7.3,
+  "phase": 1.1,
+  "delay_samples": 37,
+  "multipath_delays": [0, 2, 5, 8],
+  "multipath_gains": [[1.0, 0.0], [0.5, -0.3], [-0.2, 0.4], [0.1, 0.1]]
+}

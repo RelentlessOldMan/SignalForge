@@ -15,7 +15,7 @@ from typing import Any
 import numpy as np
 
 from ._checks import count, real
-from .channel import awgn, clock_offset, frequency_offset, phase_noise
+from .channel import awgn, clock_offset, frequency_offset, multipath, phase_noise
 from .dsp import convolve, pulse_shape, rrc_taps
 from .metrics import (
     ErrorCount,
@@ -83,6 +83,8 @@ class QpskLinkConfig:
     ofdm_nfft: int = 64
     ofdm_cp_len: int = 16
     ofdm_subcarriers: tuple[int, ...] | None = None
+    multipath_delays: tuple[int, ...] | None = None
+    multipath_gains: tuple[tuple[float, float], ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -239,7 +241,10 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         timing_loop_gains=_gains(config.timing_loop_gains, "timing_loop_gains"),
         carrier_loop_gains=_gains(config.carrier_loop_gains, "carrier_loop_gains"),
         **_ofdm_fields(config),
+        **_multipath_fields(config),
     )
+    if c.multipath_delays is not None and c.modulation != "ofdm":
+        raise ValueError("multipath_delays and multipath_gains are for ofdm only")
     if c.modulation in _FSK_ORDERS:
         return _fsk_link(c)
     if c.modulation == "ofdm":
@@ -340,8 +345,29 @@ def _ofdm_fields(config: QpskLinkConfig) -> dict[str, Any]:
     }
 
 
+def _multipath_fields(config: QpskLinkConfig) -> dict[str, Any]:
+    """The multipath fields as plain values, checked for every modulation (ADR 0064)."""
+    dl, gl = config.multipath_delays, config.multipath_gains
+    if dl is None and gl is None:
+        return {"multipath_delays": None, "multipath_gains": None}
+    what = "multipath_delays and multipath_gains"
+    if dl is None or gl is None or isinstance(dl, str | bytes) or isinstance(gl, str | bytes):
+        raise ValueError(f"{what} must both be None or lists of equal non-zero length")
+    if len(dl) != len(gl) or len(dl) == 0:
+        raise ValueError(f"{what} must both be None or lists of equal non-zero length")
+    if any(isinstance(v, bool | np.bool_) for v in dl):
+        raise ValueError("multipath_delays must be integers")
+    delays = tuple(count(v, "multipath_delays") for v in dl)
+    gains = []
+    for g in gl:
+        if isinstance(g, str | bytes) or len(g) != 2:
+            raise ValueError("multipath_gains must be pairs [re, im]")
+        gains.append((real(g[0], "multipath_gains"), real(g[1], "multipath_gains")))
+    return {"multipath_delays": delays, "multipath_gains": tuple(gains)}
+
+
 def _ofdm_link(c: QpskLinkConfig) -> QpskLinkReport:
-    """The OFDM link (conventions: QPSK link, OFDM; ADR 0063)."""
+    """The OFDM link (conventions: QPSK link, OFDM; ADR 0063, 0064)."""
     n_fft, cp, sps = c.ofdm_nfft, c.ofdm_cp_len, c.samples_per_symbol
     low = -(n_fft // 2)
     k = (
@@ -359,11 +385,17 @@ def _ofdm_link(c: QpskLinkConfig) -> QpskLinkReport:
         raise ValueError("ofdm takes no phase noise or clock offset")
     if not abs(c.frequency_offset_hz) < fs / (2 * n_fft):
         raise ValueError("ofdm needs |frequency_offset_hz| below half a subcarrier spacing")
+    if c.multipath_delays is not None and max(c.multipath_delays) > cp // 2:
+        raise ValueError("ofdm needs every multipath delay at most half of ofdm_cp_len")
     b, p = c.num_symbols // u, c.preamble_symbols // u
     bits = prbs(c.prbs_order, 2 * c.num_symbols)
     a = qpsk_map(bits)
     frame = ofdm_modulate(a, n_fft, cp, k)
     tx = np.concatenate([np.zeros(c.delay_samples, dtype=np.complex128), frame])
+    if c.multipath_delays is not None:
+        gains = [complex(re, im) for re, im in c.multipath_gains or ()]
+        tail = np.zeros(max(c.multipath_delays), dtype=np.complex128)  # room for every echo
+        tx = multipath(np.concatenate([tx, tail]), list(c.multipath_delays), gains)
     rx = np.asarray(_channel(c, tx, 2, 1 / sps), dtype=np.complex128)
     # 1. timing and frequency from the cyclic prefix
     length = frame.size
@@ -386,8 +418,11 @@ def _ofdm_link(c: QpskLinkConfig) -> QpskLinkReport:
         if m > best:
             best, d1 = m, d
     d0 = d1
-    # 2. derotate and demodulate; 3. channel from the preamble blocks
-    y = frequency_offset(rx[d0 : d0 + length], -f_hat, fs)
+    # 2. back off half a prefix, derotate (phase 0 at d0) and demodulate; 3. channel from the
+    # preamble blocks
+    d2 = max(d0 - cp // 2, 0)
+    shift = d0 - d2
+    y = frequency_offset(rx[d2 : d2 + length], -f_hat, fs, 2 * math.pi * f_hat * shift / fs)
     zm = ofdm_demodulate(y, n_fft, cp, k).reshape(b, u)
     am = a.reshape(b, u)
     h = np.mean(zm[:p] / am[:p], axis=0)
@@ -400,8 +435,23 @@ def _ofdm_link(c: QpskLinkConfig) -> QpskLinkReport:
         s = complex(np.sum(w[i] * np.conj(q)))
         theta = math.atan2(s.imag, s.real)
         z[i] = w[i] * complex(math.cos(theta), -math.sin(theta))
-    hs = complex(np.sum(h))
+    hs = complex(np.sum(h * np.exp(2j * math.pi * k * shift / n_fft)))
     zf = z.reshape(-1)
+    theory: float | None = None
+    if c.eb_n0_db is not None:
+        theory = qpsk_ber_theory(c.eb_n0_db)
+        if c.multipath_delays is not None:
+            hk = np.zeros(u, dtype=np.complex128)
+            for dly, (re, im) in zip(c.multipath_delays, c.multipath_gains or (), strict=True):
+                hk += complex(re, im) * np.exp(-2j * math.pi * k * dly / n_fft)
+            p2 = hk.real**2 + hk.imag**2
+            theory = (
+                sum(
+                    0.5 if v == 0 else qpsk_ber_theory(c.eb_n0_db + 10 * math.log10(v))
+                    for v in p2.tolist()
+                )
+                / u
+            )
     return QpskLinkReport(
         config=c,
         timing_offset=float(d0 % sps),
@@ -410,7 +460,7 @@ def _ofdm_link(c: QpskLinkConfig) -> QpskLinkReport:
         phase_offset=_wrap(math.atan2(hs.imag, hs.real)),
         evm=evm(zf, a),
         bit_errors=bit_errors(bits, qpsk_demap_hard(zf)),
-        ber_theory=None if c.eb_n0_db is None else qpsk_ber_theory(c.eb_n0_db),
+        ber_theory=theory,
     )
 
 

@@ -4,12 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Multipath channel in the link**: a tap-delay channel (`channel_taps`, within the prefix for
-   OFDM) so the OFDM per-subcarrier estimate and the single-carrier chains meet a frequency-
-   selective channel; the expected OFDM BER over a known channel is the mean of the
-   per-subcarrier QPSK BERs at `|H_k|²·Es/N₀`.
-2. **OFDM with phase noise and clock offset** (ADR 0063 rejects them today): common phase error
+1. **OFDM with phase noise and clock offset** (ADR 0063 rejects them today): common phase error
    is already tracked per block; the clock offset needs a per-subcarrier phase slope.
+2. **An equalizer for the single-carrier chains** (LMS, fractionally spaced) so they can take
+   `multipath_delays` too; the expected BER then needs a bound rather than a closed form.
 
 ## Built
 
@@ -642,12 +640,26 @@ Updated with every chunk of work. Dates are absolute.
   offsets of half a subcarrier or more are rejected. New link configs `ofdm_noiseless`
   (52 subcarriers) and `ofdm_6db`. Python 2785 passed, 2 skipped; .NET 2292 passed;
   conformance 1412/1412 in both. Version 2026.11.13.88 (.87 failed: the noiseless OFDM EVM is rounding error, about −299 dB, so its dB value and peak index differ between languages; the link compare now skips those two when both rms are ≤ 1e-9, docs/testing.md).
+- 2026-11-13: Multipath in the OFDM link ([ADR 0064](adr/0064-link-multipath.md)):
+  `multipath_delays` and `multipath_gains` (`[re, im]` pairs) run `multipath` first in the
+  channel, with room after the frame for every echo; `"ofdm"` only, delays at most `⌊cp/2⌋`. The
+  receiver backs its DFT windows off half a prefix from the timing estimate and takes the
+  window shift's phase ramp out of `phase_offset`. `ber_theory` is the mean over subcarriers of
+  QPSK theory at `|H_k|²·Eb/N₀`. Found in testing: the timing search stopped at the direct
+  path's start until the echo room was added, and a BER bracket with 8 preamble blocks failed in
+  C# because each run's channel estimate is shared by all its blocks (the tests use 64), and for
+  the same reason the flat `ofdm_6db` EVM compare failed at 5.9 sd once the back-off moved the
+  windows (its preamble is now 64 blocks too). The
+  prefix's frequency estimate is slightly biased by the echo (noiseless: about 0.012 Hz of a
+  62.5 Hz spacing). New link configs `ofdm_multipath_noiseless` and `ofdm_multipath_8db`.
+  Python 2809 passed, 2 skipped; .NET 2311 passed; conformance 1412/1412 in both.
+  Version 2026.11.13.92 (.89 to .91 failed on the lint and the two compares above).
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond modulate and demodulate (pilots, preambles, synchronization, equalization, OFDM in the link), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate and common-phase tracking (pilots, phase noise and clock offset in the OFDM link), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.
@@ -695,3 +707,8 @@ packaging and publishing.
   window of ±k% needs about `(300/k)²` errors to sit at 3σ (500 for ±15 %). The FSK tests first
   had about 200 errors and ±12 %, passed in Python and failed in C# with unbiased code; ten
   seeds showed no bias, and resizing fixed it.
+- 2026-11-13: A statistic over many symbols is only as tight as its least-averaged part. An
+  OFDM run's channel estimate comes from `P` preamble blocks and is shared by every data block,
+  so its error does not average out over the data: a binomial or per-symbol sd understates the
+  spread of the BER and EVM when `P` is small. Make `P` large enough that the estimate's share is
+  small (64 blocks here), or count runs, not symbols.

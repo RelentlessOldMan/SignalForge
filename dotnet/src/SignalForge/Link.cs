@@ -73,6 +73,14 @@ public sealed record QpskLinkConfig
     /// <summary>OFDM used subcarriers, distinct signed indices as <see cref="Modulation.OfdmModulate"/> takes
     /// them; null for every one but 0.</summary>
     public IReadOnlyList<int>? OfdmSubcarriers { get; init; }
+
+    /// <summary>Multipath path delays in samples, each at least 0; null [the default] for none, else
+    /// as many as <see cref="MultipathGains"/>. "ofdm" only, at most half of <see cref="OfdmCpLen"/>.</summary>
+    public IReadOnlyList<int>? MultipathDelays { get; init; }
+
+    /// <summary>Multipath path gains, each a finite pair [re, im]; null exactly when
+    /// <see cref="MultipathDelays"/> is null.</summary>
+    public IReadOnlyList<IReadOnlyList<double>>? MultipathGains { get; init; }
 }
 
 /// <summary>What the receiver estimated and measured on one link run.</summary>
@@ -174,6 +182,9 @@ public static class Link
         Gains(c.TimingLoopGains, nameof(c.TimingLoopGains), nameof(config));
         Gains(c.CarrierLoopGains, nameof(c.CarrierLoopGains), nameof(config));
         int[] subcarriers = OfdmSubcarriersOf(c);
+        Complex[]? paths = MultipathGainsOf(c);
+        if (paths is not null && mod != 6)
+            throw new ArgumentException("MultipathDelays and MultipathGains are for ofdm only", nameof(config));
         if (mod == 6)
             return OfdmLink(c, subcarriers);
         if (mod >= 4)
@@ -376,7 +387,30 @@ public static class Link
         return k;
     }
 
-    // the OFDM link (conventions: QPSK link, OFDM; ADR 0063)
+    // the multipath fields, checked for every modulation; the gains, or null (ADR 0064)
+    private static Complex[]? MultipathGainsOf(QpskLinkConfig c)
+    {
+        IReadOnlyList<int>? dl = c.MultipathDelays;
+        IReadOnlyList<IReadOnlyList<double>>? gl = c.MultipathGains;
+        if (dl is null && gl is null)
+            return null;
+        if (dl is null || gl is null || dl.Count != gl.Count || dl.Count == 0)
+            throw new ArgumentException("MultipathDelays and MultipathGains must both be null or of equal non-zero length", nameof(c));
+        if (dl.Any(d => d < 0))
+            throw new ArgumentOutOfRangeException(nameof(c), "MultipathDelays must be at least 0");
+        var g = new Complex[gl.Count];
+        for (int i = 0; i < g.Length; i++)
+        {
+            if (gl[i] is not { Count: 2 } pair)
+                throw new ArgumentException("MultipathGains must be pairs [re, im]", nameof(c));
+            if (!double.IsFinite(pair[0]) || !double.IsFinite(pair[1]))
+                throw new ArgumentOutOfRangeException(nameof(c), "MultipathGains must be finite");
+            g[i] = new Complex(pair[0], pair[1]);
+        }
+        return g;
+    }
+
+    // the OFDM link (conventions: QPSK link, OFDM; ADR 0063, 0064)
     private static QpskLinkReport OfdmLink(QpskLinkConfig c, int[] k)
     {
         int nf = c.OfdmNfft, cp = c.OfdmCpLen, sps = c.SamplesPerSymbol, u = k.Length;
@@ -390,12 +424,19 @@ public static class Link
             throw new ArgumentException("ofdm takes no phase noise or clock offset", nameof(c));
         if (!(Math.Abs(c.FrequencyOffsetHz) < fs / (2 * nf)))
             throw new ArgumentOutOfRangeException(nameof(c), c.FrequencyOffsetHz, "ofdm needs |FrequencyOffsetHz| below half a subcarrier spacing");
+        Complex[]? paths = MultipathGainsOf(c);
+        int[] delays = paths is null ? [] : [.. c.MultipathDelays!];
+        if (delays.Length > 0 && delays.Max() > cp / 2)
+            throw new ArgumentOutOfRangeException(nameof(c), "ofdm needs every multipath delay at most half of OfdmCpLen");
         int b = c.NumSymbols / u, p = c.PreambleSymbols / u;
         byte[] bits = Waveforms.Prbs(c.PrbsOrder, 2 * c.NumSymbols);
         Complex[] a = SignalForge.Modulation.QpskMap(bits);
         Complex[] frame = SignalForge.Modulation.OfdmModulate(a, nf, cp, k);
-        var tx = new Complex[c.DelaySamples + frame.Length];
+        // with multipath, max(delays) zeros after the frame leave room for every echo
+        var tx = new Complex[c.DelaySamples + frame.Length + (paths is null ? 0 : delays.Max())];
         frame.CopyTo(tx, c.DelaySamples);
+        if (paths is not null)
+            tx = Channel.Multipath(tx, delays, paths);
         Complex[] rx = ChannelOf(c, tx, 2, 1.0 / sps);
         // 1. timing and frequency from the cyclic prefix
         int length = frame.Length, d0 = 0;
@@ -432,8 +473,10 @@ public static class Link
                 (best, d1) = (s.Magnitude, d);
         }
         d0 = d1;
-        // 2. derotate and demodulate; 3. channel from the preamble blocks
-        Complex[] y = Channel.FrequencyOffset(rx.AsSpan(d0, length), -f, fs);
+        // 2. back off half a prefix, derotate (phase 0 at d0) and demodulate; 3. channel from the
+        // preamble blocks
+        int d2 = Math.Max(d0 - cp / 2, 0), shift = d0 - d2;
+        Complex[] y = Channel.FrequencyOffset(rx.AsSpan(d2, length), -f, fs, 2 * Math.PI * f * shift / fs);
         Complex[] zm = SignalForge.Modulation.OfdmDemodulate(y, nf, cp, k);
         var h = new Complex[u];
         for (int j = 0; j < p; j++)
@@ -460,10 +503,24 @@ public static class Link
                 z[j * u + i] = zm[j * u + i] / h[i] * back;
         }
         Complex hs = Complex.Zero;
-        foreach (Complex v in h)
-            hs += v;
+        for (int i = 0; i < u; i++)
+            hs += h[i] * Complex.Exp(new Complex(0, 2 * Math.PI * k[i] * shift / nf));
         byte[] got = SignalForge.Modulation.QpskDemapHard(z);
         double? theory = c.EbN0Db is { } eb ? Metrics.QpskBerTheory(eb) : null;
+        if (theory is not null && paths is not null)
+        {
+            // the mean over subcarriers of the QPSK BER at |H_k|²·Eb/N0, 1/2 where H_k = 0
+            double sum = 0;
+            for (int i = 0; i < u; i++)
+            {
+                Complex hk = Complex.Zero;
+                for (int j = 0; j < delays.Length; j++)
+                    hk += paths[j] * Complex.Exp(new Complex(0, -2 * Math.PI * k[i] * delays[j] / nf));
+                double v = hk.Real * hk.Real + hk.Imaginary * hk.Imaginary;
+                sum += v == 0 ? 0.5 : Metrics.QpskBerTheory(c.EbN0Db!.Value + 10 * Math.Log10(v));
+            }
+            theory = sum / u;
+        }
         return new QpskLinkReport(c, d0 % sps, d0 / sps, f, Wrap(Math.Atan2(hs.Imaginary, hs.Real)), Metrics.Evm(z, a),
             Metrics.BitErrors(bits, got), theory);
     }

@@ -44,6 +44,8 @@ CONFIG_KEYS = [
     "ofdm_nfft",
     "ofdm_cp_len",
     "ofdm_subcarriers",
+    "multipath_delays",
+    "multipath_gains",
 ]
 
 

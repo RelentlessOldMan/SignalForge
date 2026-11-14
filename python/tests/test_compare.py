@@ -115,6 +115,26 @@ def test_noiseless_exact_recovery_skips_rounding_fields() -> None:
     assert cmp.compare_link_reports(c, d)[0].startswith("evm.peak_index")
 
 
+def test_noisy_multipath_links_skip_the_evm() -> None:
+    kw: dict[str, Any] = {
+        "modulation": "ofdm",
+        "num_symbols": 63 * 4,
+        "preamble_symbols": 63,
+        "eb_n0_db": 8.0,
+        "multipath_delays": (0, 3),
+        "multipath_gains": ((1.0, 0.0), (0.5, 0.5)),
+    }
+    a = _link(**kw)
+    b = copy.deepcopy(a)
+    b["evm"]["rms"] *= 2
+    assert cmp.compare_link_reports(a, b) == []
+    kw["multipath_delays"] = kw["multipath_gains"] = None
+    c = _link(**kw)
+    d = copy.deepcopy(c)
+    d["evm"]["rms"] *= 2
+    assert cmp.compare_link_reports(c, d)[0].startswith("evm.rms")
+
+
 def test_command_line(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     cfg = tmp_path / "cfg.json"
     cfg.write_text(json.dumps({"num_symbols": 64, "eb_n0_db": 8.0}), encoding="utf-8")
