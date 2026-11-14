@@ -379,23 +379,25 @@ def _ofdm_link(c: QpskLinkConfig) -> QpskLinkReport:
     if c.num_symbols % u or c.preamble_symbols % u:
         raise ValueError(f"num_symbols and preamble_symbols must be multiples of {u} (subcarriers)")
     rrc_taps(c.rolloff, sps, c.span_symbols)  # checked as for the other modulations
-    if c.timing_loop_gains is not None or c.carrier_loop_gains is not None:
-        raise ValueError("ofdm takes no timing_loop_gains or carrier_loop_gains")
-    if c.phase_noise_linewidth_hz != 0 or c.clock_offset_ppm != 0:
-        raise ValueError("ofdm takes no phase noise or clock offset")
+    if c.carrier_loop_gains is not None:
+        raise ValueError("ofdm takes no carrier_loop_gains: the block phase is its carrier loop")
     if not abs(c.frequency_offset_hz) < fs / (2 * n_fft):
         raise ValueError("ofdm needs |frequency_offset_hz| below half a subcarrier spacing")
-    if c.multipath_delays is not None and max(c.multipath_delays) > cp // 2:
+    spread = 0 if c.multipath_delays is None else max(c.multipath_delays)
+    if spread > cp // 2:
         raise ValueError("ofdm needs every multipath delay at most half of ofdm_cp_len")
     b, p = c.num_symbols // u, c.preamble_symbols // u
+    if abs(c.clock_offset_ppm) * 1e-6 * (c.delay_samples + b * (n_fft + cp)) > cp // 2 - spread:
+        raise ValueError("ofdm needs the clock drift over the frame within half the prefix")
     bits = prbs(c.prbs_order, 2 * c.num_symbols)
     a = qpsk_map(bits)
     frame = ofdm_modulate(a, n_fft, cp, k)
-    tx = np.concatenate([np.zeros(c.delay_samples, dtype=np.complex128), frame])
+    # room after the frame for every echo and a slow clock
+    zeros = np.zeros(c.delay_samples, dtype=np.complex128), np.zeros(cp // 2, dtype=np.complex128)
+    tx = np.concatenate([zeros[0], frame, zeros[1]])
     if c.multipath_delays is not None:
         gains = [complex(re, im) for re, im in c.multipath_gains or ()]
-        tail = np.zeros(max(c.multipath_delays), dtype=np.complex128)  # room for every echo
-        tx = multipath(np.concatenate([tx, tail]), list(c.multipath_delays), gains)
+        tx = multipath(tx, list(c.multipath_delays), gains)
     rx = np.asarray(_channel(c, tx, 2, 1 / sps), dtype=np.complex128)
     # 1. timing and frequency from the cyclic prefix
     length = frame.size
@@ -425,16 +427,32 @@ def _ofdm_link(c: QpskLinkConfig) -> QpskLinkReport:
     y = frequency_offset(rx[d2 : d2 + length], -f_hat, fs, 2 * math.pi * f_hat * shift / fs)
     zm = ofdm_demodulate(y, n_fft, cp, k).reshape(b, u)
     am = a.reshape(b, u)
-    h = np.mean(zm[:p] / am[:p], axis=0)
+    # each preamble block's common phase turned to block 0's before the average: a residual
+    # frequency or phase noise would otherwise smear the estimate
+    gp = zm[:p] / am[:p]
+    for i in range(1, p):
+        t = complex(np.sum(gp[i] * np.conj(gp[0])))
+        gp[i] *= complex(t.real, -t.imag) / abs(t) if t != 0 else 1
+    h = np.mean(gp, axis=0)
     w = zm / h
-    # 4. common phase per block, decision-directed
+    # 4. common phase per block and, with timing_loop_gains, the window offset: on the known
+    # symbols through the preamble, then decision-directed
     z = np.empty_like(w)
-    theta = 0.0
+    theta = tau = v = 0.0
+    kc = k - np.mean(k)
+    kk = float(np.sum(kc * kc))
     for i in range(b):
-        q = qpsk_map(qpsk_demap_hard(w[i] * complex(math.cos(theta), -math.sin(theta))))
-        s = complex(np.sum(w[i] * np.conj(q)))
-        theta = math.atan2(s.imag, s.real)
-        z[i] = w[i] * complex(math.cos(theta), -math.sin(theta))
+        r = w[i] * np.exp(-1j * (theta + 2 * math.pi * k * tau / n_fft))
+        e = r * np.conj(am[i] if i < p else qpsk_map(qpsk_demap_hard(r)))
+        s = complex(np.sum(e))
+        theta += math.atan2(s.imag, s.real)
+        if c.timing_loop_gains is not None and kk > 0:
+            kp, ki = c.timing_loop_gains
+            ph = np.angle(e * np.conj(s))
+            err = n_fft / (2 * math.pi) * float(np.sum(kc * ph)) / kk
+            v += ki * err
+            tau += kp * err + v
+        z[i] = w[i] * np.exp(-1j * (theta + 2 * math.pi * k * tau / n_fft))
     hs = complex(np.sum(h * np.exp(2j * math.pi * k * shift / n_fft)))
     zf = z.reshape(-1)
     theory: float | None = None

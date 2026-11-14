@@ -418,22 +418,23 @@ public static class Link
         if (c.NumSymbols % u != 0 || c.PreambleSymbols % u != 0)
             throw new ArgumentException($"NumSymbols and PreambleSymbols must be multiples of {u} (subcarriers)", nameof(c));
         Dsp.RrcTaps(c.Rolloff, sps, c.SpanSymbols); // checked as for the other modulations
-        if (c.TimingLoopGains is not null || c.CarrierLoopGains is not null)
-            throw new ArgumentException("ofdm takes no TimingLoopGains or CarrierLoopGains", nameof(c));
-        if (c.PhaseNoiseLinewidthHz != 0 || c.ClockOffsetPpm != 0)
-            throw new ArgumentException("ofdm takes no phase noise or clock offset", nameof(c));
+        if (c.CarrierLoopGains is not null)
+            throw new ArgumentException("ofdm takes no CarrierLoopGains: the block phase is its carrier loop", nameof(c));
         if (!(Math.Abs(c.FrequencyOffsetHz) < fs / (2 * nf)))
             throw new ArgumentOutOfRangeException(nameof(c), c.FrequencyOffsetHz, "ofdm needs |FrequencyOffsetHz| below half a subcarrier spacing");
         Complex[]? paths = MultipathGainsOf(c);
         int[] delays = paths is null ? [] : [.. c.MultipathDelays!];
-        if (delays.Length > 0 && delays.Max() > cp / 2)
+        int spread = delays.Length > 0 ? delays.Max() : 0;
+        if (spread > cp / 2)
             throw new ArgumentOutOfRangeException(nameof(c), "ofdm needs every multipath delay at most half of OfdmCpLen");
         int b = c.NumSymbols / u, p = c.PreambleSymbols / u;
+        if (Math.Abs(c.ClockOffsetPpm) * 1e-6 * (c.DelaySamples + (double)b * (nf + cp)) > cp / 2 - spread)
+            throw new ArgumentOutOfRangeException(nameof(c), c.ClockOffsetPpm, "ofdm needs the clock drift over the frame within half the prefix");
         byte[] bits = Waveforms.Prbs(c.PrbsOrder, 2 * c.NumSymbols);
         Complex[] a = SignalForge.Modulation.QpskMap(bits);
         Complex[] frame = SignalForge.Modulation.OfdmModulate(a, nf, cp, k);
-        // with multipath, max(delays) zeros after the frame leave room for every echo
-        var tx = new Complex[c.DelaySamples + frame.Length + (paths is null ? 0 : delays.Max())];
+        // room after the frame for every echo and a slow clock
+        var tx = new Complex[c.DelaySamples + frame.Length + cp / 2];
         frame.CopyTo(tx, c.DelaySamples);
         if (paths is not null)
             tx = Channel.Multipath(tx, delays, paths);
@@ -478,29 +479,56 @@ public static class Link
         int d2 = Math.Max(d0 - cp / 2, 0), shift = d0 - d2;
         Complex[] y = Channel.FrequencyOffset(rx.AsSpan(d2, length), -f, fs, 2 * Math.PI * f * shift / fs);
         Complex[] zm = SignalForge.Modulation.OfdmDemodulate(y, nf, cp, k);
+        // each preamble block's common phase turned to block 0's before the average: a residual
+        // frequency or phase noise would otherwise smear the estimate
         var h = new Complex[u];
-        for (int j = 0; j < p; j++)
+        for (int i = 0; i < u; i++)
+            h[i] = zm[i] / a[i];
+        for (int j = 1; j < p; j++)
+        {
+            Complex t = Complex.Zero;
             for (int i = 0; i < u; i++)
-                h[i] += zm[j * u + i] / a[j * u + i];
+                t += zm[j * u + i] / a[j * u + i] * Complex.Conjugate(zm[i] / a[i]);
+            Complex turn = t == Complex.Zero ? Complex.One : Complex.Conjugate(t) / t.Magnitude;
+            for (int i = 0; i < u; i++)
+                h[i] += zm[j * u + i] / a[j * u + i] * turn;
+        }
         for (int i = 0; i < u; i++)
             h[i] /= p;
-        // 4. equalize, then the common phase per block, decision-directed
+        // 4. common phase per block and, with TimingLoopGains, the window offset: on the known
+        // symbols through the preamble, then decision-directed
         var z = new Complex[zm.Length];
-        var w = new Complex[u];
-        double theta = 0;
+        var r = new Complex[u];
+        var e = new Complex[u];
+        double theta = 0, tau = 0, v = 0, kMean = k.Average(), kk = 0;
+        foreach (int ki in k)
+            kk += (ki - kMean) * (ki - kMean);
         for (int j = 0; j < b; j++)
         {
-            var back = new Complex(Math.Cos(theta), -Math.Sin(theta));
             for (int i = 0; i < u; i++)
-                w[i] = zm[j * u + i] / h[i] * back;
-            Complex[] q = SignalForge.Modulation.QpskMap(SignalForge.Modulation.QpskDemapHard(w));
+                r[i] = zm[j * u + i] / h[i] * Complex.FromPolarCoordinates(1, -(theta + 2 * Math.PI * k[i] * tau / nf));
+            Complex[] q = j < p ? a[(j * u)..((j + 1) * u)] : SignalForge.Modulation.QpskMap(SignalForge.Modulation.QpskDemapHard(r));
             Complex s = Complex.Zero;
             for (int i = 0; i < u; i++)
-                s += zm[j * u + i] / h[i] * Complex.Conjugate(q[i]);
-            theta = Math.Atan2(s.Imaginary, s.Real);
-            back = new Complex(Math.Cos(theta), -Math.Sin(theta));
+            {
+                e[i] = r[i] * Complex.Conjugate(q[i]);
+                s += e[i];
+            }
+            theta += Math.Atan2(s.Imaginary, s.Real);
+            if (c.TimingLoopGains is { } tg && kk > 0)
+            {
+                double num = 0;
+                for (int i = 0; i < u; i++)
+                {
+                    Complex ph = e[i] * Complex.Conjugate(s);
+                    num += (k[i] - kMean) * Math.Atan2(ph.Imaginary, ph.Real);
+                }
+                double err = nf / (2 * Math.PI) * num / kk;
+                v += tg[1] * err;
+                tau += tg[0] * err + v;
+            }
             for (int i = 0; i < u; i++)
-                z[j * u + i] = zm[j * u + i] / h[i] * back;
+                z[j * u + i] = zm[j * u + i] / h[i] * Complex.FromPolarCoordinates(1, -(theta + 2 * Math.PI * k[i] * tau / nf));
         }
         Complex hs = Complex.Zero;
         for (int i = 0; i < u; i++)
@@ -516,8 +544,8 @@ public static class Link
                 Complex hk = Complex.Zero;
                 for (int j = 0; j < delays.Length; j++)
                     hk += paths[j] * Complex.Exp(new Complex(0, -2 * Math.PI * k[i] * delays[j] / nf));
-                double v = hk.Real * hk.Real + hk.Imaginary * hk.Imaginary;
-                sum += v == 0 ? 0.5 : Metrics.QpskBerTheory(c.EbN0Db!.Value + 10 * Math.Log10(v));
+                double pw = hk.Real * hk.Real + hk.Imaginary * hk.Imaginary;
+                sum += pw == 0 ? 0.5 : Metrics.QpskBerTheory(c.EbN0Db!.Value + 10 * Math.Log10(pw));
             }
             theory = sum / u;
         }

@@ -4,9 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **OFDM with phase noise and clock offset** (ADR 0063 rejects them today): common phase error
-   is already tracked per block; the clock offset needs a per-subcarrier phase slope.
-2. **An equalizer for the single-carrier chains** (LMS, fractionally spaced) so they can take
+1. **An equalizer for the single-carrier chains** (LMS, fractionally spaced) so they can take
    `multipath_delays` too; the expected BER then needs a bound rather than a closed form.
 
 ## Built
@@ -654,12 +652,27 @@ Updated with every chunk of work. Dates are absolute.
   62.5 Hz spacing). New link configs `ofdm_multipath_noiseless` and `ofdm_multipath_8db`.
   Python 2809 passed, 2 skipped; .NET 2311 passed; conformance 1412/1412 in both.
   Version 2026.11.13.92 (.89 to .91 failed on the lint and the two compares above).
+- 2026-11-13: Phase noise and clock offset in the OFDM link
+  ([ADR 0065](adr/0065-ofdm-phase-noise-clock.md)): `phase_noise_linewidth_hz`,
+  `clock_offset_ppm` and `timing_loop_gains` are accepted for `"ofdm"` (`carrier_loop_gains` stay
+  rejected: the block phase is its carrier loop). Every frame is followed by `⌊cp/2⌋` zeros, and
+  the clock drift over the frame must fit in what is left of half the prefix after the delay
+  spread. The receiver turns each preamble block's estimate to block 0's common phase before the
+  average, then runs a per-block loop on the known preamble and then on decisions: the common
+  phase `θ` every block and, with `timing_loop_gains`, a second-order loop on the window offset
+  `τ` from the phase slope across subcarriers. `ber_theory` is unchanged. Found in testing: with
+  a long preamble the prefix's small frequency error turned the averaged estimate more than π/4
+  and the link locked a quadrant off (EVM² 2.5 instead of 0.05), and 0.5 Hz of phase noise did
+  the same; the band-edge subcarrier `−N/2` cannot survive resampling, so clock-offset runs
+  use guard subcarriers. New link configs `ofdm_clock_noiseless`, `ofdm_clock_6db` and
+  `ofdm_phase_noise_6db` (52 subcarriers). Python 2817 passed, 2 skipped; .NET 2320 passed;
+  conformance 1412/1412 in both. Version 2026.11.13.93.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate and common-phase tracking (pilots, phase noise and clock offset in the OFDM link), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.
@@ -712,3 +725,8 @@ packaging and publishing.
   so its error does not average out over the data: a binomial or per-symbol sd understates the
   spread of the BER and EVM when `P` is small. Make `P` large enough that the estimate's share is
   small (64 blocks here), or count runs, not symbols.
+- 2026-11-13: Averaging estimates over time assumes nothing moved in between. A residual
+  frequency error or phase noise turns each preamble block a little, and the plain mean of the
+  blocks' channel estimates then starts with a phase off by the average turn, enough to lock a
+  decision-directed loop a quadrant off. Align each block to a reference (or track through the
+  preamble) before averaging.

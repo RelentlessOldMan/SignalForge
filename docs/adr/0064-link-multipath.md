@@ -17,7 +17,8 @@ own gain.
   finite), both none [the default] or of equal non-zero length, applied as
   `multipath(tx, delays, gains)` first in the channel, before the carrier offset, with `max(delays)`
   zeros added to `tx` first so the received signal holds every echo and the timing search reaches
-  the latest start. Only `"ofdm"`
+  the latest start ([ADR 0065](0065-ofdm-phase-noise-clock.md) makes that tail `⌊cp/2⌋` zeros
+  for every OFDM run). Only `"ofdm"`
   accepts them for now: the single-carrier chains have no equalizer, so their `ber_theory` would
   not hold. OFDM needs `max(delays) ≤ ⌊cp/2⌋`.
 - **Back-off:** after timing gives `d₁`, the DFT windows are taken from `d₂ = max(d₁ − ⌊cp/2⌋, 0)`.
