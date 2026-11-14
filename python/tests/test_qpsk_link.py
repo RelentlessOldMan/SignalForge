@@ -41,6 +41,9 @@ CONFIG_KEYS = [
     "clock_offset_ppm",
     "timing_loop_gains",
     "carrier_loop_gains",
+    "ofdm_nfft",
+    "ofdm_cp_len",
+    "ofdm_subcarriers",
 ]
 
 

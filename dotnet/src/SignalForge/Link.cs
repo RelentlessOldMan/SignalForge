@@ -47,7 +47,7 @@ public sealed record QpskLinkConfig
     /// <summary>Noise seed.</summary>
     public int Seed { get; init; }
 
-    /// <summary>"qpsk", "qam16", "psk8" or "qam64".</summary>
+    /// <summary>"qpsk", "qam16", "psk8", "qam64", "fsk2", "fsk4" or "ofdm".</summary>
     public string Modulation { get; init; } = "qpsk";
 
     /// <summary>Wiener phase noise linewidth in Hz, at least 0; 0 adds none.</summary>
@@ -63,6 +63,16 @@ public sealed record QpskLinkConfig
     /// <summary>QPSK carrier loop gains [kp, ki], both at least 0; null runs no carrier
     /// loop.</summary>
     public IReadOnlyList<double>? CarrierLoopGains { get; init; }
+
+    /// <summary>OFDM DFT size, at least 2; checked for every modulation, used by "ofdm" only.</summary>
+    public int OfdmNfft { get; init; } = 64;
+
+    /// <summary>OFDM cyclic prefix length, 1 to <see cref="OfdmNfft"/>.</summary>
+    public int OfdmCpLen { get; init; } = 16;
+
+    /// <summary>OFDM used subcarriers, distinct signed indices as <see cref="Modulation.OfdmModulate"/> takes
+    /// them; null for every one but 0.</summary>
+    public IReadOnlyList<int>? OfdmSubcarriers { get; init; }
 }
 
 /// <summary>What the receiver estimated and measured on one link run.</summary>
@@ -118,7 +128,7 @@ public sealed record QpskLinkReport(
     }
 }
 
-/// <summary>End-to-end link (QPSK, QAM, 8-PSK, FSK): bits, shaping, channel, recovery, EVM and
+/// <summary>End-to-end link (QPSK, QAM, 8-PSK, FSK, OFDM): bits, shaping, channel, recovery, EVM and
 /// BER.</summary>
 public static class Link
 {
@@ -151,8 +161,9 @@ public static class Link
             "qam64" => 3,
             "fsk2" => 4,
             "fsk4" => 5,
+            "ofdm" => 6,
             _ => throw new ArgumentException(
-                "Modulation must be \"fsk2\", \"fsk4\", \"psk8\", \"qam16\", \"qam64\" or \"qpsk\"", nameof(config)),
+                "Modulation must be \"fsk2\", \"fsk4\", \"ofdm\", \"psk8\", \"qam16\", \"qam64\" or \"qpsk\"", nameof(config)),
         };
         int bps = mod switch { 1 => 4, 2 => 3, 3 => 6, _ => 2 };
         double step = mod == 2 ? Math.PI / 4 : Math.PI / 2;
@@ -162,6 +173,9 @@ public static class Link
             throw new ArgumentOutOfRangeException(nameof(config), c.ClockOffsetPpm, "ClockOffsetPpm must be finite and within 1e5");
         Gains(c.TimingLoopGains, nameof(c.TimingLoopGains), nameof(config));
         Gains(c.CarrierLoopGains, nameof(c.CarrierLoopGains), nameof(config));
+        int[] subcarriers = OfdmSubcarriersOf(c);
+        if (mod == 6)
+            return OfdmLink(c, subcarriers);
         if (mod >= 4)
             return FskLink(c, mod == 4 ? 2 : 4);
 
@@ -345,6 +359,113 @@ public static class Link
         byte[] got = SignalForge.Modulation.FskDemodNoncoherent(rx.AsSpan(d0, n * sps), m, sps, 1);
         double? theory = c.EbN0Db is { } eb ? Metrics.FskBerTheory(eb, m) : null;
         return new QpskLinkReport(c, d0 % sps, d0 / sps, null, null, null, Metrics.BitErrors(bits, got), theory);
+    }
+
+    // the OFDM fields, checked for every modulation; the used subcarriers (conventions: QPSK link, OFDM)
+    private static int[] OfdmSubcarriersOf(QpskLinkConfig c)
+    {
+        int n = c.OfdmNfft, low = -(n / 2);
+        ArgumentOutOfRangeException.ThrowIfLessThan(n, 2, nameof(c));
+        if (c.OfdmCpLen < 1 || c.OfdmCpLen > n)
+            throw new ArgumentOutOfRangeException(nameof(c), c.OfdmCpLen, "OfdmCpLen must be between 1 and OfdmNfft");
+        if (c.OfdmSubcarriers is null)
+            return [.. Enumerable.Range(low, n).Where(k => k != 0)];
+        int[] k = [.. c.OfdmSubcarriers];
+        if (k.Length == 0 || k.Any(v => v < low || v > low + n - 1) || k.Distinct().Count() != k.Length)
+            throw new ArgumentException($"OfdmSubcarriers must be distinct indices in {low} ... {low + n - 1}, at least one", nameof(c));
+        return k;
+    }
+
+    // the OFDM link (conventions: QPSK link, OFDM; ADR 0063)
+    private static QpskLinkReport OfdmLink(QpskLinkConfig c, int[] k)
+    {
+        int nf = c.OfdmNfft, cp = c.OfdmCpLen, sps = c.SamplesPerSymbol, u = k.Length;
+        double fs = c.SymbolRate * sps;
+        if (c.NumSymbols % u != 0 || c.PreambleSymbols % u != 0)
+            throw new ArgumentException($"NumSymbols and PreambleSymbols must be multiples of {u} (subcarriers)", nameof(c));
+        Dsp.RrcTaps(c.Rolloff, sps, c.SpanSymbols); // checked as for the other modulations
+        if (c.TimingLoopGains is not null || c.CarrierLoopGains is not null)
+            throw new ArgumentException("ofdm takes no TimingLoopGains or CarrierLoopGains", nameof(c));
+        if (c.PhaseNoiseLinewidthHz != 0 || c.ClockOffsetPpm != 0)
+            throw new ArgumentException("ofdm takes no phase noise or clock offset", nameof(c));
+        if (!(Math.Abs(c.FrequencyOffsetHz) < fs / (2 * nf)))
+            throw new ArgumentOutOfRangeException(nameof(c), c.FrequencyOffsetHz, "ofdm needs |FrequencyOffsetHz| below half a subcarrier spacing");
+        int b = c.NumSymbols / u, p = c.PreambleSymbols / u;
+        byte[] bits = Waveforms.Prbs(c.PrbsOrder, 2 * c.NumSymbols);
+        Complex[] a = SignalForge.Modulation.QpskMap(bits);
+        Complex[] frame = SignalForge.Modulation.OfdmModulate(a, nf, cp, k);
+        var tx = new Complex[c.DelaySamples + frame.Length];
+        frame.CopyTo(tx, c.DelaySamples);
+        Complex[] rx = ChannelOf(c, tx, 2, 1.0 / sps);
+        // 1. timing and frequency from the cyclic prefix
+        int length = frame.Length, d0 = 0;
+        double best = double.NegativeInfinity;
+        Complex gamma = Complex.Zero;
+        for (int d = 0; d <= rx.Length - length; d++)
+        {
+            Complex g = Complex.Zero;
+            double phi = 0;
+            for (int j = 0; j < b; j++)
+                for (int m = 0; m < cp; m++)
+                {
+                    Complex r0 = rx[d + j * (nf + cp) + m], r1 = rx[d + j * (nf + cp) + m + nf];
+                    g += r0 * Complex.Conjugate(r1);
+                    phi += r0.Real * r0.Real + r0.Imaginary * r0.Imaginary + r1.Real * r1.Real + r1.Imaginary * r1.Imaginary;
+                }
+            double metric = g.Magnitude - phi / 2;
+            if (metric > best)
+                (best, d0, gamma) = (metric, d, g);
+        }
+        double f = -Math.Atan2(gamma.Imaginary, gamma.Real) * fs / (2 * Math.PI * nf);
+        // the block: the prefix ties one block early over leading zeros; the preamble decides
+        int np_ = p * (nf + cp), d1 = d0;
+        var x = new Complex[np_];
+        for (int i = 0; i < np_; i++)
+            x[i] = Complex.Conjugate(frame[i]) * Complex.FromPolarCoordinates(1, -2 * Math.PI * f / fs * i);
+        best = -1;
+        for (int d = d0 % (nf + cp); d <= rx.Length - length; d += nf + cp)
+        {
+            Complex s = Complex.Zero;
+            for (int i = 0; i < np_; i++)
+                s += x[i] * rx[d + i];
+            if (s.Magnitude > best)
+                (best, d1) = (s.Magnitude, d);
+        }
+        d0 = d1;
+        // 2. derotate and demodulate; 3. channel from the preamble blocks
+        Complex[] y = Channel.FrequencyOffset(rx.AsSpan(d0, length), -f, fs);
+        Complex[] zm = SignalForge.Modulation.OfdmDemodulate(y, nf, cp, k);
+        var h = new Complex[u];
+        for (int j = 0; j < p; j++)
+            for (int i = 0; i < u; i++)
+                h[i] += zm[j * u + i] / a[j * u + i];
+        for (int i = 0; i < u; i++)
+            h[i] /= p;
+        // 4. equalize, then the common phase per block, decision-directed
+        var z = new Complex[zm.Length];
+        var w = new Complex[u];
+        double theta = 0;
+        for (int j = 0; j < b; j++)
+        {
+            var back = new Complex(Math.Cos(theta), -Math.Sin(theta));
+            for (int i = 0; i < u; i++)
+                w[i] = zm[j * u + i] / h[i] * back;
+            Complex[] q = SignalForge.Modulation.QpskMap(SignalForge.Modulation.QpskDemapHard(w));
+            Complex s = Complex.Zero;
+            for (int i = 0; i < u; i++)
+                s += zm[j * u + i] / h[i] * Complex.Conjugate(q[i]);
+            theta = Math.Atan2(s.Imaginary, s.Real);
+            back = new Complex(Math.Cos(theta), -Math.Sin(theta));
+            for (int i = 0; i < u; i++)
+                z[j * u + i] = zm[j * u + i] / h[i] * back;
+        }
+        Complex hs = Complex.Zero;
+        foreach (Complex v in h)
+            hs += v;
+        byte[] got = SignalForge.Modulation.QpskDemapHard(z);
+        double? theory = c.EbN0Db is { } eb ? Metrics.QpskBerTheory(eb) : null;
+        return new QpskLinkReport(c, d0 % sps, d0 / sps, f, Wrap(Math.Atan2(hs.Imaginary, hs.Real)), Metrics.Evm(z, a),
+            Metrics.BitErrors(bits, got), theory);
     }
 
     // |Σ_n x[d + n]·e^{−jψ_l(n)}|² over one symbol, as FskDemodNoncoherent computes it

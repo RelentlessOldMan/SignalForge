@@ -1,5 +1,5 @@
-"""End-to-end link (QPSK, QAM, 8-PSK, FSK): bits, shaping, channel, recovery, EVM and BER, with a
-JSON report.
+"""End-to-end link (QPSK, QAM, 8-PSK, FSK, OFDM): bits, shaping, channel, recovery, EVM and BER,
+with a JSON report.
 
 Definitions are in docs/conventions.md (QPSK link) and docs/adr/0009-qpsk-link-report.md.
 """
@@ -29,8 +29,11 @@ from .metrics import (
     qpsk_ber_theory,
 )
 from .modulation import (
+    _ofdm_args,
     fsk_demod_noncoherent,
     fsk_modulate,
+    ofdm_demodulate,
+    ofdm_modulate,
     psk8_demap_hard,
     psk8_map,
     qam16_demap_hard,
@@ -77,6 +80,9 @@ class QpskLinkConfig:
     clock_offset_ppm: float = 0.0
     timing_loop_gains: tuple[float, float] | None = None
     carrier_loop_gains: tuple[float, float] | None = None
+    ofdm_nfft: int = 64
+    ofdm_cp_len: int = 16
+    ofdm_subcarriers: tuple[int, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -203,7 +209,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     rs = real(config.symbol_rate, "symbol_rate")
     if rs <= 0:
         raise ValueError("symbol_rate must be positive")
-    names = sorted([*_MODULATIONS, *_FSK_ORDERS])
+    names = sorted([*_MODULATIONS, *_FSK_ORDERS, "ofdm"])
     if not isinstance(config.modulation, str) or config.modulation not in names:
         raise ValueError(f"modulation must be one of {names}")
     lw = real(config.phase_noise_linewidth_hz, "phase_noise_linewidth_hz")
@@ -232,9 +238,12 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         clock_offset_ppm=ppm,
         timing_loop_gains=_gains(config.timing_loop_gains, "timing_loop_gains"),
         carrier_loop_gains=_gains(config.carrier_loop_gains, "carrier_loop_gains"),
+        **_ofdm_fields(config),
     )
     if c.modulation in _FSK_ORDERS:
         return _fsk_link(c)
+    if c.modulation == "ofdm":
+        return _ofdm_link(c)
     bps, mapper, demap, carrier_loop, theory, coarse, block_phases, step = _MODULATIONS[
         c.modulation
     ]
@@ -308,6 +317,101 @@ def _channel(c: QpskLinkConfig, tx: Any, bps: int, signal_power: float) -> Any:
         es_n0_db = c.eb_n0_db + 10 * math.log10(bps)
         rx = awgn(rx, es_n0_db, c.samples_per_symbol, seed=rng, signal_power=signal_power)
     return rx
+
+
+def _ofdm_fields(config: QpskLinkConfig) -> dict[str, Any]:
+    """The OFDM fields as plain ints, checked for every modulation (conventions: QPSK link)."""
+    sc = config.ofdm_subcarriers
+    if isinstance(sc, str | bytes) or (isinstance(sc, np.ndarray) and sc.ndim != 1):
+        raise ValueError("ofdm_subcarriers must be None or a list of integers")
+    if sc is not None and any(isinstance(v, bool | np.bool_) for v in sc):
+        raise ValueError("ofdm_subcarriers must be None or a list of integers")
+    n, cp, k = _ofdm_args(
+        count(config.ofdm_nfft, "ofdm_nfft"), count(config.ofdm_cp_len, "ofdm_cp_len"), sc
+    )
+    if n < 2:
+        raise ValueError("ofdm_nfft must be at least 2")
+    if cp < 1:
+        raise ValueError("ofdm_cp_len must be at least 1")
+    return {
+        "ofdm_nfft": n,
+        "ofdm_cp_len": cp,
+        "ofdm_subcarriers": None if sc is None else tuple(int(v) for v in k),
+    }
+
+
+def _ofdm_link(c: QpskLinkConfig) -> QpskLinkReport:
+    """The OFDM link (conventions: QPSK link, OFDM; ADR 0063)."""
+    n_fft, cp, sps = c.ofdm_nfft, c.ofdm_cp_len, c.samples_per_symbol
+    low = -(n_fft // 2)
+    k = (
+        np.array([v for v in range(low, low + n_fft) if v != 0], dtype=np.int64)
+        if c.ofdm_subcarriers is None
+        else np.array(c.ofdm_subcarriers, dtype=np.int64)
+    )
+    u, fs = k.size, c.symbol_rate * sps
+    if c.num_symbols % u or c.preamble_symbols % u:
+        raise ValueError(f"num_symbols and preamble_symbols must be multiples of {u} (subcarriers)")
+    rrc_taps(c.rolloff, sps, c.span_symbols)  # checked as for the other modulations
+    if c.timing_loop_gains is not None or c.carrier_loop_gains is not None:
+        raise ValueError("ofdm takes no timing_loop_gains or carrier_loop_gains")
+    if c.phase_noise_linewidth_hz != 0 or c.clock_offset_ppm != 0:
+        raise ValueError("ofdm takes no phase noise or clock offset")
+    if not abs(c.frequency_offset_hz) < fs / (2 * n_fft):
+        raise ValueError("ofdm needs |frequency_offset_hz| below half a subcarrier spacing")
+    b, p = c.num_symbols // u, c.preamble_symbols // u
+    bits = prbs(c.prbs_order, 2 * c.num_symbols)
+    a = qpsk_map(bits)
+    frame = ofdm_modulate(a, n_fft, cp, k)
+    tx = np.concatenate([np.zeros(c.delay_samples, dtype=np.complex128), frame])
+    rx = np.asarray(_channel(c, tx, 2, 1 / sps), dtype=np.complex128)
+    # 1. timing and frequency from the cyclic prefix
+    length = frame.size
+    idx = (np.arange(b)[:, None] * (n_fft + cp) + np.arange(cp)[None, :]).reshape(-1)
+    best, d0, gamma = -math.inf, 0, 0j
+    for d in range(rx.size - length + 1):
+        r0, r1 = rx[d + idx], rx[d + idx + n_fft]
+        g = complex(np.sum(r0 * np.conj(r1)))
+        m = abs(g) - float(np.sum(r0.real**2 + r0.imag**2 + r1.real**2 + r1.imag**2)) / 2
+        if m > best:
+            best, d0, gamma = m, d, g
+    f_hat = -math.atan2(gamma.imag, gamma.real) * fs / (2 * math.pi * n_fft)
+    # the block: the prefix ties one block early over leading zeros; the preamble decides
+    x = np.conj(frame[: p * (n_fft + cp)]) * np.exp(
+        -2j * math.pi * f_hat / fs * np.arange(p * (n_fft + cp))
+    )
+    best, d1 = -1.0, d0
+    for d in range(d0 % (n_fft + cp), rx.size - length + 1, n_fft + cp):
+        m = abs(complex(np.sum(x * rx[d : d + x.size])))
+        if m > best:
+            best, d1 = m, d
+    d0 = d1
+    # 2. derotate and demodulate; 3. channel from the preamble blocks
+    y = frequency_offset(rx[d0 : d0 + length], -f_hat, fs)
+    zm = ofdm_demodulate(y, n_fft, cp, k).reshape(b, u)
+    am = a.reshape(b, u)
+    h = np.mean(zm[:p] / am[:p], axis=0)
+    w = zm / h
+    # 4. common phase per block, decision-directed
+    z = np.empty_like(w)
+    theta = 0.0
+    for i in range(b):
+        q = qpsk_map(qpsk_demap_hard(w[i] * complex(math.cos(theta), -math.sin(theta))))
+        s = complex(np.sum(w[i] * np.conj(q)))
+        theta = math.atan2(s.imag, s.real)
+        z[i] = w[i] * complex(math.cos(theta), -math.sin(theta))
+    hs = complex(np.sum(h))
+    zf = z.reshape(-1)
+    return QpskLinkReport(
+        config=c,
+        timing_offset=float(d0 % sps),
+        frame_start=d0 // sps,
+        frequency_offset_hz=f_hat,
+        phase_offset=_wrap(math.atan2(hs.imag, hs.real)),
+        evm=evm(zf, a),
+        bit_errors=bit_errors(bits, qpsk_demap_hard(zf)),
+        ber_theory=None if c.eb_n0_db is None else qpsk_ber_theory(c.eb_n0_db),
+    )
 
 
 def _fsk_link(c: QpskLinkConfig) -> QpskLinkReport:

@@ -1089,14 +1089,17 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   noise], `symbol_rate` [1000] Hz, `samples_per_symbol` [4] (≥ 2), `rolloff` [0.35],
   `span_symbols` [10], `delay_samples` [0], `frequency_offset_hz` [0], `phase` [0] rad,
   `preamble_symbols` [32] (1 to `num_symbols`), `phase_block_symbols` [32] (≥ 1; 64-QAM wants 64 or more, [ADR 0053](adr/0053-qam64-link.md)), `prbs_order`
-  [15], `seed` [0], `modulation` [`"qpsk"`] (`"qpsk"`, `"qam16"`, `"psk8"`, `"qam64"`, `"fsk2"`
-  or `"fsk4"`, [ADR 0051](adr/0051-psk8-link.md), [ADR 0053](adr/0053-qam64-link.md),
+  [15], `seed` [0], `modulation` [`"qpsk"`] (`"qpsk"`, `"qam16"`, `"psk8"`, `"qam64"`, `"fsk2"`,
+  `"fsk4"` or `"ofdm"`, [ADR 0063](adr/0063-ofdm-link.md), [ADR 0051](adr/0051-psk8-link.md), [ADR 0053](adr/0053-qam64-link.md),
   [ADR 0057](adr/0057-fsk-link.md),
   [ADR 0050](adr/0050-link-modulation.md)), `phase_noise_linewidth_hz` [0] (`≥ 0`,
   [ADR 0047](adr/0047-link-phase-noise.md)), `clock_offset_ppm` [0] (`|·| ≤ 1e5`),
   `timing_loop_gains` [none] and
   `carrier_loop_gains` [none], each none or a pair `[kp, ki]` of numbers `≥ 0`
-  ([ADR 0046](adr/0046-link-tracking-loops.md)). Numbers must be finite. **(implemented)**
+  ([ADR 0046](adr/0046-link-tracking-loops.md)), `ofdm_nfft` [64], `ofdm_cp_len` [16] and
+  `ofdm_subcarriers` [none] (used by `"ofdm"` only, checked for every modulation as the OFDM
+  bullet says). Numbers must be finite.
+  **(implemented)**
 - **FSK** (`"fsk2"`, `"fsk4"`: `M` = 2 or 4, `k = log2 M`, modulation index 1;
   [ADR 0057](adr/0057-fsk-link.md)) replaces the transmitter and receiver below; the checks above
   still apply, `rrc_taps(rolloff, sps, span_symbols)` must accept its arguments, and `rolloff`,
@@ -1129,6 +1132,40 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
     M)` or none without noise. Noiseless and without carrier or clock offset, `d₀ =
     delay_samples` and there are no bit errors.
   **(implemented)**
+- **OFDM** (`"ofdm"`, [ADR 0063](adr/0063-ofdm-link.md)) replaces the transmitter and receiver
+  below. `N = ofdm_nfft ≥ 2`, `cp = ofdm_cp_len` with `1 ≤ cp ≤ N`, `K = ofdm_subcarriers` (none:
+  every index from `−⌊N/2⌋` to `N − 1 − ⌊N/2⌋` but 0; otherwise distinct integers in that range,
+  at least one), `U = len(K)`. The checks above still apply and `rrc_taps(rolloff, sps,
+  span_symbols)` must accept its arguments; `num_symbols` and `preamble_symbols` must be
+  multiples of `U` (`B` and `P` blocks); `phase_noise_linewidth_hz` and `clock_offset_ppm` must
+  be 0, both loop gains none, and `|frequency_offset_hz| < fs/(2N)`, `fs = symbol_rate·sps`.
+  `rolloff`, `span_symbols` and `phase_block_symbols` are otherwise unused.
+  - Transmitter: `bits = prbs(prbs_order, 2·num_symbols)`, `a = qpsk_map(bits)`, `tx` =
+    `delay_samples` zeros followed by `ofdm_modulate(a, N, cp, K)` (`L = B·(N + cp)` samples).
+  - Channel: as below, but the AWGN is `awgn(·, eb_n0_db + 10·log10 2, sps, signal_power =
+    1/sps)`: variance `N₀ = 1/(2·10^(eb_n0_db/10))` per sample, so every used subcarrier sees
+    `Es/N₀ = 2·Eb/N₀` (the prefix and empty subcarriers not counted).
+  - Receiver:
+    1. For each `d` in `0 … len(rx) − L`, `γ(d) = Σ_{b<B} Σ_{m<cp} r[d + b(N + cp) + m]·
+       conj(r[d + b(N + cp) + m + N])` and `Φ(d)` the same sum of `(|r[i]|² + |r[i + N]|²)/2`;
+       `d₀` is the first `d` maximizing `|γ(d)| − Φ(d)`, and
+       `f̂ = −atan2(γ(d₀))·fs/(2πN)`. Then, with `x` the first `P·(N + cp)` samples of
+       `ofdm_modulate(a, N, cp, K)`, `d₁` is the first `d` in `d₀ mod (N + cp)`,
+       `+ (N + cp)`, …, `≤ len(rx) − L` maximizing `|Σ_i conj(x[i])·rx[d + i]·e^{−j2πf̂i/fs}|`
+       (the prefix ties noiseless one block early when the delay is longer than a block). The
+       steps below use `d₁` for `d₀`.
+    2. `y = frequency_offset(rx[d₀ : d₀ + L], −f̂, fs)` (phase 0 at `d₀`), `Z = ofdm_demodulate(y,
+       N, cp, K)` as `B` rows of `U`, `A` the same of `a`.
+    3. `Ĥ_k = (1/P)·Σ_{b<P} Z[b, k]/A[b, k]`, `W[b, k] = Z[b, k]/Ĥ_k`.
+    4. Block by block, `θ_b = atan2(Σ_k W[b, k]·conj(q(W[b, k]·e^{−jθ_{b−1}})))` with
+       `θ_{−1} = 0` and `q(x) = qpsk_map(qpsk_demap(x))`; `z[b, k] = W[b, k]·e^{−jθ_b}`.
+  - Report: `timing_offset = d₀ mod sps` (as a float), `frame_start = ⌊d₀/sps⌋`,
+    `frequency_offset_hz = f̂`, `phase_offset = atan2(Σ_k Ĥ_k)` wrapped into `(−π, π]`,
+    `evm = evm(z, a)`, `bit_errors(bits, qpsk_demap(z))` (the preamble counts), `ber_theory =
+    qpsk_ber_theory(eb_n0_db)` or none without noise (exact channel knowledge; the estimate from
+    `P` blocks costs roughly `10·log10(1 + 1/P)` dB). Noiseless, `d₀ = delay_samples`, `f̂` is the
+    channel offset to rounding, `phase_offset = phase + 2π·f·delay_samples/fs` wrapped, and there
+    are no bit errors. **(implemented)**
 - **Transmitter:** with `k` bits per symbol (2 for QPSK, 4 for 16-QAM, 3 for 8-PSK, 6 for
   64-QAM), `bits = prbs(prbs_order, k·num_symbols)`, `a = qpsk_map(bits)`, `qam16_map(bits)`,
   `psk8_map(bits)` or `qam64_map(bits)`,

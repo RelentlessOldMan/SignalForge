@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **OFDM in the link**: a `"ofdm"` modulation in `qpsk_link` with a subcarrier plan, a known
-   preamble block for timing and a per-subcarrier channel estimate, BER against QPSK theory.
-   Needs a design pass (an ADR) before code: pilots or none for phase tracking, how `ebn0_db`
-   maps to noise over the used subcarriers and the prefix, the BER loss from a noisy least-squares
-   estimate (theory for the expected value), and which link impairments it rejects. (The
-   Lomb-Scargle false-alarm item went first on 2026-11-13 for that reason.)
+1. **Multipath channel in the link**: a tap-delay channel (`channel_taps`, within the prefix for
+   OFDM) so the OFDM per-subcarrier estimate and the single-carrier chains meet a frequency-
+   selective channel; the expected OFDM BER over a known channel is the mean of the
+   per-subcarrier QPSK BERs at `|H_k|²·Es/N₀`.
+2. **OFDM with phase noise and clock offset** (ADR 0063 rejects them today): common phase error
+   is already tracked per block; the clock offset needs a per-subcarrier phase slope.
 
 ## Built
 
@@ -631,6 +631,17 @@ Updated with every chunk of work. Dates are absolute.
   New generator `lomb_scargle_fap.py` (30 cases, exact fractions); Monte Carlo tests check the
   survival on noise in both languages. Python 2760 passed, 2 skipped; .NET 2269 passed;
   conformance 1412/1412 in both. Version 2026.11.13.86.
+- 2026-11-13: OFDM in the link ([ADR 0063](adr/0063-ofdm-link.md)): `modulation = "ofdm"`, Gray
+  QPSK on `ofdm_subcarriers` [all but DC] of an `ofdm_nfft` [64] DFT with an `ofdm_cp_len` [16]
+  prefix, `P` known preamble blocks. Receiver: van de Beek's prefix metric `|γ| − Φ` for timing
+  within a block and the carrier offset, the known preamble samples for the block (the prefix
+  ties one block early when the delay exceeds a block, found in testing), per-subcarrier least
+  squares over the preamble, decision-directed common phase per block. Noise is defined per data
+  subcarrier, so `ber_theory` is QPSK theory (exact channel knowledge; the estimate's loss,
+  about `10·log10(1 + 1/P)` dB, bounds the tests). Phase noise, clock offset, loop gains and
+  offsets of half a subcarrier or more are rejected. New link configs `ofdm_noiseless`
+  (52 subcarriers) and `ofdm_6db`. Python 2785 passed, 2 skipped; .NET 2292 passed;
+  conformance 1412/1412 in both. Version 2026.11.13.88 (.87 failed: the noiseless OFDM EVM is rounding error, about −299 dB, so its dB value and peak index differ between languages; the link compare now skips those two when both rms are ≤ 1e-9, docs/testing.md).
 
 ## Not built
 

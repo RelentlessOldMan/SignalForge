@@ -98,7 +98,12 @@ def compare_link_reports(a: dict[str, Any], b: dict[str, Any], z_max: float = 4.
     if out:
         return ["config: " + m for m in out]
     if a["config"]["eb_n0_db"] is None:
-        return compare(decode(a), decode(b), NOISELESS_TOL)
+        da, db = decode(a), decode(b)
+        if all(isinstance(v, dict) and v["rms"] <= 1e-9 for v in (da["evm"], db["evm"])):
+            # an exact recovery (OFDM): the error is rounding, its dB and peak index are noise
+            for v in (da["evm"], db["evm"]):
+                del v["rms_db"], v["peak_index"]
+        return compare(da, db, NOISELESS_TOL)
     out = compare(decode(a["ber_theory"]), decode(b["ber_theory"]), NOISELESS_TOL, "ber_theory")
     ea, eb = a["bit_errors"], b["bit_errors"]
     va, vb = a["evm"], b["evm"]

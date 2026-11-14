@@ -68,7 +68,8 @@ reports of one config. Each config in `vectors/links/` is run in both languages
 
 - both reports have the same fields, and the configs are equal;
 - without noise the runs are deterministic, and every field must agree within 1e-9 (absolute plus
-  relative);
+  relative), except that when both EVMs have `rms ≤ 1e-9` (an exact recovery, as OFDM gives)
+  their `rms_db` and `peak_index` are not compared: they describe rounding error;
 - with noise the random streams differ, so the frame start, the bit count and the symbol count
   must be equal, and two statistics must agree within 4 standard deviations:
   - bit errors, a two-sample test of proportions: `|e₁ − e₂| ≤ 4·√(2·n·p·(1 − p))`, `p` the pooled

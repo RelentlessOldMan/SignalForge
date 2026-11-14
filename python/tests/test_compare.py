@@ -100,6 +100,21 @@ def test_noiseless_links_compare_every_field() -> None:
     assert cmp.compare_link_reports(a, b)[0].startswith("frequency_offset_hz")
 
 
+def test_noiseless_exact_recovery_skips_rounding_fields() -> None:
+    a = _link(num_symbols=63 * 4, preamble_symbols=63, modulation="ofdm", delay_samples=3)
+    assert a["evm"]["rms"] < 1e-12
+    b = copy.deepcopy(a)
+    b["evm"]["rms_db"] -= 3.0
+    b["evm"]["peak_index"] += 1
+    assert cmp.compare_link_reports(a, b) == []
+    b["evm"]["rms"] += 1e-6
+    assert cmp.compare_link_reports(a, b)[0].startswith("evm.rms")
+    c = _link(num_symbols=300)  # a shaped link's EVM is not rounding: every field compares
+    d = copy.deepcopy(c)
+    d["evm"]["peak_index"] += 1
+    assert cmp.compare_link_reports(c, d)[0].startswith("evm.peak_index")
+
+
 def test_command_line(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     cfg = tmp_path / "cfg.json"
     cfg.write_text(json.dumps({"num_symbols": 64, "eb_n0_db": 8.0}), encoding="utf-8")
