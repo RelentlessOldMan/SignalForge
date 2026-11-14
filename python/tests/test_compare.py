@@ -141,7 +141,7 @@ def _exchange(tmp_path: Path) -> dict[str, Any]:
 
 def test_file_reports_agree(tmp_path: Path) -> None:
     r = _exchange(tmp_path)
-    assert len(r["files"]) == 2 * len(cmp.EXCHANGE_DATATYPES) == 36
+    assert len(r["files"]) == 2 * len(cmp.EXCHANGE_DATATYPES) == 56
     assert cmp.compare_file_reports(r, copy.deepcopy(r)) == []
 
 

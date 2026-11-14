@@ -18,12 +18,13 @@ public sealed class SignalFilesTests : IDisposable
         var t = new TheoryData<string>();
         foreach (char k in "cr")
         {
-            foreach (string ty in (string[])["f64", "f32", "i32", "i16"])
+            foreach (string ty in (string[])["f64", "f32", "i32", "i16", "u32", "u16"])
             {
                 t.Add($"{k}{ty}_le");
                 t.Add($"{k}{ty}_be");
             }
             t.Add($"{k}i8");
+            t.Add($"{k}u8");
         }
         return t;
     }
@@ -32,8 +33,8 @@ public sealed class SignalFilesTests : IDisposable
     {
         "f64" => 0,
         "f32" => Math.ScaleB(1, -24),
-        "i32" => Math.ScaleB(1, -31),
-        "i16" => Math.ScaleB(1, -15),
+        "i32" or "u32" => Math.ScaleB(1, -31),
+        "i16" or "u16" => Math.ScaleB(1, -15),
         _ => Math.ScaleB(1, -7),
     };
 

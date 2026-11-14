@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Unsigned SigMF sample types**: `cu8`, `ru8`, `cu16_le`/`_be`, `ru16_le`/`_be`, `cu32`/`ru32`
-   read and write with the SigMF offset-binary scaling, in both languages, with fixture files.
-2. **Lomb-Scargle periodogram** for unevenly sampled data, with analytical vectors (a pure tone
+1. **Lomb-Scargle periodogram** for unevenly sampled data, with analytical vectors (a pure tone
    on random times; the classic normalization).
-3. **OFDM modulate and demodulate**: IFFT size, cyclic prefix, used subcarriers; round trip and
+2. **OFDM modulate and demodulate**: IFFT size, cyclic prefix, used subcarriers; round trip and
    vectors from the DFT definition.
+3. **SigMF annotations**: read and write `core:annotations` (sample start, count, label) as
+   Signal metadata, in both languages.
 
 ## Built
 
@@ -588,6 +588,13 @@ Updated with every chunk of work. Dates are absolute.
   configs keep `delay mod sps < sps − 1`. New link configs `fsk2_noiseless`, `fsk4_noiseless`,
   `fsk2_8db`, `fsk4_7db`. Python 2566 passed, 2 skipped; .NET 2082 passed; conformance
   1286/1286 in both. Version 2026.11.13.79.
+- 2026-11-13: Unsigned SigMF sample types (ADR 0058): `u32`, `u16` (each with an order) and `u8`
+  (none), real and complex, as offset binary: code `u` is `(u − 2^(b−1))/2^(b−1)`, so the same
+  range and step as the signed type, and writing adds `2^(b−1)` to the signed code. C# flips the
+  top bit of the signed code. Vector cases by hand (ends, mid-scale, the range edges, NaN) and a
+  `receiver_cu8` recording replace the old "unsigned is rejected" cases; the cross-language file
+  exchange now covers 28 datatypes. Python 2607 passed, 2 skipped; .NET 2123 passed; conformance
+  1317/1317 in both. Version 2026.11.13.80.
 
 ## Not built
 
@@ -595,7 +602,7 @@ Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, el
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
-multi-capture SigMF recordings, WAV metadata chunks, SigMF annotations, unsigned sample types), plotting, CLI,
+multi-capture SigMF recordings, WAV metadata chunks, SigMF annotations, `f16` samples), plotting, CLI,
 packaging and publishing.
 
 ## Lessons

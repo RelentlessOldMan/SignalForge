@@ -19,8 +19,17 @@ from ._checks import real
 from .core import Signal
 
 SIGMF_VERSION = "1.2.0"
-_DATATYPE = re.compile(r"([cr])(f64|f32|i32|i16|i8)(?:_(le|be))?")
-_CODES = {"f64": "f8", "f32": "f4", "i32": "i4", "i16": "i2", "i8": "i1"}
+_DATATYPE = re.compile(r"([cr])(f64|f32|[iu]32|[iu]16|[iu]8)(?:_(le|be))?")
+_CODES = {
+    "f64": "f8",
+    "f32": "f4",
+    "i32": "i4",
+    "i16": "i2",
+    "i8": "i1",
+    "u32": "u4",
+    "u16": "u2",
+    "u8": "u1",
+}
 _RESERVED = frozenset(
     {
         "core:datatype",
@@ -41,10 +50,10 @@ _INT64 = (-(2**63), 2**63 - 1)
 def _parse(datatype: str) -> tuple[bool, np.dtype[Any], int]:
     """``(is_complex, element dtype in its byte order, integer bits or 0)``."""
     m = _DATATYPE.fullmatch(datatype) if isinstance(datatype, str) else None
-    if m is None or (m[2] == "i8") != (m[3] is None):
+    if m is None or (m[2][1:] == "8") != (m[3] is None):
         raise ValueError(f"unknown datatype {datatype!r}")
     order = {"le": "<", "be": ">", None: "|"}[m[3]]
-    bits = int(m[2][1:]) if m[2][0] == "i" else 0
+    bits = int(m[2][1:]) if m[2][0] in "iu" else 0
     return m[1] == "c", np.dtype(order + _CODES[m[2]]), bits
 
 
@@ -65,6 +74,8 @@ def encode_samples(x: ArrayLike, datatype: str) -> bytes:
     codes = np.rint(parts * 2.0 ** (bits - 1))
     if codes.size and (codes.min() < -(2 ** (bits - 1)) or codes.max() > 2 ** (bits - 1) - 1):
         raise ValueError(f"a sample is outside the range of {datatype} (full scale is 1.0)")
+    if dt.kind == "u":  # offset binary
+        codes += 2.0 ** (bits - 1)
     return codes.astype(dt).tobytes()
 
 
@@ -80,6 +91,8 @@ def decode_samples(
     if nbytes % size:
         raise ValueError(f"{nbytes} bytes is not a whole number of {datatype} samples")
     parts = np.frombuffer(data, dtype=dt).astype(np.float64)
+    if dt.kind == "u":  # offset binary
+        parts -= 2.0 ** (bits - 1)
     if bits:
         parts /= 2.0 ** (bits - 1)
     if not is_complex:

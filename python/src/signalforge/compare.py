@@ -133,7 +133,16 @@ def compare_link_reports(a: dict[str, Any], b: dict[str, Any], z_max: float = 4.
 EXCHANGE_DATATYPES = [
     f"{k}{t}{o}"
     for k in "cr"
-    for t, orders in [("f64", "lb"), ("f32", "lb"), ("i32", "lb"), ("i16", "lb"), ("i8", "")]
+    for t, orders in [
+        ("f64", "lb"),
+        ("f32", "lb"),
+        ("i32", "lb"),
+        ("i16", "lb"),
+        ("i8", ""),
+        ("u32", "lb"),
+        ("u16", "lb"),
+        ("u8", ""),
+    ]
     for o in ([f"_{c}e" for c in orders] or [""])
 ]
 
@@ -195,7 +204,8 @@ def _diff(a: Any, b: Any, path: str = "") -> list[str]:
 
 
 def _step(datatype: str) -> float:
-    bits = {"f64": 0, "f32": 24, "i32": 31, "i16": 15, "i8": 7}[datatype[1:4].rstrip("_")]
+    t = datatype[1:4].rstrip("_")
+    bits = {"f64": 0, "f32": 24, "32": 31, "16": 15, "8": 7}[t if t[0] == "f" else t[1:]]
     return 2.0**-bits if bits else 0.0
 
 

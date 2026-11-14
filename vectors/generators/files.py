@@ -1,7 +1,8 @@
 """Writes vectors/cases/files.json and the recordings in vectors/files/, using only the standard library.
 
 It does not import NumPy or SignalForge. Bytes come from the struct module; integer codes from
-round() (half to even) of x * 2^(b-1); float32 values from a struct round trip. The recordings'
+round() (half to even) of x * 2^(b-1), plus 2^(b-1) for unsigned (offset binary, ADR 0058);
+float32 values from a struct round trip. The recordings'
 metadata is written here as literal JSON, some of it laid out the way another tool would.
 
 Run from the repo root: python vectors/generators/files.py [--check]
@@ -15,7 +16,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 TOL = {"abs": 0, "rel": 0}
-FMT = {"f64": "d", "f32": "f", "i32": "i", "i16": "h", "i8": "b"}
+FMT = {"f64": "d", "f32": "f", "i32": "i", "i16": "h", "i8": "b", "u32": "I", "u16": "H", "u8": "B"}
 
 
 def parts(x):
@@ -27,8 +28,9 @@ def parts(x):
 
 def stored(v, t):
     """The value as the type holds it: the integer code, or the float after rounding."""
-    if t[0] == "i":
-        return round(v * 2 ** (int(t[1:]) - 1))
+    if t[0] in "iu":
+        half = 2 ** (int(t[1:]) - 1)
+        return round(v * half) + (half if t[0] == "u" else 0)
     return struct.unpack("<f", struct.pack("<f", v))[0] if t == "f32" else v
 
 
@@ -41,7 +43,13 @@ def pack(x, datatype):
 def back(x, datatype):
     """What decoding the packed bytes gives."""
     t = datatype[1:].split("_")[0]
-    vals = [stored(v, t) / 2 ** (int(t[1:]) - 1) if t[0] == "i" else stored(v, t) for v in parts(x)]
+    vals = []
+    for v in parts(x):
+        if t[0] in "iu":
+            half = 2 ** (int(t[1:]) - 1)
+            vals.append((stored(v, t) - (half if t[0] == "u" else 0)) / half)
+        else:
+            vals.append(stored(v, t))
     if datatype[0] == "r":
         return vals
     return {"re": vals[0::2], "im": vals[1::2]}
@@ -55,13 +63,15 @@ def arg(x):
 
 REAL = [0.5, -0.25, 0.123456789, -1.0, 0.0, 2.0**-7]
 CPLX = [0.5 - 0.25j, 0.123456789 + 1e-3j, -1.0 + 0j]
-SRC_ENC = "struct.pack of each part (integers: round(x * 2^(b-1)), half to even)"
-SRC_DEC = "struct round trip of the same values; integer codes divided by 2^(b-1)"
+SRC_ENC = ("struct.pack of each part (integers: round(x * 2^(b-1)), half to even; unsigned "
+           "adds 2^(b-1))")
+SRC_DEC = ("struct round trip of the same values; integer codes (less 2^(b-1) for unsigned) "
+           "divided by 2^(b-1)")
 
 cases = []
 for kind, x in (("r", REAL), ("c", CPLX)):
-    for t in ("f64", "f32", "i32", "i16", "i8"):
-        for order in ("le", "be") if t != "i8" else ("",):
+    for t in ("f64", "f32", "i32", "i16", "i8", "u32", "u16", "u8"):
+        for order in ("le", "be") if t[1:] != "8" else ("",):
             dt = f"{kind}{t}_{order}" if order else f"{kind}{t}"
             h = pack(x, dt).hex()
             cases.append({"id": f"encode_samples.{dt}", "op": "encode_samples",
@@ -95,6 +105,25 @@ cases += [
      "args": {"data": "80000000" + "7fffffff", "datatype": "ri32_be"},
      "expected": [-1.0, (2**31 - 1) / 2**31], "tol": TOL,
      "source": "by hand: codes -2^31 and 2^31-1 over 2^31"},
+    {"id": "encode_samples.ru8_ends", "op": "encode_samples",
+     "args": {"x": [-1.0, 0.0, 127 / 128, 2.5 / 128], "datatype": "ru8"}, "expected": "0080ff82",
+     "tol": TOL, "source": "by hand: offset binary, codes -128, 0, 127, 2 (2.5 to even) plus 128"},
+    {"id": "encode_samples.cu16_be_ends", "op": "encode_samples",
+     "args": {"x": {"re": [-1.0], "im": [32767 / 32768]}, "datatype": "cu16_be"},
+     "expected": "0000ffff", "tol": TOL,
+     "source": "by hand: codes -32768 and 32767 plus 32768 are 0 and 65535, big-endian"},
+    {"id": "decode_samples.u16_le_mid", "op": "decode_samples",
+     "args": {"data": "0080" + "ff7f" + "0100", "datatype": "ru16_le"},
+     "expected": [0.0, -1 / 32768, -32767 / 32768], "tol": TOL,
+     "source": "by hand: codes 32768, 32767 and 1, less 32768, over 2^15"},
+    {"id": "decode_samples.u32_be_ends", "op": "decode_samples",
+     "args": {"data": "00000000" + "ffffffff", "datatype": "ru32_be"},
+     "expected": [-1.0, (2**31 - 1) / 2**31], "tol": TOL,
+     "source": "by hand: codes 0 and 2^32-1, less 2^31, over 2^31"},
+    {"id": "decode_samples.cu8_receiver", "op": "decode_samples",
+     "args": {"data": "807f00ff", "datatype": "cu8"},
+     "expected": {"re": [0.0, -1.0], "im": [-1 / 128, 127 / 128]}, "tol": TOL,
+     "source": "by hand: unsigned 8-bit I/Q as receivers record it: (u - 128)/128"},
     {"id": "decode_samples.f32_special", "op": "decode_samples",
      "args": {"data": "0000807f" + "00000080", "datatype": "rf32_le"}, "expected": ["inf", -0.0],
      "tol": TOL, "source": "by hand: +inf and -0.0 in binary32"},
@@ -113,13 +142,19 @@ def err(case_id, op, args, why):
                   "source": why})
 
 
-for bad in ("cu8", "cf32", "ci8_le", "rf16_le", "CF32_LE", "cf32_le ", "cf32_LE", "f32_le", ""):
+for bad in ("cu8_le", "ru64_le", "ru16", "cf32", "ci8_le", "rf16_le", "CF32_LE", "cf32_le ", "cf32_LE", "f32_le", ""):
     err(f"encode_samples.datatype_{bad.strip() or 'empty'}" + ("_space" if bad.endswith(" ") else ""),
         "encode_samples", {"x": [0.5], "datatype": bad}, f"{bad!r} is not a supported datatype")
 err("encode_samples.full_scale_i16", "encode_samples", {"x": [1.0], "datatype": "ri16_le"},
     "1.0 needs code 32768, one past the largest i16")
 err("encode_samples.below_i8", "encode_samples", {"x": [-129 / 128], "datatype": "ri8"},
     "code -129 is below the smallest i8")
+err("encode_samples.full_scale_u8", "encode_samples", {"x": [1.0], "datatype": "ru8"},
+    "1.0 needs code 128 + 128 = 256, one past the largest u8")
+err("encode_samples.below_u16", "encode_samples", {"x": [-32769 / 32768], "datatype": "ru16_le"},
+    "code -32769 + 32768 = -1 is below the smallest u16")
+err("encode_samples.nan_unsigned", "encode_samples",
+    {"x": {"re": ["nan"], "im": [0]}, "datatype": "cu8"}, "integers cannot hold NaN")
 err("encode_samples.nan_int", "encode_samples", {"x": ["nan"], "datatype": "ri32_le"},
     "integers cannot hold NaN")
 err("encode_samples.inf_int", "encode_samples",
@@ -132,8 +167,8 @@ err("decode_samples.partial_sample", "decode_samples", {"data": "000000", "datat
     "3 bytes is not a whole number of 2-byte samples")
 err("decode_samples.half_complex", "decode_samples", {"data": "00000000", "datatype": "cf32_le"},
     "4 bytes is half of one 8-byte complex sample")
-err("decode_samples.bad_datatype", "decode_samples", {"data": "00", "datatype": "ru8"},
-    "unsigned types are not supported")
+err("decode_samples.bad_datatype", "decode_samples", {"data": "00", "datatype": "ri64_le"},
+    "64-bit integers are not supported")
 
 # --- recordings: (name, meta text, data bytes, expected record or None for an error, why)
 recs = []
@@ -194,6 +229,15 @@ recs.append((
      "time_origin": 0, "units": None, "impedance": None, "metadata": {}},
     "no captures: center frequency 0; i8 codes over 2^7",
 ))
+recs.append((
+    "receiver_cu8",
+    meta(base("cu8", 2.048e6), [{"core:sample_start": 0, "core:frequency": 100e6}]),
+    bytes([0x80, 0x80, 0xC0, 0x40, 0x00, 0xFF]),
+    {"samples": {"re": [0.0, 0.5, -1.0], "im": [0.0, -0.5, 127 / 128]}, "sample_rate": 2.048e6,
+     "center_frequency": 100e6, "time_origin": 0, "units": None, "impedance": None,
+     "metadata": {}},
+    "unsigned 8-bit I/Q as a receiver records it: offset binary, (u - 128)/128",
+))
 one = struct.pack("<h", 1)
 for name, text, why in (
     ("two_frequencies", meta(base("ri16_le"), [{"core:sample_start": 0, "core:frequency": 1e6},
@@ -210,7 +254,7 @@ for name, text, why in (
     ("no_datatype", meta({"core:version": "1.0.0", "core:sample_rate": 1000}),
      "core:datatype is required"),
     ("version_2", meta({**base("ri16_le"), "core:version": "2.0.0"}), "major version 1 only"),
-    ("unsigned", meta(base("ru16_le")), "unsigned types are not supported"),
+    ("half_float", meta(base("rf16_le")), "16-bit floats are not supported"),
     ("dataset", meta(base("ri16_le", **{"core:dataset": "other.bin"})),
      "a non-conforming dataset is not read"),
     ("duplicate_key", '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '

@@ -9,8 +9,9 @@ import pytest
 
 import signalforge as sf
 
-TYPES = [f"{k}{t}_{o}" for k in "cr" for t in ("f64", "f32", "i32", "i16") for o in ("le", "be")]
-TYPES += ["ci8", "ri8"]
+WIDE = ("f64", "f32", "i32", "i16", "u32", "u16")
+TYPES = [f"{k}{t}_{o}" for k in "cr" for t in WIDE for o in ("le", "be")]
+TYPES += ["ci8", "ri8", "cu8", "ru8"]
 
 
 @pytest.mark.parametrize("datatype", TYPES)
@@ -21,9 +22,10 @@ def test_round_trip_every_datatype(tmp_path: Path, datatype: str) -> None:
         x = x + 1j * rng.uniform(-0.99, 0.99, 64)
     sf.write_sigmf(tmp_path / "r", sf.Signal(x, 1e3), datatype)
     y = sf.read_sigmf(tmp_path / "r").samples
-    step = {"f64": 0.0, "f32": 2.0**-24, "i32": 2.0**-31, "i16": 2.0**-15, "i8": 2.0**-7}
+    step = {"f64": 0.0, "f32": 2.0**-24, "32": 2.0**-31, "16": 2.0**-15, "8": 2.0**-7}
     assert np.iscomplexobj(y) == np.iscomplexobj(x)
-    assert np.max(np.abs(y - x)) <= step[datatype[1:4].rstrip("_")]
+    t = datatype[1:4].rstrip("_")
+    assert np.max(np.abs(y - x)) <= step[t if t[0] == "f" else t[1:]]
     assert (tmp_path / "r.sigmf-data").stat().st_size == len(sf.encode_samples(x, datatype))
 
 

@@ -88,7 +88,7 @@ internal static class Exchange
 {
     private static IEnumerable<string> Datatypes() =>
         from k in "cr"
-        from t in (string[])["f64_le", "f64_be", "f32_le", "f32_be", "i32_le", "i32_be", "i16_le", "i16_be", "i8"]
+        from t in (string[])["f64_le", "f64_be", "f32_le", "f32_be", "i32_le", "i32_be", "i16_le", "i16_be", "i8", "u32_le", "u32_be", "u16_le", "u16_be", "u8"]
         select $"{k}{t}";
 
     public static void Write(string dir)

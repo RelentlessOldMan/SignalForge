@@ -27,9 +27,12 @@ public static class SignalFiles
         "core:num_channels", "core:dataset", "core:metadata_only",
     ];
 
-    private readonly record struct Format(bool IsComplex, bool IsInteger, int Bits, bool BigEndian)
+    private readonly record struct Format(bool IsComplex, bool IsInteger, int Bits, bool BigEndian, bool Unsigned)
     {
         public int PartBytes => Bits / 8;
+
+        // the byte holding the top bit, which offset binary flips (ADR 0058)
+        public int TopByte => BigEndian ? 0 : PartBytes - 1;
     }
 
     private static Format Parse(string? datatype, string paramName)
@@ -41,10 +44,17 @@ public static class SignalFiles
             int us = body.IndexOf('_', StringComparison.Ordinal);
             if (us >= 0)
                 (body, order) = (body[..us], body[(us + 1)..]);
-            int bits = body switch { "f64" => 64, "f32" or "i32" => 32, "i16" => 16, "i8" => 8, _ => 0 };
-            bool orderOk = body == "i8" ? us < 0 : order is "le" or "be";
+            int bits = body switch
+            {
+                "f64" => 64,
+                "f32" or "i32" or "u32" => 32,
+                "i16" or "u16" => 16,
+                "i8" or "u8" => 8,
+                _ => 0,
+            };
+            bool orderOk = bits == 8 ? us < 0 : order is "le" or "be";
             if (bits > 0 && orderOk)
-                return new Format(datatype[0] == 'c', body[0] == 'i', bits, order == "be");
+                return new Format(datatype[0] == 'c', body[0] != 'f', bits, order == "be", body[0] == 'u');
         }
         throw new ArgumentException($"unknown datatype '{datatype}'", paramName);
     }
@@ -101,6 +111,8 @@ public static class SignalFiles
                 case 16: BinaryPrimitives.WriteInt16LittleEndian(b, (short)code); break;
                 default: b[0] = unchecked((byte)(sbyte)code); break;
             }
+            if (f.Unsigned)
+                b[f.TopByte] ^= 0x80;
         }
         return bytes;
     }
@@ -118,9 +130,17 @@ public static class SignalFiles
             throw new ArgumentException($"{data.Length} bytes is not a whole number of {datatype} samples", nameof(data));
         var parts = new double[data.Length / w];
         double scale = Math.ScaleB(1.0, f.Bits - 1);
+        Span<byte> flipped = stackalloc byte[8];
         for (int i = 0; i < parts.Length; i++)
         {
-            ReadOnlySpan<byte> b = data.Slice(i * w, w);
+            scoped ReadOnlySpan<byte> b = data.Slice(i * w, w);
+            if (f.Unsigned)
+            {
+                // offset binary is the signed code with its top bit flipped (ADR 0058)
+                b.CopyTo(flipped);
+                flipped[f.TopByte] ^= 0x80;
+                b = flipped[..w];
+            }
             parts[i] = (f.IsInteger, f.Bits, f.BigEndian) switch
             {
                 (false, 64, true) => BinaryPrimitives.ReadDoubleBigEndian(b),
