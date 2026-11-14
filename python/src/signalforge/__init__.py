@@ -107,6 +107,7 @@ from .modulation import (
 )
 from .spectral import (
     Acpr,
+    HarmonicFTest,
     OccupiedBandwidth,
     SpectralDensity,
     Spectrogram,
@@ -117,6 +118,7 @@ from .spectral import (
     dpss_tapers,
     fft,
     fft_frequencies,
+    harmonic_f_test,
     ifft,
     lomb_scargle,
     lomb_scargle_false_alarm,
@@ -165,7 +167,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.111"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.112"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -176,6 +178,7 @@ __all__ = [
     "ErrorCount",
     "Evm",
     "FirFilter",
+    "HarmonicFTest",
     "IirFilter",
     "OccupiedBandwidth",
     "PowerStats",
@@ -249,6 +252,7 @@ __all__ = [
     "fsk_modulate",
     "fsk_ser_theory",
     "gardner_timing",
+    "harmonic_f_test",
     "ifft",
     "interpolate",
     "iq_image_rejection_db",

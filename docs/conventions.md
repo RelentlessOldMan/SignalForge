@@ -208,6 +208,17 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   the weight on the most concentrated taper), and all-zero input gives zeros. Each bin iterates on
   its own. With `K = 1` this is the plain estimate. `num_segments` stays `K` and `enbw_hz` `2W·fs`.
   **(implemented)**
+- **Harmonic F-test** (`harmonic_f_test(samples, sample_rate, half_bandwidth, *,
+  num_tapers=None, nfft=None)` → `HarmonicFTest(frequencies, amplitudes, f_statistic, p_values,
+  num_tapers)`, C# `HarmonicFTestResult`, [ADR 0080](adr/0080-harmonic-f-test.md)). The tapers,
+  `M` and `X_j` are as for the multitaper PSD, and `K ≥ 2`. With `U_j = Σ_n v_j[n]` (the computed
+  sum), each bin has `μ = Σ_j U_j·X_j / Σ_j U_j²` and
+  `F = (K − 1)·|μ|²·Σ_j U_j² / Σ_j |X_j − μ·U_j|²`, with all sums in order of `j`. Its p-value is
+  `p = (1 + F/(K − 1))^−(K−1)`, the F(2, 2K − 2) upper tail. When the residual sum is exactly 0,
+  `F = +∞` and `p = 0`, or `F = 0` and `p = 1` if `μ = 0` as well. `μ` is the complex amplitude of
+  `μ·e^{2πi f n/fs}` with `n` counted from 0. Real input gives bins `0 … ⌊M/2⌋` with frequencies
+  `b·fs/M`. Complex input gives all `M` bins on the PSD's two-sided axis. Nothing is folded or
+  scaled by `fs`. **(implemented)**
 - **Lomb-Scargle periodogram** (`lomb_scargle(times, values, frequencies, center=True,
   normalization="standard")`, [ADR 0059](adr/0059-lomb-scargle.md)), for unevenly sampled real
   data. `times` and `values` are finite reals of the same length `N ≥ 2` (times in any order,

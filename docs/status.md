@@ -4,10 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Multitaper F-test for line components** (Thomson's harmonic F-test): per bin, the
-   regression of the tapered spectra on the tapers' DC values, giving the line amplitude and an
-   F statistic with 2 and `2K − 2` degrees of freedom, for finding sinusoids in colored noise.
-   Expected values from a stdlib generator and a by-hand pure-tone case at a bin center.
+1. **Generalized Lomb-Scargle** (Zechmeister & Kürster 2009): a floating mean and per-sample
+   weights `1/σ²`, the fit of `a cos + b sin + c` at each frequency, so the periodogram stays
+   correct when the mean of the samples is not the mean of the signal. Expected values from a
+   stdlib generator solving the 3×3 weighted least squares directly, with a by-hand case where
+   the generalized form equals the classical one (equal weights, a zero-mean sampled sinusoid).
 
 ## Built
 
@@ -808,11 +809,21 @@ Updated with every chunk of work. Dates are absolute.
   length `2N`, within 2e-15 of the direct sum; N 65536 with seven tapers now takes about 6 s in
   Python, nearly all in the pure-Python taper solve (linear in N). Python 3127 passed, 2
   skipped; .NET 2591 passed; conformance 1560/1560 in both. Version 2026.11.13.111.
+- 2026-11-13: Thomson's harmonic F-test ([ADR 0080](adr/0080-harmonic-f-test.md)):
+  `harmonic_f_test(samples, sample_rate, half_bandwidth, *, num_tapers, nfft)` → `HarmonicFTest`
+  (C# `Spectral.HarmonicFTest` → `HarmonicFTestResult`) regresses each bin's tapered DFTs on the
+  tapers' sums. The result has the line amplitude `μ`, an F statistic with 2 and `2K − 2` degrees
+  of freedom, and its exact p-value `(1 + F/(K − 1))^−(K−1)`. Real input gives bins 0 … fs/2;
+  complex input gives the two-sided axis. `K ≥ 2`. Under white noise the p-values are uniform
+  (5.2% below 0.05 over 20 × 1024 bins), and a 0.3 cosine in unit noise at N 4096 is the smallest
+  p-value at about 1e-7. Vector suite `multitaper` now 39 cases (2 more by hand: N = 2 and all
+  zeros). Python 3143 passed, 2 skipped; .NET 2607 passed; conformance 1571/1571 in both.
+  Version 2026.11.13.112.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
-(the multitaper F-test; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
+(multitaper line removal; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,

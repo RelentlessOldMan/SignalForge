@@ -263,6 +263,7 @@ public static class Conformance
             "welch_psd" => Welch(a),
             "dpss_tapers" => Bind((a.I("length"), a.D("half_bandwidth"), a.OptInt("num_tapers")), t => Spectral.DpssTapers(t.Item1, t.Item2, t.Item3)),
             "multitaper_psd" => MultitaperOp(a),
+            "harmonic_f_test" => FTestOp(a),
             "spectrogram" => SpectrogramOp(a),
             "lomb_scargle_false_alarm" => Bind((a.D("power"), a.I("num_samples"), a.Has("num_frequencies") ? a.I("num_frequencies") : 1, a.Flag("center", true)),
                 t => Spectral.LombScargleFalseAlarm(t.Item1, t.Item2, t.Item3, t.Item4)),
@@ -526,6 +527,16 @@ public static class Conformance
             return () => Measurements.Sfdr(cs, fs, window, beta, width, fundamental, spurs);
         double[] x = Reals(samples);
         return () => Measurements.Sfdr(x, fs, window, beta, width, fundamental, spurs);
+    }
+
+    private static Func<object?> FTestOp(Args a)
+    {
+        object? samples = a.Get("samples");
+        var (fs, nw, k, nfft) = (a.D("sample_rate"), a.D("half_bandwidth"), a.OptInt("num_tapers"), a.OptInt("nfft"));
+        if (samples is Complex[] cs)
+            return () => Spectral.HarmonicFTest(cs, fs, nw, k, nfft);
+        double[] x = Reals(samples);
+        return () => Spectral.HarmonicFTest(x, fs, nw, k, nfft);
     }
 
     private static Func<object?> MultitaperOp(Args a)

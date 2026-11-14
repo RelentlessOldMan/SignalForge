@@ -131,6 +131,17 @@ public sealed record Spectrogram(
 /// <param name="Concentrations">The fraction of each taper's energy inside [−W, W], W = NW/N.</param>
 public sealed record TaperSet(double[][] Tapers, double[] Concentrations);
 
+/// <summary>
+/// Thomson's harmonic F-test per bin (conventions: Spectra, Harmonic F-test; ADR 0080).
+/// </summary>
+/// <param name="Frequencies">Bin frequencies in Hz: 0 … fs/2 for real input, the two-sided axis for complex.</param>
+/// <param name="Amplitudes">The complex amplitude μ of a line μ·e^{2πi f n/fs} at each bin.</param>
+/// <param name="FStatistic">F with 2 and 2K − 2 degrees of freedom.</param>
+/// <param name="PValues">The F(2, 2K − 2) upper tail at each F.</param>
+/// <param name="NumTapers">K, the number of tapers.</param>
+public sealed record HarmonicFTestResult(double[] Frequencies, Complex[] Amplitudes, double[] FStatistic,
+    double[] PValues, int NumTapers);
+
 /// <summary>Occupied bandwidth by the β/2 method, in the PSD's frequency axis.</summary>
 /// <param name="Bandwidth">Upper minus lower, in Hz.</param>
 /// <param name="Lower">Lower band edge in Hz.</param>
@@ -482,6 +493,89 @@ public static class Spectral
         var g = new Segments(n, n, 1, tapers[0], sampleRate, 1.0, Detrend.None, m);
         return new SpectralDensity(g.Frequencies(oneSided), g.Fold(two, 1.0, oneSided), sampleRate,
             n, k, oneSided, sampleRate / m, 2 * nw / n * sampleRate, m);
+    }
+
+    /// <summary>
+    /// Thomson's F-test for a line μ·e^{2πi f n/fs} at each bin of a real input, bins 0 … ⌊M/2⌋
+    /// (conventions: Spectra, Harmonic F-test; ADR 0080).
+    /// </summary>
+    /// <param name="samples">The input, at least one sample.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="halfBandwidth">NW, in (0, N/2).</param>
+    /// <param name="numTapers">K, at least 2; null for max(1, ⌊2NW⌋ − 1), which must then be at least 2.</param>
+    /// <param name="nfft">Transform length, at least the input length; null for the input length.</param>
+    public static HarmonicFTestResult HarmonicFTest(ReadOnlySpan<double> samples, double sampleRate,
+        double halfBandwidth, int? numTapers = null, int? nfft = null) =>
+        FTest(ToComplex(samples), sampleRate, halfBandwidth, numTapers, nfft, oneSided: true);
+
+    /// <summary>
+    /// Thomson's F-test for a line μ·e^{2πi f n/fs} at each bin of a complex input, on the two-sided
+    /// axis (conventions: Spectra, Harmonic F-test; ADR 0080).
+    /// </summary>
+    /// <param name="samples">The input, at least one sample.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="halfBandwidth">NW, in (0, N/2).</param>
+    /// <param name="numTapers">K, at least 2; null for max(1, ⌊2NW⌋ − 1), which must then be at least 2.</param>
+    /// <param name="nfft">Transform length, at least the input length; null for the input length.</param>
+    public static HarmonicFTestResult HarmonicFTest(ReadOnlySpan<Complex> samples, double sampleRate,
+        double halfBandwidth, int? numTapers = null, int? nfft = null) =>
+        FTest(samples, sampleRate, halfBandwidth, numTapers, nfft, oneSided: false);
+
+    private static HarmonicFTestResult FTest(ReadOnlySpan<Complex> x, double sampleRate, double halfBandwidth,
+        int? numTapers, int? nfft, bool oneSided)
+    {
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        int n = x.Length;
+        if (n < 1)
+            throw new ArgumentException("samples needs at least 1", nameof(x));
+        int m = nfft ?? n;
+        if (m < n)
+            throw new ArgumentException("nfft must be at least the input length", nameof(nfft));
+        var (nw, k) = TaperArgs(n, halfBandwidth, numTapers);
+        if (k < 2)
+            throw new ArgumentException("the F-test needs at least 2 tapers", nameof(numTapers));
+        double[][] tapers = Dpss(n, nw / n, k);
+        var xs = new Complex[k][];
+        var u = new double[k];
+        double uu = 0;
+        for (int j = 0; j < k; j++)
+        {
+            xs[j] = new Complex[m];
+            for (int i = 0; i < n; i++)
+            {
+                xs[j][i] = x[i] * tapers[j][i];
+                u[j] += tapers[j][i];
+            }
+            Transform(xs[j]);
+            uu += u[j] * u[j];
+        }
+        var mu = new Complex[m];
+        var f = new double[m];
+        var p = new double[m];
+        for (int b = 0; b < m; b++)
+        {
+            Complex s = Complex.Zero;
+            for (int j = 0; j < k; j++)
+                s += u[j] * xs[j][b];
+            mu[b] = s / uu;
+            double resid = 0;
+            for (int j = 0; j < k; j++)
+            {
+                Complex r = xs[j][b] - (mu[b] * u[j]);
+                resid += (r.Real * r.Real) + (r.Imaginary * r.Imaginary);
+            }
+            double mag = (mu[b].Real * mu[b].Real) + (mu[b].Imaginary * mu[b].Imaginary);
+            double num = (k - 1) * mag * uu;
+            f[b] = resid > 0 ? num / resid : num > 0 ? double.PositiveInfinity : 0.0;
+            p[b] = double.IsPositiveInfinity(f[b]) ? 0.0 : Math.Pow(1 + (f[b] / (k - 1)), -(k - 1));
+        }
+        var g = new Segments(n, n, 1, tapers[0], sampleRate, 1.0, Detrend.None, m);
+        int count = oneSided ? (m / 2) + 1 : m;
+        int Bin(int i) => oneSided ? i : (i + ((m + 1) / 2)) % m; // two-sided index i holds bin i − ⌊m/2⌋
+        return new HarmonicFTestResult(g.Frequencies(oneSided),
+            [.. Enumerable.Range(0, count).Select(i => mu[Bin(i)])],
+            [.. Enumerable.Range(0, count).Select(i => f[Bin(i)])],
+            [.. Enumerable.Range(0, count).Select(i => p[Bin(i)])], k);
     }
 
     /// <summary>Thomson's adaptive combination, each bin iterated on its own (ADR 0079).</summary>

@@ -458,6 +458,65 @@ def multitaper_psd(
     )
 
 
+@dataclass(frozen=True)
+class HarmonicFTest:
+    """Thomson's harmonic F-test per bin: line amplitudes, F statistics with 2 and
+    ``2*num_tapers - 2`` degrees of freedom, and their p-values; see docs/conventions.md (Spectra,
+    Harmonic F-test)."""
+
+    frequencies: NDArray[np.float64]
+    amplitudes: NDArray[np.complex128]
+    f_statistic: NDArray[np.float64]
+    p_values: NDArray[np.float64]
+    num_tapers: int
+
+
+def harmonic_f_test(
+    samples: ArrayLike,
+    sample_rate: float,
+    half_bandwidth: float,
+    *,
+    num_tapers: int | None = None,
+    nfft: int | None = None,
+) -> HarmonicFTest:
+    """Thomson's F-test for a line ``mu*exp(2j*pi*f*n/fs)`` at each bin, by regressing the
+    tapered DFTs on the tapers' DC values (conventions: Spectra, Harmonic F-test; ADR 0080)."""
+    x = _vector(samples, "samples")
+    if not real(sample_rate, "sample_rate") > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    n = x.size
+    if n < 1:
+        raise ValueError("samples needs at least 1")
+    m = n if nfft is None else count(nfft, "nfft")
+    if m < n:
+        raise ValueError("nfft must be at least the input length")
+    nw, k = _taper_args(n, half_bandwidth, num_tapers)
+    if k < 2:
+        raise ValueError("the F-test needs at least 2 tapers")
+    tapers = _dpss(n, nw / n, k)
+    xs = np.array([np.fft.fft(v * x, m) for v in tapers])
+    u = np.array([math.fsum(v) for v in tapers])
+    uu = math.fsum(u * u)
+    mu = np.sum(u[:, None] * xs, axis=0) / uu
+    resid = np.sum(np.abs(xs - mu[None, :] * u[:, None]) ** 2, axis=0)
+    num = (k - 1) * np.abs(mu) ** 2 * uu
+    with np.errstate(divide="ignore", invalid="ignore"):
+        f = np.where(resid > 0, num / resid, np.where(num > 0, math.inf, 0.0))
+    p_val = np.where(np.isinf(f), 0.0, (1 + f / (k - 1)) ** -(k - 1))
+    if np.iscomplexobj(x):
+        sel = np.fft.fftshift(np.arange(m))
+    else:
+        sel = np.arange(m // 2 + 1)
+    g = _Segments(x, n, n, 1, tapers[0], 1.0, not np.iscomplexobj(x), "none", m)
+    return HarmonicFTest(
+        frequencies=g.frequencies(sample_rate),
+        amplitudes=np.asarray(mu[sel], dtype=np.complex128),
+        f_statistic=np.asarray(f[sel], dtype=np.float64),
+        p_values=np.asarray(p_val[sel], dtype=np.float64),
+        num_tapers=k,
+    )
+
+
 def _adaptive(
     eigen: NDArray[np.float64], lam: NDArray[np.float64], noise: float
 ) -> NDArray[np.float64]:

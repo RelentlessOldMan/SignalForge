@@ -7,7 +7,8 @@ against the definition itself: A v = lambda v for the sinc matrix A[n][m] = sin(
 (pi (n - m)), to 1e-10, and the tapers are checked orthonormal. Each concentration is v'Av summed
 directly. Multitaper PSDs are the DFT of each tapered input summed term by term, averaged, scaled
 by 1/(K fs) and folded as Welch, or combined by iterating Thomson's adaptive weights bin by bin
-(conventions: Spectra, Multitaper PSD; ADR 0079).
+(conventions: Spectra, Multitaper PSD; ADR 0079). The harmonic F-test regresses the same tapered
+DFTs on the tapers' sums, bin by bin (conventions: Spectra, Harmonic F-test; ADR 0080).
 
 Run from the repo root: python vectors/generators/multitaper.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write (numbers
@@ -137,6 +138,45 @@ def multitaper(x, fs, nw, k=None, one_sided=None, nfft=None, adapt=False):
             "one_sided": one_sided, "bin_width": fs / m, "enbw_hz": 2 * nw / n * fs, "nfft": m}
 
 
+def f_test(x, fs, nw, k=None, nfft=None):
+    """Thomson's harmonic F-test per bin by direct sums (ADR 0080)."""
+    is_complex = any(isinstance(v, complex) for v in x)
+    n = len(x)
+    m = n if nfft is None else nfft
+    tapers, _ = dpss(n, nw, k)
+    kk = len(tapers)
+    u = [math.fsum(v) for v in tapers]
+    uu = math.fsum(a * a for a in u)
+    bins = range(m // 2 + 1) if not is_complex else [(i - m // 2) % m for i in range(m)]
+    mus, fs_, ps = [], [], []
+    for b in bins:
+        xs = [sum(v[i] * x[i] * cmath.exp(-2j * math.pi * b * i / m) for i in range(n))
+              for v in tapers]
+        mu = sum(a * y for a, y in zip(u, xs)) / uu
+        resid = math.fsum(abs(y - mu * a) ** 2 for a, y in zip(u, xs))
+        num = (kk - 1) * abs(mu) ** 2 * uu
+        f = num / resid if resid > 0 else (math.inf if num > 0 else 0.0)
+        mus.append(complex(mu))
+        fs_.append(f)
+        ps.append(0.0 if f == math.inf else (1 + f / (kk - 1)) ** -(kk - 1))
+    if is_complex:
+        freqs = [(i - m // 2) * fs / m for i in range(m)]
+    else:
+        freqs = [b * fs / m for b in bins]
+    return {"frequencies": freqs, "amplitudes": cplx(mus), "f_statistic": fs_, "p_values": ps,
+            "num_tapers": kk}
+
+
+def same(a, b, tol=1e-14):
+    if isinstance(a, dict) and isinstance(b, dict):
+        return a.keys() == b.keys() and all(same(a[k], b[k], tol) for k in a)
+    if isinstance(a, list) and isinstance(b, list):
+        return len(a) == len(b) and all(same(x, y, tol) for x, y in zip(a, b))
+    if isinstance(a, int | float) and isinstance(b, int | float) and not isinstance(a, bool):
+        return a == b or abs(a - b) <= tol * max(1.0, abs(b))
+    return a == b
+
+
 def cplx(z):
     return {"re": [v.real for v in z], "im": [v.imag for v in z]}
 
@@ -144,6 +184,8 @@ def cplx(z):
 SRC = ("vectors/generators/multitaper.py (stdlib only): eigenvectors of the commuting tridiagonal "
        "matrix by cyclic Jacobi, each checked against the sinc eigen-equation to 1e-10")
 PSRC = SRC + "; each tapered DFT summed term by term, averaged and folded per conventions: Spectra"
+FSRC = SRC + ("; each tapered DFT summed term by term, regressed on the tapers' sums per "
+               "conventions: Harmonic F-test")
 ASRC = PSRC.replace("averaged", "combined by iterating Thomson's adaptive weights per bin (ADR 0079)")
 
 
@@ -165,6 +207,17 @@ def psd_case(case_id, x, fs, nw, src=PSRC, psd=None, **kw):
         assert max(abs(a - b) for a, b in zip(psd, expected["psd"])) < 1e-12
         expected["psd"] = psd
     return {"id": case_id, "op": "multitaper_psd", "args": args, "expected": expected, "tol": TOL,
+            "source": src}
+
+
+def f_case(case_id, x, fs, nw, src=FSRC, expected=None, **kw):
+    args = {"samples": cplx(x) if any(isinstance(v, complex) for v in x) else x, "sample_rate": fs,
+            "half_bandwidth": nw} | kw
+    computed = f_test(x, fs, nw, kw.get("num_tapers"), kw.get("nfft"))
+    if expected is not None:  # a hand derivation replaces the sums
+        assert same(expected, computed, 1e-12), (expected, computed)
+        computed = expected
+    return {"id": case_id, "op": "harmonic_f_test", "args": args, "expected": computed, "tol": TOL,
             "source": src}
 
 
@@ -215,6 +268,35 @@ cases = [
              "are 4.5/fs = 2.25 in each bin and any weighted mean of them is 2.25"),
     psd_case("multitaper.adaptive_zeros", [0.0] * 8, 2.0, 2.0, adaptive=True,
              psd=[0.0] * 5, src="by hand: all-zero input gives zeros"),
+    f_case("multitaper.f_test_real_tone", tone, 1.0, 3.0),
+    f_case("multitaper.f_test_real_padded", ramp, 1000.0, 2.5, num_tapers=3, nfft=45),
+    f_case("multitaper.f_test_complex", chirp, 1e6, 3.0, num_tapers=5),
+    f_case("multitaper.f_test_complex_padded_odd", chirp, 1e6, 2.0, nfft=31),
+    f_case("multitaper.f_test_length_two", [3.0, 1.0], 1.0, 0.4, num_tapers=2,
+           expected={"frequencies": [0.0, 0.5], "amplitudes": {"re": [2.0, 1.0], "im": [0.0, 0.0]},
+                     "f_statistic": [4.0, 0.25], "p_values": [0.2, 0.8], "num_tapers": 2},
+           src="by hand: with tapers (1, 1)/sqrt 2 and (1, -1)/sqrt 2, U = (sqrt 2, 0); bin 0 has "
+           "X = (4, 2)/sqrt 2, so mu = 2, F = 1*4*2/2 = 4; bin 1 has X = (2, 4)/sqrt 2, so mu = 1, "
+           "F = 2/8 = 0.25; p = 1/(1 + F)"),
+    f_case("multitaper.f_test_zeros", [0.0] * 8, 1.0, 2.0,
+           expected={"frequencies": [0.0, 0.125, 0.25, 0.375, 0.5],
+                     "amplitudes": {"re": [0.0] * 5, "im": [0.0] * 5},
+                     "f_statistic": [0.0] * 5, "p_values": [1.0] * 5, "num_tapers": 3},
+           src="by hand: all-zero input has mu = 0 and residual 0, so F = 0 and p = 1"),
+    err("multitaper.f_test_one_taper", "harmonic_f_test",
+        {"samples": ramp, "sample_rate": 1.0, "half_bandwidth": 2.0, "num_tapers": 1},
+        "the F-test needs at least 2 tapers"),
+    err("multitaper.f_test_default_one_taper", "harmonic_f_test",
+        {"samples": ramp, "sample_rate": 1.0, "half_bandwidth": 1.0},
+        "NW 1 gives one taper by default, too few for the F-test"),
+    err("multitaper.f_test_empty", "harmonic_f_test",
+        {"samples": [], "sample_rate": 1.0, "half_bandwidth": 1.0}, "at least one sample required"),
+    err("multitaper.f_test_nfft_short", "harmonic_f_test",
+        {"samples": ramp, "sample_rate": 1.0, "half_bandwidth": 2.0, "nfft": 39},
+        "nfft >= number of samples required"),
+    err("multitaper.f_test_rate_zero", "harmonic_f_test",
+        {"samples": ramp, "sample_rate": 0.0, "half_bandwidth": 2.0},
+        "sample_rate must be positive"),
     err("multitaper.dpss_length_zero", "dpss_tapers", {"length": 0, "half_bandwidth": 0.5},
         "length >= 1 required"),
     err("multitaper.dpss_nw_zero", "dpss_tapers", {"length": 8, "half_bandwidth": 0.0},
@@ -243,21 +325,13 @@ cases = [
 doc = {
     "schema": 1,
     "suite": "multitaper",
-    "description": "DPSS tapers and Thomson's multitaper PSD, plain and adaptive (conventions: "
-    "Spectra, DPSS tapers, Multitaper PSD).",
+    "description": "DPSS tapers, Thomson's multitaper PSD (plain and adaptive) and harmonic "
+    "F-test (conventions: Spectra, DPSS tapers, Multitaper PSD, Harmonic F-test).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "multitaper.json"
 
 
-def same(a, b):
-    if isinstance(a, dict) and isinstance(b, dict):
-        return a.keys() == b.keys() and all(same(a[k], b[k]) for k in a)
-    if isinstance(a, list) and isinstance(b, list):
-        return len(a) == len(b) and all(same(x, y) for x, y in zip(a, b))
-    if isinstance(a, int | float) and isinstance(b, int | float) and not isinstance(a, bool):
-        return abs(a - b) <= 1e-14 * max(1.0, abs(b))
-    return a == b
 
 
 if "--check" in sys.argv[1:]:
