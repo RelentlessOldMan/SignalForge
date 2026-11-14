@@ -1,4 +1,5 @@
-"""Signal files: raw sample encoding and SigMF-layout recordings (conventions: Signal files)."""
+"""Signal files: raw sample encoding, SigMF-layout recordings, WAV and NumPy .npy files
+(conventions: Signal files)."""
 
 from __future__ import annotations
 
@@ -381,3 +382,142 @@ def read_wav(path: str | os.PathLike[str]) -> list[Signal]:
         raise ValueError(f"{len(data)} data bytes is not a whole number of {block}-byte frames")
     x = _wav_decode(data, _WAV_FORMATS[tag][bits])
     return [Signal(x[c::nch], float(rate), units="FS") for c in range(nch)]
+
+
+_NPY_MAGIC = b"\x93NUMPY"
+_NPY_DESCR = {"<f8": np.dtype("<f8"), "<c16": np.dtype("<c16")}
+_NPY_KEYS = frozenset({"descr", "fortran_order", "shape"})
+
+
+def write_npy(path: str | os.PathLike[str], x: ArrayLike) -> None:
+    """Write a 1-D array as a NumPy ``.npy`` file: ``'<f8'`` for real values, ``'<c16'`` for
+    complex, in the layout ``numpy.save`` writes (conventions: Signal files, NumPy .npy)."""
+    a = np.asarray(x)
+    if a.ndim != 1 or a.dtype.kind not in "fiuc":
+        raise ValueError("x must be a 1-D numeric array")
+    descr = "<c16" if a.dtype.kind == "c" else "<f8"
+    text = f"{{'descr': '{descr}', 'fortran_order': False, 'shape': ({a.size},), }}"
+    head = (text.ljust(117) + "\n").encode("ascii")
+    data = a.astype(_NPY_DESCR[descr]).tobytes()
+    Path(os.fspath(path)).write_bytes(
+        _NPY_MAGIC + b"\x01\x00" + struct.pack("<H", 118) + head + data
+    )
+
+
+class _NpyHeader:
+    """The header grammar of conventions: Signal files, NumPy .npy. The text is never evaluated."""
+
+    def __init__(self, text: str) -> None:
+        self.s, self.i = text, 0
+
+    def fail(self) -> ValueError:
+        return ValueError(f"the .npy header is not a dict this reader accepts (at {self.i})")
+
+    def peek(self) -> str:
+        while self.i < len(self.s) and self.s[self.i] in " \t\r\n":
+            self.i += 1
+        return self.s[self.i] if self.i < len(self.s) else ""
+
+    def take(self, c: str) -> None:
+        if self.peek() != c:
+            raise self.fail()
+        self.i += 1
+
+    def string(self) -> str:
+        q = self.peek()
+        j = self.s.find(q, self.i + 1) if q in ("'", '"') else -1
+        if j < 0 or "\\" in self.s[self.i + 1 : j]:
+            raise self.fail()
+        v, self.i = self.s[self.i + 1 : j], j + 1
+        return v
+
+    def integer(self) -> int:
+        self.peek()
+        j = self.i
+        while j < len(self.s) and self.s[j] in "0123456789":
+            j += 1
+        t = self.s[self.i : j]
+        if not t or (len(t) > 1 and t[0] == "0"):
+            raise self.fail()
+        self.i = j
+        return int(t)
+
+    def value(self) -> str | bool | tuple[int, ...]:
+        c = self.peek()
+        if c in ("'", '"'):
+            return self.string()
+        if c == "(":
+            self.i += 1
+            items, trailing = [], False
+            while self.peek() != ")":
+                items.append(self.integer())
+                trailing = self.peek() == ","
+                if trailing:
+                    self.i += 1
+                elif self.peek() != ")":
+                    raise self.fail()
+            self.i += 1
+            if len(items) == 1 and not trailing:
+                raise self.fail()
+            return tuple(items)
+        for word in ("True", "False"):
+            if self.s.startswith(word, self.i):
+                self.i += len(word)
+                return word == "True"
+        raise self.fail()
+
+    def parse(self) -> dict[str, str | bool | tuple[int, ...]]:
+        d: dict[str, str | bool | tuple[int, ...]] = {}
+        self.take("{")
+        while self.peek() != "}":
+            key = self.string()
+            self.take(":")
+            if key in d:
+                raise ValueError(f"the .npy header has {key!r} twice")
+            d[key] = self.value()
+            if self.peek() == ",":
+                self.i += 1
+            elif self.peek() != "}":
+                raise self.fail()
+        self.i += 1
+        if self.peek():
+            raise self.fail()
+        return d
+
+
+def read_npy(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[np.complex128]:
+    """Read a 1-D ``'<f8'`` or ``'<c16'`` NumPy ``.npy`` file (versions 1.0 to 3.0) as ``float64``
+    or ``complex128``."""
+    raw = Path(os.fspath(path)).read_bytes()
+    if len(raw) < 8 or raw[:6] != _NPY_MAGIC:
+        raise ValueError("not a .npy file")
+    version = (raw[6], raw[7])
+    if version not in ((1, 0), (2, 0), (3, 0)):
+        raise ValueError(f".npy version {version[0]}.{version[1]} is not supported")
+    width = 2 if version == (1, 0) else 4
+    if len(raw) < 8 + width:
+        raise ValueError("the .npy file ends inside its header length")
+    (size,) = struct.unpack("<H" if width == 2 else "<I", raw[8 : 8 + width])
+    start = 8 + width + size
+    if start > len(raw):
+        raise ValueError("the .npy header runs past the end of the file")
+    head = raw[8 + width : start]
+    if any(b > 127 for b in head):
+        raise ValueError("the .npy header must be ASCII")
+    d = _NpyHeader(head.decode("ascii")).parse()
+    if d.keys() != _NPY_KEYS:
+        raise ValueError("the .npy header needs exactly descr, fortran_order and shape")
+    descr, order, shape = d["descr"], d["fortran_order"], d["shape"]
+    if not isinstance(descr, str) or descr not in _NPY_DESCR:
+        raise ValueError(f"only '<f8' and '<c16' arrays are read, not {descr!r}")
+    if not isinstance(order, bool):
+        raise ValueError("fortran_order must be True or False")
+    if not isinstance(shape, tuple) or len(shape) != 1:
+        raise ValueError(f"only 1-D arrays are read, not shape {shape!r}")
+    dt = _NPY_DESCR[descr]
+    if len(raw) - start != shape[0] * dt.itemsize:
+        raise ValueError(f"{len(raw) - start} data bytes do not match shape ({shape[0]},)")
+    values = np.frombuffer(raw, dt, offset=start)
+    if descr == "<c16":
+        return values.astype(np.complex128)
+    return values.astype(np.float64)

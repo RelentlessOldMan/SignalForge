@@ -330,6 +330,10 @@ public static class Conformance
             "read_sigmf" => ReadSigmfOp(Str(a, "file")),
             "write_wav" => WriteWavOp(Rows(a.Get("channels")), a.D("sample_rate"), Str(a, "sample_format")),
             "read_wav" => ReadWavOp(Str(a, "file")),
+            "write_npy" => a.Get("x") is Complex[] nz
+                ? WriteNpyOp(path => SignalFiles.WriteNpy(path, nz))
+                : Bind(Reals(a.Get("x")), x => WriteNpyOp(path => SignalFiles.WriteNpy(path, x))()),
+            "read_npy" => ReadNpyOp(Str(a, "file")),
             "resample" => ResampleOp(a, a.I("up"), a.I("down")),
             "interpolate" => ResampleOp(a, a.I("factor"), 1),
             "decimate" => ResampleOp(a, 1, a.I("factor")),
@@ -568,6 +572,30 @@ public static class Conformance
             File.Delete(path);
         }
     };
+
+    private static Func<object?> WriteNpyOp(Action<string> write) => () =>
+    {
+        string path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".npy");
+        try
+        {
+            write(path);
+            return Convert.ToHexStringLower(File.ReadAllBytes(path));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    };
+
+    private static Func<object?> ReadNpyOp(string name)
+    {
+        if (Path.GetFileName(name) != name)
+            throw new InvalidDataException("file must be a bare file name in vectors/files");
+        string path = Path.Combine(VectorsDir(), "..", "files", name);
+        // The runner picks the element type from the descr, as ReadSigmfOp does from the metadata.
+        bool isComplex = File.ReadAllText(path, System.Text.Encoding.Latin1).Contains("<c16", StringComparison.Ordinal);
+        return isComplex ? () => SignalFiles.ReadNpy<Complex>(path) : () => SignalFiles.ReadNpy<double>(path);
+    }
 
     private static Func<object?> ReadWavOp(string name)
     {

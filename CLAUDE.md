@@ -106,8 +106,8 @@ configs in `vectors/links/` in both languages.
 
 Measured 2026-11-13:
 
-- Python `pytest` (2450 tests): about 31–47 s.
-- .NET `dotnet test` (incremental build + 1979 tests): about 6 s.
+- Python `pytest` (2541 tests): about 31–47 s.
+- .NET `dotnet test` (incremental build + 2055 tests): about 6 s.
 - `vectors/generators/fir.py`: about 3 s; `resample.py`: well under 1 s; `equiripple.py`: about 1 s; `fsk.py`: about 0.5 s.
 - `build.ps1 -Jobs 1` (everything, incremental): about 20 s before the cross-language steps were
   added; not re-timed since. A clean build with restore takes
@@ -129,7 +129,7 @@ Memory not measured yet; nothing holds more than a few MB of samples. No job use
 | `vectors/README.md`, `vectors/cases/` | Shared vector format and cases. |
 | `vectors/generators/` | Stdlib-only scripts that compute vector files from first principles. |
 | `vectors/selftest/` | Deliberately wrong cases both runners must fail. |
-| `vectors/files/` | SigMF recordings and WAV files the `read_sigmf` and `read_wav` vectors read (written by `generators/files.py` and `generators/wav.py`). |
+| `vectors/files/` | SigMF recordings, WAV and `.npy` files the `read_sigmf`, `read_wav` and `read_npy` vectors read (written by `generators/files.py`, `wav.py` and `npy.py`). |
 | `vectors/links/` | `qpsk_link` configs run in both languages and compared. |
 | `python/src/signalforge/compare.py` | Cross-language compare: conformance reports, link reports. |
 | `dotnet/tools/SignalForge.Conformance/` | C# conformance report and link runner (command line). |

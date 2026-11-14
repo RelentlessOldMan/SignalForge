@@ -168,7 +168,17 @@ OPS: dict[str, Callable[..., Any]] = {
         channels, sample_rate, sample_format
     ),
     "read_wav": lambda file: _wav_record(files.read_wav(_fixture(file))),
+    "write_npy": lambda x: _write_npy(x),
+    "read_npy": lambda file: files.read_npy(_fixture(file)),
 }
+
+
+def _write_npy(x: Any) -> str:
+    """The bytes of a .npy file written from ``x``, as hex."""
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "case.npy"
+        files.write_npy(path, x)
+        return path.read_bytes().hex()
 
 
 def _write_wav(channels: Any, sample_rate: Any, sample_format: Any) -> str:

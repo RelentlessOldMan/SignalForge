@@ -1190,6 +1190,26 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     byte rate is not checked. Rejected: anything else, a chunk running past the end of the file,
     and a data size that is not whole frames. Each signal has units `"FS"`, center frequency 0,
     time origin 0, no metadata. A missing file is an OS error, as for SigMF. **(implemented)**
+- **NumPy `.npy`** ([ADR 0056](adr/0056-npy.md)): `write_npy(path, x)`, `read_npy(path)` (C#
+  `WriteNpy`, `ReadNpy<T>`), for 1-D arrays of `float64` (descr `'<f8'`) or `complex128`
+  (`'<c16'`, real then imaginary part, each little-endian binary64). Values are stored as they
+  are, NaN and ±inf included; a NaN keeps its bits, and the two languages' default NaNs differ in
+  the sign bit, so shared write vectors use only infinities.
+  - Writing: the bytes `93 'NUMPY' 01 00`, the header length 118 as a little-endian 16-bit
+    number, then the header text `{'descr': '<f8', 'fortran_order': False, 'shape': (n,), }`
+    (`n` in decimal, `'<c16'` for complex), spaces, and a newline, so the data starts at byte 128;
+    then the data. A real `x` of any numeric type is written as `'<f8'`.
+  - Reading: the magic, then version 1.0 (16-bit header length), 2.0 or 3.0 (32-bit); the header
+    must be ASCII. Its grammar, whitespace (space, tab, CR, LF) allowed between tokens and after
+    the dict: `{` entries separated by `,`, an optional trailing `,`, `}`; an entry is a key
+    string, `:`, a value; a string is `'…'` or `"…"` with no backslash or that quote inside; a
+    value is a string, `True`, `False` or a tuple; a tuple is `(` integers separated by `,` `)`,
+    and a single integer needs its trailing `,`; an integer is decimal digits without a leading
+    zero (other than `0` itself). The keys are exactly `descr`, `fortran_order` (a bool, either
+    value) and `shape`, each once. Rejected: anything else, a descr other than `'<f8'` and
+    `'<c16'`, a shape that is not one integer, and a data size other than `n` × 8 or 16 bytes.
+    In C# a file of the other kind than `T` is rejected. A missing file is an OS error.
+    **(implemented)**
 
 ## PRBS
 

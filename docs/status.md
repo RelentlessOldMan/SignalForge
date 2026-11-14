@@ -4,9 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **NumPy `.npy` read and write**: version 1.0 headers, little-endian `float64` and
-   `complex128` 1-D arrays, so both languages exchange samples without SigMF; stdlib-only vectors.
-2. **FSK in the link**: `modulation` `"fsk2"`/`"fsk4"` through the same channel (rectangular
+1. **FSK in the link**: `modulation` `"fsk2"`/`"fsk4"` through the same channel (rectangular
    symbols, no RRC), noncoherent detection after preamble timing, error counts against
    `fsk_ber_theory`.
 
@@ -563,13 +561,24 @@ Updated with every chunk of work. Dates are absolute.
   headers are checked against Python's `wave` module, an independent writer. `files.py --check`
   now only looks at SigMF files in `vectors/files/`. Python 2448 passed, 2 skipped; .NET 1979
   passed; conformance 1241/1241 in both. Version 2026.11.13.77.
+- 2026-11-13: NumPy `.npy` files in both languages (ADR 0056): `write_npy(path, x)` and
+  `read_npy(path)` (C# `WriteNpy`, `ReadNpy<T>`) for 1-D `'<f8'` and `'<c16'` arrays. Writing uses
+  the layout `numpy.save` writes (version 1.0, data at byte 128; the Python tests compare bytes
+  with `numpy.save` and read back with `numpy.load`). Reading takes versions 1.0 to 3.0 and
+  parses the header with a small grammar, the same in both languages, never evaluating it; other
+  dtypes, shapes, keys and data sizes are rejected. New generator `vectors/generators/npy.py`
+  writes `cases/npy.json` (45 cases: exact bytes for writes, 37 fixture files for reads, NumPy
+  and other writers' headers and broken ones). Found while building it: C#'s `double.NaN` has the
+  sign bit set and Python's NaN does not, so a written NaN's bytes differ between the languages;
+  shared write vectors use only infinities. Python 2539 passed, 2 skipped; .NET 2055
+  passed; conformance 1286/1286 in both. Version 2026.11.13.78.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper, Lomb-Scargle), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond noncoherent detection with known timing, OFDM, analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF and WAV (NumPy, streaming reads and writes, multi-channel and
+phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, SigMF annotations, unsigned sample types), plotting, CLI,
 packaging and publishing.
 

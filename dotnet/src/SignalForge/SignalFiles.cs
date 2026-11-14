@@ -602,4 +602,216 @@ public static class SignalFiles
         }
         return result;
     }
+
+    private static readonly byte[] NpyMagic = [0x93, (byte)'N', (byte)'U', (byte)'M', (byte)'P', (byte)'Y'];
+
+    /// <summary>Writes a real array as a NumPy <c>.npy</c> file of <c>'&lt;f8'</c>, in the layout <c>numpy.save</c>
+    /// writes (conventions: Signal files, NumPy .npy).</summary>
+    /// <param name="path">The file to write.</param>
+    /// <param name="x">The values, NaN and infinities included.</param>
+    public static void WriteNpy(string path, ReadOnlySpan<double> x)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        WriteNpyFile(path, "<f8", x.Length, MemoryMarshal.AsBytes(x));
+    }
+
+    /// <summary>Writes a complex array as a NumPy <c>.npy</c> file of <c>'&lt;c16'</c>, in the layout <c>numpy.save</c>
+    /// writes (conventions: Signal files, NumPy .npy).</summary>
+    /// <param name="path">The file to write.</param>
+    /// <param name="x">The values, real then imaginary part of each.</param>
+    public static void WriteNpy(string path, ReadOnlySpan<Complex> x)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        WriteNpyFile(path, "<c16", x.Length, MemoryMarshal.AsBytes(x));
+    }
+
+    private static void WriteNpyFile(string path, string descr, int n, ReadOnlySpan<byte> native)
+    {
+        string text = string.Create(CultureInfo.InvariantCulture, $"{{'descr': '{descr}', 'fortran_order': False, 'shape': ({n},), }}");
+        byte[] file = new byte[128 + native.Length];
+        NpyMagic.CopyTo(file, 0);
+        file[6] = 1;
+        BinaryPrimitives.WriteUInt16LittleEndian(file.AsSpan(8), 118);
+        System.Text.Encoding.ASCII.GetBytes(text.PadRight(117) + "\n", file.AsSpan(10));
+        Span<byte> data = file.AsSpan(128);
+        native.CopyTo(data);
+        if (!BitConverter.IsLittleEndian)
+        {
+            Span<long> words = MemoryMarshal.Cast<byte, long>(data);
+            BinaryPrimitives.ReverseEndianness(words, words);
+        }
+        File.WriteAllBytes(path, file);
+    }
+
+    /// <summary>Reads a 1-D <c>'&lt;f8'</c> or <c>'&lt;c16'</c> NumPy <c>.npy</c> file, versions 1.0 to 3.0
+    /// (conventions: Signal files, NumPy .npy). The header is parsed, never evaluated.</summary>
+    /// <typeparam name="T"><see cref="double"/> for <c>'&lt;f8'</c>, <see cref="Complex"/> for <c>'&lt;c16'</c>.</typeparam>
+    /// <param name="path">The file to read.</param>
+    /// <returns>The values.</returns>
+    /// <exception cref="ArgumentException">The file is not a <c>.npy</c> file of <typeparamref name="T"/> this reads.</exception>
+    public static T[] ReadNpy<T>(string path) where T : struct
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        bool wantComplex = typeof(T) == typeof(Complex);
+        if (!wantComplex && typeof(T) != typeof(double))
+            throw new ArgumentException($"the element type must be double or Complex, not {typeof(T).Name}", nameof(T));
+        byte[] raw = File.ReadAllBytes(path);
+        ArgumentException Bad(string message) => new(message, nameof(path));
+        if (raw.Length < 8 || !raw.AsSpan(0, 6).SequenceEqual(NpyMagic))
+            throw Bad("not a .npy file");
+        int width = (raw[6], raw[7]) switch
+        {
+            (1, 0) => 2,
+            (2, 0) or (3, 0) => 4,
+            _ => throw Bad($".npy version {raw[6]}.{raw[7]} is not supported"),
+        };
+        if (raw.Length < 8 + width)
+            throw Bad("the .npy file ends inside its header length");
+        long size = width == 2 ? BinaryPrimitives.ReadUInt16LittleEndian(raw.AsSpan(8)) : BinaryPrimitives.ReadUInt32LittleEndian(raw.AsSpan(8));
+        long start = 8 + width + size;
+        if (start > raw.Length)
+            throw Bad("the .npy header runs past the end of the file");
+        ReadOnlySpan<byte> head = raw.AsSpan(8 + width, (int)size);
+        if (head.ContainsAnyInRange((byte)128, (byte)255))
+            throw Bad("the .npy header must be ASCII");
+        Dictionary<string, object> d = new NpyHeader(System.Text.Encoding.ASCII.GetString(head), Bad).Parse();
+        if (d.Count != 3 || !d.TryGetValue("descr", out object? descr) || !d.TryGetValue("fortran_order", out object? order)
+            || !d.TryGetValue("shape", out object? shapeValue))
+            throw Bad("the .npy header needs exactly descr, fortran_order and shape");
+        if (descr is not ("<f8" or "<c16"))
+            throw Bad($"only '<f8' and '<c16' arrays are read, not {descr}");
+        if (order is not bool)
+            throw Bad("fortran_order must be True or False");
+        if (shapeValue is not long[] { Length: 1 } shape)
+            throw Bad("only 1-D arrays are read");
+        bool isComplex = (string)descr == "<c16";
+        if (isComplex != wantComplex)
+            throw Bad($"the file holds {(isComplex ? "complex" : "real")} values, not {typeof(T).Name}");
+        int itemSize = isComplex ? 16 : 8;
+        long bytes = raw.Length - start;
+        if (bytes % itemSize != 0 || bytes / itemSize != shape[0])
+            throw Bad(string.Create(CultureInfo.InvariantCulture, $"{bytes} data bytes do not match shape ({shape[0]},)"));
+        T[] result = new T[bytes / itemSize];
+        Span<byte> data = MemoryMarshal.AsBytes(result.AsSpan());
+        raw.AsSpan((int)start).CopyTo(data);
+        if (!BitConverter.IsLittleEndian)
+        {
+            Span<long> words = MemoryMarshal.Cast<byte, long>(data);
+            BinaryPrimitives.ReverseEndianness(words, words);
+        }
+        return result;
+    }
+
+    /// <summary>The header grammar of conventions: Signal files, NumPy .npy. Values are strings, bools and
+    /// <c>long[]</c> tuples.</summary>
+    private sealed class NpyHeader(string s, Func<string, ArgumentException> bad)
+    {
+        private int _i;
+
+        private ArgumentException Fail() => bad(string.Create(CultureInfo.InvariantCulture, $"the .npy header is not a dict this reader accepts (at {_i})"));
+
+        private char Peek()
+        {
+            while (_i < s.Length && s[_i] is ' ' or '\t' or '\r' or '\n')
+                _i++;
+            return _i < s.Length ? s[_i] : '\0';
+        }
+
+        private void Take(char c)
+        {
+            if (Peek() != c || _i >= s.Length)
+                throw Fail();
+            _i++;
+        }
+
+        private string String()
+        {
+            char q = Peek();
+            int j = q is '\'' or '"' ? s.IndexOf(q, _i + 1) : -1;
+            if (j < 0 || s.AsSpan(_i + 1, j - _i - 1).Contains('\\'))
+                throw Fail();
+            string v = s[(_i + 1)..j];
+            _i = j + 1;
+            return v;
+        }
+
+        private long Integer()
+        {
+            Peek();
+            int j = _i;
+            long v = 0;
+            while (j < s.Length && char.IsAsciiDigit(s[j]))
+            {
+                int digit = s[j] - '0';
+                if (v > (long.MaxValue - digit) / 10)
+                    throw bad("a .npy shape is too large");
+                v = v * 10 + digit;
+                j++;
+            }
+            if (j == _i || (j - _i > 1 && s[_i] == '0'))
+                throw Fail();
+            _i = j;
+            return v;
+        }
+
+        private object Value()
+        {
+            char c = Peek();
+            if (c is '\'' or '"')
+                return String();
+            if (c == '(')
+            {
+                _i++;
+                List<long> items = [];
+                bool trailing = false;
+                while (Peek() != ')')
+                {
+                    items.Add(Integer());
+                    trailing = Peek() == ',';
+                    if (trailing)
+                        _i++;
+                    else if (Peek() != ')')
+                        throw Fail();
+                }
+                Take(')');
+                if (items.Count == 1 && !trailing)
+                    throw Fail();
+                return items.ToArray();
+            }
+            foreach (string word in (string[])["True", "False"])
+            {
+                if (string.CompareOrdinal(s, _i, word, 0, word.Length) == 0)
+                {
+                    _i += word.Length;
+                    return word == "True";
+                }
+            }
+            throw Fail();
+        }
+
+        public Dictionary<string, object> Parse()
+        {
+            Dictionary<string, object> d = new(StringComparer.Ordinal);
+            Take('{');
+            while (Peek() != '}')
+            {
+                if (_i >= s.Length)
+                    throw Fail();
+                string key = String();
+                Take(':');
+                if (d.ContainsKey(key))
+                    throw bad($"the .npy header has '{key}' twice");
+                d[key] = Value();
+                if (Peek() == ',')
+                    _i++;
+                else if (Peek() != '}')
+                    throw Fail();
+            }
+            Take('}');
+            Peek();
+            if (_i < s.Length)
+                throw Fail();
+            return d;
+        }
+    }
 }
