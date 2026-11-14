@@ -861,6 +861,97 @@ public static class Spectral
         return out_;
     }
 
+    /// <summary>
+    /// Zechmeister-Kürster generalized Lomb-Scargle periodogram: the weighted fit of
+    /// <c>a cos ωt + b sin ωt + c</c> at each frequency (conventions: Spectra, Generalized Lomb-Scargle;
+    /// ADR 0081).
+    /// </summary>
+    /// <param name="times">Sample times, finite, in any order; at least two.</param>
+    /// <param name="values">Finite values, one per time.</param>
+    /// <param name="frequencies">Trial frequencies in Hz, finite and positive; may be empty.</param>
+    /// <param name="uncertainties">σ per sample, finite and positive; null for all 1.</param>
+    /// <param name="normalization">Standard <c>(χ²₀ − χ²)/χ²₀</c>, or power <c>(χ²₀ − χ²)/2</c>.</param>
+    /// <returns>The periodogram at each frequency, in their order.</returns>
+    public static double[] GeneralizedLombScargle(ReadOnlySpan<double> times, ReadOnlySpan<double> values,
+        ReadOnlySpan<double> frequencies, double[]? uncertainties = null,
+        LombScargleNormalization normalization = LombScargleNormalization.Standard)
+    {
+        int n = times.Length;
+        if (values.Length != n || n < 2)
+            throw new ArgumentException("times and values must have the same length, at least 2", nameof(values));
+        foreach (double v in times)
+            if (!double.IsFinite(v)) throw new ArgumentException("times must be finite", nameof(times));
+        foreach (double v in values)
+            if (!double.IsFinite(v)) throw new ArgumentException("values must be finite", nameof(values));
+        var w = new double[n];
+        for (int i = 0; i < n; i++)
+            w[i] = 1;
+        if (uncertainties is not null)
+        {
+            if (uncertainties.Length != n)
+                throw new ArgumentException("uncertainties must have one value per sample", nameof(uncertainties));
+            for (int i = 0; i < n; i++)
+            {
+                double s = uncertainties[i];
+                if (!(double.IsFinite(s) && s > 0))
+                    throw new ArgumentException("uncertainties must be finite and positive", nameof(uncertainties));
+                w[i] = 1 / (s * s);
+            }
+        }
+        foreach (double v in frequencies)
+            if (!(double.IsFinite(v) && v > 0)) throw new ArgumentException("frequencies must be finite and positive", nameof(frequencies));
+        if (normalization is not (LombScargleNormalization.Standard or LombScargleNormalization.Power))
+            throw new ArgumentException($"unknown normalization {normalization}", nameof(normalization));
+        double bigW = 0;
+        foreach (double v in w)
+            bigW += v;
+        for (int i = 0; i < n; i++)
+            w[i] /= bigW;
+        var y = values.ToArray();
+        double yy = Cov(w, y, y);
+        if (normalization == LombScargleNormalization.Standard && !(yy > 0))
+            throw new ArgumentException("the standard normalization needs values that are not all equal", nameof(values));
+        var out_ = new double[frequencies.Length];
+        var c = new double[n];
+        var s_ = new double[n];
+        for (int k = 0; k < out_.Length; k++)
+        {
+            double om = 2 * Math.PI * frequencies[k];
+            for (int i = 0; i < n; i++)
+            {
+                c[i] = Math.Cos(om * times[i]);
+                s_[i] = Math.Sin(om * times[i]);
+            }
+            double tau = Math.Atan2(2 * Cov(w, c, s_), Cov(w, c, c) - Cov(w, s_, s_)) / (2 * om);
+            for (int i = 0; i < n; i++)
+            {
+                c[i] = Math.Cos(om * (times[i] - tau));
+                s_[i] = Math.Sin(om * (times[i] - tau));
+            }
+            double cc = Cov(w, c, c), ss = Cov(w, s_, s_);
+            double p = 0;
+            if (cc >= 1e-12)
+                p += Cov(w, y, c) * Cov(w, y, c) / cc;
+            if (ss >= 1e-12)
+                p += Cov(w, y, s_) * Cov(w, y, s_) / ss;
+            out_[k] = normalization == LombScargleNormalization.Standard ? p / yy : bigW * p / 2;
+        }
+        return out_;
+    }
+
+    /// <summary>The weighted centered sum Σ w a b − (Σ w a)(Σ w b), weights summing to 1.</summary>
+    private static double Cov(double[] w, double[] a, double[] b)
+    {
+        double ab = 0, sa = 0, sb = 0;
+        for (int i = 0; i < w.Length; i++)
+        {
+            ab += w[i] * a[i] * b[i];
+            sa += w[i] * a[i];
+            sb += w[i] * b[i];
+        }
+        return ab - (sa * sb);
+    }
+
     /// <summary>Chance that white Gaussian noise gives a standard Lomb-Scargle value above <paramref name="power"/>
     /// at any of <paramref name="numFrequencies"/> independent frequencies (conventions: Spectra; ADR 0062).</summary>
     /// <param name="power">A value of the standard normalization, in [0, 1].</param>

@@ -622,6 +622,59 @@ def lomb_scargle(
     return out
 
 
+def generalized_lomb_scargle(
+    times: ArrayLike,
+    values: ArrayLike,
+    frequencies: ArrayLike,
+    *,
+    uncertainties: ArrayLike | None = None,
+    normalization: str = "standard",
+) -> NDArray[np.float64]:
+    """Zechmeister-Kuerster generalized Lomb-Scargle periodogram: the weighted fit of
+    ``a cos + b sin + c`` at each frequency (Hz), as the fraction ``(chi2_0 - chi2)/chi2_0`` or for
+    ``"power"`` half the drop in chi2 (conventions: Spectra, Generalized Lomb-Scargle; ADR 0081)."""
+    t = _finite_reals(times, "times")
+    y = _finite_reals(values, "values")
+    f = _finite_reals(frequencies, "frequencies")
+    if t.size != y.size or t.size < 2:
+        raise ValueError("times and values must have the same length, at least 2")
+    if uncertainties is None:
+        inv = np.ones(t.size)
+    else:
+        sigma = _finite_reals(uncertainties, "uncertainties")
+        if sigma.size != t.size or np.any(sigma <= 0):
+            raise ValueError("uncertainties must be positive, one per sample")
+        inv = 1 / sigma**2
+    if np.any(f <= 0):
+        raise ValueError("frequencies must be positive")
+    if normalization not in ("standard", "power"):
+        raise ValueError('normalization must be "standard" or "power"')
+    big_w = float(np.sum(inv))
+    w = inv / big_w
+    mean = float(np.dot(w, y))
+    yy = float(np.dot(w, y * y)) - mean * mean
+    if normalization == "standard" and not yy > 0:
+        raise ValueError("the standard normalization needs values that are not all equal")
+
+    def cov(a: NDArray[np.float64], b: NDArray[np.float64]) -> float:
+        return float(np.dot(w, a * b)) - float(np.dot(w, a)) * float(np.dot(w, b))
+
+    out = np.empty(f.size)
+    for i, fi in enumerate(f):
+        om = 2 * math.pi * float(fi)
+        c0, s0 = np.cos(om * t), np.sin(om * t)
+        tau = math.atan2(2 * cov(c0, s0), cov(c0, c0) - cov(s0, s0)) / (2 * om)
+        c, s = np.cos(om * (t - tau)), np.sin(om * (t - tau))
+        cc, ss = cov(c, c), cov(s, s)
+        p = 0.0
+        if cc >= 1e-12:
+            p += cov(y, c) ** 2 / cc
+        if ss >= 1e-12:
+            p += cov(y, s) ** 2 / ss
+        out[i] = p / yy if normalization == "standard" else big_w * p / 2
+    return out
+
+
 def lomb_scargle_false_alarm(
     power: float, num_samples: int, *, num_frequencies: int = 1, center: bool = True
 ) -> float:

@@ -235,6 +235,18 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `a cos ωt + b sin ωt` to `y`; it does not change when every time is shifted by the same amount.
   On `N` even samples with `f` at a bin `k·fs/N` (`0 < k < N/2`), a sinusoid of amplitude `A` at
   that bin gives `P = A²N/4` and standard 1. **(implemented)**
+- **Generalized Lomb-Scargle** (`generalized_lomb_scargle(times, values, frequencies, *,
+  uncertainties=None, normalization="standard")`, [ADR 0081](adr/0081-generalized-lomb-scargle.md)).
+  `times`, `values` and `frequencies` are as for the classic form. `uncertainties` are finite
+  `σₙ > 0`, one per sample (default all 1). With `W = Σ 1/σₙ²` and `wₙ = (1/σₙ²)/W`, write
+  `⟨ab⟩ = Σ wₙaₙbₙ − (Σ wₙaₙ)(Σ wₙbₙ)` for the weighted centered sums. For each `f`, `ω = 2πf`,
+  using the cosines and sines at τ = 0, `τ = atan2(2⟨cs⟩, ⟨cc⟩ − ⟨ss⟩)/(2ω)` (any τ when both
+  are 0). Then, with `c = cos ω(t − τ)` and `s = sin ω(t − τ)`,
+  `p = (⟨yc⟩²/⟨cc⟩ + ⟨ys⟩²/⟨ss⟩)/⟨yy⟩`, where a term whose denominator is below `1e-12` is 0.
+  `"standard"` returns `p` and needs `⟨yy⟩ > 0`. `"power"` returns `½·W·⟨yy⟩·p`. `p` equals
+  `(χ²₀ − χ²)/χ²₀` of the weighted fit of `a cos ωt + b sin ωt + c`, with `χ²₀` the weighted scatter
+  about the weighted mean. With unit σ on even samples at a bin it equals the classic centered
+  form. **(implemented)**
 - **Lomb-Scargle false-alarm probability** (`lomb_scargle_false_alarm(power, num_samples,
   num_frequencies=1, center=True)`, [ADR 0062](adr/0062-lomb-scargle-significance.md)), for the
   standard normalization: `P₁ = (1 − z)^((N − d)/2)` with `d = 3` centered, `2` not (the Beta
