@@ -21,6 +21,16 @@ public sealed record CarrierRecovery(Complex[] Symbols, double[] Phases, double[
 /// <param name="Taps">The taps after the last output.</param>
 public sealed record Equalization(Complex[] Symbols, Complex[] Errors, Complex[] Taps);
 
+/// <summary>What a decision-feedback equalizer gave (conventions: Synchronization,
+/// Decision-feedback equalizer).</summary>
+/// <param name="Symbols">The output symbols, one per <c>samples_per_symbol</c> input samples.</param>
+/// <param name="Errors">The reference minus the output at each symbol, before the update; 0 where
+/// there is no reference.</param>
+/// <param name="Taps">The forward taps after the last output.</param>
+/// <param name="FeedbackTaps">The feedback taps after the last output, on the references one,
+/// two, … symbols back.</param>
+public sealed record DfeEqualization(Complex[] Symbols, Complex[] Errors, Complex[] Taps, Complex[] FeedbackTaps);
+
 /// <summary>Synchronization: block estimators of symbol timing, QPSK carrier frequency and phase,
 /// and tracking loops. Definitions in docs/conventions.md (Synchronization).</summary>
 public static class Sync
@@ -135,6 +145,32 @@ public static class Sync
     public static Equalization LmsEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
         double step, int samplesPerSymbol = 1, int? center = null, string? decision = null)
     {
+        DfeEqualization r = Equalize(samples, training, numTaps, 0, step, samplesPerSymbol, center, decision);
+        return new Equalization(r.Symbols, r.Errors, r.Taps);
+    }
+
+    /// <summary>Decision-feedback equalizer: the LMS equalizer plus feedback taps on the past
+    /// references, one normalized LMS update over both (conventions: Synchronization,
+    /// Decision-feedback equalizer; ADR 0069).</summary>
+    /// <param name="samples">The input, at least one sample, all finite.</param>
+    /// <param name="training">Known symbols for the first outputs, finite, at most the output
+    /// count.</param>
+    /// <param name="numTaps">Number of forward taps, at least 1.</param>
+    /// <param name="numFeedback">Number of feedback taps, not negative; with any, every output
+    /// needs a reference (a <paramref name="decision"/>, or training for all of them).</param>
+    /// <param name="step">Normalized step size, in [0, 2].</param>
+    /// <param name="samplesPerSymbol">Input samples per output symbol, at least 1.</param>
+    /// <param name="center">The forward tap that starts at 1, in [0, numTaps); null for
+    /// (numTaps − 1)/2.</param>
+    /// <param name="decision">After training, adapt to the hard decision of this modulation
+    /// ("qpsk", "psk8", "qam16", "qam64"); null holds the taps.</param>
+    public static DfeEqualization DfeEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
+        int numFeedback, double step, int samplesPerSymbol = 1, int? center = null, string? decision = null) =>
+        Equalize(samples, training, numTaps, numFeedback, step, samplesPerSymbol, center, decision);
+
+    private static DfeEqualization Equalize(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
+        int numFeedback, double step, int samplesPerSymbol, int? center, string? decision)
+    {
         if (samples.IsEmpty)
             throw new ArgumentException("needs at least 1 sample", nameof(samples));
         foreach (Complex z in samples)
@@ -159,9 +195,14 @@ public static class Sync
             "qam64" => static y => Modulation.Qam64Map(Modulation.Qam64DemapHard([y]))[0],
             _ => throw new ArgumentException("must be null, qpsk, psk8, qam16 or qam64", nameof(decision)),
         };
+        ArgumentOutOfRangeException.ThrowIfNegative(numFeedback);
         int n = (samples.Length + samplesPerSymbol - 1) / samplesPerSymbol;
         if (training.Length > n)
             throw new ArgumentException($"must be at most {n} symbols (the output count)", nameof(training));
+        if (numFeedback > 0 && decide is null && training.Length < n)
+            throw new ArgumentException("with feedback taps, needs a decision or training for every output", nameof(decision));
+        var fb = new Complex[numFeedback];
+        var past = new Complex[numFeedback]; // past[j - 1] is d_{k-j}
         var w = new Complex[numTaps];
         w[c] = Complex.One;
         var u = new Complex[numTaps];
@@ -176,6 +217,8 @@ public static class Sync
                 u[i] = b - i >= 0 && b - i < samples.Length ? samples[b - i] : Complex.Zero;
                 y += w[i] * u[i];
             }
+            for (int j = 0; j < numFeedback; j++)
+                y += fb[j] * past[j];
             output[k] = y;
             Complex? d = k < training.Length ? training[k] : decide?.Invoke(y);
             if (d is not { } r)
@@ -185,14 +228,23 @@ public static class Sync
             double p = 0;
             foreach (Complex x in u)
                 p += x.Real * x.Real + x.Imaginary * x.Imaginary;
+            foreach (Complex x in past)
+                p += x.Real * x.Real + x.Imaginary * x.Imaginary;
             if (p > 0)
             {
                 double g = step / p;
                 for (int i = 0; i < numTaps; i++)
                     w[i] += g * e * Complex.Conjugate(u[i]);
+                for (int j = 0; j < numFeedback; j++)
+                    fb[j] += g * e * Complex.Conjugate(past[j]);
+            }
+            if (numFeedback > 0)
+            {
+                Array.Copy(past, 0, past, 1, numFeedback - 1);
+                past[0] = r;
             }
         }
-        return new Equalization(output, errors, w);
+        return new DfeEqualization(output, errors, w, fb);
     }
 
     private static readonly double InvSqrt42 = 1.0 / Math.Sqrt(42.0);

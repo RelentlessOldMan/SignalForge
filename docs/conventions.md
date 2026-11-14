@@ -1033,6 +1033,21 @@ multiplies the block by the power of two that brings its largest real or imagina
   the last output). With `μ = 0` the output is `x[n·sps]`. With `L = 1`, `μ = 1` and a reference,
   `y_{n+1}` uses the tap that makes `w·x[n·sps] = d_n` exactly, so a scalar channel `x = g·a` is
   inverted after one training symbol. **(implemented)**
+- **Decision-feedback equalizer** (`dfe_equalizer(samples, training, num_taps, num_feedback, step,
+  *, samples_per_symbol=1, center=None, decision=None)`, [ADR
+  0069](adr/0069-decision-feedback-equalizer.md)): the LMS equalizer above with `M =
+  num_feedback ≥ 0` feedback taps `b_1 … b_M`, all starting at 0, on the past references
+  `p_j = d_{n−j}` (0 for `n − j < 0`). With `M ≥ 1` every output needs a reference: `decision`
+  given, or `T = N`. Each output:
+  - `y_n = Σ_i w_i·u_i + Σ_j b_j·p_j`, the forward sum in order of `i`, then the feedback terms
+    added in order of `j`;
+  - `P = Σ_i |u_i|² + Σ_j |p_j|²` (forward then feedback, each in order, as `re² + im²`);
+  - with `e_n = d_n − y_n` and `P > 0`, `w_i ← w_i + (μ/P)·e_n·conj(u_i)` and
+    `b_j ← b_j + (μ/P)·e_n·conj(p_j)`;
+  - the reference `d_n` then becomes `p_1` of the next output.
+  The result has `symbols`, `errors`, `taps` (`w`) and `feedback_taps` (`b`, `M` of them). With
+  `M = 0` it is `lms_equalizer` exactly. With `μ = 1` the updated taps give `d_n` exactly on the
+  regressor they were updated on (the a posteriori error is 0). **(implemented)**
 - **QPSK phase offset** (`qpsk_phase_offset(symbols)`): `φ = arg(−Σ z⁴) / 4`, in `(−π/4, π/4]`;
   the true phase is `φ + m·π/2`. Correct by multiplying by `e^{−jφ}`
   (`frequency_offset(symbols, 0, 1, −φ)`). At least one symbol. **(implemented)**

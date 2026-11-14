@@ -403,6 +403,55 @@ def lms_equalizer(
 ) -> Equalization:
     """Normalized LMS equalizer, fractionally spaced, trained on known symbols and then on its own
     decisions (conventions: Synchronization, LMS equalizer; ADR 0066)."""
+    out, errors, w, _ = _equalize(
+        samples, training, num_taps, 0, step, samples_per_symbol, center, decision
+    )
+    return Equalization(out, errors, w)
+
+
+@dataclass(frozen=True)
+class DfeEqualization:
+    """What a decision-feedback equalizer gave: the output symbols, the error each update used, the
+    final forward taps and the final feedback taps."""
+
+    symbols: NDArray[np.complex128]
+    errors: NDArray[np.complex128]
+    taps: NDArray[np.complex128]
+    feedback_taps: NDArray[np.complex128]
+
+
+def dfe_equalizer(
+    samples: ArrayLike,
+    training: ArrayLike,
+    num_taps: int,
+    num_feedback: int,
+    step: float,
+    *,
+    samples_per_symbol: int = 1,
+    center: int | None = None,
+    decision: str | None = None,
+) -> DfeEqualization:
+    """Decision-feedback equalizer: the LMS equalizer plus feedback taps on the past references,
+    one normalized LMS update over both (conventions: Synchronization, Decision-feedback
+    equalizer; ADR 0069)."""
+    out, errors, w, b = _equalize(
+        samples, training, num_taps, num_feedback, step, samples_per_symbol, center, decision
+    )
+    return DfeEqualization(out, errors, w, b)
+
+
+def _equalize(
+    samples: ArrayLike,
+    training: ArrayLike,
+    num_taps: int,
+    num_feedback: int,
+    step: float,
+    samples_per_symbol: int,
+    center: int | None,
+    decision: str | None,
+) -> tuple[
+    NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128]
+]:
     x = np.asarray(samples)
     t = np.asarray(training)
     if x.ndim != 1 or t.ndim != 1:
@@ -425,12 +474,17 @@ def lms_equalizer(
         raise ValueError("step must be between 0 and 2")
     if decision is not None and decision not in _DECISIONS:
         raise ValueError(f"decision must be None or one of {sorted(_DECISIONS)}")
+    m = count(num_feedback, "num_feedback")
     n_out = -(-x.size // sps)
     if t.size > n_out:
         raise ValueError(f"training must be at most {n_out} symbols (the output count)")
+    if m > 0 and decision is None and t.size < n_out:
+        raise ValueError("with num_feedback, decision must be given or training cover every output")
     xs, ts = x.tolist(), t.tolist()
     w = [0j] * taps
     w[c] = 1 + 0j
+    fb = [0j] * m
+    past = [0j] * m  # past[j - 1] is d_{n-j}
     out: list[complex] = []
     errors: list[complex] = []
     for n in range(n_out):
@@ -439,6 +493,8 @@ def lms_equalizer(
         y = 0j
         for wi, ui in zip(w, u, strict=True):
             y += wi * ui
+        for bj, pj in zip(fb, past, strict=True):
+            y += bj * pj
         out.append(y)
         if n < len(ts):
             d: complex | None = ts[n]
@@ -455,11 +511,17 @@ def lms_equalizer(
         p = 0.0
         for ui in u:
             p += ui.real * ui.real + ui.imag * ui.imag
+        for pj in past:
+            p += pj.real * pj.real + pj.imag * pj.imag
         if p > 0:
             g = mu / p
             w = [wi + g * e * ui.conjugate() for wi, ui in zip(w, u, strict=True)]
-    return Equalization(
+            fb = [bj + g * e * pj.conjugate() for bj, pj in zip(fb, past, strict=True)]
+        if m:
+            past = [d, *past[:-1]]
+    return (
         np.array(out, dtype=np.complex128),
         np.array(errors, dtype=np.complex128),
         np.array(w, dtype=np.complex128),
+        np.array(fb, dtype=np.complex128),
     )

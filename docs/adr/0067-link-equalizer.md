@@ -51,4 +51,5 @@ inter-symbol interference is in the way, where no closed form gives a linear equ
   use a moderate channel; [ADR 0068](0068-block-frame-search.md) then made the search work in blocks.
 - Measured on a moderate channel (delays 0, 2, 5; gains 1, 0.3 + 0.2j, −0.1) at step 0.1, the
   BER is 0.2–0.4 dB from the bound for QPSK at 6 dB and 16-QAM at 12 dB; the tests allow 1 dB.
-- Decision feedback, a training-free (blind) start and a step schedule are later work.
+- A training-free (blind) start and a step schedule are later work; the decision-feedback block
+  is [ADR 0069](0069-decision-feedback-equalizer.md).

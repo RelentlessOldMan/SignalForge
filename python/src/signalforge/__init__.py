@@ -127,8 +127,10 @@ from .spectral import (
 )
 from .sync import (
     CarrierRecovery,
+    DfeEqualization,
     Equalization,
     TimingRecovery,
+    dfe_equalizer,
     gardner_timing,
     lms_equalizer,
     pi_loop_gains,
@@ -156,11 +158,12 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.98"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.99"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
     "CarrierRecovery",
+    "DfeEqualization",
     "Equalization",
     "ErrorCount",
     "Evm",
@@ -211,6 +214,7 @@ __all__ = [
     "dc_offset",
     "decimate",
     "decode_samples",
+    "dfe_equalizer",
     "elliptic_bandpass",
     "elliptic_bandstop",
     "elliptic_highpass",

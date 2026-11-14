@@ -4,9 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **A decision-feedback equalizer** beside the linear one, for channels with deep spectral
-   nulls where the linear equalizer's noise enhancement dominates: a feedback filter on past
-   decisions, its own ADR and vectors as the LMS block had, then an option in the link.
+1. **The decision-feedback equalizer in the link**: an `equalizer_feedback` count beside
+   `equalizer_taps` in the single-carrier chains (ADR 0067's step 7 with `dfe_equalizer`, the
+   feedback at the symbol rate), a link config on a deep-null channel, and the question of what
+   `ber_theory` says there (the matched-filter bound still holds; error propagation sits on top).
 
 ## Built
 
@@ -695,6 +696,13 @@ Updated with every chunk of work. Dates are absolute.
   fix: with the equalizer, `preamble_symbols` must be below `num_symbols` (it raised from the
   EVM on an empty span). Python 2889 passed, 2 skipped; .NET 2381 passed; conformance
   1430/1430 in both. Version 2026.11.13.98.
+- 2026-11-13: decision-feedback equalizer ([ADR
+  0069](adr/0069-decision-feedback-equalizer.md)): `dfe_equalizer` / `Sync.DfeEqualizer`, the LMS
+  equalizer plus feedback taps on the past references, one normalized update over both; with no
+  feedback taps it is `lms_equalizer` exactly (the two share one implementation). Vectors in
+  `vectors/cases/dfe.json` (14 cases, `generators/dfe.py`). On `1 + 0.95 z⁻¹` at N₀ = 0.01 its
+  MSE is within 15% of the MMSE-DFE bound (closed form), a fifth of the MMSE linear bound. Python
+  PYCOUNT passed, 2 skipped; .NET 2402 passed; conformance 1444/1444 in both. Version 2026.11.13.99.
 
 ## Not built
 
