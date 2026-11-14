@@ -48,11 +48,16 @@ def qam64(y):
 DECIDE = {"qpsk": qpsk, "psk8": psk8, "qam16": qam16, "qam64": qam64}
 
 
-def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None):
+def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
+        initial_feedback=None):
     c = (taps - 1) // 2 if center is None else center
     w = [0j] * taps
     w[c] = 1 + 0j
     b = [0j] * m
+    if initial_taps is not None:
+        w = [complex(z) for z in initial_taps]
+    if initial_feedback is not None:
+        b = [complex(z) for z in initial_feedback]
     past = [0j] * m  # past[j - 1] is d_{n-j}
     ys, es = [], []
     for n in range(-(-len(x) // sps)):
@@ -115,7 +120,8 @@ OP = "dfe_equalizer"
 
 def add(name, x, t, taps, m, mu, source=SRC, tol=None, **kw):
     args = {"samples": C(x), "training": C(t), "num_taps": taps, "num_feedback": m, "step": mu}
-    args |= {("samples_per_symbol" if k == "sps" else k): v for k, v in kw.items()}
+    args |= {("samples_per_symbol" if k == "sps" else k):
+             C(v) if k in ("initial_taps", "initial_feedback") else v for k, v in kw.items()}
     ys, es, w, b = dfe(x, t, taps, m, mu, **kw)
     cases.append({"id": f"{OP}.{name}", "op": OP, "args": args,
                   "expected": {"symbols": C(ys), "errors": C(es), "taps": C(w),
@@ -165,8 +171,26 @@ A = points("qpsk", 40, 23)
 add("no_feedback_is_lms", channel(A, H2), A[:20], 5, 0, 0.3, decision="qpsk",
     source="the conventions recurrence run step by step (this generator), with no feedback taps: "
     "the LMS equalizer's recurrence")
+W0 = [complex(0.2, -0.1), complex(0.9, 0.3), complex(-0.15, 0.05)]
+B0 = [complex(-0.4, 0.2)]
+X = [complex(0.3 * k - 1, 0.7 - 0.2 * k * k % 1.3) for k in range(5)]
+T = [complex(1, -1), complex(-1, 0.5), complex(0.25, 1), complex(0, -2), complex(1.5, 0)]
+ys, es, w, b = add("initial_start_step_zero_by_hand", X, T, 3, 1, 0.0, initial_taps=W0,
+                   initial_feedback=B0,
+                   source="by hand: with step 0 the taps stay the given start, so output n is "
+                   "w0[0] x[n+1] + w0[1] x[n] + w0[2] x[n-1] + b0 t[n-1] (0 outside)")
+assert all(abs(ys[n] - sum(W0[i] * (X[n + 1 - i] if 0 <= n + 1 - i < 5 else 0)
+                           for i in range(3)) - (B0[0] * T[n - 1] if n else 0)) < 1e-15
+           for n in range(5))
+assert w == W0 and b == B0
+A = points("qam16", 60, 31)
+add("initial_start_adapts", channel(A, H2), A[:20], 3, 2, 0.3, decision="qam16",
+    initial_taps=W0, initial_feedback=[complex(-0.5, 0.25), 0j])
 
 for name, args, why in (
+    ("initial_feedback_wrong_length", {"initial_feedback": C([0])},
+     "initial_feedback must hold num_feedback"),
+    ("initial_taps_wrong_length", {"initial_taps": C([1, 0])}, "initial_taps must hold num_taps"),
     ("negative_feedback", {"num_feedback": -1}, "num_feedback must not be negative"),
     ("feedback_without_references", {"decision": None},
      "with feedback every output needs a reference: training covers 1 of 4, no decision"),

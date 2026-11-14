@@ -400,11 +400,13 @@ def lms_equalizer(
     samples_per_symbol: int = 1,
     center: int | None = None,
     decision: str | None = None,
+    initial_taps: ArrayLike | None = None,
 ) -> Equalization:
     """Normalized LMS equalizer, fractionally spaced, trained on known symbols and then on its own
-    decisions (conventions: Synchronization, LMS equalizer; ADR 0066)."""
+    decisions (conventions: Synchronization, LMS equalizer; ADR 0066). ``initial_taps`` replaces
+    the unit impulse it starts from (ADR 0072)."""
     out, errors, w, _ = _equalize(
-        samples, training, num_taps, 0, step, samples_per_symbol, center, decision
+        samples, training, num_taps, 0, step, samples_per_symbol, center, decision, initial_taps
     )
     return Equalization(out, errors, w)
 
@@ -430,14 +432,89 @@ def dfe_equalizer(
     samples_per_symbol: int = 1,
     center: int | None = None,
     decision: str | None = None,
+    initial_taps: ArrayLike | None = None,
+    initial_feedback: ArrayLike | None = None,
 ) -> DfeEqualization:
     """Decision-feedback equalizer: the LMS equalizer plus feedback taps on the past references,
     one normalized LMS update over both (conventions: Synchronization, Decision-feedback
-    equalizer; ADR 0069)."""
+    equalizer; ADR 0069). ``initial_taps`` and ``initial_feedback`` replace the unit impulse and
+    the zeros it starts from (ADR 0072)."""
     out, errors, w, b = _equalize(
-        samples, training, num_taps, num_feedback, step, samples_per_symbol, center, decision
+        samples,
+        training,
+        num_taps,
+        num_feedback,
+        step,
+        samples_per_symbol,
+        center,
+        decision,
+        initial_taps,
+        initial_feedback,
     )
     return DfeEqualization(out, errors, w, b)
+
+
+@dataclass(frozen=True)
+class DfeTaps:
+    """Equalizer taps: the forward taps and the feedback taps."""
+
+    taps: NDArray[np.complex128]
+    feedback_taps: NDArray[np.complex128]
+
+
+def dfe_least_squares(
+    samples: ArrayLike,
+    training: ArrayLike,
+    num_taps: int,
+    num_feedback: int,
+    *,
+    samples_per_symbol: int = 1,
+    center: int | None = None,
+) -> DfeTaps:
+    """The forward and feedback taps that minimize the squared error over the training, by
+    Gaussian elimination on the normal equations (conventions: Synchronization, Least-squares
+    equalizer taps; ADR 0072)."""
+    xs, ts, taps, m, sps, c = _equalizer_args(
+        samples, training, num_taps, num_feedback, samples_per_symbol, center
+    )
+    k_all = taps + m
+    if len(ts) < k_all:
+        raise ValueError("training needs at least num_taps + num_feedback symbols")
+    g = [[0j] * k_all for _ in range(k_all)]
+    h = [0j] * k_all
+    for n, tn in enumerate(ts):
+        base = n * sps + c
+        v = [xs[base - i] if 0 <= base - i < len(xs) else 0j for i in range(taps)]
+        v += [ts[n - j] if n - j >= 0 else 0j for j in range(1, m + 1)]
+        for k in range(k_all):
+            ck = v[k].conjugate()
+            row = g[k]
+            for col in range(k_all):
+                row[col] += ck * v[col]
+            h[k] += ck * tn
+    for k in range(k_all):
+        r, big = k, -1.0
+        for i in range(k, k_all):
+            mag = g[i][k].real * g[i][k].real + g[i][k].imag * g[i][k].imag
+            if mag > big:
+                r, big = i, mag
+        if big == 0:
+            raise ValueError("the training does not determine the taps")
+        g[k], g[r] = g[r], g[k]
+        h[k], h[r] = h[r], h[k]
+        for i in range(k + 1, k_all):
+            f = g[i][k] / g[k][k]
+            for col in range(k + 1, k_all):
+                g[i][col] -= f * g[k][col]
+            h[i] -= f * h[k]
+    th = [0j] * k_all
+    for k in range(k_all - 1, -1, -1):
+        acc = h[k]
+        for col in range(k + 1, k_all):
+            acc -= g[k][col] * th[col]
+        th[k] = acc / g[k][k]
+    th_a = np.array(th, dtype=np.complex128)
+    return DfeTaps(th_a[:taps], th_a[taps:])
 
 
 def _equalize(
@@ -449,41 +526,29 @@ def _equalize(
     samples_per_symbol: int,
     center: int | None,
     decision: str | None,
+    initial_taps: ArrayLike | None = None,
+    initial_feedback: ArrayLike | None = None,
 ) -> tuple[
     NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128]
 ]:
-    x = np.asarray(samples)
-    t = np.asarray(training)
-    if x.ndim != 1 or t.ndim != 1:
-        raise ValueError("samples and training must be one-dimensional")
-    x = np.asarray(x, dtype=np.complex128)
-    t = np.asarray(t, dtype=np.complex128)
-    if x.size < 1:
-        raise ValueError("samples needs at least 1")
-    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(t))):
-        raise ValueError("samples and training must be finite")
-    taps = count(num_taps, "num_taps")
-    sps = count(samples_per_symbol, "samples_per_symbol")
-    if taps < 1 or sps < 1:
-        raise ValueError("num_taps and samples_per_symbol must be at least 1")
-    c = (taps - 1) // 2 if center is None else count(center, "center")
-    if c >= taps:
-        raise ValueError("center must be below num_taps")
+    xs, ts, taps, m, sps, c = _equalizer_args(
+        samples, training, num_taps, num_feedback, samples_per_symbol, center
+    )
     mu = real(step, "step")
     if not 0 <= mu <= 2:
         raise ValueError("step must be between 0 and 2")
     if decision is not None and decision not in _DECISIONS:
         raise ValueError(f"decision must be None or one of {sorted(_DECISIONS)}")
-    m = count(num_feedback, "num_feedback")
-    n_out = -(-x.size // sps)
-    if t.size > n_out:
-        raise ValueError(f"training must be at most {n_out} symbols (the output count)")
-    if m > 0 and decision is None and t.size < n_out:
+    n_out = -(-len(xs) // sps)
+    if m > 0 and decision is None and len(ts) < n_out:
         raise ValueError("with num_feedback, decision must be given or training cover every output")
-    xs, ts = x.tolist(), t.tolist()
     w = [0j] * taps
     w[c] = 1 + 0j
+    if initial_taps is not None:
+        w = _start(initial_taps, taps, "initial_taps")
     fb = [0j] * m
+    if initial_feedback is not None:
+        fb = _start(initial_feedback, m, "initial_feedback")
     past = [0j] * m  # past[j - 1] is d_{n-j}
     out: list[complex] = []
     errors: list[complex] = []
@@ -525,3 +590,45 @@ def _equalize(
         np.array(w, dtype=np.complex128),
         np.array(fb, dtype=np.complex128),
     )
+
+
+def _start(values: ArrayLike, size: int, name: str) -> list[complex]:
+    v = np.asarray(values)
+    if v.ndim != 1 or v.size != size:
+        raise ValueError(f"{name} must hold {size} values")
+    v = np.asarray(v, dtype=np.complex128)
+    if not np.all(np.isfinite(v)):
+        raise ValueError(f"{name} must be finite")
+    return [complex(z) for z in v.tolist()]
+
+
+def _equalizer_args(
+    samples: ArrayLike,
+    training: ArrayLike,
+    num_taps: int,
+    num_feedback: int,
+    samples_per_symbol: int,
+    center: int | None,
+) -> tuple[list[complex], list[complex], int, int, int, int]:
+    x = np.asarray(samples)
+    t = np.asarray(training)
+    if x.ndim != 1 or t.ndim != 1:
+        raise ValueError("samples and training must be one-dimensional")
+    x = np.asarray(x, dtype=np.complex128)
+    t = np.asarray(t, dtype=np.complex128)
+    if x.size < 1:
+        raise ValueError("samples needs at least 1")
+    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(t))):
+        raise ValueError("samples and training must be finite")
+    taps = count(num_taps, "num_taps")
+    sps = count(samples_per_symbol, "samples_per_symbol")
+    if taps < 1 or sps < 1:
+        raise ValueError("num_taps and samples_per_symbol must be at least 1")
+    c = (taps - 1) // 2 if center is None else count(center, "center")
+    if c >= taps:
+        raise ValueError("center must be below num_taps")
+    m = count(num_feedback, "num_feedback")
+    n_out = -(-x.size // sps)
+    if t.size > n_out:
+        raise ValueError(f"training must be at most {n_out} symbols (the output count)")
+    return x.tolist(), t.tolist(), taps, m, sps, c

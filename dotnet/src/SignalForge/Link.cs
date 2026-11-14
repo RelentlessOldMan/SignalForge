@@ -93,6 +93,11 @@ public sealed record QpskLinkConfig
     /// <summary>Decision-feedback taps on the equalizer, at the symbol rate; not negative, nonzero
     /// only with <see cref="EqualizerTaps"/>; 0 [the default] for a linear equalizer (ADR 0070).</summary>
     public int EqualizerFeedback { get; init; }
+
+    /// <summary>Where the equalizer's taps start: "impulse" [the default], or "least_squares" for the
+    /// taps solved on the preamble, which then needs <see cref="EqualizerTaps"/> and at least
+    /// EqualizerTaps + EqualizerFeedback preamble symbols (ADR 0072).</summary>
+    public string EqualizerStart { get; init; } = "impulse";
 }
 
 /// <summary>What the receiver estimated and measured on one link run.</summary>
@@ -198,6 +203,12 @@ public static class Link
         ArgumentOutOfRangeException.ThrowIfNegative(c.EqualizerFeedback, nameof(config));
         if (c.EqualizerFeedback > 0 && c.EqualizerTaps is null)
             throw new ArgumentException("EqualizerFeedback needs EqualizerTaps", nameof(config));
+        if (c.EqualizerStart is not ("impulse" or "least_squares"))
+            throw new ArgumentException("EqualizerStart must be impulse or least_squares", nameof(config));
+        if (c.EqualizerStart != "impulse" && c.EqualizerTaps is null)
+            throw new ArgumentException("EqualizerStart needs EqualizerTaps", nameof(config));
+        if (c.EqualizerStart == "least_squares" && c.EqualizerTaps is { } lt && c.PreambleSymbols < lt + c.EqualizerFeedback)
+            throw new ArgumentException("EqualizerStart least_squares needs PreambleSymbols of at least EqualizerTaps + EqualizerFeedback", nameof(config));
         if (c.EqualizerTaps is { } et)
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(et, 1, nameof(config));
@@ -343,7 +354,11 @@ public static class Link
             var xe = new Complex[2 * n];
             for (int m = 0; m < xe.Length && s0 + m * half < v.Length; m++)
                 xe[m] = v[s0 + m * half];
-            Complex[] eq = Sync.DfeEqualizer(xe, a.AsSpan(0, pre), taps, c.EqualizerFeedback, c.EqualizerStep, 2, null, c.Modulation).Symbols;
+            DfeTaps? start = c.EqualizerStart == "least_squares"
+                ? Sync.DfeLeastSquares(xe, a.AsSpan(0, pre), taps, c.EqualizerFeedback, 2)
+                : null;
+            Complex[] eq = Sync.DfeEqualizer(xe, a.AsSpan(0, pre), taps, c.EqualizerFeedback, c.EqualizerStep, 2, null, c.Modulation,
+                start?.Taps, start?.FeedbackTaps).Symbols;
             // the preamble is the equalizer's training, so it does not count
             z = eq[pre..];
             a = a[pre..];

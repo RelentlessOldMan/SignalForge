@@ -4,8 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **A training-free (blind) equalizer start** (constant modulus) or a step schedule, so a short
-   preamble is enough (ADR 0067: about 2000 symbols to converge at step 0.1).
+1. **A phase loop inside the link's equalizer**: with a short preamble (100–200 symbols) the
+   frequency is 0.05–0.6 Hz off and the constellation turns faster than the taps follow (ADR
+   0072). A decision-directed loop on the forward output, before the feedback is added, solved
+   every run measured there (BER ≤ 0.0011) in a prototype with gains (0.02, 0.0002).
+2. **A training-free (blind) equalizer start** (constant modulus), for links with no preamble.
 
 ## Built
 
@@ -717,12 +720,22 @@ Updated with every chunk of work. Dates are absolute.
   8-PSK at 12 dB now decodes at offsets of 5, 37 and −120 Hz (BER 0.0001–0.001; before, half the
   runs failed with the estimate 31.25 Hz off). One more link config. Python 2927 passed, 2
   skipped; .NET 2421 passed; conformance 1444/1444 in both. Version 2026.11.13.101.
+- 2026-11-13: a least-squares equalizer start ([ADR
+  0072](adr/0072-least-squares-equalizer-start.md)): `dfe_least_squares` solves the forward and
+  feedback taps on the training by elimination with partial pivoting on the normal equations
+  (written out in the conventions); `lms_equalizer` and `dfe_equalizer` take `initial_taps` (and
+  `initial_feedback`); the link's `equalizer_start = "least_squares"` starts step 7 there.
+  Through the 0.9 echo with a 100-symbol preamble 16-QAM at 14 dB falls from a BER of 0.37–0.46
+  to 0.002–0.007; QPSK at 8 dB still fails in two of three runs from the frequency (Next). New
+  vector suite `dfe_least_squares` (12 cases, by-hand closed forms), initial-start cases in
+  `equalizer` and `dfe`, one more link config. Python 2963 passed, 2 skipped; .NET 2448
+  passed; conformance 1464/1464 in both. Version 2026.11.13.103.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS (RLS, decision feedback, blind), decision-directed equalization beyond the link's preamble-trained linear one, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form and the least-squares start (RLS, blind), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.

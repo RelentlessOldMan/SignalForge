@@ -45,6 +45,7 @@ from .modulation import (
 )
 from .sync import (
     dfe_equalizer,
+    dfe_least_squares,
     gardner_timing,
     power_frequency_offset,
     psk8_block_phases,
@@ -89,6 +90,7 @@ class QpskLinkConfig:
     equalizer_taps: int | None = None
     equalizer_step: float = 0.1
     equalizer_feedback: int = 0
+    equalizer_start: str = "impulse"
 
 
 @dataclass(frozen=True)
@@ -251,6 +253,7 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         else count(config.equalizer_taps, "equalizer_taps"),
         equalizer_step=real(config.equalizer_step, "equalizer_step"),
         equalizer_feedback=count(config.equalizer_feedback, "equalizer_feedback"),
+        equalizer_start=config.equalizer_start,
     )
     if c.equalizer_taps is not None and c.equalizer_taps < 1:
         raise ValueError("equalizer_taps must be at least 1")
@@ -260,6 +263,19 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         raise ValueError("equalizer_feedback must not be negative")
     if c.equalizer_feedback and c.equalizer_taps is None:
         raise ValueError("equalizer_feedback needs equalizer_taps")
+    if c.equalizer_start not in ("impulse", "least_squares"):
+        raise ValueError("equalizer_start must be 'impulse' or 'least_squares'")
+    if c.equalizer_start != "impulse" and c.equalizer_taps is None:
+        raise ValueError("equalizer_start needs equalizer_taps")
+    if (
+        c.equalizer_start == "least_squares"
+        and c.equalizer_taps is not None
+        and c.preamble_symbols < c.equalizer_taps + c.equalizer_feedback
+    ):
+        raise ValueError(
+            "equalizer_start 'least_squares' needs preamble_symbols of at least "
+            "equalizer_taps + equalizer_feedback"
+        )
     if c.equalizer_taps is not None:
         if c.modulation not in _MODULATIONS:
             raise ValueError("equalizer_taps is for the single-carrier modulations only")
@@ -356,6 +372,13 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         xe = np.zeros(2 * n, dtype=np.complex128)
         tail = v[s0 :: sps // 2][: 2 * n]
         xe[: tail.size] = tail
+        start = (
+            dfe_least_squares(
+                xe, a[:pre], c.equalizer_taps, c.equalizer_feedback, samples_per_symbol=2
+            )
+            if c.equalizer_start == "least_squares"
+            else None
+        )
         z = dfe_equalizer(
             xe,
             a[:pre],
@@ -364,6 +387,8 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
             c.equalizer_step,
             samples_per_symbol=2,
             decision=c.modulation,
+            initial_taps=None if start is None else start.taps,
+            initial_feedback=None if start is None else start.feedback_taps,
         ).symbols[pre:]
         # the preamble is the equalizer's training, so it does not count
         a, bits = a[pre:], bits[bps * pre :]

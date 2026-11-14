@@ -31,6 +31,11 @@ public sealed record Equalization(Complex[] Symbols, Complex[] Errors, Complex[]
 /// two, … symbols back.</param>
 public sealed record DfeEqualization(Complex[] Symbols, Complex[] Errors, Complex[] Taps, Complex[] FeedbackTaps);
 
+/// <summary>Equalizer taps (conventions: Synchronization, Least-squares equalizer taps).</summary>
+/// <param name="Taps">The forward taps.</param>
+/// <param name="FeedbackTaps">The feedback taps, on the references one, two, … symbols back.</param>
+public sealed record DfeTaps(Complex[] Taps, Complex[] FeedbackTaps);
+
 /// <summary>Synchronization: block estimators of symbol timing, QPSK carrier frequency and phase,
 /// and tracking loops. Definitions in docs/conventions.md (Synchronization).</summary>
 public static class Sync
@@ -142,10 +147,12 @@ public static class Sync
     /// <param name="center">The tap that starts at 1, in [0, numTaps); null for (numTaps − 1)/2.</param>
     /// <param name="decision">After training, adapt to the hard decision of this modulation
     /// ("qpsk", "psk8", "qam16", "qam64"); null holds the taps.</param>
+    /// <param name="initialTaps">The taps to start from, <paramref name="numTaps"/> finite values;
+    /// null for the unit impulse at <paramref name="center"/> (ADR 0072).</param>
     public static Equalization LmsEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
-        double step, int samplesPerSymbol = 1, int? center = null, string? decision = null)
+        double step, int samplesPerSymbol = 1, int? center = null, string? decision = null, Complex[]? initialTaps = null)
     {
-        DfeEqualization r = Equalize(samples, training, numTaps, 0, step, samplesPerSymbol, center, decision);
+        DfeEqualization r = Equalize(samples, training, numTaps, 0, step, samplesPerSymbol, center, decision, initialTaps, null);
         return new Equalization(r.Symbols, r.Errors, r.Taps);
     }
 
@@ -164,12 +171,93 @@ public static class Sync
     /// (numTaps − 1)/2.</param>
     /// <param name="decision">After training, adapt to the hard decision of this modulation
     /// ("qpsk", "psk8", "qam16", "qam64"); null holds the taps.</param>
+    /// <param name="initialTaps">The forward taps to start from, <paramref name="numTaps"/> finite
+    /// values; null for the unit impulse at <paramref name="center"/> (ADR 0072).</param>
+    /// <param name="initialFeedback">The feedback taps to start from, <paramref name="numFeedback"/>
+    /// finite values; null for zeros.</param>
     public static DfeEqualization DfeEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
-        int numFeedback, double step, int samplesPerSymbol = 1, int? center = null, string? decision = null) =>
-        Equalize(samples, training, numTaps, numFeedback, step, samplesPerSymbol, center, decision);
+        int numFeedback, double step, int samplesPerSymbol = 1, int? center = null, string? decision = null,
+        Complex[]? initialTaps = null, Complex[]? initialFeedback = null) =>
+        Equalize(samples, training, numTaps, numFeedback, step, samplesPerSymbol, center, decision, initialTaps, initialFeedback);
 
-    private static DfeEqualization Equalize(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
-        int numFeedback, double step, int samplesPerSymbol, int? center, string? decision)
+    /// <summary>The forward and feedback taps that minimize the squared error over the training,
+    /// by Gaussian elimination on the normal equations (conventions: Synchronization, Least-squares
+    /// equalizer taps; ADR 0072).</summary>
+    /// <param name="samples">The input, at least one sample, all finite.</param>
+    /// <param name="training">Known symbols for the first outputs, finite, at least
+    /// <paramref name="numTaps"/> + <paramref name="numFeedback"/> and at most the output count.</param>
+    /// <param name="numTaps">Number of forward taps, at least 1.</param>
+    /// <param name="numFeedback">Number of feedback taps, not negative.</param>
+    /// <param name="samplesPerSymbol">Input samples per output symbol, at least 1.</param>
+    /// <param name="center">The forward tap on the output's own sample, in [0, numTaps); null for
+    /// (numTaps − 1)/2.</param>
+    /// <exception cref="ArgumentException">Also when the training does not determine the taps (a
+    /// zero pivot).</exception>
+    public static DfeTaps DfeLeastSquares(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
+        int numFeedback, int samplesPerSymbol = 1, int? center = null)
+    {
+        int c = CheckEqualizer(samples, training, numTaps, numFeedback, samplesPerSymbol, center);
+        int kAll = numTaps + numFeedback;
+        if (training.Length < kAll)
+            throw new ArgumentException("needs at least numTaps + numFeedback symbols", nameof(training));
+        var g = new Complex[kAll][];
+        for (int k = 0; k < kAll; k++)
+            g[k] = new Complex[kAll];
+        var h = new Complex[kAll];
+        var v = new Complex[kAll];
+        for (int n = 0; n < training.Length; n++)
+        {
+            int b = n * samplesPerSymbol + c;
+            for (int i = 0; i < numTaps; i++)
+                v[i] = b - i >= 0 && b - i < samples.Length ? samples[b - i] : Complex.Zero;
+            for (int j = 1; j <= numFeedback; j++)
+                v[numTaps + j - 1] = n - j >= 0 ? training[n - j] : Complex.Zero;
+            for (int k = 0; k < kAll; k++)
+            {
+                Complex ck = Complex.Conjugate(v[k]);
+                for (int l = 0; l < kAll; l++)
+                    g[k][l] += ck * v[l];
+                h[k] += ck * training[n];
+            }
+        }
+        for (int k = 0; k < kAll; k++)
+        {
+            int r = k;
+            double big = -1;
+            for (int i = k; i < kAll; i++)
+            {
+                double mag = g[i][k].Real * g[i][k].Real + g[i][k].Imaginary * g[i][k].Imaginary;
+                if (mag > big)
+                {
+                    r = i;
+                    big = mag;
+                }
+            }
+            if (big == 0)
+                throw new ArgumentException("the training does not determine the taps", nameof(training));
+            (g[k], g[r]) = (g[r], g[k]);
+            (h[k], h[r]) = (h[r], h[k]);
+            for (int i = k + 1; i < kAll; i++)
+            {
+                Complex f = g[i][k] / g[k][k];
+                for (int l = k + 1; l < kAll; l++)
+                    g[i][l] -= f * g[k][l];
+                h[i] -= f * h[k];
+            }
+        }
+        var th = new Complex[kAll];
+        for (int k = kAll - 1; k >= 0; k--)
+        {
+            Complex acc = h[k];
+            for (int l = k + 1; l < kAll; l++)
+                acc -= g[k][l] * th[l];
+            th[k] = acc / g[k][k];
+        }
+        return new DfeTaps(th[..numTaps], th[numTaps..]);
+    }
+
+    private static int CheckEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
+        int numFeedback, int samplesPerSymbol, int? center)
     {
         if (samples.IsEmpty)
             throw new ArgumentException("needs at least 1 sample", nameof(samples));
@@ -184,6 +272,28 @@ public static class Sync
         int c = center ?? (numTaps - 1) / 2;
         if (c < 0 || c >= numTaps)
             throw new ArgumentOutOfRangeException(nameof(center), center, "must be in [0, numTaps)");
+        ArgumentOutOfRangeException.ThrowIfNegative(numFeedback);
+        int n = (samples.Length + samplesPerSymbol - 1) / samplesPerSymbol;
+        if (training.Length > n)
+            throw new ArgumentException($"must be at most {n} symbols (the output count)", nameof(training));
+        return c;
+    }
+
+    private static Complex[] StartTaps(Complex[] values, int size, string name)
+    {
+        if (values.Length != size)
+            throw new ArgumentException($"must hold {size} values", name);
+        foreach (Complex z in values)
+            if (!double.IsFinite(z.Real) || !double.IsFinite(z.Imaginary))
+                throw new ArgumentException("must be finite", name);
+        return (Complex[])values.Clone();
+    }
+
+    private static DfeEqualization Equalize(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
+        int numFeedback, double step, int samplesPerSymbol, int? center, string? decision, Complex[]? initialTaps,
+        Complex[]? initialFeedback)
+    {
+        int c = CheckEqualizer(samples, training, numTaps, numFeedback, samplesPerSymbol, center);
         if (!(step >= 0 && step <= 2))
             throw new ArgumentOutOfRangeException(nameof(step), step, "must be in [0, 2]");
         Func<Complex, Complex>? decide = decision switch
@@ -195,16 +305,21 @@ public static class Sync
             "qam64" => static y => Modulation.Qam64Map(Modulation.Qam64DemapHard([y]))[0],
             _ => throw new ArgumentException("must be null, qpsk, psk8, qam16 or qam64", nameof(decision)),
         };
-        ArgumentOutOfRangeException.ThrowIfNegative(numFeedback);
         int n = (samples.Length + samplesPerSymbol - 1) / samplesPerSymbol;
-        if (training.Length > n)
-            throw new ArgumentException($"must be at most {n} symbols (the output count)", nameof(training));
         if (numFeedback > 0 && decide is null && training.Length < n)
             throw new ArgumentException("with feedback taps, needs a decision or training for every output", nameof(decision));
-        var fb = new Complex[numFeedback];
+        var fb = initialFeedback is null ? new Complex[numFeedback] : StartTaps(initialFeedback, numFeedback, nameof(initialFeedback));
         var past = new Complex[numFeedback]; // past[j - 1] is d_{k-j}
-        var w = new Complex[numTaps];
-        w[c] = Complex.One;
+        Complex[] w;
+        if (initialTaps is null)
+        {
+            w = new Complex[numTaps];
+            w[c] = Complex.One;
+        }
+        else
+        {
+            w = StartTaps(initialTaps, numTaps, nameof(initialTaps));
+        }
         var u = new Complex[numTaps];
         var output = new Complex[n];
         var errors = new Complex[n];

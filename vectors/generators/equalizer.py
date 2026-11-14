@@ -48,10 +48,12 @@ def qam64(y):
 DECIDE = {"qpsk": qpsk, "psk8": psk8, "qam16": qam16, "qam64": qam64}
 
 
-def lms(x, t, taps, mu, sps=1, center=None, decision=None):
+def lms(x, t, taps, mu, sps=1, center=None, decision=None, initial_taps=None):
     c = (taps - 1) // 2 if center is None else center
     w = [0j] * taps
     w[c] = 1 + 0j
+    if initial_taps is not None:
+        w = [complex(z) for z in initial_taps]
     ys, es = [], []
     for n in range(-(-len(x) // sps)):
         base = n * sps + c
@@ -108,7 +110,8 @@ OP = "lms_equalizer"
 
 def add(name, x, t, taps, mu, source=SRC, tol=None, **kw):
     args = {"samples": C(x), "training": C(t), "num_taps": taps, "step": mu}
-    args |= {("samples_per_symbol" if k == "sps" else k): v for k, v in kw.items()}
+    args |= {("samples_per_symbol" if k == "sps" else k): C(v) if k == "initial_taps" else v
+             for k, v in kw.items()}
     ys, es, w = lms(x, t, taps, mu, **kw)
     cases.append({"id": f"{OP}.{name}", "op": OP, "args": args,
                   "expected": {"symbols": C(ys), "errors": C(es), "taps": C(w)},
@@ -148,8 +151,21 @@ A = points("qam64", 70, 17)
 add("qam64_fractional", channel(A, HF, 2), A[:50], 8, 0.1, sps=2, decision="qam64")
 add("sps_not_dividing", channel(points("qpsk", 7, 19), H2, 3)[:-1], points("qpsk", 3, 19), 4,
     0.7, sps=3, decision="qpsk")
+W0 = [complex(0.2, -0.1), complex(0.9, 0.3), complex(-0.15, 0.05)]
+X = [complex(0.3 * k - 1, 0.7 - 0.2 * k * k % 1.3) for k in range(6)]
+ys, es, w = add("initial_taps_step_zero_by_hand", X, X[:2], 3, 0.0, initial_taps=W0,
+                source="by hand: with step 0 the taps stay the given start, so output n is "
+                "w0[0] x[n+1] + w0[1] x[n] + w0[2] x[n-1] (0 outside the input)")
+assert all(abs(ys[n] - sum(W0[i] * (X[n + 1 - i] if 0 <= n + 1 - i < 6 else 0)
+                           for i in range(3))) < 1e-15 for n in range(6))
+assert w == W0
+A = points("qpsk", 60, 29)
+add("initial_taps_adapts", channel(A, H2), A[:20], 3, 0.3, decision="qpsk", initial_taps=W0)
 
 for name, args, why in (
+    ("initial_taps_wrong_length", {"initial_taps": C([1, 0])}, "initial_taps must hold num_taps"),
+    ("initial_taps_not_finite", {"initial_taps": {"re": [0, "inf", 0], "im": [0, 0, 0]}},
+     "initial_taps must be finite"),
     ("step_above_two", {"step": 2.5}, "step must be between 0 and 2"),
     ("negative_step", {"step": -0.1}, "step must be between 0 and 2"),
     ("center_past_the_taps", {"center": 3}, "center must be below num_taps"),

@@ -49,6 +49,7 @@ CONFIG_KEYS = [
     "equalizer_taps",
     "equalizer_step",
     "equalizer_feedback",
+    "equalizer_start",
 ]
 
 
