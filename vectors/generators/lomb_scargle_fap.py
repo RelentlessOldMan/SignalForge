@@ -7,6 +7,9 @@ It does not import NumPy or SignalForge.
   exponent is whole, z is a short decimal and the whole expression is computed exactly with
   fractions.Fraction, then rounded once to a float; a half exponent uses math.sqrt of an exact
   fraction (M = 1 only).
+- False-alarm level (the inverse): by-hand cases where the exponents are whole or halves, and
+  round trips through the exact table above (the probability is the exact false alarm of a
+  decimal z, rounded once; the expected value is that z).
 - Frequency grid: k / (oversampling * T) for k = 1 .. K with K counted by hand from f_max * T *
   oversampling, which the cases choose so the count is clear (whole or well away from whole).
 
@@ -44,7 +47,7 @@ def fap_exact(z, n, m, center):
 
 
 FA = "lomb_scargle_false_alarm"
-for cid, z, n, m, center in [
+EXACT = [
     ("half_n13", "0.5", 13, 1, True),          # (1/2)^5
     ("half_n13_m10", "0.5", 13, 10, True),
     ("n12_uncentered", "0.5", 12, 1, False),   # (1/2)^5, d = 2
@@ -56,7 +59,8 @@ for cid, z, n, m, center in [
     ("unit_power", "1", 13, 5, True),          # P1 = 0, so 0
     ("min_n_centered", "0.3", 5, 1, True),     # e = 1: 0.7
     ("min_n_uncentered", "0.3", 4, 3, False),  # e = 1: 1 - 0.3^3
-]:
+]
+for cid, z, n, m, center in EXACT:
     args = {"power": float(z), "num_samples": n}
     if m != 1:
         args["num_frequencies"] = m
@@ -79,6 +83,37 @@ err(FA, "n_too_small_centered", {"power": 0.5, "num_samples": 3}, "N >= 4 when c
 err(FA, "n_too_small_uncentered", {"power": 0.5, "num_samples": 2, "center": False},
     "N >= 3 when not centered")
 err(FA, "zero_frequencies", {"power": 0.5, "num_samples": 10, "num_frequencies": 0}, "M >= 1")
+
+FL = "lomb_scargle_false_alarm_level"
+for cid, z, n, m, center in EXACT:
+    if cid == "zero_power":
+        continue  # p = 1 is the end case below; its inverse is 0, not the z = 0 it came from
+    args = {"probability": fap_exact(z, n, m, center), "num_samples": n}
+    if m != 1:
+        args["num_frequencies"] = m
+    if not center:
+        args["center"] = False
+    add(FL, cid, args, float(z), f"round trip: the probability is the exact false alarm of z = {z}")
+add(FL, "n5", {"probability": 0.3, "num_samples": 5}, 0.7,
+    "by hand: N = 5 centered, M = 1: z = 1 - p")
+add(FL, "n7", {"probability": 0.25, "num_samples": 7}, 0.5,
+    "by hand: N = 7 centered, M = 1: z = 1 - sqrt(p) = 1 - 1/2")
+add(FL, "n5_m2", {"probability": 0.75, "num_samples": 5, "num_frequencies": 2}, 0.5,
+    "by hand: P1 = 1 - (1 - 0.75)^(1/2) = 1/2, then z = 1 - P1")
+add(FL, "n4_uncentered", {"probability": 0.2, "num_samples": 4, "center": False}, 0.8,
+    "by hand: N = 4 not centered, d = 2: z = 1 - p")
+add(FL, "zero_probability", {"probability": 0.0, "num_samples": 13, "num_frequencies": 7}, 1.0,
+    "by hand: only z = 1 is never exceeded")
+add(FL, "unit_probability", {"probability": 1.0, "num_samples": 13, "num_frequencies": 7}, 0.0,
+    "by hand: noise always exceeds z = 0")
+err(FL, "probability_above_one", {"probability": 1.5, "num_samples": 10}, "p must be in [0, 1]")
+err(FL, "probability_negative", {"probability": -0.1, "num_samples": 10}, "p must be in [0, 1]")
+err(FL, "probability_nan", {"probability": "nan", "num_samples": 10}, "p must be in [0, 1]")
+err(FL, "n_too_small_centered", {"probability": 0.5, "num_samples": 3}, "N >= 4 when centered")
+err(FL, "n_too_small_uncentered", {"probability": 0.5, "num_samples": 2, "center": False},
+    "N >= 3 when not centered")
+err(FL, "zero_frequencies", {"probability": 0.5, "num_samples": 10, "num_frequencies": 0},
+    "M >= 1")
 
 FR = "lomb_scargle_frequencies"
 add(FR, "default", {"times": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
@@ -103,8 +138,9 @@ err(FR, "too_many", {"times": [0, 1], "oversampling": 1e6, "max_frequency": 100}
 doc = {
     "schema": 1,
     "suite": "lomb_scargle_fap",
-    "description": "Lomb-Scargle false-alarm probability and frequency grid (conventions: Spectra, "
-    "Lomb-Scargle false-alarm probability and frequency grid; ADR 0062).",
+    "description": "Lomb-Scargle false-alarm probability, its inverse level and frequency grid "
+    "(conventions: Spectra, Lomb-Scargle false-alarm probability and frequency grid, Lomb-Scargle "
+    "false-alarm level; ADRs 0062 and 0082).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "lomb_scargle_fap.json"

@@ -267,6 +267,8 @@ public static class Conformance
             "spectrogram" => SpectrogramOp(a),
             "lomb_scargle_false_alarm" => Bind((a.D("power"), a.I("num_samples"), a.Has("num_frequencies") ? a.I("num_frequencies") : 1, a.Flag("center", true)),
                 t => Spectral.LombScargleFalseAlarm(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "lomb_scargle_false_alarm_level" => Bind((a.D("probability"), a.I("num_samples"), a.Has("num_frequencies") ? a.I("num_frequencies") : 1, a.Flag("center", true)),
+                t => Spectral.LombScargleFalseAlarmLevel(t.Item1, t.Item2, t.Item3, t.Item4)),
             "lomb_scargle_frequencies" => Bind((Reals(a.Get("times")), a.Opt("oversampling", 5.0), a.OptD("max_frequency")),
                 t => Spectral.LombScargleFrequencies(t.Item1, t.Item2, t.Item3)),
             "lomb_scargle" => Bind((Reals(a.Get("times")), Reals(a.Get("values")), Reals(a.Get("frequencies")), a.Flag("center", true),

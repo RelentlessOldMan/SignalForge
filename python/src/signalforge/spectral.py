@@ -694,6 +694,28 @@ def lomb_scargle_false_alarm(
     return 1.0 if p1 == 1 else -math.expm1(m * math.log1p(-p1))
 
 
+def lomb_scargle_false_alarm_level(
+    probability: float, num_samples: int, *, num_frequencies: int = 1, center: bool = True
+) -> float:
+    """The standard Lomb-Scargle value that white Gaussian noise exceeds with chance
+    ``probability`` over ``num_frequencies`` independent frequencies: the inverse of
+    ``lomb_scargle_false_alarm`` (conventions: Spectra; ADR 0082)."""
+    p = real(probability, "probability")
+    n = count(num_samples, "num_samples")
+    m = count(num_frequencies, "num_frequencies")
+    d = 3 if center else 2
+    if not 0 <= p <= 1:
+        raise ValueError("probability must be between 0 and 1")
+    if n < d + 1:
+        raise ValueError(f"num_samples must be at least {d + 1}")
+    if m < 1:
+        raise ValueError("num_frequencies must be at least 1")
+    if p == 0:
+        return 1.0
+    p1 = -math.expm1(math.log1p(-p) / m) if p < 1 else 1.0
+    return -math.expm1(2 * math.log(p1) / (n - d))
+
+
 def lomb_scargle_frequencies(
     times: ArrayLike, *, oversampling: float = 5.0, max_frequency: float | None = None
 ) -> NDArray[np.float64]:

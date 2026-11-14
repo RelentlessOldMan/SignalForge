@@ -4,11 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Lomb-Scargle false-alarm level**: the inverse of `lomb_scargle_false_alarm`, the standard
-   power that white noise exceeds with a given probability over `M` frequencies, in closed form
-   `z = 1 − (1 − (1 − p)^{1/M})^{2/(N − d)}`. It also serves the generalized form, which is
-   `d = 3`. Expected values by hand and from round trips through the forward formula as
-   evaluated by a stdlib generator.
+1. **Multitaper line removal** (Thomson 1982): at the bins where the harmonic F-test (ADR 0080)
+   rejects at a chosen probability, subtract the fitted line `μ·U_k(f − f₀)` from each
+   eigencoefficient over the band `|f − f₀| ≤ W`. Then return the line-free multitaper PSD and
+   the removed lines (frequency, complex amplitude). Expected values from a stdlib generator
+   that builds the tapers and spectra independently, plus a by-hand case: a pure bin-centred
+   tone leaves only round-off.
 
 ## Built
 
@@ -829,11 +830,22 @@ Updated with every chunk of work. Dates are absolute.
   `generalized_lomb_scargle` (23 cases, 7 by hand), from a stdlib generator solving the weighted
   3×3 normal equations with no τ. Python 3171 passed, 2 skipped; .NET 2635 passed;
   conformance 1594/1594 in both. Version 2026.11.13.113.
+- 2026-11-13: Lomb-Scargle false-alarm level
+  ([ADR 0082](adr/0082-lomb-scargle-false-alarm-level.md)):
+  `lomb_scargle_false_alarm_level(probability, num_samples, *, num_frequencies, center)` (C#
+  `Spectral.LombScargleFalseAlarmLevel`) inverts the false-alarm probability in closed form,
+  using `log1p`/`expm1` so tiny `p` and large `M` keep full precision. With `center` it also
+  serves the generalized form: in a Monte Carlo of weighted Gaussian noise at one frequency, the
+  10% level is exceeded at the stated rate in both languages. `lomb_scargle_fap` gains 22 cases:
+  6 by hand, 10 round trips through the exact-fraction table, 6 errors (52 in all). Lesson: a
+  round trip near `z = 1` is only as good as `1 − z` after rounding `z`, so those cases get a
+  looser tolerance. Python 3197 passed, 2 skipped; .NET 2661 passed; conformance
+  1616/1616 in both. Version 2026.11.13.114.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
-(multitaper line removal; Lomb-Scargle false-alarm levels, weights for the classic form), the rest of modulation (PSK/QAM
+(multitaper line removal; weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,

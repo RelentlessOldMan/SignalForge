@@ -972,6 +972,30 @@ public static class Spectral
         return p1 == 1 ? 1.0 : -ExpM1(numFrequencies * LogP1(-p1));
     }
 
+    /// <summary>The standard Lomb-Scargle value that white Gaussian noise exceeds with chance <paramref name="probability"/>
+    /// over <paramref name="numFrequencies"/> independent frequencies: the inverse of <see cref="LombScargleFalseAlarm"/>
+    /// (conventions: Spectra; ADR 0082).</summary>
+    /// <param name="probability">The false-alarm probability, in [0, 1].</param>
+    /// <param name="numSamples">The number of samples the periodogram was computed from.</param>
+    /// <param name="numFrequencies">The number of independent frequencies searched, at least 1.</param>
+    /// <param name="center">Whether the periodogram subtracted the mean, as <see cref="LombScargle"/>'s <c>center</c>;
+    /// true also for <see cref="GeneralizedLombScargle"/>.</param>
+    /// <returns><c>1 − P₁^(2/(N − d))</c> with <c>P₁ = 1 − (1 − p)^(1/M)</c>, <c>d</c> 3 centered and 2 not.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double LombScargleFalseAlarmLevel(double probability, int numSamples, int numFrequencies = 1, bool center = true)
+    {
+        int d = center ? 3 : 2;
+        if (!(probability >= 0 && probability <= 1))
+            throw new ArgumentOutOfRangeException(nameof(probability), probability, "must be between 0 and 1");
+        if (numSamples < d + 1)
+            throw new ArgumentOutOfRangeException(nameof(numSamples), numSamples, $"must be at least {d + 1}");
+        ArgumentOutOfRangeException.ThrowIfLessThan(numFrequencies, 1);
+        if (probability == 0)
+            return 1.0;
+        double p1 = probability < 1 ? -ExpM1(LogP1(-probability) / numFrequencies) : 1.0;
+        return -ExpM1(2 * Math.Log(p1) / (numSamples - d));
+    }
+
     /// <summary>Frequency grid <c>k / (oversampling·T)</c>, <c>k = 1, 2, …</c> up to <paramref name="maxFrequency"/>,
     /// for <see cref="LombScargle"/> (conventions: Spectra; ADR 0062).</summary>
     /// <param name="times">The sample times, finite, at least 2 and not all equal; <c>T</c> is their span.</param>

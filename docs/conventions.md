@@ -254,6 +254,13 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   independent frequencies. `z` in `[0, 1]`, integers `N ≥ d + 1` and `M ≥ 1`; otherwise
   `invalid_argument`. Exact when the fitted cosine and sine are orthogonal to the constant (not
   centered, or evenly spaced times at a bin), close otherwise. **(implemented)**
+- **Lomb-Scargle false-alarm level** (`lomb_scargle_false_alarm_level(probability, num_samples,
+  num_frequencies=1, center=True)`, [ADR 0082](adr/0082-lomb-scargle-false-alarm-level.md)) is the
+  inverse of the false-alarm probability. It computes `P₁ = −expm1(log1p(−p)/M)`, then
+  `z = −expm1(2·log(P₁)/(N − d))`. `p = 0` gives 1 and `p = 1` gives 0. `p` is in `[0, 1]`,
+  and `N`, `M` and `d` are as for the false-alarm probability; otherwise the call raises
+  `invalid_argument`. With `center=True` it also holds for the generalized form.
+  **(implemented)**
 - **Lomb-Scargle frequency grid** (`lomb_scargle_frequencies(times, oversampling=5.0,
   max_frequency=None)`): `T = max(t) − min(t)`, which must be `> 0`; `Δ = 1/(oversampling·T)`
   (that product, then its reciprocal); the frequencies are `k·Δ` for `k = 1 … K`,
