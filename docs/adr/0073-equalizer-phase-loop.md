@@ -40,10 +40,14 @@ symbols, a 5 Hz offset, seeds 80–82), BER:
 | (0.02, 0.0002) | 0.0003–0.0011 | 0.0003–0.0007 | 0–0.0006 | 0–0.0002 | 0.0005–0.0008 | 0.0002–0.06 |
 | (0.03, 0.0003) | 0.0001–0.0008 | 0.0004–0.0013 | 0–0.0006 | 0–0.0002 | 0.0004–0.0007 | 0.0002–0.006 |
 
-- `(0.02, 0.0001)` decodes every run above; it is the gain the tests and link configs use.
+- `(0.02, 0.0001)` decodes every run above (seeds 80–82; see the note at the end); it is the gain
+  the tests and link configs use.
 - The single bad runs are 8-PSK cycle slips: its points are only π/4 apart, and a decision loop
   can lock a step off. A slip costs a burst of errors and is not detected; the frame has no pilots
   to resolve it.
 - With the unit-impulse start the loop alone (at `(0.02, 0.0002)`) also rescues QPSK and 8-PSK
   at `P = 100` (0.001–0.004) but not 16-QAM, whose decisions fail before the taps converge.
 - One `atan2`, a `cos` and a `sin` per symbol, small beside the taps.
+
+Note, 2026-11-13: over ten seeds (80–89) `(0.02, 0.0001)` also slips, once in ten for 8-PSK at
+`P = 100` (seed 84, BER 0.33). Pilots catch it ([ADR 0075](0075-pilot-slip-correction.md)).

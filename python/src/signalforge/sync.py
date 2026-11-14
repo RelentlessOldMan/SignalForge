@@ -482,12 +482,16 @@ def dfe_equalizer(
     initial_taps: ArrayLike | None = None,
     initial_feedback: ArrayLike | None = None,
     phase_loop_gains: tuple[float, float] | None = None,
+    pilots: ArrayLike | None = None,
+    pilot_interval: int | None = None,
+    slip_window: int = 2,
 ) -> DfeEqualization:
     """Decision-feedback equalizer: the LMS equalizer plus feedback taps on the past references,
     one normalized LMS update over both (conventions: Synchronization, Decision-feedback
     equalizer; ADR 0069). ``initial_taps`` and ``initial_feedback`` replace the unit impulse and
     the zeros it starts from (ADR 0072). ``phase_loop_gains`` ``(kp, ki)`` adds a second-order
-    carrier loop on the forward part (ADR 0073)."""
+    carrier loop on the forward part (ADR 0073); ``pilots`` every ``pilot_interval`` outputs
+    after the training are references and correct its cycle slips (ADR 0075)."""
     out, errors, w, b = _equalize(
         samples,
         training,
@@ -500,6 +504,9 @@ def dfe_equalizer(
         initial_taps,
         initial_feedback,
         phase_loop_gains,
+        pilots,
+        pilot_interval,
+        slip_window,
     )
     return DfeEqualization(out, errors, w, b)
 
@@ -579,6 +586,9 @@ def _equalize(
     initial_taps: ArrayLike | None = None,
     initial_feedback: ArrayLike | None = None,
     phase_loop_gains: tuple[float, float] | None = None,
+    pilots: ArrayLike | None = None,
+    pilot_interval: int | None = None,
+    slip_window: int = 2,
 ) -> tuple[
     NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128], NDArray[np.complex128]
 ]:
@@ -609,6 +619,23 @@ def _equalize(
         if kp < 0 or ki < 0:
             raise ValueError("phase_loop_gains must not be negative")
         loop = (kp, ki)
+    if (pilots is None) != (pilot_interval is None):
+        raise ValueError("pilots and pilot_interval go together")
+    k_p = 0
+    g_p: list[complex] = []
+    window = count(slip_window, "slip_window")
+    if window < 1:
+        raise ValueError("slip_window must be at least 1")
+    sigma = math.pi / 4 if decision == "psk8" else math.pi / 2
+    if pilots is not None and pilot_interval is not None:
+        k_p = count(pilot_interval, "pilot_interval")
+        if k_p < 1:
+            raise ValueError("pilot_interval must be at least 1")
+        if loop is None or decision is None:
+            raise ValueError("pilots need phase_loop_gains and decision")
+        g_p = _start(pilots, max(n_out - len(ts), 0) // k_p, "pilots")
+    s_p = 0j
+    c_p = 0
     theta = nu = 0.0
     past = [0j] * m  # past[j - 1] is d_{n-j}
     out: list[complex] = []
@@ -624,8 +651,11 @@ def _equalize(
         for bj, pj in zip(fb, past, strict=True):
             y += bj * pj
         out.append(y)
+        pilot = k_p > 0 and n >= len(ts) and (n - len(ts)) % k_p == k_p - 1
         if n < len(ts):
             d: complex | None = ts[n]
+        elif pilot:
+            d = g_p[(n - len(ts)) // k_p]
         elif decision is not None:
             demap, mapper = _DECISIONS[decision]
             d = complex(mapper(demap(np.array([y])))[0])
@@ -655,6 +685,12 @@ def _equalize(
             ph = math.atan2(cc.imag, cc.real) if v != 0 and q != 0 else 0.0
             nu += loop[1] * ph
             theta += loop[0] * ph + nu
+        if pilot:
+            s_p += y * g_p[(n - len(ts)) // k_p].conjugate()
+            c_p += 1
+            if c_p == window:
+                theta += round(math.atan2(s_p.imag, s_p.real) / sigma) * sigma
+                s_p, c_p = 0j, 0
         if m:
             past = [d, *past[:-1]]
     return (

@@ -4,9 +4,7 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **8-PSK cycle slips in the equalizer's phase loop** (ADR 0073): at some gains one run in six
-   locks a π/4 step off. Pilots, or a slip detector on the decisions, would catch it.
-2. **An RLS equalizer**, for channels where normalized LMS converges too slowly for the preamble
+1. **An RLS equalizer**, for channels where normalized LMS converges too slowly for the preamble
    (a zero near the unit circle, ADR 0074's harder channel).
 
 ## Built
@@ -746,12 +744,23 @@ Updated with every chunk of work. Dates are absolute.
   decision-directed LMS that does as well as one trained on every symbol. The link does not use
   it. Vector suite `cma` (20 cases, 3 by hand). Python 3011 passed, 2 skipped; .NET 2488
   passed; conformance 1490/1490 in both. Version 2026.11.13.105.
+- 2026-11-13: pilots that correct the phase loop's cycle slips ([ADR
+  0075](adr/0075-pilot-slip-correction.md)): `dfe_equalizer` gains `pilots`, `pilot_interval`
+  and `slip_window=2` (C# the same, PascalCase). Every `K`-th output after the training is a known
+  symbol: the reference there, and every `slip_window` pilots the loop's phase steps by the
+  multiple of π/2 (π/4 for 8-PSK) nearest their summed rotation. The link gains
+  `pilot_interval` (only with `equalizer_loop_gains`); pilots do not count in the errors. 8-PSK
+  at 12 dB with a 100-symbol preamble, seeds 80–89: six of ten slip to 0.32–0.63 without
+  pilots, all under 0.01 with one in 20 (the good runs unchanged). The same holds with C#'s
+  noise. ADR 0073's "every run" claim corrected (seed 84 slips at its gains). Pilot cases in the
+  `dfe` vectors (one by hand), one more link config. Python 3036 passed, 2 skipped; .NET
+  2505 passed; conformance 1501/1501 in both. Version 2026.11.13.106.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop and the constant-modulus (blind) form (RLS), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction and the constant-modulus (blind) form (RLS), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.

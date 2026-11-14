@@ -236,11 +236,19 @@ public static class Sync
     /// finite values; null for zeros.</param>
     /// <param name="phaseLoopGains">(kp, ki) of a second-order carrier loop on the forward part,
     /// finite, not negative; null for none (ADR 0073).</param>
+    /// <param name="pilots">Known symbols at the pilot outputs, ⌊(N − T)/K⌋ finite values, with
+    /// <paramref name="pilotInterval"/>; they are references there and correct the loop's cycle
+    /// slips. Need <paramref name="phaseLoopGains"/> and <paramref name="decision"/>; null for none
+    /// (ADR 0075).</param>
+    /// <param name="pilotInterval">K, at least 1: output n ≥ T is a pilot when (n − T) mod K =
+    /// K − 1; null for none, with <paramref name="pilots"/>.</param>
+    /// <param name="slipWindow">Pilots summed per slip correction, at least 1.</param>
     public static DfeEqualization DfeEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
         int numFeedback, double step, int samplesPerSymbol = 1, int? center = null, string? decision = null,
-        Complex[]? initialTaps = null, Complex[]? initialFeedback = null, (double Kp, double Ki)? phaseLoopGains = null) =>
+        Complex[]? initialTaps = null, Complex[]? initialFeedback = null, (double Kp, double Ki)? phaseLoopGains = null,
+        Complex[]? pilots = null, int? pilotInterval = null, int slipWindow = 2) =>
         Equalize(samples, training, numTaps, numFeedback, step, samplesPerSymbol, center, decision, initialTaps, initialFeedback,
-            phaseLoopGains);
+            phaseLoopGains, pilots, pilotInterval, slipWindow);
 
     /// <summary>The forward and feedback taps that minimize the squared error over the training,
     /// by Gaussian elimination on the normal equations (conventions: Synchronization, Least-squares
@@ -353,7 +361,8 @@ public static class Sync
 
     private static DfeEqualization Equalize(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,
         int numFeedback, double step, int samplesPerSymbol, int? center, string? decision, Complex[]? initialTaps,
-        Complex[]? initialFeedback, (double Kp, double Ki)? loop)
+        Complex[]? initialFeedback, (double Kp, double Ki)? loop, Complex[]? pilots = null, int? pilotInterval = null,
+        int slipWindow = 2)
     {
         if (loop is { } lg && !(double.IsFinite(lg.Kp) && double.IsFinite(lg.Ki) && lg.Kp >= 0 && lg.Ki >= 0))
             throw new ArgumentOutOfRangeException(nameof(loop), lg, "phase loop gains must be finite and not negative");
@@ -372,6 +381,24 @@ public static class Sync
         int n = (samples.Length + samplesPerSymbol - 1) / samplesPerSymbol;
         if (numFeedback > 0 && decide is null && training.Length < n)
             throw new ArgumentException("with feedback taps, needs a decision or training for every output", nameof(decision));
+        if ((pilots is null) != (pilotInterval is null))
+            throw new ArgumentException("pilots and pilotInterval go together", nameof(pilots));
+        if (slipWindow < 1)
+            throw new ArgumentOutOfRangeException(nameof(slipWindow), slipWindow, "must be at least 1");
+        int kp = 0;
+        Complex[] known = [];
+        if (pilots is not null && pilotInterval is { } interval)
+        {
+            if (interval < 1)
+                throw new ArgumentOutOfRangeException(nameof(pilotInterval), interval, "must be at least 1");
+            if (loop is null || decide is null)
+                throw new ArgumentException("pilots need phaseLoopGains and decision", nameof(pilots));
+            kp = interval;
+            known = StartTaps(pilots, Math.Max(n - training.Length, 0) / kp, nameof(pilots));
+        }
+        double sigma = decision == "psk8" ? Math.PI / 4 : Math.PI / 2;
+        Complex sp = Complex.Zero;
+        int cp = 0;
         var fb = initialFeedback is null ? new Complex[numFeedback] : StartTaps(initialFeedback, numFeedback, nameof(initialFeedback));
         var past = new Complex[numFeedback]; // past[j - 1] is d_{k-j}
         Complex[] w;
@@ -402,7 +429,8 @@ public static class Sync
             for (int j = 0; j < numFeedback; j++)
                 y += fb[j] * past[j];
             output[k] = y;
-            Complex? d = k < training.Length ? training[k] : decide?.Invoke(y);
+            bool pilot = kp > 0 && k >= training.Length && (k - training.Length) % kp == kp - 1;
+            Complex? d = k < training.Length ? training[k] : pilot ? known[(k - training.Length) / kp] : decide?.Invoke(y);
             if (d is not { } r)
                 continue;
             Complex e = r - y;
@@ -431,6 +459,16 @@ public static class Sync
                 double ph = v != Complex.Zero && q != Complex.Zero ? Math.Atan2(cc.Imaginary, cc.Real) : 0;
                 nu += gains.Ki * ph;
                 theta += gains.Kp * ph + nu;
+            }
+            if (pilot)
+            {
+                sp += y * Complex.Conjugate(r);
+                if (++cp == slipWindow)
+                {
+                    theta += Math.Round(Math.Atan2(sp.Imaginary, sp.Real) / sigma) * sigma;
+                    sp = Complex.Zero;
+                    cp = 0;
+                }
             }
             if (numFeedback > 0)
             {

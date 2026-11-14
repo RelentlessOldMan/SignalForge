@@ -49,7 +49,8 @@ DECIDE = {"qpsk": qpsk, "psk8": psk8, "qam16": qam16, "qam64": qam64}
 
 
 def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
-        initial_feedback=None, phase_loop_gains=None):
+        initial_feedback=None, phase_loop_gains=None, pilots=None, pilot_interval=None,
+        slip_window=2):
     c = (taps - 1) // 2 if center is None else center
     w = [0j] * taps
     w[c] = 1 + 0j
@@ -60,6 +61,9 @@ def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
         b = [complex(z) for z in initial_feedback]
     past = [0j] * m  # past[j - 1] is d_{n-j}
     theta = nu = 0.0
+    kp_ = pilot_interval or 0
+    sigma = math.pi / 4 if decision == "psk8" else math.pi / 2
+    s_p, c_p = 0j, 0
     ys, es = [], []
     for n in range(-(-len(x) // sps)):
         base = n * sps + c
@@ -72,7 +76,9 @@ def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
         for bj, pj in zip(b, past):
             y += bj * pj
         ys.append(y)
-        d = t[n] if n < len(t) else DECIDE[decision](y) if decision else None
+        pilot = kp_ and n >= len(t) and (n - len(t)) % kp_ == kp_ - 1
+        g_n = pilots[(n - len(t)) // kp_] if pilot else None
+        d = t[n] if n < len(t) else g_n if pilot else DECIDE[decision](y) if decision else None
         if d is None:
             es.append(0j)
             continue
@@ -95,6 +101,12 @@ def dfe(x, t, taps, m, mu, sps=1, center=None, decision=None, initial_taps=None,
             ph = math.atan2(cc.imag, cc.real) if v != 0 and q != 0 else 0.0
             nu += phase_loop_gains[1] * ph
             theta += phase_loop_gains[0] * ph + nu
+        if pilot:
+            s_p += y * g_n.conjugate()
+            c_p += 1
+            if c_p == slip_window:
+                theta += round(math.atan2(s_p.imag, s_p.real) / sigma) * sigma
+                s_p, c_p = 0j, 0
         if m:
             past = [d] + past[:-1]
     return ys, es, w, b
@@ -134,7 +146,8 @@ OP = "dfe_equalizer"
 def add(name, x, t, taps, m, mu, source=SRC, tol=None, **kw):
     args = {"samples": C(x), "training": C(t), "num_taps": taps, "num_feedback": m, "step": mu}
     args |= {("samples_per_symbol" if k == "sps" else k):
-             C(v) if k in ("initial_taps", "initial_feedback") else v for k, v in kw.items()}
+             C(v) if k in ("initial_taps", "initial_feedback", "pilots") else v
+             for k, v in kw.items()}
     ys, es, w, b = dfe(x, t, taps, m, mu, **kw)
     cases.append({"id": f"{OP}.{name}", "op": OP, "args": args,
                   "expected": {"symbols": C(ys), "errors": C(es), "taps": C(w),
@@ -224,7 +237,47 @@ add("phase_loop_qam16_fractional", X, A[:60], 7, 2, 0.2, sps=2, decision="qam16"
 add("phase_loop_trained_throughout", channel(A[:30], H2), A[:30], 3, 1, 0.3,
     phase_loop_gains=[0.05, 0.001], tol={"abs": 1e-10, "rel": 0})
 
+# pilots that correct cycle slips (ADR 0075)
+A = points("psk8", 20, 43)
+T8 = cmath.exp(1j * math.pi / 4)
+X = [z * (T8 if n >= 4 else 1) for n, z in enumerate(A)]
+PIL = [A[n] for n in range(6, 20, 3)]
+ys, es, w, b = add("pilots_undo_a_slip_by_hand", X, A[:4], 1, 0, 0.0, decision="psk8",
+                   phase_loop_gains=[0.0, 0.0], pilots=PIL, pilot_interval=3,
+                   tol={"abs": 1e-14, "rel": 0},
+                   source="by hand: the input jumps by pi/4 after the 4 training symbols, which "
+                   "8-PSK decides as other points with no error, so nothing adapts; the first two "
+                   "pilots (outputs 6 and 9) each give y conj(g) = e^{j pi/4}, so theta steps by "
+                   "pi/4 after output 9 and every later output is the symbol itself")
+assert all(abs(ys[n] - A[n]) < 1e-15 for n in range(4))
+assert all(abs(ys[n] - A[n] * T8) < 1e-15 for n in range(4, 10))
+assert all(abs(ys[n] - A[n]) < 1e-14 for n in range(10, 20))
+A = points("qpsk", 200, 47)
+X = [z * cmath.exp(0.01j * n) for n, z in enumerate(channel(A, H2, 2))]
+add("pilots_qpsk_fractional", X, A[:30], 6, 2, 0.1, sps=2, decision="qpsk",
+    phase_loop_gains=[0.02, 0.0002], pilots=[A[n] for n in range(36, 200, 7)], pilot_interval=7,
+    tol={"abs": 1e-10, "rel": 0})
+A = points("psk8", 150, 53)
+X = [z * cmath.exp(0.03j * n) for n, z in enumerate(channel(A, H2))]
+add("pilots_psk8_window_one", X, A[:20], 5, 1, 0.1, decision="psk8",
+    phase_loop_gains=[0.01, 0.0001], pilots=[A[n] for n in range(24, 150, 5)], pilot_interval=5,
+    slip_window=1, tol={"abs": 1e-10, "rel": 0})
+
+PILOT3 = {"phase_loop_gains": [0.1, 0.0], "pilot_interval": 1, "pilots": C([1, 1j, -1])}
 for name, args, why in (
+    ("pilots_without_interval", PILOT3 | {"pilot_interval": None},
+     "pilots and pilot_interval go together"),
+    ("pilot_interval_without_pilots", PILOT3 | {"pilots": None},
+     "pilots and pilot_interval go together"),
+    ("pilots_wrong_count", PILOT3 | {"pilots": C([1, 1j])},
+     "pilots must hold floor((4 - 1)/1) = 3 symbols"),
+    ("pilots_without_loop", PILOT3 | {"phase_loop_gains": None}, "pilots need phase_loop_gains"),
+    ("pilots_without_decision", PILOT3 | {"decision": None, "num_feedback": 0},
+     "pilots need decision"),
+    ("pilot_interval_zero", PILOT3 | {"pilot_interval": 0}, "pilot_interval must be at least 1"),
+    ("slip_window_zero", PILOT3 | {"slip_window": 0}, "slip_window must be at least 1"),
+    ("pilots_not_finite", PILOT3 | {"pilots": {"re": [1, "nan", 0], "im": [0, 0, 0]}},
+     "pilots must be finite"),
     ("phase_loop_negative_gain", {"phase_loop_gains": [0.1, -0.01]},
      "phase_loop_gains must not be negative"),
     ("phase_loop_gain_not_finite", {"phase_loop_gains": ["nan", 0.0]},

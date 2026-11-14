@@ -92,6 +92,7 @@ class QpskLinkConfig:
     equalizer_feedback: int = 0
     equalizer_start: str = "impulse"
     equalizer_loop_gains: tuple[float, float] | None = None
+    pilot_interval: int | None = None
 
 
 @dataclass(frozen=True)
@@ -256,6 +257,9 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         equalizer_feedback=count(config.equalizer_feedback, "equalizer_feedback"),
         equalizer_start=config.equalizer_start,
         equalizer_loop_gains=_gains(config.equalizer_loop_gains, "equalizer_loop_gains"),
+        pilot_interval=None
+        if config.pilot_interval is None
+        else count(config.pilot_interval, "pilot_interval"),
     )
     if c.equalizer_taps is not None and c.equalizer_taps < 1:
         raise ValueError("equalizer_taps must be at least 1")
@@ -271,6 +275,10 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         raise ValueError("equalizer_start needs equalizer_taps")
     if c.equalizer_loop_gains is not None and c.equalizer_taps is None:
         raise ValueError("equalizer_loop_gains needs equalizer_taps")
+    if c.pilot_interval is not None and c.pilot_interval < 1:
+        raise ValueError("pilot_interval must be at least 1")
+    if c.pilot_interval is not None and c.equalizer_loop_gains is None:
+        raise ValueError("pilot_interval needs equalizer_loop_gains")
     if (
         c.equalizer_start == "least_squares"
         and c.equalizer_taps is not None
@@ -383,6 +391,8 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
             if c.equalizer_start == "least_squares"
             else None
         )
+        k_p = c.pilot_interval
+        at = None if k_p is None else np.arange(pre + k_p - 1, n, k_p)
         z = dfe_equalizer(
             xe,
             a[:pre],
@@ -394,9 +404,15 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
             initial_taps=None if start is None else start.taps,
             initial_feedback=None if start is None else start.feedback_taps,
             phase_loop_gains=c.equalizer_loop_gains,
-        ).symbols[pre:]
-        # the preamble is the equalizer's training, so it does not count
-        a, bits = a[pre:], bits[bps * pre :]
+            pilots=None if at is None else a[at],
+            pilot_interval=k_p,
+        ).symbols
+        # the preamble is the equalizer's training and the pilots are known, so neither counts
+        keep = np.ones(n, dtype=bool)
+        keep[:pre] = False
+        if at is not None:
+            keep[at] = False
+        z, a, bits = z[keep], a[keep], bits.reshape(n, bps)[keep].reshape(-1)
     elif c.carrier_loop_gains is None:
         z = frequency_offset(z_raw[k0 : k0 + n], -f_hat, rs, -phi)
     else:

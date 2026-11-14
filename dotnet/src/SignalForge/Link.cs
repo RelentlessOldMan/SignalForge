@@ -102,6 +102,11 @@ public sealed record QpskLinkConfig
     /// <summary>(kp, ki) of the phase loop inside the equalizer, each finite and not negative, as
     /// a pair; null [the default] for none; only with <see cref="EqualizerTaps"/> (ADR 0073).</summary>
     public IReadOnlyList<double>? EqualizerLoopGains { get; init; }
+
+    /// <summary>Every this many data symbols, at least 1, the last is a pilot the equalizer knows:
+    /// it corrects the phase loop's cycle slips and does not count in the errors; null [the
+    /// default] for none; only with <see cref="EqualizerLoopGains"/> (ADR 0075).</summary>
+    public int? PilotInterval { get; init; }
 }
 
 /// <summary>What the receiver estimated and measured on one link run.</summary>
@@ -214,6 +219,10 @@ public static class Link
         Gains(c.EqualizerLoopGains, nameof(c.EqualizerLoopGains), nameof(config));
         if (c.EqualizerLoopGains is not null && c.EqualizerTaps is null)
             throw new ArgumentException("EqualizerLoopGains needs EqualizerTaps", nameof(config));
+        if (c.PilotInterval is < 1)
+            throw new ArgumentException("PilotInterval must be at least 1", nameof(config));
+        if (c.PilotInterval is not null && c.EqualizerLoopGains is null)
+            throw new ArgumentException("PilotInterval needs EqualizerLoopGains", nameof(config));
         if (c.EqualizerStart == "least_squares" && c.EqualizerTaps is { } lt && c.PreambleSymbols < lt + c.EqualizerFeedback)
             throw new ArgumentException("EqualizerStart least_squares needs PreambleSymbols of at least EqualizerTaps + EqualizerFeedback", nameof(config));
         if (c.EqualizerTaps is { } et)
@@ -364,13 +373,32 @@ public static class Link
             DfeTaps? start = c.EqualizerStart == "least_squares"
                 ? Sync.DfeLeastSquares(xe, a.AsSpan(0, pre), taps, c.EqualizerFeedback, 2)
                 : null;
+            Complex[]? pilots = null;
+            if (c.PilotInterval is { } kp)
+            {
+                pilots = new Complex[(n - pre) / kp];
+                for (int j = 0; j < pilots.Length; j++)
+                    pilots[j] = a[pre + (j + 1) * kp - 1];
+            }
             Complex[] eq = Sync.DfeEqualizer(xe, a.AsSpan(0, pre), taps, c.EqualizerFeedback, c.EqualizerStep, 2, null, c.Modulation,
                 start?.Taps, start?.FeedbackTaps,
-                c.EqualizerLoopGains is { } lg ? (lg[0], lg[1]) : null).Symbols;
-            // the preamble is the equalizer's training, so it does not count
-            z = eq[pre..];
-            a = a[pre..];
-            bits = bits[(bps * pre)..];
+                c.EqualizerLoopGains is { } lg ? (lg[0], lg[1]) : null, pilots, c.PilotInterval).Symbols;
+            // the preamble is the equalizer's training and the pilots are known, so neither counts
+            var kz = new List<Complex>(n - pre);
+            var ka = new List<Complex>(n - pre);
+            var kb = new List<byte>(bps * (n - pre));
+            for (int i = pre; i < n; i++)
+            {
+                if (c.PilotInterval is { } k && (i - pre) % k == k - 1)
+                    continue;
+                kz.Add(eq[i]);
+                ka.Add(a[i]);
+                for (int t = 0; t < bps; t++)
+                    kb.Add(bits[bps * i + t]);
+            }
+            z = [.. kz];
+            a = [.. ka];
+            bits = [.. kb];
         }
         else if (c.CarrierLoopGains is { } cg)
         {

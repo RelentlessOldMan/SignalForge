@@ -1069,7 +1069,17 @@ multiplies the block by the power of two that brings its largest real or imagina
   - with `q = d_n − f`, the phase error is `φ = atan2(Im c, Re c)` of `c = (v·r)·conj(q)`, or 0
     when `v` or `q` is 0; then `ν ← ν + ki·φ` and `θ ← θ + kp·φ + ν`.
   Without a reference there is no update and no loop step. With gains `[0, 0]` it is the
-  equalizer without the loop exactly. **(implemented)**
+  equalizer without the loop exactly.
+  With `pilot_interval = K ≥ 1` and `pilots` (both or neither; [ADR
+  0075](adr/0075-pilot-slip-correction.md)), which need `phase_loop_gains` and `decision`: output
+  `n ≥ T` is pilot `j = ⌊(n − T)/K⌋` when `(n − T) mod K = K − 1`, and `pilots` holds exactly
+  `J = ⌊(N − T)/K⌋` finite symbols `g_0 … g_{J−1}`. `W = slip_window ≥ 1`; the step `σ` is `π/4`
+  for `"psk8"` and `π/2` otherwise. At a pilot:
+  - the reference is `d_n = g_j` in place of the decision;
+  - after the loop step, `s ← s + y_n·conj(g_j)` (`s` starts at 0) and one more pilot is counted;
+    when the count reaches `W`, `θ ← θ + k·σ` with `k` the integer nearest `atan2(Im s, Re s)/σ`
+    (ties to even), and `s` and the count go back to 0.
+  **(implemented)**
 - **Least-squares equalizer taps** (`dfe_least_squares(samples, training, num_taps, num_feedback,
   *, samples_per_symbol=1, center=None)` → `DfeTaps(taps, feedback_taps)`, [ADR
   0072](adr/0072-least-squares-equalizer-start.md)): the arguments as for `dfe_equalizer`, with
@@ -1179,7 +1189,9 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   `"least_squares"`; anything else only with `equalizer_taps`; [ADR
   0072](adr/0072-least-squares-equalizer-start.md)) and `equalizer_loop_gains` [none] (none or a
   pair `[kp, ki]` of numbers `≥ 0`, only with `equalizer_taps`; [ADR
-  0073](adr/0073-equalizer-phase-loop.md)). Numbers must be finite.
+  0073](adr/0073-equalizer-phase-loop.md)) and `pilot_interval` [none] (an integer `≥ 1`, only
+  with `equalizer_loop_gains`; [ADR 0075](adr/0075-pilot-slip-correction.md)). Numbers must be
+  finite.
   **(implemented)**
 - **FSK** (`"fsk2"`, `"fsk4"`: `M` = 2 or 4, `k = log2 M`, modulation index 1;
   [ADR 0057](adr/0057-fsk-link.md)) replaces the transmitter and receiver below; the checks above
@@ -1321,11 +1333,13 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
      samples_per_symbol=2, decision=modulation).symbols` with `M = equalizer_feedback` (`M = 0`
      is `lms_equalizer`); with `equalizer_start = "least_squares"` it also passes the
      `dfe_least_squares(x, a[:P], L, M, samples_per_symbol=2)` taps as `initial_taps` and
-     `initial_feedback` (`P ≥ L + M` is then needed), and `equalizer_loop_gains` as
-     `phase_loop_gains`, where `v = frequency_offset(y, −f, symbol_rate·sps)`, `s₀ = (round(τ) mod sps) + k₀·sps`, and `x` the `2N` samples
+     `initial_feedback` (`P ≥ L + M` is then needed), `equalizer_loop_gains` as
+     `phase_loop_gains`, and with `pilot_interval = K` that as `pilot_interval` with `pilots` the
+     symbols `a[P + (j + 1)·K − 1]`, `j < ⌊(N − P)/K⌋`, where `v = frequency_offset(y, −f, symbol_rate·sps)`, `s₀ = (round(τ) mod sps) + k₀·sps`, and `x` the `2N` samples
      `x[m] = v[s₀ + m·sps/2]`, 0 past the end of `v`. Output `n` then starts as `v[s₀ + n·sps]`,
      the sample the steps above take. With the equalizer the preamble does not count: `evm` and
-     `bit_errors` compare symbols `P … N − 1` only (the bits from `k·P` on). With the equalizer
+     `bit_errors` compare symbols `P … N − 1` only (the bits from `k·P` on), and with pilots
+     not those at the pilots either (nor their `k` bits each). With the equalizer
      and `n_b = ⌊P/B⌋ ≥ 2`, `f` here (and as reported) is instead the preamble's: `q_b =
      Σ_{i=bB}^{(b+1)B−1} conj(a[i])·c[k₀+i]` for `b < n_b`, each summed in order of `i`; their
      phases unwrapped as `θ₀ = arg q₀`, `θ_b = θ_{b−1} + arg(q_b·conj(q_{b−1}))`; `s` the
