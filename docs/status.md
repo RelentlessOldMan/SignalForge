@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Bessel IIR design**: a lowpass and highpass from the Bessel polynomial's poles. Its
-   normalization (delay, phase or −3 dB at the cutoff) is a convention to fix first. The analog
-   prototype goes through the same bilinear path as Butterworth and Chebyshev. Expected values
-   from a stdlib generator that finds the polynomial's roots independently (Durand-Kerner, each
-   checked against the polynomial), with by-hand orders 1 and 2.
+1. **Frequency-sampling FIR design**: `fir_frequency_sampling(num_taps, frequencies, gains,
+   sample_rate, window)`. Interpolate a piecewise-linear magnitude onto a dense grid, give it
+   the linear phase of a symmetric filter, take the inverse DFT and window it. Types I and II
+   (a type II filter needs zero gain at fs/2). Expected values from a stdlib generator that does
+   the inverse DFT by direct sums, plus a by-hand case: a flat gain gives a windowed impulse.
 
 ## Built
 
@@ -851,7 +851,7 @@ Updated with every chunk of work. Dates are absolute.
   several bins over the threshold. `multitaper` gains 12 cases (7 removal, 3 of them by hand:
   pure complex tone, DC, Nyquist; 5 errors), all at least 1.7× from their thresholds. Lesson: at
   the default `1/N` a spectrum expects about one noise line, so tests that count lines set a
-  strict probability. Python 3214 passed, 2 skipped; .NET 2678 passed; conformance
+  strict probability. The vectors README now states the generator naming rule instead of a list that had fallen behind. Python 3214 passed, 2 skipped; .NET 2678 passed; conformance
   1628/1628 in both. Version 2026.11.13.115.
 
 ## Not built
