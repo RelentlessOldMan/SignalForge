@@ -449,6 +449,75 @@ public static class Spectral
         return out_;
     }
 
+    /// <summary>Chance that white Gaussian noise gives a standard Lomb-Scargle value above <paramref name="power"/>
+    /// at any of <paramref name="numFrequencies"/> independent frequencies (conventions: Spectra; ADR 0062).</summary>
+    /// <param name="power">A value of the standard normalization, in [0, 1].</param>
+    /// <param name="numSamples">The number of samples the periodogram was computed from.</param>
+    /// <param name="numFrequencies">The number of independent frequencies searched, at least 1.</param>
+    /// <param name="center">Whether the periodogram subtracted the mean, as <see cref="LombScargle"/>'s <c>center</c>.</param>
+    /// <returns><c>1 − (1 − P₁)^M</c> with <c>P₁ = (1 − z)^((N − d)/2)</c>, <c>d</c> 3 centered and 2 not.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double LombScargleFalseAlarm(double power, int numSamples, int numFrequencies = 1, bool center = true)
+    {
+        int d = center ? 3 : 2;
+        if (!(power >= 0 && power <= 1))
+            throw new ArgumentOutOfRangeException(nameof(power), power, "must be between 0 and 1 (the standard normalization)");
+        if (numSamples < d + 1)
+            throw new ArgumentOutOfRangeException(nameof(numSamples), numSamples, $"must be at least {d + 1}");
+        ArgumentOutOfRangeException.ThrowIfLessThan(numFrequencies, 1);
+        double p1 = Math.Pow(1 - power, (numSamples - d) / 2.0);
+        return p1 == 1 ? 1.0 : -ExpM1(numFrequencies * LogP1(-p1));
+    }
+
+    /// <summary>Frequency grid <c>k / (oversampling·T)</c>, <c>k = 1, 2, …</c> up to <paramref name="maxFrequency"/>,
+    /// for <see cref="LombScargle"/> (conventions: Spectra; ADR 0062).</summary>
+    /// <param name="times">The sample times, finite, at least 2 and not all equal; <c>T</c> is their span.</param>
+    /// <param name="oversampling">Grid points per <c>1/T</c>, positive and finite.</param>
+    /// <param name="maxFrequency">The highest frequency, positive and finite; null for <c>N/(2T)</c>.</param>
+    /// <returns>The frequencies in Hz, ascending; empty when the first would be above the maximum.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or the grid would exceed 10⁷ frequencies.</exception>
+    public static double[] LombScargleFrequencies(ReadOnlySpan<double> times, double oversampling = 5.0, double? maxFrequency = null)
+    {
+        if (times.Length < 2)
+            throw new ArgumentException("times must have at least 2 values", nameof(times));
+        double lo = double.PositiveInfinity, hi = double.NegativeInfinity;
+        foreach (double t in times)
+        {
+            if (!double.IsFinite(t)) throw new ArgumentException("times must be finite", nameof(times));
+            lo = Math.Min(lo, t);
+            hi = Math.Max(hi, t);
+        }
+        double span = hi - lo;
+        if (!(span > 0))
+            throw new ArgumentException("times must not all be equal", nameof(times));
+        Check.PositiveFinite(oversampling, nameof(oversampling));
+        double fmax = maxFrequency is { } m ? Check.PositiveFinite(m, nameof(maxFrequency)) : times.Length / (2 * span);
+        double df = 1 / (oversampling * span);
+        double ratio = fmax / df + 1e-9;
+        if (!(ratio < 1e7 + 1))
+            throw new ArgumentException("the grid would have more than 10^7 frequencies", nameof(oversampling));
+        var out_ = new double[(int)Math.Floor(ratio)];
+        for (int k = 0; k < out_.Length; k++)
+            out_[k] = (k + 1) * df;
+        return out_;
+    }
+
+    /// <summary>log(1 + x), accurate for small x (Kahan's form).</summary>
+    private static double LogP1(double x)
+    {
+        double u = 1 + x;
+        return u == 1 ? x : Math.Log(u) * x / (u - 1);
+    }
+
+    /// <summary>exp(x) − 1, accurate for small x (Kahan's form).</summary>
+    private static double ExpM1(double x)
+    {
+        double u = Math.Exp(x);
+        if (u == 1) return x;
+        double um1 = u - 1;
+        return um1 == -1 ? -1 : um1 * x / Math.Log(u);
+    }
+
     /// <summary>The expected median of <paramref name="k"/> independent unit-mean exponential values
     /// (conventions: Spectra, PSD).</summary>
     private static double MedianBias(int k)

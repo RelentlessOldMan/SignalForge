@@ -117,6 +117,8 @@ from .spectral import (
     fft_frequencies,
     ifft,
     lomb_scargle,
+    lomb_scargle_false_alarm,
+    lomb_scargle_frequencies,
     occupied_bandwidth,
     spectrogram,
     welch_psd,
@@ -152,7 +154,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.13.85"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.13.86"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -235,6 +237,8 @@ __all__ = [
     "kaiser_parameters",
     "lin_to_db",
     "lomb_scargle",
+    "lomb_scargle_false_alarm",
+    "lomb_scargle_frequencies",
     "multipath",
     "multitone",
     "newman_phases",

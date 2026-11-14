@@ -6,8 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **OFDM in the link**: a `"ofdm"` modulation in `qpsk_link` with a subcarrier plan, a known
    preamble block for timing and a per-subcarrier channel estimate, BER against QPSK theory.
-2. **Lomb-Scargle false-alarm probability** (Scargle's exponential form for the standard
-   normalization) and a frequency-grid helper from the time span.
+   Needs a design pass (an ADR) before code: pilots or none for phase tracking, how `ebn0_db`
+   maps to noise over the used subcarriers and the prefix, the BER loss from a noisy least-squares
+   estimate (theory for the expected value), and which link impairments it rejects. (The
+   Lomb-Scargle false-alarm item went first on 2026-11-13 for that reason.)
 
 ## Built
 
@@ -619,6 +621,16 @@ Updated with every chunk of work. Dates are absolute.
   a bool or null) element by element; the `files` generator gained 12 annotation cases and
   `foreign_ci16` now expects its annotation. Python 2711 passed, 2 skipped; .NET 2221
   passed; conformance 1382/1382 in both. Version 2026.11.13.85. (The first build of this, .84, failed: the C# report writer could not encode a list; fixed.)
+- 2026-11-13: Lomb-Scargle false-alarm probability and frequency grid in both languages
+  ([ADR 0062](adr/0062-lomb-scargle-significance.md)). `lomb_scargle_false_alarm` /
+  `Spectral.LombScargleFalseAlarm` gives, for the standard normalization, the Beta survival
+  `(1 − z)^((N − d)/2)` of white Gaussian noise (`d` 3 centered, 2 not; Scargle's exponential form
+  is for a known noise variance, so not used) and `1 − (1 − P₁)^M` over `M` frequencies through
+  log1p/expm1 (C# has its own Kahan forms). `lomb_scargle_frequencies` /
+  `Spectral.LombScargleFrequencies` gives `k/(oversampling·T)` up to `N/(2T)` or a given maximum.
+  New generator `lomb_scargle_fap.py` (30 cases, exact fractions); Monte Carlo tests check the
+  survival on noise in both languages. Python 2760 passed, 2 skipped; .NET 2269 passed;
+  conformance 1412/1412 in both. Version 2026.11.13.86.
 
 ## Not built
 

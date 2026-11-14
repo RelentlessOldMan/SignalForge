@@ -352,6 +352,48 @@ def lomb_scargle(
     return out
 
 
+def lomb_scargle_false_alarm(
+    power: float, num_samples: int, *, num_frequencies: int = 1, center: bool = True
+) -> float:
+    """Chance that white Gaussian noise gives a standard Lomb-Scargle value above ``power`` at any
+    of ``num_frequencies`` independent frequencies (conventions: Spectra; ADR 0062)."""
+    z = real(power, "power")
+    n = count(num_samples, "num_samples")
+    m = count(num_frequencies, "num_frequencies")
+    d = 3 if center else 2
+    if not 0 <= z <= 1:
+        raise ValueError("power must be between 0 and 1 (the standard normalization)")
+    if n < d + 1:
+        raise ValueError(f"num_samples must be at least {d + 1}")
+    if m < 1:
+        raise ValueError("num_frequencies must be at least 1")
+    p1 = (1 - z) ** ((n - d) / 2)
+    return 1.0 if p1 == 1 else -math.expm1(m * math.log1p(-p1))
+
+
+def lomb_scargle_frequencies(
+    times: ArrayLike, *, oversampling: float = 5.0, max_frequency: float | None = None
+) -> NDArray[np.float64]:
+    """Frequency grid ``k / (oversampling * T)``, ``k = 1, 2, ...`` up to ``max_frequency``
+    (default ``N / (2T)``), for :func:`lomb_scargle` (conventions: Spectra; ADR 0062)."""
+    t = _finite_reals(times, "times")
+    if t.size < 2:
+        raise ValueError("times must have at least 2 values")
+    span = float(np.max(t) - np.min(t))
+    if not span > 0:
+        raise ValueError("times must not all be equal")
+    os_ = real(oversampling, "oversampling")
+    fmax = t.size / (2 * span) if max_frequency is None else real(max_frequency, "max_frequency")
+    if os_ <= 0 or fmax <= 0:
+        raise ValueError("oversampling and max_frequency must be positive")
+    df = 1 / (os_ * span)
+    ratio = fmax / df + 1e-9
+    if not ratio < 10**7 + 1:  # also catches an infinite ratio
+        raise ValueError("the grid would have more than 10^7 frequencies")
+    k = math.floor(ratio)
+    return np.arange(1, k + 1, dtype=np.float64) * df
+
+
 def _median_bias(k: int) -> float:
     """The expected median of ``k`` independent unit-mean exponential values (conventions: PSD)."""
     m = k // 2

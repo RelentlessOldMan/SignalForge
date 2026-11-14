@@ -188,6 +188,18 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `a cos ωt + b sin ωt` to `y`; it does not change when every time is shifted by the same amount.
   On `N` even samples with `f` at a bin `k·fs/N` (`0 < k < N/2`), a sinusoid of amplitude `A` at
   that bin gives `P = A²N/4` and standard 1. **(implemented)**
+- **Lomb-Scargle false-alarm probability** (`lomb_scargle_false_alarm(power, num_samples,
+  num_frequencies=1, center=True)`, [ADR 0062](adr/0062-lomb-scargle-significance.md)), for the
+  standard normalization: `P₁ = (1 − z)^((N − d)/2)` with `d = 3` centered, `2` not (the Beta
+  survival of white Gaussian noise at one frequency), then `−expm1(M·log1p(−P₁))` for `M`
+  independent frequencies. `z` in `[0, 1]`, integers `N ≥ d + 1` and `M ≥ 1`; otherwise
+  `invalid_argument`. Exact when the fitted cosine and sine are orthogonal to the constant (not
+  centered, or evenly spaced times at a bin), close otherwise. **(implemented)**
+- **Lomb-Scargle frequency grid** (`lomb_scargle_frequencies(times, oversampling=5.0,
+  max_frequency=None)`): `T = max(t) − min(t)`, which must be `> 0`; `Δ = 1/(oversampling·T)`
+  (that product, then its reciprocal); the frequencies are `k·Δ` for `k = 1 … K`,
+  `K = ⌊f_max/Δ + 1e-9⌋`, default `f_max = N/(2T)`. `oversampling` and `f_max` positive and finite,
+  times finite (at least 2), `K ≤ 10⁷`; `K = 0` gives an empty grid. **(implemented)**
 - **PSD units:** W/Hz when the samples are volts and an impedance is known (divide by the
   impedance), otherwise sample-units²/Hz. The functions above work in sample units. **(defined)**
 - **Bins as rectangles:** OBW and channel power treat PSD bin `k` (center `f_k`, uniform spacing
