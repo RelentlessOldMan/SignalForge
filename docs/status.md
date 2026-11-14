@@ -4,9 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **The LMS equalizer in the single-carrier link chains** (ADR 0066 built the block) so they can
-   take `multipath_delays` too: trained on the preamble after the matched filter, fractionally
-   spaced at 2 samples per symbol; the expected BER then needs a bound rather than a closed form.
+1. **A frame search robust to a frequency error** in the single-carrier chains: step 3 correlates
+   the whole preamble coherently, so a long preamble (as the equalizer wants) turns through a
+   cycle under the coarse estimate's error (about 0.7 Hz rms for QPSK at 6 dB on a 1 kHz link,
+   twice that through strong ISI) and can pick the wrong start (ADR 0067). Correlate in blocks
+   and add the blocks' magnitudes, or estimate the frequency from the preamble first.
+2. **A decision-feedback equalizer** beside the linear one, for channels with deep spectral
+   nulls where the linear equalizer's noise enhancement dominates.
 
 ## Built
 
@@ -677,12 +681,22 @@ Updated with every chunk of work. Dates are absolute.
   one-tap inversion of a gain at step 1, zero input, the recurrence for each decision and
   spacing, rejects). Python 2854 passed, 2 skipped; .NET 2346 passed; conformance
   1430/1430 in both. Version 2026.11.13.94.
+- 2026-11-13: the LMS equalizer in the single-carrier link ([ADR
+  0067](adr/0067-link-equalizer.md)): `equalizer_taps` and `equalizer_step` [0.1] in the config;
+  with them QPSK, 8-PSK, 16-QAM and 64-QAM take `multipath_delays`. The equalizer replaces the
+  final derotation, fractionally spaced at 2 samples per symbol on the matched-filter output from
+  the frame start, trained on the preamble and then decision-directed; the preamble no longer
+  counts in the EVM and BER. `ber_theory` over multipath is the matched-filter bound (the energy
+  the paths give one raised-cosine pulse). Measured 0.1–0.5 dB from the bound on a three-path
+  channel; tests allow 1 dB. New link configs `qpsk_equalizer_noiseless`, `qpsk_multipath_6db`,
+  `qam16_multipath_12db`. Python 2884 passed, 2 skipped; .NET 2376 passed; conformance
+  1430/1430 in both. Version 2026.11.13.96.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
 (multitaper; Lomb-Scargle false-alarm levels, the generalized form and weights), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS (RLS, decision feedback, blind) and any equalizer in the single-carrier link, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS (RLS, decision feedback, blind), decision-directed equalization beyond the link's preamble-trained linear one, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
 packaging and publishing.
@@ -740,3 +754,8 @@ packaging and publishing.
   blocks' channel estimates then starts with a phase off by the average turn, enough to lock a
   decision-directed loop a quadrant off. Align each block to a reference (or track through the
   preamble) before averaging.
+- 2026-11-13: When a new stage makes the old metrics look broken, find where in the frame the
+  errors are before tuning it. The equalized link's errors did not move with preamble length,
+  because every one of them was in the preamble, made while the taps were still converging; and
+  the one run that failed outright had the wrong frame start, from a coarse frequency error that a
+  long preamble turned through a cycle, not from the equalizer at all.

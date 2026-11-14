@@ -46,6 +46,8 @@ CONFIG_KEYS = [
     "ofdm_subcarriers",
     "multipath_delays",
     "multipath_gains",
+    "equalizer_taps",
+    "equalizer_step",
 ]
 
 

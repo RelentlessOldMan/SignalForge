@@ -125,8 +125,9 @@ def compare_link_reports(a: dict[str, Any], b: dict[str, Any], z_max: float = 4.
     if d > 0 and d / sd > z_max:  # d > 0 means 0 < p < 1, so sd > 0
         out.append(f"bit_errors: {ea['errors']} vs {eb['errors']} of {n} ({d / sd:.1f} sd)")
     if va is None or a["config"].get("multipath_delays") is not None:
-        # over multipath the EVM is a mean of unequal parts led by the weakest subcarriers'
-        # estimates: no per-symbol standard deviation fits it (docs/testing.md)
+        # over multipath the EVM is a mean of unequal parts, led by the weakest subcarriers'
+        # estimates (OFDM) or by the equalizer's adaptation noise (single carrier): no per-symbol
+        # standard deviation fits it (docs/testing.md)
         return out
     # |e|^2 of complex Gaussian error is exponential: its standard deviation equals its mean
     m = va["num_symbols"]

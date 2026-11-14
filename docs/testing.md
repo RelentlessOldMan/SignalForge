@@ -86,9 +86,11 @@ reports of one config. Each config in `vectors/links/` is run in both languages
   The theoretical BER depends only on the config and must agree within 1e-9. The receiver's
   estimates (timing, frequency, phase) are noisy and are not judged. FSK reports have no EVM
   (both must say `null`, and the EVM test is skipped). Nor is the EVM tested for a noisy config
-  with multipath: after equalization it is a mean of per-subcarrier parts of very different size,
-  led by the weakest subcarriers and their channel estimates, so no per-symbol standard deviation
-  fits it (a 19 sd difference in testing); the BER test still applies. An FSK receiver may land on `delay` or
+  with multipath: after OFDM equalization it is a mean of per-subcarrier parts of very different
+  size, led by the weakest subcarriers and their channel estimates, and after the single-carrier
+  LMS equalizer it carries the taps' adaptation noise, so no per-symbol standard deviation fits it
+  (a 19 sd difference in testing); the BER test still applies. Over multipath the single-carrier
+  `ber_theory` is a bound, and tests bracket the BER between it and a named allowance. An FSK receiver may land on `delay` or
   `delay + 1` equally well, so noisy FSK configs keep `delay_samples mod sps < sps − 1`, where
   both give the same frame start.
 

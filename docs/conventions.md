@@ -1117,8 +1117,10 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   ([ADR 0046](adr/0046-link-tracking-loops.md)), `ofdm_nfft` [64], `ofdm_cp_len` [16] and
   `ofdm_subcarriers` [none] (used by `"ofdm"` only, checked for every modulation as the OFDM
   bullet says), `multipath_delays` and `multipath_gains` [none] (both none or of equal non-zero
-  length: integers `≥ 0`, and `[re, im]` pairs; `"ofdm"` only, [ADR
-  0064](adr/0064-link-multipath.md)). Numbers must be finite.
+  length: integers `≥ 0`, and `[re, im]` pairs; `"ofdm"`, or a single-carrier chain with
+  `equalizer_taps`, [ADR 0064](adr/0064-link-multipath.md)), `equalizer_taps` [none] (an integer
+  `≥ 1`) and `equalizer_step` [0.1] (in `[0, 2]`; [ADR 0067](adr/0067-link-equalizer.md)).
+  Numbers must be finite.
   **(implemented)**
 - **FSK** (`"fsk2"`, `"fsk4"`: `M` = 2 or 4, `k = log2 M`, modulation index 1;
   [ADR 0057](adr/0057-fsk-link.md)) replaces the transmitter and receiver below; the checks above
@@ -1206,7 +1208,13 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
   64-QAM), `bits = prbs(prbs_order, k·num_symbols)`, `a = qpsk_map(bits)`, `qam16_map(bits)`,
   `psk8_map(bits)` or `qam64_map(bits)`,
   `h = rrc_taps(rolloff, sps, span_symbols)`, `tx` = `delay_samples` zeros followed by
-  `pulse_shape(a, h, sps)`. **(implemented)**
+  `pulse_shape(a, h, sps)`, and with multipath `max(multipath_delays)` zeros after that.
+  **(implemented)**
+- **Equalizer** ([ADR 0067](adr/0067-link-equalizer.md)): `equalizer_taps` is for the
+  single-carrier chains only (FSK and `"ofdm"` reject it), needs an even `samples_per_symbol`, and
+  rejects `timing_loop_gains` and `carrier_loop_gains`. Multipath in those chains needs it. With
+  multipath the channel first makes `tx` `multipath(tx, multipath_delays, gains)`.
+  **(implemented)**
 - **Channel:** `frequency_offset(tx, frequency_offset_hz, symbol_rate·sps, phase)`, then, with
   `phase_noise_linewidth_hz > 0`, `phase_noise(·, phase_noise_linewidth_hz, symbol_rate·sps)`,
   then, with `clock_offset_ppm ≠ 0`, `clock_offset(·, clock_offset_ppm)` (the receiver's clock), then, with
@@ -1241,13 +1249,24 @@ Decided in [ADR 0009](adr/0009-qpsk-link-report.md). Python: `signalforge.link`;
      to the frame start). Either way they are compared with
      `a` by `evm` and, after `qpsk_demap_hard` (`qam16_demap_hard`, `psk8_demap_hard`, `qam64_demap_hard`), with `bits` by `bit_errors`.
      The preamble counts.
+     With `equalizer_taps = L` they are instead `lms_equalizer(x, a[:P], L, equalizer_step,
+     samples_per_symbol=2, decision=modulation).symbols`, where `v = frequency_offset(y, −f,
+     symbol_rate·sps)`, `s₀ = (round(τ) mod sps) + k₀·sps`, and `x` the `2N` samples
+     `x[m] = v[s₀ + m·sps/2]`, 0 past the end of `v`. Output `n` then starts as `v[s₀ + n·sps]`,
+     the sample the steps above take. With the equalizer the preamble does not count: `evm` and
+     `bit_errors` compare symbols `P … N − 1` only (the bits from `k·P` on).
   **(implemented)**
 - **Report** (`QpskLinkReport`): `config`, `timing_offset` (τ, samples; the loop's start when it
   runs), `frame_start` (`k₀`,
   symbols into `r`), `frequency_offset_hz` (`f`), `phase_offset` (`φ`, rad: the carrier phase at the
   frame's first symbol), `evm` (an EVM record), `bit_errors` (an error-count record), `ber_theory`
   (`qpsk_ber_theory`, `qam16_ber_theory`, `psk8_ber_theory` or `qam64_ber_theory` of
-  `eb_n0_db`, or none without noise). For FSK see above: `frequency_offset_hz`, `phase_offset`
+  `eb_n0_db`, or none without noise). With multipath it is the matched-filter bound, that theory
+  at `eb_n0_db + 10·log10 E_h` (`1/2` if `E_h = 0`), `E_h = Σᵢ Σⱼ gᵢ·conj(gⱼ)·ρ((dⱼ − dᵢ)/sps)`
+  over the paths (its real part, summed in order of `i` then `j`), `ρ(t) = sinc(t)·cos(πβt)/(1 −
+  (2βt)²)` the raised cosine of `β = rolloff` (`(π/4)·sinc(1/(2β))` where `|t| = 1/(2β)`,
+  `sinc(t) = sin(πt)/(πt)`, `sinc(0) = 1`). It is a lower bound on the BER, not a
+  prediction. For FSK see above: `frequency_offset_hz`, `phase_offset`
   and `evm` are none. **(implemented)**
 - **JSON** (`to_json()` / `ToJson()`): an object with exactly those field names, nested records as
   objects, none as `null`, integers as integers, and non-finite numbers as the strings `"inf"`,

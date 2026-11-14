@@ -1,0 +1,10 @@
+{
+  "num_symbols": 4000,
+  "preamble_symbols": 500,
+  "frequency_offset_hz": 5.0,
+  "phase": 0.7,
+  "delay_samples": 3,
+  "equalizer_taps": 11,
+  "multipath_delays": [0, 2, 5],
+  "multipath_gains": [[1.0, 0.0], [0.3, 0.2], [-0.1, 0.0]]
+}

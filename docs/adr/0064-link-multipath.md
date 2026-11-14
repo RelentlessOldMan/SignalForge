@@ -20,7 +20,7 @@ own gain.
   the latest start ([ADR 0065](0065-ofdm-phase-noise-clock.md) makes that tail `⌊cp/2⌋` zeros
   for every OFDM run). Only `"ofdm"`
   accepts them for now: the single-carrier chains have no equalizer, so their `ber_theory` would
-  not hold. OFDM needs `max(delays) ≤ ⌊cp/2⌋`.
+  not hold ([ADR 0067](0067-link-equalizer.md) lets them take multipath with an equalizer). OFDM needs `max(delays) ≤ ⌊cp/2⌋`.
 - **Back-off:** after timing gives `d₁`, the DFT windows are taken from `d₂ = max(d₁ − ⌊cp/2⌋, 0)`.
   A window is clear of the previous block's echo when `d₂ ∈ [delay + D − cp, delay]` for the
   largest path delay `D`; `d₁` lies between `delay` and `delay + D`, so `D ≤ ⌊cp/2⌋` keeps it clear.

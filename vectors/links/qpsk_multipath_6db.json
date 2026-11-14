@@ -1,0 +1,12 @@
+{
+  "num_symbols": 20000,
+  "preamble_symbols": 1000,
+  "eb_n0_db": 6.0,
+  "frequency_offset_hz": 20.0,
+  "phase": 1.0,
+  "delay_samples": 2,
+  "seed": 67,
+  "equalizer_taps": 11,
+  "multipath_delays": [0, 2, 5],
+  "multipath_gains": [[1.0, 0.0], [0.3, 0.2], [-0.1, 0.0]]
+}

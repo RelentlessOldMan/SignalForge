@@ -75,12 +75,20 @@ public sealed record QpskLinkConfig
     public IReadOnlyList<int>? OfdmSubcarriers { get; init; }
 
     /// <summary>Multipath path delays in samples, each at least 0; null [the default] for none, else
-    /// as many as <see cref="MultipathGains"/>. "ofdm" only, at most half of <see cref="OfdmCpLen"/>.</summary>
+    /// as many as <see cref="MultipathGains"/>. "ofdm" (at most half of <see cref="OfdmCpLen"/>), or a
+    /// single-carrier modulation with <see cref="EqualizerTaps"/>.</summary>
     public IReadOnlyList<int>? MultipathDelays { get; init; }
 
     /// <summary>Multipath path gains, each a finite pair [re, im]; null exactly when
     /// <see cref="MultipathDelays"/> is null.</summary>
     public IReadOnlyList<IReadOnlyList<double>>? MultipathGains { get; init; }
+
+    /// <summary>LMS equalizer taps, at least 1, for the single-carrier modulations; null [the default]
+    /// for no equalizer (ADR 0067).</summary>
+    public int? EqualizerTaps { get; init; }
+
+    /// <summary>The equalizer's normalized step, 0 to 2.</summary>
+    public double EqualizerStep { get; init; } = 0.1;
 }
 
 /// <summary>What the receiver estimated and measured on one link run.</summary>
@@ -183,8 +191,25 @@ public static class Link
         Gains(c.CarrierLoopGains, nameof(c.CarrierLoopGains), nameof(config));
         int[] subcarriers = OfdmSubcarriersOf(c);
         Complex[]? paths = MultipathGainsOf(c);
-        if (paths is not null && mod != 6)
-            throw new ArgumentException("MultipathDelays and MultipathGains are for ofdm only", nameof(config));
+        if (c.EqualizerTaps is { } et)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(et, 1, nameof(config));
+            if (!(c.EqualizerStep >= 0 && c.EqualizerStep <= 2))
+                throw new ArgumentOutOfRangeException(nameof(config), c.EqualizerStep, "EqualizerStep must be between 0 and 2");
+            if (mod >= 4)
+                throw new ArgumentException("EqualizerTaps is for the single-carrier modulations only", nameof(config));
+            if (sps % 2 != 0)
+                throw new ArgumentException("the equalizer needs an even SamplesPerSymbol", nameof(config));
+            if (c.TimingLoopGains is not null || c.CarrierLoopGains is not null)
+                throw new ArgumentException("the equalizer takes no TimingLoopGains or CarrierLoopGains", nameof(config));
+        }
+        else
+        {
+            if (!(c.EqualizerStep >= 0 && c.EqualizerStep <= 2))
+                throw new ArgumentOutOfRangeException(nameof(config), c.EqualizerStep, "EqualizerStep must be between 0 and 2");
+            if (paths is not null && mod != 6)
+                throw new ArgumentException("MultipathDelays and MultipathGains need ofdm or EqualizerTaps", nameof(config));
+        }
         if (mod == 6)
             return OfdmLink(c, subcarriers);
         if (mod >= 4)
@@ -201,8 +226,11 @@ public static class Link
         };
         double[] h = Dsp.RrcTaps(c.Rolloff, sps, c.SpanSymbols);
         Complex[] shaped = Dsp.PulseShape(a, h, sps);
-        var tx = new Complex[c.DelaySamples + shaped.Length];
+        int spread = paths is null ? 0 : c.MultipathDelays!.Max();
+        var tx = new Complex[c.DelaySamples + shaped.Length + spread];
         shaped.CopyTo(tx, c.DelaySamples);
+        if (paths is not null)
+            tx = Channel.Multipath(tx, [.. c.MultipathDelays!], paths);
         Complex[] rx = ChannelOf(c, tx, bps, 1.0 / sps);
         // receiver
         Complex[] y = Dsp.Convolve(rx, h);
@@ -260,7 +288,21 @@ public static class Link
         for (int i = 0; i < pre; i++)
             cp += Complex.Conjugate(a[i]) * zp[i];
         phi = Wrap(phi + step * Math.Round(Math.Atan2(cp.Imaginary, cp.Real) / step));
-        if (c.CarrierLoopGains is { } cg)
+        if (c.EqualizerTaps is { } taps)
+        {
+            // fractionally spaced at 2 per symbol, its center on the sample the chain takes (ADR 0067)
+            Complex[] v = Channel.FrequencyOffset(y, -f, rs * sps);
+            int s0 = (int)Math.Round(tau) % sps + k0 * sps, half = sps / 2;
+            var xe = new Complex[2 * n];
+            for (int m = 0; m < xe.Length && s0 + m * half < v.Length; m++)
+                xe[m] = v[s0 + m * half];
+            Complex[] eq = Sync.LmsEqualizer(xe, a.AsSpan(0, pre), taps, c.EqualizerStep, 2, null, c.Modulation).Symbols;
+            // the preamble is the equalizer's training, so it does not count
+            z = eq[pre..];
+            a = a[pre..];
+            bits = bits[(bps * pre)..];
+        }
+        else if (c.CarrierLoopGains is { } cg)
         {
             Complex[] w = Channel.FrequencyOffset(r.AsSpan(k0, n), -f, rs);
             Complex cw = Complex.Zero;
@@ -285,14 +327,35 @@ public static class Link
             3 => SignalForge.Modulation.Qam64DemapHard(z),
             _ => SignalForge.Modulation.QpskDemapHard(z),
         };
-        double? theory = c.EbN0Db is not { } eb ? null : mod switch
+        double eh = PulseEnergy(c, paths);
+        double? theory = c.EbN0Db is not { } eb ? null : eh <= 0 ? 0.5 : mod switch
         {
-            1 => Metrics.Qam16BerTheory(eb),
-            2 => Metrics.Psk8BerTheory(eb),
-            3 => Metrics.Qam64BerTheory(eb),
-            _ => Metrics.QpskBerTheory(eb),
+            1 => Metrics.Qam16BerTheory(eb + 10 * Math.Log10(eh)),
+            2 => Metrics.Psk8BerTheory(eb + 10 * Math.Log10(eh)),
+            3 => Metrics.Qam64BerTheory(eb + 10 * Math.Log10(eh)),
+            _ => Metrics.QpskBerTheory(eb + 10 * Math.Log10(eh)),
         };
         return new QpskLinkReport(c, tau, k0, f, phi, Metrics.Evm(z, a), Metrics.BitErrors(bits, got), theory);
+    }
+
+    // E_h, the energy the multipath paths give one pulse, 1 without multipath: with it the theory is
+    // the matched-filter bound (conventions: QPSK link, Report)
+    private static double PulseEnergy(QpskLinkConfig c, Complex[]? paths)
+    {
+        if (paths is null)
+            return 1;
+        double beta = c.Rolloff, e = 0;
+        double Rho(double t) // raised cosine at t symbols
+        {
+            double sinc = t == 0 ? 1 : Math.Sin(Math.PI * t) / (Math.PI * t);
+            if (beta > 0 && Math.Abs(t) == 1 / (2 * beta))
+                return Math.PI / 4 * Math.Sin(Math.PI / (2 * beta)) / (Math.PI / (2 * beta));
+            return sinc * Math.Cos(Math.PI * beta * t) / (1 - (2 * beta * t) * (2 * beta * t));
+        }
+        for (int i = 0; i < paths.Length; i++)
+            for (int j = 0; j < paths.Length; j++)
+                e += (paths[i] * Complex.Conjugate(paths[j])).Real * Rho((double)(c.MultipathDelays![j] - c.MultipathDelays[i]) / c.SamplesPerSymbol);
+        return e;
     }
 
     // carrier offset, phase noise, clock offset and AWGN (conventions: QPSK link, Channel)

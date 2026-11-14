@@ -45,6 +45,7 @@ from .modulation import (
 )
 from .sync import (
     gardner_timing,
+    lms_equalizer,
     power_frequency_offset,
     psk8_block_phases,
     psk8_carrier_tracking,
@@ -85,6 +86,8 @@ class QpskLinkConfig:
     ofdm_subcarriers: tuple[int, ...] | None = None
     multipath_delays: tuple[int, ...] | None = None
     multipath_gains: tuple[tuple[float, float], ...] | None = None
+    equalizer_taps: int | None = None
+    equalizer_step: float = 0.1
 
 
 @dataclass(frozen=True)
@@ -242,9 +245,24 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         carrier_loop_gains=_gains(config.carrier_loop_gains, "carrier_loop_gains"),
         **_ofdm_fields(config),
         **_multipath_fields(config),
+        equalizer_taps=None
+        if config.equalizer_taps is None
+        else count(config.equalizer_taps, "equalizer_taps"),
+        equalizer_step=real(config.equalizer_step, "equalizer_step"),
     )
-    if c.multipath_delays is not None and c.modulation != "ofdm":
-        raise ValueError("multipath_delays and multipath_gains are for ofdm only")
+    if c.equalizer_taps is not None and c.equalizer_taps < 1:
+        raise ValueError("equalizer_taps must be at least 1")
+    if not 0 <= c.equalizer_step <= 2:
+        raise ValueError("equalizer_step must be between 0 and 2")
+    if c.equalizer_taps is not None:
+        if c.modulation not in _MODULATIONS:
+            raise ValueError("equalizer_taps is for the single-carrier modulations only")
+        if sps % 2:
+            raise ValueError("the equalizer needs an even samples_per_symbol")
+        if c.timing_loop_gains is not None or c.carrier_loop_gains is not None:
+            raise ValueError("the equalizer takes no timing_loop_gains or carrier_loop_gains")
+    elif c.multipath_delays is not None and c.modulation != "ofdm":
+        raise ValueError("multipath_delays and multipath_gains need ofdm or equalizer_taps")
     if c.modulation in _FSK_ORDERS:
         return _fsk_link(c)
     if c.modulation == "ofdm":
@@ -260,6 +278,9 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     h = rrc_taps(c.rolloff, sps, span)
     tx = np.concatenate([np.zeros(delay, dtype=np.complex128), pulse_shape(a, h, sps)])
     # channel
+    if c.multipath_delays is not None:
+        tx = np.concatenate([tx, np.zeros(max(c.multipath_delays), dtype=np.complex128)])
+        tx = multipath(tx, list(c.multipath_delays), [complex(*g) for g in c.multipath_gains or ()])
     rx = _channel(c, tx, bps, 1 / sps)
     # receiver
     y = np.asarray(convolve(rx, h), dtype=np.complex128)
@@ -289,7 +310,24 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
     # the preamble resolves the pi/2 (8-PSK: pi/4) ambiguity
     c_pre = complex(np.sum(ref * frequency_offset(z[:pre], -slope * rs / (2 * math.pi), rs, -phi)))
     phi = _wrap(phi + step * round(math.atan2(c_pre.imag, c_pre.real) / step))
-    if c.carrier_loop_gains is None:
+    if c.equalizer_taps is not None:
+        # fractionally spaced at 2 per symbol, its center on the sample the chain takes (ADR 0067)
+        v = frequency_offset(y, -f_hat, rs * sps)
+        s0 = round(tau) % sps + k0 * sps
+        xe = np.zeros(2 * n, dtype=np.complex128)
+        tail = v[s0 :: sps // 2][: 2 * n]
+        xe[: tail.size] = tail
+        z = lms_equalizer(
+            xe,
+            a[:pre],
+            c.equalizer_taps,
+            c.equalizer_step,
+            samples_per_symbol=2,
+            decision=c.modulation,
+        ).symbols[pre:]
+        # the preamble is the equalizer's training, so it does not count
+        a, bits = a[pre:], bits[bps * pre :]
+    elif c.carrier_loop_gains is None:
         z = frequency_offset(z_raw[k0 : k0 + n], -f_hat, rs, -phi)
     else:
         w = frequency_offset(z_raw[k0 : k0 + n], -f_hat, rs)
@@ -305,8 +343,36 @@ def qpsk_link(config: QpskLinkConfig) -> QpskLinkReport:
         phase_offset=phi,
         evm=evm(z, a),
         bit_errors=bit_errors(bits, demap(z)),
-        ber_theory=None if eb_n0_db is None else theory(eb_n0_db),
+        ber_theory=None if eb_n0_db is None else _theory(theory, eb_n0_db, _pulse_energy(c)),
     )
+
+
+def _theory(theory: Any, eb_n0_db: float, e_h: float) -> float:
+    """The chain's theory, at Eb/N0 scaled by the pulse energy ``e_h`` (1/2 if it is 0)."""
+    return 0.5 if e_h <= 0 else float(theory(eb_n0_db + 10 * math.log10(e_h)))
+
+
+def _pulse_energy(c: QpskLinkConfig) -> float:
+    """E_h, the energy the multipath paths give one pulse, 1 without multipath: with it the theory
+    is the matched-filter bound (conventions: QPSK link, Report)."""
+    if c.multipath_delays is None:
+        return 1.0
+    beta, sps = c.rolloff, c.samples_per_symbol
+
+    def rho(t: float) -> float:  # raised cosine at t symbols
+        sinc = 1.0 if t == 0 else math.sin(math.pi * t) / (math.pi * t)
+        if beta > 0 and abs(t) == 1 / (2 * beta):
+            return (math.pi / 4) * math.sin(math.pi / (2 * beta)) / (math.pi / (2 * beta))
+        return sinc * math.cos(math.pi * beta * t) / (1 - (2 * beta * t) ** 2)
+
+    paths = [
+        (d, complex(*g)) for d, g in zip(c.multipath_delays, c.multipath_gains or (), strict=True)
+    ]
+    e = 0.0
+    for di, gi in paths:
+        for dj, gj in paths:
+            e += (gi * gj.conjugate()).real * rho((dj - di) / sps)
+    return e
 
 
 def _channel(c: QpskLinkConfig, tx: Any, bps: int, signal_power: float) -> Any:
