@@ -371,6 +371,8 @@ public static class Conformance
                 ? WriteNpyOp(path => SignalFiles.WriteNpy(path, nz))
                 : Bind(Reals(a.Get("x")), x => WriteNpyOp(path => SignalFiles.WriteNpy(path, x))()),
             "read_npy" => ReadNpyOp(Str(a, "file")),
+            "write_npz" => WriteNpzOp(a.Get("arrays")),
+            "read_npz" => ReadNpzOp(Str(a, "file")),
             "resample" => ResampleOp(a, a.I("up"), a.I("down")),
             "interpolate" => ResampleOp(a, a.I("factor"), 1),
             "decimate" => ResampleOp(a, 1, a.I("factor")),
@@ -659,6 +661,24 @@ public static class Conformance
             File.Delete(path);
         }
     };
+
+    private static Func<object?> WriteNpzOp(object? arrays)
+    {
+        // A list of {name, x} records; an empty JSON list decodes as an empty number array.
+        List<KeyValuePair<string, Array>> items = arrays is double[] { Length: 0 } ? [] :
+            [.. ((List<object?>)arrays!).Cast<Dictionary<string, object?>>()
+                .Select(d => new KeyValuePair<string, Array>((string)d["name"]!, (Array)d["x"]!))];
+        return WriteNpyOp(path => SignalFiles.WriteNpz(path, items));
+    }
+
+    private static Func<object?> ReadNpzOp(string name)
+    {
+        if (Path.GetFileName(name) != name)
+            throw new InvalidDataException("file must be a bare file name in vectors/files");
+        string path = Path.Combine(VectorsDir(), "..", "files", name);
+        return () => SignalFiles.ReadNpz(path)
+            .Select(kv => (object?)new Dictionary<string, object?> { ["name"] = kv.Key, ["x"] = kv.Value }).ToList();
+    }
 
     private static Func<object?> WriteNpyOp(Action<string> write) => () =>
     {

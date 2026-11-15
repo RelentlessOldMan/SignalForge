@@ -8,6 +8,7 @@ import math
 import os
 import re
 import struct
+import zlib
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -433,16 +434,18 @@ _NPY_KEYS = frozenset({"descr", "fortran_order", "shape"})
 def write_npy(path: str | os.PathLike[str], x: ArrayLike) -> None:
     """Write a 1-D array as a NumPy ``.npy`` file: ``'<f8'`` for real values, ``'<c16'`` for
     complex, in the layout ``numpy.save`` writes (conventions: Signal files, NumPy .npy)."""
+    Path(os.fspath(path)).write_bytes(_npy_bytes(x, "x"))
+
+
+def _npy_bytes(x: ArrayLike, name: str) -> bytes:
     a = np.asarray(x)
     if a.ndim != 1 or a.dtype.kind not in "fiuc":
-        raise ValueError("x must be a 1-D numeric array")
+        raise ValueError(f"{name} must be a 1-D numeric array")
     descr = "<c16" if a.dtype.kind == "c" else "<f8"
     text = f"{{'descr': '{descr}', 'fortran_order': False, 'shape': ({a.size},), }}"
     head = (text.ljust(117) + "\n").encode("ascii")
     data = a.astype(_NPY_DESCR[descr]).tobytes()
-    Path(os.fspath(path)).write_bytes(
-        _NPY_MAGIC + b"\x01\x00" + struct.pack("<H", 118) + head + data
-    )
+    return _NPY_MAGIC + b"\x01\x00" + struct.pack("<H", 118) + head + data
 
 
 class _NpyHeader:
@@ -529,8 +532,11 @@ class _NpyHeader:
 def read_npy(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[np.complex128]:
     """Read a 1-D NumPy ``.npy`` file (versions 1.0 to 3.0) of ``float64``, ``float32``,
     ``float16``, ``complex128`` or ``complex64`` in either byte order, widened exactly to
-    ``float64`` or ``complex128`` (ADR 0088)."""
-    raw = Path(os.fspath(path)).read_bytes()
+    ``float64`` or ``complex128``    (ADR 0088)."""
+    return _parse_npy(Path(os.fspath(path)).read_bytes())
+
+
+def _parse_npy(raw: bytes) -> NDArray[np.float64] | NDArray[np.complex128]:
     if len(raw) < 8 or raw[:6] != _NPY_MAGIC:
         raise ValueError("not a .npy file")
     version = (raw[6], raw[7])
@@ -563,3 +569,137 @@ def read_npy(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[np.c
     if dt.kind == "c":
         return values.astype(np.complex128)
     return values.astype(np.float64)
+
+
+_ZIP_LOCAL, _ZIP_CENTRAL, _ZIP_END = b"PK\x03\x04", b"PK\x01\x02", b"PK\x05\x06"
+_ZIP_DATE = 0x0021  # 1980-01-01
+
+
+def write_npz(path: str | os.PathLike[str], arrays: Mapping[str, ArrayLike]) -> None:
+    """Write 1-D arrays as a NumPy ``.npz`` archive: one uncompressed ``<key>.npy`` member each, in
+    the mapping's order (conventions: Signal files, NumPy .npz; ADR 0089)."""
+    if not isinstance(arrays, Mapping):
+        raise ValueError("arrays must be a mapping from names to arrays")
+    if len(arrays) > 65535:
+        raise ValueError("an archive holds at most 65535 arrays")
+    body, central = bytearray(), bytearray()
+    for key, x in arrays.items():
+        if (
+            not isinstance(key, str)
+            or not 1 <= len(key) <= 250
+            or any(not " " <= c <= "~" or c in "/\\" for c in key)
+        ):
+            raise ValueError(
+                f"name {key!r} must be 1 to 250 printable ASCII characters, no / or \\"
+            )
+        name, data = (key + ".npy").encode("ascii"), _npy_bytes(x, f"arrays[{key!r}]")
+        crc, offset = zlib.crc32(data), len(body)
+        sizes = struct.pack("<HHHIIIH", 0, 0, _ZIP_DATE, crc, len(data), len(data), len(name))
+        body += _ZIP_LOCAL + struct.pack("<HH", 20, 0) + sizes + b"\0\0" + name + data
+        central += _ZIP_CENTRAL + struct.pack("<HHH", 20, 20, 0) + sizes
+        central += struct.pack("<HHHHII", 0, 0, 0, 0, 0, offset) + name
+        if len(body) + len(central) + 22 >= 2**32:
+            raise ValueError("the archive would reach 4 GiB, which needs ZIP64")
+    n = len(arrays)
+    end = _ZIP_END + struct.pack("<HHHHIIH", 0, 0, n, n, len(central), len(body), 0)
+    Path(os.fspath(path)).write_bytes(bytes(body + central + end))
+
+
+def read_npz(
+    path: str | os.PathLike[str],
+) -> dict[str, NDArray[np.float64] | NDArray[np.complex128]]:
+    """Read a NumPy ``.npz`` archive (stored or deflated ``.npy`` members) as a dict in member
+    order; the ZIP is parsed here, not by ``zipfile`` (conventions: Signal files, NumPy .npz;
+    ADR 0089)."""
+    raw = Path(os.fspath(path)).read_bytes()
+    at = next(
+        (
+            i
+            for i in range(len(raw) - 22, max(-1, len(raw) - 65558), -1)
+            if raw[i : i + 4] == _ZIP_END
+            and i + 22 + struct.unpack_from("<H", raw, i + 20)[0] == len(raw)
+        ),
+        -1,
+    )
+    if at < 0:
+        raise ValueError("not a ZIP archive: no end record")
+    disk, cd_disk, here, count, cd_size, cd_at = struct.unpack_from("<HHHHII", raw, at + 4)
+    if disk or cd_disk:
+        raise ValueError("multi-disk archives are not read")
+    if here != count:
+        raise ValueError("the end record's two member counts differ")
+    if count == 0xFFFF or cd_size == 0xFFFFFFFF or cd_at == 0xFFFFFFFF:
+        raise ValueError("archives that need ZIP64 are not read")
+    if cd_at + cd_size > at:
+        raise ValueError("the central directory runs past the end record")
+    out: dict[str, NDArray[np.float64] | NDArray[np.complex128]] = {}
+    i = cd_at
+    for _ in range(count):
+        if i + 46 > cd_at + cd_size or raw[i : i + 4] != _ZIP_CENTRAL:
+            raise ValueError("a central directory header is missing")
+        flags, method = struct.unpack_from("<HH", raw, i + 8)
+        crc, csize, usize, nlen, xlen, clen = struct.unpack_from("<IIIHHH", raw, i + 16)
+        (offset,) = struct.unpack_from("<I", raw, i + 42)
+        name_end = i + 46 + nlen
+        if name_end + xlen + clen > cd_at + cd_size:
+            raise ValueError("a central directory header runs past the directory")
+        name_raw, extra = raw[i + 46 : name_end], raw[name_end : name_end + xlen]
+        i = name_end + xlen + clen
+        if flags & 1:
+            raise ValueError("encrypted members are not read")
+        if method not in (0, 8):
+            raise ValueError(f"compression method {method} is not read (only stored and deflate)")
+        usize, csize, offset = _zip64_fields(extra, usize, csize, offset)
+        try:
+            name = name_raw.decode("utf-8" if flags & 0x800 else "ascii")
+        except UnicodeDecodeError:
+            raise ValueError("a member name is not valid text") from None
+        if not name.endswith(".npy") or len(name) == 4:
+            raise ValueError(f"member {name!r} is not a .npy array")
+        key = name[:-4]
+        if key in out:
+            raise ValueError(f"the archive has {key!r} twice")
+        if offset + 30 > len(raw) or raw[offset : offset + 4] != _ZIP_LOCAL:
+            raise ValueError(f"member {name!r} has no local header")
+        ln, lx = struct.unpack_from("<HH", raw, offset + 26)
+        start = offset + 30 + ln + lx
+        if start + csize > len(raw):
+            raise ValueError(f"member {name!r} runs past the end of the file")
+        data = raw[start : start + csize]
+        if method == 8:
+            d = zlib.decompressobj(-15)
+            try:
+                data = d.decompress(data, usize + 1)
+            except zlib.error:
+                raise ValueError(f"member {name!r} is not valid deflate data") from None
+        if len(data) != usize:
+            raise ValueError(f"member {name!r} is not {usize} bytes")
+        if zlib.crc32(data) != crc:
+            raise ValueError(f"member {name!r} fails its CRC-32")
+        out[key] = _parse_npy(data)
+    return out
+
+
+def _zip64_fields(extra: bytes, usize: int, csize: int, offset: int) -> tuple[int, int, int]:
+    """Sizes and offset, with each 0xFFFFFFFF taken from the ZIP64 extra field (0x0001)."""
+    need = [v == 0xFFFFFFFF for v in (usize, csize, offset)]
+    if not any(need):
+        return usize, csize, offset
+    j = 0
+    while j + 4 <= len(extra):
+        tag, size = struct.unpack_from("<HH", extra, j)
+        if tag == 1:
+            values = (
+                list(struct.unpack_from(f"<{size // 8}Q", extra, j + 4))
+                if j + 4 + size <= len(extra)
+                else []
+            )
+            got = [usize, csize, offset]
+            for k in range(3):
+                if need[k]:
+                    if not values:
+                        raise ValueError("the ZIP64 extra field is too short")
+                    got[k] = values.pop(0)
+            return got[0], got[1], got[2]
+        j += 4 + size
+    raise ValueError("a ZIP64 size or offset has no ZIP64 extra field")

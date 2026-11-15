@@ -64,9 +64,11 @@ from .files import (
     decode_samples,
     encode_samples,
     read_npy,
+    read_npz,
     read_sigmf,
     read_wav,
     write_npy,
+    write_npz,
     write_sigmf,
     write_wav,
 )
@@ -172,7 +174,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.14.4"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.14.5"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -318,6 +320,7 @@ __all__ = [
     "qpsk_map",
     "qpsk_phase_offset",
     "read_npy",
+    "read_npz",
     "read_sigmf",
     "read_wav",
     "resample",
@@ -339,6 +342,7 @@ __all__ = [
     "window",
     "window_stats",
     "write_npy",
+    "write_npz",
     "write_sigmf",
     "write_wav",
     "zero_phase_filter",

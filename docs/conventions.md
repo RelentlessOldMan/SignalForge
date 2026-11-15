@@ -1634,6 +1634,39 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     shape that is not one integer, and a data size other than `n` × the item size.
     In C# a file of the other kind than `T` is rejected. A missing file is an OS error.
     **(implemented)**
+- **NumPy `.npz`** ([ADR 0089](adr/0089-npz.md)): `write_npz(path, arrays)`, `read_npz(path)` (C#
+  `WriteNpz`, `ReadNpz`), a ZIP archive of one `.npy` member per array, named `<key>.npy`, in the
+  mapping's order. All numbers in the ZIP structures are little-endian.
+  - Writing: for each member, a local header (`50 4B 03 04`, version needed 20, flags 0, method
+    0, time 0, date `0x0021`, CRC-32, size, size, name length, extra length 0, the name), then the
+    member's `write_npy` bytes. Then one central header per member (`50 4B 01 02`, version made by
+    20, version needed 20, flags 0, method 0, time 0, date `0x0021`, CRC-32, size, size, name
+    length, extra 0, comment 0, disk 0, internal attributes 0, external attributes 0, the local
+    header's offset, the name). Then the end record (`50 4B 05 06`, disks 0 and 0, the member
+    count twice, the central directory's size and offset, comment length 0). CRC-32 is the ZIP
+    one: reflected polynomial `0xEDB88320`, initial value and final XOR `0xFFFFFFFF`. Keys are 1
+    to 250 printable ASCII characters without `/` or `\`, each used once; at most 65535 members,
+    and the archive must stay under 4 GiB. An empty mapping writes just the end record.
+  - Reading: the end record is the last `50 4B 05 06` that sits within 65557 bytes of the end and
+    whose comment runs exactly to the end. Its disk numbers must be 0, and its two counts must be
+    equal. An archive that needs ZIP64 (a count of `0xFFFF`, or a size or offset of `0xFFFFFFFF`,
+    in the end record) is rejected. The central directory must lie inside the file and hold
+    exactly the count of headers. For each central header:
+    - flag bit 0 (encryption) is rejected;
+    - the method must be 0 or 8;
+    - a compressed size, an uncompressed size or an offset of `0xFFFFFFFF` is taken from the ZIP64
+      extra field (`0x0001`), whose 8-byte values come in that order and only for the fields that
+      are `0xFFFFFFFF`;
+    - the name is UTF-8 if flag bit 11 is set, otherwise ASCII;
+    - the name must end in `.npy`, and the key (the name without it) must be non-empty and
+      unique.
+
+    At the offset there must be a local header (`50 4B 03 04`); the data starts after its name and
+    extra field (their lengths are the local header's own). Stored data must have the
+    uncompressed size. Deflated data must inflate to exactly the uncompressed size (bytes after the
+    end of the deflate stream are not checked: .NET's inflater cannot report them). The CRC-32 of the result must match. The result is then read as a
+    `.npy` file. Anything else is `invalid_argument`. A missing file is an OS error.
+    **(implemented)**
 
 ## PRBS
 

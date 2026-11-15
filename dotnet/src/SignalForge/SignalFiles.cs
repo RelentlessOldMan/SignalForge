@@ -696,7 +696,10 @@ public static class SignalFiles
         WriteNpyFile(path, "<c16", x.Length, MemoryMarshal.AsBytes(x));
     }
 
-    private static void WriteNpyFile(string path, string descr, int n, ReadOnlySpan<byte> native)
+    private static void WriteNpyFile(string path, string descr, int n, ReadOnlySpan<byte> native) =>
+        File.WriteAllBytes(path, NpyBytes(descr, n, native));
+
+    private static byte[] NpyBytes(string descr, int n, ReadOnlySpan<byte> native)
     {
         string text = string.Create(CultureInfo.InvariantCulture, $"{{'descr': '{descr}', 'fortran_order': False, 'shape': ({n},), }}");
         byte[] file = new byte[128 + native.Length];
@@ -711,7 +714,7 @@ public static class SignalFiles
             Span<long> words = MemoryMarshal.Cast<byte, long>(data);
             BinaryPrimitives.ReverseEndianness(words, words);
         }
-        File.WriteAllBytes(path, file);
+        return file;
     }
 
     /// <summary>Reads a 1-D NumPy <c>.npy</c> file, versions 1.0 to 3.0, of binary64, binary32 or binary16
@@ -728,44 +731,49 @@ public static class SignalFiles
         bool wantComplex = typeof(T) == typeof(Complex);
         if (!wantComplex && typeof(T) != typeof(double))
             throw new ArgumentException($"the element type must be double or Complex, not {typeof(T).Name}", nameof(T));
-        byte[] raw = File.ReadAllBytes(path);
-        ArgumentException Bad(string message) => new(message, nameof(path));
+        Array values = ParseNpy(File.ReadAllBytes(path), message => new ArgumentException(message, nameof(path)));
+        return values as T[] ?? throw new ArgumentException(
+            $"the file holds {(values is Complex[]? "complex" : "real")} values, not {typeof(T).Name}", nameof(path));
+    }
+
+    /// <summary>The values in a <c>.npy</c> file's bytes: a <see cref="double"/>[] or a <see cref="Complex"/>[]
+    /// (conventions: Signal files, NumPy .npy).</summary>
+    private static Array ParseNpy(byte[] raw, Func<string, ArgumentException> bad)
+    {
         if (raw.Length < 8 || !raw.AsSpan(0, 6).SequenceEqual(NpyMagic))
-            throw Bad("not a .npy file");
+            throw bad("not a .npy file");
         int width = (raw[6], raw[7]) switch
         {
             (1, 0) => 2,
             (2, 0) or (3, 0) => 4,
-            _ => throw Bad($".npy version {raw[6]}.{raw[7]} is not supported"),
+            _ => throw bad($".npy version {raw[6]}.{raw[7]} is not supported"),
         };
         if (raw.Length < 8 + width)
-            throw Bad("the .npy file ends inside its header length");
+            throw bad("the .npy file ends inside its header length");
         long size = width == 2 ? BinaryPrimitives.ReadUInt16LittleEndian(raw.AsSpan(8)) : BinaryPrimitives.ReadUInt32LittleEndian(raw.AsSpan(8));
         long start = 8 + width + size;
         if (start > raw.Length)
-            throw Bad("the .npy header runs past the end of the file");
+            throw bad("the .npy header runs past the end of the file");
         ReadOnlySpan<byte> head = raw.AsSpan(8 + width, (int)size);
         if (head.ContainsAnyInRange((byte)128, (byte)255))
-            throw Bad("the .npy header must be ASCII");
-        Dictionary<string, object> d = new NpyHeader(System.Text.Encoding.ASCII.GetString(head), Bad).Parse();
+            throw bad("the .npy header must be ASCII");
+        Dictionary<string, object> d = new NpyHeader(System.Text.Encoding.ASCII.GetString(head), bad).Parse();
         if (d.Count != 3 || !d.TryGetValue("descr", out object? descr) || !d.TryGetValue("fortran_order", out object? order)
             || !d.TryGetValue("shape", out object? shapeValue))
-            throw Bad("the .npy header needs exactly descr, fortran_order and shape");
+            throw bad("the .npy header needs exactly descr, fortran_order and shape");
         if (descr is not string { Length: >= 3 } ds || ds[0] is not ('<' or '>')
             || ds[1..] is not ("f8" or "f4" or "f2" or "c16" or "c8"))
-            throw Bad($"only float and complex arrays with '<' or '>' are read, not {descr}");
+            throw bad($"only float and complex arrays with '<' or '>' are read, not {descr}");
         if (order is not bool)
-            throw Bad("fortran_order must be True or False");
+            throw bad("fortran_order must be True or False");
         if (shapeValue is not long[] { Length: 1 } shape)
-            throw Bad("only 1-D arrays are read");
+            throw bad("only 1-D arrays are read");
         bool isComplex = ds[1] == 'c', little = ds[0] == '<';
-        if (isComplex != wantComplex)
-            throw Bad($"the file holds {(isComplex ? "complex" : "real")} values, not {typeof(T).Name}");
         int partSize = int.Parse(ds.AsSpan(2), CultureInfo.InvariantCulture) / (isComplex ? 2 : 1); // bytes per part
         int parts = isComplex ? 2 : 1;
         long bytes = raw.Length - start;
         if (bytes % (partSize * parts) != 0 || bytes / (partSize * parts) != shape[0])
-            throw Bad(string.Create(CultureInfo.InvariantCulture, $"{bytes} data bytes do not match shape ({shape[0]},)"));
+            throw bad(string.Create(CultureInfo.InvariantCulture, $"{bytes} data bytes do not match shape ({shape[0]},)"));
         var values = new double[bytes / partSize];
         ReadOnlySpan<byte> src = raw.AsSpan((int)start);
         for (int i = 0; i < values.Length; i++)
@@ -782,11 +790,234 @@ public static class SignalFiles
             };
         }
         if (!isComplex)
-            return (T[])(object)values;
+            return values;
         var z = new Complex[values.Length / 2];
         for (int i = 0; i < z.Length; i++)
             z[i] = new Complex(values[2 * i], values[(2 * i) + 1]);
-        return (T[])(object)z;
+        return z;
+    }
+
+    private static readonly uint[] Crc32Table = [.. Enumerable.Range(0, 256).Select(n =>
+    {
+        uint c = (uint)n;
+        for (int k = 0; k < 8; k++)
+            c = (c & 1) != 0 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
+        return c;
+    })];
+
+    /// <summary>The ZIP CRC-32 (reflected polynomial 0xEDB88320).</summary>
+    private static uint Crc32(ReadOnlySpan<byte> data)
+    {
+        uint c = 0xFFFFFFFF;
+        foreach (byte b in data)
+            c = Crc32Table[(c ^ b) & 0xFF] ^ (c >> 8);
+        return ~c;
+    }
+
+    /// <summary>Writes 1-D arrays as a NumPy <c>.npz</c> archive: one uncompressed <c>&lt;key&gt;.npy</c> member
+    /// each, in order (conventions: Signal files, NumPy .npz; ADR 0089).</summary>
+    /// <param name="path">The file to write.</param>
+    /// <param name="arrays">Names (1 to 250 printable ASCII characters, no <c>/</c> or <c>\</c>, each once)
+    /// and their values, each a <see cref="double"/>[] or a <see cref="Complex"/>[].</param>
+    public static void WriteNpz(string path, IEnumerable<KeyValuePair<string, Array>> arrays)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        ArgumentNullException.ThrowIfNull(arrays);
+        var body = new MemoryStream();
+        var central = new MemoryStream();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        Span<byte> h = stackalloc byte[46];
+        foreach ((string key, Array x) in arrays)
+        {
+            if (key is null || key.Length is < 1 or > 250 || key.Any(c => c is < ' ' or > '~' or '/' or '\\'))
+                throw new ArgumentException($"name '{key}' must be 1 to 250 printable ASCII characters, no / or \\", nameof(arrays));
+            if (!seen.Add(key))
+                throw new ArgumentException($"name '{key}' is used twice", nameof(arrays));
+            if (seen.Count > 65535)
+                throw new ArgumentException("an archive holds at most 65535 arrays", nameof(arrays));
+            byte[] data = x switch
+            {
+                double[] r => NpyBytes("<f8", r.Length, MemoryMarshal.AsBytes(r.AsSpan())),
+                Complex[] z => NpyBytes("<c16", z.Length, MemoryMarshal.AsBytes(z.AsSpan())),
+                _ => throw new ArgumentException($"arrays['{key}'] must be a double[] or a Complex[]", nameof(arrays)),
+            };
+            byte[] name = System.Text.Encoding.ASCII.GetBytes(key + ".npy");
+            uint crc = Crc32(data), offset = (uint)body.Length;
+            h.Clear();
+            BinaryPrimitives.WriteUInt32LittleEndian(h, 0x04034B50);
+            BinaryPrimitives.WriteUInt16LittleEndian(h[4..], 20);
+            BinaryPrimitives.WriteUInt16LittleEndian(h[12..], 0x0021);
+            BinaryPrimitives.WriteUInt32LittleEndian(h[14..], crc);
+            BinaryPrimitives.WriteUInt32LittleEndian(h[18..], (uint)data.Length);
+            BinaryPrimitives.WriteUInt32LittleEndian(h[22..], (uint)data.Length);
+            BinaryPrimitives.WriteUInt16LittleEndian(h[26..], (ushort)name.Length);
+            body.Write(h[..30]);
+            body.Write(name);
+            body.Write(data);
+            h.Clear();
+            BinaryPrimitives.WriteUInt32LittleEndian(h, 0x02014B50);
+            BinaryPrimitives.WriteUInt16LittleEndian(h[4..], 20);
+            BinaryPrimitives.WriteUInt16LittleEndian(h[6..], 20);
+            BinaryPrimitives.WriteUInt16LittleEndian(h[14..], 0x0021);
+            BinaryPrimitives.WriteUInt32LittleEndian(h[16..], crc);
+            BinaryPrimitives.WriteUInt32LittleEndian(h[20..], (uint)data.Length);
+            BinaryPrimitives.WriteUInt32LittleEndian(h[24..], (uint)data.Length);
+            BinaryPrimitives.WriteUInt16LittleEndian(h[28..], (ushort)name.Length);
+            BinaryPrimitives.WriteUInt32LittleEndian(h[42..], offset);
+            central.Write(h);
+            central.Write(name);
+            if (body.Length + central.Length + 22 >= 1L << 32)
+                throw new ArgumentException("the archive would reach 4 GiB, which needs ZIP64", nameof(arrays));
+        }
+        Span<byte> end = stackalloc byte[22];
+        end.Clear();
+        BinaryPrimitives.WriteUInt32LittleEndian(end, 0x06054B50);
+        BinaryPrimitives.WriteUInt16LittleEndian(end[8..], (ushort)seen.Count);
+        BinaryPrimitives.WriteUInt16LittleEndian(end[10..], (ushort)seen.Count);
+        BinaryPrimitives.WriteUInt32LittleEndian(end[12..], (uint)central.Length);
+        BinaryPrimitives.WriteUInt32LittleEndian(end[16..], (uint)body.Length);
+        using var file = File.Create(path);
+        body.WriteTo(file);
+        central.WriteTo(file);
+        file.Write(end);
+    }
+
+    /// <summary>Reads a NumPy <c>.npz</c> archive of stored or deflated <c>.npy</c> members, in member order. The
+    /// ZIP is parsed here, not by <c>ZipArchive</c> (conventions: Signal files, NumPy .npz; ADR 0089).</summary>
+    /// <param name="path">The file to read.</param>
+    /// <returns>Each key and its values, a <see cref="double"/>[] or a <see cref="Complex"/>[].</returns>
+    /// <exception cref="ArgumentException">The file is not a <c>.npz</c> archive this reads.</exception>
+    public static OrderedDictionary<string, Array> ReadNpz(string path)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        byte[] raw = File.ReadAllBytes(path);
+        ArgumentException Bad(string message) => new(message, nameof(path));
+        ushort U16(long i) => BinaryPrimitives.ReadUInt16LittleEndian(raw.AsSpan((int)i));
+        uint U32(long i) => BinaryPrimitives.ReadUInt32LittleEndian(raw.AsSpan((int)i));
+        long at = -1;
+        for (long i = raw.Length - 22; i >= Math.Max(0, raw.Length - 65557); i--)
+        {
+            if (U32(i) == 0x06054B50 && i + 22 + U16(i + 20) == raw.Length)
+            {
+                at = i;
+                break;
+            }
+        }
+        if (at < 0)
+            throw Bad("not a ZIP archive: no end record");
+        if (U16(at + 4) != 0 || U16(at + 6) != 0)
+            throw Bad("multi-disk archives are not read");
+        int count = U16(at + 10);
+        if (U16(at + 8) != count)
+            throw Bad("the end record's two member counts differ");
+        long cdSize = U32(at + 12), cdAt = U32(at + 16);
+        if (count == 0xFFFF || cdSize == 0xFFFFFFFF || cdAt == 0xFFFFFFFF)
+            throw Bad("archives that need ZIP64 are not read");
+        if (cdAt + cdSize > at)
+            throw Bad("the central directory runs past the end record");
+        var result = new OrderedDictionary<string, Array>(StringComparer.Ordinal);
+        long p = cdAt, cdEnd = cdAt + cdSize;
+        for (int m = 0; m < count; m++)
+        {
+            if (p + 46 > cdEnd || U32(p) != 0x02014B50)
+                throw Bad("a central directory header is missing");
+            int flags = U16(p + 8), method = U16(p + 10);
+            uint crc = U32(p + 16);
+            long csize = U32(p + 20), usize = U32(p + 24), offset = U32(p + 42);
+            int nlen = U16(p + 28), xlen = U16(p + 30), clen = U16(p + 32);
+            long nameEnd = p + 46 + nlen;
+            if (nameEnd + xlen + clen > cdEnd)
+                throw Bad("a central directory header runs past the directory");
+            byte[] nameRaw = raw[(int)(p + 46)..(int)nameEnd];
+            ReadOnlySpan<byte> extra = raw.AsSpan((int)nameEnd, xlen);
+            p = nameEnd + xlen + clen;
+            if ((flags & 1) != 0)
+                throw Bad("encrypted members are not read");
+            if (method is not (0 or 8))
+                throw Bad(string.Create(CultureInfo.InvariantCulture, $"compression method {method} is not read (only stored and deflate)"));
+            (usize, csize, offset) = Zip64Fields(extra, usize, csize, offset, Bad);
+            string name;
+            try
+            {
+                name = (flags & 0x800) != 0
+                    ? new System.Text.UTF8Encoding(false, true).GetString(nameRaw)
+                    : nameRaw.Any(b => b > 127) ? throw Bad("a member name is not valid text") : System.Text.Encoding.ASCII.GetString(nameRaw);
+            }
+            catch (System.Text.DecoderFallbackException)
+            {
+                throw Bad("a member name is not valid text");
+            }
+            if (!name.EndsWith(".npy", StringComparison.Ordinal) || name.Length == 4)
+                throw Bad($"member '{name}' is not a .npy array");
+            string key = name[..^4];
+            if (result.ContainsKey(key))
+                throw Bad($"the archive has '{key}' twice");
+            if (offset + 30 > raw.Length || U32(offset) != 0x04034B50)
+                throw Bad($"member '{name}' has no local header");
+            long start = offset + 30 + U16(offset + 26) + U16(offset + 28);
+            if (start + csize > raw.Length)
+                throw Bad($"member '{name}' runs past the end of the file");
+            byte[] data;
+            if (method == 0)
+            {
+                data = raw[(int)start..(int)(start + csize)];
+            }
+            else
+            {
+                if (usize > int.MaxValue - 1)
+                    throw Bad($"member '{name}' is too large");
+                using var inflate = new System.IO.Compression.DeflateStream(
+                    new MemoryStream(raw, (int)start, (int)csize), System.IO.Compression.CompressionMode.Decompress);
+                var buffer = new byte[usize + 1];
+                int got = 0;
+                try
+                {
+                    for (int r; got < buffer.Length && (r = inflate.Read(buffer, got, buffer.Length - got)) > 0;)
+                        got += r;
+                }
+                catch (InvalidDataException)
+                {
+                    throw Bad($"member '{name}' is not valid deflate data");
+                }
+                data = buffer[..got];
+            }
+            if (data.Length != usize)
+                throw Bad(string.Create(CultureInfo.InvariantCulture, $"member '{name}' is not {usize} bytes"));
+            if (Crc32(data) != crc)
+                throw Bad($"member '{name}' fails its CRC-32");
+            result.Add(key, ParseNpy(data, Bad));
+        }
+        return result;
+    }
+
+    /// <summary>Sizes and offset, with each 0xFFFFFFFF taken from the ZIP64 extra field (0x0001).</summary>
+    private static (long USize, long CSize, long Offset) Zip64Fields(ReadOnlySpan<byte> extra, long usize, long csize, long offset,
+        Func<string, ArgumentException> bad)
+    {
+        bool[] need = [usize == 0xFFFFFFFF, csize == 0xFFFFFFFF, offset == 0xFFFFFFFF];
+        if (!need.Any(v => v))
+            return (usize, csize, offset);
+        for (int j = 0; j + 4 <= extra.Length;)
+        {
+            int tag = BinaryPrimitives.ReadUInt16LittleEndian(extra[j..]), size = BinaryPrimitives.ReadUInt16LittleEndian(extra[(j + 2)..]);
+            if (tag == 1)
+            {
+                int available = j + 4 + size <= extra.Length ? size / 8 : 0, next = 0;
+                long[] got = [usize, csize, offset];
+                for (int k = 0; k < 3; k++)
+                {
+                    if (!need[k])
+                        continue;
+                    if (next >= available)
+                        throw bad("the ZIP64 extra field is too short");
+                    ulong v = BinaryPrimitives.ReadUInt64LittleEndian(extra[(j + 4 + (8 * next++))..]);
+                    got[k] = v > int.MaxValue ? throw bad("a ZIP64 size or offset is too large") : (long)v;
+                }
+                return (got[0], got[1], got[2]);
+            }
+            j += 4 + size;
+        }
+        throw bad("a ZIP64 size or offset has no ZIP64 extra field");
     }
 
     /// <summary>The header grammar of conventions: Signal files, NumPy .npy. Values are strings, bools and

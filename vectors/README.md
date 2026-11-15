@@ -57,8 +57,9 @@ Structured results use the Python field names (`mean_power`, `peak_index`, …).
 ## Generators
 
 `generators/*.py` compute a whole case file from first principles with the Python standard
-library only. Each `generators/NAME.py` writes `cases/NAME.json`; `files.py`, `wav.py` and
-`npy.py` also write the recordings, `.wav` and `.npy` files in `files/` that their cases read.
+library only. Each `generators/NAME.py` writes `cases/NAME.json`; `files.py`, `wav.py`,
+`npy.py` and `npz.py` also write the recordings, `.wav`, `.npy` and `.npz` files in `files/` that
+their cases read.
 Run one from the repo root to rewrite its file;
 `--check` compares instead and exits 1 on any difference. CI runs every generator with `--check`.
 

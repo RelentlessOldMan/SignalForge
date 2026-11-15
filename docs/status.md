@@ -4,14 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **`.npz` archives**: `write_npz(path, arrays)` and `read_npz(path)` (C# `WriteNpz`,
-   `ReadNpz`) for a mapping of names to 1-D arrays, each member a `.npy` file as `read_npy` and
-   `write_npy` handle. Writing stores the members uncompressed, as `numpy.savez` does; reading
-   takes stored and deflated members (`numpy.savez_compressed`). The ZIP support comes from the
-   standard libraries (`zipfile`, `System.IO.Compression`), so there is no new dependency. Needs an
-   ADR: member names, order, which ZIP features are rejected (encryption, ZIP64, other methods).
-   Expected values: the generator lays out the ZIP by hand with `struct` and `zlib.crc32`, and
-   deflated members come from `zlib`, which is independent of both readers.
+1. **`.npy` integer dtypes on read**: `read_npy` (and so `read_npz`) also takes `|i1`, `|u1`
+   and `<`/`>` `i2`, `u2`, `i4`, `u4`, `i8`, `u8`, read as float64 values with no scaling. Every
+   value up to 2^53 in magnitude is exact; wider 64-bit values round to the nearest double, ties to
+   even, as `numpy.astype(float64)` does. Writing stays float64 and complex128. Needs a short ADR
+   (no scaling, unlike WAV and SigMF integers, because a `.npy` file has no full-scale convention).
+   Expected values: struct-packed integers and their exact or hand-rounded doubles.
 
 ## Built
 
@@ -910,13 +908,28 @@ Updated with every chunk of work. Dates are absolute.
   test value has to be exact in the narrowest type. 1000.25 is not exact in binary16, and only
   C#, which compares with the original value, caught it. Python 3322 passed, 2 skipped;
   .NET 2779 passed; conformance 1700/1700 in both. Version 2026.11.14.4.
+- 2026-11-14: NumPy `.npz` archives (ADR 0089): `write_npz(path, arrays)` and `read_npz(path)`
+  (C# `WriteNpz`, `ReadNpz`, the latter returning an `OrderedDictionary<string, Array>`). Each member
+  is a `.npy` file as `write_npy` writes and `read_npy` reads, keyed by its name without `.npy`, in
+  archive order. Writing stores members uncompressed with a fixed 1980-01-01 timestamp, so the bytes
+  are the same in both languages and `numpy.load` reads them. Reading takes stored and deflated
+  members, ZIP64 extra fields (which `numpy.savez` always writes), data descriptors, UTF-8 names and
+  archive comments. It rejects encryption, other methods (bzip2, LZMA, Deflate64), multi-disk and
+  ZIP64-end archives, a bad CRC-32, a wrong size, non-`.npy` members and duplicate keys. Both
+  languages parse the ZIP by hand (CRC-32 and inflate from `zlib` and `System.IO.Compression`)
+  rather than through `zipfile` or `ZipArchive`, because the two accept different methods. New
+  generator `npz.py` (43 cases, 33 archives, stdlib `struct` and `zlib` only); its good archives
+  were also checked with `numpy.load`. Lesson: an archive comment that holds the end signature is
+  ambiguous, and `zipfile` takes the wrong record, so it was not kept as a good case.
+  Python 3382 passed, 2 skipped; .NET 2837 passed; conformance 1743/1743 in both. Version
+  2026.11.14.5.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, `.npy` integer dtypes and other shapes, streaming reads and writes, multi-channel and
+phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npy` integer dtypes and other shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks), plotting, CLI,
 packaging and publishing.
 
