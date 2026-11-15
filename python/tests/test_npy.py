@@ -68,11 +68,33 @@ def test_reads_numpy_save_of_a_view(tmp_path: Path) -> None:
     np.testing.assert_array_equal(read_npy(path), [0.0, 3.0, 6.0, 9.0])
 
 
-def test_numpy_big_endian_save_is_rejected(tmp_path: Path) -> None:
+@pytest.mark.parametrize("descr", ["<f8", ">f8", "<f4", ">f4", "<f2", ">f2"])
+def test_reads_numpy_save_of_each_real_dtype(tmp_path: Path, descr: str) -> None:
     path = tmp_path / "x.npy"
-    np.save(path, np.arange(3.0).astype(">f8"))
+    x = np.array([0.5, -1.5, np.inf, -0.0, 2.0**-24, 1000.5]).astype(descr)
+    np.save(path, x)
+    got = read_npy(path)
+    assert got.dtype == np.float64
+    np.testing.assert_array_equal(got, x.astype(np.float64))
+    assert np.signbit(got[3])
+
+
+@pytest.mark.parametrize("descr", ["<c16", ">c16", "<c8", ">c8"])
+def test_reads_numpy_save_of_each_complex_dtype(tmp_path: Path, descr: str) -> None:
+    path = tmp_path / "x.npy"
+    rng = np.random.default_rng(3)
+    z = (rng.standard_normal(50) + 1j * rng.standard_normal(50)).astype(descr)
+    np.save(path, z)
+    got = read_npy(path)
+    assert got.dtype == np.complex128
+    np.testing.assert_array_equal(got, z.astype(np.complex128))
+
+
+@pytest.mark.parametrize("descr", ["=f8", "|f8", "<f16", "<i4", "<u2", "<c32"])
+def test_other_descrs_are_rejected(tmp_path: Path, descr: str) -> None:
+    header = f"{{'descr':'{descr}','fortran_order':False,'shape':(1,)}}"
     with pytest.raises(ValueError):
-        read_npy(path)
+        read_npy(_file(tmp_path, header))
 
 
 def _file(tmp_path: Path, header: str) -> Path:

@@ -1626,8 +1626,12 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     value is a string, `True`, `False` or a tuple; a tuple is `(` integers separated by `,` `)`,
     and a single integer needs its trailing `,`; an integer is decimal digits without a leading
     zero (other than `0` itself). The keys are exactly `descr`, `fortran_order` (a bool, either
-    value) and `shape`, each once. Rejected: anything else, a descr other than `'<f8'` and
-    `'<c16'`, a shape that is not one integer, and a data size other than `n` × 8 or 16 bytes.
+    value) and `shape`, each once. The descr is `'<f8'`, `'>f8'`, `'<f4'`, `'>f4'`, `'<f2'`,
+    `'>f2'`, `'<c16'`, `'>c16'`, `'<c8'` or `'>c8'` ([ADR 0088](adr/0088-npy-read-dtypes.md)):
+    IEEE binary64, binary32 or binary16 in that byte order, a complex item being the real then
+    the imaginary part. Values are widened exactly to `float64` / `complex128`; a NaN stays NaN.
+    Rejected: anything else, any other descr (`=` and `|` byte orders, integers, structured), a
+    shape that is not one integer, and a data size other than `n` × the item size.
     In C# a file of the other kind than `T` is rejected. A missing file is an OS error.
     **(implemented)**
 

@@ -714,9 +714,11 @@ public static class SignalFiles
         File.WriteAllBytes(path, file);
     }
 
-    /// <summary>Reads a 1-D <c>'&lt;f8'</c> or <c>'&lt;c16'</c> NumPy <c>.npy</c> file, versions 1.0 to 3.0
-    /// (conventions: Signal files, NumPy .npy). The header is parsed, never evaluated.</summary>
-    /// <typeparam name="T"><see cref="double"/> for <c>'&lt;f8'</c>, <see cref="Complex"/> for <c>'&lt;c16'</c>.</typeparam>
+    /// <summary>Reads a 1-D NumPy <c>.npy</c> file, versions 1.0 to 3.0, of binary64, binary32 or binary16
+    /// floats or complex pairs in either byte order, widened exactly (conventions: Signal files, NumPy .npy;
+    /// ADR 0088). The header is parsed, never evaluated.</summary>
+    /// <typeparam name="T"><see cref="double"/> for <c>f8</c>, <c>f4</c>, <c>f2</c>; <see cref="Complex"/> for
+    /// <c>c16</c>, <c>c8</c>.</typeparam>
     /// <param name="path">The file to read.</param>
     /// <returns>The values.</returns>
     /// <exception cref="ArgumentException">The file is not a <c>.npy</c> file of <typeparamref name="T"/> this reads.</exception>
@@ -749,28 +751,42 @@ public static class SignalFiles
         if (d.Count != 3 || !d.TryGetValue("descr", out object? descr) || !d.TryGetValue("fortran_order", out object? order)
             || !d.TryGetValue("shape", out object? shapeValue))
             throw Bad("the .npy header needs exactly descr, fortran_order and shape");
-        if (descr is not ("<f8" or "<c16"))
-            throw Bad($"only '<f8' and '<c16' arrays are read, not {descr}");
+        if (descr is not string { Length: >= 3 } ds || ds[0] is not ('<' or '>')
+            || ds[1..] is not ("f8" or "f4" or "f2" or "c16" or "c8"))
+            throw Bad($"only float and complex arrays with '<' or '>' are read, not {descr}");
         if (order is not bool)
             throw Bad("fortran_order must be True or False");
         if (shapeValue is not long[] { Length: 1 } shape)
             throw Bad("only 1-D arrays are read");
-        bool isComplex = (string)descr == "<c16";
+        bool isComplex = ds[1] == 'c', little = ds[0] == '<';
         if (isComplex != wantComplex)
             throw Bad($"the file holds {(isComplex ? "complex" : "real")} values, not {typeof(T).Name}");
-        int itemSize = isComplex ? 16 : 8;
+        int partSize = int.Parse(ds.AsSpan(2), CultureInfo.InvariantCulture) / (isComplex ? 2 : 1); // bytes per part
+        int parts = isComplex ? 2 : 1;
         long bytes = raw.Length - start;
-        if (bytes % itemSize != 0 || bytes / itemSize != shape[0])
+        if (bytes % (partSize * parts) != 0 || bytes / (partSize * parts) != shape[0])
             throw Bad(string.Create(CultureInfo.InvariantCulture, $"{bytes} data bytes do not match shape ({shape[0]},)"));
-        T[] result = new T[bytes / itemSize];
-        Span<byte> data = MemoryMarshal.AsBytes(result.AsSpan());
-        raw.AsSpan((int)start).CopyTo(data);
-        if (!BitConverter.IsLittleEndian)
+        var values = new double[bytes / partSize];
+        ReadOnlySpan<byte> src = raw.AsSpan((int)start);
+        for (int i = 0; i < values.Length; i++)
         {
-            Span<long> words = MemoryMarshal.Cast<byte, long>(data);
-            BinaryPrimitives.ReverseEndianness(words, words);
+            ReadOnlySpan<byte> b = src.Slice(i * partSize, partSize);
+            values[i] = (partSize, little) switch
+            {
+                (8, true) => BinaryPrimitives.ReadDoubleLittleEndian(b),
+                (8, false) => BinaryPrimitives.ReadDoubleBigEndian(b),
+                (4, true) => BinaryPrimitives.ReadSingleLittleEndian(b),
+                (4, false) => BinaryPrimitives.ReadSingleBigEndian(b),
+                (_, true) => (double)BinaryPrimitives.ReadHalfLittleEndian(b),
+                _ => (double)BinaryPrimitives.ReadHalfBigEndian(b),
+            };
         }
-        return result;
+        if (!isComplex)
+            return (T[])(object)values;
+        var z = new Complex[values.Length / 2];
+        for (int i = 0; i < z.Length; i++)
+            z[i] = new Complex(values[2 * i], values[(2 * i) + 1]);
+        return (T[])(object)z;
     }
 
     /// <summary>The header grammar of conventions: Signal files, NumPy .npy. Values are strings, bools and

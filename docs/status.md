@@ -4,12 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **More `.npy` dtypes on read**: `read_npy` also takes 1-D `float32`, `float16` and `complex64`
-   arrays (`'<f4'`, `'<f2'`, `'<c8'`), and the big-endian forms of every accepted dtype (`'>f8'`,
-   …), widened exactly to `float64` / `complex128`. `write_npy` still writes only `'<f8'` and
-   `'<c16'`, which lose nothing. Expected values: the npy generator writes the files by hand from
-   `struct` (`e`, `f`, `d` in both byte orders), and the samples are values the narrow type holds
-   exactly.
+1. **`.npz` archives**: `write_npz(path, arrays)` and `read_npz(path)` (C# `WriteNpz`,
+   `ReadNpz`) for a mapping of names to 1-D arrays, each member a `.npy` file as `read_npy` and
+   `write_npy` handle. Writing stores the members uncompressed, as `numpy.savez` does; reading
+   takes stored and deflated members (`numpy.savez_compressed`). The ZIP support comes from the
+   standard libraries (`zipfile`, `System.IO.Compression`), so there is no new dependency. Needs an
+   ADR: member names, order, which ZIP features are rejected (encryption, ZIP64, other methods).
+   Expected values: the generator lays out the ZIP by hand with `struct` and `zlib.crc32`, and
+   deflated members come from `zlib`, which is independent of both readers.
 
 ## Built
 
@@ -897,13 +899,24 @@ Updated with every chunk of work. Dates are absolute.
   `|y − x|` and C# measured each part, so `f16`'s coarser step failed only in Python. Both now
   measure each part. Python 3294 passed, 2 skipped; .NET 2758 passed; conformance
   1687/1687 in both. Version 2026.11.14.3.
+- 2026-11-14: more `.npy` dtypes on read ([ADR 0088](adr/0088-npy-read-dtypes.md)): `read_npy`
+  takes `'<f8'`, `'>f8'`, `'<f4'`, `'>f4'`, `'<f2'`, `'>f2'`, `'<c16'`, `'>c16'`, `'<c8'` and
+  `'>c8'`, widened exactly to `float64` / `complex128`. `=` and `|` byte orders, long doubles
+  (`'<f16'`) and integers are still rejected, and `write_npy` is unchanged. The npy generator packs
+  the data with `struct` (`d`, `f`, `e`, both byte orders) from values each type holds exactly. 13
+  new cases: 9 files to read, and 7 rejections that replace the old `big_endian` and `float32`
+  rejections. The C# runner now picks `Complex` for any `c8` or `c16` descr. New tests read
+  `numpy.save` output of every dtype in Python, and hand-packed files in C#. Lesson: a
+  test value has to be exact in the narrowest type. 1000.25 is not exact in binary16, and only
+  C#, which compares with the original value, caught it. Python 3322 passed, 2 skipped;
+  .NET 2779 passed; conformance 1700/1700 in both. Version 2026.11.14.4.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
+phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, `.npy` integer dtypes and other shapes, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks), plotting, CLI,
 packaging and publishing.
 

@@ -426,7 +426,7 @@ def read_wav(path: str | os.PathLike[str]) -> list[Signal]:
 
 
 _NPY_MAGIC = b"\x93NUMPY"
-_NPY_DESCR = {"<f8": np.dtype("<f8"), "<c16": np.dtype("<c16")}
+_NPY_DESCR = {f"{e}{t}": np.dtype(f"{e}{t}") for e in "<>" for t in ("f8", "f4", "f2", "c16", "c8")}
 _NPY_KEYS = frozenset({"descr", "fortran_order", "shape"})
 
 
@@ -527,8 +527,9 @@ class _NpyHeader:
 
 
 def read_npy(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[np.complex128]:
-    """Read a 1-D ``'<f8'`` or ``'<c16'`` NumPy ``.npy`` file (versions 1.0 to 3.0) as ``float64``
-    or ``complex128``."""
+    """Read a 1-D NumPy ``.npy`` file (versions 1.0 to 3.0) of ``float64``, ``float32``,
+    ``float16``, ``complex128`` or ``complex64`` in either byte order, widened exactly to
+    ``float64`` or ``complex128`` (ADR 0088)."""
     raw = Path(os.fspath(path)).read_bytes()
     if len(raw) < 8 or raw[:6] != _NPY_MAGIC:
         raise ValueError("not a .npy file")
@@ -550,7 +551,7 @@ def read_npy(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[np.c
         raise ValueError("the .npy header needs exactly descr, fortran_order and shape")
     descr, order, shape = d["descr"], d["fortran_order"], d["shape"]
     if not isinstance(descr, str) or descr not in _NPY_DESCR:
-        raise ValueError(f"only '<f8' and '<c16' arrays are read, not {descr!r}")
+        raise ValueError(f"only float and complex arrays with '<' or '>' are read, not {descr!r}")
     if not isinstance(order, bool):
         raise ValueError("fortran_order must be True or False")
     if not isinstance(shape, tuple) or len(shape) != 1:
@@ -559,6 +560,6 @@ def read_npy(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[np.c
     if len(raw) - start != shape[0] * dt.itemsize:
         raise ValueError(f"{len(raw) - start} data bytes do not match shape ({shape[0]},)")
     values = np.frombuffer(raw, dt, offset=start)
-    if descr == "<c16":
+    if dt.kind == "c":
         return values.astype(np.complex128)
     return values.astype(np.float64)

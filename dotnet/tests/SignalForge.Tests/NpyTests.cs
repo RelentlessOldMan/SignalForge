@@ -64,6 +64,49 @@ public sealed class NpyTests : IDisposable
         Assert.ThrowsAny<ArgumentException>(() => SignalFiles.ReadNpy<double>(path));
     }
 
+    private string Typed(string descr, byte[] data, int n)
+    {
+        string text = $"{{'descr': '{descr}', 'fortran_order': False, 'shape': ({n},), }}\n";
+        byte[] raw = [0x93, .. "NUMPY"u8, 3, 0, .. new byte[4], .. Encoding.ASCII.GetBytes(text), .. data];
+        BinaryPrimitives.WriteUInt32LittleEndian(raw.AsSpan(8), (uint)text.Length);
+        string path = PathOf("t.npy");
+        File.WriteAllBytes(path, raw);
+        return path;
+    }
+
+    [Theory]
+    [InlineData('<')]
+    [InlineData('>')]
+    public void NarrowAndBigEndianFloatsAreWidened(char order)
+    {
+        double[] x = [0.5, -1.5, double.PositiveInfinity, -0.0, Math.ScaleB(1, -24), 1000.5];
+        bool le = order == '<';
+        byte[] f8 = [.. x.SelectMany(v => { var b = new byte[8]; if (le) BinaryPrimitives.WriteDoubleLittleEndian(b, v); else BinaryPrimitives.WriteDoubleBigEndian(b, v); return b; })];
+        byte[] f4 = [.. x.SelectMany(v => { var b = new byte[4]; if (le) BinaryPrimitives.WriteSingleLittleEndian(b, (float)v); else BinaryPrimitives.WriteSingleBigEndian(b, (float)v); return b; })];
+        byte[] f2 = [.. x.SelectMany(v => { var b = new byte[2]; if (le) BinaryPrimitives.WriteHalfLittleEndian(b, (Half)v); else BinaryPrimitives.WriteHalfBigEndian(b, (Half)v); return b; })];
+        foreach ((string t, byte[] d) in new[] { ("f8", f8), ("f4", f4), ("f2", f2) })
+        {
+            double[] got = SignalFiles.ReadNpy<double>(Typed($"{order}{t}", d, x.Length));
+            Assert.Equal(x, got);
+            Assert.True(double.IsNegative(got[3]));
+            Assert.ThrowsAny<ArgumentException>(() => SignalFiles.ReadNpy<Complex>(Typed($"{order}{t}", d, x.Length)));
+        }
+        Complex[] z = SignalFiles.ReadNpy<Complex>(Typed($"{order}c8", f4, 3));
+        Assert.Equal([new Complex(0.5, -1.5), new Complex(double.PositiveInfinity, -0.0), new Complex(Math.ScaleB(1, -24), 1000.5)], z);
+        Assert.Equal(z, SignalFiles.ReadNpy<Complex>(Typed($"{order}c16", f8, 3)));
+        Assert.ThrowsAny<ArgumentException>(() => SignalFiles.ReadNpy<double>(Typed($"{order}c8", f4, 3)));
+    }
+
+    [Theory]
+    [InlineData("=f8")]
+    [InlineData("|f8")]
+    [InlineData("<f16")]
+    [InlineData("<i4")]
+    [InlineData("<c32")]
+    [InlineData("f8")]
+    public void OtherDescrsAreRejected(string descr) =>
+        Assert.ThrowsAny<ArgumentException>(() => SignalFiles.ReadNpy<double>(Typed(descr, new byte[8], 1)));
+
     private string File3(string header)
     {
         byte[] text = Encoding.UTF8.GetBytes(header);

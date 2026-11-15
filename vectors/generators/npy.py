@@ -2,7 +2,7 @@
 
 It does not import NumPy or SignalForge. The written layout is the one in conventions: Signal files,
 NumPy .npy (the one numpy.save writes for these arrays; the Python tests compare with numpy.save,
-which this script cannot import). Values come from struct; headers of other writers and broken
+which this script cannot import). Values come from struct (d, f and e in both byte orders; ADR 0088); headers of other writers and broken
 headers are written here as literal text.
 
 Run from the repo root: python vectors/generators/npy.py [--check]
@@ -27,8 +27,8 @@ def parts(x):
     return out
 
 
-def data(x):
-    return b"".join(struct.pack("<d", v) for v in parts(x))
+def data(x, fmt="<d"):
+    return b"".join(struct.pack(fmt, v) for v in parts(x))
 
 
 def header(text, version=(1, 0)):
@@ -99,6 +99,32 @@ good("no_newline", header("{'descr':'<f8','fortran_order':False,'shape':(3,)}") 
      "no padding and no newline")
 
 
+# ADR 0088: narrower floats and big-endian data, widened exactly. Each value is one the narrow
+# type holds exactly, so the expected double is the value itself.
+x16 = [0.5, -1.5, 2.0**-24, 65504.0, -INF, -0.0]
+x32 = [0.5, -1.5, 2.0**-149, 3.4028234663852886e38, INF, 0.1875]
+z32 = [complex(0.25, -2.0**-149), complex(-INF, 2.0**-126)]
+z16 = [complex(1.0, -2.0**-14), complex(65504.0, 2.0**-24)]
+
+
+def typed(descr, x, fmt):
+    return header(f"{{'descr': '{descr}', 'fortran_order': False, 'shape': ({len(x)},), }}\n") + data(x, fmt)
+
+
+good("big_endian_f8", typed(">f8", x3, ">d"), x3, "'>f8': big-endian binary64, as NumPy saves a '>f8' array")
+good("float32", typed("<f4", x32, "<f"), x32,
+     "'<f4' packed with struct 'f': the smallest subnormal 2^-149, the largest finite, inf")
+good("float32_be", typed(">f4", x32, ">f"), x32, "'>f4' packed with struct '>f'")
+good("float16", typed("<f2", x16, "<e"), x16,
+     "'<f2' packed with struct 'e': the smallest subnormal 2^-24, the largest finite 65504, -inf, -0")
+good("float16_be", typed(">f2", x16, ">e"), x16, "'>f2' packed with struct '>e'")
+good("complex64", typed("<c8", z32, "<f"), z32, "'<c8': two binary32 parts per item, real first")
+good("complex64_be", typed(">c8", z32, ">f"), z32, "'>c8' packed with struct '>f'")
+good("complex128_be", typed(">c16", z2, ">d"), z2, "'>c16' packed with struct '>d'")
+good("float16_even", typed("<f2", [1.0, -2.0**-14], "<e"), [1.0, -2.0**-14],
+     "a real '<f2' file read as reals, even with an even count")
+
+
 def h(text):
     return header(text + "\n") + data(x3)
 
@@ -108,9 +134,17 @@ bad("version_4", header(H + "\n", (4, 0)) + data(x3), "only versions 1.0, 2.0 an
 bad("version_1_1", header(H + "\n", (1, 1)) + data(x3), "only versions 1.0, 2.0 and 3.0")
 bad("too_short", MAGIC + b"\x01\x00\x76", "the file ends inside the header length")
 bad("header_past_end", MAGIC + b"\x01\x00\xff\x00" + H.encode(), "the header length runs past the file")
-bad("big_endian", h("{'descr': '>f8', 'fortran_order': False, 'shape': (3,), }"), "'>f8' is big-endian")
-bad("float32", h("{'descr': '<f4', 'fortran_order': False, 'shape': (6,), }"), "only '<f8' and '<c16'")
-bad("int64", h("{'descr': '<i8', 'fortran_order': False, 'shape': (3,), }"), "only '<f8' and '<c16'")
+bad("native_order", h("{'descr': '=f8', 'fortran_order': False, 'shape': (3,), }"),
+    "'=' would depend on the reader's byte order")
+bad("no_order", h("{'descr': '|f8', 'fortran_order': False, 'shape': (3,), }"), "'|' is for single bytes")
+bad("long_double", header("{'descr': '<f16', 'fortran_order': False, 'shape': (1,), }\n") + bytes(16),
+    "'<f16' is a 16-byte long double, not binary16 ('<f2')")
+bad("float32_short", header("{'descr': '<f4', 'fortran_order': False, 'shape': (3,), }\n") + data(x32[:2], "<f"),
+    "8 bytes for shape (3,) of '<f4'")
+bad("complex64_odd", header("{'descr': '<c8', 'fortran_order': False, 'shape': (1,), }\n") + data([0.5], "<f"),
+    "4 bytes for one complex64")
+bad("float32_uppercase", h("{'descr': '<F4', 'fortran_order': False, 'shape': (6,), }"), "descrs are lowercase")
+bad("int64", h("{'descr': '<i8', 'fortran_order': False, 'shape': (3,), }"), "integers need a scaling")
 bad("object", h("{'descr': '|O', 'fortran_order': False, 'shape': (3,), }"), "object arrays hold pickles")
 bad("structured", h("{'descr': [('a', '<f8')], 'fortran_order': False, 'shape': (3,), }"),
     "a structured descr is a list, which the grammar has no place for")

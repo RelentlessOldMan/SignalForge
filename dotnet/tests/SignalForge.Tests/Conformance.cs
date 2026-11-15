@@ -680,7 +680,7 @@ public static class Conformance
             throw new InvalidDataException("file must be a bare file name in vectors/files");
         string path = Path.Combine(VectorsDir(), "..", "files", name);
         // The runner picks the element type from the descr, as ReadSigmfOp does from the metadata.
-        bool isComplex = File.ReadAllText(path, System.Text.Encoding.Latin1).Contains("<c16", StringComparison.Ordinal);
+        bool isComplex = System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(path, System.Text.Encoding.Latin1), "[<>]c(16|8)['\"]");
         return isComplex ? () => SignalFiles.ReadNpy<Complex>(path) : () => SignalFiles.ReadNpy<double>(path);
     }
 
