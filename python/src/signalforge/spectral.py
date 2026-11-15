@@ -795,6 +795,41 @@ def lomb_scargle_false_alarm_level(
     return -math.expm1(2 * math.log(p1) / (n - d))
 
 
+def lomb_scargle_false_alarm_baluev(
+    power: float, times: ArrayLike, max_frequency: float, *, center: bool = True
+) -> float:
+    """Baluev's alias-free estimate of the chance that white Gaussian noise gives a standard
+    Lomb-Scargle value above ``power`` anywhere up to ``max_frequency`` for these sample times
+    (conventions: Spectra; ADR 0098)."""
+    z = real(power, "power")
+    t = _finite_reals(times, "times")
+    fmax = real(max_frequency, "max_frequency")
+    d, h = (3, 1) if center else (2, 0)
+    if not 0 <= z <= 1:
+        raise ValueError("power must be between 0 and 1 (the standard normalization)")
+    n = t.size
+    if n < d + 1:
+        raise ValueError(f"times must have at least {d + 1} values")
+    if not float(np.max(t) - np.min(t)) > 0:
+        raise ValueError("times must not all be equal")
+    if fmax <= 0:
+        raise ValueError("max_frequency must be positive")
+    nk, nh = n - d, n - h
+    p1 = (1 - z) ** (nk / 2)
+    if p1 == 1:
+        return 1.0
+    mean = float(np.mean(t))
+    var = float(np.mean((t - mean) ** 2))
+    k, r = (2, 1 / math.sqrt(math.pi)) if nh % 2 == 0 else (3, math.sqrt(math.pi) / 2)
+    while k < nh:
+        r = r * k / (k - 1)
+        k += 2
+    gamma = math.sqrt(2 / nh) * r
+    tau = fmax * math.sqrt(4 * math.pi * var) * gamma * (1 - z) ** ((nk - 1) / 2)
+    tau *= math.sqrt(nh * z / 2)
+    return -math.expm1(math.log1p(-p1) - tau)
+
+
 def lomb_scargle_frequencies(
     times: ArrayLike, *, oversampling: float = 5.0, max_frequency: float | None = None
 ) -> NDArray[np.float64]:

@@ -10,6 +10,9 @@ It does not import NumPy or SignalForge.
 - False-alarm level (the inverse): by-hand cases where the exponents are whole or halves, and
   round trips through the exact table above (the probability is the exact false alarm of a
   decimal z, rounded once; the expected value is that z).
+- Baluev false alarm (ADR 0098): 1 - (1 - P1) e^-tau with the gamma ratio from math.lgamma (the
+  code uses a recurrence instead) and the variance of the times from math.fsum; one case is
+  written out by hand at N = 4, where the exponent (N_K - 1)/2 is 0.
 - Frequency grid: k / (oversampling * T) for k = 1 .. K with K counted by hand from f_max * T *
   oversampling, which the cases choose so the count is clear (whole or well away from whole).
 
@@ -115,6 +118,59 @@ err(FL, "n_too_small_uncentered", {"probability": 0.5, "num_samples": 2, "center
 err(FL, "zero_frequencies", {"probability": 0.5, "num_samples": 10, "num_frequencies": 0},
     "M >= 1")
 
+FB = "lomb_scargle_false_alarm_baluev"
+
+
+def baluev(z, times, fmax, center=True):
+    n = len(times)
+    d, h = (3, 1) if center else (2, 0)
+    nk, nh = n - d, n - h
+    p1 = (1 - z) ** (nk / 2)
+    mean = math.fsum(times) / n
+    var = math.fsum((t - mean) ** 2 for t in times) / n
+    g = math.sqrt(2 / nh) * math.exp(math.lgamma(nh / 2) - math.lgamma((nh - 1) / 2))
+    tau = fmax * math.sqrt(4 * math.pi * var) * g * (1 - z) ** ((nk - 1) / 2) * math.sqrt(nh * z / 2)
+    return -math.expm1(math.log1p(-p1) - tau)
+
+
+# N = 4 centered, times 0..3: var 5/4, N_H = 3, gamma = sqrt(2/3) * (sqrt(pi)/2), (1 - z)^0 = 1.
+hand_tau = math.sqrt(4 * math.pi * 1.25) * math.sqrt(2 / 3) * (math.sqrt(math.pi) / 2) * math.sqrt(0.75)
+add(FB, "hand_n4", {"power": 0.5, "times": [0, 1, 2, 3], "max_frequency": 1},
+    1 - (1 - math.sqrt(0.5)) * math.exp(-hand_tau),
+    "by hand: P1 = sqrt(1/2), tau = sqrt(5 pi) sqrt(2/3) (sqrt(pi)/2) sqrt(3/4)")
+uneven = [0.0, 0.7, 1.1, 2.9, 3.0, 4.6, 5.2, 7.5, 8.1, 9.9, 10.4, 12.0, 13.3, 15.8, 16.1, 19.0]
+even = [k / 10 for k in range(100)]
+for cid, z, times, fmax, center in (
+    ("uneven_mid", 0.4, uneven, 2.0, True),
+    ("uneven_high", 0.8, uneven, 2.0, True),
+    ("uneven_uncentered", 0.6, uneven, 0.5, False),
+    ("even_100_small", 0.25, even, 5.0, True),   # result about 1e-3
+    ("even_100_tiny", 0.6, even, 5.0, True),     # result about 1e-18: needs log1p/expm1
+    ("even_101_odd", 0.3, even + [10.0], 5.0, True),
+    ("min_uncentered", 0.5, [0, 1, 3], 1.0, False),
+):
+    args = {"power": z, "times": times, "max_frequency": fmax}
+    if not center:
+        args["center"] = False
+    add(FB, cid, args, baluev(z, times, fmax, center),
+        "Baluev (2008) alias-free form, gamma ratio from math.lgamma, variance from math.fsum")
+add(FB, "zero_power", {"power": 0.0, "times": uneven, "max_frequency": 2.0}, 1.0,
+    "by hand: P1 = 1, so 1")
+add(FB, "unit_power", {"power": 1.0, "times": uneven, "max_frequency": 2.0}, 0.0,
+    "by hand: P1 = 0 and (1 - z)^((N_K - 1)/2) = 0, so tau = 0 and the value is 0")
+err(FB, "power_above_one", {"power": 1.5, "times": uneven, "max_frequency": 1}, "z in [0, 1]")
+err(FB, "power_nan", {"power": "nan", "times": uneven, "max_frequency": 1}, "z in [0, 1]")
+err(FB, "too_few_centered", {"power": 0.5, "times": [0, 1, 2], "max_frequency": 1},
+    "N >= 4 when centered")
+err(FB, "too_few_uncentered", {"power": 0.5, "times": [0, 1], "max_frequency": 1,
+                               "center": False}, "N >= 3 when not centered")
+err(FB, "equal_times", {"power": 0.5, "times": [2, 2, 2, 2], "max_frequency": 1},
+    "times all equal")
+err(FB, "inf_time", {"power": 0.5, "times": [0, 1, 2, "inf"], "max_frequency": 1},
+    "times must be finite")
+err(FB, "zero_max", {"power": 0.5, "times": uneven, "max_frequency": 0}, "f_max > 0")
+err(FB, "inf_max", {"power": 0.5, "times": uneven, "max_frequency": "inf"}, "f_max finite")
+
 FR = "lomb_scargle_frequencies"
 add(FR, "default", {"times": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
     [k / 50 for k in range(1, 28)],
@@ -138,9 +194,10 @@ err(FR, "too_many", {"times": [0, 1], "oversampling": 1e6, "max_frequency": 100}
 doc = {
     "schema": 1,
     "suite": "lomb_scargle_fap",
-    "description": "Lomb-Scargle false-alarm probability, its inverse level and frequency grid "
-    "(conventions: Spectra, Lomb-Scargle false-alarm probability and frequency grid, Lomb-Scargle "
-    "false-alarm level; ADRs 0062 and 0082).",
+    "description": "Lomb-Scargle false-alarm probability, its inverse level, the Baluev estimate "
+    "and frequency grid (conventions: Spectra, Lomb-Scargle false-alarm probability and frequency "
+    "grid, Lomb-Scargle false-alarm level, Baluev false-alarm probability; ADRs 0062, 0082 and "
+    "0098).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "lomb_scargle_fap.json"

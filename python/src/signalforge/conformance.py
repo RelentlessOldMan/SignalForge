@@ -87,6 +87,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "spectrogram": spectral.spectrogram,
     "lomb_scargle": spectral.lomb_scargle,
     "lomb_scargle_false_alarm": spectral.lomb_scargle_false_alarm,
+    "lomb_scargle_false_alarm_baluev": spectral.lomb_scargle_false_alarm_baluev,
     "lomb_scargle_false_alarm_level": spectral.lomb_scargle_false_alarm_level,
     "lomb_scargle_frequencies": spectral.lomb_scargle_frequencies,
     "occupied_bandwidth": spectral.occupied_bandwidth,

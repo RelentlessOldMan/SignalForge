@@ -1100,6 +1100,53 @@ public static class Spectral
         return -ExpM1(2 * Math.Log(p1) / (numSamples - d));
     }
 
+    /// <summary>Baluev's alias-free estimate of the chance that white Gaussian noise gives a standard Lomb-Scargle
+    /// value above <paramref name="power"/> anywhere up to <paramref name="maxFrequency"/> for these sample times
+    /// (conventions: Spectra; ADR 0098).</summary>
+    /// <param name="power">A value of the standard normalization, in [0, 1].</param>
+    /// <param name="times">The sample times, finite and not all equal, at least 4 centered and 3 not.</param>
+    /// <param name="maxFrequency">The highest frequency searched, positive and finite.</param>
+    /// <param name="center">Whether the periodogram subtracted the mean, as <see cref="LombScargle"/>'s <c>center</c>;
+    /// true also for <see cref="GeneralizedLombScargle"/>.</param>
+    /// <returns><c>1 − (1 − P₁)·e^(−τ)</c>, with <c>τ</c> Baluev's expected number of upcrossings.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double LombScargleFalseAlarmBaluev(double power, ReadOnlySpan<double> times, double maxFrequency,
+        bool center = true)
+    {
+        var (d, h) = center ? (3, 1) : (2, 0);
+        if (!(power >= 0 && power <= 1))
+            throw new ArgumentOutOfRangeException(nameof(power), power, "must be between 0 and 1 (the standard normalization)");
+        int n = times.Length;
+        if (n < d + 1)
+            throw new ArgumentException($"times must have at least {d + 1} values", nameof(times));
+        double lo = double.PositiveInfinity, hi = double.NegativeInfinity, sum = 0;
+        foreach (double t in times)
+        {
+            if (!double.IsFinite(t)) throw new ArgumentException("times must be finite", nameof(times));
+            lo = Math.Min(lo, t);
+            hi = Math.Max(hi, t);
+            sum += t;
+        }
+        if (!(hi - lo > 0))
+            throw new ArgumentException("times must not all be equal", nameof(times));
+        Check.PositiveFinite(maxFrequency, nameof(maxFrequency));
+        int nk = n - d, nh = n - h;
+        double p1 = Math.Pow(1 - power, nk / 2.0);
+        if (p1 == 1)
+            return 1.0;
+        double mean = sum / n, ss = 0;
+        foreach (double t in times)
+            ss += (t - mean) * (t - mean);
+        double var = ss / n;
+        var (k, r) = nh % 2 == 0 ? (2, 1 / Math.Sqrt(Math.PI)) : (3, Math.Sqrt(Math.PI) / 2);
+        for (; k < nh; k += 2)
+            r = r * k / (k - 1);
+        double gamma = Math.Sqrt(2.0 / nh) * r;
+        double tau = maxFrequency * Math.Sqrt(4 * Math.PI * var) * gamma * Math.Pow(1 - power, (nk - 1) / 2.0);
+        tau *= Math.Sqrt(nh * power / 2);
+        return -ExpM1(LogP1(-p1) - tau);
+    }
+
     /// <summary>Frequency grid <c>k / (oversampling·T)</c>, <c>k = 1, 2, …</c> up to <paramref name="maxFrequency"/>,
     /// for <see cref="LombScargle"/> (conventions: Spectra; ADR 0062).</summary>
     /// <param name="times">The sample times, finite, at least 2 and not all equal; <c>T</c> is their span.</param>

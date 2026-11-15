@@ -274,6 +274,16 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   and `N`, `M` and `d` are as for the false-alarm probability; otherwise the call raises
   `invalid_argument`. With `center=True` it also holds for the generalized form.
   **(implemented)**
+- **Baluev false-alarm probability** (`lomb_scargle_false_alarm_baluev(power, times, max_frequency,
+  center=True)`, [ADR 0098](adr/0098-lomb-scargle-baluev.md)) is for a search of the standard
+  normalization up to `f_max`. Let `d = 3, h = 1` when centered and `d = 2, h = 0` when not,
+  `N_K = N − d` and `N_H = N − h`. Then `P₁ = (1 − z)^(N_K/2)`, `D = Σ(t − t̄)²/N`,
+  `W = f_max·√(4πD)` and `γ = √(2/N_H)·r(N_H)`. Here `r(n) = Γ(n/2)/Γ((n − 1)/2)` comes from
+  `r(2) = 1/√π`, `r(3) = √π/2` and `r(n + 2) = r(n)·n/(n − 1)`. Next,
+  `τ = W·γ·(1 − z)^((N_K − 1)/2)·√(N_H·z/2)`, and the result is `−expm1(log1p(−P₁) − τ)`, which is 1
+  when `P₁ = 1`. `z` must be in `[0, 1]`, there must be at least `d + 1` finite times that are not
+  all equal, and `f_max` must be positive and finite; otherwise the call raises `invalid_argument`.
+  **(implemented)**
 - **Lomb-Scargle frequency grid** (`lomb_scargle_frequencies(times, oversampling=5.0,
   max_frequency=None)`): `T = max(t) − min(t)`, which must be `> 0`; `Δ = 1/(oversampling·T)`
   (that product, then its reciprocal); the frequencies are `k·Δ` for `k = 1 … K`,

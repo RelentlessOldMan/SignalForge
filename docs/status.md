@@ -4,12 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Baluev false-alarm probability**: the chance that noise exceeds a standard Lomb-Scargle value
-   anywhere up to `f_max`, from the sample times (Baluev 2008), so a grid search needs no guess
-   at the number of independent frequencies (ADR 0062 left it out). Needs an ADR: the formula and
-   its constants for centered and uncentered fits, how the gamma ratio is computed without a
-   log-gamma in C#, and what is rejected. Expected values: a stdlib generator using
-   `math.lgamma`, with a by-hand `N = 4` case.
+1. **Baluev false-alarm level**: the inverse of `lomb_scargle_false_alarm_baluev`, the standard
+   value that noise exceeds with chance `p` anywhere up to `f_max`, as ADR 0082 is for ADR 0062.
+   It has no closed form. Needs an ADR: the root finder (bisection on `[0, 1]` to a fixed count,
+   so both languages take the same steps), its tolerance, the ends `p = 0` and `p = 1`, and what
+   is rejected. Expected values: round trips through the generator's Baluev cases, plus the ends.
 
 ## Built
 
@@ -1008,6 +1007,17 @@ Updated with every chunk of work. Dates are absolute.
   files generator gained 11 recordings (2 good, 9 bad) and 16 cases.
   Python 3750 passed, 2 skipped; .NET 3147 passed; conformance 1934/1934 in both. Version
   2026.11.15.0.
+- 2026-11-15: Baluev false-alarm probability (ADR 0098): `lomb_scargle_false_alarm_baluev(power,
+  times, max_frequency, center=True)` (C# `Spectral.LombScargleFalseAlarmBaluev`) estimates, for
+  the standard normalization, the chance that white noise exceeds `z` anywhere up to `f_max`. It
+  uses Baluev's (2008) alias-free form `1 − (1 − P₁)·e^(−τ)`, where `τ` comes from the variance of
+  the times, so no count of independent frequencies is needed. The gamma ratio uses an exact
+  recurrence, so neither language needs a log-gamma. It is within a few ε of the exact rational
+  product at `N = 2·10⁴`, where `math.lgamma` is off by 1.5e-11. The `lomb_scargle_fap.py`
+  generator gained 18 cases (one by hand at `N = 4`, the rest from `math.lgamma`). Monte Carlo
+  tests in both languages check a 100-frequency grid search on uneven times.
+  Python 3792 passed, 2 skipped; .NET 3180 passed; conformance 1952/1952 in both. Version
+  2026.11.15.1.
 
 ## Not built
 
