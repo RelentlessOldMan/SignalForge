@@ -364,8 +364,9 @@ public static class Conformance
                 ? Bind((z, Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2)))
                 : Bind((Reals(a.Get("x")), Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2))),
             "decode_samples" => DecodeSamplesOp(Convert.FromHexString(Str(a, "data")), Str(a, "datatype")),
-            "read_sigmf" => ReadSigmfOp(Str(a, "file"), channels: false),
-            "read_sigmf_channels" => ReadSigmfOp(Str(a, "file"), channels: true),
+            "read_sigmf" => ReadSigmfOp(Str(a, "file"), list: null),
+            "read_sigmf_channels" => ReadSigmfOp(Str(a, "file"), list: "channels"),
+            "read_sigmf_captures" => ReadSigmfOp(Str(a, "file"), list: "captures"),
             "write_wav" => WriteWavOp(Rows(a.Get("channels")), a.D("sample_rate"), Str(a, "sample_format"),
                 a.Has("info") ? a.Get("info") : null, a.Has("cues") ? a.Get("cues") : null),
             "read_wav" => ReadWavOp(Str(a, "file")),
@@ -635,7 +636,7 @@ public static class Conformance
 
     /// <summary>A recording in vectors/files, read as the kind its datatype names (the runner
     /// peeks; a file it can't peek at is read as real, and the library must reject it).</summary>
-    private static Func<object?> ReadSigmfOp(string name, bool channels)
+    private static Func<object?> ReadSigmfOp(string name, string? list)
     {
         if (Path.GetFileName(name) != name)
             throw new InvalidDataException("file must be a bare file name in vectors/files");
@@ -649,10 +650,15 @@ public static class Conformance
         catch (Exception e) when (e is JsonException or KeyNotFoundException or InvalidOperationException)
         {
         }
-        if (channels)
+        if (list is not null)
+        {
+            bool channels = list == "channels";
             return isComplex
-                ? () => SignalFiles.ReadSigmfChannels<Complex>(path).Select(s => (object?)SignalRecord(s)).ToList()
-                : () => SignalFiles.ReadSigmfChannels<double>(path).Select(s => (object?)SignalRecord(s)).ToList();
+                ? () => (channels ? SignalFiles.ReadSigmfChannels<Complex>(path) : SignalFiles.ReadSigmfCaptures<Complex>(path))
+                    .Select(s => (object?)SignalRecord(s)).ToList()
+                : () => (channels ? SignalFiles.ReadSigmfChannels<double>(path) : SignalFiles.ReadSigmfCaptures<double>(path))
+                    .Select(s => (object?)SignalRecord(s)).ToList();
+        }
         return isComplex
             ? () => SignalRecord(SignalFiles.ReadSigmf<Complex>(path))
             : () => SignalRecord(SignalFiles.ReadSigmf<double>(path));

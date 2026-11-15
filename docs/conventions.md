@@ -1580,6 +1580,17 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
   length, whose metadata files as `write_sigmf` would write them are identical (so those fields
   agree exactly; `1` and `1.0` differ); `core:num_channels` follows `core:sample_rate` when there
   is more than one channel, and one channel gives the `write_sigmf` files. **(implemented)**
+- **Captures** ([ADR 0097](adr/0097-sigmf-captures.md)): `read_sigmf_captures(path)` (C#
+  `ReadSigmfCaptures`) reads a one-channel recording as one signal per capture, in file order;
+  `read_sigmf` still rejects captures at different frequencies. Each capture needs
+  `core:sample_start`, a JSON integer; the first is 0, each is greater than the last, none is
+  past the number of samples. Capture `j` holds samples `start_j` up to the next start (the last,
+  to the end); no captures is one segment at frequency 0. A segment's center frequency is its
+  capture's `core:frequency` (missing: 0) and its time origin `time_origin + start_j /
+  sample_rate`; other capture fields are not read. Rate, units, impedance and metadata are the
+  recording's (each its own copy). An annotation goes to the last segment starting at or before
+  its `core:sample_start`, which becomes `core:sample_start − start_j`; its other fields are
+  kept, and a span past its segment is not checked. Reading only. **(implemented)**
 - **Annotations** ([ADR 0061](adr/0061-sigmf-annotations.md)): the metadata key
   `core:annotations` is a list of JSON objects, written to the top-level `annotations` array (not
   to `global`) and read back from it, in file order; an empty or missing array gives no key. Each

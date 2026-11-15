@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import itertools
 import json
 import math
 import os
@@ -280,15 +281,22 @@ def _object(v: Any, what: str) -> dict[str, Any]:
 
 def read_sigmf(path: str | os.PathLike[str]) -> Signal:
     """Read a ``.sigmf-meta`` / ``.sigmf-data`` pair as a :class:`Signal`."""
-    return _read_sigmf(path, multi=False)[0]
+    return _read_sigmf(path, "one")[0]
 
 
 def read_sigmf_channels(path: str | os.PathLike[str]) -> list[Signal]:
     """Read a SigMF recording of any number of channels as one :class:`Signal` per channel."""
-    return _read_sigmf(path, multi=True)
+    return _read_sigmf(path, "channels")
 
 
-def _read_sigmf(path: str | os.PathLike[str], *, multi: bool) -> list[Signal]:
+def read_sigmf_captures(path: str | os.PathLike[str]) -> list[Signal]:
+    """Read a one-channel SigMF recording as one :class:`Signal` per capture, each with its
+    capture's center frequency and a time origin moved to the capture's first sample."""
+    return _read_sigmf(path, "captures")
+
+
+def _read_sigmf(path: str | os.PathLike[str], mode: str) -> list[Signal]:
+    """``mode`` is ``"one"`` (read_sigmf), ``"channels"`` or ``"captures"``."""
     meta_path, data_path = _files(path)
     try:
         parsed = json.loads(
@@ -308,8 +316,9 @@ def _read_sigmf(path: str | os.PathLike[str], *, multi: bool) -> list[Signal]:
         raise ValueError(f"unsupported core:version {version!r}")
     rate = _finite(glob.get("core:sample_rate"), "core:sample_rate")  # type: ignore[arg-type]
     n = glob.get("core:num_channels", 1)
-    if not multi and not _integer(n, 1):
-        raise ValueError("read_sigmf reads one channel; read_sigmf_channels reads more")
+    if mode != "channels" and not _integer(n, 1):
+        reader = "read_sigmf" if mode == "one" else "read_sigmf_captures"
+        raise ValueError(f"{reader} reads one channel; read_sigmf_channels reads more")
     if type(n) is not int or not 1 <= n <= MAX_CHANNELS:
         raise ValueError(f"core:num_channels must be a whole number from 1 to {MAX_CHANNELS}")
     for k in ("core:dataset", "core:metadata_only"):
@@ -318,14 +327,22 @@ def _read_sigmf(path: str | os.PathLike[str], *, multi: bool) -> list[Signal]:
     captures = doc.get("captures", [])
     if not isinstance(captures, list):
         raise ValueError("captures must be a JSON array")
-    freqs = set()
+    freqs: list[float] = []
+    starts: list[int] = []
     for i, c in enumerate(captures):
         c = _object(c, f"captures[{i}]")
         if not _integer(c.get("core:header_bytes", 0), 0):
             raise ValueError("captures with header bytes are not supported")
-        freqs.add(_finite(c.get("core:frequency", 0), f"captures[{i}] core:frequency"))
-    if len(freqs) > 1:
-        raise ValueError("captures at different frequencies are not supported")
+        freqs.append(_finite(c.get("core:frequency", 0), f"captures[{i}] core:frequency"))
+        if mode == "captures":
+            start = c.get("core:sample_start")
+            if type(start) is not int or start < 0:
+                raise ValueError(f"captures[{i}] core:sample_start must be an integer, at least 0")
+            starts.append(start)
+    if mode != "captures" and len(set(freqs)) > 1:
+        raise ValueError(
+            "captures at different frequencies are not one signal; read_sigmf_captures reads them"
+        )
     if _ANNOTATIONS in glob:
         raise ValueError(f"{_ANNOTATIONS} belongs at the top level, not in global")
     annotations = _annotations(doc.get("annotations", []), "annotations")
@@ -339,10 +356,44 @@ def _read_sigmf(path: str | os.PathLike[str], *, multi: bool) -> list[Signal]:
     )
     if annotations:
         metadata[_ANNOTATIONS] = annotations
-    frequency = freqs.pop() if freqs else 0.0
+    frequency = freqs[0] if freqs else 0.0
     time_origin = _finite(glob.get("signalforge:time_origin", 0.0), "signalforge:time_origin")
     ohms = None if impedance is None else _finite(impedance, "signalforge:impedance")
     samples = decode_samples(data_path.read_bytes(), datatype)
+    if mode == "captures":
+        if not starts:
+            starts, freqs = [0], [0.0]
+        if starts[0] != 0:
+            raise ValueError("the first capture must start at sample 0")
+        if any(b <= a for a, b in itertools.pairwise(starts)):
+            raise ValueError("each capture must start after the one before")
+        if starts[-1] > len(samples):
+            raise ValueError(f"a capture starts past the last of {len(samples)} samples")
+        shared = {k: v for k, v in metadata.items() if k != _ANNOTATIONS}
+        ends = [*starts[1:], len(samples)]
+        segments = []
+        for j, (a, b) in enumerate(zip(starts, ends, strict=True)):
+            last = j == len(starts) - 1
+            mine = [
+                {**x, "core:sample_start": x["core:sample_start"] - a}
+                for x in annotations
+                if a <= x["core:sample_start"] and (last or x["core:sample_start"] < b)
+            ]
+            md = copy.deepcopy(shared)
+            if mine:
+                md[_ANNOTATIONS] = copy.deepcopy(mine)
+            segments.append(
+                Signal(
+                    samples[a:b].copy(),
+                    rate,
+                    center_frequency=freqs[j],
+                    time_origin=time_origin + a / rate,
+                    units=units,
+                    impedance=ohms,
+                    metadata=md,
+                )
+            )
+        return segments
     if len(samples) % n:
         raise ValueError(f"{len(samples)} samples is not a whole number of {n}-channel frames")
     frames = samples.reshape(-1, n)

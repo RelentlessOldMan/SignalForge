@@ -1,0 +1,35 @@
+{
+  "global": {
+    "core:datatype": "ri16_le",
+    "core:version": "1.0.0",
+    "core:sample_rate": 1000,
+    "core:author": "a test"
+  },
+  "captures": [
+    {
+      "core:sample_start": 0,
+      "core:frequency": 1000000.0,
+      "core:datetime": "2026-11-14T00:00:00Z"
+    },
+    {
+      "core:sample_start": 2,
+      "core:frequency": 2000000.0
+    }
+  ],
+  "annotations": [
+    {
+      "core:sample_start": 0,
+      "core:sample_count": 1,
+      "core:label": "a"
+    },
+    {
+      "core:sample_start": 2,
+      "core:sample_count": 2,
+      "core:label": "b"
+    },
+    {
+      "core:sample_start": 3,
+      "core:label": "c"
+    }
+  ]
+}

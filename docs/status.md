@@ -4,15 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Multi-capture SigMF recordings**: captures at different `core:frequency`, which
-   `read_sigmf` rejects, read as one signal per capture segment (from its `core:sample_start` to
-   the next capture's), each with its own center frequency and time origin. Needs an ADR: the API
-   shape (a `read_sigmf_captures` returning a list, and whether channels combine with it), what a
-   segment's time origin is (the recording's plus its start over the rate, or a capture's
-   `core:datetime`), which capture fields are kept, how annotations split between segments, and
-   what is rejected (unsorted or repeated starts, a start past the samples, a first capture not
-   at 0). Expected values: `struct`-packed samples and hand-written metadata, implemented from the
-   SigMF description (not copied: it is CC-BY-SA).
+1. **Baluev false-alarm probability**: the chance that noise exceeds a standard Lomb-Scargle value
+   anywhere up to `f_max`, from the sample times (Baluev 2008), so a grid search needs no guess
+   at the number of independent frequencies (ADR 0062 left it out). Needs an ADR: the formula and
+   its constants for centered and uncentered fits, how the gamma ratio is computed without a
+   log-gamma in C#, and what is rejected. Expected values: a stdlib generator using
+   `math.lgamma`, with a by-hand `N = 4` case.
 
 ## Built
 
@@ -1000,14 +997,25 @@ Updated with every chunk of work. Dates are absolute.
   7 bad channel counts or frames, an explicit `core:num_channels: 1`) and 16 cases.
   Python 3717 passed, 2 skipped; .NET 3113 passed; conformance 1918/1918 in both. Version
   2026.11.14.12.
+- 2026-11-14: Multi-capture SigMF recordings (ADR 0097): `read_sigmf_captures` (C#
+  `ReadSigmfCaptures`) reads a one-channel recording as one signal per capture, from its
+  `core:sample_start` to the next capture's, each with its capture's `core:frequency` and the
+  recording's time origin plus start over rate. Each annotation goes to the last segment starting
+  at or before it, its start rebased; a segment with none has no annotations key. Starts must be
+  integers (not bools or floats), the first 0, strictly increasing and not past the samples (one
+  at the end is an empty segment); no captures is one segment at frequency 0. `read_sigmf` still
+  rejects differing frequencies and now names the new reader. Writing captures is not built. The
+  files generator gained 11 recordings (2 good, 9 bad) and 16 cases.
+  Python 3750 passed, 2 skipped; .NET 3147 passed; conformance 1934/1934 in both. Version
+  2026.11.15.0.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes, multi-capture
-SigMF recordings and per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
+phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes, writing
+multi-capture SigMF recordings, per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.
 
 ## Lessons

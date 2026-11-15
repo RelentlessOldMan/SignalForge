@@ -1,0 +1,32 @@
+{
+  "global": {
+    "core:datatype": "cf32_le",
+    "core:version": "1.0.0",
+    "core:sample_rate": 4,
+    "core:extensions": [
+      {
+        "name": "signalforge",
+        "version": "1.0.0",
+        "optional": true
+      }
+    ],
+    "signalforge:time_origin": 0.5,
+    "signalforge:units": "V"
+  },
+  "captures": [
+    {
+      "core:sample_start": 0,
+      "core:frequency": 100000000.0
+    },
+    {
+      "core:sample_start": 3,
+      "core:frequency": 101000000.0
+    }
+  ],
+  "annotations": [
+    {
+      "core:sample_start": 3,
+      "core:sample_count": 5
+    }
+  ]
+}

@@ -184,6 +184,9 @@ OPS: dict[str, Callable[..., Any]] = {
     "read_sigmf_channels": lambda file: [
         _signal_record(s) for s in files.read_sigmf_channels(_fixture(file))
     ],
+    "read_sigmf_captures": lambda file: [
+        _signal_record(s) for s in files.read_sigmf_captures(_fixture(file))
+    ],
     "write_wav": lambda channels, sample_rate, sample_format, info=None, cues=None: _write_wav(
         channels, sample_rate, sample_format, info, cues
     ),

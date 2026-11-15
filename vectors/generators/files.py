@@ -500,6 +500,62 @@ for name, n, why in (
     ("channels_too_many", 65536, "at most 65535 channels"),
 ):
     chans.append((name, meta(base("ri16_le", **{"core:num_channels": n})), b"", None, why))
+# --- multi-capture recordings (ADR 0097): one segment per capture, time origin moved by
+# start / rate, each annotation rebased into the last segment starting at or before it.
+caps = []
+caps.append((
+    "captures_two_freqs",
+    meta(base("ri16_le", **{"core:author": "a test"}),
+         [{"core:sample_start": 0, "core:frequency": 1e6, "core:datetime": "2026-11-14T00:00:00Z"},
+          {"core:sample_start": 2, "core:frequency": 2e6}],
+         [{"core:sample_start": 0, "core:sample_count": 1, "core:label": "a"},
+          {"core:sample_start": 2, "core:sample_count": 2, "core:label": "b"},
+          {"core:sample_start": 3, "core:label": "c"}]),
+    struct.pack("<4h", 8192, -8192, 16384, -16384),
+    [rec([0.25, -0.25], 1000, 1e6, 0, metadata={
+        "core:author": "a test",
+        "core:annotations": [{"core:sample_start": 0, "core:sample_count": 1, "core:label": "a"}]}),
+     rec([0.5, -0.5], 1000, 2e6, 2 / 1000, metadata={
+         "core:author": "a test",
+         "core:annotations": [{"core:sample_start": 0, "core:sample_count": 2, "core:label": "b"},
+                              {"core:sample_start": 1, "core:label": "c"}]})],
+    "two captures at different frequencies are two signals; the second starts 2/1000 s later; "
+    "annotations at 2 and 3 move to the second, at 0 and 1; core:datetime is not read",
+))
+caps.append((
+    "captures_time_origin_cf32",
+    meta({**base("cf32_le", 4),
+          "core:extensions": [{"name": "signalforge", "version": "1.0.0", "optional": True}],
+          "signalforge:time_origin": 0.5, "signalforge:units": "V"},
+         [{"core:sample_start": 0, "core:frequency": 100e6},
+          {"core:sample_start": 3, "core:frequency": 101e6}],
+         [{"core:sample_start": 3, "core:sample_count": 5}]),
+    struct.pack("<8f", 0.5, -0.5, 1, 0, 0, 1, -0.25, 0.125),
+    [rec({"re": [0.5, 1, 0], "im": [-0.5, 0, 1]}, 4, 100e6, 0.5, "V"),
+     rec({"re": [-0.25], "im": [0.125]}, 4, 101e6, 0.5 + 3 / 4, "V",
+         metadata={"core:annotations": [{"core:sample_start": 0, "core:sample_count": 5}]})],
+    "time origin 0.5 + 3/4 = 1.25 for the capture at sample 3 of a 4 Hz recording; the span of 5 "
+    "past its one sample is kept, not checked; the first segment has no annotations key",
+))
+for name, captures, why in (
+    ("captures_first_not_zero", [{"core:sample_start": 1}], "the first capture must start at 0"),
+    ("captures_repeated", [{"core:sample_start": 0}, {"core:sample_start": 0}],
+     "a repeated start would be an empty segment"),
+    ("captures_unsorted", [{"core:sample_start": 0}, {"core:sample_start": 2},
+                           {"core:sample_start": 1}], "captures must be in order of start"),
+    ("captures_past_end", [{"core:sample_start": 0}, {"core:sample_start": 2}],
+     "a capture at 2 is past the one sample"),
+    ("captures_no_start", [{"core:frequency": 1e6}], "core:sample_start is required"),
+    ("captures_start_float", [{"core:sample_start": 0.0}],
+     "core:sample_start must be an integer, and 0.0 is a float"),
+    ("captures_start_bool", [{"core:sample_start": False}],
+     "core:sample_start must be an integer, and a bool is not one"),
+    ("captures_start_negative", [{"core:sample_start": -1}], "core:sample_start is at least 0"),
+):
+    caps.append((name, meta(base("ri16_le"), captures), one, None, why))
+caps.append(("captures_two_channels", meta(base("ri16_le", **{"core:num_channels": 2})),
+             struct.pack("<2h", 1, 2), None, "read_sigmf_captures reads one channel only"))
+
 chans.append(("channels_partial_frame", meta(base("ri16_le", **{"core:num_channels": 2})),
               struct.pack("<3h", 1, 2, 3), None,
               "3 samples is not a whole number of 2-sample frames"))
@@ -525,6 +581,32 @@ for name in ("foreign_ci16", "signalforge_rf32_be", "one_channel_explicit"):
     cases.append({"id": f"read_sigmf_channels.{name}", "op": "read_sigmf_channels",
                   "args": {"file": name}, "expected": [good[name]], "tol": TOL,
                   "source": "a one-channel recording is a list of one, as read_sigmf reads it"})
+for name, _, _, expected, why in caps:
+    case = {"id": f"read_sigmf_captures.{name}", "op": "read_sigmf_captures",
+            "args": {"file": name}}
+    if expected is None:
+        case.update({"error": "invalid_argument", "source": why})
+    else:
+        case.update({"expected": expected, "tol": TOL, "source": why})
+    cases.append(case)
+s = good["signalforge_rf32_be"]
+for name, expected, why in (
+    ("no_captures_ri8", [good["no_captures_ri8"]], "no captures is one segment at frequency 0"),
+    ("two_frequencies",
+     [rec([1 / 32768], 1000, 1e6), rec([], 1000, 2e6, 1 / 1000)],
+     "a capture at the number of samples is an empty last segment, 1/1000 s on"),
+    ("signalforge_rf32_be",
+     [{**s, "samples": [0.5, -2.0]}, {**s, "samples": [3.25], "time_origin": 1.5 + 2 / 2.5e6}],
+     "two captures at one frequency are still two segments; the second 2/2.5e6 s after 1.5"),
+):
+    cases.append({"id": f"read_sigmf_captures.{name}", "op": "read_sigmf_captures",
+                  "args": {"file": name}, "expected": expected, "tol": TOL, "source": why})
+cases.append({"id": "read_sigmf_captures.header_bytes", "op": "read_sigmf_captures",
+              "args": {"file": "header_bytes"}, "error": "invalid_argument",
+              "source": "header bytes inside the data are still not supported"})
+cases.append({"id": "read_sigmf.captures_two_freqs", "op": "read_sigmf",
+              "args": {"file": "captures_two_freqs"}, "error": "invalid_argument",
+              "source": "read_sigmf gives one signal and one frequency; these captures have two"})
 cases.append({"id": "read_sigmf_channels.two_channels", "op": "read_sigmf_channels",
               "args": {"file": "two_channels"}, "error": "invalid_argument",
               "source": "one 2-byte sample is not a whole number of 2-channel frames"})
@@ -536,13 +618,14 @@ doc = {
     "schema": 1,
     "suite": "files",
     "description": "Raw sample encoding in every supported datatype, and reading SigMF-layout "
-    "recordings of one or more channels from vectors/files (conventions: Signal files).",
+    "recordings of one or more channels or captures from vectors/files (conventions: Signal "
+    "files).",
     "cases": cases,
 }
 lines = ",\n".join("    " + json.dumps(c) for c in cases)
 head = json.dumps({k: v for k, v in doc.items() if k != "cases"}, indent=2)[:-2]
 outputs = {ROOT / "cases" / "files.json": (head + ',\n  "cases": [\n' + lines + "\n  ]\n}\n").encode()}
-for name, text, data, _, _ in recs + chans:
+for name, text, data, _, _ in recs + chans + caps:
     outputs[ROOT / "files" / f"{name}.sigmf-meta"] = text.encode()
     outputs[ROOT / "files" / f"{name}.sigmf-data"] = data
 

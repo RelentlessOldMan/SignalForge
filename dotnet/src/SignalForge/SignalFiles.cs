@@ -409,7 +409,7 @@ public static class SignalFiles
     /// <param name="path">The base path, or either file's name.</param>
     /// <exception cref="ArgumentException">The recording is malformed or of the other kind.</exception>
     /// <exception cref="IOException">A file is missing or unreadable.</exception>
-    public static Signal<T> ReadSigmf<T>(string path) where T : struct => ReadSigmfCore<T>(path, multi: false)[0];
+    public static Signal<T> ReadSigmf<T>(string path) where T : struct => ReadSigmfCore<T>(path, SigmfRead.One)[0];
 
     /// <summary>Reads a SigMF recording of any number of channels as one signal per channel.</summary>
     /// <typeparam name="T"><c>double</c> for a real recording, <see cref="Complex"/> for a complex one.</typeparam>
@@ -417,9 +417,25 @@ public static class SignalFiles
     /// <exception cref="ArgumentException">The recording is malformed or of the other kind.</exception>
     /// <exception cref="IOException">A file is missing or unreadable.</exception>
     public static IReadOnlyList<Signal<T>> ReadSigmfChannels<T>(string path) where T : struct =>
-        ReadSigmfCore<T>(path, multi: true);
+        ReadSigmfCore<T>(path, SigmfRead.Channels);
 
-    private static List<Signal<T>> ReadSigmfCore<T>(string path, bool multi) where T : struct
+    /// <summary>Reads a one-channel SigMF recording as one signal per capture, each with its capture's center
+    /// frequency and a time origin moved to the capture's first sample.</summary>
+    /// <typeparam name="T"><c>double</c> for a real recording, <see cref="Complex"/> for a complex one.</typeparam>
+    /// <param name="path">The base path, or either file's name.</param>
+    /// <exception cref="ArgumentException">The recording is malformed or of the other kind.</exception>
+    /// <exception cref="IOException">A file is missing or unreadable.</exception>
+    public static IReadOnlyList<Signal<T>> ReadSigmfCaptures<T>(string path) where T : struct =>
+        ReadSigmfCore<T>(path, SigmfRead.Captures);
+
+    private enum SigmfRead
+    {
+        One,
+        Channels,
+        Captures,
+    }
+
+    private static List<Signal<T>> ReadSigmfCore<T>(string path, SigmfRead mode) where T : struct
     {
         var (metaPath, dataPath) = Files(path);
         byte[] text = File.ReadAllBytes(metaPath);
@@ -441,8 +457,10 @@ public static class SignalFiles
             throw new ArgumentException("unsupported core:version", nameof(path));
         double rate = Num(glob.GetValueOrDefault("core:sample_rate"), "core:sample_rate");
         object? nc = glob.TryGetValue("core:num_channels", out var ncv) ? ncv : 1L;
-        if (!multi && nc is not 1L)
-            throw new ArgumentException("ReadSigmf reads one channel; ReadSigmfChannels reads more", nameof(path));
+        if (mode != SigmfRead.Channels && nc is not 1L)
+            throw new ArgumentException(
+                $"{(mode == SigmfRead.One ? "ReadSigmf" : "ReadSigmfCaptures")} reads one channel; ReadSigmfChannels reads more",
+                nameof(path));
         if (nc is not long count || count is < 1 or > MaxChannels)
             throw new ArgumentException($"core:num_channels must be a whole number from 1 to {MaxChannels}", nameof(path));
         foreach (string k in (string[])["core:dataset", "core:metadata_only"])
@@ -451,16 +469,22 @@ public static class SignalFiles
         object? captures = top.TryGetValue("captures", out var cv) ? cv : new List<object?>();
         if (captures is not List<object?> caps)
             throw new ArgumentException("captures must be a JSON array", nameof(path));
-        var freqs = new HashSet<double>();
+        var freqs = new List<double>();
+        var starts = new List<long>();
         for (int i = 0; i < caps.Count; i++)
         {
             var c = Obj(caps[i], $"captures[{i}]");
             if (c.TryGetValue("core:header_bytes", out var hb) && hb is not 0L)
                 throw new ArgumentException("captures with header bytes are not supported", nameof(path));
             freqs.Add(c.TryGetValue("core:frequency", out var fq) ? Num(fq, $"captures[{i}] core:frequency") : 0.0);
+            if (mode == SigmfRead.Captures)
+                starts.Add(c.GetValueOrDefault("core:sample_start") is long s && s >= 0
+                    ? s
+                    : throw new ArgumentException($"captures[{i}] core:sample_start must be an integer, at least 0", nameof(path)));
         }
-        if (freqs.Count > 1)
-            throw new ArgumentException("captures at different frequencies are not supported", nameof(path));
+        if (mode != SigmfRead.Captures && freqs.Distinct().Count() > 1)
+            throw new ArgumentException(
+                "captures at different frequencies are not one signal; ReadSigmfCaptures reads them", nameof(path));
         if (glob.ContainsKey(AnnotationsKey))
             throw new ArgumentException($"{AnnotationsKey} belongs at the top level, not in global", nameof(path));
         object? annotations = top.TryGetValue("annotations", out var av) ? av : new List<object?>();
@@ -477,9 +501,12 @@ public static class SignalFiles
         if (annotations is List<object?> { Count: > 0 })
             metadata[AnnotationsKey] = annotations;
         double timeOrigin = glob.TryGetValue("signalforge:time_origin", out var t0) ? Num(t0, "signalforge:time_origin") : 0.0;
-        double frequency = freqs.Count == 1 ? freqs.First() : 0.0;
+        double frequency = freqs.Count > 0 ? freqs[0] : 0.0;
         double? ohms = impedance is null ? null : Num(impedance, "signalforge:impedance");
         T[] samples = DecodeSamples<T>(File.ReadAllBytes(dataPath), datatype);
+        if (mode == SigmfRead.Captures)
+            return Segments(samples, starts, freqs, (List<object?>)annotations!, metadata,
+                s => new(s.Samples, rate, s.Frequency, timeOrigin + s.Start / rate, (string?)units, ohms, s.Metadata));
         int n = (int)count;
         if (samples.Length % n != 0)
             throw new ArgumentException($"{samples.Length} samples is not a whole number of {n}-channel frames", nameof(path));
@@ -491,6 +518,46 @@ public static class SignalFiles
                 x[k] = samples[k * n + ch];
             result.Add(new Signal<T>(x, rate, frequency, timeOrigin, (string?)units, ohms,
                 (Dictionary<string, object?>)Copy(metadata)!));
+        }
+        return result;
+    }
+
+    /// <summary>Splits a recording's samples at its capture starts (conventions: Signal files, Captures).</summary>
+    private static List<Signal<T>> Segments<T>(T[] samples, List<long> starts, List<double> freqs, List<object?> annotations,
+        Dictionary<string, object?> metadata, Func<(T[] Samples, long Start, double Frequency, Dictionary<string, object?> Metadata), Signal<T>> make)
+        where T : struct
+    {
+        if (starts.Count == 0)
+            (starts, freqs) = ([0], [0.0]);
+        if (starts[0] != 0)
+            throw new ArgumentException("the first capture must start at sample 0");
+        for (int j = 1; j < starts.Count; j++)
+            if (starts[j] <= starts[j - 1])
+                throw new ArgumentException("each capture must start after the one before");
+        if (starts[^1] > samples.Length)
+            throw new ArgumentException($"a capture starts past the last of {samples.Length} samples");
+        var result = new List<Signal<T>>(starts.Count);
+        for (int j = 0; j < starts.Count; j++)
+        {
+            long a = starts[j];
+            long b = j + 1 < starts.Count ? starts[j + 1] : samples.Length;
+            bool last = j == starts.Count - 1;
+            var md = (Dictionary<string, object?>)Copy(metadata)!;
+            md.Remove(AnnotationsKey);
+            var mine = new List<object?>();
+            foreach (var x in annotations.Cast<Dictionary<string, object?>>())
+            {
+                long at = Convert.ToInt64(x["core:sample_start"], CultureInfo.InvariantCulture);
+                if (a <= at && (last || at < b))
+                {
+                    var y = (Dictionary<string, object?>)Copy(x)!;
+                    y["core:sample_start"] = at - a;
+                    mine.Add(y);
+                }
+            }
+            if (mine.Count > 0)
+                md[AnnotationsKey] = mine;
+            result.Add(make((samples[(int)a..(int)b], a, freqs[j], md)));
         }
         return result;
     }
