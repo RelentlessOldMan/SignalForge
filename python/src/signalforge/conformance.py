@@ -188,8 +188,11 @@ OPS: dict[str, Callable[..., Any]] = {
     "read_wav_info": lambda file: [
         {"id": k, "text": v} for k, v in files.read_wav_info(_fixture(file)).items()
     ],
-    "write_npy": lambda x: _write_npy(x),
+    "write_npy": lambda x, shape=None: _write_npy(
+        x if shape is None else np.asarray(x).reshape([int(n) for n in shape])
+    ),
     "read_npy": lambda file: files.read_npy(_fixture(file)),
+    "read_npy_2d": lambda file: _matrix_record(files.read_npy_2d(_fixture(file))),
     "write_npz": lambda arrays: _write_npz(arrays),
     "read_npz": lambda file: [
         {"name": k, "x": v} for k, v in files.read_npz(_fixture(file)).items()
@@ -205,6 +208,11 @@ def _write_npz(arrays: Any) -> str:
             path, {} if isinstance(arrays, np.ndarray) else {a["name"]: a["x"] for a in arrays}
         )
         return path.read_bytes().hex()
+
+
+def _matrix_record(a: Any) -> dict[str, Any]:
+    """A 2-D array as its shape and its values flat in C order."""
+    return {"shape": [float(n) for n in a.shape], "x": a.reshape(-1)}
 
 
 def _write_npy(x: Any) -> str:

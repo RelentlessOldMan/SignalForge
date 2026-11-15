@@ -1653,6 +1653,15 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     integer, and a data size other than `n` × the item size.
     In C# a file of the other kind than `T` is rejected (an integer file is real). A missing file is an OS error.
     **(implemented)**
+  - 2-D arrays ([ADR 0092](adr/0092-npy-2d.md)): `read_npy_2d(path)` (C# `ReadNpy2D<T>`, a `T[,]`)
+    reads what `read_npy` reads except that the shape is exactly two integers `(r, c)`, each at
+    most 2147483591 (2^31 − 57), and the data is `r × c` items. Item `k` of the data is row `k ÷ c`, column
+    `k mod c` when `fortran_order` is `False`, and row `k mod r`, column `k ÷ r` when it is `True`;
+    the result is in C order either way. Zero rows or columns mean no data. `read_npy` rejects a
+    2-D shape and `read_npy_2d` a 1-D one. `write_npy` of a 2-D array writes the header text
+    `{'descr': '<f8', 'fortran_order': False, 'shape': (r, c), }` (`'<c16'` for complex), padded
+    as above to 118 bytes, then the items in C order (row by row). `write_npz` and `read_npz` stay
+    1-D. **(implemented)**
 - **NumPy `.npz`** ([ADR 0089](adr/0089-npz.md)): `write_npz(path, arrays)`, `read_npz(path)` (C#
   `WriteNpz`, `ReadNpz`), a ZIP archive of one `.npy` member per array, named `<key>.npy`, in the
   mapping's order. All numbers in the ZIP structures are little-endian.

@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **2-D `.npy` arrays**: `read_npy_2d(path)` (C# `ReadNpy2D<T>`, returning `T[,]`) reading a
-   `.npy` of shape `(rows, columns)` in either `fortran_order`, with the same dtypes as `read_npy`,
-   and `write_npy` accepting a 2-D array (C# `T[,]`), written in C order. Needs an ADR: the shape
-   forms accepted (`(r, c)`, zero rows or columns), whether `read_npy` of a 2-D file stays an
-   error, the C# return type, and how `.npz` members of 2-D shape are read. Expected values:
-   `struct`-packed bytes in both orders, cross-checked with `numpy.load`.
+1. **2-D `.npz` members**: `write_npz` accepting 2-D members (C# `T[,]` values) and a
+   `read_npz_2d(path)` (C# `ReadNpz2D<T>`) returning every member as a 2-D array, built on
+   `read_npy_2d` (ADR 0092). Needs an ADR: whether one archive may mix 1-D and 2-D members, what
+   `read_npz` does with a 2-D member (still an error?), and the C# return type for a mixed
+   archive. Expected values: `zlib.crc32` and `struct`-packed stored ZIP entries, cross-checked
+   with `numpy.load`.
 
 ## Built
 
@@ -944,13 +944,24 @@ Updated with every chunk of work. Dates are absolute.
   read files, the tagged PCM files checked with the `wave` module.
   Python 3491 passed, 2 skipped; .NET 2938 passed; conformance 1803/1803 in both. Version
   2026.11.14.7.
+- 2026-11-14: 2-D `.npy` arrays (ADR 0092): `read_npy_2d(path)` (C# `ReadNpy2D<T>`, a `T[,]`)
+  reads a `.npy` of shape `(rows, columns)` in either `fortran_order`, with every dtype
+  `read_npy` reads, and returns it in C order; `write_npy` (C# `WriteNpy(path, double[,])` and
+  `WriteNpy(path, Complex[,])`) writes a 2-D array in C order, byte for byte what `numpy.save`
+  writes. Zero rows or columns are allowed; each dimension is at most 2147483591, the largest
+  .NET allocates for a rectangular array (2^31 − 1 throws there, found by the C# tests).
+  `read_npy` and `read_npy_2d` each reject the other's files; `.npz` stays 1-D. Generator
+  `npy.py` gained 6 write cases and 11 good and 8 bad `m2_*.npy` read files, all cross-checked
+  with `numpy.save` and `numpy.load`.
+  Python 3566 passed, 2 skipped; .NET 2979 passed; conformance 1828/1828 in both. Version
+  2026.11.14.8.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npy` shapes other than 1-D, streaming reads and writes, multi-channel and
+phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` shapes beyond 2-D, 2-D `.npz` members, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks other than `LIST`/`INFO`), plotting, CLI,
 packaging and publishing.
 

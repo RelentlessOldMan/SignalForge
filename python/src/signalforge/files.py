@@ -491,17 +491,21 @@ _NPY_KEYS = frozenset({"descr", "fortran_order", "shape"})
 
 
 def write_npy(path: str | os.PathLike[str], x: ArrayLike) -> None:
-    """Write a 1-D array as a NumPy ``.npy`` file: ``'<f8'`` for real values, ``'<c16'`` for
-    complex, in the layout ``numpy.save`` writes (conventions: Signal files, NumPy .npy)."""
-    Path(os.fspath(path)).write_bytes(_npy_bytes(x, "x"))
+    """Write a 1-D or 2-D array as a NumPy ``.npy`` file: ``'<f8'`` for real values, ``'<c16'``
+    for complex, 2-D in C order, in the layout ``numpy.save`` writes (conventions: Signal files,
+    NumPy .npy; ADR 0092)."""
+    Path(os.fspath(path)).write_bytes(_npy_bytes(x, "x", 2))
 
 
-def _npy_bytes(x: ArrayLike, name: str) -> bytes:
+def _npy_bytes(x: ArrayLike, name: str, max_ndim: int = 1) -> bytes:
     a = np.asarray(x)
-    if a.ndim != 1 or a.dtype.kind not in "fiuc":
-        raise ValueError(f"{name} must be a 1-D numeric array")
+    if not 1 <= a.ndim <= max_ndim or a.dtype.kind not in "fiuc":
+        raise ValueError(
+            f"{name} must be a {'1-D or 2-D' if max_ndim == 2 else '1-D'} numeric array"
+        )
     descr = "<c16" if a.dtype.kind == "c" else "<f8"
-    text = f"{{'descr': '{descr}', 'fortran_order': False, 'shape': ({a.size},), }}"
+    shape = f"({a.shape[0]},)" if a.ndim == 1 else f"({a.shape[0]}, {a.shape[1]})"
+    text = f"{{'descr': '{descr}', 'fortran_order': False, 'shape': {shape}, }}"
     head = (text.ljust(117) + "\n").encode("ascii")
     data = a.astype(_NPY_DESCR[descr]).tobytes()
     return _NPY_MAGIC + b"\x01\x00" + struct.pack("<H", 118) + head + data
@@ -596,7 +600,14 @@ def read_npy(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[np.c
     return _parse_npy(Path(os.fspath(path)).read_bytes())
 
 
-def _parse_npy(raw: bytes) -> NDArray[np.float64] | NDArray[np.complex128]:
+def read_npy_2d(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[np.complex128]:
+    """Read a 2-D NumPy ``.npy`` file of shape ``(rows, columns)``, in either ``fortran_order``,
+    as a C-ordered array, with the dtypes ``read_npy`` reads (conventions: Signal files, NumPy
+    .npy; ADR 0092)."""
+    return _parse_npy(Path(os.fspath(path)).read_bytes(), 2)
+
+
+def _parse_npy(raw: bytes, ndim: int = 1) -> NDArray[np.float64] | NDArray[np.complex128]:
     if len(raw) < 8 or raw[:6] != _NPY_MAGIC:
         raise ValueError("not a .npy file")
     version = (raw[6], raw[7])
@@ -620,15 +631,17 @@ def _parse_npy(raw: bytes) -> NDArray[np.float64] | NDArray[np.complex128]:
         raise ValueError(f"descr {descr!r} is not one read_npy reads")
     if not isinstance(order, bool):
         raise ValueError("fortran_order must be True or False")
-    if not isinstance(shape, tuple) or len(shape) != 1:
-        raise ValueError(f"only 1-D arrays are read, not shape {shape!r}")
+    if not isinstance(shape, tuple) or len(shape) != ndim:
+        raise ValueError(f"only {ndim}-D arrays are read here, not shape {shape!r}")
+    if ndim == 2 and max(shape) > 2147483591:
+        raise ValueError(f"shape {shape!r} has a dimension beyond 2147483591")
     dt = _NPY_DESCR[descr]
-    if len(raw) - start != shape[0] * dt.itemsize:
-        raise ValueError(f"{len(raw) - start} data bytes do not match shape ({shape[0]},)")
-    values = np.frombuffer(raw, dt, offset=start)
+    if len(raw) - start != math.prod(shape) * dt.itemsize:
+        raise ValueError(f"{len(raw) - start} data bytes do not match shape {shape!r}")
+    values = np.frombuffer(raw, dt, offset=start).reshape(shape, order="F" if order else "C")
     if dt.kind == "c":
-        return values.astype(np.complex128)
-    return values.astype(np.float64)
+        return values.astype(np.complex128, order="C")
+    return values.astype(np.float64, order="C")
 
 
 _ZIP_LOCAL, _ZIP_CENTRAL, _ZIP_END = b"PK\x03\x04", b"PK\x01\x02", b"PK\x05\x06"

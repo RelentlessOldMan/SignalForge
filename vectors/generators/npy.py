@@ -3,7 +3,8 @@
 It does not import NumPy or SignalForge. The written layout is the one in conventions: Signal files,
 NumPy .npy (the one numpy.save writes for these arrays; the Python tests compare with numpy.save,
 which this script cannot import). Values come from struct (d, f and e in both byte orders; ADR 0088); headers of other writers and broken
-headers are written here as literal text.
+headers are written here as literal text. 2-D files (ADR 0092) pack their items row by row (C order)
+or column by column (Fortran order); expected values are listed flat in C order with the shape.
 
 Run from the repo root: python vectors/generators/npy.py [--check]
 With --check it writes nothing and exits 1 unless every file matches what it would write.
@@ -68,6 +69,35 @@ for name, x, is_complex, why in (
 cases.append({"id": "write_npy.integers", "op": "write_npy", "args": {"x": [1, -2, 3]},
               "expected": npy([1.0, -2.0, 3.0], False).hex(), "tol": TOL,
               "source": "real samples of any numeric type are written as '<f8'"})
+
+
+
+def npy2(rows, is_complex):
+    """The bytes write_npy writes for a 2-D array given as rows: C order."""
+    descr = "<c16" if is_complex else "<f8"
+    shape = f"({len(rows)}, {len(rows[0]) if rows else 0})"
+    text = f"{{'descr': '{descr}', 'fortran_order': False, 'shape': {shape}, }}"
+    return header(text.ljust(117) + "\n") + data([v for r in rows for v in r])
+
+
+def write2(name, rows, ncols, is_complex, why):
+    flat = [v for r in rows for v in r]
+    expected = npy2(rows, is_complex) if rows else header(
+        f"{{'descr': '<f8', 'fortran_order': False, 'shape': (0, {ncols}), }}".ljust(117) + "\n")
+    cases.append({"id": f"write_npy.{name}", "op": "write_npy",
+                  "args": {"x": arg(flat, is_complex), "shape": [len(rows), ncols]},
+                  "expected": expected.hex(), "tol": TOL, "source": why})
+
+
+M = [[1.5, -2.0, 3.0], [0.25, 1e-300, -INF]]
+MZ = [[1 + 2j, -0.5j], [complex(INF, 0.125), 3.0 + 0j], [0j, -1 - 1j]]
+write2("matrix_2x3", M, 3, False, "C order: row 0 then row 1, shape (2, 3); numpy.save writes the same")
+write2("matrix_complex_3x2", MZ, 2, True, "C order, real then imaginary part of each, shape (3, 2)")
+write2("matrix_1x1", [[0.5]], 1, False, "shape (1, 1)")
+write2("matrix_zero_rows", [], 3, False, "shape (0, 3), no data")
+write2("matrix_zero_columns", [[], []], 0, False, "shape (2, 0), no data")
+write2("matrix_10x10", [[float(10 * i + j) for j in range(10)] for i in range(10)], 10, False,
+       "two-digit dimensions: the header is still 118 bytes")
 
 recs = []  # (name, bytes, expected or None, why)
 x3 = [0.5, -1.5, 1e-300]
@@ -225,17 +255,76 @@ for name, _, expected, why in recs:
              else {"expected": expected, "tol": TOL, "source": why})
     cases.append(c)
 
+recs2 = []  # (name, bytes, expected or None, why) for read_npy_2d
+
+
+def file2(descr, shape, fortran, items, fmt="<d", version=(1, 0)):
+    """A 2-D .npy file whose items are already in the file's order."""
+    text = f"{{'descr': '{descr}', 'fortran_order': {fortran}, 'shape': {shape}, }}\n"
+    return header(text, version) + data(items, fmt)
+
+
+def good2(name, raw, rows, ncols, why):
+    flat = [v for r in rows for v in r]
+    recs2.append((f"m2_{name}", raw, {"shape": [len(rows), ncols],
+                                      "x": arg(flat, any(isinstance(v, complex) for v in flat))}, why))
+
+
+def bad2(name, raw, why):
+    recs2.append((f"m2_{name}", raw, None, why))
+
+
+def columns(rows):
+    return [rows[i][j] for j in range(len(rows[0])) for i in range(len(rows))]
+
+
+good2("c_order", npy2(M, False), M, 3, "the layout numpy.save writes for a C-ordered (2, 3) float64 array")
+good2("fortran", file2("<f8", "(2, 3)", True, columns(M)), M, 3,
+      "Fortran order: the file holds column 0, then 1, then 2; read back as rows")
+good2("complex", npy2(MZ, True), MZ, 2, "a C-ordered (3, 2) complex128 array")
+Z2 = [[1 + 2j, 0.5 - 0.25j], [-3j, 4 + 0j]]
+good2("complex64_big_fortran", file2(">c8", "(2, 2)", True, columns(Z2), ">f"), Z2, 2,
+      "big-endian complex64 in Fortran order, values exact in binary32")
+I16 = [[1, -2, 32767], [-32768, 0, 5]]
+good2("int16_fortran", file2("<i2", "(2, 3)", True, columns(I16), "<h"),
+      [[float(v) for v in r] for r in I16], 3, "integers in Fortran order, no scaling (ADR 0090)")
+good2("uint8_column", file2("|u1", "(3, 1)", False, [0, 128, 255], "B"), [[0.0], [128.0], [255.0]], 1,
+      "one column of unsigned bytes")
+good2("zero_rows", file2("<f8", "(0, 3)", False, []), [], 3, "shape (0, 3): no data")
+good2("zero_columns", file2("<f8", "(4, 0)", True, []), [[], [], [], []], 0, "shape (4, 0): no data")
+good2("one_by_one", file2("<f8", "(1, 1)", False, [0.5]), [[0.5]], 1, "shape (1, 1)")
+good2("version_2", file2("<f8", "(2, 3)", False, [v for r in M for v in r], version=(2, 0)), M, 3,
+      "version 2.0, a 32-bit header length")
+good2("other_writer", header("{\"shape\":( 2 ,3 ),\"fortran_order\":False,\"descr\":\"<f8\"}\n")
+      + data([v for r in M for v in r]), M, 3, "another writer's spacing and key order")
+bad2("one_dim", npy(x3, False), "shape (3,) is 1-D")
+bad2("three_dims", file2("<f8", "(1, 2, 3)", False, [0.0] * 6), "shape (1, 2, 3) is 3-D")
+bad2("zero_dims", file2("<f8", "()", False, [0.5]), "shape () is 0-D")
+bad2("data_short", file2("<f8", "(2, 3)", False, [0.0] * 5), "40 bytes for shape (2, 3)")
+bad2("data_long", file2("<f8", "(2, 3)", True, [0.0] * 7), "56 bytes for shape (2, 3)")
+bad2("dimension_too_big", file2("<f8", "(2147483592, 0)", False, []),
+     "2147483592 rows is one beyond the 2147483591 limit, even with no data")
+bad2("product_too_big", file2("<f8", "(2147483591, 2147483591)", False, [0.0]),
+     "each dimension fits, but 8 bytes are not 2147483591^2 items")
+bad2("bool", file2("|b1", "(1, 1)", False, [1], "B"), "booleans are not read")
+
+for name, _, expected, why in recs2:
+    c = {"id": f"read_npy_2d.{name}", "op": "read_npy_2d", "args": {"file": f"{name}.npy"}}
+    c.update({"error": "invalid_argument", "source": why} if expected is None
+             else {"expected": expected, "tol": TOL, "source": why})
+    cases.append(c)
+
 doc = {
     "schema": 1,
     "suite": "npy",
     "description": "Writing NumPy .npy files, and reading them as NumPy and other writers lay them "
-    "out, from vectors/files (conventions: Signal files, NumPy .npy).",
+    "out, from vectors/files, 1-D and 2-D (conventions: Signal files, NumPy .npy).",
     "cases": cases,
 }
 lines = ",\n".join("    " + json.dumps(c) for c in cases)
 head = json.dumps({k: v for k, v in doc.items() if k != "cases"}, indent=2)[:-2]
 outputs = {ROOT / "cases" / "npy.json": (head + ',\n  "cases": [\n' + lines + "\n  ]\n}\n").encode()}
-for name, raw, _, _ in recs:
+for name, raw, _, _ in recs + recs2:
     outputs[ROOT / "files" / f"{name}.npy"] = raw
 
 if "--check" in sys.argv[1:]:

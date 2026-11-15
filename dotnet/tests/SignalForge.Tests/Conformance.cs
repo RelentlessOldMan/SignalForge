@@ -369,10 +369,12 @@ public static class Conformance
                 a.Has("info") ? a.Get("info") : null),
             "read_wav" => ReadWavOp(Str(a, "file")),
             "read_wav_info" => ReadWavInfoOp(Str(a, "file")),
+            "write_npy" when a.Has("shape") => WriteNpy2DOp(a.Get("x"), Reals(a.Get("shape"))),
             "write_npy" => a.Get("x") is Complex[] nz
                 ? WriteNpyOp(path => SignalFiles.WriteNpy(path, nz))
                 : Bind(Reals(a.Get("x")), x => WriteNpyOp(path => SignalFiles.WriteNpy(path, x))()),
             "read_npy" => ReadNpyOp(Str(a, "file")),
+            "read_npy_2d" => ReadNpy2DOp(Str(a, "file")),
             "write_npz" => WriteNpzOp(a.Get("arrays")),
             "read_npz" => ReadNpzOp(Str(a, "file")),
             "resample" => ResampleOp(a, a.I("up"), a.I("down")),
@@ -717,6 +719,44 @@ public static class Conformance
         {
             File.Delete(path);
         }
+    };
+
+    private static Func<object?> WriteNpy2DOp(object? x, double[] shape)
+    {
+        if (shape is not [var r, var c] || r < 0 || c < 0 || r != Math.Floor(r) || c != Math.Floor(c))
+            throw new InvalidDataException("shape must be two non-negative whole numbers");
+        if (x is Complex[] z)
+        {
+            var zm = new Complex[(int)r, (int)c];
+            if (z.Length != zm.Length)
+                throw new InvalidDataException("x must have rows x columns values");
+            for (int k = 0; k < z.Length; k++)
+                zm[k / (int)c, k % (int)c] = z[k];
+            return WriteNpyOp(path => SignalFiles.WriteNpy(path, zm));
+        }
+        double[] v = Reals(x);
+        var m = new double[(int)r, (int)c];
+        if (v.Length != m.Length)
+            throw new InvalidDataException("x must have rows x columns values");
+        for (int k = 0; k < v.Length; k++)
+            m[k / (int)c, k % (int)c] = v[k];
+        return WriteNpyOp(path => SignalFiles.WriteNpy(path, m));
+    }
+
+    private static Func<object?> ReadNpy2DOp(string name)
+    {
+        if (Path.GetFileName(name) != name)
+            throw new InvalidDataException("file must be a bare file name in vectors/files");
+        string path = Path.Combine(VectorsDir(), "..", "files", name);
+        bool isComplex = System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(path, System.Text.Encoding.Latin1), "[<>]c(16|8)['\"]");
+        return isComplex ? () => MatrixRecord(SignalFiles.ReadNpy2D<Complex>(path)) : () => MatrixRecord(SignalFiles.ReadNpy2D<double>(path));
+    }
+
+    /// <summary>A 2-D array as its shape and its values flat in C order.</summary>
+    private static Dictionary<string, object?> MatrixRecord<T>(T[,] m) => new()
+    {
+        ["shape"] = new double[] { m.GetLength(0), m.GetLength(1) },
+        ["x"] = m.Cast<T>().ToArray(),
     };
 
     private static Func<object?> ReadNpyOp(string name)

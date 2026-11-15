@@ -784,12 +784,44 @@ public static class SignalFiles
         WriteNpyFile(path, "<c16", x.Length, MemoryMarshal.AsBytes(x));
     }
 
+    /// <summary>Writes a real 2-D array as a NumPy <c>.npy</c> file of <c>'&lt;f8'</c> in C order, in the layout
+    /// <c>numpy.save</c> writes (conventions: Signal files, NumPy .npy; ADR 0092).</summary>
+    /// <param name="path">The file to write.</param>
+    /// <param name="x">The values, row by row; NaN and infinities included.</param>
+    public static void WriteNpy(string path, double[,] x)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        ArgumentNullException.ThrowIfNull(x);
+        File.WriteAllBytes(path, NpyBytes("<f8", Shape2D(x), Bytes2D(x, 8)));
+    }
+
+    /// <summary>Writes a complex 2-D array as a NumPy <c>.npy</c> file of <c>'&lt;c16'</c> in C order, in the layout
+    /// <c>numpy.save</c> writes (conventions: Signal files, NumPy .npy; ADR 0092).</summary>
+    /// <param name="path">The file to write.</param>
+    /// <param name="x">The values, row by row, real then imaginary part of each.</param>
+    public static void WriteNpy(string path, Complex[,] x)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        ArgumentNullException.ThrowIfNull(x);
+        File.WriteAllBytes(path, NpyBytes("<c16", Shape2D(x), Bytes2D(x, 16)));
+    }
+
+    private static string Shape2D(Array x) =>
+        string.Create(CultureInfo.InvariantCulture, $"({x.GetLength(0)}, {x.GetLength(1)})");
+
+    /// <summary>The bytes of a rectangular array, which .NET stores row by row (C order).</summary>
+    private static ReadOnlySpan<byte> Bytes2D(Array x, int itemSize) =>
+        MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetArrayDataReference(x), checked(x.Length * itemSize));
+
     private static void WriteNpyFile(string path, string descr, int n, ReadOnlySpan<byte> native) =>
         File.WriteAllBytes(path, NpyBytes(descr, n, native));
 
-    private static byte[] NpyBytes(string descr, int n, ReadOnlySpan<byte> native)
+    private static byte[] NpyBytes(string descr, int n, ReadOnlySpan<byte> native) =>
+        NpyBytes(descr, string.Create(CultureInfo.InvariantCulture, $"({n},)"), native);
+
+    private static byte[] NpyBytes(string descr, string shape, ReadOnlySpan<byte> native)
     {
-        string text = string.Create(CultureInfo.InvariantCulture, $"{{'descr': '{descr}', 'fortran_order': False, 'shape': ({n},), }}");
+        string text = $"{{'descr': '{descr}', 'fortran_order': False, 'shape': {shape}, }}";
         byte[] file = new byte[128 + native.Length];
         NpyMagic.CopyTo(file, 0);
         file[6] = 1;
@@ -825,9 +857,44 @@ public static class SignalFiles
             $"the file holds {(values is Complex[]? "complex" : "real")} values, not {typeof(T).Name}", nameof(path));
     }
 
-    /// <summary>The values in a <c>.npy</c> file's bytes: a <see cref="double"/>[] or a <see cref="Complex"/>[]
+    /// <summary>Reads a 2-D NumPy <c>.npy</c> file of shape <c>(rows, columns)</c>, in either <c>fortran_order</c>, with
+    /// the dtypes <see cref="ReadNpy{T}(string)"/> reads (conventions: Signal files, NumPy .npy; ADR 0092).</summary>
+    /// <typeparam name="T"><see cref="double"/> or <see cref="Complex"/>, as for <see cref="ReadNpy{T}(string)"/>.</typeparam>
+    /// <param name="path">The file to read.</param>
+    /// <returns>The values, indexed [row, column].</returns>
+    /// <exception cref="ArgumentException">The file is not a 2-D <c>.npy</c> file of <typeparamref name="T"/> this reads.</exception>
+    public static T[,] ReadNpy2D<T>(string path) where T : struct
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        bool wantComplex = typeof(T) == typeof(Complex);
+        if (!wantComplex && typeof(T) != typeof(double))
+            throw new ArgumentException($"the element type must be double or Complex, not {typeof(T).Name}", nameof(T));
+        Array values = ParseNpy(File.ReadAllBytes(path), message => new ArgumentException(message, nameof(path)), 2,
+            out long[] shape, out bool fortran);
+        T[] flat = values as T[] ?? throw new ArgumentException(
+            $"the file holds {(values is Complex[]? "complex" : "real")} values, not {typeof(T).Name}", nameof(path));
+        int rows = (int)shape[0], columns = (int)shape[1];
+        var result = new T[rows, columns];
+        for (int k = 0; k < flat.Length; k++)
+        {
+            if (fortran)
+                result[k % rows, k / rows] = flat[k];
+            else
+                result[k / columns, k % columns] = flat[k];
+        }
+        return result;
+    }
+
+    /// <summary>The largest 2-D dimension read: <see cref="Array.MaxLength"/>, written out so it cannot drift from the
+    /// Python limit (ADR 0092).</summary>
+    private const long NpyMaxDimension = 2147483591;
+
+    /// <summary>The values in a 1-D <c>.npy</c> file's bytes: a <see cref="double"/>[] or a <see cref="Complex"/>[]
     /// (conventions: Signal files, NumPy .npy).</summary>
-    private static Array ParseNpy(byte[] raw, Func<string, ArgumentException> bad)
+    private static Array ParseNpy(byte[] raw, Func<string, ArgumentException> bad) => ParseNpy(raw, bad, 1, out _, out _);
+
+    /// <summary>The values in a <c>.npy</c> file's bytes in file order, for a shape of <paramref name="ndim"/> integers.</summary>
+    private static Array ParseNpy(byte[] raw, Func<string, ArgumentException> bad, int ndim, out long[] shape, out bool fortran)
     {
         if (raw.Length < 8 || !raw.AsSpan(0, 6).SequenceEqual(NpyMagic))
             throw bad("not a .npy file");
@@ -855,17 +922,22 @@ public static class SignalFiles
             || !(ds is "|i1" or "|u1" || (ds[0] is '<' or '>'
                 && ds[1..] is "f8" or "f4" or "f2" or "c16" or "c8" or "i2" or "u2" or "i4" or "u4" or "i8" or "u8")))
             throw bad($"descr {descr} is not one ReadNpy reads");
-        if (order is not bool)
+        if (order is not bool isFortran)
             throw bad("fortran_order must be True or False");
-        if (shapeValue is not long[] { Length: 1 } shape)
-            throw bad("only 1-D arrays are read");
+        if (shapeValue is not long[] shp || shp.Length != ndim)
+            throw bad(string.Create(CultureInfo.InvariantCulture, $"only {ndim}-D arrays are read here"));
+        if (ndim == 2 && shp.Max() > NpyMaxDimension)
+            throw bad("the shape has a dimension beyond 2147483591");
+        (shape, fortran) = (shp, isFortran);
+        long count = shp.Aggregate(1L, (p, n) => p * n); // no overflow: two dimensions below 2^31 when ndim is 2
         char kind = ds[1];
         bool isComplex = kind == 'c', little = ds[0] != '>';
         int partSize = int.Parse(ds.AsSpan(2), CultureInfo.InvariantCulture) / (isComplex ? 2 : 1); // bytes per part
         int parts = isComplex ? 2 : 1;
         long bytes = raw.Length - start;
-        if (bytes % (partSize * parts) != 0 || bytes / (partSize * parts) != shape[0])
-            throw bad(string.Create(CultureInfo.InvariantCulture, $"{bytes} data bytes do not match shape ({shape[0]},)"));
+        if (bytes % (partSize * parts) != 0 || bytes / (partSize * parts) != count)
+            throw bad(string.Create(CultureInfo.InvariantCulture,
+                $"{bytes} data bytes do not match shape ({string.Join(", ", shp)}{(ndim == 1 ? "," : "")})"));
         var values = new double[bytes / partSize];
         ReadOnlySpan<byte> src = raw.AsSpan((int)start);
         for (int i = 0; i < values.Length; i++)

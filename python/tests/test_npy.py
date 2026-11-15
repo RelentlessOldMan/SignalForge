@@ -54,7 +54,9 @@ def test_other_numeric_types(tmp_path: Path, x: object, dtype: type) -> None:
     np.testing.assert_array_equal(got, np.asarray(x).astype(dtype))
 
 
-@pytest.mark.parametrize("x", [np.zeros((2, 2)), np.float64(1.0), [True, False], ["a"], [None]])
+@pytest.mark.parametrize(
+    "x", [np.zeros((2, 2, 2)), np.zeros(()), np.float64(1.0), [True, False], ["a"], [None]]
+)
 def test_bad_writes_are_rejected(tmp_path: Path, x: object) -> None:
     path = tmp_path / "x.npy"
     with pytest.raises(ValueError):
