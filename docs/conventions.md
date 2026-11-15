@@ -633,6 +633,27 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     `p_k = Σ_j W_j ((D_lo − s_j α)·C(t_k) + s_j·S(t_k))`. `G` is symmetric positive definite (the
     cosines are independent on any interval); each language solves it in its own way, so taps
     agree to rounding times the condition of `G`.
+- **Frequency-sampling design** (`fir_frequency_sampling(num_taps, frequencies, gains,
+  sample_rate, window="hamming", beta=None, num_points=None)`,
+  [ADR 0084](adr/0084-frequency-sampling-fir.md)): symmetric taps from a sampled piecewise-linear
+  magnitude.
+  - Arguments: `frequencies` in Hz, at least two, finite, strictly increasing, the first exactly
+    0 and the last exactly `fs/2`; `gains` one finite value per frequency. `num_taps ≥ 1`; even
+    `num_taps` (type II) needs the last gain to be 0. `window` and `beta` as for windowed-sinc
+    design (symmetric form). `num_points = K`, an integer in `[2, 2²⁰ + 1]` with
+    `L = 2(K − 1) ≥ num_taps`; by default `K − 1` is the smallest power of two `≥ max(num_taps,
+    512)`.
+  - Grid: `ν_k = k/L` for `k = 0 … K − 1` (so `ν_{K−1} = ½`). `G_k` is the target at `ν_k`: with
+    breakpoints `ν_i = f_i/fs`, take the segment `ν_i ≤ ν_k ≤ ν_{i+1}` (the first such `i`) and
+    `G_k = g_i + (g_{i+1} − g_i)(ν_k − ν_i)/(ν_{i+1} − ν_i)`.
+  - Taps: with `t = n − (N − 1)/2`,
+    `d[n] = (1/L)[G_0 + 2 Σ_{k=1}^{K−2} G_k cos(2πkt/L) + G_{K−1} cos(πt)]`. This is the inverse
+    `L`-point DFT of `G_k e^{−iπk(N−1)/L}` (the Hermitian extension), which is how a language may
+    compute it. Then `h[n] = d[n]·w[n]` with the symmetric window, and `h ← (h + reversed h)/2`,
+    which makes the symmetry exact (neither an FFT nor a computed window is symmetric to the last
+    bit). No rescaling.
+  - A flat gain `c` gives `c` times the unit impulse at the centre for odd `N` (the cosines sum
+    to `L·δ(t)`, and the symmetric window's centre is 1).
 
   `H(f) = Σ h[n]·e^(−j2π·f·n/fs)` at each frequency (`n` from 0, so it includes the delay).
   Real taps, non-empty and finite; frequencies finite.

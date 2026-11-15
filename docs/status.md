@@ -4,11 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Frequency-sampling FIR design**: `fir_frequency_sampling(num_taps, frequencies, gains,
-   sample_rate, window)`. Interpolate a piecewise-linear magnitude onto a dense grid, give it
-   the linear phase of a symmetric filter, take the inverse DFT and window it. Types I and II
-   (a type II filter needs zero gain at fs/2). Expected values from a stdlib generator that does
-   the inverse DFT by direct sums, plus a by-hand case: a flat gain gives a windowed impulse.
+1. **Antisymmetric frequency sampling** (types III and IV): `kind` on `fir_frequency_sampling`,
+   with the same values as equiripple design (`"filter"`, `"hilbert"`, `"differentiator"`) and
+   its amplitude convention, `H = −j·e^(−j2πfc/fs)·A`. The grid samples get the extra `−j`, so
+   the closed form becomes a sine sum. Type III (odd `N`) needs zero gain at 0 and fs/2; type IV
+   (even `N`) needs zero gain at 0. Expected values from the frequency-sampling generator's
+   direct sums, plus by-hand cases: the 3-tap and 2-tap differentiators.
 
 ## Built
 
@@ -853,10 +854,21 @@ Updated with every chunk of work. Dates are absolute.
   the default `1/N` a spectrum expects about one noise line, so tests that count lines set a
   strict probability. The vectors README now states the generator naming rule instead of a list that had fallen behind. Python 3214 passed, 2 skipped; .NET 2678 passed; conformance
   1628/1628 in both. Version 2026.11.13.115.
+- 2026-11-14: frequency-sampling FIR design ([ADR 0084](adr/0084-frequency-sampling-fir.md)):
+  `fir_frequency_sampling(num_taps, frequencies, gains, sample_rate, window, beta, num_points)`
+  (C# `Dsp.FirFrequencySampling`) samples a piecewise-linear gain on `K` points from 0 to fs/2.
+  It gives the samples a symmetric filter's linear phase, takes the inverse `2(K − 1)`-point DFT,
+  windows the result, and averages the taps with their reverse so they are exactly symmetric.
+  There is no rescaling, so a flat gain gives the unit impulse. Even `num_taps` needs zero gain
+  at fs/2. New `frequency_sampling` suite of 25 cases: 4 by hand, 7 from the generator's direct
+  cosine sums, 14 errors. Lesson: averaging the taps with their reverse before the window did
+  not give exact symmetry, because a computed window is only symmetric to round-off. The tests
+  caught it, and the averaging now comes last. Python 3244 passed, 2 skipped; .NET 2708
+  passed; conformance 1653/1653 in both. Version 2026.11.14.0.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple and least squares (arbitrary-magnitude bands, frequency sampling), spectral estimators beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling (arbitrary-magnitude bands; antisymmetric frequency sampling), spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and

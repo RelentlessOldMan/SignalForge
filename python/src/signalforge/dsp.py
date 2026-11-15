@@ -536,6 +536,52 @@ def _nu_cos_integral(u: NDArray[np.float64], lo: float, hi: float) -> NDArray[np
     return np.asarray(np.where(u == 0, (hi * hi - lo * lo) / 2, f(hi) - f(lo)), dtype=np.float64)
 
 
+def fir_frequency_sampling(
+    num_taps: int,
+    frequencies: ArrayLike,
+    gains: ArrayLike,
+    sample_rate: float,
+    window: str = "hamming",
+    beta: float | None = None,
+    num_points: int | None = None,
+) -> NDArray[np.float64]:
+    """Symmetric taps from the piecewise-linear gain through ``(frequencies, gains)`` sampled on
+    ``num_points`` points from 0 to ``sample_rate/2``, inverse DFT with linear phase, then the
+    symmetric window (conventions: FIR filters, Frequency-sampling design)."""
+    n = count(num_taps, "num_taps")
+    if n < 1:
+        raise ValueError("num_taps must be at least 1")
+    fs = _rate(sample_rate)
+    f = np.asarray(frequencies, dtype=np.float64)
+    if f.ndim != 1 or f.size < 2 or not np.all(np.isfinite(f)):
+        raise ValueError("frequencies must be a finite 1-D array of at least two values")
+    if f[0] != 0 or f[-1] != fs / 2 or np.any(np.diff(f) <= 0):
+        raise ValueError("frequencies must increase strictly from 0 to sample_rate/2")
+    g = np.asarray(gains, dtype=np.float64)
+    if g.shape != f.shape or not np.all(np.isfinite(g)):
+        raise ValueError("gains must have one finite value per frequency")
+    if n % 2 == 0 and g[-1] != 0:
+        raise ValueError("an even num_taps needs zero gain at sample_rate/2")
+    if num_points is None:
+        k = 1 << (max(n, 512) - 1).bit_length()
+        k += 1
+    else:
+        k = count(num_points, "num_points")
+        if not 2 <= k <= (1 << 20) + 1:
+            raise ValueError("num_points must be in [2, 2**20 + 1]")
+    big_l = 2 * (k - 1)
+    if big_l < n:
+        raise ValueError("2*(num_points - 1) must be at least num_taps")
+    w = _window(window, n, symmetric=True, beta=beta)
+    nu = np.arange(k, dtype=np.float64) / big_l
+    nb = f / fs
+    i = np.clip(np.searchsorted(nb, nu, side="left") - 1, 0, nb.size - 2)
+    grid = g[i] + (g[i + 1] - g[i]) * (nu - nb[i]) / (nb[i + 1] - nb[i])
+    phase = np.exp(-1j * np.pi * np.arange(k) * (n - 1) / big_l)
+    h = np.fft.irfft(grid * phase, big_l)[:n] * w
+    return np.asarray((h + h[::-1]) / 2, dtype=np.float64)
+
+
 def fir_response(
     taps: ArrayLike, frequencies: ArrayLike, sample_rate: float
 ) -> NDArray[np.complex128]:
