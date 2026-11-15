@@ -72,3 +72,50 @@ def test_sloped_band_is_followed() -> None:
 def test_bad_arguments(call) -> None:  # type: ignore[no-untyped-def]
     with pytest.raises(ValueError):
         call()
+
+
+def _anti_energy(h: np.ndarray, bands: list[float], target: list[float], diff: bool) -> float:
+    """The integral squared error of antisymmetric taps, A = sum h[n] sin(2 pi nu (n - c))."""
+    t = np.arange(h.size) - (h.size - 1) / 2
+    total = 0.0
+    for j in range(len(bands) // 2):
+        nu = np.linspace(bands[2 * j], bands[2 * j + 1], 20001)
+        a = np.sin(2 * np.pi * np.outer(nu, t)) @ h
+        d = np.interp(nu, bands[2 * j : 2 * j + 2], target[2 * j : 2 * j + 2])
+        if diff:
+            d = -2 * np.pi * nu * d
+        total += float(np.trapezoid((a - d) ** 2, nu))
+    return total
+
+
+@pytest.mark.parametrize("n", [9, 10])
+@pytest.mark.parametrize("kind", ["hilbert", "differentiator"])
+def test_antisymmetric_perturbations_only_raise_the_error(n: int, kind: str) -> None:
+    bands, target = [0.0, 0.3, 0.35, 0.5], [1.0, 1.0, 0.0, 0.0]
+    if kind == "hilbert":
+        bands, target = [0.04, 0.46], [1.0, 1.0]
+    h = sf.fir_least_squares(n, bands, target, 1.0, kind=kind)
+    np.testing.assert_array_equal(h, -h[::-1])
+    best = _anti_energy(h, bands, target, kind == "differentiator")
+    rng = np.random.default_rng(5)
+    for _ in range(10):
+        dh = rng.standard_normal(n) * 1e-3
+        dh = (dh - dh[::-1]) / 2
+        for s in (1, -1):
+            assert _anti_energy(h + s * dh, bands, target, kind == "differentiator") > best
+
+
+def test_differentiator_follows_the_slope() -> None:
+    h = sf.fir_least_squares(41, [0, 0.3, 0.4, 0.5], [1, 1, 0, 0], 1.0, [1, 1], "differentiator")
+    nu = np.linspace(0.01, 0.28, 40)
+    t = np.arange(41) - 20
+    a = np.sin(2 * np.pi * np.outer(nu, t)) @ h
+    np.testing.assert_allclose(a, -2 * np.pi * nu, atol=1e-3)
+    assert h[20] == 0
+
+
+def test_antisymmetric_bad_arguments() -> None:
+    with pytest.raises(ValueError):
+        sf.fir_least_squares(11, BANDS, DESIRED, 1.0, kind="bandstop")
+    with pytest.raises(ValueError):
+        sf.fir_least_squares(1, BANDS, DESIRED, 1.0, kind="hilbert")

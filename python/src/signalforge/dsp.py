@@ -473,12 +473,19 @@ def fir_least_squares(
     desired: ArrayLike,
     sample_rate: float,
     weights: ArrayLike | None = None,
+    kind: str = "filter",
 ) -> NDArray[np.float64]:
-    """Symmetric taps minimizing the weighted integral squared error over ``bands`` (edge pairs in
-    Hz), the desired gain linear across each band from its two ``desired`` edge values
-    (conventions: FIR filters, Least-squares design)."""
+    """Symmetric (``kind="filter"``) or antisymmetric (``"hilbert"``, ``"differentiator"``) taps
+    minimizing the weighted integral squared error over ``bands`` (edge pairs in Hz), the desired
+    gain linear across each band from its two ``desired`` edge values (conventions: FIR filters,
+    Least-squares design)."""
     n = count(num_taps, "num_taps")
-    if not 1 <= n <= 1001:
+    if kind not in ("filter", "hilbert", "differentiator"):
+        raise ValueError("kind must be 'filter', 'hilbert' or 'differentiator'")
+    if kind != "filter":
+        if not 2 <= n <= 1001:
+            raise ValueError("num_taps must be in [2, 1001] for an antisymmetric kind")
+    elif not 1 <= n <= 1001:
         raise ValueError("num_taps must be in [1, 1001]")
     fs = _rate(sample_rate)
     b = np.asarray(bands, dtype=np.float64)
@@ -493,6 +500,8 @@ def fir_least_squares(
     w = np.ones(nb) if weights is None else np.asarray(weights, dtype=np.float64)
     if w.shape != (nb,) or not np.all(np.isfinite(w)) or np.any(w <= 0):
         raise ValueError("weights must have one positive finite value per band")
+    if kind != "filter":
+        return _least_squares_antisymmetric(n, b, d, fs, w, kind == "differentiator")
     odd = n % 2 == 1
     big_l = (n + 1) // 2 if odd else n // 2
     t = np.arange(big_l, dtype=np.float64) + (0.0 if odd else 0.5)
@@ -517,6 +526,53 @@ def fir_least_squares(
         h[n // 2 :] = a / 2
         h[: n // 2] = a[::-1] / 2
     return h
+
+
+def _least_squares_antisymmetric(
+    n: int,
+    b: NDArray[np.float64],
+    d: NDArray[np.float64],
+    fs: float,
+    w: NDArray[np.float64],
+    differentiator: bool,
+) -> NDArray[np.float64]:
+    """The sine-basis normal equations of the antisymmetric kinds (conventions)."""
+    big_l = n // 2
+    t = np.arange(big_l, dtype=np.float64) + (1.0 if n % 2 == 1 else 0.5)
+    diff = t[:, None] - t[None, :]
+    summ = t[:, None] + t[None, :]
+    g = np.zeros((big_l, big_l))
+    p = np.zeros(big_l)
+    for j in range(b.size // 2):
+        lo, hi = b[2 * j] / fs, b[2 * j + 1] / fs
+        slope = (d[2 * j + 1] - d[2 * j]) / (hi - lo)
+        level = d[2 * j] - slope * lo
+        g += w[j] * (_cos_integral(diff, lo, hi) - _cos_integral(summ, lo, hi)) / 2
+        m0, m1, m2 = (_sin_moment(i, t, lo, hi) for i in range(3))
+        if differentiator:
+            p += w[j] * -2 * np.pi * (level * m1 + slope * m2)
+        else:
+            p += w[j] * (level * m0 + slope * m1)
+    a = np.linalg.solve(g, p)
+    h = np.zeros(n)
+    h[n // 2 + n % 2 :] = a / 2  # the taps after the centre; an odd N's centre stays 0
+    h[: n // 2] = -a[::-1] / 2
+    return h
+
+
+def _sin_moment(i: int, u: NDArray[np.float64], lo: float, hi: float) -> NDArray[np.float64]:
+    """``M_i(u)``: the integral of ``nu**i sin(2 pi u nu)`` over ``[lo, hi]``, ``u != 0``."""
+    k = 2 * np.pi * u
+
+    def f(v: float) -> NDArray[np.float64]:
+        cs, sn = np.cos(k * v), np.sin(k * v)
+        if i == 0:
+            return np.asarray(-cs / k, dtype=np.float64)
+        if i == 1:
+            return np.asarray(-v * cs / k + sn / k**2, dtype=np.float64)
+        return np.asarray(-v * v * cs / k + 2 * v * sn / k**2 + 2 * cs / k**3, dtype=np.float64)
+
+    return np.asarray(f(hi) - f(lo), dtype=np.float64)
 
 
 def _cos_integral(u: NDArray[np.float64], lo: float, hi: float) -> NDArray[np.float64]:

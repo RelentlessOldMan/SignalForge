@@ -39,6 +39,16 @@ def nu_cos_int(u, lo, hi):
     return f(hi) - f(lo)
 
 
+def sin_moment(i, u, lo, hi):
+    k = 2 * math.pi * u
+
+    def f(v):
+        c, s = math.cos(k * v), math.sin(k * v)
+        return [-c / k, -v * c / k + s / k**2, -v * v * c / k + 2 * v * s / k**2 + 2 * c / k**3][i]
+
+    return f(hi) - f(lo)
+
+
 def simpson(fn, lo, hi, panels=2000):
     step = (hi - lo) / panels
     s = fn(lo) + fn(hi)
@@ -69,9 +79,59 @@ def solve_exact(g, p):
     return [float(m[i][n]) for i in range(n)]
 
 
-def design(n, bands, desired, fs, weights=None):
+def design_anti(n, bands, desired, fs, weights, differentiator):
+    big_l = n // 2
+    t = [k + (1.0 if n % 2 == 1 else 0.5) for k in range(big_l)]
+    g = [[0.0] * big_l for _ in range(big_l)]
+    p = [0.0] * big_l
+    for j in range(len(bands) // 2):
+        lo, hi, w = bands[2 * j] / fs, bands[2 * j + 1] / fs, weights[j]
+        d0, d1 = desired[2 * j], desired[2 * j + 1]
+        slope = (d1 - d0) / (hi - lo)
+        level = d0 - slope * lo
+        if differentiator:
+
+            def target(v, d0=d0, slope=slope, lo=lo):
+                return -2 * math.pi * v * (d0 + slope * (v - lo))
+        else:
+
+            def target(v, d0=d0, slope=slope, lo=lo):
+                return d0 + slope * (v - lo)
+
+        for k in range(big_l):
+            tk = t[k]
+            for m in range(big_l):
+                tm = t[m]
+                c = (cos_int(tk - tm, lo, hi) - cos_int(tk + tm, lo, hi)) / 2
+                if k < 4 and m < 4:
+                    checked(
+                        c,
+                        lambda v, a=tk, b=tm: math.sin(2 * math.pi * a * v)
+                        * math.sin(2 * math.pi * b * v),
+                        lo,
+                        hi,
+                    )
+                g[k][m] += w * c
+            if differentiator:
+                pk = -2 * math.pi * (level * sin_moment(1, tk, lo, hi)
+                                     + slope * sin_moment(2, tk, lo, hi))  # fmt: skip
+            else:
+                pk = level * sin_moment(0, tk, lo, hi) + slope * sin_moment(1, tk, lo, hi)
+            checked(pk, lambda v, a=tk: target(v) * math.sin(2 * math.pi * a * v), lo, hi)
+            p[k] += w * pk
+    a = solve_exact(g, p)
+    h = [0.0] * n
+    for k in range(big_l):
+        h[n // 2 + n % 2 + k] = a[k] / 2
+        h[n // 2 - 1 - k] = -a[k] / 2
+    return h
+
+
+def design(n, bands, desired, fs, weights=None, kind="filter"):
     nb = len(bands) // 2
     weights = weights or [1.0] * nb
+    if kind != "filter":
+        return design_anti(n, bands, desired, fs, weights, kind == "differentiator")
     odd = n % 2 == 1
     big_l = (n + 1) // 2 if odd else n // 2
     t = [k + (0.0 if odd else 0.5) for k in range(big_l)]
@@ -122,12 +182,14 @@ SRC = (
 )
 
 
-def gen(case_id, n, bands, desired, fs, weights=None):
+def gen(case_id, n, bands, desired, fs, weights=None, kind="filter"):
     args = {"num_taps": n, "bands": bands, "desired": desired, "sample_rate": fs}
     if weights is not None:
         args["weights"] = weights
+    if kind != "filter":
+        args["kind"] = kind
     return {"id": case_id, "op": "fir_least_squares", "args": args,
-            "expected": design(n, bands, desired, fs, weights), "tol": TOL, "source": SRC}  # fmt: skip
+            "expected": design(n, bands, desired, fs, weights, kind), "tol": TOL, "source": SRC}  # fmt: skip
 
 
 def hand(case_id, args, expected, why):
@@ -160,6 +222,14 @@ cases = [
     hand("fir_least_squares.weights_scale_cancel", {"num_taps": 3, "bands": [0, 0.5],
          "desired": [0, 1], "weights": [7]}, [-2 / math.pi**2, 0.5, -2 / math.pi**2],
          "one band: its weight scales G and p alike, so full_band_ramp's taps"),
+    hand("fir_least_squares.hilbert_2", {"num_taps": 2, "bands": [0, 0.5], "desired": [1, 1],
+         "kind": "hilbert"}, [-2 / math.pi, 2 / math.pi],
+         "N = 2, A = a sin(pi nu): a = int sin(pi nu) / int sin^2(pi nu) = (1/pi)/(1/4); "
+         "h = [-a/2, a/2]"),
+    hand("fir_least_squares.differentiator_3", {"num_taps": 3, "bands": [0, 0.5],
+         "desired": [1, 1], "kind": "differentiator"}, [1, 0, -1],
+         "N = 3, A = a sin(2 pi nu), target -2 pi nu: a = int -2 pi nu sin(2 pi nu) / (1/4) "
+         "= (-1/2)/(1/4) = -2; h = [-a/2, 0, a/2]"),
     gen("fir_least_squares.lowpass_31", 31, [0, 0.1, 0.15, 0.5], [1, 1, 0, 0], 1.0),
     gen("fir_least_squares.lowpass_30_even", 30, [0, 0.1, 0.15, 0.5], [1, 1, 0, 0], 1.0),
     gen("fir_least_squares.bandpass_weighted_hz", 41, [0, 800, 1200, 2000, 2400, 4000],
@@ -168,6 +238,19 @@ cases = [
     gen("fir_least_squares.highpass_odd", 21, [0, 0.2, 0.3, 0.5], [0, 0, 1, 1], 1.0),
     gen("fir_least_squares.even_with_gain_at_nyquist", 16, [0, 0.2, 0.3, 0.5], [0, 0, 1, 1], 1.0),
     gen("fir_least_squares.long_101", 101, [0, 0.2, 0.22, 0.5], [1, 1, 0, 0], 1.0, [1, 5]),
+    gen("fir_least_squares.hilbert_31", 31, [0.03, 0.47], [1, 1], 1.0, kind="hilbert"),
+    gen("fir_least_squares.hilbert_30_even_two_bands", 30, [0, 0.02, 0.05, 0.5], [0, 0, 1, 1],
+        1.0, [1, 4], kind="hilbert"),
+    gen("fir_least_squares.differentiator_21", 21, [0, 0.35, 0.4, 0.5], [1, 1, 0, 0], 1.0,
+        [1, 10], kind="differentiator"),
+    gen("fir_least_squares.differentiator_16_even_hz", 16, [0, 3000], [1, 0.8], 8000.0,
+        kind="differentiator"),
+    gen("fir_least_squares.hilbert_odd_nyquist_target", 11, [0, 0.5], [0, 1], 1.0,
+        kind="hilbert"),
+    err("fir_least_squares.unknown_kind", {"kind": "bandstop"},
+        "kind is filter, hilbert or differentiator"),
+    err("fir_least_squares.antisymmetric_one_tap", {"num_taps": 1, "kind": "hilbert"},
+        "an antisymmetric kind needs num_taps >= 2"),
     err("fir_least_squares.zero_taps", {"num_taps": 0}, "1 <= num_taps"),
     err("fir_least_squares.too_many_taps", {"num_taps": 1002}, "num_taps <= 1001"),
     err("fir_least_squares.one_value_per_band", {"desired": [1, 0]}, "two desired values per band"),
@@ -182,9 +265,10 @@ cases = [
 ]  # fmt: skip
 
 # The hand values are also what the generator's design gives.
-for c in cases[:5]:
+for c in cases[:7]:
     a = c["args"]
-    got = design(a["num_taps"], a["bands"], a["desired"], a["sample_rate"], a.get("weights"))
+    got = design(a["num_taps"], a["bands"], a["desired"], a["sample_rate"], a.get("weights"),
+                 a.get("kind", "filter"))  # fmt: skip
     assert all(abs(x - y) < 1e-14 for x, y in zip(got, c["expected"], strict=True)), c["id"]
 
 doc = {

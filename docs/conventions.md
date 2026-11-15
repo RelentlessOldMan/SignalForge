@@ -612,7 +612,8 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     `b_1 = c_0 − c_1/2`, `b_m = (c_{m−1} − c_m)/2` (`c_L = 0`), and
     `h[N/2 − 1 + m] = −h[N/2 − m] = b_m/2`.
 - **Least-squares design** (`fir_least_squares(num_taps, bands, desired, sample_rate,
-  weights=None)`, [ADR 0029](adr/0029-least-squares-fir.md)): the symmetric taps whose zero-phase
+  weights=None, kind="filter")`, [ADR 0029](adr/0029-least-squares-fir.md),
+  [ADR 0086](adr/0086-antisymmetric-least-squares.md)): the symmetric taps whose zero-phase
   gain `A` (as above) minimizes the weighted integral squared error
   `E = Σ_j W_j ∫_{band j} (A(ν) − D_j(ν))² dν` over normalized frequency `ν = f/fs`, **an exact
   integral, not a grid**.
@@ -633,6 +634,19 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     `p_k = Σ_j W_j ((D_lo − s_j α)·C(t_k) + s_j·S(t_k))`. `G` is symmetric positive definite (the
     cosines are independent on any interval); each language solves it in its own way, so taps
     agree to rounding times the condition of `G`.
+  - `kind`: `"filter"` is all of the above. `"hilbert"` and `"differentiator"` give antisymmetric
+    taps with equiripple design's `A`: `A(ν) = Σ_{k<L} a_k sin(2π t_k ν)` with `t_k = k + 1`,
+    `L = (N − 1)/2` (odd `N`), or `t_k = k + ½`, `L = N/2` (even `N`). Taps: `h[c + t_k] = a_k/2`,
+    `h[c − t_k] = −a_k/2` with `c = (N − 1)/2` (the centre tap of an odd `N` is 0).
+    `G_kl = Σ_j W_j (C(t_k − t_l) − C(t_k + t_l))/2`. The target is `T_j = D_j` (`"hilbert"`) or
+    `T_j = −2πν·D_j` (`"differentiator"`), with the plain weight `W_j` (not equiripple design's
+    relative one). With the sine moments `M_i(u) = ∫_α^β ν^i sin(2πuν) dν`, `κ = 2πu`:
+    `M_0 = [−cos κν/κ]`, `M_1 = [−ν cos κν/κ + sin κν/κ²]`,
+    `M_2 = [−ν² cos κν/κ + 2ν sin κν/κ² + 2 cos κν/κ³]`, each `_α^β`. With `ℓ_j = D_lo − s_j α`:
+    `p_k = Σ_j W_j (ℓ_j M_0(t_k) + s_j M_1(t_k))` (`"hilbert"`) or
+    `Σ_j W_j (−2π)(ℓ_j M_1(t_k) + s_j M_2(t_k))` (`"differentiator"`). `2 ≤ num_taps ≤ 1001`. A
+    nonzero target where the type has `A = 0` (at 0; at fs/2 for odd `N`) is part of the error.
+    Any other `kind` is `invalid_argument`.
 - **Frequency-sampling design** (`fir_frequency_sampling(num_taps, frequencies, gains,
   sample_rate, window="hamming", beta=None, num_points=None, kind="filter")`,
   [ADR 0084](adr/0084-frequency-sampling-fir.md), [ADR 0085](adr/0085-antisymmetric-frequency-sampling.md)):

@@ -93,4 +93,72 @@ public class LeastSquaresTests
         Assert.ThrowsAny<ArgumentException>(() => Dsp.FirLeastSquares(11, Bands, [1, double.NaN, 0, 0], 1));
         Assert.ThrowsAny<ArgumentException>(() => Dsp.FirLeastSquares(11, Bands, Desired, 0));
     }
+
+    /// <summary>The integral squared error of antisymmetric taps, A = Σ h[n]·sin(2πν(n − c)), trapezoid on 4001 points.</summary>
+    private static double AntiEnergy(double[] h, double[] bands, double[] target, bool differentiator)
+    {
+        double c = (h.Length - 1) / 2.0, total = 0;
+        for (int j = 0; j < bands.Length / 2; j++)
+        {
+            double lo = bands[2 * j], hi = bands[2 * j + 1], step = (hi - lo) / 4000, sum = 0;
+            for (int i = 0; i <= 4000; i++)
+            {
+                double nu = lo + (i * step), a = 0;
+                for (int n = 0; n < h.Length; n++)
+                    a += h[n] * Math.Sin(2 * Math.PI * nu * (n - c));
+                double d = target[2 * j] + ((target[2 * j + 1] - target[2 * j]) * (nu - lo) / (hi - lo));
+                if (differentiator)
+                    d *= -2 * Math.PI * nu;
+                double e = (a - d) * (a - d);
+                sum += i == 0 || i == 4000 ? e / 2 : e;
+            }
+            total += sum * step;
+        }
+        return total;
+    }
+
+    [Theory]
+    [InlineData(9, FirKind.Hilbert)]
+    [InlineData(10, FirKind.Hilbert)]
+    [InlineData(9, FirKind.Differentiator)]
+    [InlineData(10, FirKind.Differentiator)]
+    public void AntisymmetricPerturbationsOnlyRaiseTheError(int n, FirKind kind)
+    {
+        bool diff = kind == FirKind.Differentiator;
+        double[] bands = diff ? [0, 0.3, 0.35, 0.5] : [0.04, 0.46], target = diff ? [1, 1, 0, 0] : [1, 1];
+        double[] h = Dsp.FirLeastSquares(n, bands, target, 1, kind: kind);
+        Assert.Equal(h, h.Reverse().Select(v => -v));
+        double best = AntiEnergy(h, bands, target, diff);
+        var rng = new Random(5);
+        for (int trial = 0; trial < 5; trial++)
+        {
+            double[] d = [.. Enumerable.Range(0, n).Select(_ => rng.NextDouble() - 0.5)];
+            foreach (int sign in new[] { 1, -1 })
+            {
+                double[] moved = [.. Enumerable.Range(0, n).Select(i => h[i] + (sign * 1e-3 * (d[i] - d[n - 1 - i])))];
+                Assert.True(AntiEnergy(moved, bands, target, diff) > best);
+            }
+        }
+    }
+
+    [Fact]
+    public void DifferentiatorFollowsTheSlope()
+    {
+        double[] h = Dsp.FirLeastSquares(41, [0, 0.3, 0.4, 0.5], [1, 1, 0, 0], 1, [1, 1], FirKind.Differentiator);
+        Assert.Equal(0.0, h[20]);
+        for (int i = 0; i < 40; i++)
+        {
+            double nu = 0.01 + (0.27 * i / 39), a = 0;
+            for (int n = 0; n < 41; n++)
+                a += h[n] * Math.Sin(2 * Math.PI * nu * (n - 20));
+            Assert.True(Math.Abs(a + (2 * Math.PI * nu)) < 1e-3);
+        }
+    }
+
+    [Fact]
+    public void AntisymmetricBadArguments()
+    {
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirLeastSquares(11, Bands, Desired, 1, kind: (FirKind)9));
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirLeastSquares(1, Bands, Desired, 1, kind: FirKind.Hilbert));
+    }
 }

@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Antisymmetric least-squares design** (types III and IV): `kind` on `fir_least_squares`, with
-   the same values and amplitude convention as equiripple and frequency-sampling design
-   (`H = −j·e^(−j2πfc/fs)·A`). The normal equations use sine bases, whose band integrals have
-   closed forms, as the cosine ones do. A differentiator's desired amplitude is `−2πν` times the
-   band's linear gain. Expected values from the least-squares generator's closed-form integrals,
-   extended to sines, plus a by-hand 2-tap case.
+1. **`f16` SigMF samples**: `rf16_le`, `rf16_be`, `cf16_le`, `cf16_be` in `read_sigmf` and
+   `write_sigmf`, IEEE 754 binary16 (NumPy `float16`, C# `Half`). Writing rounds each sample to
+   nearest, ties to even. A finite sample above the binary16 range would become infinite, so it
+   is rejected, as integer types reject out-of-range codes. Expected values: a stdlib generator
+   that packs and unpacks binary16 by hand (sign, exponent, mantissa, subnormals), cross-checked
+   with `struct`'s `e` format, plus by-hand codes (1.0 is `0x3C00`, the smallest subnormal is
+   `2^−24`).
 
 ## Built
 
@@ -874,10 +875,20 @@ Updated with every chunk of work. Dates are absolute.
   differentiators, the 2-tap Hilbert), 4 from the generator's direct sine sums, 4 errors.
   Python 3259 passed, 2 skipped; .NET 2723 passed; conformance 1664/1664 in both.
   Version 2026.11.14.1.
+- 2026-11-14: antisymmetric least-squares design ([ADR 0086](adr/0086-antisymmetric-least-squares.md)):
+  `kind` on `fir_least_squares` (`"filter"`, `"hilbert"`, `"differentiator"`), so all three
+  band-target FIR designs share it. Sine bases replace the cosines, and the normal equations use
+  closed-form sine moments up to `ν²`, because the differentiator's target `−2πν·D(ν)` is
+  quadratic. The weight is plain, unlike equiripple's relative differentiator weight, whose
+  integrals have no closed form. Targets the type cannot meet (at 0, and at fs/2 for odd `N`) are
+  part of the error, as for type II filters. 9 new cases: 2 by hand (the 2-tap Hilbert
+  `[−2/π, 2/π]`, the 3-tap differentiator `[1, 0, −1]`), 5 from the generator's Simpson-checked
+  integrals solved exactly, 2 errors. Python 3274 passed, 2 skipped; .NET 2738 passed;
+  conformance 1673/1673 in both. Version 2026.11.14.2.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling (antisymmetric least squares), spectral estimators beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
