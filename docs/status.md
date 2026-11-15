@@ -4,13 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Multi-channel SigMF recordings**: `core:num_channels` greater than 1, samples interleaved
-   by channel, read as one signal per channel and written from a list of signals. Needs an ADR:
-   the API shape (a new `read_sigmf_channels` / `write_sigmf` overload, or a list from the
-   existing reader), how annotations and captures apply to channels, and what is rejected (a
-   sample count not a multiple of the channels, mixed channel lengths or rates on write).
-   Expected values: `struct`-packed interleaved samples and hand-written metadata, implemented
-   from the SigMF description (not copied: it is CC-BY-SA).
+1. **Multi-capture SigMF recordings**: captures at different `core:frequency`, which
+   `read_sigmf` rejects, read as one signal per capture segment (from its `core:sample_start` to
+   the next capture's), each with its own center frequency and time origin. Needs an ADR: the API
+   shape (a `read_sigmf_captures` returning a list, and whether channels combine with it), what a
+   segment's time origin is (the recording's plus its start over the rate, or a capture's
+   `core:datetime`), which capture fields are kept, how annotations split between segments, and
+   what is rejected (unsorted or repeated starts, a start past the samples, a first capture not
+   at 0). Expected values: `struct`-packed samples and hand-written metadata, implemented from the
+   SigMF description (not copied: it is CC-BY-SA).
 
 ## Built
 
@@ -987,14 +989,25 @@ Updated with every chunk of work. Dates are absolute.
   gained 6 write cases and 11 read files.
   Python 3681 passed, 2 skipped; .NET 3075 passed; conformance 1902/1902 in both. Version
   2026.11.14.11.
+- 2026-11-14: Multi-channel SigMF recordings (ADR 0096): `read_sigmf_channels` /
+  `write_sigmf_channels` (C# `ReadSigmfChannels`, `WriteSigmfChannels`) read and write one signal
+  per channel, samples interleaved frame by frame; `core:num_channels` an integer from 1 to
+  65535 (`MAX_CHANNELS` / `MaxChannels`). Every channel shares the rate, frequency, time origin,
+  units, impedance and metadata (each its own copy); writing builds each channel's metadata file
+  and rejects channels whose files differ, or of mixed kind or length. `read_sigmf` still takes
+  one channel and now names `read_sigmf_channels` when refusing more; one channel gives the
+  `write_sigmf` files byte for byte. The files generator gained 11 recordings (3 multi-channel,
+  7 bad channel counts or frames, an explicit `core:num_channels: 1`) and 16 cases.
+  Python 3717 passed, 2 skipped; .NET 3113 passed; conformance 1918/1918 in both. Version
+  2026.11.14.12.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes, multi-channel and
-multi-capture SigMF recordings, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
+phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes, multi-capture
+SigMF recordings and per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.
 
 ## Lessons

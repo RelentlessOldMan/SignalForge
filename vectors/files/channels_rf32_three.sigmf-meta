@@ -1,0 +1,27 @@
+{
+  "global": {
+    "core:datatype": "rf32_le",
+    "core:version": "1.0.0",
+    "core:sample_rate": 8000,
+    "core:num_channels": 3,
+    "core:extensions": [
+      {
+        "name": "signalforge",
+        "version": "1.0.0",
+        "optional": true
+      }
+    ],
+    "signalforge:time_origin": 0.5,
+    "signalforge:units": "V",
+    "signalforge:impedance": 50.0,
+    "signalforge:metadata": {
+      "run": 3
+    }
+  },
+  "captures": [
+    {
+      "core:sample_start": 0
+    }
+  ],
+  "annotations": []
+}

@@ -181,6 +181,9 @@ OPS: dict[str, Callable[..., Any]] = {
     "encode_samples": lambda x, datatype: files.encode_samples(x, datatype).hex(),
     "decode_samples": lambda data, datatype: files.decode_samples(_hex(data), datatype),
     "read_sigmf": lambda file: _signal_record(files.read_sigmf(_fixture(file))),
+    "read_sigmf_channels": lambda file: [
+        _signal_record(s) for s in files.read_sigmf_channels(_fixture(file))
+    ],
     "write_wav": lambda channels, sample_rate, sample_format, info=None, cues=None: _write_wav(
         channels, sample_rate, sample_format, info, cues
     ),

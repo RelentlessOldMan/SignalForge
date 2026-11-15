@@ -21,6 +21,9 @@ public static class SignalFiles
     /// <summary>Deepest nesting of objects and arrays in a <c>.sigmf-meta</c> file; the top object is level 1.</summary>
     public const int MaxDepth = 64;
 
+    /// <summary>Most channels in one SigMF recording (<c>core:num_channels</c>).</summary>
+    public const int MaxChannels = 65535;
+
     private static readonly HashSet<string> Reserved =
     [
         "core:datatype", "core:version", "core:sample_rate", "core:extensions",
@@ -198,13 +201,57 @@ public static class SignalFiles
     public static void WriteSigmf<T>(string path, Signal<T> signal, string? datatype = null) where T : struct
     {
         ArgumentNullException.ThrowIfNull(signal);
+        WriteSigmfChannels(path, [signal], datatype);
+    }
+
+    /// <summary>Writes <paramref name="channels"/>, one signal per channel, as one interleaved SigMF recording.</summary>
+    /// <typeparam name="T"><c>double</c> or <see cref="Complex"/>.</typeparam>
+    /// <param name="path">The base path, or either file's name.</param>
+    /// <param name="channels">1 to <see cref="MaxChannels"/> signals of one length whose sample rate, center
+    /// frequency, time origin, units, impedance and metadata are identical.</param>
+    /// <param name="datatype">The sample datatype; null for <c>cf64_le</c> or <c>rf64_le</c>, which lose nothing.</param>
+    public static void WriteSigmfChannels<T>(string path, IReadOnlyList<Signal<T>> channels, string? datatype = null)
+        where T : struct
+    {
+        ArgumentNullException.ThrowIfNull(channels);
+        int count = channels.Count;
+        if (count is < 1 or > MaxChannels)
+            throw new ArgumentException($"a recording needs 1 to {MaxChannels} channels, not {count}", nameof(channels));
+        foreach (var s in channels)
+            ArgumentNullException.ThrowIfNull(s, nameof(channels));
+        int length = channels[0].Length;
+        if (channels.Any(s => s.Length != length))
+            throw new ArgumentException("the channels must have the same number of samples", nameof(channels));
+        if ((long)length * count > Array.MaxLength)
+            throw new ArgumentException("the channels hold too many samples for one array", nameof(channels));
         bool isComplex = typeof(T) == typeof(Complex);
         datatype ??= isComplex ? "cf64_le" : "rf64_le";
         var f = Parse(datatype, nameof(datatype));
         CheckKind<T>(f, datatype, nameof(datatype));
+        var frames = new T[length * count];
+        for (int c = 0; c < count; c++)
+        {
+            var x = channels[c].Samples;
+            for (int k = 0; k < length; k++)
+                frames[k * count + c] = x[k];
+        }
         byte[] data = isComplex
-            ? EncodeSamples(MemoryMarshal.Cast<T, Complex>(signal.Samples), datatype)
-            : EncodeSamples(MemoryMarshal.Cast<T, double>(signal.Samples), datatype);
+            ? EncodeSamples(MemoryMarshal.Cast<T, Complex>(frames.AsSpan()), datatype)
+            : EncodeSamples(MemoryMarshal.Cast<T, double>(frames.AsSpan()), datatype);
+        byte[] meta = SigmfMeta(channels[0], datatype, count);
+        for (int c = 1; c < count; c++)
+            if (!SigmfMeta(channels[c], datatype, count).AsSpan().SequenceEqual(meta))
+                throw new ArgumentException(
+                    "the channels must have the same sample rate, center frequency, time origin, units, impedance and metadata",
+                    nameof(channels));
+        var (metaPath, dataPath) = Files(path);
+        File.WriteAllBytes(dataPath, data);
+        File.WriteAllBytes(metaPath, meta);
+    }
+
+    /// <summary>The <c>.sigmf-meta</c> bytes for <paramref name="signal"/>, one of <paramref name="channels"/>, checked.</summary>
+    private static byte[] SigmfMeta<T>(Signal<T> signal, string datatype, int channels) where T : struct
+    {
         Check.Finite(signal.TimeOrigin, nameof(signal));
         Check.Finite(signal.CenterFrequency, nameof(signal));
         object? annotations = signal.Metadata.TryGetValue(AnnotationsKey, out var av) ? av : new List<object?>();
@@ -220,6 +267,8 @@ public static class SignalFiles
             w.WriteString("core:version", SigmfVersion);
             w.WritePropertyName("core:sample_rate");
             WriteDouble(w, signal.SampleRate);
+            if (channels > 1)
+                w.WriteNumber("core:num_channels", channels);
             w.WriteStartArray("core:extensions");
             w.WriteStartObject();
             w.WriteString("name", "signalforge");
@@ -267,9 +316,7 @@ public static class SignalFiles
             w.WriteEndObject();
         }
         buffer.WriteByte((byte)'\n');
-        var (meta, dataPath) = Files(path);
-        File.WriteAllBytes(dataPath, data);
-        File.WriteAllBytes(meta, buffer.ToArray());
+        return buffer.ToArray();
     }
 
     /// <summary>Checks <paramref name="v"/> as a SigMF annotations list (conventions: Signal files, Annotations).</summary>
@@ -362,7 +409,17 @@ public static class SignalFiles
     /// <param name="path">The base path, or either file's name.</param>
     /// <exception cref="ArgumentException">The recording is malformed or of the other kind.</exception>
     /// <exception cref="IOException">A file is missing or unreadable.</exception>
-    public static Signal<T> ReadSigmf<T>(string path) where T : struct
+    public static Signal<T> ReadSigmf<T>(string path) where T : struct => ReadSigmfCore<T>(path, multi: false)[0];
+
+    /// <summary>Reads a SigMF recording of any number of channels as one signal per channel.</summary>
+    /// <typeparam name="T"><c>double</c> for a real recording, <see cref="Complex"/> for a complex one.</typeparam>
+    /// <param name="path">The base path, or either file's name.</param>
+    /// <exception cref="ArgumentException">The recording is malformed or of the other kind.</exception>
+    /// <exception cref="IOException">A file is missing or unreadable.</exception>
+    public static IReadOnlyList<Signal<T>> ReadSigmfChannels<T>(string path) where T : struct =>
+        ReadSigmfCore<T>(path, multi: true);
+
+    private static List<Signal<T>> ReadSigmfCore<T>(string path, bool multi) where T : struct
     {
         var (metaPath, dataPath) = Files(path);
         byte[] text = File.ReadAllBytes(metaPath);
@@ -383,8 +440,11 @@ public static class SignalFiles
         if (glob.GetValueOrDefault("core:version") is not string version || !version.StartsWith("1.", StringComparison.Ordinal))
             throw new ArgumentException("unsupported core:version", nameof(path));
         double rate = Num(glob.GetValueOrDefault("core:sample_rate"), "core:sample_rate");
-        if (glob.TryGetValue("core:num_channels", out var nc) && nc is not 1L)
-            throw new ArgumentException("only single-channel recordings are supported", nameof(path));
+        object? nc = glob.TryGetValue("core:num_channels", out var ncv) ? ncv : 1L;
+        if (!multi && nc is not 1L)
+            throw new ArgumentException("ReadSigmf reads one channel; ReadSigmfChannels reads more", nameof(path));
+        if (nc is not long count || count is < 1 or > MaxChannels)
+            throw new ArgumentException($"core:num_channels must be a whole number from 1 to {MaxChannels}", nameof(path));
         foreach (string k in (string[])["core:dataset", "core:metadata_only"])
             if (glob.ContainsKey(k))
                 throw new ArgumentException($"{k} recordings are not supported", nameof(path));
@@ -417,10 +477,31 @@ public static class SignalFiles
         if (annotations is List<object?> { Count: > 0 })
             metadata[AnnotationsKey] = annotations;
         double timeOrigin = glob.TryGetValue("signalforge:time_origin", out var t0) ? Num(t0, "signalforge:time_origin") : 0.0;
+        double frequency = freqs.Count == 1 ? freqs.First() : 0.0;
+        double? ohms = impedance is null ? null : Num(impedance, "signalforge:impedance");
         T[] samples = DecodeSamples<T>(File.ReadAllBytes(dataPath), datatype);
-        return new Signal<T>(samples, rate, freqs.Count == 1 ? freqs.First() : 0.0, timeOrigin, (string?)units,
-            impedance is null ? null : Num(impedance, "signalforge:impedance"), metadata);
+        int n = (int)count;
+        if (samples.Length % n != 0)
+            throw new ArgumentException($"{samples.Length} samples is not a whole number of {n}-channel frames", nameof(path));
+        var result = new List<Signal<T>>(n);
+        for (int ch = 0; ch < n; ch++)
+        {
+            var x = new T[samples.Length / n];
+            for (int k = 0; k < x.Length; k++)
+                x[k] = samples[k * n + ch];
+            result.Add(new Signal<T>(x, rate, frequency, timeOrigin, (string?)units, ohms,
+                (Dictionary<string, object?>)Copy(metadata)!));
+        }
+        return result;
     }
+
+    /// <summary>A deep copy of a JSON value, so channels read from one recording share no lists or objects.</summary>
+    private static object? Copy(object? v) => v switch
+    {
+        List<object?> l => l.Select(Copy).ToList(),
+        Dictionary<string, object?> d => d.ToDictionary(kv => kv.Key, kv => Copy(kv.Value)),
+        _ => v,
+    };
 
     /// <summary><paramref name="s"/>, or an exception if it has a lone surrogate (not valid Unicode).</summary>
     private static string Text(string s, string where, bool read = false)

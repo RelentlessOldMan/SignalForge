@@ -1558,8 +1558,8 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
   `core:metadata_only`, or anything `signalforge:`). **(implemented)**
 - **Reading** inverts that. `core:datatype`, `core:version` (a string starting `1.`) and
   `core:sample_rate` (positive, finite) are required. Rejected: `core:num_channels` other than the
-  integer 1, `core:dataset` or `core:metadata_only`, a capture whose `core:header_bytes` is not the
-  integer 0, captures with
+  integer 1 (see **Channels**), `core:dataset` or `core:metadata_only`, a capture whose
+  `core:header_bytes` is not the integer 0, captures with
   different `core:frequency` (a missing one is 0), a data file that is not a whole number of
   samples, JSON with duplicate keys or the non-standard `NaN`/`Infinity`, `annotations: null`, and
   a global field named `core:annotations`. Other global fields go to `metadata` under their own
@@ -1569,6 +1569,17 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
   trip through the other language. `captures` and `signalforge:metadata` may be missing, but `null`
   is not an array or an object and is rejected. A missing or unreadable file is an OS error
   (`OSError` / `IOException`), not `invalid_argument`. **(implemented)**
+- **Channels** ([ADR 0096](adr/0096-sigmf-channels.md)): `read_sigmf_channels(path)` and
+  `write_sigmf_channels(path, channels, datatype)` (C# `ReadSigmfChannels`, `WriteSigmfChannels`)
+  read and write a list of signals, one per channel; `read_sigmf` still takes one channel only.
+  `core:num_channels` is a JSON integer from 1 to 65535 (`MAX_CHANNELS` /
+  `SignalFiles.MaxChannels`), missing meaning 1. Sample `k` of channel `c` is sample `k·N + c`
+  of the data; the data must be a whole number of `N`-sample frames. Every channel gets the
+  recording's rate, center frequency, time origin, units, impedance and metadata (its own copy,
+  annotations included). Writing: a non-empty list of at most 65535 signals of one kind and one
+  length, whose metadata files as `write_sigmf` would write them are identical (so those fields
+  agree exactly; `1` and `1.0` differ); `core:num_channels` follows `core:sample_rate` when there
+  is more than one channel, and one channel gives the `write_sigmf` files. **(implemented)**
 - **Annotations** ([ADR 0061](adr/0061-sigmf-annotations.md)): the metadata key
   `core:annotations` is a list of JSON objects, written to the top-level `annotations` array (not
   to `global`) and read back from it, in file order; an empty or missing array gives no key. Each

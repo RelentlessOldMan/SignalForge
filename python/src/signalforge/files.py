@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import math
 import os
@@ -46,6 +47,8 @@ _RESERVED = frozenset(
 _EXTENSION = {"name": "signalforge", "version": "1.0.0", "optional": True}
 MAX_DEPTH = 64
 """Deepest nesting of objects and arrays in a ``.sigmf-meta`` file; the top object is level 1."""
+MAX_CHANNELS = 65535
+"""Most channels in one SigMF recording (``core:num_channels``)."""
 _INT64 = (-(2**63), 2**63 - 1)
 
 
@@ -180,16 +183,53 @@ def _annotations(v: Any, what: str) -> list[dict[str, Any]]:
 def write_sigmf(path: str | os.PathLike[str], signal: Signal, datatype: str | None = None) -> None:
     """Write ``signal`` as ``<base>.sigmf-data`` and ``<base>.sigmf-meta``. ``datatype`` defaults
     to ``cf64_le`` or ``rf64_le``, which lose nothing."""
+    write_sigmf_channels(path, [signal], datatype)
+
+
+def write_sigmf_channels(
+    path: str | os.PathLike[str], channels: Sequence[Signal], datatype: str | None = None
+) -> None:
+    """Write ``channels``, one signal per channel, as one interleaved SigMF recording. They must
+    have one kind, one length and identical metadata (rate, frequency, time origin, units,
+    impedance and metadata); ``datatype`` defaults as for :func:`write_sigmf`."""
+    if isinstance(channels, Signal) or not isinstance(channels, Sequence):
+        raise ValueError("channels must be a list of signals")
+    if not 1 <= len(channels) <= MAX_CHANNELS:
+        raise ValueError(f"a recording needs 1 to {MAX_CHANNELS} channels, not {len(channels)}")
+    if not all(isinstance(s, Signal) for s in channels):
+        raise ValueError("channels must be a list of signals")
+    first = channels[0]
+    if any(s.is_complex != first.is_complex for s in channels):
+        raise ValueError("the channels must be all real or all complex")
+    if any(len(s.samples) != len(first.samples) for s in channels):
+        raise ValueError("the channels must have the same number of samples")
     if datatype is None:
-        datatype = "cf64_le" if signal.is_complex else "rf64_le"
-    data = encode_samples(signal.samples, datatype)
+        datatype = "cf64_le" if first.is_complex else "rf64_le"
+    frames = np.stack([s.samples for s in channels], axis=1).reshape(-1)
+    data = encode_samples(frames, datatype)
+    text = _sigmf_text(first, datatype, len(channels))
+    for s in channels[1:]:
+        if _sigmf_text(s, datatype, len(channels)) != text:
+            raise ValueError(
+                "the channels must have the same sample rate, center frequency, time origin, "
+                "units, impedance and metadata"
+            )
+    meta_path, data_path = _files(path)
+    data_path.write_bytes(data)  # only once nothing above can fail
+    meta_path.write_bytes(text.encode("utf-8"))
+
+
+def _sigmf_text(signal: Signal, datatype: str, channels: int) -> str:
+    """The ``.sigmf-meta`` text for ``signal`` (one of ``channels``), checked."""
     glob: dict[str, Any] = {
         "core:datatype": datatype,
         "core:version": SIGMF_VERSION,
         "core:sample_rate": float(signal.sample_rate),
-        "core:extensions": [dict(_EXTENSION)],
-        "signalforge:time_origin": _finite(signal.time_origin, "time_origin"),
     }
+    if channels > 1:
+        glob["core:num_channels"] = channels
+    glob["core:extensions"] = [dict(_EXTENSION)]
+    glob["signalforge:time_origin"] = _finite(signal.time_origin, "time_origin")
     if signal.units is not None:
         if not isinstance(signal.units, str):
             raise ValueError("units must be a string")
@@ -211,10 +251,7 @@ def write_sigmf(path: str | os.PathLike[str], signal: Signal, datatype: str | No
         "core:frequency": _finite(signal.center_frequency, "center_frequency"),
     }
     doc = _json({"global": glob, "captures": [capture], "annotations": annotations}, "the metadata")
-    text = json.dumps(doc, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
-    meta_path, data_path = _files(path)
-    data_path.write_bytes(data)  # only once nothing above can fail
-    meta_path.write_bytes(text.encode("utf-8"))
+    return json.dumps(doc, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
 
 
 def _unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -243,6 +280,15 @@ def _object(v: Any, what: str) -> dict[str, Any]:
 
 def read_sigmf(path: str | os.PathLike[str]) -> Signal:
     """Read a ``.sigmf-meta`` / ``.sigmf-data`` pair as a :class:`Signal`."""
+    return _read_sigmf(path, multi=False)[0]
+
+
+def read_sigmf_channels(path: str | os.PathLike[str]) -> list[Signal]:
+    """Read a SigMF recording of any number of channels as one :class:`Signal` per channel."""
+    return _read_sigmf(path, multi=True)
+
+
+def _read_sigmf(path: str | os.PathLike[str], *, multi: bool) -> list[Signal]:
     meta_path, data_path = _files(path)
     try:
         parsed = json.loads(
@@ -261,8 +307,11 @@ def read_sigmf(path: str | os.PathLike[str]) -> Signal:
     if not isinstance(version, str) or not version.startswith("1."):
         raise ValueError(f"unsupported core:version {version!r}")
     rate = _finite(glob.get("core:sample_rate"), "core:sample_rate")  # type: ignore[arg-type]
-    if not _integer(glob.get("core:num_channels", 1), 1):
-        raise ValueError("only single-channel recordings are supported")
+    n = glob.get("core:num_channels", 1)
+    if not multi and not _integer(n, 1):
+        raise ValueError("read_sigmf reads one channel; read_sigmf_channels reads more")
+    if type(n) is not int or not 1 <= n <= MAX_CHANNELS:
+        raise ValueError(f"core:num_channels must be a whole number from 1 to {MAX_CHANNELS}")
     for k in ("core:dataset", "core:metadata_only"):
         if k in glob:
             raise ValueError(f"{k} recordings are not supported")
@@ -290,15 +339,25 @@ def read_sigmf(path: str | os.PathLike[str]) -> Signal:
     )
     if annotations:
         metadata[_ANNOTATIONS] = annotations
-    return Signal(
-        decode_samples(data_path.read_bytes(), datatype),
-        rate,
-        center_frequency=freqs.pop() if freqs else 0.0,
-        time_origin=_finite(glob.get("signalforge:time_origin", 0.0), "signalforge:time_origin"),
-        units=units,
-        impedance=None if impedance is None else _finite(impedance, "signalforge:impedance"),
-        metadata=metadata,
-    )
+    frequency = freqs.pop() if freqs else 0.0
+    time_origin = _finite(glob.get("signalforge:time_origin", 0.0), "signalforge:time_origin")
+    ohms = None if impedance is None else _finite(impedance, "signalforge:impedance")
+    samples = decode_samples(data_path.read_bytes(), datatype)
+    if len(samples) % n:
+        raise ValueError(f"{len(samples)} samples is not a whole number of {n}-channel frames")
+    frames = samples.reshape(-1, n)
+    return [
+        Signal(
+            np.ascontiguousarray(frames[:, c]),
+            rate,
+            center_frequency=frequency,
+            time_origin=time_origin,
+            units=units,
+            impedance=ohms,
+            metadata=copy.deepcopy(metadata),
+        )
+        for c in range(n)
+    ]
 
 
 _WAV_BITS = {"u8": 8, "i16": 16, "i24": 24, "i32": 32, "f32": 32, "f64": 64}

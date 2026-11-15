@@ -436,6 +436,73 @@ for name, text, why in (
     recs.append((name, text, one, None, why))
 recs.append(("partial_sample", meta(base("ri16_le")), b"\x01\x00\x02", None,
              "3 bytes is not a whole number of 2-byte samples"))
+recs.append((
+    "one_channel_explicit",
+    meta(base("ri8", **{"core:num_channels": 1})),
+    bytes([0x40]),
+    {"samples": [0.5], "sample_rate": 1000, "center_frequency": 0, "time_origin": 0,
+     "units": None, "impedance": None, "metadata": {}},
+    "core:num_channels given as the integer 1 is one channel; 0x40 is 64/128",
+))
+
+
+# --- multi-channel recordings (ADR 0096): (name, meta text, data, expected list or None, why).
+# Sample k of channel c is sample k*N + c of the data.
+def rec(samples, rate=1000, freq=0, t0=0, units=None, ohms=None, metadata=None):
+    return {"samples": samples, "sample_rate": rate, "center_frequency": freq, "time_origin": t0,
+            "units": units, "impedance": ohms, "metadata": metadata or {}}
+
+
+def frames(rows, fmt):
+    """Interleave one list of samples per channel, frame by frame, packing each with fmt."""
+    return b"".join(struct.pack(fmt, *(v if isinstance(v, tuple) else (v,)))
+                    for frame in zip(*rows, strict=True) for v in frame)
+
+
+chans = []
+iq = [[(16384, 0), (0, -16384), (8192, 8192)], [(-32768, 1), (32767, -1), (0, 0)]]
+burst = [{"core:sample_start": 1, "core:sample_count": 2, "core:label": "burst"}]
+shared = {"core:description": "two antennas", "core:annotations": burst}
+chans.append((
+    "channels_ci16",
+    meta(base("ci16_le", 2e6, **{"core:num_channels": 2, "core:description": "two antennas"}),
+         [{"core:sample_start": 0, "core:frequency": 2.4e9}], burst),
+    frames(iq, "<hh"),
+    [rec({"re": [i / 32768 for i, _ in ch], "im": [q / 32768 for _, q in ch]}, 2e6, 2.4e9,
+         metadata=shared) for ch in iq],
+    "two complex channels interleaved sample by sample (I, Q of channel 0, then channel 1); "
+    "each gets the frequency, description and annotation, its indices counting one channel",
+))
+reals = [[0.5, 2.0], [-0.25, -1.0], [1.5, 0.125]]
+chans.append((
+    "channels_rf32_three",
+    meta({**base("rf32_le", 8000), "core:num_channels": 3,
+          "core:extensions": [{"name": "signalforge", "version": "1.0.0", "optional": True}],
+          "signalforge:time_origin": 0.5, "signalforge:units": "V", "signalforge:impedance": 50.0,
+          "signalforge:metadata": {"run": 3}}),
+    frames(reals, "<f"),
+    [rec(ch, 8000, 0, 0.5, "V", 50, {"run": 3}) for ch in reals],
+    "three real channels; the signalforge fields go to every channel; values exact in binary32",
+))
+chans.append((
+    "channels_empty",
+    meta(base("ri16_le", **{"core:num_channels": 2})),
+    b"",
+    [rec([]), rec([])],
+    "no data and two channels: two empty signals, zero being a whole number of frames",
+))
+for name, n, why in (
+    ("channels_zero", 0, "core:num_channels must be at least 1"),
+    ("channels_negative", -1, "core:num_channels must be at least 1"),
+    ("channels_float", 2.0, "core:num_channels must be an integer, and 2.0 is a float"),
+    ("channels_bool", True, "core:num_channels must be an integer, and a bool is not one"),
+    ("channels_string", "2", "core:num_channels must be a number"),
+    ("channels_too_many", 65536, "at most 65535 channels"),
+):
+    chans.append((name, meta(base("ri16_le", **{"core:num_channels": n})), b"", None, why))
+chans.append(("channels_partial_frame", meta(base("ri16_le", **{"core:num_channels": 2})),
+              struct.pack("<3h", 1, 2, 3), None,
+              "3 samples is not a whole number of 2-sample frames"))
 
 for name, _, _, expected, why in recs:
     case = {"id": f"read_sigmf.{name}", "op": "read_sigmf", "args": {"file": name}}
@@ -445,17 +512,37 @@ for name, _, _, expected, why in recs:
         case.update({"expected": expected, "tol": TOL, "source": why})
     cases.append(case)
 
+good = {name: expected for name, _, _, expected, _ in recs}
+for name, _, _, expected, why in chans:
+    case = {"id": f"read_sigmf_channels.{name}", "op": "read_sigmf_channels",
+            "args": {"file": name}}
+    if expected is None:
+        case.update({"error": "invalid_argument", "source": why})
+    else:
+        case.update({"expected": expected, "tol": TOL, "source": why})
+    cases.append(case)
+for name in ("foreign_ci16", "signalforge_rf32_be", "one_channel_explicit"):
+    cases.append({"id": f"read_sigmf_channels.{name}", "op": "read_sigmf_channels",
+                  "args": {"file": name}, "expected": [good[name]], "tol": TOL,
+                  "source": "a one-channel recording is a list of one, as read_sigmf reads it"})
+cases.append({"id": "read_sigmf_channels.two_channels", "op": "read_sigmf_channels",
+              "args": {"file": "two_channels"}, "error": "invalid_argument",
+              "source": "one 2-byte sample is not a whole number of 2-channel frames"})
+cases.append({"id": "read_sigmf.channels_ci16", "op": "read_sigmf",
+              "args": {"file": "channels_ci16"}, "error": "invalid_argument",
+              "source": "read_sigmf reads one channel only; this recording has two"})
+
 doc = {
     "schema": 1,
     "suite": "files",
     "description": "Raw sample encoding in every supported datatype, and reading SigMF-layout "
-    "recordings from vectors/files (conventions: Signal files).",
+    "recordings of one or more channels from vectors/files (conventions: Signal files).",
     "cases": cases,
 }
 lines = ",\n".join("    " + json.dumps(c) for c in cases)
 head = json.dumps({k: v for k, v in doc.items() if k != "cases"}, indent=2)[:-2]
 outputs = {ROOT / "cases" / "files.json": (head + ',\n  "cases": [\n' + lines + "\n  ]\n}\n").encode()}
-for name, text, data, _, _ in recs:
+for name, text, data, _, _ in recs + chans:
     outputs[ROOT / "files" / f"{name}.sigmf-meta"] = text.encode()
     outputs[ROOT / "files" / f"{name}.sigmf-data"] = data
 
