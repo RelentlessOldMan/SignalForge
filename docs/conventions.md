@@ -1521,10 +1521,10 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
 `SignalForge.SignalFiles`. Implemented from the SigMF format description, not from its text.
 
 - **Data types** are named `<kind><type>[_<order>]`: kind `c` (complex, interleaved I then Q) or
-  `r` (real); type `f64`, `f32`, `i32`, `i16`, `i8`, `u32`, `u16` or `u8` (unsigned:
-  [ADR 0058](adr/0058-unsigned-sample-types.md)); order `le` or `be`, which `i8` and `u8` omit and
-  every other type requires. Anything else (`f16`, `i64`, a missing or extra order) is
-  rejected. **(implemented)**
+  `r` (real); type `f64`, `f32`, `f16` ([ADR 0087](adr/0087-half-float-samples.md)), `i32`, `i16`,
+  `i8`, `u32`, `u16` or `u8` (unsigned: [ADR 0058](adr/0058-unsigned-sample-types.md)); order `le`
+  or `be`, which `i8` and `u8` omit and every other type requires. Anything else (`i64`, a missing
+  or extra order) is rejected. **(implemented)**
 - **Integer scaling**: code `c` of a `b`-bit type is the sample `c / 2^(b−1)`, so full scale is
   1.0 (units `"FS"` if the caller wants to say so). Writing, a sample becomes
   `round(x·2^(b−1))`, rounding half to even; a non-finite sample or a code outside
@@ -1533,8 +1533,10 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
   sample `(u − 2^(b−1)) / 2^(b−1)`, and writing gives `round(x·2^(b−1)) + 2^(b−1)` (half to even),
   rejected outside `0 … 2^b − 1`: the signed code with its top bit flipped, so the same range and
   step as the signed type. **(implemented)**
-- **Floats** are stored as IEEE binary64 or binary32 in the given byte order; writing `f32` rounds
-  to nearest even, and a value beyond its range becomes ±inf. NaN and ±inf are stored as they are.
+- **Floats** are stored as IEEE binary64, binary32 or binary16 in the given byte order; writing
+  `f32` or `f16` rounds once from the binary64 value to nearest even (`f16` never goes through
+  binary32), and a value beyond the range becomes ±inf (`f16`: 65520 and up). Subnormals are kept.
+  NaN and ±inf are stored as they are.
   Reading always returns `float64` / `complex128` (`double` / `Complex`). **(implemented)**
 - `encode_samples(x, datatype)` gives the bytes, `decode_samples(data, datatype)` the samples; the
   byte count must be a whole number of samples. A real datatype needs real samples and a complex

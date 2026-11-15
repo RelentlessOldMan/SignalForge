@@ -1,6 +1,6 @@
 {
   "global": {
-    "core:datatype": "rf16_le",
+    "core:datatype": "ri64_le",
     "core:version": "1.0.0",
     "core:sample_rate": 1000
   },

@@ -19,10 +19,11 @@ from ._checks import real
 from .core import Signal
 
 SIGMF_VERSION = "1.2.0"
-_DATATYPE = re.compile(r"([cr])(f64|f32|[iu]32|[iu]16|[iu]8)(?:_(le|be))?")
+_DATATYPE = re.compile(r"([cr])(f64|f32|f16|[iu]32|[iu]16|[iu]8)(?:_(le|be))?")
 _CODES = {
     "f64": "f8",
     "f32": "f4",
+    "f16": "f2",
     "i32": "i4",
     "i16": "i2",
     "i8": "i1",

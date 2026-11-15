@@ -18,7 +18,7 @@ public sealed class SignalFilesTests : IDisposable
         var t = new TheoryData<string>();
         foreach (char k in "cr")
         {
-            foreach (string ty in (string[])["f64", "f32", "i32", "i16", "u32", "u16"])
+            foreach (string ty in (string[])["f64", "f32", "f16", "i32", "i16", "u32", "u16"])
             {
                 t.Add($"{k}{ty}_le");
                 t.Add($"{k}{ty}_be");
@@ -33,10 +33,29 @@ public sealed class SignalFilesTests : IDisposable
     {
         "f64" => 0,
         "f32" => Math.ScaleB(1, -24),
+        "f16" => Math.ScaleB(1, -12),
         "i32" or "u32" => Math.ScaleB(1, -31),
         "i16" or "u16" => Math.ScaleB(1, -15),
         _ => Math.ScaleB(1, -7),
     };
+
+    [Theory]
+    [InlineData("le")]
+    [InlineData("be")]
+    public void EveryHalfFloatSurvivesARoundTrip(string order)
+    {
+        var data = new List<byte>();
+        for (int c = 0; c < 65536; c++)
+        {
+            if ((c & 0x7C00) == 0x7C00 && (c & 0x3FF) != 0)
+                continue; // NaN
+            byte hi = (byte)(c >> 8), lo = (byte)c;
+            data.AddRange(order == "le" ? [lo, hi] : [hi, lo]);
+        }
+        byte[] bytes = [.. data];
+        double[] x = SignalFiles.DecodeSamples<double>(bytes, $"rf16_{order}");
+        Assert.Equal(bytes, SignalFiles.EncodeSamples(x, $"rf16_{order}"));
+    }
 
     [Theory]
     [MemberData(nameof(Types))]

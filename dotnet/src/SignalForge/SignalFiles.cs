@@ -50,7 +50,7 @@ public static class SignalFiles
             {
                 "f64" => 64,
                 "f32" or "i32" or "u32" => 32,
-                "i16" or "u16" => 16,
+                "f16" or "i16" or "u16" => 16,
                 "i8" or "u8" => 8,
                 _ => 0,
             };
@@ -94,10 +94,16 @@ public static class SignalFiles
             double v = parts[i];
             if (!f.IsInteger)
             {
-                if (f.Bits == 64)
-                    if (f.BigEndian) BinaryPrimitives.WriteDoubleBigEndian(b, v); else BinaryPrimitives.WriteDoubleLittleEndian(b, v);
-                else if (f.BigEndian) BinaryPrimitives.WriteSingleBigEndian(b, (float)v);
-                else BinaryPrimitives.WriteSingleLittleEndian(b, (float)v);
+                // (Half)v rounds once from the double, never through float (ADR 0087)
+                switch (f.Bits)
+                {
+                    case 64 when f.BigEndian: BinaryPrimitives.WriteDoubleBigEndian(b, v); break;
+                    case 64: BinaryPrimitives.WriteDoubleLittleEndian(b, v); break;
+                    case 32 when f.BigEndian: BinaryPrimitives.WriteSingleBigEndian(b, (float)v); break;
+                    case 32: BinaryPrimitives.WriteSingleLittleEndian(b, (float)v); break;
+                    case 16 when f.BigEndian: BinaryPrimitives.WriteHalfBigEndian(b, (Half)v); break;
+                    default: BinaryPrimitives.WriteHalfLittleEndian(b, (Half)v); break;
+                }
                 continue;
             }
             if (!double.IsFinite(v))
@@ -147,8 +153,10 @@ public static class SignalFiles
             {
                 (false, 64, true) => BinaryPrimitives.ReadDoubleBigEndian(b),
                 (false, 64, false) => BinaryPrimitives.ReadDoubleLittleEndian(b),
-                (false, _, true) => BinaryPrimitives.ReadSingleBigEndian(b),
-                (false, _, false) => BinaryPrimitives.ReadSingleLittleEndian(b),
+                (false, 32, true) => BinaryPrimitives.ReadSingleBigEndian(b),
+                (false, 32, false) => BinaryPrimitives.ReadSingleLittleEndian(b),
+                (false, _, true) => (double)BinaryPrimitives.ReadHalfBigEndian(b),
+                (false, _, false) => (double)BinaryPrimitives.ReadHalfLittleEndian(b),
                 (true, 32, true) => BinaryPrimitives.ReadInt32BigEndian(b) / scale,
                 (true, 32, false) => BinaryPrimitives.ReadInt32LittleEndian(b) / scale,
                 (true, 16, true) => BinaryPrimitives.ReadInt16BigEndian(b) / scale,

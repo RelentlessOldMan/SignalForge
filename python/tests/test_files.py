@@ -9,9 +9,18 @@ import pytest
 
 import signalforge as sf
 
-WIDE = ("f64", "f32", "i32", "i16", "u32", "u16")
+WIDE = ("f64", "f32", "f16", "i32", "i16", "u32", "u16")
 TYPES = [f"{k}{t}_{o}" for k in "cr" for t in WIDE for o in ("le", "be")]
 TYPES += ["ci8", "ri8", "cu8", "ru8"]
+
+
+@pytest.mark.parametrize("order", ["le", "be"])
+def test_every_half_float_survives_a_round_trip(order: str) -> None:
+    codes = np.arange(65536, dtype=np.uint16)
+    codes = codes[((codes & 0x7C00) != 0x7C00) | ((codes & 0x3FF) == 0)]  # every pattern but NaN
+    data = codes.astype("<u2" if order == "le" else ">u2").tobytes()
+    x = sf.decode_samples(data, f"rf16_{order}")
+    assert sf.encode_samples(x, f"rf16_{order}") == data
 
 
 @pytest.mark.parametrize("datatype", TYPES)
@@ -22,10 +31,18 @@ def test_round_trip_every_datatype(tmp_path: Path, datatype: str) -> None:
         x = x + 1j * rng.uniform(-0.99, 0.99, 64)
     sf.write_sigmf(tmp_path / "r", sf.Signal(x, 1e3), datatype)
     y = sf.read_sigmf(tmp_path / "r").samples
-    step = {"f64": 0.0, "f32": 2.0**-24, "32": 2.0**-31, "16": 2.0**-15, "8": 2.0**-7}
+    step = {
+        "f64": 0.0,
+        "f32": 2.0**-24,
+        "f16": 2.0**-12,
+        "32": 2.0**-31,
+        "16": 2.0**-15,
+        "8": 2.0**-7,
+    }
     assert np.iscomplexobj(y) == np.iscomplexobj(x)
     t = datatype[1:4].rstrip("_")
-    assert np.max(np.abs(y - x)) <= step[t if t[0] == "f" else t[1:]]
+    parts = np.asarray(y - x).view(np.float64)  # each part: I and Q round separately
+    assert np.max(np.abs(parts)) <= step[t if t[0] == "f" else t[1:]]
     assert (tmp_path / "r.sigmf-data").stat().st_size == len(sf.encode_samples(x, datatype))
 
 

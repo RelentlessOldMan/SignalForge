@@ -2,7 +2,8 @@
 
 It does not import NumPy or SignalForge. Bytes come from the struct module; integer codes from
 round() (half to even) of x * 2^(b-1), plus 2^(b-1) for unsigned (offset binary, ADR 0058);
-float32 values from a struct round trip. The recordings'
+float32 values from a struct round trip; binary16 packed by hand with exact rational rounding
+(half_bits), checked against struct's "e" format wherever it can pack the value. The recordings'
 metadata is written here as literal JSON, some of it laid out the way another tool would.
 
 Run from the repo root: python vectors/generators/files.py [--check]
@@ -10,13 +11,58 @@ With --check it writes nothing and exits 1 unless every file matches what it wou
 """
 
 import json
+import math
 import pathlib
 import struct
 import sys
+from fractions import Fraction
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 TOL = {"abs": 0, "rel": 0}
 FMT = {"f64": "d", "f32": "f", "i32": "i", "i16": "h", "i8": "b", "u32": "I", "u16": "H", "u8": "B"}
+
+
+def half_bits(v):
+    """IEEE binary16 bits of the float v: one rounding to nearest, ties to even (ADR 0087)."""
+    if math.isnan(v):
+        return 0x7E00
+    sign = 0x8000 if math.copysign(1.0, v) < 0 else 0
+    a = Fraction(abs(v)) if math.isfinite(v) else None
+    if a is None:
+        return sign | 0x7C00
+    if a == 0:
+        return sign
+    e = max(math.floor(math.log2(a)), -14)  # subnormals share exponent -14
+    while Fraction(2) ** e > a:  # log2 of a float can be off by one at a power of two
+        e -= 1
+    while Fraction(2) ** (e + 1) <= a:
+        e += 1
+    e = max(e, -14)
+    m = a / Fraction(2) ** (e - 10)  # the significand in units of the last place
+    q, r = divmod(m.numerator, m.denominator)
+    if 2 * r > m.denominator or (2 * r == m.denominator and q % 2):
+        q += 1
+    if q == 2048:  # rounded up to the next binade
+        q, e = 1024, e + 1
+    if e > 15:
+        return sign | 0x7C00
+    if q < 1024:  # subnormal
+        bits = sign | q
+    else:
+        bits = sign | (e + 15) << 10 | (q - 1024)
+    try:
+        assert struct.pack("<e", v) == struct.pack("<H", bits), (v, hex(bits))
+    except OverflowError:  # struct refuses what rounds to inf
+        assert bits & 0x7FFF == 0x7C00, v
+    return bits
+
+
+def half_value(bits):
+    sign = -1.0 if bits & 0x8000 else 1.0
+    e, m = (bits >> 10) & 0x1F, bits & 0x3FF
+    if e == 31:
+        return sign * math.inf if m == 0 else math.nan
+    return sign * (m * 2.0**-24 if e == 0 else (1024 + m) * 2.0 ** (e - 25))
 
 
 def parts(x):
@@ -31,12 +77,16 @@ def stored(v, t):
     if t[0] in "iu":
         half = 2 ** (int(t[1:]) - 1)
         return round(v * half) + (half if t[0] == "u" else 0)
+    if t == "f16":
+        return half_value(half_bits(v))
     return struct.unpack("<f", struct.pack("<f", v))[0] if t == "f32" else v
 
 
 def pack(x, datatype):
     t, order = datatype[1:].split("_") if "_" in datatype else (datatype[1:], "le")
     end = "<" if order == "le" else ">"
+    if t == "f16":
+        return b"".join(struct.pack(end + "H", half_bits(v)) for v in parts(x))
     return b"".join(struct.pack(end + FMT[t], stored(v, t)) for v in parts(x))
 
 
@@ -63,14 +113,14 @@ def arg(x):
 
 REAL = [0.5, -0.25, 0.123456789, -1.0, 0.0, 2.0**-7]
 CPLX = [0.5 - 0.25j, 0.123456789 + 1e-3j, -1.0 + 0j]
-SRC_ENC = ("struct.pack of each part (integers: round(x * 2^(b-1)), half to even; unsigned "
+SRC_ENC = ("struct.pack of each part (f16: half_bits, by hand; integers: round(x * 2^(b-1)), half to even; unsigned "
            "adds 2^(b-1))")
 SRC_DEC = ("struct round trip of the same values; integer codes (less 2^(b-1) for unsigned) "
            "divided by 2^(b-1)")
 
 cases = []
 for kind, x in (("r", REAL), ("c", CPLX)):
-    for t in ("f64", "f32", "i32", "i16", "i8", "u32", "u16", "u8"):
+    for t in ("f64", "f32", "f16", "i32", "i16", "i8", "u32", "u16", "u8"):
         for order in ("le", "be") if t[1:] != "8" else ("",):
             dt = f"{kind}{t}_{order}" if order else f"{kind}{t}"
             h = pack(x, dt).hex()
@@ -92,6 +142,31 @@ cases += [
     {"id": "encode_samples.rf32_overflow_is_inf", "op": "encode_samples",
      "args": {"x": [1e39, -1e39], "datatype": "rf32_le"}, "expected": "0000807f000080ff",
      "tol": TOL, "source": "by hand: beyond binary32's range rounds to +inf 0x7f800000, -inf 0xff800000"},
+    {"id": "encode_samples.rf16_by_hand", "op": "encode_samples",
+     "args": {"x": [1.0, 2.0**-24, 65504.0, -2.0, 2.0**-14], "datatype": "rf16_le"},
+     "expected": "003c0100ff7b00c00004", "tol": TOL,
+     "source": "by hand: 1.0 = 0x3c00 (exponent 15); 2^-24 = 0x0001, the smallest subnormal; "
+     "65504 = 0x7bff, the largest finite; -2 = 0xc000; 2^-14 = 0x0400, the smallest normal"},
+    {"id": "encode_samples.rf16_overflow_is_inf", "op": "encode_samples",
+     "args": {"x": [65519.99, 65520.0, -1e6], "datatype": "rf16_be"},
+     "expected": "7bff7c00fc00", "tol": TOL,
+     "source": "by hand: below the tie 65520 rounds down to 65504 (0x7bff); 65520 is the tie "
+     "between 65504 and 2^16 and rounds to even, the infinite 0x7c00; -1e6 is -inf 0xfc00"},
+    {"id": "encode_samples.rf16_rounds_once", "op": "encode_samples",
+     "args": {"x": [1 + 2.0**-11 + 2.0**-40, 1 + 2.0**-11, 1 + 3 * 2.0**-11], "datatype": "rf16_le"},
+     "expected": "013c003c023c", "tol": TOL,
+     "source": "by hand: 1 + 2^-11 + 2^-40 is past the tie, so 1 + 2^-10 (0x3c01); through "
+     "binary32 it would be the tie and round to 1. The exact ties 1 + 2^-11 and 1 + 3 2^-11 "
+     "round to even: 0x3c00 and 0x3c02"},
+    {"id": "encode_samples.rf16_subnormal_tie", "op": "encode_samples",
+     "args": {"x": [2.0**-25, 3 * 2.0**-25, -0.0], "datatype": "rf16_le"},
+     "expected": "000002000080", "tol": TOL,
+     "source": "by hand: 2^-25 is half the smallest subnormal and rounds to even, 0; 3 2^-25 is "
+     "1.5 units and rounds to 2 (0x0002); -0.0 keeps its sign, 0x8000"},
+    {"id": "decode_samples.f16_special", "op": "decode_samples",
+     "args": {"data": "007c00fc0100ff03", "datatype": "rf16_le"},
+     "expected": ["inf", "-inf", 2.0**-24, 1023 * 2.0**-24], "tol": TOL,
+     "source": "by hand: 0x7c00 +inf, 0xfc00 -inf, 0x0001 = 2^-24, 0x03ff the largest subnormal"},
     {"id": "encode_samples.rf64_inf", "op": "encode_samples",
      "args": {"x": ["inf"], "datatype": "rf64_be"}, "expected": "7ff0000000000000", "tol": TOL,
      "source": "by hand: binary64 +inf, big-endian"},
@@ -142,7 +217,7 @@ def err(case_id, op, args, why):
                   "source": why})
 
 
-for bad in ("cu8_le", "ru64_le", "ru16", "cf32", "ci8_le", "rf16_le", "CF32_LE", "cf32_le ", "cf32_LE", "f32_le", ""):
+for bad in ("cu8_le", "ru64_le", "ru16", "cf32", "ci8_le", "rf16", "CF32_LE", "cf32_le ", "cf32_LE", "f32_le", ""):
     err(f"encode_samples.datatype_{bad.strip() or 'empty'}" + ("_space" if bad.endswith(" ") else ""),
         "encode_samples", {"x": [0.5], "datatype": bad}, f"{bad!r} is not a supported datatype")
 err("encode_samples.full_scale_i16", "encode_samples", {"x": [1.0], "datatype": "ri16_le"},
@@ -239,6 +314,15 @@ recs.append((
     "the signalforge extension fields map back to the Signal; two captures at one frequency",
 ))
 recs.append((
+    "receiver_cf16_be",
+    meta(base("cf16_be", 1e6), [{"core:sample_start": 0, "core:frequency": 433.92e6}]),
+    bytes.fromhex("3800b800" + "7bff0001"),
+    {"samples": {"re": [0.5, 65504.0], "im": [-0.5, 2.0**-24]}, "sample_rate": 1e6,
+     "center_frequency": 433.92e6, "time_origin": 0, "units": None, "impedance": None,
+     "metadata": {}},
+    "big-endian binary16 IQ by hand: 0x3800 = 0.5, 0xb800 = -0.5, 0x7bff = 65504, 0x0001 = 2^-24",
+))
+recs.append((
     "int64_extremes",
     meta(base("ri16_le", **{"x:min": -(2**63), "x:max": 2**63 - 1})),
     struct.pack("<h", -16384),
@@ -280,7 +364,7 @@ for name, text, why in (
     ("no_datatype", meta({"core:version": "1.0.0", "core:sample_rate": 1000}),
      "core:datatype is required"),
     ("version_2", meta({**base("ri16_le"), "core:version": "2.0.0"}), "major version 1 only"),
-    ("half_float", meta(base("rf16_le")), "16-bit floats are not supported"),
+    ("wide_int", meta(base("ri64_le")), "64-bit integers are not supported"),
     ("dataset", meta(base("ri16_le", **{"core:dataset": "other.bin"})),
      "a non-conforming dataset is not read"),
     ("duplicate_key", '{"global": {"core:datatype": "ri16_le", "core:version": "1.0.0", '

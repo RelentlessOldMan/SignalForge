@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **`f16` SigMF samples**: `rf16_le`, `rf16_be`, `cf16_le`, `cf16_be` in `read_sigmf` and
-   `write_sigmf`, IEEE 754 binary16 (NumPy `float16`, C# `Half`). Writing rounds each sample to
-   nearest, ties to even. A finite sample above the binary16 range would become infinite, so it
-   is rejected, as integer types reject out-of-range codes. Expected values: a stdlib generator
-   that packs and unpacks binary16 by hand (sign, exponent, mantissa, subnormals), cross-checked
-   with `struct`'s `e` format, plus by-hand codes (1.0 is `0x3C00`, the smallest subnormal is
-   `2^−24`).
+1. **More `.npy` dtypes on read**: `read_npy` also takes 1-D `float32`, `float16` and `complex64`
+   arrays (`'<f4'`, `'<f2'`, `'<c8'`), and the big-endian forms of every accepted dtype (`'>f8'`,
+   …), widened exactly to `float64` / `complex128`. `write_npy` still writes only `'<f8'` and
+   `'<c16'`, which lose nothing. Expected values: the npy generator writes the files by hand from
+   `struct` (`e`, `f`, `d` in both byte orders), and the samples are values the narrow type holds
+   exactly.
 
 ## Built
 
@@ -885,6 +884,19 @@ Updated with every chunk of work. Dates are absolute.
   `[−2/π, 2/π]`, the 3-tap differentiator `[1, 0, −1]`), 5 from the generator's Simpson-checked
   integrals solved exactly, 2 errors. Python 3274 passed, 2 skipped; .NET 2738 passed;
   conformance 1673/1673 in both. Version 2026.11.14.2.
+- 2026-11-14: half-precision SigMF samples ([ADR 0087](adr/0087-half-float-samples.md)):
+  `rf16_le`, `rf16_be`, `cf16_le` and `cf16_be` in `encode_samples`, `decode_samples`,
+  `write_sigmf` and `read_sigmf`, as IEEE binary16 (NumPy `float16`, C# `Half`). Writing rounds
+  once from the double, never through binary32, which could land on a different value. Beyond
+  65504 is ±inf, as for `f32`, and subnormals are kept. The files generator packs binary16 by hand
+  with exact rational rounding and checks each value against `struct`'s `e` format. 14 new cases:
+  the round-trip set for the four types, by-hand cases for the limits, ties, overflow,
+  subnormals and a double-rounding trap, and a big-endian `cf16` recording. The `half_float`
+  rejection recording became `wide_int` (`ri64_le`). A new test round-trips every non-NaN binary16
+  pattern in both languages. Lesson: the Python round-trip test measured the complex error as
+  `|y − x|` and C# measured each part, so `f16`'s coarser step failed only in Python. Both now
+  measure each part. Python 3294 passed, 2 skipped; .NET 2758 passed; conformance
+  1687/1687 in both. Version 2026.11.14.3.
 
 ## Not built
 
@@ -892,7 +904,7 @@ Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, el
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and
-multi-capture SigMF recordings, WAV metadata chunks, `f16` samples), plotting, CLI,
+multi-capture SigMF recordings, WAV metadata chunks), plotting, CLI,
 packaging and publishing.
 
 ## Lessons
