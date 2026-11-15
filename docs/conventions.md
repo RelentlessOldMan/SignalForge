@@ -1608,7 +1608,15 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
   sample_rate`; other capture fields are not read. Rate, units, impedance and metadata are the
   recording's (each its own copy). An annotation goes to the last segment starting at or before
   its `core:sample_start`, which becomes `core:sample_start − start_j`; its other fields are
-  kept, and a span past its segment is not checked. Reading only. **(implemented)**
+  kept, and a span past its segment is not checked. **(implemented)**
+  Writing ([ADR 0100](adr/0100-sigmf-write-captures.md)): `write_sigmf_captures(path, segments,
+  datatype=None)` (C# `WriteSigmfCaptures`) joins a non-empty list of signals of one kind.
+  Segment `j` starts at `start_j`, the sum of the earlier lengths, and gives the capture
+  `{"core:sample_start": start_j, "core:frequency": f_j}`. Each later time origin must be exactly
+  `t₀ + start_j / sample_rate`. The `global` objects `write_sigmf` would write, apart from the time
+  origin, must be identical. Only the last segment may be empty. Annotations move up by `start_j`.
+  In every segment but the last, each must start before the segment's end. One segment gives the
+  `write_sigmf` files. **(implemented)**
 - **Annotations** ([ADR 0061](adr/0061-sigmf-annotations.md)): the metadata key
   `core:annotations` is a list of JSON objects, written to the top-level `annotations` array (not
   to `global`) and read back from it, in file order; an empty or missing array gives no key. Each

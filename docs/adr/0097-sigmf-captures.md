@@ -34,7 +34,7 @@ recordings could not be read.
   signal's samples); every other field, `core:sample_count` included, is kept as it is, and an
   annotation running past its segment is not cut or checked, as ADR 0061 leaves spans unchecked.
   A segment with no annotations has no `core:annotations` key.
-- **Writing is not part of this decision.** A writer would have to decide when consecutive
+- **Writing is not part of this decision** (it came later, in [ADR 0100](0100-sigmf-write-captures.md)). A writer would have to decide when consecutive
   signals' time origins are close enough to be one recording; it waits until someone needs it.
 - **Expected values**: the files generator packs the samples with `struct` and writes the metadata
   by hand; segment time origins are chosen exact in binary64 (for example 0.5 + 3/4). Implemented

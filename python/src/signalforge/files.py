@@ -220,8 +220,66 @@ def write_sigmf_channels(
     meta_path.write_bytes(text.encode("utf-8"))
 
 
-def _sigmf_text(signal: Signal, datatype: str, channels: int) -> str:
-    """The ``.sigmf-meta`` text for ``signal`` (one of ``channels``), checked."""
+def write_sigmf_captures(
+    path: str | os.PathLike[str], segments: Sequence[Signal], datatype: str | None = None
+) -> None:
+    """Write ``segments`` as one one-channel SigMF recording with one capture per segment, the
+    inverse of :func:`read_sigmf_captures` (conventions: Signal files, Captures; ADR 0100). Each
+    later time origin must be exactly the first's plus ``start / sample_rate``, and everything but
+    the center frequency, time origin and annotations must be identical."""
+    if isinstance(segments, Signal) or not isinstance(segments, Sequence) or not segments:
+        raise ValueError("segments must be a non-empty list of signals")
+    if not all(isinstance(s, Signal) for s in segments):
+        raise ValueError("segments must be a non-empty list of signals")
+    first = segments[0]
+    if any(s.is_complex != first.is_complex for s in segments):
+        raise ValueError("the segments must be all real or all complex")
+    if any(len(s.samples) == 0 for s in segments[:-1]):
+        raise ValueError("only the last segment may be empty")
+    if datatype is None:
+        datatype = "cf64_le" if first.is_complex else "rf64_le"
+    t0 = _finite(first.time_origin, "time_origin")
+    shared = _sigmf_text(first, datatype, 1, (0.0, [], []))
+    rate = float(first.sample_rate)
+    captures: list[dict[str, Any]] = []
+    annotations: list[dict[str, Any]] = []
+    start = 0
+    for j, s in enumerate(segments):
+        if j and _sigmf_text(s, datatype, 1, (0.0, [], [])) != shared:
+            raise ValueError(
+                "the segments must have the same sample rate, units, impedance and metadata "
+                "apart from annotations"
+            )
+        if j and s.time_origin != t0 + start / rate:
+            raise ValueError(
+                f"segment {j} must have time origin {t0 + start / rate!r} "
+                f"(the first's plus {start} / sample_rate), not {s.time_origin!r}"
+            )
+        n = len(s.samples)
+        mine = _json(s.metadata.get(_ANNOTATIONS, []), "metadata")
+        if j < len(segments) - 1 and any(a["core:sample_start"] >= n for a in mine):
+            raise ValueError(f"an annotation of segment {j} starts past its {n} samples")
+        annotations += [{**a, "core:sample_start": a["core:sample_start"] + start} for a in mine]
+        captures.append(
+            {
+                "core:sample_start": start,
+                "core:frequency": _finite(s.center_frequency, "center_frequency"),
+            }
+        )
+        start += n
+    data = encode_samples(np.concatenate([s.samples for s in segments]), datatype)
+    text = _sigmf_text(first, datatype, 1, (t0, captures, annotations))
+    meta_path, data_path = _files(path)
+    data_path.write_bytes(data)  # only once nothing above can fail
+    meta_path.write_bytes(text.encode("utf-8"))
+
+
+_Layout = tuple[float, list[dict[str, Any]], list[dict[str, Any]]]
+
+
+def _sigmf_text(signal: Signal, datatype: str, channels: int, layout: _Layout | None = None) -> str:
+    """The ``.sigmf-meta`` text for ``signal`` (one of ``channels``), checked. ``layout`` replaces
+    its time origin, captures and annotations (its own annotations are still checked)."""
     glob: dict[str, Any] = {
         "core:datatype": datatype,
         "core:version": SIGMF_VERSION,
@@ -230,7 +288,9 @@ def _sigmf_text(signal: Signal, datatype: str, channels: int) -> str:
     if channels > 1:
         glob["core:num_channels"] = channels
     glob["core:extensions"] = [dict(_EXTENSION)]
-    glob["signalforge:time_origin"] = _finite(signal.time_origin, "time_origin")
+    glob["signalforge:time_origin"] = (
+        _finite(signal.time_origin, "time_origin") if layout is None else layout[0]
+    )
     if signal.units is not None:
         if not isinstance(signal.units, str):
             raise ValueError("units must be a string")
@@ -247,11 +307,12 @@ def _sigmf_text(signal: Signal, datatype: str, channels: int) -> str:
             if k in _RESERVED or k.startswith("signalforge:"):
                 raise ValueError(f"metadata key {k!r} is reserved")
             glob[k] = v
-    capture = {
-        "core:sample_start": 0,
-        "core:frequency": _finite(signal.center_frequency, "center_frequency"),
-    }
-    doc = _json({"global": glob, "captures": [capture], "annotations": annotations}, "the metadata")
+    if layout is None:
+        frequency = _finite(signal.center_frequency, "center_frequency")
+        captures = [{"core:sample_start": 0, "core:frequency": frequency}]
+    else:
+        captures, annotations = layout[1], layout[2]
+    doc = _json({"global": glob, "captures": captures, "annotations": annotations}, "the metadata")
     return json.dumps(doc, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
 
 

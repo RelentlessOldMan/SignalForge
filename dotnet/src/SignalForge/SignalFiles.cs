@@ -249,13 +249,100 @@ public static class SignalFiles
         File.WriteAllBytes(metaPath, meta);
     }
 
-    /// <summary>The <c>.sigmf-meta</c> bytes for <paramref name="signal"/>, one of <paramref name="channels"/>, checked.</summary>
-    private static byte[] SigmfMeta<T>(Signal<T> signal, string datatype, int channels) where T : struct
+    /// <summary>Writes <paramref name="segments"/> as one one-channel SigMF recording with one capture per segment, the
+    /// inverse of <see cref="ReadSigmfCaptures{T}"/> (conventions: Signal files, Captures; ADR 0100).</summary>
+    /// <typeparam name="T"><c>double</c> or <see cref="Complex"/>.</typeparam>
+    /// <param name="path">The base path, or either file's name.</param>
+    /// <param name="segments">One or more signals, only the last of which may be empty. Each later time origin must be
+    /// exactly the first's plus <c>start / sample_rate</c>; the sample rate, units, impedance and metadata other than
+    /// annotations must be identical.</param>
+    /// <param name="datatype">The sample datatype; null for <c>cf64_le</c> or <c>rf64_le</c>, which lose nothing.</param>
+    public static void WriteSigmfCaptures<T>(string path, IReadOnlyList<Signal<T>> segments, string? datatype = null)
+        where T : struct
     {
-        Check.Finite(signal.TimeOrigin, nameof(signal));
-        Check.Finite(signal.CenterFrequency, nameof(signal));
+        ArgumentNullException.ThrowIfNull(segments);
+        if (segments.Count == 0)
+            throw new ArgumentException("segments must be a non-empty list of signals", nameof(segments));
+        foreach (var s in segments)
+            ArgumentNullException.ThrowIfNull(s, nameof(segments));
+        for (int j = 0; j < segments.Count - 1; j++)
+            if (segments[j].Length == 0)
+                throw new ArgumentException("only the last segment may be empty", nameof(segments));
+        if (segments.Sum(s => (long)s.Length) > Array.MaxLength)
+            throw new ArgumentException("the segments hold too many samples for one array", nameof(segments));
+        bool isComplex = typeof(T) == typeof(Complex);
+        datatype ??= isComplex ? "cf64_le" : "rf64_le";
+        var f = Parse(datatype, nameof(datatype));
+        CheckKind<T>(f, datatype, nameof(datatype));
+        var first = segments[0];
+        double t0 = Check.Finite(first.TimeOrigin, nameof(segments));
+        var empty = new SigmfLayout(0.0, [], []);
+        byte[] shared = SigmfMeta(first, datatype, 1, empty);
+        var captures = new List<(long Start, double Frequency)>();
+        var annotations = new List<object?>();
+        long start = 0;
+        for (int j = 0; j < segments.Count; j++)
+        {
+            var s = segments[j];
+            if (j > 0 && !SigmfMeta(s, datatype, 1, empty).AsSpan().SequenceEqual(shared))
+                throw new ArgumentException(
+                    "the segments must have the same sample rate, units, impedance and metadata apart from annotations",
+                    nameof(segments));
+            double origin = t0 + start / first.SampleRate;
+            if (j > 0 && s.TimeOrigin != origin)
+                throw new ArgumentException(
+                    FormattableString.Invariant($"segment {j} must have time origin {origin:R} (the first's plus {start} / sample_rate), not {s.TimeOrigin:R}"),
+                    nameof(segments));
+            bool last = j == segments.Count - 1;
+            if (s.Metadata.TryGetValue(AnnotationsKey, out var mine))
+            {
+                foreach (IDictionary a in (IEnumerable)mine!)
+                {
+                    long at = SampleIndex(a["core:sample_start"], AnnotationsKey);
+                    if (!last && at >= s.Length)
+                        throw new ArgumentException($"an annotation of segment {j} starts past its {s.Length} samples", nameof(segments));
+                    var moved = new Dictionary<string, object?>();
+                    foreach (DictionaryEntry e in a)
+                        moved[e.Key as string ?? throw new ArgumentException("annotation keys must be strings", nameof(segments))] = e.Value;
+                    moved["core:sample_start"] = at + start;
+                    annotations.Add(moved);
+                }
+            }
+            captures.Add((start, Check.Finite(s.CenterFrequency, nameof(segments))));
+            start += s.Length;
+        }
+        var samples = new T[start];
+        int k = 0;
+        foreach (var s in segments)
+        {
+            s.Samples.CopyTo(samples.AsSpan(k));
+            k += s.Length;
+        }
+        byte[] data = isComplex
+            ? EncodeSamples(MemoryMarshal.Cast<T, Complex>(samples.AsSpan()), datatype)
+            : EncodeSamples(MemoryMarshal.Cast<T, double>(samples.AsSpan()), datatype);
+        byte[] meta = SigmfMeta(first, datatype, 1, new SigmfLayout(t0, captures, annotations));
+        var (metaPath, dataPath) = Files(path);
+        File.WriteAllBytes(dataPath, data);
+        File.WriteAllBytes(metaPath, meta);
+    }
+
+    /// <summary>A time origin, captures and annotations that replace a signal's own in <see cref="SigmfMeta"/>.</summary>
+    private sealed record SigmfLayout(double TimeOrigin, List<(long Start, double Frequency)> Captures, List<object?> Annotations);
+
+    /// <summary>The <c>.sigmf-meta</c> bytes for <paramref name="signal"/>, one of <paramref name="channels"/>, checked;
+    /// <paramref name="layout"/> replaces its time origin, captures and annotations (its own are still checked).</summary>
+    private static byte[] SigmfMeta<T>(Signal<T> signal, string datatype, int channels, SigmfLayout? layout = null) where T : struct
+    {
+        if (layout is null)
+        {
+            Check.Finite(signal.TimeOrigin, nameof(signal));
+            Check.Finite(signal.CenterFrequency, nameof(signal));
+        }
         object? annotations = signal.Metadata.TryGetValue(AnnotationsKey, out var av) ? av : new List<object?>();
         CheckAnnotations(annotations, $"metadata {AnnotationsKey}");
+        if (layout is not null)
+            annotations = layout.Annotations;
 
         var buffer = new MemoryStream();
         var options = new JsonWriterOptions { Indented = true, NewLine = "\n", Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
@@ -277,7 +364,7 @@ public static class SignalFiles
             w.WriteEndObject();
             w.WriteEndArray();
             w.WritePropertyName("signalforge:time_origin");
-            WriteDouble(w, signal.TimeOrigin);
+            WriteDouble(w, layout?.TimeOrigin ?? signal.TimeOrigin);
             if (signal.Units is { } units)
                 w.WriteString("signalforge:units", Text(units, "units"));
             if (signal.Impedance is { } r)
@@ -305,11 +392,14 @@ public static class SignalFiles
             }
             w.WriteEndObject();
             w.WriteStartArray("captures");
-            w.WriteStartObject();
-            w.WriteNumber("core:sample_start", 0);
-            w.WritePropertyName("core:frequency");
-            WriteDouble(w, signal.CenterFrequency);
-            w.WriteEndObject();
+            foreach (var (start, frequency) in layout?.Captures ?? [(0, signal.CenterFrequency)])
+            {
+                w.WriteStartObject();
+                w.WriteNumber("core:sample_start", start);
+                w.WritePropertyName("core:frequency");
+                WriteDouble(w, frequency);
+                w.WriteEndObject();
+            }
             w.WriteEndArray();
             w.WritePropertyName("annotations");
             WriteValue(w, annotations, AnnotationsKey, 2);

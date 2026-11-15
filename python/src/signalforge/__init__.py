@@ -75,6 +75,7 @@ from .files import (
     write_npy,
     write_npz,
     write_sigmf,
+    write_sigmf_captures,
     write_sigmf_channels,
     write_wav,
 )
@@ -182,7 +183,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.15.2"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.15.3"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -359,6 +360,7 @@ __all__ = [
     "write_npy",
     "write_npz",
     "write_sigmf",
+    "write_sigmf_captures",
     "write_sigmf_channels",
     "write_wav",
     "zero_phase_filter",
