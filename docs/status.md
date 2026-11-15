@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **2-D `.npz` members**: `write_npz` accepting 2-D members (C# `T[,]` values) and a
-   `read_npz_2d(path)` (C# `ReadNpz2D<T>`) returning every member as a 2-D array, built on
-   `read_npy_2d` (ADR 0092). Needs an ADR: whether one archive may mix 1-D and 2-D members, what
-   `read_npz` does with a 2-D member (still an error?), and the C# return type for a mixed
-   archive. Expected values: `zlib.crc32` and `struct`-packed stored ZIP entries, cross-checked
-   with `numpy.load`.
+1. **WAV cue points**: `read_wav_cues(path)` (C# `ReadWavCues`) returning the sample positions
+   of a `cue ` chunk, with their `LIST`/`adtl` labels (`labl`) when present, and `write_wav`
+   taking optional cues. Needs an ADR: which `cue ` fields are kept (ID, position, and the
+   `data` chunk's sample offset only), how labels are matched to cue IDs, and what is rejected
+   (a position past the data, a duplicate ID). Expected values: `struct`-packed chunks from the
+   RIFF and `cue ` layout, the plain PCM files cross-checked with the `wave` module.
 
 ## Built
 
@@ -955,13 +955,22 @@ Updated with every chunk of work. Dates are absolute.
   with `numpy.save` and `numpy.load`.
   Python 3566 passed, 2 skipped; .NET 2979 passed; conformance 1828/1828 in both. Version
   2026.11.14.8.
+- 2026-11-14: 2-D `.npz` members (ADR 0093): `read_npz` returns each member at its own
+  dimensions, a 2-D member read as `read_npy_2d` reads a file (C#: a `double[,]` or `Complex[,]`
+  in the `OrderedDictionary<string, Array>`), so one archive may mix 1-D and 2-D members; 0-D
+  and 3-D members are still rejected. `write_npz` takes 2-D values too (C# `double[,]` and
+  `Complex[,]`), each member the bytes `write_npy` writes. No separate `read_npz_2d`: the C#
+  values already carry their rank. Generator `npz.py` gained 3 write cases and 4 good and 4 bad
+  read archives, cross-checked with `numpy.load`.
+  Python 3587 passed, 2 skipped; .NET 2993 passed; conformance 1839/1839 in both. Version
+  2026.11.14.9.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` shapes beyond 2-D, 2-D `.npz` members, streaming reads and writes, multi-channel and
+phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks other than `LIST`/`INFO`), plotting, CLI,
 packaging and publishing.
 

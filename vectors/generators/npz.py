@@ -5,7 +5,8 @@ zlib.crc32 and deflated members come from zlib, following conventions: Signal fi
 (ADR 0089). The member .npy bytes are laid out as conventions: Signal files, NumPy .npy describes,
 with values from struct. The local and central headers numpy.savez writes (ZIP64 extra fields, a
 version needed of 45) are rebuilt here from the ZIP layout; the Python tests also read real
-numpy.savez output.
+numpy.savez output. 2-D members (ADR 0093) are packed row by row (C order) or column by column
+(Fortran order); their expected values are listed flat in C order with the shape.
 
 Run from the repo root: python vectors/generators/npz.py [--check]
 With --check it writes nothing and exits 1 unless every file matches what it would write.
@@ -197,6 +198,79 @@ bad("zip64_no_extra", archive([member("taps.npy", A, csize=0xFFFFFFFF)]),
 loc, cen = member("taps.npy", A)
 bad("no_local_header", archive([(b"XX" + loc[2:], cen)]), "the offset does not point at a local header")
 
+
+def npy2(rows, ncols, descr=None, fmt="<d", fortran=False):
+    """A 2-D .npy file: write_npy's layout for C order, or another descr or Fortran order."""
+    is_complex = any(isinstance(v, complex) for r in rows for v in r)
+    descr = descr or ("<c16" if is_complex else "<f8")
+    text = (f"{{'descr': '{descr}', 'fortran_order': {fortran}, "
+            f"'shape': ({len(rows)}, {ncols}), }}")
+    head = (text.ljust(117) + "\n").encode("ascii")
+    items = ([rows[i][j] for j in range(ncols) for i in range(len(rows))] if fortran
+             else [v for r in rows for v in r])
+    return b"\x93NUMPY\x01\x00" + struct.pack("<H", 118) + head + b"".join(
+        struct.pack(fmt, v) for v in parts(items))
+
+
+def rec2(name, rows, ncols):
+    return {"name": name, "shape": [len(rows), ncols], "x": arg([v for r in rows for v in r])}
+
+
+def write2(name, arrays, why):
+    """arrays: (key, 1-D list) or (key, rows, ncols) for a 2-D member."""
+    args, ms = [], []
+    for a in arrays:
+        if len(a) == 2:
+            args.append({"name": a[0], "x": arg(a[1])})
+            ms.append(member(a[0] + ".npy", npy(a[1], any(isinstance(v, complex) for v in a[1]))))
+        else:
+            args.append(rec2(*a))
+            ms.append(member(a[0] + ".npy", npy2(a[1], a[2])))
+    cases.append({"id": f"write_npz.{name}", "op": "write_npz", "args": {"arrays": args},
+                  "expected": archive(ms).hex(), "tol": TOL, "source": why})
+
+
+BANK = [[0.5, -0.25, 0.125], [1.0, 0.0, -1.0]]
+CBANK = [[1 + 1j, -2.0 + 0j], [0.5j, complex(math.inf, -1)]]
+write2("matrix_member", [("bank", BANK, 3)], "a (2, 3) member in C order, numpy.savez's layout")
+write2("mixed_members", [("taps", taps), ("bank", CBANK, 2)],
+       "a 1-D member, then a complex (2, 2) member, in order")
+write2("empty_matrix", [("e", [], 3), ("f", [[], []], 0)], "members of shape (0, 3) and (2, 0)")
+
+
+def good2(name, raw, records, why):
+    recs.append((name, raw, records, why))
+
+
+good2("matrix", archive([member("bank.npy", npy2(BANK, 3))]), [rec2("bank", BANK, 3)],
+      "a stored (2, 3) float64 member")
+good2("mixed_fortran", archive([member("taps.npy", A),
+                                member("bank.npy", npy2(CBANK, 2, ">c8", ">f", True), method=8)]),
+      [{"name": "taps", "x": arg(taps)}, rec2("bank", CBANK, 2)],
+      "a 1-D member next to a deflated big-endian complex64 member in Fortran order")
+I16 = [[1, -2], [32767, -32768], [0, 5]]
+good2("savez_like_matrix", archive([member("m.npy", npy2(I16, 2, "<i2", "<h"), version=45,
+                                           zip64_central=True)]),
+      [rec2("m", [[float(v) for v in r] for r in I16], 2)],
+      "an int16 (3, 2) member with numpy.savez's ZIP64 central extra field")
+good2("zero_rows_member", archive([member("z.npy", npy2([], 4))]), [rec2("z", [], 4)],
+      "a member of shape (0, 4): no data")
+
+
+def odd_npy(shape, items):
+    text = f"{{'descr': '<f8', 'fortran_order': False, 'shape': {shape}, }}"
+    return b"\x93NUMPY\x01\x00" + struct.pack("<H", 118) + (text.ljust(117) + "\n").encode() + b"".join(
+        struct.pack("<d", v) for v in items)
+
+
+bad("three_dim_member", archive([member("taps.npy", A), member("c.npy", odd_npy("(1, 2, 2)", [0.0] * 4))]),
+    "a (1, 2, 2) member: only 1-D and 2-D members are read")
+bad("zero_dim_member", archive([member("s.npy", odd_npy("()", [0.5]))]), "a 0-D member")
+bad("member_dimension_too_big", archive([member("w.npy", odd_npy("(0, 2147483592)", []))]),
+    "a dimension one beyond 2147483591")
+bad("matrix_data_short", archive([member("m.npy", odd_npy("(2, 3)", [0.0] * 5))]),
+    "40 data bytes for shape (2, 3)")
+
 for name, _, expected, why in recs:
     c = {"id": f"read_npz.{name}", "op": "read_npz", "args": {"file": f"{name}.npz"}}
     c.update({"error": "invalid_argument", "source": why} if expected is None
@@ -207,8 +281,8 @@ doc = {
     "schema": 1,
     "suite": "npz",
     "description": "Writing NumPy .npz archives, and reading them as numpy.savez, "
-    "numpy.savez_compressed and other ZIP writers lay them out, from vectors/files "
-    "(conventions: Signal files, NumPy .npz).",
+    "numpy.savez_compressed and other ZIP writers lay them out, from vectors/files, 1-D and "
+    "2-D members (conventions: Signal files, NumPy .npz).",
     "cases": cases,
 }
 lines = ",\n".join("    " + json.dumps(c) for c in cases)

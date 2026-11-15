@@ -1660,8 +1660,8 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     the result is in C order either way. Zero rows or columns mean no data. `read_npy` rejects a
     2-D shape and `read_npy_2d` a 1-D one. `write_npy` of a 2-D array writes the header text
     `{'descr': '<f8', 'fortran_order': False, 'shape': (r, c), }` (`'<c16'` for complex), padded
-    as above to 118 bytes, then the items in C order (row by row). `write_npz` and `read_npz` stay
-    1-D. **(implemented)**
+    as above to 118 bytes, then the items in C order (row by row). `.npz` members may be 2-D too
+    (ADR 0093). **(implemented)**
 - **NumPy `.npz`** ([ADR 0089](adr/0089-npz.md)): `write_npz(path, arrays)`, `read_npz(path)` (C#
   `WriteNpz`, `ReadNpz`), a ZIP archive of one `.npy` member per array, named `<key>.npy`, in the
   mapping's order. All numbers in the ZIP structures are little-endian.
@@ -1674,7 +1674,9 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     count twice, the central directory's size and offset, comment length 0). CRC-32 is the ZIP
     one: reflected polynomial `0xEDB88320`, initial value and final XOR `0xFFFFFFFF`. Keys are 1
     to 250 printable ASCII characters without `/` or `\`, each used once; at most 65535 members,
-    and the archive must stay under 4 GiB. An empty mapping writes just the end record.
+    and the archive must stay under 4 GiB. An empty mapping writes just the end record. A
+    member may be 1-D or 2-D ([ADR 0093](adr/0093-npz-2d.md)); each is written with the bytes
+    `write_npy` writes for it.
   - Reading: the end record is the last `50 4B 05 06` that sits within 65557 bytes of the end and
     whose comment runs exactly to the end. Its disk numbers must be 0, and its two counts must be
     equal. An archive that needs ZIP64 (a count of `0xFFFF`, or a size or offset of `0xFFFFFFFF`,
@@ -1693,7 +1695,9 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     extra field (their lengths are the local header's own). Stored data must have the
     uncompressed size. Deflated data must inflate to exactly the uncompressed size (bytes after the
     end of the deflate stream are not checked: .NET's inflater cannot report them). The CRC-32 of the result must match. The result is then read as a
-    `.npy` file. Anything else is `invalid_argument`. A missing file is an OS error.
+    `.npy` file: a 1-D member as `read_npy` reads it, a 2-D one as `read_npy_2d` does (ADR 0093),
+    and any other shape is rejected. Anything else is `invalid_argument`. A missing file is an OS
+    error.
     **(implemented)**
 
 ## PRBS

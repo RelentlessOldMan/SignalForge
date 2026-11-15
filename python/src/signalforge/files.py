@@ -607,7 +607,8 @@ def read_npy_2d(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[n
     return _parse_npy(Path(os.fspath(path)).read_bytes(), 2)
 
 
-def _parse_npy(raw: bytes, ndim: int = 1) -> NDArray[np.float64] | NDArray[np.complex128]:
+def _parse_npy(raw: bytes, ndim: int | None = 1) -> NDArray[np.float64] | NDArray[np.complex128]:
+    """The values of a .npy file's bytes, of exactly ``ndim`` dimensions, or 1 or 2 for None."""
     if len(raw) < 8 or raw[:6] != _NPY_MAGIC:
         raise ValueError("not a .npy file")
     version = (raw[6], raw[7])
@@ -631,9 +632,10 @@ def _parse_npy(raw: bytes, ndim: int = 1) -> NDArray[np.float64] | NDArray[np.co
         raise ValueError(f"descr {descr!r} is not one read_npy reads")
     if not isinstance(order, bool):
         raise ValueError("fortran_order must be True or False")
-    if not isinstance(shape, tuple) or len(shape) != ndim:
-        raise ValueError(f"only {ndim}-D arrays are read here, not shape {shape!r}")
-    if ndim == 2 and max(shape) > 2147483591:
+    dims = "1-D and 2-D" if ndim is None else f"{ndim}-D"
+    if not isinstance(shape, tuple) or len(shape) not in ((1, 2) if ndim is None else (ndim,)):
+        raise ValueError(f"only {dims} arrays are read here, not shape {shape!r}")
+    if len(shape) == 2 and max(shape) > 2147483591:
         raise ValueError(f"shape {shape!r} has a dimension beyond 2147483591")
     dt = _NPY_DESCR[descr]
     if len(raw) - start != math.prod(shape) * dt.itemsize:
@@ -649,8 +651,8 @@ _ZIP_DATE = 0x0021  # 1980-01-01
 
 
 def write_npz(path: str | os.PathLike[str], arrays: Mapping[str, ArrayLike]) -> None:
-    """Write 1-D arrays as a NumPy ``.npz`` archive: one uncompressed ``<key>.npy`` member each, in
-    the mapping's order (conventions: Signal files, NumPy .npz; ADR 0089)."""
+    """Write 1-D or 2-D arrays as a NumPy ``.npz`` archive: one uncompressed ``<key>.npy`` member
+    each, in the mapping's order (conventions: Signal files, NumPy .npz; ADRs 0089 and 0093)."""
     if not isinstance(arrays, Mapping):
         raise ValueError("arrays must be a mapping from names to arrays")
     if len(arrays) > 65535:
@@ -665,7 +667,7 @@ def write_npz(path: str | os.PathLike[str], arrays: Mapping[str, ArrayLike]) -> 
             raise ValueError(
                 f"name {key!r} must be 1 to 250 printable ASCII characters, no / or \\"
             )
-        name, data = (key + ".npy").encode("ascii"), _npy_bytes(x, f"arrays[{key!r}]")
+        name, data = (key + ".npy").encode("ascii"), _npy_bytes(x, f"arrays[{key!r}]", 2)
         crc, offset = zlib.crc32(data), len(body)
         sizes = struct.pack("<HHHIIIH", 0, 0, _ZIP_DATE, crc, len(data), len(data), len(name))
         body += _ZIP_LOCAL + struct.pack("<HH", 20, 0) + sizes + b"\0\0" + name + data
@@ -681,9 +683,9 @@ def write_npz(path: str | os.PathLike[str], arrays: Mapping[str, ArrayLike]) -> 
 def read_npz(
     path: str | os.PathLike[str],
 ) -> dict[str, NDArray[np.float64] | NDArray[np.complex128]]:
-    """Read a NumPy ``.npz`` archive (stored or deflated ``.npy`` members) as a dict in member
-    order; the ZIP is parsed here, not by ``zipfile`` (conventions: Signal files, NumPy .npz;
-    ADR 0089)."""
+    """Read a NumPy ``.npz`` archive (stored or deflated ``.npy`` members, each 1-D or 2-D) as a
+    dict in member order; the ZIP is parsed here, not by ``zipfile`` (conventions: Signal files,
+    NumPy .npz; ADRs 0089 and 0093)."""
     raw = Path(os.fspath(path)).read_bytes()
     at = next(
         (
@@ -749,7 +751,7 @@ def read_npz(
             raise ValueError(f"member {name!r} is not {usize} bytes")
         if zlib.crc32(data) != crc:
             raise ValueError(f"member {name!r} fails its CRC-32")
-        out[key] = _parse_npy(data)
+        out[key] = _parse_npy(data, None)
     return out
 
 

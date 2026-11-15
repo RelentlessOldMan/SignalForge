@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from signalforge import read_npy, read_npy_2d, read_npz, write_npy, write_npz
+from signalforge import read_npy, read_npy_2d, write_npy
 
 RNG = np.random.default_rng(92)
 SHAPES = [(1, 1), (2, 3), (3, 2), (0, 4), (5, 0), (17, 33), (1, 100), (100, 1)]
@@ -96,11 +96,3 @@ def test_largest_dimension_with_no_data(tmp_path: Path) -> None:
     path = tmp_path / "wide.npy"
     np.save(path, np.zeros((0, 2147483591)))
     assert read_npy_2d(path).shape == (0, 2147483591)
-
-
-def test_npz_stays_one_dimensional(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="1-D"):
-        write_npz(tmp_path / "a.npz", {"m": np.zeros((2, 2))})
-    np.savez(tmp_path / "b.npz", m=np.zeros((2, 2)))
-    with pytest.raises(ValueError):
-        read_npz(tmp_path / "b.npz")

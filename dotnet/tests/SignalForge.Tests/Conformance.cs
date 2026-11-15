@@ -691,10 +691,12 @@ public static class Conformance
 
     private static Func<object?> WriteNpzOp(object? arrays)
     {
-        // A list of {name, x} records; an empty JSON list decodes as an empty number array.
+        // A list of {name, x} records, {name, shape, x} for a 2-D member; an empty JSON list decodes as an empty
+        // number array.
         List<KeyValuePair<string, Array>> items = arrays is double[] { Length: 0 } ? [] :
             [.. ((List<object?>)arrays!).Cast<Dictionary<string, object?>>()
-                .Select(d => new KeyValuePair<string, Array>((string)d["name"]!, (Array)d["x"]!))];
+                .Select(d => new KeyValuePair<string, Array>((string)d["name"]!,
+                    d.TryGetValue("shape", out object? shape) ? Matrix(d["x"], Reals(shape)) : (Array)d["x"]!))];
         return WriteNpyOp(path => SignalFiles.WriteNpz(path, items));
     }
 
@@ -703,8 +705,17 @@ public static class Conformance
         if (Path.GetFileName(name) != name)
             throw new InvalidDataException("file must be a bare file name in vectors/files");
         string path = Path.Combine(VectorsDir(), "..", "files", name);
-        return () => SignalFiles.ReadNpz(path)
-            .Select(kv => (object?)new Dictionary<string, object?> { ["name"] = kv.Key, ["x"] = kv.Value }).ToList();
+        return () => SignalFiles.ReadNpz(path).Select(kv =>
+        {
+            Dictionary<string, object?> record = kv.Value switch
+            {
+                double[,] m => MatrixRecord(m),
+                Complex[,] m => MatrixRecord(m),
+                _ => new() { ["x"] = kv.Value },
+            };
+            record["name"] = kv.Key;
+            return (object?)record;
+        }).ToList();
     }
 
     private static Func<object?> WriteNpyOp(Action<string> write) => () =>
@@ -721,7 +732,14 @@ public static class Conformance
         }
     };
 
-    private static Func<object?> WriteNpy2DOp(object? x, double[] shape)
+    private static Func<object?> WriteNpy2DOp(object? x, double[] shape) => Matrix(x, shape) switch
+    {
+        Complex[,] z => WriteNpyOp(path => SignalFiles.WriteNpy(path, z)),
+        var m => WriteNpyOp(path => SignalFiles.WriteNpy(path, (double[,])m)),
+    };
+
+    /// <summary>A <see cref="double"/>[,] or <see cref="Complex"/>[,] from values flat in C order and a shape.</summary>
+    private static Array Matrix(object? x, double[] shape)
     {
         if (shape is not [var r, var c] || r < 0 || c < 0 || r != Math.Floor(r) || c != Math.Floor(c))
             throw new InvalidDataException("shape must be two non-negative whole numbers");
@@ -732,7 +750,7 @@ public static class Conformance
                 throw new InvalidDataException("x must have rows x columns values");
             for (int k = 0; k < z.Length; k++)
                 zm[k / (int)c, k % (int)c] = z[k];
-            return WriteNpyOp(path => SignalFiles.WriteNpy(path, zm));
+            return zm;
         }
         double[] v = Reals(x);
         var m = new double[(int)r, (int)c];
@@ -740,7 +758,7 @@ public static class Conformance
             throw new InvalidDataException("x must have rows x columns values");
         for (int k = 0; k < v.Length; k++)
             m[k / (int)c, k % (int)c] = v[k];
-        return WriteNpyOp(path => SignalFiles.WriteNpy(path, m));
+        return m;
     }
 
     private static Func<object?> ReadNpy2DOp(string name)

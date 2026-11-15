@@ -81,7 +81,7 @@ def test_bad_names_are_rejected(tmp_path: Path, name: str) -> None:
 
 def test_bad_arrays_are_rejected(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
-        write_npz(tmp_path / "a.npz", {"x": [[1.0, 2.0]]})
+        write_npz(tmp_path / "a.npz", {"x": [[[1.0, 2.0]]]})
     with pytest.raises(ValueError):
         write_npz(tmp_path / "a.npz", [("x", [1.0])])  # type: ignore[arg-type]
 

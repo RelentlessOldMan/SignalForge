@@ -195,17 +195,27 @@ OPS: dict[str, Callable[..., Any]] = {
     "read_npy_2d": lambda file: _matrix_record(files.read_npy_2d(_fixture(file))),
     "write_npz": lambda arrays: _write_npz(arrays),
     "read_npz": lambda file: [
-        {"name": k, "x": v} for k, v in files.read_npz(_fixture(file)).items()
+        {"name": k, **(_matrix_record(v) if v.ndim == 2 else {"x": v})}
+        for k, v in files.read_npz(_fixture(file)).items()
     ],
 }
 
 
 def _write_npz(arrays: Any) -> str:
-    """The bytes of a .npz archive of ``{name, x}`` records, as hex (``[]`` decodes as an array)."""
+    """The bytes of a .npz archive of ``{name, x}`` records, ``{name, shape, x}`` for a 2-D member
+    with ``x`` flat in C order, as hex (``[]`` decodes as an array)."""
     with tempfile.TemporaryDirectory() as d:
         path = Path(d) / "case.npz"
         files.write_npz(
-            path, {} if isinstance(arrays, np.ndarray) else {a["name"]: a["x"] for a in arrays}
+            path,
+            {}
+            if isinstance(arrays, np.ndarray)
+            else {
+                a["name"]: np.asarray(a["x"]).reshape([int(n) for n in a["shape"]])
+                if "shape" in a
+                else a["x"]
+                for a in arrays
+            },
         )
         return path.read_bytes().hex()
 

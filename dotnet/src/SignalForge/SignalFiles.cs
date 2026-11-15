@@ -873,6 +873,12 @@ public static class SignalFiles
             out long[] shape, out bool fortran);
         T[] flat = values as T[] ?? throw new ArgumentException(
             $"the file holds {(values is Complex[]? "complex" : "real")} values, not {typeof(T).Name}", nameof(path));
+        return Reshape(flat, shape, fortran);
+    }
+
+    /// <summary>A 2-D array from its items in file order, C or Fortran (ADR 0092).</summary>
+    private static T[,] Reshape<T>(T[] flat, long[] shape, bool fortran)
+    {
         int rows = (int)shape[0], columns = (int)shape[1];
         var result = new T[rows, columns];
         for (int k = 0; k < flat.Length; k++)
@@ -885,6 +891,16 @@ public static class SignalFiles
         return result;
     }
 
+    /// <summary>A <c>.npz</c> member's values: 1-D as <see cref="ReadNpy{T}(string)"/> reads them, 2-D as
+    /// <see cref="ReadNpy2D{T}(string)"/> does (ADR 0093).</summary>
+    private static Array ParseNpzMember(byte[] raw, Func<string, ArgumentException> bad)
+    {
+        Array values = ParseNpy(raw, bad, 0, out long[] shape, out bool fortran);
+        if (shape.Length == 1)
+            return values;
+        return values is Complex[] z ? Reshape(z, shape, fortran) : Reshape((double[])values, shape, fortran);
+    }
+
     /// <summary>The largest 2-D dimension read: <see cref="Array.MaxLength"/>, written out so it cannot drift from the
     /// Python limit (ADR 0092).</summary>
     private const long NpyMaxDimension = 2147483591;
@@ -893,7 +909,8 @@ public static class SignalFiles
     /// (conventions: Signal files, NumPy .npy).</summary>
     private static Array ParseNpy(byte[] raw, Func<string, ArgumentException> bad) => ParseNpy(raw, bad, 1, out _, out _);
 
-    /// <summary>The values in a <c>.npy</c> file's bytes in file order, for a shape of <paramref name="ndim"/> integers.</summary>
+    /// <summary>The values in a <c>.npy</c> file's bytes in file order, for a shape of <paramref name="ndim"/> integers, or
+    /// of 1 or 2 when <paramref name="ndim"/> is 0.</summary>
     private static Array ParseNpy(byte[] raw, Func<string, ArgumentException> bad, int ndim, out long[] shape, out bool fortran)
     {
         if (raw.Length < 8 || !raw.AsSpan(0, 6).SequenceEqual(NpyMagic))
@@ -924,12 +941,13 @@ public static class SignalFiles
             throw bad($"descr {descr} is not one ReadNpy reads");
         if (order is not bool isFortran)
             throw bad("fortran_order must be True or False");
-        if (shapeValue is not long[] shp || shp.Length != ndim)
-            throw bad(string.Create(CultureInfo.InvariantCulture, $"only {ndim}-D arrays are read here"));
-        if (ndim == 2 && shp.Max() > NpyMaxDimension)
+        if (shapeValue is not long[] shp || (ndim == 0 ? shp.Length is not (1 or 2) : shp.Length != ndim))
+            throw bad(ndim == 0 ? "only 1-D and 2-D arrays are read here"
+                : string.Create(CultureInfo.InvariantCulture, $"only {ndim}-D arrays are read here"));
+        if (shp.Length == 2 && shp.Max() > NpyMaxDimension)
             throw bad("the shape has a dimension beyond 2147483591");
         (shape, fortran) = (shp, isFortran);
-        long count = shp.Aggregate(1L, (p, n) => p * n); // no overflow: two dimensions below 2^31 when ndim is 2
+        long count = shp.Aggregate(1L, (p, n) => p * n); // no overflow: two dimensions are below 2^31
         char kind = ds[1];
         bool isComplex = kind == 'c', little = ds[0] != '>';
         int partSize = int.Parse(ds.AsSpan(2), CultureInfo.InvariantCulture) / (isComplex ? 2 : 1); // bytes per part
@@ -993,11 +1011,12 @@ public static class SignalFiles
         return ~c;
     }
 
-    /// <summary>Writes 1-D arrays as a NumPy <c>.npz</c> archive: one uncompressed <c>&lt;key&gt;.npy</c> member
-    /// each, in order (conventions: Signal files, NumPy .npz; ADR 0089).</summary>
+    /// <summary>Writes 1-D or 2-D arrays as a NumPy <c>.npz</c> archive: one uncompressed <c>&lt;key&gt;.npy</c>
+    /// member each, in order (conventions: Signal files, NumPy .npz; ADRs 0089 and 0093).</summary>
     /// <param name="path">The file to write.</param>
     /// <param name="arrays">Names (1 to 250 printable ASCII characters, no <c>/</c> or <c>\</c>, each once)
-    /// and their values, each a <see cref="double"/>[] or a <see cref="Complex"/>[].</param>
+    /// and their values, each a <see cref="double"/>[], <see cref="Complex"/>[], <see cref="double"/>[,] or
+    /// <see cref="Complex"/>[,]; a 2-D value is written in C order.</param>
     public static void WriteNpz(string path, IEnumerable<KeyValuePair<string, Array>> arrays)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
@@ -1018,7 +1037,10 @@ public static class SignalFiles
             {
                 double[] r => NpyBytes("<f8", r.Length, MemoryMarshal.AsBytes(r.AsSpan())),
                 Complex[] z => NpyBytes("<c16", z.Length, MemoryMarshal.AsBytes(z.AsSpan())),
-                _ => throw new ArgumentException($"arrays['{key}'] must be a double[] or a Complex[]", nameof(arrays)),
+                double[,] r2 => NpyBytes("<f8", Shape2D(r2), Bytes2D(r2, 8)),
+                Complex[,] z2 => NpyBytes("<c16", Shape2D(z2), Bytes2D(z2, 16)),
+                _ => throw new ArgumentException(
+                    $"arrays['{key}'] must be a double[], Complex[], double[,] or Complex[,]", nameof(arrays)),
             };
             byte[] name = System.Text.Encoding.ASCII.GetBytes(key + ".npy");
             uint crc = Crc32(data), offset = (uint)body.Length;
@@ -1064,7 +1086,8 @@ public static class SignalFiles
     /// <summary>Reads a NumPy <c>.npz</c> archive of stored or deflated <c>.npy</c> members, in member order. The
     /// ZIP is parsed here, not by <c>ZipArchive</c> (conventions: Signal files, NumPy .npz; ADR 0089).</summary>
     /// <param name="path">The file to read.</param>
-    /// <returns>Each key and its values, a <see cref="double"/>[] or a <see cref="Complex"/>[].</returns>
+    /// <returns>Each key and its values: a <see cref="double"/>[] or <see cref="Complex"/>[] for a 1-D member, a
+    /// <see cref="double"/>[,] or <see cref="Complex"/>[,] for a 2-D one (ADR 0093).</returns>
     /// <exception cref="ArgumentException">The file is not a <c>.npz</c> archive this reads.</exception>
     public static OrderedDictionary<string, Array> ReadNpz(string path)
     {
@@ -1164,7 +1187,7 @@ public static class SignalFiles
                 throw Bad(string.Create(CultureInfo.InvariantCulture, $"member '{name}' is not {usize} bytes"));
             if (Crc32(data) != crc)
                 throw Bad($"member '{name}' fails its CRC-32");
-            result.Add(key, ParseNpy(data, Bad));
+            result.Add(key, ParseNpzMember(data, Bad));
         }
         return result;
     }
