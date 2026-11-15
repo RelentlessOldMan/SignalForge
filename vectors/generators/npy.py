@@ -124,6 +124,45 @@ good("complex128_be", typed(">c16", z2, ">d"), z2, "'>c16' packed with struct '>
 good("float16_even", typed("<f2", [1.0, -2.0**-14], "<e"), [1.0, -2.0**-14],
      "a real '<f2' file read as reals, even with an even count")
 
+# Integers (ADR 0090): each value as the double of the same value, no scaling.
+for descr, fmt, x in (
+    ("|i1", "b", [0, 1, -1, 127, -128]),
+    ("|u1", "B", [0, 1, 128, 255]),
+    ("<i2", "<h", [0, -1, 32767, -32768, 258]),
+    (">i2", ">h", [0, -1, 32767, -32768, 258]),
+    ("<u2", "<H", [0, 1, 65535, 258]),
+    (">u2", ">H", [0, 1, 65535, 258]),
+    ("<i4", "<i", [0, -1, 2**31 - 1, -(2**31), 16909060]),
+    (">i4", ">i", [0, -1, 2**31 - 1, -(2**31), 16909060]),
+    ("<u4", "<I", [0, 2**32 - 1, 16909060]),
+    (">u4", ">I", [0, 2**32 - 1, 16909060]),
+    ("<i8", "<q", [0, -1, 2**53, -(2**53), -(2**63), 72623859790382856]),
+    (">i8", ">q", [0, -1, 2**53, -(2**53), -(2**63), 72623859790382856]),
+    ("<u8", "<Q", [0, 2**53, 2**63, 2**64 - 2**11]),
+    (">u8", ">Q", [0, 2**53, 2**63, 2**64 - 2**11]),
+):
+    # Every value here is exact in binary64: at most 2^53 in magnitude, or a multiple of the spacing
+    # at its size (72623859790382856 = 0x0102030405060708 is a multiple of 8, the spacing in
+    # [2^56, 2^57)), so the expected double is the integer itself.
+    name = ("int" if descr[1] == "i" else "uint") + str(8 * int(descr[2:])) + ("_be" if descr[0] == ">" else "")
+    good(name, typed(descr, x, fmt), [float(v) for v in x], f"'{descr}' packed with struct '{fmt}'")
+# Beyond 2^53, worked by hand. Near 2^53 doubles are 2 apart, near 2^60 256 apart, near 2^63 and
+# 2^64 2048 and 4096 apart; a value halfway between two goes to the one whose significand is even.
+rounded = [
+    (2**53 + 1, 2**53),  # halfway between 2^53 (even) and 2^53 + 2 (odd)
+    (2**53 + 3, 2**53 + 4),  # halfway between 2^53 + 2 (odd) and 2^53 + 4 (even)
+    (2**60 + 2**7, 2**60),  # halfway, 2^60 is even
+    (2**60 + 3 * 2**7, 2**60 + 2**9),  # halfway between 2^60 + 2^8 (odd) and 2^60 + 2^9 (even)
+    (2**60 + 2**7 + 1, 2**60 + 2**8),  # just past halfway: up
+    (2**63 - 1, 2**63),  # below 2^63 doubles are 1024 apart; 2^63 - 1 is nearest 2^63
+]
+good("int64_rounded", typed("<i8", [v for v, _ in rounded], "<q"), [float(r) for _, r in rounded],
+     "64-bit values beyond 2^53 round to the nearest double, ties to even, worked by hand")
+good("uint64_rounded", typed(">u8", [2**64 - 1, 2**64 - 3 * 2**10, 2**63 + 2**10], ">Q"),
+     [float(2**64), float(2**64 - 2**12), float(2**63)],
+     "near 2^64 doubles are 2^11 apart: 2^64 - 1 rounds up to 2^64; 2^64 - 3 * 2^10 is halfway "
+     "between 2^64 - 2^12 (even) and 2^64 - 2^11 (odd); 2^63 + 2^10 is halfway, 2^63 is even")
+
 
 def h(text):
     return header(text + "\n") + data(x3)
@@ -144,7 +183,12 @@ bad("float32_short", header("{'descr': '<f4', 'fortran_order': False, 'shape': (
 bad("complex64_odd", header("{'descr': '<c8', 'fortran_order': False, 'shape': (1,), }\n") + data([0.5], "<f"),
     "4 bytes for one complex64")
 bad("float32_uppercase", h("{'descr': '<F4', 'fortran_order': False, 'shape': (6,), }"), "descrs are lowercase")
-bad("int64", h("{'descr': '<i8', 'fortran_order': False, 'shape': (3,), }"), "integers need a scaling")
+bad("int8_order", typed("<i1", [1], "<b"), "a one-byte integer's descr uses '|', not '<'")
+bad("uint8_order", typed(">u1", [1], ">B"), "a one-byte integer's descr uses '|', not '>'")
+bad("int16_native", typed("=i2", [1], "<h"), "'=' is rejected for integers too")
+bad("int16_none", typed("|i2", [1], "<h"), "'|' on a two-byte integer")
+bad("bool", typed("|b1", [1], "<B"), "booleans are not read")
+bad("int32_short", typed("<i4", [1, 2], "<i")[:-1], "7 data bytes for shape (2,)")
 bad("object", h("{'descr': '|O', 'fortran_order': False, 'shape': (3,), }"), "object arrays hold pickles")
 bad("structured", h("{'descr': [('a', '<f8')], 'fortran_order': False, 'shape': (3,), }"),
     "a structured descr is a list, which the grammar has no place for")

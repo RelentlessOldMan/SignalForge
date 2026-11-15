@@ -427,7 +427,11 @@ def read_wav(path: str | os.PathLike[str]) -> list[Signal]:
 
 
 _NPY_MAGIC = b"\x93NUMPY"
-_NPY_DESCR = {f"{e}{t}": np.dtype(f"{e}{t}") for e in "<>" for t in ("f8", "f4", "f2", "c16", "c8")}
+_NPY_DESCR = {
+    f"{e}{t}": np.dtype(f"{e}{t}")
+    for e in "<>"
+    for t in ("f8", "f4", "f2", "c16", "c8", "i2", "u2", "i4", "u4", "i8", "u8")
+} | {"|i1": np.dtype("i1"), "|u1": np.dtype("u1")}  # integers: ADR 0090
 _NPY_KEYS = frozenset({"descr", "fortran_order", "shape"})
 
 
@@ -532,7 +536,8 @@ class _NpyHeader:
 def read_npy(path: str | os.PathLike[str]) -> NDArray[np.float64] | NDArray[np.complex128]:
     """Read a 1-D NumPy ``.npy`` file (versions 1.0 to 3.0) of ``float64``, ``float32``,
     ``float16``, ``complex128`` or ``complex64`` in either byte order, widened exactly to
-    ``float64`` or ``complex128``    (ADR 0088)."""
+    ``float64`` or ``complex128`` (ADR 0088), or of 8- to 64-bit integers, read as ``float64``
+    values without scaling (ADR 0090)."""
     return _parse_npy(Path(os.fspath(path)).read_bytes())
 
 
@@ -557,7 +562,7 @@ def _parse_npy(raw: bytes) -> NDArray[np.float64] | NDArray[np.complex128]:
         raise ValueError("the .npy header needs exactly descr, fortran_order and shape")
     descr, order, shape = d["descr"], d["fortran_order"], d["shape"]
     if not isinstance(descr, str) or descr not in _NPY_DESCR:
-        raise ValueError(f"only float and complex arrays with '<' or '>' are read, not {descr!r}")
+        raise ValueError(f"descr {descr!r} is not one read_npy reads")
     if not isinstance(order, bool):
         raise ValueError("fortran_order must be True or False")
     if not isinstance(shape, tuple) or len(shape) != 1:

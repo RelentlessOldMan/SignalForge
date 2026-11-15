@@ -719,8 +719,9 @@ public static class SignalFiles
 
     /// <summary>Reads a 1-D NumPy <c>.npy</c> file, versions 1.0 to 3.0, of binary64, binary32 or binary16
     /// floats or complex pairs in either byte order, widened exactly (conventions: Signal files, NumPy .npy;
-    /// ADR 0088). The header is parsed, never evaluated.</summary>
-    /// <typeparam name="T"><see cref="double"/> for <c>f8</c>, <c>f4</c>, <c>f2</c>; <see cref="Complex"/> for
+    /// ADR 0088), or of 8- to 64-bit integers, read as doubles without scaling (ADR 0090). The header is
+    /// parsed, never evaluated.</summary>
+    /// <typeparam name="T"><see cref="double"/> for <c>f8</c>, <c>f4</c>, <c>f2</c> and the integers; <see cref="Complex"/> for
     /// <c>c16</c>, <c>c8</c>.</typeparam>
     /// <param name="path">The file to read.</param>
     /// <returns>The values.</returns>
@@ -761,14 +762,17 @@ public static class SignalFiles
         if (d.Count != 3 || !d.TryGetValue("descr", out object? descr) || !d.TryGetValue("fortran_order", out object? order)
             || !d.TryGetValue("shape", out object? shapeValue))
             throw bad("the .npy header needs exactly descr, fortran_order and shape");
-        if (descr is not string { Length: >= 3 } ds || ds[0] is not ('<' or '>')
-            || ds[1..] is not ("f8" or "f4" or "f2" or "c16" or "c8"))
-            throw bad($"only float and complex arrays with '<' or '>' are read, not {descr}");
+        // Floats, complex and integers (ADR 0088, ADR 0090); a one-byte integer has the byte order '|'.
+        if (descr is not string { Length: >= 3 } ds
+            || !(ds is "|i1" or "|u1" || (ds[0] is '<' or '>'
+                && ds[1..] is "f8" or "f4" or "f2" or "c16" or "c8" or "i2" or "u2" or "i4" or "u4" or "i8" or "u8")))
+            throw bad($"descr {descr} is not one ReadNpy reads");
         if (order is not bool)
             throw bad("fortran_order must be True or False");
         if (shapeValue is not long[] { Length: 1 } shape)
             throw bad("only 1-D arrays are read");
-        bool isComplex = ds[1] == 'c', little = ds[0] == '<';
+        char kind = ds[1];
+        bool isComplex = kind == 'c', little = ds[0] != '>';
         int partSize = int.Parse(ds.AsSpan(2), CultureInfo.InvariantCulture) / (isComplex ? 2 : 1); // bytes per part
         int parts = isComplex ? 2 : 1;
         long bytes = raw.Length - start;
@@ -779,14 +783,29 @@ public static class SignalFiles
         for (int i = 0; i < values.Length; i++)
         {
             ReadOnlySpan<byte> b = src.Slice(i * partSize, partSize);
-            values[i] = (partSize, little) switch
+            values[i] = (kind, partSize, little) switch
             {
-                (8, true) => BinaryPrimitives.ReadDoubleLittleEndian(b),
-                (8, false) => BinaryPrimitives.ReadDoubleBigEndian(b),
-                (4, true) => BinaryPrimitives.ReadSingleLittleEndian(b),
-                (4, false) => BinaryPrimitives.ReadSingleBigEndian(b),
-                (_, true) => (double)BinaryPrimitives.ReadHalfLittleEndian(b),
-                _ => (double)BinaryPrimitives.ReadHalfBigEndian(b),
+                ('f' or 'c', 8, true) => BinaryPrimitives.ReadDoubleLittleEndian(b),
+                ('f' or 'c', 8, false) => BinaryPrimitives.ReadDoubleBigEndian(b),
+                ('f' or 'c', 4, true) => BinaryPrimitives.ReadSingleLittleEndian(b),
+                ('f' or 'c', 4, false) => BinaryPrimitives.ReadSingleBigEndian(b),
+                ('f' or 'c', _, true) => (double)BinaryPrimitives.ReadHalfLittleEndian(b),
+                ('f' or 'c', _, false) => (double)BinaryPrimitives.ReadHalfBigEndian(b),
+                ('i', 1, _) => (sbyte)b[0],
+                ('u', 1, _) => b[0],
+                ('i', 2, true) => BinaryPrimitives.ReadInt16LittleEndian(b),
+                ('i', 2, false) => BinaryPrimitives.ReadInt16BigEndian(b),
+                ('u', 2, true) => BinaryPrimitives.ReadUInt16LittleEndian(b),
+                ('u', 2, false) => BinaryPrimitives.ReadUInt16BigEndian(b),
+                ('i', 4, true) => BinaryPrimitives.ReadInt32LittleEndian(b),
+                ('i', 4, false) => BinaryPrimitives.ReadInt32BigEndian(b),
+                ('u', 4, true) => BinaryPrimitives.ReadUInt32LittleEndian(b),
+                ('u', 4, false) => BinaryPrimitives.ReadUInt32BigEndian(b),
+                // (double) of a 64-bit integer rounds to nearest, ties to even (ADR 0090).
+                ('i', _, true) => BinaryPrimitives.ReadInt64LittleEndian(b),
+                ('i', _, false) => BinaryPrimitives.ReadInt64BigEndian(b),
+                (_, _, true) => BinaryPrimitives.ReadUInt64LittleEndian(b),
+                _ => BinaryPrimitives.ReadUInt64BigEndian(b),
             };
         }
         if (!isComplex)

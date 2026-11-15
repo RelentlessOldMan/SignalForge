@@ -90,11 +90,46 @@ def test_reads_numpy_save_of_each_complex_dtype(tmp_path: Path, descr: str) -> N
     np.testing.assert_array_equal(got, z.astype(np.complex128))
 
 
-@pytest.mark.parametrize("descr", ["=f8", "|f8", "<f16", "<i4", "<u2", "<c32"])
+@pytest.mark.parametrize(
+    "descr", ["=f8", "|f8", "<f16", "<c32", "<i1", ">u1", "=i4", "|i2", "|b1", "<i16", "<i"]
+)
 def test_other_descrs_are_rejected(tmp_path: Path, descr: str) -> None:
     header = f"{{'descr':'{descr}','fortran_order':False,'shape':(1,)}}"
     with pytest.raises(ValueError):
         read_npy(_file(tmp_path, header))
+
+
+@pytest.mark.parametrize(
+    "descr",
+    [
+        "i1",
+        "u1",
+        "<i2",
+        ">i2",
+        "<u2",
+        ">u2",
+        "<i4",
+        ">i4",
+        "<u4",
+        ">u4",
+        "<i8",
+        ">i8",
+        "<u8",
+        ">u8",
+    ],
+)
+def test_reads_numpy_save_of_each_integer_dtype(tmp_path: Path, descr: str) -> None:
+    native = np.dtype(descr).newbyteorder("=")
+    info = np.iinfo(native)
+    rng = np.random.default_rng(5)
+    ends = np.array([info.min, info.max, 0, 1], native)
+    x = np.concatenate([ends, rng.integers(info.min, info.max, 200, native, endpoint=True)])
+    x = x.astype(descr)
+    path = tmp_path / "x.npy"
+    np.save(path, x)
+    got = read_npy(path)
+    assert got.dtype == np.float64
+    assert got.tolist() == [float(int(v)) for v in x]  # float(int) rounds to nearest, ties to even
 
 
 def _file(tmp_path: Path, header: str) -> Path:

@@ -101,11 +101,55 @@ public sealed class NpyTests : IDisposable
     [InlineData("=f8")]
     [InlineData("|f8")]
     [InlineData("<f16")]
-    [InlineData("<i4")]
     [InlineData("<c32")]
     [InlineData("f8")]
+    [InlineData("<i1")]
+    [InlineData(">u1")]
+    [InlineData("=i4")]
+    [InlineData("|i2")]
+    [InlineData("|b1")]
+    [InlineData("<i16")]
     public void OtherDescrsAreRejected(string descr) =>
         Assert.ThrowsAny<ArgumentException>(() => SignalFiles.ReadNpy<double>(Typed(descr, new byte[8], 1)));
+
+    [Fact]
+    public void IntegersAreReadWithoutScaling()
+    {
+        byte[] le = [0xFE, 0xFF, 0x02, 0x01], be = [0xFF, 0xFE, 0x01, 0x02];
+        Assert.Equal([-2.0, 258.0], SignalFiles.ReadNpy<double>(Typed("<i2", le, 2)));
+        Assert.Equal([65534.0, 258.0], SignalFiles.ReadNpy<double>(Typed("<u2", le, 2)));
+        Assert.Equal([-2.0, 258.0], SignalFiles.ReadNpy<double>(Typed(">i2", be, 2)));
+        Assert.Equal([-2.0, -1.0, 2.0, 1.0], SignalFiles.ReadNpy<double>(Typed("|i1", le, 4)));
+        Assert.Equal([254.0, 255.0, 2.0, 1.0], SignalFiles.ReadNpy<double>(Typed("|u1", le, 4)));
+        Assert.Equal([16973822.0], SignalFiles.ReadNpy<double>(Typed("<u4", le, 1)));
+        Assert.Equal([-16776958.0], SignalFiles.ReadNpy<double>(Typed(">i4", [0xFF, 0x00, 0x01, 0x02], 1)));
+        Assert.ThrowsAny<ArgumentException>(() => SignalFiles.ReadNpy<Complex>(Typed("<i2", le, 2)));
+    }
+
+    [Theory]
+    [InlineData(long.MinValue, -9223372036854775808.0)]
+    [InlineData(long.MaxValue, 9223372036854775808.0)] // 2^63 - 1: below 2^63 doubles are 1024 apart
+    [InlineData((1L << 53) + 1, 9007199254740992.0)] // halfway: 2^53 is even
+    [InlineData((1L << 53) + 3, 9007199254740996.0)] // halfway: 2^53 + 4 is even
+    [InlineData((1L << 60) + 128, 1152921504606846976.0)] // halfway: 2^60 is even
+    [InlineData(-(1L << 60) - 384, -1152921504606847488.0)] // halfway: 2^60 + 512 is even
+    public void Int64RoundsToNearestEven(long v, double expected)
+    {
+        byte[] b = new byte[8];
+        BinaryPrimitives.WriteInt64BigEndian(b, v);
+        Assert.Equal([expected], SignalFiles.ReadNpy<double>(Typed(">i8", b, 1)));
+    }
+
+    [Theory]
+    [InlineData(ulong.MaxValue, 18446744073709551616.0)] // near 2^64 doubles are 2048 apart
+    [InlineData((1UL << 63) + 1024, 9223372036854775808.0)] // halfway: 2^63 is even
+    [InlineData(ulong.MaxValue - 3071, 18446744073709547520.0)] // 2^64 - 3072, halfway: 2^64 - 4096 is even
+    public void UInt64RoundsToNearestEven(ulong v, double expected)
+    {
+        byte[] b = new byte[8];
+        BinaryPrimitives.WriteUInt64LittleEndian(b, v);
+        Assert.Equal([expected], SignalFiles.ReadNpy<double>(Typed("<u8", b, 1)));
+    }
 
     private string File3(string header)
     {

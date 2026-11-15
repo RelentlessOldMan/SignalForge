@@ -4,12 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **`.npy` integer dtypes on read**: `read_npy` (and so `read_npz`) also takes `|i1`, `|u1`
-   and `<`/`>` `i2`, `u2`, `i4`, `u4`, `i8`, `u8`, read as float64 values with no scaling. Every
-   value up to 2^53 in magnitude is exact; wider 64-bit values round to the nearest double, ties to
-   even, as `numpy.astype(float64)` does. Writing stays float64 and complex128. Needs a short ADR
-   (no scaling, unlike WAV and SigMF integers, because a `.npy` file has no full-scale convention).
-   Expected values: struct-packed integers and their exact or hand-rounded doubles.
+1. **WAV `LIST`/`INFO` text tags**: `read_wav_info(path)` returning the `INFO` subchunks of a
+   `LIST` chunk (`INAM` title, `IART` artist, `ICMT` comment, `ISFT` software, …) as an ordered
+   mapping of four-character IDs to text (C# `ReadWavInfo`), and an optional `info` argument to
+   `write_wav` that writes them after the `data` chunk. Needs an ADR: the text encoding (ASCII
+   only on write; Latin-1 or UTF-8 on read?), the NUL terminator and pad byte, IDs allowed,
+   duplicate IDs, and where the chunk goes. Expected values: the WAV generator packs the chunks
+   with `struct`; Python's `wave` module skips unknown chunks, which checks that the audio still
+   reads.
 
 ## Built
 
@@ -923,13 +925,23 @@ Updated with every chunk of work. Dates are absolute.
   ambiguous, and `zipfile` takes the wrong record, so it was not kept as a good case.
   Python 3382 passed, 2 skipped; .NET 2837 passed; conformance 1743/1743 in both. Version
   2026.11.14.5.
+- 2026-11-14: integer `.npy` dtypes on read (ADR 0090): `read_npy`, and so `read_npz`, also
+  read `'|i1'`, `'|u1'` and `<`/`>` `i2`, `u2`, `i4`, `u4`, `i8`, `u8` as `float64` values with
+  no scaling. 64-bit values beyond 2^53 round to the nearest double, ties to even. A one-byte
+  integer must use `|`, as NumPy writes it. Booleans and `=` stay rejected. Generator `npy.py`
+  gained 16 good integer cases (each width and byte order, from `struct`, plus two cases rounded
+  by hand) and 6 bad ones, all checked against `numpy.load`; `npz.py`'s bad member is now a
+  boolean array. Lesson: a NumPy test that concatenates a `uint64` maximum with an `int64` array
+  silently goes through `float64`; build the array in its own dtype.
+  Python 3422 passed, 2 skipped; .NET 2873 passed; conformance 1764/1764 in both. Version
+  2026.11.14.6.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npy` integer dtypes and other shapes, streaming reads and writes, multi-channel and
+phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npy` shapes other than 1-D, streaming reads and writes, multi-channel and
 multi-capture SigMF recordings, WAV metadata chunks), plotting, CLI,
 packaging and publishing.
 

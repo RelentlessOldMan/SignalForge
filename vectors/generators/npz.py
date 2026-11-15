@@ -190,8 +190,8 @@ bad("duplicate", archive([member("taps.npy", A), member("taps.npy", B)]), "taps 
 bad("latin1_name", archive([member("é.npy".encode("latin-1"), A)]),
     "a non-ASCII name without flag bit 11")
 bad("bad_utf8", archive([member(b"\xc3.npy", A, flags=0x800)]), "flag bit 11 with invalid UTF-8")
-bad("bad_member", archive([member("i.npy", npy([1], False, "<i8", "<q"))]),
-    "an integer member: read_npy rejects it")
+bad("bad_member", archive([member("b.npy", npy([1], False, "|b1", "<B"))]),
+    "a boolean member: read_npy rejects it")
 bad("zip64_no_extra", archive([member("taps.npy", A, csize=0xFFFFFFFF)]),
     "a 0xFFFFFFFF size with no ZIP64 extra field")
 loc, cen = member("taps.npy", A)

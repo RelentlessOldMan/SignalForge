@@ -1630,9 +1630,14 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     `'>f2'`, `'<c16'`, `'>c16'`, `'<c8'` or `'>c8'` ([ADR 0088](adr/0088-npy-read-dtypes.md)):
     IEEE binary64, binary32 or binary16 in that byte order, a complex item being the real then
     the imaginary part. Values are widened exactly to `float64` / `complex128`; a NaN stays NaN.
-    Rejected: anything else, any other descr (`=` and `|` byte orders, integers, structured), a
-    shape that is not one integer, and a data size other than `n` × the item size.
-    In C# a file of the other kind than `T` is rejected. A missing file is an OS error.
+    The descr may also be an integer one ([ADR 0090](adr/0090-npy-integer-dtypes.md)): `'|i1'`,
+    `'|u1'`, or `<` or `>` with `i2`, `u2`, `i4`, `u4`, `i8` or `u8`, two's-complement signed or
+    unsigned in that byte order. Each integer becomes the real `float64` of the same value, with
+    no scaling; a 64-bit value beyond 2^53 in magnitude rounds to the nearest double, ties to even.
+    Rejected: anything else, any other descr (`=` byte order, `|` on a float or a multi-byte
+    integer, `<` or `>` on a one-byte integer, booleans, structured), a shape that is not one
+    integer, and a data size other than `n` × the item size.
+    In C# a file of the other kind than `T` is rejected (an integer file is real). A missing file is an OS error.
     **(implemented)**
 - **NumPy `.npz`** ([ADR 0089](adr/0089-npz.md)): `write_npz(path, arrays)`, `read_npz(path)` (C#
   `WriteNpz`, `ReadNpz`), a ZIP archive of one `.npy` member per array, named `<key>.npy`, in the
