@@ -69,22 +69,32 @@ def grid(freqs, gains, fs, k):
     return out
 
 
-def design(n, freqs, gains, fs, name="hamming", beta=None, k=None):
+def design(n, freqs, gains, fs, name="hamming", beta=None, k=None, kind="filter"):
     k = default_points(n) if k is None else k
     big_l = 2 * (k - 1)
     g = grid(freqs, gains, fs, k)
+    if kind == "differentiator":
+        g = [-2 * math.pi * (j / big_l) * v for j, v in enumerate(g)]
     w = window(name, n, beta)
     taps = []
     for i in range(n):
         t = i - (n - 1) / 2
-        terms = [g[0], g[k - 1] * math.cos(math.pi * t)]
-        terms += [2 * g[j] * math.cos(2 * math.pi * j * t / big_l) for j in range(1, k - 1)]
+        if kind == "filter":
+            terms = [g[0], g[k - 1] * math.cos(math.pi * t)]
+            terms += [2 * g[j] * math.cos(2 * math.pi * j * t / big_l) for j in range(1, k - 1)]
+        else:  # Re(-j e^{i theta}) = sin(theta); the DC term vanishes
+            terms = [g[k - 1] * math.sin(math.pi * t)]
+            terms += [2 * g[j] * math.sin(2 * math.pi * j * t / big_l) for j in range(1, k - 1)]
         taps.append(math.fsum(terms) / big_l * w[i])
-    return [(a + b) / 2 for a, b in zip(taps, reversed(taps))]
+    if kind == "filter":
+        return [(a + b) / 2 for a, b in zip(taps, reversed(taps))]
+    return [(a - b) / 2 for a, b in zip(taps, reversed(taps))]
 
 
-def args_of(n, freqs, gains, fs, name, beta, k):
+def args_of(n, freqs, gains, fs, name, beta, k, kind="filter"):
     a = {"num_taps": n, "frequencies": freqs, "gains": gains, "sample_rate": fs}
+    if kind != "filter":
+        a["kind"] = kind
     if name != "hamming":
         a["window"] = name
     if beta is not None:
@@ -94,17 +104,20 @@ def args_of(n, freqs, gains, fs, name, beta, k):
     return a
 
 
-def gen(case_id, n, freqs, gains, fs, name="hamming", beta=None, k=None):
+def gen(case_id, n, freqs, gains, fs, name="hamming", beta=None, k=None, kind="filter"):
     return {"id": case_id, "op": "fir_frequency_sampling",
-            "args": args_of(n, freqs, gains, fs, name, beta, k),
-            "expected": design(n, freqs, gains, fs, name, beta, k), "tol": TOL, "source": SRC}
+            "args": args_of(n, freqs, gains, fs, name, beta, k, kind),
+            "expected": design(n, freqs, gains, fs, name, beta, k, kind), "tol": TOL,
+            "source": SRC}
 
 
-def hand(case_id, n, freqs, gains, fs, expected, why, name="hamming", beta=None, k=None):
-    got = design(n, freqs, gains, fs, name, beta, k)
+def hand(case_id, n, freqs, gains, fs, expected, why, name="hamming", beta=None, k=None,
+         kind="filter"):
+    got = design(n, freqs, gains, fs, name, beta, k, kind)
     assert all(abs(x - y) < 1e-14 for x, y in zip(got, expected, strict=True)), (case_id, got)
     return {"id": case_id, "op": "fir_frequency_sampling",
-            "args": args_of(n, freqs, gains, fs, name, beta, k), "expected": expected, "tol": TOL,
+            "args": args_of(n, freqs, gains, fs, name, beta, k, kind), "expected": expected,
+            "tol": TOL,
             "source": "by hand: " + why}
 
 
@@ -139,7 +152,35 @@ cases = [
         name="blackman"),
     gen("fir_frequency_sampling.odd_grid", 51, [0, 0.24, 0.4, 1.0], [1, 0.8, 0, 0], 2.0, k=100),
     gen("fir_frequency_sampling.long_255", 255, [0, 0.2, 0.22, 0.5], [1, 1, 0, 0], 1.0),
+    hand("fir_frequency_sampling.differentiator_3", 3, [0, 0.25, 0.5], [1, 1, 0], 1.0,
+         [math.pi / 4, 0.0, -math.pi / 4],
+         "K = 3, L = 4: A = -2 pi nu G = [0, -pi/2, 0]; d(t) = (1/4) 2 (-pi/2) sin(pi t/2) at "
+         "t = -1, 0, 1", name="rectangular", k=3, kind="differentiator"),
+    hand("fir_frequency_sampling.hilbert_2", 2, [0, 0.5], [0, 1], 1.0,
+         [-(2 + math.sqrt(2)) / 8, (2 + math.sqrt(2)) / 8],
+         "K = 3, L = 4: A = [0, 1/2, 1]; d(1/2) = (1/4)(2 (1/2) sin(pi/4) + sin(pi/2)), and "
+         "d(-1/2) = -d(1/2)", name="rectangular", k=3, kind="hilbert"),
+    hand("fir_frequency_sampling.differentiator_2", 2, [0, 0.5], [1, 1], 1.0,
+         [math.pi * (2 + math.sqrt(2)) / 8, -math.pi * (2 + math.sqrt(2)) / 8],
+         "K = 3, L = 4: A = [0, -pi/2, -pi]; d(1/2) = (1/4)(2 (-pi/2) sin(pi/4) - pi)",
+         name="rectangular", k=3, kind="differentiator"),
+    gen("fir_frequency_sampling.hilbert_31", 31, [0, 0.05, 0.45, 0.5], [0, 1, 1, 0], 1.0,
+        kind="hilbert"),
+    gen("fir_frequency_sampling.hilbert_32_even", 32, [0, 0.05, 0.5], [0, 1, 1], 1.0,
+        name="kaiser", beta=5.0, kind="hilbert"),
+    gen("fir_frequency_sampling.differentiator_21", 21, [0, 0.4, 0.5], [1, 1, 0], 1.0,
+        name="hann", kind="differentiator"),
+    gen("fir_frequency_sampling.differentiator_20_even_hz", 20, [0, 2000, 4000], [1, 1, 1],
+        8000.0, name="blackman", k=33, kind="differentiator"),
     err("fir_frequency_sampling.zero_taps", {"num_taps": 0}, "num_taps >= 1"),
+    err("fir_frequency_sampling.unknown_kind", {"kind": "bandpass"}, "kind is filter, hilbert or "
+        "differentiator"),
+    err("fir_frequency_sampling.antisymmetric_one_tap", {"num_taps": 1, "kind": "differentiator",
+        "gains": [1, 1, 0, 0]}, "an antisymmetric kind needs num_taps >= 2"),
+    err("fir_frequency_sampling.hilbert_dc_gain", {"num_taps": 12, "kind": "hilbert",
+        "gains": [1, 1, 1, 1]}, "a Hilbert design has A(0) = 0, so needs zero gain at 0"),
+    err("fir_frequency_sampling.type_3_nyquist_gain", {"num_taps": 11, "kind": "differentiator",
+        "gains": [1, 1, 1, 1]}, "type III has A(fs/2) = 0, so needs zero gain at fs/2"),
     err("fir_frequency_sampling.one_frequency", {"frequencies": [0], "gains": [1]},
         "at least two frequencies"),
     err("fir_frequency_sampling.not_from_zero", {"frequencies": [0.01, 0.2, 0.3, 0.5]},

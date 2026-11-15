@@ -108,7 +108,7 @@ public class EquirippleTests
     [Fact]
     public void HilbertTransformerTurnsCosineIntoSine()
     {
-        double[] h = Dsp.FirEquiripple(101, [0.02, 0.48], [1], 1, kind: EquirippleKind.Hilbert);
+        double[] h = Dsp.FirEquiripple(101, [0.02, 0.48], [1], 1, kind: FirKind.Hilbert);
         Assert.Equal(h, h.Reverse().Select(v => -v));
         double[] x = [.. Enumerable.Range(0, 600).Select(n => Math.Cos(2 * Math.PI * 0.13 * n))];
         double[] y = Dsp.Convolve(x, h);
@@ -121,7 +121,7 @@ public class EquirippleTests
     [InlineData(32)]
     public void DifferentiatorGivesTheDerivativePerSample(int taps)
     {
-        double[] h = Dsp.FirEquiripple(taps, [0, 0.4], [2], 1, kind: EquirippleKind.Differentiator);
+        double[] h = Dsp.FirEquiripple(taps, [0, 0.4], [2], 1, kind: FirKind.Differentiator);
         Assert.Equal(h, h.Reverse().Select(v => -v));
         double[] x = [.. Enumerable.Range(0, 400).Select(n => Math.Sin(2 * Math.PI * 0.1 * n))];
         double[] y = Dsp.Convolve(x, h);
@@ -133,10 +133,10 @@ public class EquirippleTests
     [Fact]
     public void AntisymmetricBadArgumentsThrow()
     {
-        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirEquiripple(21, [0.1, 0.4], [1], 1, kind: (EquirippleKind)7));
-        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirEquiripple(1, [0.1, 0.4], [1], 1, kind: EquirippleKind.Hilbert));
-        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirEquiripple(21, [0, 0.4], [1], 1, kind: EquirippleKind.Hilbert));
-        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirEquiripple(21, [0, 0.5], [1], 1, kind: EquirippleKind.Differentiator));
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirEquiripple(21, [0.1, 0.4], [1], 1, kind: (FirKind)7));
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirEquiripple(1, [0.1, 0.4], [1], 1, kind: FirKind.Hilbert));
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirEquiripple(21, [0, 0.4], [1], 1, kind: FirKind.Hilbert));
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.FirEquiripple(21, [0, 0.5], [1], 1, kind: FirKind.Differentiator));
     }
 
     [Fact]

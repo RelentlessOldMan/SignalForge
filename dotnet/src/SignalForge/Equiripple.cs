@@ -1,7 +1,7 @@
 namespace SignalForge;
 
 /// <summary>What an equiripple design approximates (conventions: Equiripple design; ADR 0026).</summary>
-public enum EquirippleKind
+public enum FirKind
 {
     /// <summary>Symmetric taps; desired is the gain in each band.</summary>
     Filter,
@@ -34,13 +34,13 @@ public static partial class Dsp
     /// double precision (it does not converge).</exception>
     public static double[] FirEquiripple(int numTaps, IReadOnlyList<double> bands, IReadOnlyList<double> desired,
         double sampleRate, IReadOnlyList<double>? weights = null, int gridDensity = 16,
-        EquirippleKind kind = EquirippleKind.Filter)
+        FirKind kind = FirKind.Filter)
     {
         ArgumentNullException.ThrowIfNull(bands);
         ArgumentNullException.ThrowIfNull(desired);
         var (_, _, dd, _, _) = EquirippleGrid(numTaps, bands, desired, sampleRate, weights, gridDensity, kind);
         int n = numTaps;
-        if (dd.All(v => v == 0) || (kind == EquirippleKind.Filter && n % 2 == 1 && dd.All(v => v == dd[0])))
+        if (dd.All(v => v == 0) || (kind == FirKind.Filter && n % 2 == 1 && dd.All(v => v == dd[0])))
         {
             var exact = new double[n];
             exact[(n - 1) / 2] = dd[0];
@@ -102,10 +102,10 @@ public static partial class Dsp
     // The exchange (conventions: Equiripple design): the taps and the final set's frequencies, or
     // null if the design is beyond double precision.
     private static (double[] Taps, double[] Nu)? Remez(int n, IReadOnlyList<double> bands, IReadOnlyList<double> desired,
-        double sampleRate, IReadOnlyList<double>? weights, int gridDensity, EquirippleKind kind)
+        double sampleRate, IReadOnlyList<double>? weights, int gridDensity, FirKind kind)
     {
         var (l, nu, dd, ww, band) = EquirippleGrid(n, bands, desired, sampleRate, weights, gridDensity, kind);
-        bool odd = n % 2 == 1, anti = kind != EquirippleKind.Filter;
+        bool odd = n % 2 == 1, anti = kind != FirKind.Filter;
         int g = nu.Length;
         double[] dp = new double[g], wp = new double[g], x = new double[g];
         double slack = 0;
@@ -370,11 +370,11 @@ public static partial class Dsp
 
     private static (int L, double[] Nu, double[] D, double[] W, int[] Band) EquirippleGrid(int numTaps,
         IReadOnlyList<double> bands, IReadOnlyList<double> desired, double sampleRate,
-        IReadOnlyList<double>? weights, int gridDensity, EquirippleKind kind)
+        IReadOnlyList<double>? weights, int gridDensity, FirKind kind)
     {
         if (!Enum.IsDefined(kind))
             throw new ArgumentOutOfRangeException(nameof(kind), kind, "unknown kind");
-        bool anti = kind != EquirippleKind.Filter;
+        bool anti = kind != FirKind.Filter;
         if (numTaps < (anti ? 2 : 1) || numTaps > 1001)
             throw new ArgumentOutOfRangeException(nameof(numTaps), numTaps, anti ? "must be in [2, 1001] for this kind" : "must be in [1, 1001]");
         if (gridDensity < 1 || gridDensity > 64)
@@ -393,7 +393,7 @@ public static partial class Dsp
         // Q = 0 at 0.5 for types II and III, at 0 for III and IV: the target must be 0 there.
         if (odd == anti && bands[^1] == fs / 2 && desired[^1] != 0)
             throw new ArgumentException("numTaps and kind give zero gain at sampleRate/2: desired must be 0", nameof(desired));
-        if (kind == EquirippleKind.Hilbert && bands[0] == 0 && desired[0] != 0)
+        if (kind == FirKind.Hilbert && bands[0] == 0 && desired[0] != 0)
             throw new ArgumentException("a Hilbert transformer has zero gain at 0: desired must be 0 there", nameof(desired));
         int l = anti && odd ? (numTaps - 1) / 2 : odd ? (numTaps + 1) / 2 : numTaps / 2;
         double step = 0.5 / (gridDensity * l);
@@ -410,7 +410,7 @@ public static partial class Dsp
                     continue;
                 nu.Add(v);
                 double w = weights?[j] ?? 1.0;
-                if (kind == EquirippleKind.Differentiator && desired[j] != 0)
+                if (kind == FirKind.Differentiator && desired[j] != 0)
                 {
                     dd.Add(-2 * Math.PI * v * desired[j]);
                     ww.Add(w / (2 * Math.PI * v));

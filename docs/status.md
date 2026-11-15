@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Antisymmetric frequency sampling** (types III and IV): `kind` on `fir_frequency_sampling`,
-   with the same values as equiripple design (`"filter"`, `"hilbert"`, `"differentiator"`) and
-   its amplitude convention, `H = −j·e^(−j2πfc/fs)·A`. The grid samples get the extra `−j`, so
-   the closed form becomes a sine sum. Type III (odd `N`) needs zero gain at 0 and fs/2; type IV
-   (even `N`) needs zero gain at 0. Expected values from the frequency-sampling generator's
-   direct sums, plus by-hand cases: the 3-tap and 2-tap differentiators.
+1. **Antisymmetric least-squares design** (types III and IV): `kind` on `fir_least_squares`, with
+   the same values and amplitude convention as equiripple and frequency-sampling design
+   (`H = −j·e^(−j2πfc/fs)·A`). The normal equations use sine bases, whose band integrals have
+   closed forms, as the cosine ones do. A differentiator's desired amplitude is `−2πν` times the
+   band's linear gain. Expected values from the least-squares generator's closed-form integrals,
+   extended to sines, plus a by-hand 2-tap case.
 
 ## Built
 
@@ -865,10 +865,19 @@ Updated with every chunk of work. Dates are absolute.
   not give exact symmetry, because a computed window is only symmetric to round-off. The tests
   caught it, and the averaging now comes last. Python 3244 passed, 2 skipped; .NET 2708
   passed; conformance 1653/1653 in both. Version 2026.11.14.0.
+- 2026-11-14: antisymmetric frequency sampling ([ADR 0085](adr/0085-antisymmetric-frequency-sampling.md)):
+  `kind` on `fir_frequency_sampling` (`"filter"`, `"hilbert"`, `"differentiator"`), with
+  equiripple design's amplitude convention. The grid samples get an extra `−j`, so the taps are a
+  sine sum, and they are made exactly antisymmetric after the window. A Hilbert design needs zero
+  gain at 0, and an odd length needs zero gain at fs/2 for both kinds. C# `EquirippleKind` is
+  renamed `FirKind`, shared by both designs. 11 new cases: 3 by hand (the 3-tap and 2-tap
+  differentiators, the 2-tap Hilbert), 4 from the generator's direct sine sums, 4 errors.
+  Python 3259 passed, 2 skipped; .NET 2723 passed; conformance 1664/1664 in both.
+  Version 2026.11.14.1.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling (arbitrary-magnitude bands; antisymmetric frequency sampling), spectral estimators beyond Welch and the spectrogram
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling (antisymmetric least squares), spectral estimators beyond Welch and the spectrogram
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npz`, other `.npy` dtypes and shapes, streaming reads and writes, multi-channel and

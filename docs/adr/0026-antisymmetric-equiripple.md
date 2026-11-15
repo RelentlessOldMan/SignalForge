@@ -1,6 +1,6 @@
 # ADR 0026: Hilbert transformers and differentiators by equiripple design
 
-Status: accepted, 2026-11-13
+Status: accepted, 2026-11-13 (C# `EquirippleKind` renamed `FirKind` by [ADR 0085](0085-antisymmetric-frequency-sampling.md))
 
 ## Context
 

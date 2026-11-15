@@ -313,14 +313,15 @@ public static class Conformance
                 t => Dsp.FirBandpass(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "fir_equiripple" => Bind((a.I("num_taps"), Reals(a.Get("bands")), Reals(a.Get("desired")), a.D("sample_rate"),
                     a.Has("weights") ? Reals(a.Get("weights")) : null, a.OptInt("grid_density") ?? 16,
-                    a.Has("kind") ? EquirippleKindName(a.Get("kind")) : EquirippleKind.Filter),
+                    a.Has("kind") ? FirKindName(a.Get("kind")) : FirKind.Filter),
                 t => Dsp.FirEquiripple(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
             "fir_least_squares" => Bind((a.I("num_taps"), Reals(a.Get("bands")), Reals(a.Get("desired")), a.D("sample_rate"),
                     a.Has("weights") ? Reals(a.Get("weights")) : null),
                 t => Dsp.FirLeastSquares(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "fir_frequency_sampling" => Bind((a.I("num_taps"), Reals(a.Get("frequencies")), Reals(a.Get("gains")),
-                    a.D("sample_rate"), FirWindow(a), a.OptD("beta"), a.OptInt("num_points")),
-                t => Dsp.FirFrequencySampling(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
+                    a.D("sample_rate"), FirWindow(a), a.OptD("beta"), a.OptInt("num_points"),
+                    a.Has("kind") ? FirKindName(a.Get("kind")) : FirKind.Filter),
+                t => Dsp.FirFrequencySampling(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8)),
             "kaiser_parameters" => Bind((a.D("attenuation_db"), a.D("transition_width"), a.D("sample_rate")),
                 t => Dsp.KaiserParameters(t.Item1, t.Item2, t.Item3)),
             "fir_response" => Bind((Reals(a.Get("taps")), Reals(a.Get("frequencies")), a.D("sample_rate")),
@@ -791,12 +792,12 @@ public static class Conformance
 
     /// <summary>Vector equiripple kinds: the Python names; an unknown one maps to an undefined
     /// value the library must reject.</summary>
-    private static EquirippleKind EquirippleKindName(object? v) => (v as string) switch
+    private static FirKind FirKindName(object? v) => (v as string) switch
     {
-        "filter" => EquirippleKind.Filter,
-        "hilbert" => EquirippleKind.Hilbert,
-        "differentiator" => EquirippleKind.Differentiator,
-        string => (EquirippleKind)(-1),
+        "filter" => FirKind.Filter,
+        "hilbert" => FirKind.Hilbert,
+        "differentiator" => FirKind.Differentiator,
+        string => (FirKind)(-1),
         _ => throw new InvalidDataException("kind must be a string"),
     };
 

@@ -544,8 +544,10 @@ def fir_frequency_sampling(
     window: str = "hamming",
     beta: float | None = None,
     num_points: int | None = None,
+    kind: str = "filter",
 ) -> NDArray[np.float64]:
-    """Symmetric taps from the piecewise-linear gain through ``(frequencies, gains)`` sampled on
+    """Symmetric (``kind="filter"``) or antisymmetric (``"hilbert"``, ``"differentiator"``) taps
+    from the piecewise-linear gain through ``(frequencies, gains)`` sampled on
     ``num_points`` points from 0 to ``sample_rate/2``, inverse DFT with linear phase, then the
     symmetric window (conventions: FIR filters, Frequency-sampling design)."""
     n = count(num_taps, "num_taps")
@@ -560,8 +562,17 @@ def fir_frequency_sampling(
     g = np.asarray(gains, dtype=np.float64)
     if g.shape != f.shape or not np.all(np.isfinite(g)):
         raise ValueError("gains must have one finite value per frequency")
-    if n % 2 == 0 and g[-1] != 0:
+    if kind not in ("filter", "hilbert", "differentiator"):
+        raise ValueError("kind must be 'filter', 'hilbert' or 'differentiator'")
+    anti = kind != "filter"
+    if anti and n < 2:
+        raise ValueError("an antisymmetric kind needs num_taps >= 2")
+    if not anti and n % 2 == 0 and g[-1] != 0:
         raise ValueError("an even num_taps needs zero gain at sample_rate/2")
+    if anti and n % 2 == 1 and g[-1] != 0:
+        raise ValueError("an odd antisymmetric design needs zero gain at sample_rate/2")
+    if kind == "hilbert" and g[0] != 0:
+        raise ValueError("a Hilbert design needs zero gain at 0")
     if num_points is None:
         k = 1 << (max(n, 512) - 1).bit_length()
         k += 1
@@ -577,9 +588,11 @@ def fir_frequency_sampling(
     nb = f / fs
     i = np.clip(np.searchsorted(nb, nu, side="left") - 1, 0, nb.size - 2)
     grid = g[i] + (g[i + 1] - g[i]) * (nu - nb[i]) / (nb[i + 1] - nb[i])
-    phase = np.exp(-1j * np.pi * np.arange(k) * (n - 1) / big_l)
+    if kind == "differentiator":
+        grid = -2 * np.pi * nu * grid
+    phase = np.exp(-1j * np.pi * np.arange(k) * (n - 1) / big_l) * (-1j if anti else 1)
     h = np.fft.irfft(grid * phase, big_l)[:n] * w
-    return np.asarray((h + h[::-1]) / 2, dtype=np.float64)
+    return np.asarray((h - h[::-1] if anti else h + h[::-1]) / 2, dtype=np.float64)
 
 
 def fir_response(

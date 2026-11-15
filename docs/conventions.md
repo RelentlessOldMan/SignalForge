@@ -634,9 +634,9 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     cosines are independent on any interval); each language solves it in its own way, so taps
     agree to rounding times the condition of `G`.
 - **Frequency-sampling design** (`fir_frequency_sampling(num_taps, frequencies, gains,
-  sample_rate, window="hamming", beta=None, num_points=None)`,
-  [ADR 0084](adr/0084-frequency-sampling-fir.md)): symmetric taps from a sampled piecewise-linear
-  magnitude.
+  sample_rate, window="hamming", beta=None, num_points=None, kind="filter")`,
+  [ADR 0084](adr/0084-frequency-sampling-fir.md), [ADR 0085](adr/0085-antisymmetric-frequency-sampling.md)):
+  symmetric or antisymmetric taps from a sampled piecewise-linear magnitude.
   - Arguments: `frequencies` in Hz, at least two, finite, strictly increasing, the first exactly
     0 and the last exactly `fs/2`; `gains` one finite value per frequency. `num_taps ≥ 1`; even
     `num_taps` (type II) needs the last gain to be 0. `window` and `beta` as for windowed-sinc
@@ -654,6 +654,15 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
     bit). No rescaling.
   - A flat gain `c` gives `c` times the unit impulse at the centre for odd `N` (the cosines sum
     to `L·δ(t)`, and the symmetric window's centre is 1).
+  - `kind`, as for equiripple design: `"filter"` is all of the above. `"hilbert"` and
+    `"differentiator"` give antisymmetric taps with `H = −j·e^(−j2πfc/fs)·A`. Their amplitude
+    samples are `A_k = G_k` (`"hilbert"`) or `A_k = −2πν_k·G_k` (`"differentiator"`). The grid
+    samples are `−j·e^{−iπk(N−1)/L}·A_k`, so
+    `d[n] = (1/L)[2 Σ_{k=1}^{K−2} A_k sin(2πkt/L) + A_{K−1} sin(πt)]`. After the window,
+    `h ← (h − reversed h)/2`, which makes the antisymmetry exact (the centre tap of an odd `N` is
+    exactly 0). They need `num_taps ≥ 2`. `"hilbert"` needs the first gain to be 0. An odd
+    `num_taps` (type III) needs the last gain to be 0 for both kinds. The even-length rule above is
+    for `"filter"` only. Any other `kind` is `invalid_argument`.
 
   `H(f) = Σ h[n]·e^(−j2π·f·n/fs)` at each frequency (`n` from 0, so it includes the delay).
   Real taps, non-empty and finite; frequencies finite.

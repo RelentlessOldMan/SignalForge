@@ -61,3 +61,51 @@ def test_rejects() -> None:
     for call in calls:
         with pytest.raises(ValueError):
             call()
+
+
+def anti_amplitude(h: NDArray[np.float64], nu: NDArray[np.float64]) -> NDArray[np.float64]:
+    """A(nu) with H = -j e^(-j 2 pi nu c) A: A = sum h[n] sin(2 pi nu t), t = n - c."""
+    t = np.arange(h.size) - (h.size - 1) / 2
+    return np.asarray(np.sin(2 * math.pi * np.outer(nu, t)) @ h, dtype=np.float64)
+
+
+def test_hilbert_turns_cos_into_sin() -> None:
+    h = sf.fir_frequency_sampling(
+        101, [0, 0.05, 0.45, 0.5], [0, 1, 1, 0], 1.0, "kaiser", 8.0, kind="hilbert"
+    )
+    n = np.arange(400)
+    y = np.convolve(np.cos(2 * math.pi * 0.2 * n), h)[100:400]
+    np.testing.assert_allclose(y, np.sin(2 * math.pi * 0.2 * (n[100:400] - 50)), atol=1e-3)
+
+
+def test_differentiator_follows_the_slope() -> None:
+    for n in (61, 60):
+        h = sf.fir_frequency_sampling(
+            n, [0, 0.4, 0.5], [1, 1, 0], 1.0, "kaiser", 8.0, kind="differentiator"
+        )
+        nu = np.linspace(0.01, 0.3, 30)
+        np.testing.assert_allclose(anti_amplitude(h, nu), -2 * math.pi * nu, atol=2e-3)
+
+
+def test_antisymmetric_taps_are_exact() -> None:
+    for n in (31, 32):
+        h = sf.fir_frequency_sampling(n, [0, 0.1, 0.5], [0, 1, 0], 1.0, kind="hilbert")
+        np.testing.assert_array_equal(h, -h[::-1])
+    assert (
+        h.size == 32
+        and sf.fir_frequency_sampling(31, [0, 0.5], [0, 0], 1.0, kind="hilbert")[15] == 0
+    )
+
+
+def test_rejects_unmeetable_antisymmetric_targets() -> None:
+    f = [0, 0.2, 0.5]
+    calls: list[Callable[[], object]] = [
+        lambda: sf.fir_frequency_sampling(11, f, [0, 1, 0], 1.0, kind="lowpass"),
+        lambda: sf.fir_frequency_sampling(1, f, [0, 1, 0], 1.0, kind="hilbert"),
+        lambda: sf.fir_frequency_sampling(12, f, [1, 1, 1], 1.0, kind="hilbert"),
+        lambda: sf.fir_frequency_sampling(11, f, [0, 1, 1], 1.0, kind="hilbert"),
+        lambda: sf.fir_frequency_sampling(11, f, [1, 1, 1], 1.0, kind="differentiator"),
+    ]
+    for call in calls:
+        with pytest.raises(ValueError):
+            call()
