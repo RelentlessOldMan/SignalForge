@@ -1113,9 +1113,47 @@ public static class Spectral
     public static double LombScargleFalseAlarmBaluev(double power, ReadOnlySpan<double> times, double maxFrequency,
         bool center = true)
     {
-        var (d, h) = center ? (3, 1) : (2, 0);
         if (!(power >= 0 && power <= 1))
             throw new ArgumentOutOfRangeException(nameof(power), power, "must be between 0 and 1 (the standard normalization)");
+        var (nk, nh, scale) = BaluevSetup(times, maxFrequency, center);
+        return Baluev(power, nk, nh, scale);
+    }
+
+    /// <summary>The standard Lomb-Scargle value that white Gaussian noise exceeds with chance <paramref name="probability"/>
+    /// anywhere up to <paramref name="maxFrequency"/>: the inverse of <see cref="LombScargleFalseAlarmBaluev"/>, by
+    /// bisection (conventions: Spectra; ADR 0099).</summary>
+    /// <param name="probability">The false-alarm probability, in [0, 1].</param>
+    /// <param name="times">The sample times, finite and not all equal, at least 4 centered and 3 not.</param>
+    /// <param name="maxFrequency">The highest frequency searched, positive and finite.</param>
+    /// <param name="center">Whether the periodogram subtracted the mean, as <see cref="LombScargle"/>'s <c>center</c>;
+    /// true also for <see cref="GeneralizedLombScargle"/>.</param>
+    /// <returns>The smallest value bisection finds whose Baluev probability is at most <paramref name="probability"/>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double LombScargleFalseAlarmLevelBaluev(double probability, ReadOnlySpan<double> times, double maxFrequency,
+        bool center = true)
+    {
+        if (!(probability >= 0 && probability <= 1))
+            throw new ArgumentOutOfRangeException(nameof(probability), probability, "must be between 0 and 1");
+        var (nk, nh, scale) = BaluevSetup(times, maxFrequency, center);
+        if (probability == 1)
+            return 0; // F(0) = 1 is not above 1
+        double lo = 0, hi = 1;
+        while (true)
+        {
+            double m = lo + (hi - lo) / 2;
+            if (m == lo || m == hi)
+                return hi;
+            if (Baluev(m, nk, nh, scale) > probability)
+                lo = m;
+            else
+                hi = m;
+        }
+    }
+
+    /// <summary>Checks the times and <c>f_max</c>; returns <c>N_K</c>, <c>N_H</c> and <c>f_max·√(4πD)·γ</c>.</summary>
+    private static (int Nk, int Nh, double Scale) BaluevSetup(ReadOnlySpan<double> times, double maxFrequency, bool center)
+    {
+        var (d, h) = center ? (3, 1) : (2, 0);
         int n = times.Length;
         if (n < d + 1)
             throw new ArgumentException($"times must have at least {d + 1} values", nameof(times));
@@ -1131,9 +1169,6 @@ public static class Spectral
             throw new ArgumentException("times must not all be equal", nameof(times));
         Check.PositiveFinite(maxFrequency, nameof(maxFrequency));
         int nk = n - d, nh = n - h;
-        double p1 = Math.Pow(1 - power, nk / 2.0);
-        if (p1 == 1)
-            return 1.0;
         double mean = sum / n, ss = 0;
         foreach (double t in times)
             ss += (t - mean) * (t - mean);
@@ -1142,8 +1177,17 @@ public static class Spectral
         for (; k < nh; k += 2)
             r = r * k / (k - 1);
         double gamma = Math.Sqrt(2.0 / nh) * r;
-        double tau = maxFrequency * Math.Sqrt(4 * Math.PI * var) * gamma * Math.Pow(1 - power, (nk - 1) / 2.0);
-        tau *= Math.Sqrt(nh * power / 2);
+        return (nk, nh, maxFrequency * Math.Sqrt(4 * Math.PI * var) * gamma);
+    }
+
+    /// <summary>The Baluev value at <paramref name="z"/> for the numbers from <see cref="BaluevSetup"/>.</summary>
+    private static double Baluev(double z, int nk, int nh, double scale)
+    {
+        double p1 = Math.Pow(1 - z, nk / 2.0);
+        if (p1 == 1)
+            return 1.0;
+        double tau = scale * Math.Pow(1 - z, (nk - 1) / 2.0);
+        tau *= Math.Sqrt(nh * z / 2);
         return -ExpM1(LogP1(-p1) - tau);
     }
 

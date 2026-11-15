@@ -13,6 +13,7 @@ It does not import NumPy or SignalForge.
 - Baluev false alarm (ADR 0098): 1 - (1 - P1) e^-tau with the gamma ratio from math.lgamma (the
   code uses a recurrence instead) and the variance of the times from math.fsum; one case is
   written out by hand at N = 4, where the exponent (N_K - 1)/2 is 0.
+- Baluev false-alarm level (ADR 0099): round trips through the Baluev values above, and the ends.
 - Frequency grid: k / (oversampling * T) for k = 1 .. K with K counted by hand from f_max * T *
   oversampling, which the cases choose so the count is clear (whole or well away from whole).
 
@@ -171,6 +172,42 @@ err(FB, "inf_time", {"power": 0.5, "times": [0, 1, 2, "inf"], "max_frequency": 1
 err(FB, "zero_max", {"power": 0.5, "times": uneven, "max_frequency": 0}, "f_max > 0")
 err(FB, "inf_max", {"power": 0.5, "times": uneven, "max_frequency": "inf"}, "f_max finite")
 
+# The inverse (ADR 0099): round trips, p = F(z) from the generator's own F, expected z.
+FBL = "lomb_scargle_false_alarm_level_baluev"
+LTOL = {"abs": 0, "rel": 1e-9}  # the root inherits the slope of F
+for cid, z, times, fmax, center in (
+    ("uneven_mid", 0.4, uneven, 2.0, True),
+    ("uneven_high", 0.8, uneven, 2.0, True),
+    ("uneven_uncentered", 0.6, uneven, 0.5, False),
+    ("even_100_small", 0.25, even, 5.0, True),
+    ("even_100_tiny", 0.6, even, 5.0, True),
+    ("even_101_odd", 0.3, even + [10.0], 5.0, True),
+):  # not N = d + 1: there F stays above 0 and is not monotone, so a round trip can miss
+
+    args = {"probability": baluev(z, times, fmax, center), "times": times, "max_frequency": fmax}
+    if not center:
+        args["center"] = False
+    cases.append({"id": f"{FBL}.{cid}", "op": FBL, "args": args, "expected": z, "tol": LTOL,
+                  "source": f"round trip: the probability is the Baluev value of z = {z} "
+                            "(math.lgamma route)"})
+add(FBL, "unit_probability", {"probability": 1.0, "times": uneven, "max_frequency": 2.0}, 0.0,
+    "by hand: F(0) = 1 is not above 1, so 0")
+add(FBL, "zero_probability", {"probability": 0.0, "times": uneven, "max_frequency": 2.0}, 1.0,
+    "by hand: F(z) > 0 for every z < 1, so bisection closes on 1")
+add(FBL, "below_f_at_one", {"probability": 0.5, "times": [0, 1, 2, 3], "max_frequency": 1},
+    1.0, "by hand: N = 4 centered, tau = 3.51 sqrt(z) (sqrt(5 pi) sqrt(2/3) (sqrt(pi)/2) sqrt(3/2)); "
+    "every midpoint bisection visits is at least 1/2, where F >= 1 - exp(-3.51 sqrt(1/2)) > 0.9 "
+    "> 0.5, so it moves lo up every step and ends at 1")
+err(FBL, "probability_above_one", {"probability": 1.5, "times": uneven, "max_frequency": 1},
+    "p in [0, 1]")
+err(FBL, "probability_nan", {"probability": "nan", "times": uneven, "max_frequency": 1},
+    "p in [0, 1]")
+err(FBL, "too_few_centered", {"probability": 0.5, "times": [0, 1, 2], "max_frequency": 1},
+    "N >= 4 when centered")
+err(FBL, "equal_times", {"probability": 0.5, "times": [2, 2, 2, 2], "max_frequency": 1},
+    "times all equal")
+err(FBL, "zero_max", {"probability": 0.5, "times": uneven, "max_frequency": 0}, "f_max > 0")
+
 FR = "lomb_scargle_frequencies"
 add(FR, "default", {"times": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
     [k / 50 for k in range(1, 28)],
@@ -196,8 +233,8 @@ doc = {
     "suite": "lomb_scargle_fap",
     "description": "Lomb-Scargle false-alarm probability, its inverse level, the Baluev estimate "
     "and frequency grid (conventions: Spectra, Lomb-Scargle false-alarm probability and frequency "
-    "grid, Lomb-Scargle false-alarm level, Baluev false-alarm probability; ADRs 0062, 0082 and "
-    "0098).",
+    "grid, Lomb-Scargle false-alarm level, Baluev false-alarm probability and level; ADRs 0062, "
+    "0082, 0098 and 0099).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "lomb_scargle_fap.json"

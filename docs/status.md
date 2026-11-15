@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Baluev false-alarm level**: the inverse of `lomb_scargle_false_alarm_baluev`, the standard
-   value that noise exceeds with chance `p` anywhere up to `f_max`, as ADR 0082 is for ADR 0062.
-   It has no closed form. Needs an ADR: the root finder (bisection on `[0, 1]` to a fixed count,
-   so both languages take the same steps), its tolerance, the ends `p = 0` and `p = 1`, and what
-   is rejected. Expected values: round trips through the generator's Baluev cases, plus the ends.
+1. **Write multi-capture SigMF recordings**: `write_sigmf_captures(path, segments, datatype=None)`,
+   the writer for what `read_sigmf_captures` (ADR 0097) reads. Needs an ADR: segments must share a
+   sample rate and kind, each gives a capture at its `sample_start` with its center frequency,
+   empty segments, and what is rejected. Expected values: byte-exact metadata and data files
+   worked by hand, and round trips through the reader.
 
 ## Built
 
@@ -1018,11 +1018,20 @@ Updated with every chunk of work. Dates are absolute.
   tests in both languages check a 100-frequency grid search on uneven times.
   Python 3792 passed, 2 skipped; .NET 3180 passed; conformance 1952/1952 in both. Version
   2026.11.15.1.
+- 2026-11-15: Baluev false-alarm level (ADR 0099): `lomb_scargle_false_alarm_level_baluev(
+  probability, times, max_frequency, center=True)` (C# `Spectral.LombScargleFalseAlarmLevelBaluev`)
+  inverts the Baluev probability by bisection on `[0, 1]` until the midpoint stops moving, with the
+  same steps in both languages. Both functions now share one checked setup and one core. `F` is
+  not quite monotone near 1 and at `N = d + 1`, so the level is defined as the crossing bisection
+  finds; `p = 1` gives 0 directly. The generator gained 14 cases (round trips through its own
+  `math.lgamma` route, the ends, an `N = 4` case by hand, and rejects).
+  Python 3820 passed, 2 skipped; .NET 3207 passed; conformance 1966/1966 in both. Version
+  2026.11.15.2.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
-(weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
+(Lomb-Scargle bootstrap significance), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes, writing
 multi-capture SigMF recordings, per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,

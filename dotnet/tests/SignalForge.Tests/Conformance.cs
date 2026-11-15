@@ -272,6 +272,8 @@ public static class Conformance
                 t => Spectral.LombScargleFalseAlarmLevel(t.Item1, t.Item2, t.Item3, t.Item4)),
             "lomb_scargle_false_alarm_baluev" => Bind((a.D("power"), Reals(a.Get("times")), a.D("max_frequency"), a.Flag("center", true)),
                 t => Spectral.LombScargleFalseAlarmBaluev(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "lomb_scargle_false_alarm_level_baluev" => Bind((a.D("probability"), Reals(a.Get("times")), a.D("max_frequency"), a.Flag("center", true)),
+                t => Spectral.LombScargleFalseAlarmLevelBaluev(t.Item1, t.Item2, t.Item3, t.Item4)),
             "lomb_scargle_frequencies" => Bind((Reals(a.Get("times")), a.Opt("oversampling", 5.0), a.OptD("max_frequency")),
                 t => Spectral.LombScargleFrequencies(t.Item1, t.Item2, t.Item3)),
             "lomb_scargle" => Bind((Reals(a.Get("times")), Reals(a.Get("values")), Reals(a.Get("frequencies")), a.Flag("center", true),

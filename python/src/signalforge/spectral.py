@@ -802,11 +802,39 @@ def lomb_scargle_false_alarm_baluev(
     Lomb-Scargle value above ``power`` anywhere up to ``max_frequency`` for these sample times
     (conventions: Spectra; ADR 0098)."""
     z = real(power, "power")
+    if not 0 <= z <= 1:
+        raise ValueError("power must be between 0 and 1 (the standard normalization)")
+    return _baluev(z, *_baluev_setup(times, max_frequency, center))
+
+
+def lomb_scargle_false_alarm_level_baluev(
+    probability: float, times: ArrayLike, max_frequency: float, *, center: bool = True
+) -> float:
+    """The standard Lomb-Scargle value that white Gaussian noise exceeds with chance
+    ``probability`` anywhere up to ``max_frequency``: the inverse of
+    :func:`lomb_scargle_false_alarm_baluev`, by bisection (conventions: Spectra; ADR 0099)."""
+    p = real(probability, "probability")
+    if not 0 <= p <= 1:
+        raise ValueError("probability must be between 0 and 1")
+    setup = _baluev_setup(times, max_frequency, center)
+    if p == 1:
+        return 0.0  # F(0) = 1 is not above 1
+    lo, hi = 0.0, 1.0
+    while True:
+        m = lo + (hi - lo) / 2
+        if m in (lo, hi):
+            return hi
+        if _baluev(m, *setup) > p:
+            lo = m
+        else:
+            hi = m
+
+
+def _baluev_setup(times: ArrayLike, max_frequency: float, center: bool) -> tuple[int, int, float]:
+    """Checks the times and ``f_max``; returns ``N_K``, ``N_H`` and ``f_max·√(4πD)`` times gamma."""
     t = _finite_reals(times, "times")
     fmax = real(max_frequency, "max_frequency")
     d, h = (3, 1) if center else (2, 0)
-    if not 0 <= z <= 1:
-        raise ValueError("power must be between 0 and 1 (the standard normalization)")
     n = t.size
     if n < d + 1:
         raise ValueError(f"times must have at least {d + 1} values")
@@ -815,9 +843,6 @@ def lomb_scargle_false_alarm_baluev(
     if fmax <= 0:
         raise ValueError("max_frequency must be positive")
     nk, nh = n - d, n - h
-    p1 = (1 - z) ** (nk / 2)
-    if p1 == 1:
-        return 1.0
     mean = float(np.mean(t))
     var = float(np.mean((t - mean) ** 2))
     k, r = (2, 1 / math.sqrt(math.pi)) if nh % 2 == 0 else (3, math.sqrt(math.pi) / 2)
@@ -825,7 +850,15 @@ def lomb_scargle_false_alarm_baluev(
         r = r * k / (k - 1)
         k += 2
     gamma = math.sqrt(2 / nh) * r
-    tau = fmax * math.sqrt(4 * math.pi * var) * gamma * (1 - z) ** ((nk - 1) / 2)
+    return nk, nh, fmax * math.sqrt(4 * math.pi * var) * gamma
+
+
+def _baluev(z: float, nk: int, nh: int, scale: float) -> float:
+    """The Baluev value at ``z`` for the numbers from :func:`_baluev_setup`."""
+    p1 = (1 - z) ** (nk / 2)
+    if p1 == 1:
+        return 1.0
+    tau = scale * (1 - z) ** ((nk - 1) / 2)
     tau *= math.sqrt(nh * z / 2)
     return -math.expm1(math.log1p(-p1) - tau)
 

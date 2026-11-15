@@ -87,3 +87,40 @@ def test_shifting_the_times_changes_nothing() -> None:
 def test_rejects(power: float, times: list[float], fmax: float, center: bool) -> None:
     with pytest.raises(ValueError):
         sf.lomb_scargle_false_alarm_baluev(power, times, fmax, center=center)
+
+
+@pytest.mark.parametrize("center", [True, False])
+@pytest.mark.parametrize("z", [0.05, 0.3, 0.6, 0.9])
+def test_level_inverts_the_probability(center: bool, z: float) -> None:
+    t = np.sort(RNG.uniform(0, 20, 50))
+    p = sf.lomb_scargle_false_alarm_baluev(z, t, 1.0, center=center)
+    level = sf.lomb_scargle_false_alarm_level_baluev(p, t, 1.0, center=center)
+    assert level == pytest.approx(z, rel=1e-9)
+
+
+def test_level_is_the_edge_of_the_probability() -> None:
+    t = np.sort(RNG.uniform(0, 20, 50))
+    level = sf.lomb_scargle_false_alarm_level_baluev(0.01, t, 2.0)
+    assert sf.lomb_scargle_false_alarm_baluev(level, t, 2.0) <= 0.01
+    assert sf.lomb_scargle_false_alarm_baluev(np.nextafter(level, 0), t, 2.0) > 0.01
+
+
+def test_level_ends() -> None:
+    t = np.arange(30.0)
+    assert sf.lomb_scargle_false_alarm_level_baluev(1.0, t, 1.0) == 0.0
+    assert sf.lomb_scargle_false_alarm_level_baluev(0.0, t, 1.0) == 1.0
+    p = [sf.lomb_scargle_false_alarm_level_baluev(q, t, 1.0) for q in (1e-6, 1e-3, 0.1, 0.5)]
+    assert p == sorted(p, reverse=True)
+
+
+@pytest.mark.parametrize("probability", [-0.1, 1.01, math.nan])
+def test_level_rejects_probability(probability: float) -> None:
+    with pytest.raises(ValueError):
+        sf.lomb_scargle_false_alarm_level_baluev(probability, [0, 1, 2, 3], 1.0)
+
+
+def test_level_rejects_times() -> None:
+    with pytest.raises(ValueError):
+        sf.lomb_scargle_false_alarm_level_baluev(0.1, [0, 1, 2], 1.0)
+    with pytest.raises(ValueError):
+        sf.lomb_scargle_false_alarm_level_baluev(0.1, [0, 1, 2, 3], 0.0)

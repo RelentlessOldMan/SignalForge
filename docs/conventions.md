@@ -284,6 +284,14 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   when `P₁ = 1`. `z` must be in `[0, 1]`, there must be at least `d + 1` finite times that are not
   all equal, and `f_max` must be positive and finite; otherwise the call raises `invalid_argument`.
   **(implemented)**
+- **Baluev false-alarm level** (`lomb_scargle_false_alarm_level_baluev(probability, times,
+  max_frequency, center=True)`, [ADR 0099](adr/0099-lomb-scargle-baluev-level.md)) is the inverse
+  of the Baluev probability `F`. It bisects from `lo = 0` and `hi = 1`. At each step it takes
+  `m = lo + (hi − lo)/2` and stops when `m` equals `lo` or `hi`. Otherwise it sets `lo = m` if
+  `F(m) > p` and `hi = m` if not. It returns `hi`. `p = 1` returns 0 directly. `p = 0` gives 1, and
+  so does any `p` that every visited `F(m)` exceeds. `F` is not monotone at `N = d + 1`, or where it
+  is near 1, so the result is the crossing bisection finds. `p` must be in `[0, 1]`; the other arguments are checked as for `F`.
+  **(implemented)**
 - **Lomb-Scargle frequency grid** (`lomb_scargle_frequencies(times, oversampling=5.0,
   max_frequency=None)`): `T = max(t) − min(t)`, which must be `> 0`; `Δ = 1/(oversampling·T)`
   (that product, then its reciprocal); the frequencies are `k·Δ` for `k = 1 … K`,

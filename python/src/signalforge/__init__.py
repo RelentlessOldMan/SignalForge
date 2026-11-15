@@ -135,6 +135,7 @@ from .spectral import (
     lomb_scargle_false_alarm,
     lomb_scargle_false_alarm_baluev,
     lomb_scargle_false_alarm_level,
+    lomb_scargle_false_alarm_level_baluev,
     lomb_scargle_frequencies,
     multitaper_line_removal,
     multitaper_psd,
@@ -181,7 +182,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.15.1"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.15.2"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -281,6 +282,7 @@ __all__ = [
     "lomb_scargle_false_alarm",
     "lomb_scargle_false_alarm_baluev",
     "lomb_scargle_false_alarm_level",
+    "lomb_scargle_false_alarm_level_baluev",
     "lomb_scargle_frequencies",
     "multipath",
     "multitaper_line_removal",

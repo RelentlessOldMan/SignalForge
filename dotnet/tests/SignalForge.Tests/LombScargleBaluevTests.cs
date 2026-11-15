@@ -6,6 +6,7 @@ namespace SignalForge.Tests;
 public sealed class LombScargleBaluevTests
 {
     private static readonly Random Rng = new(98);
+    private static readonly double[] LevelProbabilities = [1e-6, 1e-3, 0.1, 0.5];
 
     private static double Gauss() => Math.Sqrt(-2 * Math.Log(1 - Rng.NextDouble())) * Math.Cos(2 * Math.PI * Rng.NextDouble());
 
@@ -81,4 +82,46 @@ public sealed class LombScargleBaluevTests
     [InlineData(0.5, new double[] { 0, 1, 2, 3 }, double.PositiveInfinity, true)]
     public void Rejects(double power, double[] times, double maxFrequency, bool center) =>
         Assert.ThrowsAny<ArgumentException>(() => Spectral.LombScargleFalseAlarmBaluev(power, times, maxFrequency, center));
+
+    [Theory]
+    [InlineData(true, 0.05)]
+    [InlineData(true, 0.3)]
+    [InlineData(true, 0.6)]
+    [InlineData(true, 0.9)]
+    [InlineData(false, 0.3)]
+    [InlineData(false, 0.9)]
+    public void LevelInvertsTheProbability(bool center, double z)
+    {
+        double[] t = Uneven(50, 20);
+        double p = Spectral.LombScargleFalseAlarmBaluev(z, t, 1, center);
+        Assert.Equal(z, Spectral.LombScargleFalseAlarmLevelBaluev(p, t, 1, center), z * 1e-9);
+    }
+
+    [Fact]
+    public void LevelIsTheEdgeOfTheProbability()
+    {
+        double[] t = Uneven(50, 20);
+        double level = Spectral.LombScargleFalseAlarmLevelBaluev(0.01, t, 2);
+        Assert.True(Spectral.LombScargleFalseAlarmBaluev(level, t, 2) <= 0.01);
+        Assert.True(Spectral.LombScargleFalseAlarmBaluev(Math.BitDecrement(level), t, 2) > 0.01);
+    }
+
+    [Fact]
+    public void LevelEnds()
+    {
+        double[] t = [.. Enumerable.Range(0, 30).Select(i => (double)i)];
+        Assert.Equal(0.0, Spectral.LombScargleFalseAlarmLevelBaluev(1, t, 1));
+        Assert.Equal(1.0, Spectral.LombScargleFalseAlarmLevelBaluev(0, t, 1));
+        double[] p = [.. LevelProbabilities.Select(q => Spectral.LombScargleFalseAlarmLevelBaluev(q, t, 1))];
+        Assert.Equal(p.OrderDescending(), p);
+    }
+
+    [Theory]
+    [InlineData(-0.1, new double[] { 0, 1, 2, 3 }, 1.0)]
+    [InlineData(1.01, new double[] { 0, 1, 2, 3 }, 1.0)]
+    [InlineData(double.NaN, new double[] { 0, 1, 2, 3 }, 1.0)]
+    [InlineData(0.1, new double[] { 0, 1, 2 }, 1.0)]
+    [InlineData(0.1, new double[] { 0, 1, 2, 3 }, 0.0)]
+    public void LevelRejects(double probability, double[] times, double maxFrequency) =>
+        Assert.ThrowsAny<ArgumentException>(() => Spectral.LombScargleFalseAlarmLevelBaluev(probability, times, maxFrequency));
 }
