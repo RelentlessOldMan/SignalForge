@@ -807,6 +807,42 @@ def lomb_scargle_false_alarm_baluev(
     return _baluev(z, *_baluev_setup(times, max_frequency, center))
 
 
+def lomb_scargle_bootstrap(
+    times: ArrayLike,
+    values: ArrayLike,
+    frequencies: ArrayLike,
+    draws: int,
+    *,
+    seed: int | np.random.Generator,
+    center: bool = True,
+) -> NDArray[np.float64]:
+    """The highest standard Lomb-Scargle value over ``frequencies`` for each of ``draws``
+    resamplings of ``values`` with replacement at the same ``times``, in draw order
+    (conventions: Spectra; ADR 0101)."""
+    lomb_scargle(times, values, frequencies, center=center)  # checks everything else
+    t = np.asarray(times, dtype=np.float64)
+    y = np.asarray(values, dtype=np.float64)
+    f = np.asarray(frequencies, dtype=np.float64)
+    if f.size == 0:
+        raise ValueError("frequencies must not be empty")
+    k = count(draws, "draws")
+    if k < 1:
+        raise ValueError("draws must be at least 1")
+    rng = (
+        seed
+        if isinstance(seed, np.random.Generator)
+        else np.random.default_rng(count(seed, "seed"))
+    )
+    n = y.size
+    peaks = np.zeros(k)
+    for i in range(k):
+        drawn = y[rng.integers(0, n, size=n)]
+        if np.all(drawn == drawn[0]) if center else not np.any(drawn):
+            continue  # nothing to normalize: the peak is 0
+        peaks[i] = float(np.max(lomb_scargle(t, drawn, f, center=center)))
+    return peaks
+
+
 def lomb_scargle_false_alarm_level_baluev(
     probability: float, times: ArrayLike, max_frequency: float, *, center: bool = True
 ) -> float:

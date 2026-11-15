@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Lomb-Scargle bootstrap false alarm**: the chance that noise exceeds a peak anywhere in a
-   search, estimated by refitting the periodogram to the data's own values shuffled across the
-   times (or redrawn with replacement), as a check on the Baluev estimate. Needs an ADR: which
-   resampling, the number of draws, the generator it takes (random streams differ between the
-   languages, so the cross-language checks compare statistics), and the result shape (the
-   fraction above, or the sorted maxima). Expected values: statistics against the Baluev estimate
-   and the exact one-frequency chance where they apply.
+1. **Clock drift**: a sample clock whose offset changes linearly over the input, `clock_drift(samples,
+   ppm_start, ppm_end, *, half_width=16)`, the time-varying form of `clock_offset` (ADR 0045). It
+   reads `y[n] = z(t_n)` with `t_n` the sum of the step sizes so far, using the same fractional
+   delay kernel. Needs an ADR: how `t_n` is computed (a closed form, `n·r₀ + n(n−1)/2·Δ`, or a
+   running sum, which the two languages must do in the same order), where it stops, and the
+   limits. Expected values: `ppm_start = ppm_end` gives `clock_offset`; a linear input
+   `x[k] = k` read exactly where the kernel is exact; and the output length worked by hand.
 
 ## Built
 
@@ -1040,11 +1040,21 @@ Updated with every chunk of work. Dates are absolute.
   hand in the tests of both languages.
   Python 3837 passed, 2 skipped; .NET 3222 passed; conformance 1966/1966 in both. Version
   2026.11.15.3.
+- 2026-11-15: Lomb-Scargle bootstrap (ADR 0101): `lomb_scargle_bootstrap(times, values,
+  frequencies, draws, *, seed, center=True)` (C# `Spectral.LombScargleBootstrap`, with an `int` or
+  `Random` seed) returns each draw's highest standard periodogram value. A draw resamples the
+  values with replacement at the original times. A draw that cannot be normalized gives 0. The
+  random streams differ between languages. So the generator has only seed-independent cases (a
+  constant uncentered series, from its own least-squares fit) and rejects, 7 in all. Tests in
+  both languages check the peaks on Gaussian noise against the Baluev estimate, and that a strong
+  tone is above every draw.
+  Python 3856 passed, 2 skipped; .NET 3242 passed; conformance 1973/1973 in both. Version
+  2026.11.15.4.
 
 ## Not built
 
-Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch and the spectrogram
-(Lomb-Scargle bootstrap significance), the rest of modulation (PSK/QAM
+Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
+and Lomb-Scargle (multiband and multiterm forms), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,

@@ -1119,6 +1119,59 @@ public static class Spectral
         return Baluev(power, nk, nh, scale);
     }
 
+    /// <summary>The highest standard Lomb-Scargle value over <paramref name="frequencies"/> for each of
+    /// <paramref name="draws"/> resamplings of <paramref name="values"/> with replacement at the same times, in draw order
+    /// (conventions: Spectra; ADR 0101).</summary>
+    /// <param name="times">The sample times, as for <see cref="LombScargle"/>.</param>
+    /// <param name="values">The values, as for <see cref="LombScargle"/> in the standard normalization.</param>
+    /// <param name="frequencies">The search grid in Hz, not empty.</param>
+    /// <param name="draws">The number of resamplings, at least 1.</param>
+    /// <param name="seed">The seed of the generator.</param>
+    /// <param name="center">Whether to subtract each draw's mean, as for <see cref="LombScargle"/>.</param>
+    /// <returns>One peak per draw; 0 for a draw that cannot be normalized.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LombScargleBootstrap(ReadOnlySpan<double> times, ReadOnlySpan<double> values,
+        ReadOnlySpan<double> frequencies, int draws, int seed, bool center = true) =>
+        LombScargleBootstrap(times, values, frequencies, draws, new Random(seed), center);
+
+    /// <summary>The highest standard Lomb-Scargle value over <paramref name="frequencies"/> for each of
+    /// <paramref name="draws"/> resamplings of <paramref name="values"/> with replacement at the same times, in draw order
+    /// (conventions: Spectra; ADR 0101).</summary>
+    /// <param name="times">The sample times, as for <see cref="LombScargle"/>.</param>
+    /// <param name="values">The values, as for <see cref="LombScargle"/> in the standard normalization.</param>
+    /// <param name="frequencies">The search grid in Hz, not empty.</param>
+    /// <param name="draws">The number of resamplings, at least 1.</param>
+    /// <param name="rng">The generator the indices are drawn from.</param>
+    /// <param name="center">Whether to subtract each draw's mean, as for <see cref="LombScargle"/>.</param>
+    /// <returns>One peak per draw; 0 for a draw that cannot be normalized.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LombScargleBootstrap(ReadOnlySpan<double> times, ReadOnlySpan<double> values,
+        ReadOnlySpan<double> frequencies, int draws, Random rng, bool center = true)
+    {
+        ArgumentNullException.ThrowIfNull(rng);
+        LombScargle(times, values, frequencies, center); // checks everything else
+        if (frequencies.IsEmpty)
+            throw new ArgumentException("must not be empty", nameof(frequencies));
+        ArgumentOutOfRangeException.ThrowIfLessThan(draws, 1);
+        int n = values.Length;
+        var peaks = new double[draws];
+        var drawn = new double[n];
+        for (int i = 0; i < draws; i++)
+        {
+            bool same = true, zero = true;
+            for (int k = 0; k < n; k++)
+            {
+                drawn[k] = values[rng.Next(n)];
+                same &= drawn[k] == drawn[0];
+                zero &= drawn[k] == 0;
+            }
+            if (center ? same : zero)
+                continue; // nothing to normalize: the peak is 0
+            peaks[i] = LombScargle(times, drawn, frequencies, center).Max();
+        }
+        return peaks;
+    }
+
     /// <summary>The standard Lomb-Scargle value that white Gaussian noise exceeds with chance <paramref name="probability"/>
     /// anywhere up to <paramref name="maxFrequency"/>: the inverse of <see cref="LombScargleFalseAlarmBaluev"/>, by
     /// bisection (conventions: Spectra; ADR 0099).</summary>

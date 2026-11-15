@@ -292,6 +292,13 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   so does any `p` that every visited `F(m)` exceeds. `F` is not monotone at `N = d + 1`, or where it
   is near 1, so the result is the crossing bisection finds. `p` must be in `[0, 1]`; the other arguments are checked as for `F`.
   **(implemented)**
+- **Lomb-Scargle bootstrap** (`lomb_scargle_bootstrap(times, values, frequencies, draws, *, seed,
+  center=True)`, [ADR 0101](adr/0101-lomb-scargle-bootstrap.md)) returns `draws` peaks in draw
+  order. Each draw takes `N` indices uniformly with replacement: Python `rng.integers(0, N,
+  size=N)`, C# `rng.Next(N)` `N` times. The draw's peak is the largest standard `lomb_scargle` value
+  of the values at those indices, at the original times. A draw that cannot be normalized (all
+  equal when centered, all zero when not) gives 0. `lomb_scargle`'s checks apply to the original
+  values. `frequencies` must not be empty and `draws` must be at least 1. **(implemented)**
 - **Lomb-Scargle frequency grid** (`lomb_scargle_frequencies(times, oversampling=5.0,
   max_frequency=None)`): `T = max(t) − min(t)`, which must be `> 0`; `Δ = 1/(oversampling·T)`
   (that product, then its reciprocal); the frequencies are `k·Δ` for `k = 1 … K`,

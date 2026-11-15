@@ -14,6 +14,7 @@ It does not import NumPy or SignalForge.
   code uses a recurrence instead) and the variance of the times from math.fsum; one case is
   written out by hand at N = 4, where the exponent (N_K - 1)/2 is 0.
 - Baluev false-alarm level (ADR 0099): round trips through the Baluev values above, and the ends.
+- Bootstrap maxima (ADR 0101): a constant uncentered series, by the least-squares fit.
 - Frequency grid: k / (oversampling * T) for k = 1 .. K with K counted by hand from f_max * T *
   oversampling, which the cases choose so the count is clear (whole or well away from whole).
 
@@ -208,6 +209,37 @@ err(FBL, "equal_times", {"probability": 0.5, "times": [2, 2, 2, 2], "max_frequen
     "times all equal")
 err(FBL, "zero_max", {"probability": 0.5, "times": uneven, "max_frequency": 0}, "f_max > 0")
 
+# Bootstrap maxima (ADR 0101): only seed-independent results. A constant series, not centered,
+# is the same on every draw, so each peak is the original's, found from the least-squares fit
+# a cos(wt) + b sin(wt): P = (a sum(y cos) + b sum(y sin)) / 2, standard 2P / sum(y^2).
+def fit_standard(t, y, f):
+    w = 2 * math.pi * f
+    c = [math.cos(w * v) for v in t]
+    s = [math.sin(w * v) for v in t]
+    gcc, gss = math.fsum(x * x for x in c), math.fsum(x * x for x in s)
+    gcs = math.fsum(x * z for x, z in zip(c, s))
+    bc, bs = math.fsum(v * x for v, x in zip(y, c)), math.fsum(v * x for v, x in zip(y, s))
+    det = gcc * gss - gcs * gcs
+    a, b = (gss * bc - gcs * bs) / det, (gcc * bs - gcs * bc) / det
+    return (a * bc + b * bs) / math.fsum(v * v for v in y)
+
+
+BS = "lomb_scargle_bootstrap"
+bt, bf = [0.0, 0.7, 1.9, 3.2, 4.0, 5.5], [0.13, 0.31, 0.47]
+peak = max(fit_standard(bt, [2.0] * 6, f) for f in bf)
+for seed in (1, 2):
+    add(BS, f"constant_uncentered_seed{seed}", {"times": bt, "values": [2.0] * 6,
+        "frequencies": bf, "draws": 3, "seed": seed, "center": False}, [peak] * 3,
+        "least-squares fit by hand: every draw of a constant series is the series")
+for cid, args, why in (
+    ("zero_draws", {"values": [1, 2, 3, 4, 5, 7], "draws": 0}, "draws >= 1"),
+    ("no_frequencies", {"values": [1, 2, 3, 4, 5, 7], "frequencies": []}, "frequencies not empty"),
+    ("constant_centered", {"values": [2.0] * 6}, "the values cannot be normalized when centered"),
+    ("length_mismatch", {"values": [1, 2, 3]}, "times and values differ in length"),
+    ("nan_value", {"values": [1, 2, "nan", 4, 5, 7]}, "values finite"),
+):
+    err(BS, cid, {"times": bt, "frequencies": bf, "draws": 2, "seed": 1} | args, why)
+
 FR = "lomb_scargle_frequencies"
 add(FR, "default", {"times": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
     [k / 50 for k in range(1, 28)],
@@ -233,8 +265,8 @@ doc = {
     "suite": "lomb_scargle_fap",
     "description": "Lomb-Scargle false-alarm probability, its inverse level, the Baluev estimate "
     "and frequency grid (conventions: Spectra, Lomb-Scargle false-alarm probability and frequency "
-    "grid, Lomb-Scargle false-alarm level, Baluev false-alarm probability and level; ADRs 0062, "
-    "0082, 0098 and 0099).",
+    "grid, Lomb-Scargle false-alarm level, Baluev false-alarm probability and level, bootstrap "
+    "maxima; ADRs 0062, 0082, 0098, 0099 and 0101).",
     "cases": cases,
 }
 out = pathlib.Path(__file__).resolve().parents[1] / "cases" / "lomb_scargle_fap.json"

@@ -133,6 +133,7 @@ from .spectral import (
     harmonic_f_test,
     ifft,
     lomb_scargle,
+    lomb_scargle_bootstrap,
     lomb_scargle_false_alarm,
     lomb_scargle_false_alarm_baluev,
     lomb_scargle_false_alarm_level,
@@ -183,7 +184,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.15.3"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.15.4"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -280,6 +281,7 @@ __all__ = [
     "lin_to_db",
     "lms_equalizer",
     "lomb_scargle",
+    "lomb_scargle_bootstrap",
     "lomb_scargle_false_alarm",
     "lomb_scargle_false_alarm_baluev",
     "lomb_scargle_false_alarm_level",
