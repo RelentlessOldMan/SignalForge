@@ -1610,6 +1610,20 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     byte rate is not checked. Rejected: anything else, a chunk running past the end of the file,
     and a data size that is not whole frames. Each signal has units `"FS"`, center frequency 0,
     time origin 0, no metadata. A missing file is an OS error, as for SigMF. **(implemented)**
+  - Text tags ([ADR 0091](adr/0091-wav-info.md)): `write_wav(..., info=None)` and
+    `read_wav_info(path)` (C# `WriteWav(..., info)`, `ReadWavInfo`). Writing a non-empty `info`
+    adds, after `data` and its pad, `LIST`, the size of the rest, `INFO`, then for each tag in
+    order its ID, the size of the text plus one, the text, a NUL, and a zero pad byte when that
+    size is odd; the RIFF size counts it all. An ID is four characters from `A`–`Z` and `0`–`9`,
+    each used once; a text is printable ASCII (`0x20`–`0x7E`), possibly empty. No or empty `info`
+    writes no `LIST` chunk. Reading needs `RIFF` and `WAVE`, then walks every chunk to the end of
+    the file (not stopping at `data`), reading each `LIST` whose body starts with `INFO`, in file
+    order, as an ordered mapping of ID to text. Subchunks are an ID, a 32-bit size and a body
+    padded to even. A text is its body up to the first NUL (all of it without one); IDs and texts
+    are decoded byte for byte as Latin-1. Rejected: a chunk running past the end of the file, a
+    subchunk running past its `LIST`, and an ID seen twice anywhere in the file. A walk (of the
+    file or of a `LIST` body) ends when fewer than 8 bytes are left, and those bytes are ignored;
+    so a missing pad byte after the last chunk or subchunk is allowed. **(implemented)**
 - **NumPy `.npy`** ([ADR 0056](adr/0056-npy.md)): `write_npy(path, x)`, `read_npy(path)` (C#
   `WriteNpy`, `ReadNpy<T>`), for 1-D arrays of `float64` (descr `'<f8'`) or `complex128`
   (`'<c16'`, real then imaginary part, each little-endian binary64). Values are stored as they

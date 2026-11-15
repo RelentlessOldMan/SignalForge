@@ -365,8 +365,10 @@ public static class Conformance
                 : Bind((Reals(a.Get("x")), Str(a, "datatype")), t => Convert.ToHexStringLower(SignalFiles.EncodeSamples(t.Item1, t.Item2))),
             "decode_samples" => DecodeSamplesOp(Convert.FromHexString(Str(a, "data")), Str(a, "datatype")),
             "read_sigmf" => ReadSigmfOp(Str(a, "file")),
-            "write_wav" => WriteWavOp(Rows(a.Get("channels")), a.D("sample_rate"), Str(a, "sample_format")),
+            "write_wav" => WriteWavOp(Rows(a.Get("channels")), a.D("sample_rate"), Str(a, "sample_format"),
+                a.Has("info") ? a.Get("info") : null),
             "read_wav" => ReadWavOp(Str(a, "file")),
+            "read_wav_info" => ReadWavInfoOp(Str(a, "file")),
             "write_npy" => a.Get("x") is Complex[] nz
                 ? WriteNpyOp(path => SignalFiles.WriteNpy(path, nz))
                 : Bind(Reals(a.Get("x")), x => WriteNpyOp(path => SignalFiles.WriteNpy(path, x))()),
@@ -648,12 +650,35 @@ public static class Conformance
             : () => SignalRecord(SignalFiles.ReadSigmf<double>(path));
     }
 
-    private static Func<object?> WriteWavOp(double[][] rows, double rate, string format) => () =>
+    private static Func<object?> WriteWavOp(double[][] rows, double rate, string format, object? info)
+    {
+        // A list of {id, text} records; an empty JSON list decodes as an empty number array.
+        List<KeyValuePair<string, string>>? tags = info switch
+        {
+            null => null,
+            double[] { Length: 0 } => [],
+            _ => [.. ((List<object?>)info).Cast<Dictionary<string, object?>>()
+                .Select(d => new KeyValuePair<string, string>((string)d["id"]!, (string)d["text"]!))],
+        };
+        return WriteWavOp(rows, rate, format, tags);
+    }
+
+    private static Func<object?> ReadWavInfoOp(string name)
+    {
+        if (Path.GetFileName(name) != name)
+            throw new InvalidDataException("file must be a bare file name in vectors/files");
+        string path = Path.Combine(VectorsDir(), "..", "files", name);
+        return () => SignalFiles.ReadWavInfo(path)
+            .Select(kv => (object?)new Dictionary<string, object?> { ["id"] = kv.Key, ["text"] = kv.Value }).ToList();
+    }
+
+    private static Func<object?> WriteWavOp(double[][] rows, double rate, string format,
+        List<KeyValuePair<string, string>>? tags) => () =>
     {
         string path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".wav");
         try
         {
-            SignalFiles.WriteWav(path, [.. rows.Select(r => new Signal<double>(r, rate))], format);
+            SignalFiles.WriteWav(path, [.. rows.Select(r => new Signal<double>(r, rate))], format, tags);
             return Convert.ToHexStringLower(File.ReadAllBytes(path));
         }
         finally

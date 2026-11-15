@@ -331,10 +331,16 @@ def _wav_encode(x: NDArray[np.float64], fmt: str) -> bytes:
 
 
 def write_wav(
-    path: str | os.PathLike[str], channels: Signal | Sequence[Signal], sample_format: str = "f32"
+    path: str | os.PathLike[str],
+    channels: Signal | Sequence[Signal],
+    sample_format: str = "f32",
+    info: Mapping[str, str] | None = None,
 ) -> None:
     """Write real signals, one per channel, as a PCM or IEEE float WAV file (conventions: Signal
-    files, WAV). Only the samples and the sample rate are stored."""
+    files, WAV). Only the samples, the sample rate and the ``info`` text tags (four-character IDs
+    to printable ASCII, written as a ``LIST``/``INFO`` chunk after the data; ADR 0091) are
+    stored."""
+    tags = _wav_info_chunk(info)
     if not isinstance(sample_format, str) or sample_format not in _WAV_BITS:
         raise ValueError(f"unknown WAV sample format {sample_format!r}")
     sigs = [channels] if isinstance(channels, Signal) else list(channels)
@@ -354,7 +360,7 @@ def write_wav(
     if int(rate) * block > _U32:
         raise ValueError("the byte rate (sample rate x block align) must fit 32 bits")
     nbytes = n * block
-    if 4 + (26 + 12 if is_float else 24) + 8 + nbytes + nbytes % 2 > _U32:
+    if 4 + (26 + 12 if is_float else 24) + 8 + nbytes + nbytes % 2 + len(tags) > _U32:
         raise ValueError("too many samples for a WAV file")
     x = np.stack([s.samples.astype(np.float64) for s in sigs], axis=1).reshape(-1)
     data = _wav_encode(x, sample_format)
@@ -365,8 +371,57 @@ def write_wav(
         body = _chunk(b"fmt ", fmt + bytes(2)) + _chunk(b"fact", struct.pack("<I", n))
     else:
         body = _chunk(b"fmt ", fmt)
-    body = b"WAVE" + body + _chunk(b"data", data)
+    body = b"WAVE" + body + _chunk(b"data", data) + tags
     Path(os.fspath(path)).write_bytes(b"RIFF" + struct.pack("<I", len(body)) + body)
+
+
+def _wav_info_chunk(info: Mapping[str, str] | None) -> bytes:
+    """The ``LIST``/``INFO`` chunk for ``info``, or nothing when it is empty."""
+    if info is None:
+        return b""
+    if not isinstance(info, Mapping):
+        raise ValueError("info must be a mapping from four-character IDs to text")
+    subs = b""
+    for cid, text in info.items():
+        if not isinstance(cid, str) or len(cid) != 4 or any(c not in _INFO_ID for c in cid):
+            raise ValueError(f"info ID {cid!r} must be four characters from A-Z and 0-9")
+        if not isinstance(text, str) or any(not " " <= c <= "~" for c in text):
+            raise ValueError(f"info[{cid!r}] must be printable ASCII text")
+        subs += _chunk(cid.encode("ascii"), text.encode("ascii") + b"\0")
+    return _chunk(b"LIST", b"INFO" + subs) if subs else b""
+
+
+_INFO_ID = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+
+def read_wav_info(path: str | os.PathLike[str]) -> dict[str, str]:
+    """Read the text tags of every ``LIST``/``INFO`` chunk in a WAV file, in file order, IDs and
+    texts decoded byte for byte as Latin-1 (conventions: Signal files, WAV; ADR 0091)."""
+    raw = Path(os.fspath(path)).read_bytes()
+    if len(raw) < 12 or raw[:4] != b"RIFF" or raw[8:12] != b"WAVE":
+        raise ValueError("not a RIFF WAVE file")
+    out: dict[str, str] = {}
+    for cid, start, end in _riff_walk(raw, 12, len(raw), "chunk"):
+        if cid != b"LIST" or end - start < 4 or raw[start : start + 4] != b"INFO":
+            continue
+        for sid, s, e in _riff_walk(raw, start + 4, end, "INFO subchunk"):
+            key = sid.decode("latin-1")
+            if key in out:
+                raise ValueError(f"the info ID {key!r} appears twice")
+            out[key] = raw[s:e].split(b"\0", 1)[0].decode("latin-1")
+    return out
+
+
+def _riff_walk(raw: bytes, pos: int, stop: int, what: str) -> list[tuple[bytes, int, int]]:
+    """(id, body start, body end) of each chunk from ``pos`` until fewer than 8 bytes are left."""
+    out = []
+    while pos + 8 <= stop:
+        cid, (size,) = raw[pos : pos + 4], struct.unpack_from("<I", raw, pos + 4)
+        if pos + 8 + size > stop:
+            raise ValueError(f"the {cid.decode('latin-1')!r} {what} runs past its end")
+        out.append((cid, pos + 8, pos + 8 + size))
+        pos += 8 + size + size % 2
+    return out
 
 
 def _wav_decode(data: bytes, fmt: str) -> NDArray[np.float64]:

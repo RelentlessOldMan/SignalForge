@@ -181,10 +181,13 @@ OPS: dict[str, Callable[..., Any]] = {
     "encode_samples": lambda x, datatype: files.encode_samples(x, datatype).hex(),
     "decode_samples": lambda data, datatype: files.decode_samples(_hex(data), datatype),
     "read_sigmf": lambda file: _signal_record(files.read_sigmf(_fixture(file))),
-    "write_wav": lambda channels, sample_rate, sample_format: _write_wav(
-        channels, sample_rate, sample_format
+    "write_wav": lambda channels, sample_rate, sample_format, info=None: _write_wav(
+        channels, sample_rate, sample_format, info
     ),
     "read_wav": lambda file: _wav_record(files.read_wav(_fixture(file))),
+    "read_wav_info": lambda file: [
+        {"id": k, "text": v} for k, v in files.read_wav_info(_fixture(file)).items()
+    ],
     "write_npy": lambda x: _write_npy(x),
     "read_npy": lambda file: files.read_npy(_fixture(file)),
     "write_npz": lambda arrays: _write_npz(arrays),
@@ -212,12 +215,20 @@ def _write_npy(x: Any) -> str:
         return path.read_bytes().hex()
 
 
-def _write_wav(channels: Any, sample_rate: Any, sample_format: Any) -> str:
-    """The bytes of a WAV file written from rows of samples, as hex."""
+def _write_wav(channels: Any, sample_rate: Any, sample_format: Any, info: Any) -> str:
+    """The bytes of a WAV file written from rows of samples and ``{id, text}`` tag records, as hex
+    (``[]`` decodes as an array)."""
     sigs = [Signal(np.asarray(c, dtype=np.float64), sample_rate) for c in channels]
+    tags = (
+        None
+        if info is None
+        else {}
+        if isinstance(info, np.ndarray)
+        else {t["id"]: t["text"] for t in info}
+    )
     with tempfile.TemporaryDirectory() as d:
         path = Path(d) / "case.wav"
-        files.write_wav(path, sigs, sample_format)
+        files.write_wav(path, sigs, sample_format, tags)
         return path.read_bytes().hex()
 
 

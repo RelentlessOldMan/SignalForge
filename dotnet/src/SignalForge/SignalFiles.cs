@@ -493,20 +493,26 @@ public static class SignalFiles
     /// <param name="path">The file to write.</param>
     /// <param name="signal">The signal; only its samples and sample rate are stored.</param>
     /// <param name="sampleFormat"><c>u8</c>, <c>i16</c>, <c>i24</c>, <c>i32</c> (PCM), <c>f32</c> or <c>f64</c> (IEEE float).</param>
-    public static void WriteWav(string path, Signal<double> signal, string sampleFormat = "f32")
+    /// <param name="info">Text tags, as for the multi-channel overload.</param>
+    public static void WriteWav(string path, Signal<double> signal, string sampleFormat = "f32",
+        IEnumerable<KeyValuePair<string, string>>? info = null)
     {
         ArgumentNullException.ThrowIfNull(signal);
-        WriteWav(path, [signal], sampleFormat);
+        WriteWav(path, [signal], sampleFormat, info);
     }
 
     /// <summary>Writes real signals, one per channel, as a PCM or IEEE float WAV file (conventions: Signal files, WAV).
-    /// Only the samples and the sample rate are stored.</summary>
+    /// Only the samples, the sample rate and the text tags are stored.</summary>
     /// <param name="path">The file to write.</param>
     /// <param name="channels">One or more signals with the same length and the same whole-number sample rate.</param>
     /// <param name="sampleFormat"><c>u8</c>, <c>i16</c>, <c>i24</c>, <c>i32</c> (PCM), <c>f32</c> or <c>f64</c> (IEEE float).</param>
-    public static void WriteWav(string path, IReadOnlyList<Signal<double>> channels, string sampleFormat = "f32")
+    /// <param name="info">Text tags in order, written as a <c>LIST</c>/<c>INFO</c> chunk after the data: IDs of four
+    /// characters from A-Z and 0-9, each once, to printable ASCII text (ADR 0091). None or empty writes no chunk.</param>
+    public static void WriteWav(string path, IReadOnlyList<Signal<double>> channels, string sampleFormat = "f32",
+        IEnumerable<KeyValuePair<string, string>>? info = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
+        byte[] tags = WavInfoChunk(info);
         ArgumentNullException.ThrowIfNull(channels);
         int bits = WavBits(sampleFormat);
         if (bits == 0)
@@ -526,7 +532,7 @@ public static class SignalFiles
         if ((long)rate * block > uint.MaxValue)
             throw new ArgumentException("the byte rate (sample rate x block align) must fit 32 bits", nameof(channels));
         long nbytes = n * block;
-        long riffSize = 4 + (isFloat ? 38 : 24) + 8 + nbytes + nbytes % 2;
+        long riffSize = 4 + (isFloat ? 38 : 24) + 8 + nbytes + nbytes % 2 + tags.Length;
         if (riffSize > uint.MaxValue)
             throw new ArgumentException("too many samples for a WAV file", nameof(channels));
         var data = new byte[checked((int)nbytes)];
@@ -585,8 +591,90 @@ public static class SignalFiles
             bw.Write(data);
             if (nbytes % 2 == 1)
                 bw.Write((byte)0);
+            bw.Write(tags);
         }
         File.WriteAllBytes(path, ms.ToArray());
+    }
+
+    /// <summary>The <c>LIST</c>/<c>INFO</c> chunk for <paramref name="info"/>, or nothing when it is empty.</summary>
+    private static byte[] WavInfoChunk(IEnumerable<KeyValuePair<string, string>>? info)
+    {
+        if (info is null)
+            return [];
+        var subs = new MemoryStream();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        Span<byte> size = stackalloc byte[4];
+        foreach ((string id, string text) in info)
+        {
+            if (id is not { Length: 4 } || id.Any(c => c is not ((>= 'A' and <= 'Z') or (>= '0' and <= '9'))))
+                throw new ArgumentException($"info ID '{id}' must be four characters from A-Z and 0-9", nameof(info));
+            if (!seen.Add(id))
+                throw new ArgumentException($"info ID '{id}' is used twice", nameof(info));
+            if (text is null || text.Any(c => c is < ' ' or > '~'))
+                throw new ArgumentException($"info['{id}'] must be printable ASCII text", nameof(info));
+            subs.Write(System.Text.Encoding.ASCII.GetBytes(id));
+            BinaryPrimitives.WriteUInt32LittleEndian(size, (uint)(text.Length + 1));
+            subs.Write(size);
+            subs.Write(System.Text.Encoding.ASCII.GetBytes(text));
+            subs.WriteByte(0);
+            if (text.Length % 2 == 0) // the body (text + NUL) is odd: pad it
+                subs.WriteByte(0);
+        }
+        if (subs.Length == 0)
+            return [];
+        byte[] chunk = new byte[12 + subs.Length];
+        "LIST"u8.CopyTo(chunk);
+        BinaryPrimitives.WriteUInt32LittleEndian(chunk.AsSpan(4), (uint)(4 + subs.Length));
+        "INFO"u8.CopyTo(chunk.AsSpan(8));
+        subs.ToArray().CopyTo(chunk, 12);
+        return chunk;
+    }
+
+    /// <summary>Reads the text tags of every <c>LIST</c>/<c>INFO</c> chunk in a WAV file, in file order, IDs and texts
+    /// decoded byte for byte as Latin-1 (conventions: Signal files, WAV; ADR 0091).</summary>
+    /// <param name="path">The file to read.</param>
+    /// <returns>Each ID and its text.</returns>
+    /// <exception cref="ArgumentException">The file is not a RIFF WAVE file, a chunk runs past its end, or an ID
+    /// appears twice.</exception>
+    public static OrderedDictionary<string, string> ReadWavInfo(string path)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        byte[] raw = File.ReadAllBytes(path);
+        if (raw.Length < 12 || !raw.AsSpan(0, 4).SequenceEqual("RIFF"u8) || !raw.AsSpan(8, 4).SequenceEqual("WAVE"u8))
+            throw new ArgumentException("not a RIFF WAVE file", nameof(path));
+        var result = new OrderedDictionary<string, string>(StringComparer.Ordinal);
+        foreach ((string id, int start, int end) in RiffWalk(raw, 12, raw.Length, "chunk", nameof(path)))
+        {
+            if (id != "LIST" || end - start < 4 || !raw.AsSpan(start, 4).SequenceEqual("INFO"u8))
+                continue;
+            foreach ((string key, int s, int e) in RiffWalk(raw, start + 4, end, "INFO subchunk", nameof(path)))
+            {
+                ReadOnlySpan<byte> body = raw.AsSpan(s, e - s);
+                int nul = body.IndexOf((byte)0);
+                if (!result.TryAdd(key, System.Text.Encoding.Latin1.GetString(nul < 0 ? body : body[..nul])))
+                    throw new ArgumentException($"the info ID '{key}' appears twice", nameof(path));
+            }
+        }
+        return result;
+    }
+
+    /// <summary>(id, body start, body end) of each chunk from <paramref name="pos"/> until fewer than 8 bytes are left.</summary>
+    private static List<(string Id, int Start, int End)> RiffWalk(byte[] raw, int pos, int stop, string what, string param)
+    {
+        var chunks = new List<(string, int, int)>();
+        while ((long)pos + 8 <= stop)
+        {
+            string id = System.Text.Encoding.Latin1.GetString(raw, pos, 4);
+            long size = BinaryPrimitives.ReadUInt32LittleEndian(raw.AsSpan(pos + 4));
+            if (pos + 8 + size > stop)
+                throw new ArgumentException($"the '{id}' {what} runs past its end", param);
+            chunks.Add((id, pos + 8, (int)(pos + 8 + size)));
+            long next = pos + 8 + size + (size % 2);
+            if (next >= stop)
+                break;
+            pos = (int)next;
+        }
+        return chunks;
     }
 
     /// <summary>Reads a PCM or IEEE float WAV file as real signals, one per channel, in units <c>"FS"</c>

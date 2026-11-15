@@ -5,6 +5,8 @@ round() (half to even) of x * 2^(b-1), plus 128 for u8; float32 values from a st
 Every PCM file with an even data size is also written by Python's wave module, and the two must be
 the same bytes, so the header layout is checked against an independent writer. Files from other
 tools' layouts (extensible, extra chunks, no fact chunk) are written here as literal chunks.
+LIST/INFO text tags (ADR 0091) are literal byte strings packed with struct; a tagged PCM file must
+still give the wave module the same frames as the untagged one.
 
 Run from the repo root: python vectors/generators/wav.py [--check]
 With --check it writes nothing and exits 1 unless every file matches what it would write.
@@ -154,6 +156,56 @@ bad_write("format_i8", [[0.0]], 1000, "i8", "8-bit WAV is unsigned: u8, not i8")
 bad_write("format_f16", [[0.0]], 1000, "f16", "no 16-bit float")
 bad_write("format_sigmf_name", [[0.0]], 1000, "ri16_le", "WAV formats are named without kind or order")
 
+def info_chunk(tags):
+    """A LIST/INFO chunk of (id, text) byte pairs, each text NUL-terminated and padded to even."""
+    return chunk(b"LIST", b"INFO" + b"".join(chunk(i, t + b"\0") for i, t in tags))
+
+
+def tagged(base, tags):
+    """A WAV file with a LIST/INFO chunk appended after everything else, RIFF size updated."""
+    body = base[8:] + info_chunk(tags)
+    return b"RIFF" + struct.pack("<I", len(body)) + body
+
+
+def case_info(name, channels, rate, fmt, tags, why):
+    expected = tagged(wav(channels, rate, fmt), tags) if tags else wav(channels, rate, fmt)
+    if fmt in ("i16", "u8") and len(channels[0]) % 2 == 0:
+        with wave.open(io.BytesIO(expected)) as w:
+            assert w.readframes(w.getnframes()) == frames(channels, fmt), name
+    info = [{"id": i.decode(), "text": t.decode()} for i, t in tags]
+    cases.append({"id": f"write_wav.{name}", "op": "write_wav",
+                  "args": {"channels": channels, "sample_rate": rate, "sample_format": fmt, "info": info},
+                  "expected": expected.hex(), "tol": TOL, "source": why})
+
+
+def bad_info(name, info, why):
+    cases.append({"id": f"write_wav.{name}", "op": "write_wav",
+                  "args": {"channels": [[0.0]], "sample_rate": 1000, "sample_format": "i16", "info": info},
+                  "error": "invalid_argument", "source": why})
+
+
+case_info("info_i16", [X[:2]], 8000, "i16", [(b"INAM", b"Test tone"), (b"ISFT", b"SignalForge")],
+          "LIST, size, INFO, then INAM size 10 (9 + NUL), ISFT size 12 (11 + NUL) and its pad; "
+          "the wave module still reads the frames")
+case_info("info_f32", [X[:3], X[3:]], 44100, "f32", [(b"ICMT", b"stereo, 3 frames")],
+          "after fmt, fact and data; ICMT size 17 (16 + NUL), padded to 18")
+case_info("info_u8_odd_data", [[0.5, -0.5, 0.0]], 8000, "u8", [(b"IART", b"x")],
+          "the data pad byte comes first, then LIST; IART size 2, no pad")
+case_info("info_empty_text", [X[:2]], 1000, "i16", [(b"ICMT", b"")], "an empty text is one NUL, padded to 2")
+case_info("info_order_kept", [X[:2]], 1000, "i16",
+          [(b"ISFT", b"a"), (b"ICRD", b"2026-11-14"), (b"IART", b"~ !")],
+          "tags in the order given, not sorted; sizes 2, 11 (padded) and 4")
+case_info("info_digit_id", [X[:2]], 1000, "i16", [(b"I0A9", b"ok")], "digits are allowed in an ID")
+case_info("info_empty", [X[:2]], 1000, "i16", [], "no tags: no LIST chunk, the bytes of a plain file")
+for n, (bad_id, why) in enumerate((("inam", "lowercase is not allowed"), ("NAM", "three characters"),
+                                   ("INAME", "five characters"), ("ID3 ", "a space is not allowed"),
+                                   ("", "an empty ID"))):
+    bad_info(f"info_bad_id_{n}", [{"id": bad_id, "text": "x"}], "IDs are four of A-Z, 0-9: " + why)
+bad_info("info_non_ascii", [{"id": "INAM", "text": "caf\u00e9"}], "texts are printable ASCII: no e-acute")
+bad_info("info_newline", [{"id": "ICMT", "text": "a\nb"}], "a line feed is not printable")
+bad_info("info_nul", [{"id": "ICMT", "text": "a\u0000b"}], "a NUL inside the text would end it early")
+bad_info("info_delete", [{"id": "ICMT", "text": "\u007f"}], "0x7F is not printable")
+
 recs = []  # (name, bytes, expected record or None, why)
 
 
@@ -253,17 +305,81 @@ for name, _, expected, why in recs:
              else {"expected": expected, "tol": TOL, "source": why})
     cases.append(c)
 
+info_recs = []  # (name, bytes, expected [(id, text)] or None, why)
+
+
+def good_info(name, data, tags, why):
+    info_recs.append((f"info_{name}", data, tags, why))
+
+
+def bad_info_file(name, data, why):
+    info_recs.append((f"info_{name}", data, None, why))
+
+
+plain = riff([pcm, data])
+good_info("after_data", tagged(plain, [(b"INAM", b"Test tone"), (b"IART", b"SignalForge"), (b"ICMT", b"")]),
+          [("INAM", "Test tone"), ("IART", "SignalForge"), ("ICMT", "")],
+          "after data, as write_wav puts it; each text up to its NUL")
+good_info("before_fmt", riff([info_chunk([(b"ISFT", b"Lavf")]), pcm, data]), [("ISFT", "Lavf")],
+          "LIST may come anywhere, here before fmt")
+good_info("none", plain, [], "no LIST chunk: no tags")
+good_info("empty_list", riff([pcm, data, chunk(b"LIST", b"INFO")]), [], "a LIST/INFO with no subchunks")
+good_info("short_list", riff([pcm, data, chunk(b"LIST", b"IN")]), [], "a LIST body under 4 bytes has no form type: skipped")
+good_info("no_nul", riff([pcm, data, chunk(b"LIST", b"INFO" + chunk(b"INAM", b"ab"))]), [("INAM", "ab")],
+          "a text without a NUL is all of its body")
+good_info("after_nul", riff([pcm, data, chunk(b"LIST", b"INFO" + chunk(b"ICMT", b"abc\0\0junk"))]),
+          [("ICMT", "abc")], "the text stops at the first NUL; the rest of the body is ignored")
+good_info("latin1", riff([pcm, data, info_chunk([(b"INAM", b"caf\xe9"), (b"IART", b"caf\xc3\xa9")])]),
+          [("INAM", "caf\u00e9"), ("IART", "caf\u00c3\u00a9")],
+          "each byte is the character with that code: 0xE9 is e-acute, UTF-8 C3 A9 is two characters")
+good_info("two_lists", riff([info_chunk([(b"INAM", b"a")]), pcm, data, info_chunk([(b"IART", b"b")])]),
+          [("INAM", "a"), ("IART", "b")], "tags from every LIST/INFO, in file order")
+adtl = chunk(b"LIST", b"adtl" + chunk(b"labl", struct.pack("<I", 1) + b"INAM\0"))
+good_info("adtl_skipped", riff([pcm, data, adtl, info_chunk([(b"INAM", b"x")])]), [("INAM", "x")],
+          "a LIST of another type is skipped")
+good_info("tags_only", riff([info_chunk([(b"ICMT", b"no audio")])]), [("ICMT", "no audio")],
+          "fmt and data are not needed to read tags")
+odd = riff([pcm, data, b"LIST" + struct.pack("<I", 15) + b"INFO" + b"IART" + struct.pack("<I", 3) + b"ab\0"])
+good_info("odd_no_pad", odd, [("IART", "ab")],
+          "the last subchunk and the LIST chunk are odd, and the file ends without their pad bytes")
+good_info("trailing_bytes", riff([pcm, data, info_chunk([(b"INAM", b"t")])]) + b"\0\0\0\0\0\0\0",
+          [("INAM", "t")], "7 bytes left at the end: fewer than 8, ignored")
+good_info("lowercase_id", riff([pcm, data, info_chunk([(b"inam", b"low")])]), [("inam", "low")],
+          "IDs are not checked on read")
+good_info("u8_odd_data", riff([fmt_chunk(1, 1, 8000, 8), chunk(b"data", u8), info_chunk([(b"INAM", b"u")])]),
+          [("INAM", "u")], "after the pad byte of an odd data chunk")
+bad_info_file("not_wave", tagged(plain, [(b"INAM", b"a")]).replace(b"WAVE", b"AVI ", 1), "a RIFF file that is not WAVE")
+bad_info_file("rifx", b"RIFX" + tagged(plain, [(b"INAM", b"a")])[4:], "RIFX is not RIFF")
+bad_info_file("too_short", b"RIFF\4\0\0\0WAV", "11 bytes: no full form type")
+bad_info_file("dup_same_list", riff([pcm, data, info_chunk([(b"INAM", b"a"), (b"INAM", b"b")])]),
+              "INAM twice in one LIST")
+bad_info_file("dup_two_lists", riff([info_chunk([(b"INAM", b"a")]), pcm, data, info_chunk([(b"INAM", b"b")])]),
+              "INAM in two LIST chunks")
+bad_info_file("sub_past_list", riff([pcm, data, chunk(b"LIST", b"INFO" + b"INAM" + struct.pack("<I", 9) + b"abc\0")]),
+              "the INAM subchunk says 9 bytes, its LIST has 4 left")
+bad_info_file("list_past_end", riff([pcm, data]) + b"LIST" + struct.pack("<I", 100) + b"INFO",
+              "the LIST chunk says 100 bytes, the file has 4 left")
+bad_info_file("data_past_end", riff([pcm, b"data" + struct.pack("<I", 100) + i16]),
+              "the data chunk runs past the end of the file")
+
+for name, _, expected, why in info_recs:
+    c = {"id": f"read_wav_info.{name}", "op": "read_wav_info", "args": {"file": f"{name}.wav"}}
+    c.update({"error": "invalid_argument", "source": why} if expected is None
+             else {"expected": [{"id": i, "text": t} for i, t in expected], "source": why})
+    cases.append(c)
+
 doc = {
     "schema": 1,
     "suite": "wav",
     "description": "Writing WAV files in every sample format, and reading WAV files laid out as "
-    "SignalForge and other tools write them, from vectors/files (conventions: Signal files, WAV).",
+    "SignalForge and other tools write them, from vectors/files, with LIST/INFO text tags "
+    "(conventions: Signal files, WAV).",
     "cases": cases,
 }
 lines = ",\n".join("    " + json.dumps(c) for c in cases)
 head = json.dumps({k: v for k, v in doc.items() if k != "cases"}, indent=2)[:-2]
 outputs = {ROOT / "cases" / "wav.json": (head + ',\n  "cases": [\n' + lines + "\n  ]\n}\n").encode()}
-for name, data, _, _ in recs:
+for name, data, _, _ in recs + info_recs:
     outputs[ROOT / "files" / f"{name}.wav"] = data
 
 if "--check" in sys.argv[1:]:

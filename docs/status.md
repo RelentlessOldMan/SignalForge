@@ -4,14 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **WAV `LIST`/`INFO` text tags**: `read_wav_info(path)` returning the `INFO` subchunks of a
-   `LIST` chunk (`INAM` title, `IART` artist, `ICMT` comment, `ISFT` software, …) as an ordered
-   mapping of four-character IDs to text (C# `ReadWavInfo`), and an optional `info` argument to
-   `write_wav` that writes them after the `data` chunk. Needs an ADR: the text encoding (ASCII
-   only on write; Latin-1 or UTF-8 on read?), the NUL terminator and pad byte, IDs allowed,
-   duplicate IDs, and where the chunk goes. Expected values: the WAV generator packs the chunks
-   with `struct`; Python's `wave` module skips unknown chunks, which checks that the audio still
-   reads.
+1. **2-D `.npy` arrays**: `read_npy_2d(path)` (C# `ReadNpy2D<T>`, returning `T[,]`) reading a
+   `.npy` of shape `(rows, columns)` in either `fortran_order`, with the same dtypes as `read_npy`,
+   and `write_npy` accepting a 2-D array (C# `T[,]`), written in C order. Needs an ADR: the shape
+   forms accepted (`(r, c)`, zero rows or columns), whether `read_npy` of a 2-D file stays an
+   error, the C# return type, and how `.npz` members of 2-D shape are read. Expected values:
+   `struct`-packed bytes in both orders, cross-checked with `numpy.load`.
 
 ## Built
 
@@ -935,6 +933,17 @@ Updated with every chunk of work. Dates are absolute.
   silently goes through `float64`; build the array in its own dtype.
   Python 3422 passed, 2 skipped; .NET 2873 passed; conformance 1764/1764 in both. Version
   2026.11.14.6.
+- 2026-11-14: WAV `LIST`/`INFO` text tags (ADR 0091): `read_wav_info(path)` (C# `ReadWavInfo`)
+  returns the tags of every `LIST`/`INFO` chunk in file order as an ordered mapping of ID to text,
+  decoded byte for byte as Latin-1, each text up to its first NUL; `write_wav` (both C# overloads)
+  takes an optional `info` and writes a `LIST`/`INFO` chunk after `data`, with IDs of four `A`–`Z`
+  or `0`–`9` characters and printable ASCII texts. No or empty `info` writes the same bytes as
+  before, and `read_wav` still ignores the tags. Duplicate IDs and chunks running past their
+  container are rejected; a walk ends when fewer than 8 bytes are left, so missing final pad
+  bytes are fine. Generator `wav.py` gained 7 good and 9 bad write cases and 15 good and 8 bad
+  read files, the tagged PCM files checked with the `wave` module.
+  Python 3491 passed, 2 skipped; .NET 2938 passed; conformance 1803/1803 in both. Version
+  2026.11.14.7.
 
 ## Not built
 
@@ -942,7 +951,7 @@ Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, el
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D `.npy` (`.npy` shapes other than 1-D, streaming reads and writes, multi-channel and
-multi-capture SigMF recordings, WAV metadata chunks), plotting, CLI,
+multi-capture SigMF recordings, WAV metadata chunks other than `LIST`/`INFO`), plotting, CLI,
 packaging and publishing.
 
 ## Lessons
