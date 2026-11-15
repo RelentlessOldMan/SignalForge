@@ -68,6 +68,7 @@ from .files import (
     read_npz,
     read_sigmf,
     read_wav,
+    read_wav_cues,
     read_wav_info,
     write_npy,
     write_npz,
@@ -176,7 +177,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.14.9"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.14.10"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -326,6 +327,7 @@ __all__ = [
     "read_npz",
     "read_sigmf",
     "read_wav",
+    "read_wav_cues",
     "read_wav_info",
     "resample",
     "resample_taps",

@@ -1624,6 +1624,23 @@ Decided in [ADR 0012](adr/0012-signal-files.md). Python: `signalforge.files`; C#
     subchunk running past its `LIST`, and an ID seen twice anywhere in the file. A walk (of the
     file or of a `LIST` body) ends when fewer than 8 bytes are left, and those bytes are ignored;
     so a missing pad byte after the last chunk or subchunk is allowed. **(implemented)**
+  - Cue points ([ADR 0094](adr/0094-wav-cues.md)): `write_wav(..., cues=None)` and
+    `read_wav_cues(path)` (C# `WriteWav(..., cues)`, `ReadWavCues`), each cue a (position,
+    label) pair, the position in sample frames from the start of the data. Writing a non-empty
+    `cues` adds, after `data` and its pad and before any `LIST`/`INFO`: `cue `, the size
+    4 + 24k, the count k, then per point its ID (1, 2, … in order), the position, `data`, 0, 0,
+    and the position again; then, if any label is non-empty, `LIST`, its size, `adtl`, and per
+    non-empty label `labl`, the size 4 + text length + 1, the cue ID, the text, a NUL and a pad
+    byte when that size is odd. A position is a whole number from 0 to the samples per channel; a
+    label is printable ASCII, possibly empty. Reading walks the chunks as `read_wav_info` does and
+    needs a `fmt ` of at least 16 bytes with a non-zero block align (bytes 12–13) and a `data`
+    chunk; frames = data size ÷ block align, rounded down. At most one `cue `, of size exactly
+    4 + 24 × count; each point must name `data` with chunk start and block start 0, its sample
+    offset (last field) is the position and must be at most the frames, and its ID must be new;
+    the play-order field is ignored. Each `labl` in a `LIST`/`adtl` needs at least 4 bytes; its
+    text runs from byte 4 to the first NUL, as Latin-1, and its ID must name a cue point that has
+    no label yet. Other `adtl` subchunks are skipped. Points come back in the `cue ` chunk's
+    order, a point without a label with `""`; no `cue ` chunk means no cues. **(implemented)**
 - **NumPy `.npy`** ([ADR 0056](adr/0056-npy.md)): `write_npy(path, x)`, `read_npy(path)` (C#
   `WriteNpy`, `ReadNpy<T>`), for 1-D arrays of `float64` (descr `'<f8'`) or `complex128`
   (`'<c16'`, real then imaginary part, each little-endian binary64). Values are stored as they

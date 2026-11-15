@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **WAV cue points**: `read_wav_cues(path)` (C# `ReadWavCues`) returning the sample positions
-   of a `cue ` chunk, with their `LIST`/`adtl` labels (`labl`) when present, and `write_wav`
-   taking optional cues. Needs an ADR: which `cue ` fields are kept (ID, position, and the
-   `data` chunk's sample offset only), how labels are matched to cue IDs, and what is rejected
-   (a position past the data, a duplicate ID). Expected values: `struct`-packed chunks from the
-   RIFF and `cue ` layout, the plain PCM files cross-checked with the `wave` module.
+1. **WAV cue regions**: `ltxt` subchunks of `LIST`/`adtl`, which give a cue point a length in
+   frames (a region), read by `read_wav_cues` and written by `write_wav` for cues given a
+   length. Needs an ADR: the return shape once a cue may have a length (a third field, 0 for a
+   plain point?), whether the `ltxt` purpose, country, language, dialect, code page and text are
+   kept or checked, what a second `ltxt` for one ID means, and that a region must end within the
+   data. Expected values: `struct`-packed `ltxt` subchunks from the `adtl` layout, the PCM files
+   cross-checked with the `wave` module.
 
 ## Built
 
@@ -964,6 +965,18 @@ Updated with every chunk of work. Dates are absolute.
   read archives, cross-checked with `numpy.load`.
   Python 3587 passed, 2 skipped; .NET 2993 passed; conformance 1839/1839 in both. Version
   2026.11.14.9.
+- 2026-11-14: WAV cue points (ADR 0094): `read_wav_cues(path)` (C# `ReadWavCues`) returns each
+  point of the `cue ` chunk in its order as (position in frames, label), the labels from `labl`
+  subchunks of every `LIST`/`adtl` chunk matched by cue ID, `""` for none. `write_wav` takes an
+  optional `cues` of (position, label) pairs, positions 0 to the length, labels printable ASCII,
+  and writes a `cue ` chunk (IDs 1, 2, …, play order = sample offset) and a `LIST`/`adtl` for
+  the non-empty labels after `data`, before `LIST`/`INFO`. Rejected on read: two `cue ` chunks,
+  a size that is not 4 + 24 × count, a point outside the `data` chunk (`wavl` lists), a
+  duplicate ID, a position past the frames, a label with no point or a second label. Cue IDs
+  are not exposed. Generator `wav.py` gained 12 write cases and 34 read files, the PCM ones
+  cross-checked with the `wave` module.
+  Python 3658 passed, 2 skipped; .NET 3053 passed; conformance 1885/1885 in both. Version
+  2026.11.14.10.
 
 ## Not built
 
@@ -971,7 +984,7 @@ Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, el
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes, multi-channel and
-multi-capture SigMF recordings, WAV metadata chunks other than `LIST`/`INFO`), plotting, CLI,
+multi-capture SigMF recordings, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels), plotting, CLI,
 packaging and publishing.
 
 ## Lessons

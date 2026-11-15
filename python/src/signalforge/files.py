@@ -335,11 +335,12 @@ def write_wav(
     channels: Signal | Sequence[Signal],
     sample_format: str = "f32",
     info: Mapping[str, str] | None = None,
+    cues: Sequence[tuple[int, str]] | None = None,
 ) -> None:
     """Write real signals, one per channel, as a PCM or IEEE float WAV file (conventions: Signal
-    files, WAV). Only the samples, the sample rate and the ``info`` text tags (four-character IDs
-    to printable ASCII, written as a ``LIST``/``INFO`` chunk after the data; ADR 0091) are
-    stored."""
+    files, WAV). Only the samples, the sample rate, the ``info`` text tags (four-character IDs
+    to printable ASCII, written as a ``LIST``/``INFO`` chunk after the data; ADR 0091) and the
+    ``cues``, (position in frames, label) pairs (ADR 0094), are stored."""
     tags = _wav_info_chunk(info)
     if not isinstance(sample_format, str) or sample_format not in _WAV_BITS:
         raise ValueError(f"unknown WAV sample format {sample_format!r}")
@@ -359,6 +360,7 @@ def write_wav(
         raise ValueError("too many channels: the block align must fit 16 bits")
     if int(rate) * block > _U32:
         raise ValueError("the byte rate (sample rate x block align) must fit 32 bits")
+    tags = _wav_cue_chunks(cues, n) + tags
     nbytes = n * block
     if 4 + (26 + 12 if is_float else 24) + 8 + nbytes + nbytes % 2 + len(tags) > _U32:
         raise ValueError("too many samples for a WAV file")
@@ -392,6 +394,93 @@ def _wav_info_chunk(info: Mapping[str, str] | None) -> bytes:
 
 
 _INFO_ID = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+
+def _wav_cue_chunks(cues: Sequence[tuple[int, str]] | None, frames: int) -> bytes:
+    """The ``cue `` chunk and ``LIST``/``adtl`` labels for ``cues``, or nothing when it is empty."""
+    if cues is None:
+        return b""
+    if isinstance(cues, (str, bytes, Mapping)) or not isinstance(cues, Sequence):
+        raise ValueError("cues must be a sequence of (position, label) pairs")
+    points, labels = b"", b""
+    for i, cue in enumerate(cues, 1):
+        if not isinstance(cue, (tuple, list)) or len(cue) != 2:
+            raise ValueError(f"cues[{i - 1}] must be a (position, label) pair")
+        pos, label = cue
+        if (
+            isinstance(pos, bool)
+            or not isinstance(pos, (int, np.integer))
+            or not 0 <= pos <= frames
+        ):
+            raise ValueError(f"cue position {pos!r} must be a whole number from 0 to {frames}")
+        if not isinstance(label, str) or any(not " " <= c <= "~" for c in label):
+            raise ValueError(f"cue label {label!r} must be printable ASCII text")
+        points += struct.pack("<II4sIII", i, int(pos), b"data", 0, 0, int(pos))
+        if label:
+            labels += _chunk(b"labl", struct.pack("<I", i) + label.encode("ascii") + b"\0")
+    if not points:
+        return b""
+    out = _chunk(b"cue ", struct.pack("<I", len(cues)) + points)
+    return out + (_chunk(b"LIST", b"adtl" + labels) if labels else b"")
+
+
+def read_wav_cues(path: str | os.PathLike[str]) -> list[tuple[int, str]]:
+    """Read the cue points of a WAV file's ``cue `` chunk, in its order, as (position in frames,
+    label) pairs, the labels from ``LIST``/``adtl`` ``labl`` subchunks, ``""`` for none
+    (conventions: Signal files, WAV; ADR 0094)."""
+    raw = Path(os.fspath(path)).read_bytes()
+    if len(raw) < 12 or raw[:4] != b"RIFF" or raw[8:12] != b"WAVE":
+        raise ValueError("not a RIFF WAVE file")
+    block = frames = None
+    points: dict[int, int] | None = None
+    labels: dict[int, str] = {}
+    for cid, start, end in _riff_walk(raw, 12, len(raw), "chunk"):
+        if cid == b"fmt " and block is None:
+            if end - start < 16:
+                raise ValueError("the fmt chunk is shorter than 16 bytes")
+            (block,) = struct.unpack_from("<H", raw, start + 12)
+        elif cid == b"data" and frames is None:
+            frames = end - start
+        elif cid == b"cue ":
+            if points is not None:
+                raise ValueError("there are two cue chunks")
+            points = {}
+            if end - start < 4:
+                raise ValueError("the cue chunk is shorter than 4 bytes")
+            (count,) = struct.unpack_from("<I", raw, start)
+            if end - start != 4 + 24 * count:
+                raise ValueError(f"the cue chunk is not 4 + 24 x {count} bytes")
+            for k in range(count):
+                cue_id, _, chunk, cstart, bstart, offset = struct.unpack_from(
+                    "<II4sIII", raw, start + 4 + 24 * k
+                )
+                if chunk != b"data" or cstart or bstart:
+                    raise ValueError(f"cue {cue_id} does not point straight into the data chunk")
+                if cue_id in points:
+                    raise ValueError(f"the cue ID {cue_id} appears twice")
+                points[cue_id] = offset
+        elif cid == b"LIST" and end - start >= 4 and raw[start : start + 4] == b"adtl":
+            for sid, s, e in _riff_walk(raw, start + 4, end, "adtl subchunk"):
+                if sid != b"labl":
+                    continue
+                if e - s < 4:
+                    raise ValueError("a labl subchunk is shorter than 4 bytes")
+                (cue_id,) = struct.unpack_from("<I", raw, s)
+                if cue_id in labels:
+                    raise ValueError(f"cue {cue_id} has two labels")
+                labels[cue_id] = raw[s + 4 : e].split(b"\0", 1)[0].decode("latin-1")
+    if block is None:
+        raise ValueError("no fmt chunk")
+    if frames is None:
+        raise ValueError("no data chunk")
+    if block == 0:
+        raise ValueError("the block align is 0")
+    points = points or {}
+    if any(cue_id not in points for cue_id in labels):
+        raise ValueError("a label names a cue ID with no cue point")
+    if any(offset > frames // block for offset in points.values()):
+        raise ValueError(f"a cue point is past the last of {frames // block} frames")
+    return [(offset, labels.get(cue_id, "")) for cue_id, offset in points.items()]
 
 
 def read_wav_info(path: str | os.PathLike[str]) -> dict[str, str]:

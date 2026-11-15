@@ -494,11 +494,12 @@ public static class SignalFiles
     /// <param name="signal">The signal; only its samples and sample rate are stored.</param>
     /// <param name="sampleFormat"><c>u8</c>, <c>i16</c>, <c>i24</c>, <c>i32</c> (PCM), <c>f32</c> or <c>f64</c> (IEEE float).</param>
     /// <param name="info">Text tags, as for the multi-channel overload.</param>
+    /// <param name="cues">Cue points, as for the multi-channel overload.</param>
     public static void WriteWav(string path, Signal<double> signal, string sampleFormat = "f32",
-        IEnumerable<KeyValuePair<string, string>>? info = null)
+        IEnumerable<KeyValuePair<string, string>>? info = null, IReadOnlyList<(long Position, string Label)>? cues = null)
     {
         ArgumentNullException.ThrowIfNull(signal);
-        WriteWav(path, [signal], sampleFormat, info);
+        WriteWav(path, [signal], sampleFormat, info, cues);
     }
 
     /// <summary>Writes real signals, one per channel, as a PCM or IEEE float WAV file (conventions: Signal files, WAV).
@@ -508,8 +509,11 @@ public static class SignalFiles
     /// <param name="sampleFormat"><c>u8</c>, <c>i16</c>, <c>i24</c>, <c>i32</c> (PCM), <c>f32</c> or <c>f64</c> (IEEE float).</param>
     /// <param name="info">Text tags in order, written as a <c>LIST</c>/<c>INFO</c> chunk after the data: IDs of four
     /// characters from A-Z and 0-9, each once, to printable ASCII text (ADR 0091). None or empty writes no chunk.</param>
+    /// <param name="cues">Cue points in order, written as a <c>cue </c> chunk after the data, with a <c>LIST</c>/<c>adtl</c>
+    /// chunk for the non-empty labels: each a position in frames from 0 to the length, and a printable ASCII label
+    /// (ADR 0094). None or empty writes no chunk.</param>
     public static void WriteWav(string path, IReadOnlyList<Signal<double>> channels, string sampleFormat = "f32",
-        IEnumerable<KeyValuePair<string, string>>? info = null)
+        IEnumerable<KeyValuePair<string, string>>? info = null, IReadOnlyList<(long Position, string Label)>? cues = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
         byte[] tags = WavInfoChunk(info);
@@ -531,6 +535,7 @@ public static class SignalFiles
             throw new ArgumentException("too many channels: the block align must fit 16 bits", nameof(channels));
         if ((long)rate * block > uint.MaxValue)
             throw new ArgumentException("the byte rate (sample rate x block align) must fit 32 bits", nameof(channels));
+        tags = [.. WavCueChunks(cues, n), .. tags];
         long nbytes = n * block;
         long riffSize = 4 + (isFloat ? 38 : 24) + 8 + nbytes + nbytes % 2 + tags.Length;
         if (riffSize > uint.MaxValue)
@@ -596,6 +601,53 @@ public static class SignalFiles
         File.WriteAllBytes(path, ms.ToArray());
     }
 
+    /// <summary>The <c>cue </c> chunk and <c>LIST</c>/<c>adtl</c> labels for <paramref name="cues"/>, or nothing when it
+    /// is empty.</summary>
+    private static byte[] WavCueChunks(IReadOnlyList<(long Position, string Label)>? cues, int frames)
+    {
+        if (cues is null || cues.Count == 0)
+            return [];
+        var points = new MemoryStream();
+        var labels = new MemoryStream();
+        Span<byte> point = stackalloc byte[24];
+        for (int i = 0; i < cues.Count; i++)
+        {
+            (long pos, string label) = cues[i];
+            uint id = (uint)(i + 1);
+            if (pos < 0 || pos > frames)
+                throw new ArgumentException($"cue position {pos} must be a whole number from 0 to {frames}", nameof(cues));
+            if (label is null || label.Any(c => c is < ' ' or > '~'))
+                throw new ArgumentException($"cue label '{label}' must be printable ASCII text", nameof(cues));
+            BinaryPrimitives.WriteUInt32LittleEndian(point, id);
+            BinaryPrimitives.WriteUInt32LittleEndian(point[4..], (uint)pos);
+            "data"u8.CopyTo(point[8..]);
+            BinaryPrimitives.WriteUInt32LittleEndian(point[12..], 0);
+            BinaryPrimitives.WriteUInt32LittleEndian(point[16..], 0);
+            BinaryPrimitives.WriteUInt32LittleEndian(point[20..], (uint)pos);
+            points.Write(point);
+            if (label.Length == 0)
+                continue;
+            byte[] body = new byte[4 + label.Length + 1];
+            BinaryPrimitives.WriteUInt32LittleEndian(body, id);
+            System.Text.Encoding.ASCII.GetBytes(label).CopyTo(body, 4);
+            labels.Write(RiffChunk("labl"u8, body));
+        }
+        byte[] count = new byte[4];
+        BinaryPrimitives.WriteUInt32LittleEndian(count, (uint)cues.Count);
+        byte[] cue = RiffChunk("cue "u8, [.. count, .. points.ToArray()]);
+        return labels.Length == 0 ? cue : [.. cue, .. RiffChunk("LIST"u8, [.. "adtl"u8, .. labels.ToArray()])];
+    }
+
+    /// <summary>A RIFF chunk: the ID, the 32-bit size, the body and a zero pad byte when the size is odd.</summary>
+    private static byte[] RiffChunk(ReadOnlySpan<byte> id, byte[] body)
+    {
+        byte[] chunk = new byte[8 + body.Length + body.Length % 2];
+        id.CopyTo(chunk);
+        BinaryPrimitives.WriteUInt32LittleEndian(chunk.AsSpan(4), (uint)body.Length);
+        body.CopyTo(chunk, 8);
+        return chunk;
+    }
+
     /// <summary>The <c>LIST</c>/<c>INFO</c> chunk for <paramref name="info"/>, or nothing when it is empty.</summary>
     private static byte[] WavInfoChunk(IEnumerable<KeyValuePair<string, string>>? info)
     {
@@ -656,6 +708,87 @@ public static class SignalFiles
             }
         }
         return result;
+    }
+
+    /// <summary>Reads the cue points of a WAV file's <c>cue </c> chunk, in its order, with their labels from
+    /// <c>LIST</c>/<c>adtl</c> <c>labl</c> subchunks (conventions: Signal files, WAV; ADR 0094).</summary>
+    /// <param name="path">The file to read.</param>
+    /// <returns>Each point's position in frames from the start of the data, and its label (empty for none).</returns>
+    /// <exception cref="ArgumentException">The file is not a RIFF WAVE file with <c>fmt </c> and <c>data</c> chunks, or
+    /// its cue points or labels break the rules of ADR 0094.</exception>
+    public static IReadOnlyList<(long Position, string Label)> ReadWavCues(string path)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        byte[] raw = File.ReadAllBytes(path);
+        ArgumentException Bad(string message) => new(message, nameof(path));
+        uint U32(int i) => BinaryPrimitives.ReadUInt32LittleEndian(raw.AsSpan(i));
+        if (raw.Length < 12 || !raw.AsSpan(0, 4).SequenceEqual("RIFF"u8) || !raw.AsSpan(8, 4).SequenceEqual("WAVE"u8))
+            throw Bad("not a RIFF WAVE file");
+        int? block = null;
+        long? dataBytes = null;
+        OrderedDictionary<uint, long>? points = null;
+        var labels = new Dictionary<uint, string>();
+        foreach ((string id, int start, int end) in RiffWalk(raw, 12, raw.Length, "chunk", nameof(path)))
+        {
+            if (id == "fmt " && block is null)
+            {
+                if (end - start < 16)
+                    throw Bad("the fmt chunk is shorter than 16 bytes");
+                block = BinaryPrimitives.ReadUInt16LittleEndian(raw.AsSpan(start + 12));
+            }
+            else if (id == "data" && dataBytes is null)
+            {
+                dataBytes = end - start;
+            }
+            else if (id == "cue ")
+            {
+                if (points is not null)
+                    throw Bad("there are two cue chunks");
+                points = [];
+                if (end - start < 4)
+                    throw Bad("the cue chunk is shorter than 4 bytes");
+                long count = U32(start);
+                if (end - start != 4 + 24 * count)
+                    throw Bad($"the cue chunk is not 4 + 24 x {count} bytes");
+                for (int k = 0; k < count; k++)
+                {
+                    int at = start + 4 + 24 * k;
+                    uint cueId = U32(at);
+                    if (!raw.AsSpan(at + 8, 4).SequenceEqual("data"u8) || U32(at + 12) != 0 || U32(at + 16) != 0)
+                        throw Bad($"cue {cueId} does not point straight into the data chunk");
+                    if (!points.TryAdd(cueId, U32(at + 20)))
+                        throw Bad($"the cue ID {cueId} appears twice");
+                }
+            }
+            else if (id == "LIST" && end - start >= 4 && raw.AsSpan(start, 4).SequenceEqual("adtl"u8))
+            {
+                foreach ((string sid, int s, int e) in RiffWalk(raw, start + 4, end, "adtl subchunk", nameof(path)))
+                {
+                    if (sid != "labl")
+                        continue;
+                    if (e - s < 4)
+                        throw Bad("a labl subchunk is shorter than 4 bytes");
+                    uint cueId = U32(s);
+                    ReadOnlySpan<byte> text = raw.AsSpan(s + 4, e - s - 4);
+                    int nul = text.IndexOf((byte)0);
+                    if (!labels.TryAdd(cueId, System.Text.Encoding.Latin1.GetString(nul < 0 ? text : text[..nul])))
+                        throw Bad($"cue {cueId} has two labels");
+                }
+            }
+        }
+        if (block is null)
+            throw Bad("no fmt chunk");
+        if (dataBytes is null)
+            throw Bad("no data chunk");
+        if (block == 0)
+            throw Bad("the block align is 0");
+        points ??= [];
+        if (labels.Keys.Any(k => !points.ContainsKey(k)))
+            throw Bad("a label names a cue ID with no cue point");
+        long frames = dataBytes.Value / block.Value;
+        if (points.Values.Any(p => p > frames))
+            throw Bad($"a cue point is past the last of {frames} frames");
+        return [.. points.Select(kv => (kv.Value, labels.GetValueOrDefault(kv.Key, "")))];
     }
 
     /// <summary>(id, body start, body end) of each chunk from <paramref name="pos"/> until fewer than 8 bytes are left.</summary>

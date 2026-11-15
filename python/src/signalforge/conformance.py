@@ -181,12 +181,15 @@ OPS: dict[str, Callable[..., Any]] = {
     "encode_samples": lambda x, datatype: files.encode_samples(x, datatype).hex(),
     "decode_samples": lambda data, datatype: files.decode_samples(_hex(data), datatype),
     "read_sigmf": lambda file: _signal_record(files.read_sigmf(_fixture(file))),
-    "write_wav": lambda channels, sample_rate, sample_format, info=None: _write_wav(
-        channels, sample_rate, sample_format, info
+    "write_wav": lambda channels, sample_rate, sample_format, info=None, cues=None: _write_wav(
+        channels, sample_rate, sample_format, info, cues
     ),
     "read_wav": lambda file: _wav_record(files.read_wav(_fixture(file))),
     "read_wav_info": lambda file: [
         {"id": k, "text": v} for k, v in files.read_wav_info(_fixture(file)).items()
+    ],
+    "read_wav_cues": lambda file: [
+        {"position": float(p), "label": t} for p, t in files.read_wav_cues(_fixture(file))
     ],
     "write_npy": lambda x, shape=None: _write_npy(
         x if shape is None else np.asarray(x).reshape([int(n) for n in shape])
@@ -233,9 +236,9 @@ def _write_npy(x: Any) -> str:
         return path.read_bytes().hex()
 
 
-def _write_wav(channels: Any, sample_rate: Any, sample_format: Any, info: Any) -> str:
-    """The bytes of a WAV file written from rows of samples and ``{id, text}`` tag records, as hex
-    (``[]`` decodes as an array)."""
+def _write_wav(channels: Any, sample_rate: Any, sample_format: Any, info: Any, cues: Any) -> str:
+    """The bytes of a WAV file written from rows of samples, ``{id, text}`` tag records and
+    ``{position, label}`` cue records, as hex (``[]`` decodes as an array)."""
     sigs = [Signal(np.asarray(c, dtype=np.float64), sample_rate) for c in channels]
     tags = (
         None
@@ -244,9 +247,16 @@ def _write_wav(channels: Any, sample_rate: Any, sample_format: Any, info: Any) -
         if isinstance(info, np.ndarray)
         else {t["id"]: t["text"] for t in info}
     )
+    marks = (
+        None
+        if cues is None
+        else []
+        if isinstance(cues, np.ndarray)
+        else [(_whole(c["position"]), c["label"]) for c in cues]
+    )
     with tempfile.TemporaryDirectory() as d:
         path = Path(d) / "case.wav"
-        files.write_wav(path, sigs, sample_format, tags)
+        files.write_wav(path, sigs, sample_format, tags, marks)
         return path.read_bytes().hex()
 
 
@@ -256,6 +266,13 @@ def _wav_record(sigs: list[Any]) -> dict[str, Any]:
         "sample_rate": sigs[0].sample_rate,
         "units": sigs[0].units,
     }
+
+
+def _whole(x: Any) -> int:
+    """A JSON number that must be a whole number, as an ``int``."""
+    if float(x) != int(float(x)):
+        raise ValueError(f"{x} is not a whole number")
+    return int(float(x))
 
 
 def _hex(data: Any) -> bytes:
