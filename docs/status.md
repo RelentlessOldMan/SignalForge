@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **WAV cue regions**: `ltxt` subchunks of `LIST`/`adtl`, which give a cue point a length in
-   frames (a region), read by `read_wav_cues` and written by `write_wav` for cues given a
-   length. Needs an ADR: the return shape once a cue may have a length (a third field, 0 for a
-   plain point?), whether the `ltxt` purpose, country, language, dialect, code page and text are
-   kept or checked, what a second `ltxt` for one ID means, and that a region must end within the
-   data. Expected values: `struct`-packed `ltxt` subchunks from the `adtl` layout, the PCM files
-   cross-checked with the `wave` module.
+1. **Multi-channel SigMF recordings**: `core:num_channels` greater than 1, samples interleaved
+   by channel, read as one signal per channel and written from a list of signals. Needs an ADR:
+   the API shape (a new `read_sigmf_channels` / `write_sigmf` overload, or a list from the
+   existing reader), how annotations and captures apply to channels, and what is rejected (a
+   sample count not a multiple of the channels, mixed channel lengths or rates on write).
+   Expected values: `struct`-packed interleaved samples and hand-written metadata, implemented
+   from the SigMF description (not copied: it is CC-BY-SA).
 
 ## Built
 
@@ -977,6 +977,16 @@ Updated with every chunk of work. Dates are absolute.
   cross-checked with the `wave` module.
   Python 3658 passed, 2 skipped; .NET 3053 passed; conformance 1885/1885 in both. Version
   2026.11.14.10.
+- 2026-11-14: WAV cue regions (ADR 0095): a cue is now (position, length, label), length 0 for a
+  plain point, in `read_wav_cues` and `write_wav` (C# `(long Position, long Length, string
+  Label)`), replacing ADR 0094's pairs. A non-zero length is written as a 20-byte `ltxt`
+  (purpose `rgn `, locale fields 0, no text) after the cue's `labl`; on read an `ltxt` gives the
+  length, its purpose, locale and text ignored. Rejected: an `ltxt` under 20 bytes, one with no
+  cue point or a second for one ID, and a region running past the frames (on write too). The
+  generator's `note_ltxt_skipped` file became `note_skipped`, since `ltxt` is now read; it
+  gained 6 write cases and 11 read files.
+  Python 3681 passed, 2 skipped; .NET 3075 passed; conformance 1902/1902 in both. Version
+  2026.11.14.11.
 
 ## Not built
 
@@ -984,7 +994,7 @@ Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, el
 (weights for the classic Lomb-Scargle form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes, multi-channel and
-multi-capture SigMF recordings, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels), plotting, CLI,
+multi-capture SigMF recordings, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.
 
 ## Lessons

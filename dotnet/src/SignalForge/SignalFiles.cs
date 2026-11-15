@@ -496,7 +496,7 @@ public static class SignalFiles
     /// <param name="info">Text tags, as for the multi-channel overload.</param>
     /// <param name="cues">Cue points, as for the multi-channel overload.</param>
     public static void WriteWav(string path, Signal<double> signal, string sampleFormat = "f32",
-        IEnumerable<KeyValuePair<string, string>>? info = null, IReadOnlyList<(long Position, string Label)>? cues = null)
+        IEnumerable<KeyValuePair<string, string>>? info = null, IReadOnlyList<(long Position, long Length, string Label)>? cues = null)
     {
         ArgumentNullException.ThrowIfNull(signal);
         WriteWav(path, [signal], sampleFormat, info, cues);
@@ -510,10 +510,11 @@ public static class SignalFiles
     /// <param name="info">Text tags in order, written as a <c>LIST</c>/<c>INFO</c> chunk after the data: IDs of four
     /// characters from A-Z and 0-9, each once, to printable ASCII text (ADR 0091). None or empty writes no chunk.</param>
     /// <param name="cues">Cue points in order, written as a <c>cue </c> chunk after the data, with a <c>LIST</c>/<c>adtl</c>
-    /// chunk for the non-empty labels: each a position in frames from 0 to the length, and a printable ASCII label
-    /// (ADR 0094). None or empty writes no chunk.</param>
+    /// chunk for the non-empty labels and non-zero lengths: each a position in frames, a length in frames (0 for a point;
+    /// position + length at most the signal length) and a printable ASCII label (ADR 0094, 0095). None or empty writes
+    /// no chunk.</param>
     public static void WriteWav(string path, IReadOnlyList<Signal<double>> channels, string sampleFormat = "f32",
-        IEnumerable<KeyValuePair<string, string>>? info = null, IReadOnlyList<(long Position, string Label)>? cues = null)
+        IEnumerable<KeyValuePair<string, string>>? info = null, IReadOnlyList<(long Position, long Length, string Label)>? cues = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
         byte[] tags = WavInfoChunk(info);
@@ -601,9 +602,9 @@ public static class SignalFiles
         File.WriteAllBytes(path, ms.ToArray());
     }
 
-    /// <summary>The <c>cue </c> chunk and <c>LIST</c>/<c>adtl</c> labels for <paramref name="cues"/>, or nothing when it
-    /// is empty.</summary>
-    private static byte[] WavCueChunks(IReadOnlyList<(long Position, string Label)>? cues, int frames)
+    /// <summary>The <c>cue </c> chunk and <c>LIST</c>/<c>adtl</c> labels and regions for <paramref name="cues"/>, or
+    /// nothing when it is empty.</summary>
+    private static byte[] WavCueChunks(IReadOnlyList<(long Position, long Length, string Label)>? cues, int frames)
     {
         if (cues is null || cues.Count == 0)
             return [];
@@ -612,10 +613,12 @@ public static class SignalFiles
         Span<byte> point = stackalloc byte[24];
         for (int i = 0; i < cues.Count; i++)
         {
-            (long pos, string label) = cues[i];
+            (long pos, long length, string label) = cues[i];
             uint id = (uint)(i + 1);
             if (pos < 0 || pos > frames)
                 throw new ArgumentException($"cue position {pos} must be a whole number from 0 to {frames}", nameof(cues));
+            if (length < 0 || length > frames - pos)
+                throw new ArgumentException($"cue length {length} must be a whole number from 0 to {frames - pos}", nameof(cues));
             if (label is null || label.Any(c => c is < ' ' or > '~'))
                 throw new ArgumentException($"cue label '{label}' must be printable ASCII text", nameof(cues));
             BinaryPrimitives.WriteUInt32LittleEndian(point, id);
@@ -625,12 +628,21 @@ public static class SignalFiles
             BinaryPrimitives.WriteUInt32LittleEndian(point[16..], 0);
             BinaryPrimitives.WriteUInt32LittleEndian(point[20..], (uint)pos);
             points.Write(point);
-            if (label.Length == 0)
-                continue;
-            byte[] body = new byte[4 + label.Length + 1];
-            BinaryPrimitives.WriteUInt32LittleEndian(body, id);
-            System.Text.Encoding.ASCII.GetBytes(label).CopyTo(body, 4);
-            labels.Write(RiffChunk("labl"u8, body));
+            if (label.Length > 0)
+            {
+                byte[] body = new byte[4 + label.Length + 1];
+                BinaryPrimitives.WriteUInt32LittleEndian(body, id);
+                System.Text.Encoding.ASCII.GetBytes(label).CopyTo(body, 4);
+                labels.Write(RiffChunk("labl"u8, body));
+            }
+            if (length > 0)
+            {
+                byte[] body = new byte[20]; // ID, length, purpose; country, language, dialect, code page 0
+                BinaryPrimitives.WriteUInt32LittleEndian(body, id);
+                BinaryPrimitives.WriteUInt32LittleEndian(body.AsSpan(4), (uint)length);
+                "rgn "u8.CopyTo(body.AsSpan(8));
+                labels.Write(RiffChunk("ltxt"u8, body));
+            }
         }
         byte[] count = new byte[4];
         BinaryPrimitives.WriteUInt32LittleEndian(count, (uint)cues.Count);
@@ -711,12 +723,14 @@ public static class SignalFiles
     }
 
     /// <summary>Reads the cue points of a WAV file's <c>cue </c> chunk, in its order, with their labels from
-    /// <c>LIST</c>/<c>adtl</c> <c>labl</c> subchunks (conventions: Signal files, WAV; ADR 0094).</summary>
+    /// <c>LIST</c>/<c>adtl</c> <c>labl</c> subchunks and their lengths from <c>ltxt</c> subchunks (conventions: Signal
+    /// files, WAV; ADR 0094, 0095).</summary>
     /// <param name="path">The file to read.</param>
-    /// <returns>Each point's position in frames from the start of the data, and its label (empty for none).</returns>
+    /// <returns>Each point's position in frames from the start of the data, its length in frames (0 for none) and its
+    /// label (empty for none).</returns>
     /// <exception cref="ArgumentException">The file is not a RIFF WAVE file with <c>fmt </c> and <c>data</c> chunks, or
-    /// its cue points or labels break the rules of ADR 0094.</exception>
-    public static IReadOnlyList<(long Position, string Label)> ReadWavCues(string path)
+    /// its cue points, labels or regions break the rules of ADR 0094 and 0095.</exception>
+    public static IReadOnlyList<(long Position, long Length, string Label)> ReadWavCues(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
         byte[] raw = File.ReadAllBytes(path);
@@ -728,6 +742,7 @@ public static class SignalFiles
         long? dataBytes = null;
         OrderedDictionary<uint, long>? points = null;
         var labels = new Dictionary<uint, string>();
+        var lengths = new Dictionary<uint, long>();
         foreach ((string id, int start, int end) in RiffWalk(raw, 12, raw.Length, "chunk", nameof(path)))
         {
             if (id == "fmt " && block is null)
@@ -764,6 +779,14 @@ public static class SignalFiles
             {
                 foreach ((string sid, int s, int e) in RiffWalk(raw, start + 4, end, "adtl subchunk", nameof(path)))
                 {
+                    if (sid == "ltxt")
+                    {
+                        if (e - s < 20)
+                            throw Bad("an ltxt subchunk is shorter than 20 bytes");
+                        if (!lengths.TryAdd(U32(s), U32(s + 4)))
+                            throw Bad($"cue {U32(s)} has two ltxt subchunks");
+                        continue;
+                    }
                     if (sid != "labl")
                         continue;
                     if (e - s < 4)
@@ -785,10 +808,14 @@ public static class SignalFiles
         points ??= [];
         if (labels.Keys.Any(k => !points.ContainsKey(k)))
             throw Bad("a label names a cue ID with no cue point");
+        if (lengths.Keys.Any(k => !points.ContainsKey(k)))
+            throw Bad("an ltxt names a cue ID with no cue point");
         long frames = dataBytes.Value / block.Value;
         if (points.Values.Any(p => p > frames))
             throw Bad($"a cue point is past the last of {frames} frames");
-        return [.. points.Select(kv => (kv.Value, labels.GetValueOrDefault(kv.Key, "")))];
+        if (lengths.Any(kv => points[kv.Key] + kv.Value > frames))
+            throw Bad($"a cue region runs past the last of {frames} frames");
+        return [.. points.Select(kv => (kv.Value, lengths.GetValueOrDefault(kv.Key), labels.GetValueOrDefault(kv.Key, "")))];
     }
 
     /// <summary>(id, body start, body end) of each chunk from <paramref name="pos"/> until fewer than 8 bytes are left.</summary>

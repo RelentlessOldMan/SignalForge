@@ -663,13 +663,13 @@ public static class Conformance
             _ => [.. ((List<object?>)info).Cast<Dictionary<string, object?>>()
                 .Select(d => new KeyValuePair<string, string>((string)d["id"]!, (string)d["text"]!))],
         };
-        // {position, label} records, likewise.
-        List<(long Position, string Label)>? marks = cues switch
+        // {position, length, label} records, likewise.
+        List<(long Position, long Length, string Label)>? marks = cues switch
         {
             null => null,
             double[] { Length: 0 } => [],
             _ => [.. ((List<object?>)cues).Cast<Dictionary<string, object?>>()
-                .Select(d => (Whole((double)d["position"]!), (string)d["label"]!))],
+                .Select(d => (Whole((double)d["position"]!), Whole((double)d["length"]!), (string)d["label"]!))],
         };
         return WriteWavOp(rows, rate, format, tags, marks);
     }
@@ -683,7 +683,7 @@ public static class Conformance
             throw new InvalidDataException("file must be a bare file name in vectors/files");
         string path = Path.Combine(VectorsDir(), "..", "files", name);
         return () => SignalFiles.ReadWavCues(path)
-            .Select(c => (object?)new Dictionary<string, object?> { ["position"] = (double)c.Position, ["label"] = c.Label }).ToList();
+            .Select(c => (object?)new Dictionary<string, object?> { ["position"] = (double)c.Position, ["length"] = (double)c.Length, ["label"] = c.Label }).ToList();
     }
 
     private static Func<object?> ReadWavInfoOp(string name)
@@ -696,7 +696,7 @@ public static class Conformance
     }
 
     private static Func<object?> WriteWavOp(double[][] rows, double rate, string format,
-        List<KeyValuePair<string, string>>? tags, List<(long Position, string Label)>? cues) => () =>
+        List<KeyValuePair<string, string>>? tags, List<(long Position, long Length, string Label)>? cues) => () =>
     {
         string path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".wav");
         try

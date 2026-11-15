@@ -8,7 +8,8 @@ tools' layouts (extensible, extra chunks, no fact chunk) are written here as lit
 LIST/INFO text tags (ADR 0091) are literal byte strings packed with struct; a tagged PCM file must
 still give the wave module the same frames as the untagged one. Cue points and their labels
 (ADR 0094) are cue and LIST/adtl chunks packed with struct from the 24-byte cue point layout; a
-PCM file with cues must also give the wave module the same frames.
+PCM file with cues must also give the wave module the same frames. Cue regions (ADR 0095) are
+20-byte ltxt subchunks packed the same way.
 
 Run from the repo root: python vectors/generators/wav.py [--check]
 With --check it writes nothing and exits 1 unless every file matches what it would write.
@@ -385,13 +386,22 @@ def adtl_chunk(labels):
                                              for i, t in labels))
 
 
+def ltxt(cue_id, length, purpose=b"rgn ", locale=(0, 0, 0, 0), text=b""):
+    """An ltxt subchunk: cue ID, length, purpose, country, language, dialect, code page, text."""
+    return chunk(b"ltxt", struct.pack("<II4s4H", cue_id, length, purpose, *locale) + text)
+
+
 def cue_bytes(cues):
-    """The chunks write_wav adds for (position, label) cues: IDs 1, 2, ... in order."""
+    """The chunks write_wav adds for (position, length, label) cues: IDs 1, 2, ... in order, and
+    per cue its labl (non-empty label) then its ltxt (non-zero length)."""
     if not cues:
         return b""
-    out = cue_chunk([cue_point(i, p) for i, (p, _) in enumerate(cues, 1)])
-    labels = [(i, t.encode("ascii")) for i, (_, t) in enumerate(cues, 1) if t]
-    return out + (adtl_chunk(labels) if labels else b"")
+    out = cue_chunk([cue_point(i, p) for i, (p, _, _) in enumerate(cues, 1)])
+    subs = b""
+    for i, (_, n, t) in enumerate(cues, 1):
+        subs += (chunk(b"labl", struct.pack("<I", i) + t.encode("ascii") + b"\0") if t else b"")
+        subs += ltxt(i, n) if n else b""
+    return out + (chunk(b"LIST", b"adtl" + subs) if subs else b"")
 
 
 def with_chunks(base, extra):
@@ -405,7 +415,7 @@ def case_cues(name, channels, rate, fmt, cues, why, tags=()):
         with wave.open(io.BytesIO(expected)) as w:
             assert w.readframes(w.getnframes()) == frames(channels, fmt), name
     args = {"channels": channels, "sample_rate": rate, "sample_format": fmt,
-            "cues": [{"position": p, "label": t} for p, t in cues]}
+            "cues": [{"position": p, "length": n, "label": t} for p, n, t in cues]}
     if tags:
         args["info"] = [{"id": i.decode(), "text": t.decode()} for i, t in tags]
     cases.append({"id": f"write_wav.{name}", "op": "write_wav", "args": args,
@@ -415,35 +425,44 @@ def case_cues(name, channels, rate, fmt, cues, why, tags=()):
 def bad_cues(name, cues, why):
     cases.append({"id": f"write_wav.{name}", "op": "write_wav",
                   "args": {"channels": [[0.0, 0.0]], "sample_rate": 1000, "sample_format": "i16",
-                           "cues": [{"position": p, "label": t} for p, t in cues]},
+                           "cues": [{"position": p, "length": n, "label": t} for p, n, t in cues]},
                   "error": "invalid_argument", "source": why})
 
 
-case_cues("cues_i16", [X[:4]], 8000, "i16", [(0, "start"), (2, "burst")],
+case_cues("cues_i16", [X[:4]], 8000, "i16", [(0, 0, "start"), (2, 0, "burst")],
           "cue size 52 (4 + 2 x 24), IDs 1 and 2, play order = sample offset; LIST/adtl with labl "
           "sizes 10 (4 + 5 + NUL) and 10; the wave module still reads the frames")
-case_cues("cues_unlabelled", [X[:2]], 1000, "i16", [(1, "")], "no label: a cue chunk and no LIST/adtl")
-case_cues("cues_some_labels", [X[:4]], 1000, "i16", [(3, ""), (0, "a"), (3, "")],
+case_cues("cues_unlabelled", [X[:2]], 1000, "i16", [(1, 0, "")], "no label or length: a cue chunk and no LIST/adtl")
+case_cues("cues_some_labels", [X[:4]], 1000, "i16", [(3, 0, ""), (0, 0, "a"), (3, 0, "")],
           "only the labelled point gets a labl, keyed by its ID 2; positions in the order given, "
           "a position may repeat")
-case_cues("cues_at_end", [X[:3], X[3:]], 44100, "f32", [(3, "end")],
+case_cues("cues_at_end", [X[:3], X[3:]], 44100, "f32", [(3, 0, "end")],
           "a position equal to the length is the end of the data; after fmt, fact and data")
-case_cues("cues_u8_odd_data", [[0.5, -0.5, 0.0]], 8000, "u8", [(1, "ab")],
+case_cues("cues_u8_odd_data", [[0.5, -0.5, 0.0]], 8000, "u8", [(1, 0, "ab")],
           "after the data pad byte; labl size 7 (4 + 2 + NUL), padded to 8")
-case_cues("cues_and_info", [X[:2]], 1000, "i16", [(1, "mark")],
+case_cues("cues_and_info", [X[:2]], 1000, "i16", [(1, 0, "mark")],
           "cue, then LIST/adtl, then LIST/INFO", tags=[(b"INAM", b"tone")])
 case_cues("cues_empty", [X[:2]], 1000, "i16", [], "no cues: the bytes of a plain file")
-bad_cues("cue_negative", [(-1, "")], "a position is at least 0")
-bad_cues("cue_past_end", [(3, "")], "2 samples: a position is at most 2")
-bad_cues("cue_label_non_ascii", [(0, "café")], "labels are printable ASCII: no e-acute")
-bad_cues("cue_label_newline", [(0, "a\nb")], "a line feed is not printable")
-bad_cues("cue_label_nul", [(0, "a\u0000b")], "a NUL inside the label would end it early")
+bad_cues("cue_negative", [(-1, 0, "")], "a position is at least 0")
+bad_cues("cue_past_end", [(3, 0, "")], "2 samples: a position is at most 2")
+bad_cues("cue_label_non_ascii", [(0, 0, "café")], "labels are printable ASCII: no e-acute")
+bad_cues("cue_label_newline", [(0, 0, "a\nb")], "a line feed is not printable")
+bad_cues("cue_label_nul", [(0, 0, "a\u0000b")], "a NUL inside the label would end it early")
+case_cues("region", [X[:4]], 1000, "i16", [(1, 2, "")],
+          "a region with no label: LIST/adtl holds one ltxt of size 20 (ID 1, length 2, rgn , zeros)")
+case_cues("region_labelled", [X[:4]], 1000, "i16", [(0, 4, "all"), (2, 0, "mid"), (3, 1, "")],
+          "per cue its labl then its ltxt: labl 1, ltxt 1, labl 2, ltxt 3; a region may run to the end")
+case_cues("region_f32", [X[:3], X[3:]], 44100, "f32", [(0, 3, "x")], "a stereo float region of every frame")
+bad_cues("region_negative", [(0, -1, "")], "a length is at least 0")
+bad_cues("region_past_end", [(1, 2, "")], "2 samples: position 1 + length 2 runs past the end")
+bad_cues("region_from_end", [(2, 1, "")], "a region cannot start at the end")
 
-cue_recs = []  # (name, bytes, expected [(position, label)] or None, why)
+cue_recs = []  # (name, bytes, expected [(position, length, label)] or None, why)
 
 
 def good_cues(name, data, cues, why):
-    cue_recs.append((f"cues_{name}", data, cues, why))
+    """Expected cues as (position, label) pairs, length 0, or (position, length, label)."""
+    cue_recs.append((f"cues_{name}", data, [c if len(c) == 3 else (c[0], 0, c[1]) for c in cues], why))
 
 
 def bad_cues_file(name, data, why):
@@ -456,7 +475,7 @@ def labl(cue_id, body):
 
 stereo = fmt_chunk(1, 2, 1000, 16)  # with the 6 bytes of i16: 1 frame of 4 bytes, 2 left over
 one = cue_chunk([cue_point(1, 0)])
-good_cues("as_written", with_chunks(plain, cue_bytes([(0, "start"), (3, "end")])),
+good_cues("as_written", with_chunks(plain, cue_bytes([(0, 0, "start"), (3, 0, "end")])),
           [(0, "start"), (3, "end")], "the chunks write_wav adds; 3 frames, so 3 is the end")
 good_cues("none", plain, [], "no cue chunk: no cues")
 good_cues("zero_points", riff([pcm, data, cue_chunk([])]), [], "a cue chunk with a count of 0")
@@ -479,9 +498,8 @@ good_cues("label_empty_body", riff([pcm, data, one, chunk(b"LIST", b"adtl" + lab
 good_cues("label_latin1", riff([pcm, data, one, adtl_chunk([(1, b"caf\xe9")])]),
           [(0, "café")], "labels are read byte for byte as Latin-1")
 note = chunk(b"note", struct.pack("<I", 1) + b"a note\0")
-ltxt = chunk(b"ltxt", struct.pack("<II4sHHHH", 1, 2, b"rgn ", 0, 0, 0, 0))
-good_cues("note_ltxt_skipped", riff([pcm, data, one, chunk(b"LIST", b"adtl" + note + ltxt + labl(1, b"L\0"))]),
-          [(0, "L")], "note and ltxt subchunks are skipped, even ones naming the same ID")
+good_cues("note_skipped", riff([pcm, data, one, chunk(b"LIST", b"adtl" + note + labl(1, b"L\0"))]),
+          [(0, "L")], "a note subchunk is skipped, even one naming the same ID")
 good_cues("two_adtl_lists", riff([pcm, data, cue_chunk([cue_point(1, 0), cue_point(2, 1)]),
                                   adtl_chunk([(1, b"a")]), adtl_chunk([(2, b"b")])]),
           [(0, "a"), (1, "b")], "labels from every LIST/adtl")
@@ -489,7 +507,23 @@ good_cues("frames_round_down", riff([stereo, data, cue_chunk([cue_point(1, 1)])]
           "stereo i16: 6 data bytes are 1 whole frame, so 1 is the end")
 good_cues("with_info", riff([pcm, data, cue_chunk([cue_point(1, 2)]), info_chunk([(b"INAM", b"t")])]),
           [(2, "")], "a LIST/INFO is not read for labels")
-bad_cues_file("not_wave", with_chunks(plain, cue_bytes([(0, "")])).replace(b"WAVE", b"AVI ", 1),
+good_cues("region_as_written", with_chunks(plain, cue_bytes([(0, 3, "all"), (1, 1, "")])),
+          [(0, 3, "all"), (1, 1, "")], "labl then ltxt per cue, as write_wav writes them")
+good_cues("region_any_purpose", riff([pcm, data, one, chunk(b"LIST", b"adtl" + ltxt(
+          1, 2, b"mark", (1, 9, 1, 437), b"region text\0"))]), [(0, 2, "")],
+          "the purpose, locale fields and text of an ltxt are ignored, and give no label")
+good_cues("region_zero", riff([pcm, data, one, chunk(b"LIST", b"adtl" + ltxt(1, 0))]), [(0, "")],
+          "an ltxt of length 0 is a plain point")
+good_cues("region_before_label", riff([pcm, data, cue_chunk([cue_point(7, 1)]),
+                                       chunk(b"LIST", b"adtl" + ltxt(7, 2) + labl(7, b"b\0"))]),
+          [(1, 2, "b")], "an ltxt before its labl; matched by ID 7; 1 + 2 is the end of 3 frames")
+good_cues("region_other_list", riff([pcm, data, one, adtl_chunk([(1, b"a")]),
+                                     chunk(b"LIST", b"adtl" + ltxt(1, 1))]),
+          [(0, 1, "a")], "label and length from different LIST/adtl chunks")
+good_cues("region_stereo_round_down", riff([stereo, data, cue_chunk([cue_point(1, 0)]),
+                                            chunk(b"LIST", b"adtl" + ltxt(1, 1))]),
+          [(0, 1, "")], "stereo i16 with 6 data bytes: 1 frame, so a region of 1 from 0 fits")
+bad_cues_file("not_wave", with_chunks(plain, cue_bytes([(0, 0, "")])).replace(b"WAVE", b"AVI ", 1),
               "a RIFF file that is not WAVE")
 bad_cues_file("no_fmt", riff([data, one]), "no fmt chunk to give the block align")
 bad_cues_file("no_data", riff([pcm, one]), "no data chunk to give the frames")
@@ -519,6 +553,16 @@ bad_cues_file("labl_short", riff([pcm, data, one, chunk(b"LIST", b"adtl" + chunk
 bad_cues_file("labl_past_list", riff([pcm, data, one,
                                       chunk(b"LIST", b"adtl" + b"labl" + struct.pack("<I", 20) + b"\1\0\0\0")]),
               "the labl subchunk says 20 bytes, its LIST has 4 left")
+bad_cues_file("ltxt_short", riff([pcm, data, one, chunk(b"LIST", b"adtl" + chunk(b"ltxt", struct.pack("<II", 1, 1)))]),
+              "an ltxt of 8 bytes is not the 20 of its fixed fields")
+bad_cues_file("ltxt_no_point", riff([pcm, data, one, chunk(b"LIST", b"adtl" + ltxt(2, 1))]),
+              "an ltxt for ID 2, which has no cue point")
+bad_cues_file("ltxt_twice", riff([pcm, data, one, chunk(b"LIST", b"adtl" + ltxt(1, 1) + ltxt(1, 2))]),
+              "two ltxt subchunks for ID 1")
+bad_cues_file("region_past_end", riff([pcm, data, cue_chunk([cue_point(1, 2)]), chunk(b"LIST", b"adtl" + ltxt(1, 2))]),
+              "3 frames: position 2 + length 2 runs past the end")
+bad_cues_file("region_past_end_stereo", riff([stereo, data, one, chunk(b"LIST", b"adtl" + ltxt(1, 2))]),
+              "stereo i16 with 6 data bytes has 1 frame: a region of 2 runs past it")
 for name, raw, expected, _ in cue_recs:
     if expected is not None and pcm in raw:  # the cue chunks leave the mono i16 audio readable
         with wave.open(io.BytesIO(raw)) as w:
@@ -527,7 +571,8 @@ for name, raw, expected, _ in cue_recs:
 for name, _, expected, why in cue_recs:
     c = {"id": f"read_wav_cues.{name}", "op": "read_wav_cues", "args": {"file": f"{name}.wav"}}
     c.update({"error": "invalid_argument", "source": why} if expected is None
-             else {"expected": [{"position": p, "label": t} for p, t in expected], "source": why})
+             else {"expected": [{"position": p, "length": n, "label": t} for p, n, t in expected],
+                   "source": why})
     cases.append(c)
 
 doc = {

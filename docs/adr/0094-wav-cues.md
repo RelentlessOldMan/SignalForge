@@ -1,6 +1,7 @@
 # ADR 0094: WAV cue points
 
-Status: accepted, 2026-11-14
+Status: accepted, 2026-11-14. Its (position, label) cue shape is replaced by (position, length,
+label) in [ADR 0095](0095-wav-cue-regions.md), which also reads and writes `ltxt`.
 
 ## Context
 

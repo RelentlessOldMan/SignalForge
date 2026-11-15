@@ -3,7 +3,8 @@ using Xunit;
 
 namespace SignalForge.Tests;
 
-/// <summary>WAV cue points and their <c>LIST</c>/<c>adtl</c> labels (conventions: Signal files, WAV; ADR 0094).</summary>
+/// <summary>WAV cue points, their <c>LIST</c>/<c>adtl</c> labels and regions (conventions: Signal files, WAV;
+/// ADR 0094, 0095).</summary>
 public sealed class WavCuesTests : IDisposable
 {
     private static readonly double[] Samples = [0.5, -0.25, 0.0, 0.125];
@@ -18,7 +19,7 @@ public sealed class WavCuesTests : IDisposable
     public void RoundTripKeepsOrderPositionsAndLabels()
     {
         string printable = new([.. Enumerable.Range(0x20, 0x5F).Select(c => (char)c)]);
-        (long, string)[] cues = [(4, "end"), (0, ""), (2, printable), (2, "again"), (1, "")];
+        (long, long, string)[] cues = [(4, 0, "end"), (0, 4, ""), (2, 0, printable), (2, 2, "again"), (1, 1, "")];
         string path = PathOf("c.wav");
         SignalFiles.WriteWav(path, Tone, "i16", cues: cues);
         Assert.Equal(cues, SignalFiles.ReadWavCues(path));
@@ -34,7 +35,7 @@ public sealed class WavCuesTests : IDisposable
     {
         var odd = new Signal<double>(Samples.AsSpan()[..3], 8000);
         KeyValuePair<string, string>[] tags = [new("INAM", "tone")];
-        (long, string)[] cues = [(1, "one"), (3, "")];
+        (long, long, string)[] cues = [(1, 2, "one"), (3, 0, "")];
         SignalFiles.WriteWav(PathOf("plain.wav"), [odd, odd], format, tags);
         SignalFiles.WriteWav(PathOf("marked.wav"), [odd, odd], format, tags, cues);
         var a = SignalFiles.ReadWav(PathOf("plain.wav"));
@@ -57,18 +58,36 @@ public sealed class WavCuesTests : IDisposable
     }
 
     [Theory]
-    [InlineData(-1, "")]
-    [InlineData(5, "")]
-    [InlineData(long.MaxValue, "")]
-    [InlineData(0, "café")]
-    [InlineData(0, "\t")]
-    [InlineData(0, null)]
-    public void BadCuesAreRejected(long position, string? label)
+    [InlineData(-1, 0, "")]
+    [InlineData(5, 0, "")]
+    [InlineData(long.MaxValue, 0, "")]
+    [InlineData(0, -1, "")]
+    [InlineData(1, 4, "")]
+    [InlineData(4, 1, "")]
+    [InlineData(1, long.MaxValue, "")]
+    [InlineData(0, 0, "caf\u00e9")]
+    [InlineData(0, 0, "\t")]
+    [InlineData(0, 0, null)]
+    public void BadCuesAreRejected(long position, long length, string? label)
     {
         var e = Assert.Throws<ArgumentException>(() =>
-            SignalFiles.WriteWav(PathOf("c.wav"), Tone, "i16", cues: [(position, label!)]));
+            SignalFiles.WriteWav(PathOf("c.wav"), Tone, "i16", cues: [(position, length, label!)]));
         Assert.Equal("cues", e.ParamName);
         Assert.False(File.Exists(PathOf("c.wav")));
+    }
+
+    [Fact]
+    public void ARegionIsOneLtxtAfterItsLabl()
+    {
+        SignalFiles.WriteWav(PathOf("r.wav"), Tone, "i16", cues: [(1, 3, "ab")]);
+        byte[] raw = File.ReadAllBytes(PathOf("r.wav"));
+        int at = raw.AsSpan().IndexOf("adtl"u8);
+        byte[] want =
+        [
+            .. "adtllabl"u8, 7, 0, 0, 0, 1, 0, 0, 0, .. "ab"u8, 0, 0,
+            .. "ltxt"u8, 20, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, .. "rgn "u8, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+        Assert.Equal(want, raw[at..]);
     }
 
     [Fact]

@@ -335,12 +335,12 @@ def write_wav(
     channels: Signal | Sequence[Signal],
     sample_format: str = "f32",
     info: Mapping[str, str] | None = None,
-    cues: Sequence[tuple[int, str]] | None = None,
+    cues: Sequence[tuple[int, int, str]] | None = None,
 ) -> None:
     """Write real signals, one per channel, as a PCM or IEEE float WAV file (conventions: Signal
     files, WAV). Only the samples, the sample rate, the ``info`` text tags (four-character IDs
     to printable ASCII, written as a ``LIST``/``INFO`` chunk after the data; ADR 0091) and the
-    ``cues``, (position in frames, label) pairs (ADR 0094), are stored."""
+    ``cues``, (position, length, label) triples in frames (ADR 0094, 0095), are stored."""
     tags = _wav_info_chunk(info)
     if not isinstance(sample_format, str) or sample_format not in _WAV_BITS:
         raise ValueError(f"unknown WAV sample format {sample_format!r}")
@@ -396,44 +396,53 @@ def _wav_info_chunk(info: Mapping[str, str] | None) -> bytes:
 _INFO_ID = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 
-def _wav_cue_chunks(cues: Sequence[tuple[int, str]] | None, frames: int) -> bytes:
-    """The ``cue `` chunk and ``LIST``/``adtl`` labels for ``cues``, or nothing when it is empty."""
+def _wav_cue_chunks(cues: Sequence[tuple[int, int, str]] | None, frames: int) -> bytes:
+    """The ``cue `` chunk and ``LIST``/``adtl`` labels and regions for ``cues``, or nothing when it
+    is empty."""
     if cues is None:
         return b""
     if isinstance(cues, (str, bytes, Mapping)) or not isinstance(cues, Sequence):
-        raise ValueError("cues must be a sequence of (position, label) pairs")
+        raise ValueError("cues must be a sequence of (position, length, label) triples")
     points, labels = b"", b""
     for i, cue in enumerate(cues, 1):
-        if not isinstance(cue, (tuple, list)) or len(cue) != 2:
-            raise ValueError(f"cues[{i - 1}] must be a (position, label) pair")
-        pos, label = cue
-        if (
-            isinstance(pos, bool)
-            or not isinstance(pos, (int, np.integer))
-            or not 0 <= pos <= frames
-        ):
+        if not isinstance(cue, (tuple, list)) or len(cue) != 3:
+            raise ValueError(f"cues[{i - 1}] must be a (position, length, label) triple")
+        pos, length, label = cue
+        if not _is_whole(pos) or not 0 <= pos <= frames:
             raise ValueError(f"cue position {pos!r} must be a whole number from 0 to {frames}")
+        if not _is_whole(length) or not 0 <= length <= frames - pos:
+            raise ValueError(
+                f"cue length {length!r} must be a whole number from 0 to {frames - pos}"
+            )
         if not isinstance(label, str) or any(not " " <= c <= "~" for c in label):
             raise ValueError(f"cue label {label!r} must be printable ASCII text")
         points += struct.pack("<II4sIII", i, int(pos), b"data", 0, 0, int(pos))
         if label:
             labels += _chunk(b"labl", struct.pack("<I", i) + label.encode("ascii") + b"\0")
+        if length:
+            labels += _chunk(b"ltxt", struct.pack("<II4s4H", i, int(length), b"rgn ", 0, 0, 0, 0))
     if not points:
         return b""
     out = _chunk(b"cue ", struct.pack("<I", len(cues)) + points)
     return out + (_chunk(b"LIST", b"adtl" + labels) if labels else b"")
 
 
-def read_wav_cues(path: str | os.PathLike[str]) -> list[tuple[int, str]]:
-    """Read the cue points of a WAV file's ``cue `` chunk, in its order, as (position in frames,
-    label) pairs, the labels from ``LIST``/``adtl`` ``labl`` subchunks, ``""`` for none
-    (conventions: Signal files, WAV; ADR 0094)."""
+def _is_whole(x: object) -> bool:
+    return isinstance(x, (int, np.integer)) and not isinstance(x, bool)
+
+
+def read_wav_cues(path: str | os.PathLike[str]) -> list[tuple[int, int, str]]:
+    """Read the cue points of a WAV file's ``cue `` chunk, in its order, as (position, length,
+    label) triples in frames, the labels from ``LIST``/``adtl`` ``labl`` subchunks (``""`` for
+    none) and the lengths from ``ltxt`` subchunks (0 for none) (conventions: Signal files, WAV;
+    ADR 0094, 0095)."""
     raw = Path(os.fspath(path)).read_bytes()
     if len(raw) < 12 or raw[:4] != b"RIFF" or raw[8:12] != b"WAVE":
         raise ValueError("not a RIFF WAVE file")
     block = frames = None
     points: dict[int, int] | None = None
     labels: dict[int, str] = {}
+    lengths: dict[int, int] = {}
     for cid, start, end in _riff_walk(raw, 12, len(raw), "chunk"):
         if cid == b"fmt " and block is None:
             if end - start < 16:
@@ -461,6 +470,14 @@ def read_wav_cues(path: str | os.PathLike[str]) -> list[tuple[int, str]]:
                 points[cue_id] = offset
         elif cid == b"LIST" and end - start >= 4 and raw[start : start + 4] == b"adtl":
             for sid, s, e in _riff_walk(raw, start + 4, end, "adtl subchunk"):
+                if sid == b"ltxt":
+                    if e - s < 20:
+                        raise ValueError("an ltxt subchunk is shorter than 20 bytes")
+                    cue_id, length = struct.unpack_from("<II", raw, s)
+                    if cue_id in lengths:
+                        raise ValueError(f"cue {cue_id} has two ltxt subchunks")
+                    lengths[cue_id] = length
+                    continue
                 if sid != b"labl":
                     continue
                 if e - s < 4:
@@ -478,9 +495,14 @@ def read_wav_cues(path: str | os.PathLike[str]) -> list[tuple[int, str]]:
     points = points or {}
     if any(cue_id not in points for cue_id in labels):
         raise ValueError("a label names a cue ID with no cue point")
-    if any(offset > frames // block for offset in points.values()):
-        raise ValueError(f"a cue point is past the last of {frames // block} frames")
-    return [(offset, labels.get(cue_id, "")) for cue_id, offset in points.items()]
+    if any(cue_id not in points for cue_id in lengths):
+        raise ValueError("an ltxt names a cue ID with no cue point")
+    n = frames // block
+    if any(offset > n for offset in points.values()):
+        raise ValueError(f"a cue point is past the last of {n} frames")
+    if any(points[cue_id] + length > n for cue_id, length in lengths.items()):
+        raise ValueError(f"a cue region runs past the last of {n} frames")
+    return [(p, lengths.get(c, 0), labels.get(c, "")) for c, p in points.items()]
 
 
 def read_wav_info(path: str | os.PathLike[str]) -> dict[str, str]:
