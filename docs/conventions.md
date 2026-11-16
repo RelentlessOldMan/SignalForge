@@ -1159,6 +1159,12 @@ Decided in [ADR 0010](adr/0010-fir-design-streaming.md). Python: `signalforge.ds
   `convolve(x, h)`. Taps are real, non-empty and finite. The first non-empty chunk fixes the
   filter as real or complex; a chunk of the other kind raises, until `reset()`. An empty chunk
   returns an empty output and changes nothing.
+- **Gammatone** (`gammatone(center_frequency, sample_rate, length, *, order=4,
+  bandwidth_factor=1.019)`, C# `Dsp.Gammatone`, [ADR 0161](adr/0161-gammatone.md)): taps
+  `h[n] = g(n/fs)/G`, `g(t) = t^(N−1)·exp(−2π b ERB(f_c) t)·cos(2π f_c t)` (`t^0 = 1`), `ERB`
+  from `erb_bandwidth`, `G = |Σ g(n/fs) e^(−j 2π f_c n/fs)|` so the gain at `f_c` is 1; `G ≤ 0`
+  is an error. `fs` finite and positive, `0 < f_c < fs/2`, `length ≥ 1`, `order ≥ 1`, `b`
+  finite and positive. **(implemented)**
 
 ## IIR filters
 

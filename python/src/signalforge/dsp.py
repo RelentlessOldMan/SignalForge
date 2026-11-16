@@ -16,6 +16,7 @@ from typing import Any, cast
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from . import units
 from ._checks import count, real
 from .spectral import window as _window
 
@@ -1631,3 +1632,39 @@ def decimate(
 ) -> NDArray[np.complex128] | NDArray[np.float64]:
     """``resample(x, 1, factor, taps)``."""
     return resample(x, 1, factor, taps)
+
+
+def gammatone(
+    center_frequency: float,
+    sample_rate: float,
+    length: int,
+    *,
+    order: int = 4,
+    bandwidth_factor: float = 1.019,
+) -> NDArray[np.float64]:
+    """Sampled gammatone impulse response ``t^(N-1) exp(-2 pi b ERB t) cos(2 pi f_c t)``, scaled
+    to unit gain at ``f_c`` (conventions: FIR filters, Gammatone; ADR 0161)."""
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    fc = real(center_frequency, "center_frequency")
+    if not (math.isfinite(fc) and 0 < fc < fs / 2):
+        raise ValueError("need 0 < center_frequency < sample_rate/2")
+    n = count(length, "length")
+    if n < 1:
+        raise ValueError("length must be at least 1")
+    k = count(order, "order")
+    if k < 1:
+        raise ValueError("order must be at least 1")
+    b = real(bandwidth_factor, "bandwidth_factor")
+    if not (math.isfinite(b) and b > 0):
+        raise ValueError("bandwidth_factor must be finite and positive")
+    erb = float(units.erb_bandwidth(fc))
+    t = np.arange(n) / fs
+    g = t ** (k - 1) * np.exp(-2 * math.pi * b * erb * t) * np.cos(2 * math.pi * fc * t)
+    w = 2 * math.pi * fc / fs
+    idx = np.arange(n)
+    gain = math.hypot(float(np.sum(g * np.cos(w * idx))), float(np.sum(g * np.sin(w * idx))))
+    if not gain > 0:
+        raise ValueError("the response is zero at center_frequency; use a longer length")
+    return np.asarray(g / gain, dtype=np.float64)

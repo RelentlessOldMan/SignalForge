@@ -55,6 +55,7 @@ from .dsp import (
     fir_least_squares,
     fir_lowpass,
     fir_response,
+    gammatone,
     interpolate,
     kaiser_parameters,
     levinson,
@@ -288,7 +289,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.58"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.59"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -423,6 +424,7 @@ __all__ = [
     "fsk_modulate",
     "fsk_ser_theory",
     "gain_compression",
+    "gammatone",
     "gardner_timing",
     "generalized_lomb_scargle",
     "harmonic_centroid",

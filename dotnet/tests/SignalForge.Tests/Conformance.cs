@@ -442,6 +442,8 @@ public static class Conformance
                     a.Has("weights") ? Reals(a.Get("weights")) : null, a.OptInt("grid_density") ?? 16,
                     a.Has("kind") ? FirKindName(a.Get("kind")) : FirKind.Filter),
                 t => Dsp.FirEquiripple(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
+            "gammatone" => Bind((a.D("center_frequency"), a.D("sample_rate"), a.I("length"), a.OptInt("order") ?? 4, a.OptD("bandwidth_factor") ?? 1.019),
+                t => Dsp.Gammatone(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "fir_least_squares" => Bind((a.I("num_taps"), Reals(a.Get("bands")), Reals(a.Get("desired")), a.D("sample_rate"),
                     a.Has("weights") ? Reals(a.Get("weights")) : null,
                     a.Has("kind") ? FirKindName(a.Get("kind")) : FirKind.Filter),

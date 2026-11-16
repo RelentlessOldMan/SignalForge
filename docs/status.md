@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Gammatone impulse response**: `gammatone(center_frequency, sample_rate, length, *,
-   order=4, bandwidth_factor=1.019)`, the sampled `g[n] = t^(N−1)·exp(−2π b ERB(f_c) t)·
-   cos(2π f_c t)` with `t = n/fs`, using `erb_bandwidth` (ADR 0160). Not built yet. Needs an
-   ADR: the normalization (peak gain 1 at `f_c`, measured from the DFT, or unit peak
-   amplitude), the phase, and `f_c < fs/2`. Expected values: the closed form, evaluated in
-   `decimal` at each sample. The tests check that the magnitude response peaks near `f_c` and
-   that the −3 dB width matches the order-4 bandwidth `≈ 0.887·b·ERB` times 2.
+1. **ERB-spaced center frequencies**: `erb_space(min_frequency, max_frequency, count)`, center
+   frequencies equally spaced in ERB rate (ADR 0160), from `min` to `max` inclusive and
+   ascending, in `units`. With `gammatone` (ADR 0161) it makes a gammatone filterbank. Not built
+   yet. Needs an ADR: whether the endpoints are included (yes, like `linspace`), `count = 1`,
+   and the order (ascending; some libraries return descending). Expected values: `E` is
+   linear in the index, and in `decimal` the frequencies are `(10^(E_i/21.4) − 1)·1000/4.37`.
 
 ## Built
 
@@ -1544,6 +1543,14 @@ Updated with every chunk of work. Dates are absolute.
   (`21.4·24.7·4.37/(1000 ln 10) ≈ 1.0032`), and the ADR was corrected before it was committed.
   Python 5087 passed, 2 skipped; .NET 4410 passed; conformance 2743/2743 in both. Version
   2026.11.16.58.
+- 2026-11-16: gammatone (ADR 0161): `gammatone(center_frequency, sample_rate, length, *, order=4,
+  bandwidth_factor=1.019)` in `dsp` (C# `Dsp.Gammatone`). It gives sampled taps `t^(N−1)·exp(−2π
+  b ERB t)·cos(2π f_c t)`, scaled to exactly unit gain at `f_c`. A zero response, such as one
+  tap of order ≥ 2, is an error. The vectors use the closed form in 60-digit `decimal`, with π
+  from Machin's formula and Taylor cos and sin. The tests check the order-4 −3 dB width
+  `2√(2^(1/4) − 1)·b·ERB` to 2 %.
+  Python 5102 passed, 2 skipped; .NET 4424 passed; conformance 2756/2756 in both. Version
+  2026.11.16.59.
 
 ## Not built
 
