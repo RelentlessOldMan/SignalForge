@@ -1351,3 +1351,35 @@ def centre_time(impulse_response: ArrayLike, sample_rate: float) -> float:
     if not total > 0:
         raise ValueError("impulse_response must not be all zero")
     return float(np.sum(np.arange(p.shape[0], dtype=np.float64) * p)) / total / fs
+
+
+def iacc(left: ArrayLike, right: ArrayLike, sample_rate: float, *, max_lag: float = 0.001) -> float:
+    """The interaural cross-correlation ``max |sum l[n] r[n+t]| / sqrt(E_l E_r)`` over integer
+    lags ``|t| <= round(max_lag sample_rate)`` (conventions: Interaural cross-correlation;
+    ADR 0174)."""
+    lt = np.asarray(left)
+    rt = np.asarray(right)
+    if lt.ndim != 1 or rt.ndim != 1 or lt.shape[0] == 0 or lt.shape != rt.shape:
+        raise ValueError("left and right must be one-dimensional, non-empty and of equal length")
+    if np.iscomplexobj(lt) or np.iscomplexobj(rt):
+        raise ValueError("left and right must be real")
+    lv = lt.astype(np.float64)
+    rv = rt.astype(np.float64)
+    if not (np.all(np.isfinite(lv)) and np.all(np.isfinite(rv))):
+        raise ValueError("left and right must be finite")
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    lag = real(max_lag, "max_lag")
+    if not (math.isfinite(lag) and lag >= 0):
+        raise ValueError("max_lag must be finite and non-negative")
+    el, er = float(np.dot(lv, lv)), float(np.dot(rv, rv))
+    if not (el > 0 and er > 0):
+        raise ValueError("left and right must not be all zero")
+    n = lv.shape[0]
+    reach = min(math.floor(lag * fs + 0.5), n - 1)
+    best = 0.0
+    for t in range(-reach, reach + 1):
+        r = float(np.dot(lv[: n - t], rv[t:])) if t >= 0 else float(np.dot(lv[-t:], rv[: n + t]))
+        best = max(best, abs(r))
+    return best / math.sqrt(el * er)

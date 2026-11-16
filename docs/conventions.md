@@ -94,6 +94,11 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Interaural cross-correlation** ([ADR 0174](adr/0174-iacc.md); `iacc(left, right, sample_rate, *,
+  max_lag=0.001)`, C# `Measurements.Iacc`): `max_{|τ| ≤ L} |Σ_n l[n] r[n+τ]| / √(Σl² Σr²)` over
+  integer lags, `L = ⌊max_lag·fs + 1/2⌋` (lags past the length skipped; `τ > 0`: right lags),
+  whole responses, value only. Real, finite, equal non-zero length, neither all zero; `fs`
+  finite and positive; `max_lag` finite and `≥ 0`. **(implemented)**
 - **Centre time** ([ADR 0173](adr/0173-centre-time.md); `centre_time(impulse_response, sample_rate)`,
   C# `Measurements.CentreTime`): `T_s = Σ (n/fs)|h[n]|² / Σ |h[n]|²` from index 0, in seconds
   (energy-weighted, unlike the envelope-weighted temporal centroid). The early decay time is

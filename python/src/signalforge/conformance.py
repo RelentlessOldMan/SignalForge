@@ -78,6 +78,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "clarity": measurements.clarity,
     "definition": measurements.definition,
     "centre_time": measurements.centre_time,
+    "iacc": measurements.iacc,
     "zero_crossing_rate": measurements.zero_crossing_rate,
     "power_ccdf": measurements.power_ccdf,
     "kay_frequency": measurements.kay_frequency,

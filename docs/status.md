@@ -4,12 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Interaural cross-correlation**: `iacc(left, right, sample_rate, *, max_lag=0.001)` in
-   `measurements`. It is ISO 3382-1 `IACC = max_{|τ| ≤ 1 ms} |Σ l[n] r[n+τ]| / √(Σ l² Σ r²)`,
-   over whole real responses. Not built yet. Needs an ADR: integer lags only, or with
-   interpolation; how `max_lag·fs` is rounded; whether the result also returns the lag; and
-   the equal-length rule. Expected values: hand cross-correlations of short sequences, and a
-   delayed copy, which gives exactly 1 at its lag.
+1. **Lateral energy fraction**: `lateral_fraction(omni, figure_eight, sample_rate)` in
+   `measurements`. It is ISO 3382-1 `LF = Σ_{5 ms ≤ t < 80 ms} h_8² / Σ_{t < 80 ms} h_o²`, from
+   an omnidirectional and a figure-of-eight response that start together at index 0. Not built
+   yet. Needs an ADR covering three points:
+   - how the 5 ms and 80 ms bounds round, using the rule from ADR 0172;
+   - the equal-length rule;
+   - whether LF may exceed 1, which it can, because the two microphones are calibrated
+     separately.
+
+   Expected values: hand sums, plus geometric sums over the two windows.
 
 ## Built
 
@@ -1649,6 +1653,17 @@ Updated with every chunk of work. Dates are absolute.
   in 50-digit `decimal`, checked against the direct sums.
   Python 5311 passed, 2 skipped; .NET 4630 passed; conformance 2936/2936 in both. Version
   2026.11.16.71.
+- 2026-11-16: interaural cross-correlation (ADR 0174): `iacc(left, right, sample_rate, *,
+  max_lag=0.001)` in `measurements` (C# `Measurements.Iacc`). It is
+  `max |Σ l[n]r[n+τ]|/√(E_l E_r)` over integer lags `|τ| ≤ ⌊max_lag·fs + 1/2⌋`, clipped to the
+  length, over the whole real responses, and returns the value only. The windowed forms
+  (`IACC_E`, `IACC_L`) are the caller's slices. The vectors are exact hand sums in fractions:
+  - delayed and inverted copies give 1;
+  - impulses that don't overlap give 0;
+  - one case tests the rounding of the lag range.
+
+  Python 5328 passed, 2 skipped; .NET 4646 passed; conformance 2951/2951 in both. Version
+  2026.11.16.72.
 
 ## Not built
 
