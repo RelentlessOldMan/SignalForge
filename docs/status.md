@@ -4,16 +4,17 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Mel filterbank**: `mel_filterbank(n_filters, nfft, sample_rate, min_frequency=0,
-   max_frequency=None, *, scale="htk", normalization=None)`, a `(n_filters, nfft//2 + 1)` matrix
-   of triangular weights on the one-sided FFT bins. Not built yet. Needs an ADR: the edges
-   (`n_filters + 2` points equally spaced in mel, ADR 0154, from min to max, which defaults to
-   `fs/2`), the triangles evaluated at each bin frequency `k·fs/nfft` (librosa style, not
-   rounded to bins as in HTK), the optional Slaney area normalization `2/(f[i+2] − f[i])`, the
-   C# return shape (`double[][]`), and empty filters (allowed, or `invalid_argument`).
-   Expected values: hand-worked triangles where the mel edges fall on exact frequencies. For
-   example, Slaney below 1 kHz is linear, so the edges are evenly spaced in Hz and the weights
-   are simple fractions.
+1. **DCT-II**: `dct(x, *, orthonormal=True)`, `X[k] = Σ x[n]·cos(π k (2n + 1) / (2N))`, the
+   transform MFCCs use, with an inverse `idct` (the DCT-III). Not built yet. Needs an ADR: the
+   scaling (unnormalized `2Σ` as SciPy's default, or orthonormal with `√(1/N)` at `k = 0` and
+   `√(2/N)` elsewhere), the default, real input only, and whether to compute it directly in
+   `O(N²)` or through the FFT. Expected values: hand cases. A constant maps to `k = 0` only, and
+   `x[n] = cos(π m (2n+1)/(2N))` maps to bin `m` alone, with exact weights for `N = 2, 4`
+   (`cos(π/4) = √2/2`). Orthonormality is checked against the identity.
+2. **MFCC**: `mfcc(power_spectrum, filterbank, n_coefficients)`, which takes the log of the mel
+   band energies, `ln(W @ P)`, then the orthonormal DCT-II, keeping the first `n_coefficients`.
+   It needs the DCT-II. Needs an ADR: the log (natural, or `10·log10`), a zero band (an error or
+   a floor), and liftering (none at first).
 
 ## Built
 
@@ -1503,6 +1504,15 @@ Updated with every chunk of work. Dates are absolute.
   monotonicity, and arrays.
   Python 4962 passed, 2 skipped; .NET 4288 passed; conformance 2647/2647 in both. Version
   2026.11.16.52.
+- 2026-11-16: mel filterbank (ADR 0155): `mel_filterbank(n_filters, nfft, sample_rate,
+  min_frequency=0.0, max_frequency=None, *, scale="htk", area_normalized=False)` (C#
+  `Spectral.MelFilterbank`, `double[][]`). It builds triangles on `n_filters + 2` edges equally
+  spaced in mel, evaluated at the bin frequencies `k·fs/nfft`, with optional Slaney area
+  normalization. All-zero rows are allowed. The vectors are worked in 50-digit `decimal`, with
+  hand rows on the linear part of the Slaney scale (edges every 200 Hz). The tests cover
+  adjacent filters summing to 1 and unit area.
+  Python 4981 passed, 2 skipped; .NET 4306 passed; conformance 2662/2662 in both. Version
+  2026.11.16.53.
 
 ## Not built
 

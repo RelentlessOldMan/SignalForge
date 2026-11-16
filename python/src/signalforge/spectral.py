@@ -12,7 +12,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from . import _checks
+from . import _checks, units
 from ._checks import count, real
 
 _COSINE_SUMS: dict[str, tuple[float, ...]] = {
@@ -1781,6 +1781,45 @@ def minimum_phase(samples: ArrayLike, nfft: int | None = None) -> NDArray[np.flo
     if m % 2 == 0:
         folded[m // 2] = c[m // 2]
     return np.asarray(np.fft.ifft(np.exp(np.fft.fft(folded))).real, dtype=np.float64)
+
+
+def mel_filterbank(
+    n_filters: int,
+    nfft: int,
+    sample_rate: float,
+    min_frequency: float = 0.0,
+    max_frequency: float | None = None,
+    *,
+    scale: str = "htk",
+    area_normalized: bool = False,
+) -> NDArray[np.float64]:
+    """Triangular filters equally spaced in mel on the ``nfft//2 + 1`` one-sided bins, one row
+    per filter (conventions: Spectra, Mel filterbank; ADR 0155)."""
+    n = count(n_filters, "n_filters")
+    if n < 1:
+        raise ValueError("n_filters must be at least 1")
+    if count(nfft, "nfft") < 2:
+        raise ValueError("nfft must be at least 2")
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    lo = real(min_frequency, "min_frequency")
+    hi = fs / 2 if max_frequency is None else real(max_frequency, "max_frequency")
+    if not (math.isfinite(lo) and math.isfinite(hi) and 0 <= lo < hi <= fs / 2):
+        raise ValueError("need 0 <= min_frequency < max_frequency <= sample_rate/2")
+    m_lo = float(units.hz_to_mel(lo, scale=scale))
+    m_hi = float(units.hz_to_mel(hi, scale=scale))
+    mels = np.array([m_lo + (m_hi - m_lo) * i / (n + 1) for i in range(n + 2)])
+    f = np.asarray(units.mel_to_hz(mels, scale=scale), dtype=np.float64)
+    bins = np.arange(nfft // 2 + 1) * fs / nfft
+    weights = np.empty((n, bins.size))
+    for i in range(n):
+        rising = (bins - f[i]) / (f[i + 1] - f[i])
+        falling = (f[i + 2] - bins) / (f[i + 2] - f[i + 1])
+        weights[i] = np.maximum(0.0, np.minimum(rising, falling))
+        if area_normalized:
+            weights[i] *= 2.0 / (f[i + 2] - f[i])
+    return weights
 
 
 def find_tones(

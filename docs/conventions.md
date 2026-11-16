@@ -570,6 +570,14 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `ĉ[m] = 2c[m]` for `1 ≤ m ≤ ⌈M/2⌉ − 1`, `ĉ[M/2] = c[M/2]` for even `M`, else 0;
   `y = Re IFFT(exp(FFT(ĉ)))`, all `M` values. `M = nfft ≥ N`; default the smallest power of two
   `≥ max(64, 8N)`. The rules of the real cepstrum. **(implemented)**
+- **Mel filterbank** (`mel_filterbank(n_filters, nfft, sample_rate, min_frequency=0.0,
+  max_frequency=None, *, scale="htk", area_normalized=False)`, C# `Spectral.MelFilterbank`,
+  [ADR 0155](adr/0155-mel-filterbank.md)): edges `m_i = M_lo + (M_hi − M_lo)·i/(n + 1)`,
+  `i = 0 … n + 1`, in mel (Mel scale), `f_i = mel_to_hz(m_i)`; max defaults to `fs/2`. Bin
+  `b_k = k·fs/nfft`, `k = 0 … nfft//2`. `W[i][k] = max(0, min((b_k − f_i)/(f_{i+1} − f_i),
+  (f_{i+2} − b_k)/(f_{i+2} − f_{i+1})))`; `area_normalized` scales row `i` by `2/(f_{i+2} − f_i)`.
+  An all-zero row is allowed. `n ≥ 1`, `nfft ≥ 2`, `fs` finite and positive, `0 ≤ min < max ≤
+  fs/2`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

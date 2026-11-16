@@ -354,6 +354,8 @@ public static class Conformance
                 t => Spectral.SpectralVariation(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "minimum_phase" => Bind((Reals(a.Get("samples")), a.Has("nfft") ? a.I("nfft") : (int?)null),
                 t => Spectral.MinimumPhase(t.Item1, t.Item2)),
+            "mel_filterbank" => Bind((a.I("n_filters"), a.I("nfft"), a.D("sample_rate"), a.OptD("min_frequency") ?? 0, a.OptD("max_frequency"), Mel(a), a.Flag("area_normalized")),
+                t => Spectral.MelFilterbank(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
             "real_cepstrum" => Bind((Reals(a.Get("samples")), a.Has("nfft") ? a.I("nfft") : (int?)null),
                 t => Spectral.RealCepstrum(t.Item1, t.Item2)),
             "harmonic_centroid" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("heights")), Ints(a.Get("orders"))),

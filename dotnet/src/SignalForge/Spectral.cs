@@ -2422,6 +2422,54 @@ public static class Spectral
     }
 
     /// <summary>
+    /// Triangular filters equally spaced in mel on the <c>nfft/2 + 1</c> one-sided bins, one row
+    /// per filter (conventions: Spectra, Mel filterbank; ADR 0155).
+    /// </summary>
+    /// <param name="nFilters">The number of filters, at least 1.</param>
+    /// <param name="nfft">The FFT length, at least 2.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <param name="minFrequency">The lowest edge in Hz, at least 0.</param>
+    /// <param name="maxFrequency">The highest edge in Hz, at most half the sample rate; half the sample rate when null.</param>
+    /// <param name="scale">Which mel scale spaces the edges.</param>
+    /// <param name="areaNormalized">Scale each triangle to unit area in Hz (Slaney).</param>
+    /// <returns>One row of <c>nfft/2 + 1</c> weights per filter; a row may be all zero.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[][] MelFilterbank(int nFilters, int nfft, double sampleRate, double minFrequency = 0, double? maxFrequency = null,
+        MelScale scale = MelScale.Htk, bool areaNormalized = false)
+    {
+        if (nFilters < 1)
+            throw new ArgumentOutOfRangeException(nameof(nFilters), "nFilters must be at least 1");
+        if (nfft < 2)
+            throw new ArgumentOutOfRangeException(nameof(nfft), "nfft must be at least 2");
+        if (!(double.IsFinite(sampleRate) && sampleRate > 0))
+            throw new ArgumentException("sampleRate must be finite and positive", nameof(sampleRate));
+        double hi = maxFrequency ?? sampleRate / 2;
+        if (!(double.IsFinite(minFrequency) && double.IsFinite(hi) && minFrequency >= 0 && minFrequency < hi && hi <= sampleRate / 2))
+            throw new ArgumentException("need 0 <= minFrequency < maxFrequency <= sampleRate/2", nameof(maxFrequency));
+        double mLo = Units.HzToMel(minFrequency, scale), mHi = Units.HzToMel(hi, scale);
+        var f = new double[nFilters + 2];
+        for (int i = 0; i < f.Length; i++)
+            f[i] = Units.MelToHz(mLo + (mHi - mLo) * i / (nFilters + 1), scale);
+        int bins = nfft / 2 + 1;
+        var weights = new double[nFilters][];
+        for (int i = 0; i < nFilters; i++)
+        {
+            var row = new double[bins];
+            double gain = areaNormalized ? 2.0 / (f[i + 2] - f[i]) : 1.0;
+            for (int k = 0; k < bins; k++)
+            {
+                double b = k * sampleRate / nfft;
+                double rising = (b - f[i]) / (f[i + 1] - f[i]);
+                double falling = (f[i + 2] - b) / (f[i + 2] - f[i + 1]);
+                double w = Math.Max(0.0, Math.Min(rising, falling));
+                row[k] = areaNormalized ? w * gain : w;
+            }
+            weights[i] = row;
+        }
+        return weights;
+    }
+
+    /// <summary>
     /// Each spectral peak's width where the PSD crosses height − relHeight·prominence,
     /// interpolated linearly between bins; in order of frequency (conventions: Spectra, Peak
     /// widths; ADR 0138).
