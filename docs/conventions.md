@@ -420,6 +420,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   ((b_k − center)² − (a_k − center)²)/2 / (W³/12)`. Result `SpectralSlope(center, level,
   slope)`. Band rules as for spectral flatness; power `> 0`, and with `db` every overlapping bin
   `> 0`. **(implemented)**
+- **Spectral entropy** (`spectral_entropy(frequencies, psd, band=None, span=None)`,
+  [ADR 0128](adr/0128-spectral-entropy.md)): on the step density and pieces of the spectral
+  moments, `p_k = d_k / power` per Hz and `q_k = p_k (b_k − a_k)`; `entropy = −Σ q_k ln p_k`
+  nats over pieces with `d_k > 0`, `entropy_bandwidth = exp(entropy)` Hz, `normalized =
+  entropy_bandwidth / (high − low)`. Result `SpectralEntropy(entropy, entropy_bandwidth,
+  normalized)`. Band rules as for spectral flatness; `power > 0`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

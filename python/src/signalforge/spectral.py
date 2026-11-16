@@ -1216,6 +1216,17 @@ class SpectralSlope:
     slope: float
 
 
+@dataclass(frozen=True)
+class SpectralEntropy:
+    """Differential entropy of a band's normalized PSD (conventions: Spectra, Spectral entropy;
+    ADR 0128): ``entropy`` in nats, ``entropy_bandwidth = exp(entropy)`` in Hz, and that over
+    the band's width as ``normalized``."""
+
+    entropy: float
+    entropy_bandwidth: float
+    normalized: float
+
+
 def _band_edges(
     band: ArrayLike | None, left: NDArray[np.float64], right: NDArray[np.float64]
 ) -> tuple[float, float]:
@@ -1318,6 +1329,30 @@ def spectral_slope(
     level = float(np.sum(d * (b - a))) / width
     moment = float(np.sum(d * ((b - center) ** 2 - (a - center) ** 2) / 2))
     return SpectralSlope(center, level, moment / (width**3 / 12))
+
+
+def spectral_entropy(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+) -> SpectralEntropy:
+    """The differential entropy of the PSD, taken as constant over each bin and normalized to
+    unit power, over ``band = (low, high)`` in Hz (the whole spectrum by default)."""
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    a, b = np.maximum(left, lo), np.minimum(right, hi)
+    keep = b > a
+    a, b, d = a[keep], b[keep], (power / (right - left))[keep]
+    total = float(np.sum(d * (b - a)))
+    if not total > 0:
+        raise ValueError("the band has no power")
+    live = d > 0
+    p = d[live] / total
+    h = -float(np.sum(p * (b[live] - a[live]) * np.log(p)))
+    width = math.exp(h)
+    return SpectralEntropy(h, width, width / (hi - lo))
 
 
 def spectral_flatness(

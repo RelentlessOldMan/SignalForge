@@ -213,6 +213,13 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
 
+/// <summary>Differential entropy of a band's normalized PSD (conventions: Spectra, Spectral entropy;
+/// ADR 0128).</summary>
+/// <param name="Entropy">−∫ p ln p df of the unit-power step density, in nats.</param>
+/// <param name="EntropyBandwidth">exp(Entropy), in Hz.</param>
+/// <param name="Normalized">EntropyBandwidth over the band's width, in (0, 1].</param>
+public sealed record SpectralEntropy(double Entropy, double EntropyBandwidth, double Normalized);
+
 /// <summary>Where the PSD falls a given number of dB below its peak (conventions: Spectra, x dB
 /// bandwidth; ADR 0122).</summary>
 /// <param name="PeakFrequency">The peak bin's center, in the PSD's axis.</param>
@@ -1928,6 +1935,48 @@ public static class Spectral
         if (db && zero)
             throw new ArgumentException("with db, every bin in the band must have a positive PSD", nameof(psd));
         return new SpectralSlope(center, sum / width, moment / (width * width * width / 12));
+    }
+
+    /// <summary>
+    /// The differential entropy of the PSD, taken as constant over each bin and normalized to
+    /// unit power, over <paramref name="band"/> (the whole spectrum when null) (conventions:
+    /// Spectra, Spectral entropy; ADR 0128).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The entropy, the entropy bandwidth and its share of the band.</returns>
+    /// <exception cref="ArgumentException">An edge is out of order or not finite, the band leaves the spectrum, or the band has no power.</exception>
+    public static SpectralEntropy SpectralEntropy(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        int n = power.Length;
+        double[] a = new double[n], b = new double[n], d = new double[n];
+        double total = 0;
+        for (int k = 0; k < n; k++)
+        {
+            a[k] = Math.Max(left[k], lo);
+            b[k] = Math.Min(right[k], hi);
+            if (!(b[k] > a[k]))
+                continue;
+            d[k] = power[k] / (right[k] - left[k]);
+            total += d[k] * (b[k] - a[k]);
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        double h = 0;
+        for (int k = 0; k < n; k++)
+        {
+            if (!(b[k] > a[k] && d[k] > 0))
+                continue;
+            double p = d[k] / total;
+            h -= p * (b[k] - a[k]) * Math.Log(p);
+        }
+        double width = Math.Exp(h);
+        return new SpectralEntropy(h, width, width / (hi - lo));
     }
 
     /// <summary>

@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral entropy**: the Shannon entropy of a band's normalized PSD, how evenly its power
-   spreads (a tone near 0, white noise near the maximum). Not built yet. Needs an ADR: a
-   function `spectral_entropy(frequencies, psd, *, band=None, span=None)` on the step density
-   of `spectral_moments`, the definition (the differential entropy `−∫ p ln p df` of the
-   normalized density, and its value over `ln W` as the 0-to-1 normalized form), the log base,
-   zero bins (`0 ln 0 = 0`), and zero power. Expected values: a flat band's `ln W` and 1, a
-   single bin, and short PSDs worked by hand.
+1. **Spectral flux**: how much a PSD changed from one frame to the next, the onset feature of
+   audio analysis. Not built yet. Needs an ADR: a function `spectral_flux(frequencies,
+   previous, current, *, band=None, span=None, normalize=True, rectify=True)`, with each
+   frame's step density (normalized to unit power when asked), the L2 distance `sqrt(∫ (Δd)²
+   df)` of the difference (only its rises when rectified), the band weights, and zero power.
+   Expected values: short PSD pairs worked by hand with Fractions (the result squared is
+   rational), identical frames giving 0, and a frame against its double giving 0 normalized.
 
 ## Built
 
@@ -1272,6 +1272,15 @@ Updated with every chunk of work. Dates are absolute.
   PSD in dB.
   Python 4536 passed, 2 skipped; .NET 3875 passed; conformance 2320/2320 in both. Version
   2026.11.16.25.
+- 2026-11-16: spectral entropy (ADR 0128): `spectral_entropy(frequencies, psd, *, band=None,
+  span=None)` (C# `Spectral.SpectralEntropy`) is the differential entropy of the band's step
+  density normalized to unit power. It gives `SpectralEntropy(entropy, entropy_bandwidth,
+  normalized)`, with the bandwidth `exp(entropy)` in Hz and `normalized` that over the band's
+  width. The bandwidth was chosen over `entropy / ln W` because the entropy depends on the axis
+  units. The vectors assert hand bandwidths in Fractions and compute the rest as `ln power −
+  Σ q ln d`. The tests cover scaling, axis stretch, a tone, and white noise against `exp(γ − 1)`.
+  Python 4550 passed, 2 skipped; .NET 3889 passed; conformance 2330/2330 in both. Version
+  2026.11.16.26.
 
 ## Not built
 
