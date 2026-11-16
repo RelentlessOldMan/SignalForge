@@ -237,6 +237,8 @@ public static class Conformance
                 t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "temporal_centroid" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2)),
+            "time_weighting" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate"), a.D("time_constant")), t => Measurements.TimeWeighting(t.Item1, t.Item2, t.Item3))
+                : Bind((Reals(a.Get("samples")), a.D("sample_rate"), a.D("time_constant")), t => Measurements.TimeWeighting(t.Item1, t.Item2, t.Item3)),
             "autocorrelation_pitch" => Bind((Reals(a.Get("samples")), a.D("sample_rate"), a.D("min_frequency"), a.D("max_frequency")),
                 t => Measurements.AutocorrelationPitch(t.Item1, t.Item2, t.Item3, t.Item4)),
             "cepstrum_pitch" => Bind((Reals(a.Get("samples")), a.D("sample_rate"), a.D("min_frequency"), a.D("max_frequency"), a.Has("nfft") ? a.I("nfft") : (int?)null),

@@ -4,14 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Time weighting and Leq**: `time_weighting(samples, sample_rate, time_constant)`, the IEC
-   61672-1 exponential average of the squared signal, one output per input sample (Fast
-   `τ = 0.125` s, Slow `1` s), and `equivalent_level(samples)`, the mean square, in
-   `measurements`. With the weighting filters (ADR 0165) they make a sound level meter. Not
-   built yet. Needs an ADR: the discretization (exact `α = exp(−1/(τ fs))` against the Euler
-   `1/(τ fs)`), the initial state (0), whether the outputs are power or dB, and the reference
-   level. Expected values: a step input gives `1 − α^(n+1)` exactly in `fractions` for a
-   rational `α`, and a constant gives its square.
+1. **Fractional-octave bands**: `octave_bands(fraction, min_frequency, max_frequency)` in
+   `units`. It gives the IEC 61260-1 exact mid-band frequencies `f_m = 1000·G^(x/b)` (odd `b`)
+   or `1000·G^((2x+1)/(2b))` (even `b`), with `G = 10^(3/10)`, plus the band edges `f_m·G^(±1/(2b))`,
+   for every band whose mid-band frequency lies in `[min, max]`. Not built yet. Needs an ADR: base 10
+   (not base 2), the result type (centers and edges), `fraction` in `{1, 2, 3, 6, 12, 24}`
+   or any positive integer, and the inclusion rule. Expected values: `G` powers in 50-digit
+   `decimal`, checked against the standard's nominal frequencies (31.5, 63, 125, …) to
+   their rounding.
 
 ## Built
 
@@ -1584,6 +1584,15 @@ Updated with every chunk of work. Dates are absolute.
   `(fs/π)·tan(πf/fs)`, relative to 1 kHz, to 1e-9.
   Python 5185 passed, 2 skipped; .NET 4509 passed; conformance 2826/2826 in both. Version
   2026.11.16.63.
+- 2026-11-16: time weighting (ADR 0166): `time_weighting(samples, sample_rate, time_constant)`
+  in `measurements` (C# `Measurements.TimeWeighting`, real and complex). It is the exponential
+  average `y[n] = α y[n−1] + (1 − α)|x[n]|²`, with `α = exp(−1/(τ fs))` and `1 − α` from
+  `expm1`. It starts from 0 and gives one power per sample; the caller takes dB. `L_eq` is the
+  existing `power_stats(...).mean_power`. The vectors come from the closed-form sum in 50-digit
+  `decimal`, including a unit step at `τ·fs = 1`, which gives `1 − e^(−(n+1))`. The C#
+  `Measurements` class is now `partial`.
+  Python 5199 passed, 2 skipped; .NET 4523 passed; conformance 2838/2838 in both. Version
+  2026.11.16.64.
 
 ## Not built
 

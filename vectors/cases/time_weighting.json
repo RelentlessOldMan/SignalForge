@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "time_weighting",
+  "description": "Exponential time weighting (conventions: Time weighting; ADR 0166).",
+  "cases": [
+    {"id": "time_weighting.step_tau_fs_one", "op": "time_weighting", "args": {"samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "sample_rate": 8.0, "time_constant": 0.125}, "expected": [0.6321205588285577, 0.8646647167633873, 0.950212931632136, 0.9816843611112658, 0.9932620530009145, 0.9975212478233336], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "unit step, tau fs = 1: y[n] = 1 - e^-(n+1)"},
+    {"id": "time_weighting.fast_48k", "op": "time_weighting", "args": {"samples": [0.5, -1.0, 0.25, 2.0, 0.0, -0.75, 1.5], "sample_rate": 48000.0, "time_constant": 0.125}, "expected": [4.1663194637337644e-05, 0.00020830902989953866, 0.00021869011328024338, 0.0008852647821626262, 0.000885117250326927, 0.0009787119310118277, 0.0013535175776851639], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "Fast (tau = 0.125 s) at 48 kHz: the closed-form sum in decimal"},
+    {"id": "time_weighting.slow_48k", "op": "time_weighting", "args": {"samples": [0.5, -1.0, 0.25, 2.0, 0.0, -0.75, 1.5], "sample_rate": 48000.0, "time_constant": 1.0}, "expected": [5.208279080237869e-06, 2.6041286896505437e-05, 2.734281414540584e-05, 0.00011067470979318411, 0.00011067240409408121, 0.0001223887263735484, 0.0001692606883571163], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "Slow (tau = 1 s) at 48 kHz: the closed-form sum in decimal"},
+    {"id": "time_weighting.impulse_decay", "op": "time_weighting", "args": {"samples": [2.0, 0.0, 0.0, 0.0], "sample_rate": 10.0, "time_constant": 0.05}, "expected": [3.458658867053549, 0.4680785773915141, 0.0633475468482713, 0.00857315819505539], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "impulse of power 4, tau fs = 0.5: 4 (1 - a) a^n with a = e^-2"},
+    {"id": "time_weighting.complex", "op": "time_weighting", "args": {"samples": {"re": [3.0, 0.0, 1.0], "im": [4.0, 1.0, -1.0]}, "sample_rate": 4.0, "time_constant": 0.5}, "expected": [9.836733507184164, 6.359749803817144, 4.644321924691236], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "powers |x|^2 = 25, 1, 2, tau fs = 2: the closed-form sum in decimal"},
+    {"id": "time_weighting.empty", "op": "time_weighting", "args": {"samples": [], "sample_rate": 48000.0, "time_constant": 0.125}, "expected": [], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "an empty input gives an empty output"},
+    {"id": "time_weighting.nan_sample", "op": "time_weighting", "args": {"samples": [1.0, "nan"], "sample_rate": 48000.0, "time_constant": 0.125}, "error": "invalid_argument", "source": "samples must be finite"},
+    {"id": "time_weighting.zero_rate", "op": "time_weighting", "args": {"samples": [1.0, 2.0], "sample_rate": 0.0, "time_constant": 0.125}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "time_weighting.inf_rate", "op": "time_weighting", "args": {"samples": [1.0, 2.0], "sample_rate": "inf", "time_constant": 0.125}, "error": "invalid_argument", "source": "sample_rate must be finite"},
+    {"id": "time_weighting.zero_tau", "op": "time_weighting", "args": {"samples": [1.0, 2.0], "sample_rate": 48000.0, "time_constant": 0.0}, "error": "invalid_argument", "source": "time_constant must be positive"},
+    {"id": "time_weighting.negative_tau", "op": "time_weighting", "args": {"samples": [1.0, 2.0], "sample_rate": 48000.0, "time_constant": -1.0}, "error": "invalid_argument", "source": "time_constant must be positive"},
+    {"id": "time_weighting.nan_tau", "op": "time_weighting", "args": {"samples": [1.0, 2.0], "sample_rate": 48000.0, "time_constant": "nan"}, "error": "invalid_argument", "source": "time_constant must be finite"}
+  ]
+}

@@ -1117,3 +1117,31 @@ def _half_width(window: str, beta: float | None) -> int:
 def _db(num: float, den: float) -> float:
     """10*log10(num/den) for num > 0; +inf when den is zero."""
     return math.inf if den == 0 else 10 * math.log10(num / den)
+
+
+def time_weighting(
+    samples: ArrayLike, sample_rate: float, time_constant: float
+) -> NDArray[np.float64]:
+    """The exponential time weighting ``y[n] = a y[n-1] + (1 - a)|x[n]|^2``, ``a =
+    exp(-1/(time_constant sample_rate))``, from 0 (conventions: Time weighting; ADR 0166)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be a one-dimensional array")
+    x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    fs = float(sample_rate)
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    tau = float(time_constant)
+    if not (math.isfinite(tau) and tau > 0):
+        raise ValueError("time_constant must be finite and positive")
+    p = x.real * x.real + x.imag * x.imag if np.iscomplexobj(x) else x * x
+    gain = -math.expm1(-1.0 / (tau * fs))
+    alpha = 1.0 - gain
+    out = np.empty(p.shape[0], dtype=np.float64)
+    y = 0.0
+    for n, v in enumerate(p.tolist()):
+        y = alpha * y + gain * v
+        out[n] = y
+    return out

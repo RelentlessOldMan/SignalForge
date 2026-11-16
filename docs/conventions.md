@@ -94,6 +94,13 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Time weighting** ([ADR 0166](adr/0166-time-weighting.md);
+  `time_weighting(samples, sample_rate, time_constant)`, C# `Measurements.TimeWeighting`):
+  `y[n] = α y[n−1] + (1 − α)|x[n]|²`, `y[−1] = 0`, `α = exp(−1/(τ fs))`, `1 − α =
+  −expm1(−1/(τ fs))`; one power value per sample (Fast `τ = 0.125` s, Slow `1` s; dB is the
+  caller's `lin_to_db`). Real or complex, finite; empty gives empty; `sample_rate` and
+  `time_constant` finite and positive. `L_eq` is `power_stats(...).mean_power`.
+  **(implemented)**
 - **Autocorrelation pitch** ([ADR 0150](adr/0150-autocorrelation-pitch.md);
   `autocorrelation_pitch(samples, sample_rate, min_frequency, max_frequency)`, C#
   `Measurements.AutocorrelationPitch`): biased `r` (Autocorrelation); lags `lo = ceil(fs/max)`

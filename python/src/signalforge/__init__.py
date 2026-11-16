@@ -123,6 +123,7 @@ from .measurements import (
     power_stats,
     sfdr,
     temporal_centroid,
+    time_weighting,
     tone_metrics,
     two_tone_imd,
     two_tone_ip2,
@@ -296,7 +297,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.63"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.64"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -562,6 +563,7 @@ __all__ = [
     "spectral_variation",
     "spectrogram",
     "temporal_centroid",
+    "time_weighting",
     "timing_offset",
     "tone",
     "tone_metrics",

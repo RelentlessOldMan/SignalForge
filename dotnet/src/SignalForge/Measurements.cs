@@ -215,7 +215,7 @@ public sealed record AutocorrelationPitch(double Frequency, double Lag, double V
 public sealed record CepstrumPitch(double Frequency, double Quefrency, double Strength);
 
 /// <summary>Power measurements and tone metrics. Definitions in docs/conventions.md.</summary>
-public static class Measurements
+public static partial class Measurements
 {
     /// <summary>The highest biased autocorrelation peak among the lags whose <c>fs/lag</c> lies in
     /// [<paramref name="minFrequency"/>, <paramref name="maxFrequency"/>], refined by a parabola
