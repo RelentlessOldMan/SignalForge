@@ -864,6 +864,12 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
 
 - **Convolution** (`convolve(x, h)`): full linear convolution, `y[n] = Σₖ h[k]·x[n−k]`, length
   `len(x) + len(h) − 1`; both non-empty. **(implemented)**
+- **Autocorrelation** (`autocorrelation(samples, max_lag=None, *, scaling="biased")`, C#
+  `Dsp.Autocorrelation`, [ADR 0148](adr/0148-autocorrelation.md)): `r[k] = Σ_{n=0}^{N−1−k}
+  x[n+k]·conj x[n]` for `k = 0 … max_lag` (so `r[−k] = conj r[k]`; NumPy's `correlate(x, x)`);
+  `"biased"` divides by `N`, `"unbiased"` by `N − k`, `"none"` not at all. The mean is kept.
+  Real in, real out. At least one finite sample; `max_lag` an integer in `0 … N − 1`, default
+  `N − 1`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

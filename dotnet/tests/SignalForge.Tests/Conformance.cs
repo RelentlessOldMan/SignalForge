@@ -399,6 +399,7 @@ public static class Conformance
             "acpr_rrc" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.D("center"), a.D("symbol_rate"), a.D("alpha"), Reals(a.Get("offsets")), Span(a)),
                 t => Spectral.AcprRrc(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
             "convolve" => Convolve(a),
+            "autocorrelation" => Autocorrelation(a),
             "upsample" => a.Get("x") is Complex[] ux
                 ? Bind((ux, a.I("factor")), t => Dsp.Upsample(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("x")), a.I("factor")), t => Dsp.Upsample(t.Item1, t.Item2)),
@@ -802,6 +803,21 @@ public static class Conformance
     }
 
     /// <summary>Real only when both inputs are real, as in NumPy.</summary>
+    private static Func<object?> Autocorrelation(Args a)
+    {
+        object? x = a.Get("samples");
+        int? maxLag = a.Has("max_lag") ? a.I("max_lag") : null;
+        var scaling = a.Has("scaling") ? Str(a, "scaling") switch
+        {
+            "biased" => CorrelationScaling.Biased,
+            "unbiased" => CorrelationScaling.Unbiased,
+            "none" => CorrelationScaling.None,
+            _ => (CorrelationScaling)(-1), // the library rejects it, as Python does
+        } : CorrelationScaling.Biased;
+        return x is Complex[]? Bind(Complexes(x), c => Dsp.Autocorrelation(c, maxLag, scaling))
+            : Bind(Reals(x), r => Dsp.Autocorrelation(r, maxLag, scaling));
+    }
+
     private static Func<object?> Convolve(Args a)
     {
         object? x = a.Get("x"), h = a.Get("h");

@@ -4,11 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Autocorrelation**: `r[k] = Σ x[n+k]·conj x[n]` for lags `0 … max_lag`, real or complex.
-   Not built yet (no correlation function exists yet). Needs an ADR: the conjugate placement
-   (which side, so `r[−k] = conj r[k]`), the scaling (`biased` 1/N, `unbiased` 1/(N − k), or
-   none), whether the mean is removed, the default and limits of `max_lag` and the result
-   type. Expected values: hand-built sequences worked in exact integers.
+1. **Linear prediction (Levinson-Durbin)**: `levinson(r, order)` solves the Toeplitz normal
+   equations from an autocorrelation (ADR 0148), giving the predictor `a` (with `a[0] = 1`),
+   the reflection coefficients and the final prediction error. Not built yet. Needs an ADR: the
+   sign convention of `a` (`e[n] = Σ a[k] x[n−k]`, as SciPy's `lfilter` form), complex input
+   (Hermitian Toeplitz, conjugates on the reflection update), `r[0] ≤ 0` and a
+   non-positive-definite sequence (`|k| ≥ 1`: `invalid_argument`), and the result type.
+   Expected values: hand-solved small Toeplitz systems in Fractions (an AR(1) and an AR(2)
+   whose `r` is known exactly).
 
 ## Built
 
@@ -1436,6 +1439,14 @@ Updated with every chunk of work. Dates are absolute.
   The tests cover a delay (only the centroid moves) and complex scaling.
   Python 4840 passed, 2 skipped; .NET 4176 passed; conformance 2550/2550 in both. Version
   2026.11.16.45.
+- 2026-11-16: autocorrelation (ADR 0148): `autocorrelation(samples, max_lag=None, *,
+  scaling="biased")` (C# `Dsp.Autocorrelation`, real and complex, with `CorrelationScaling`).
+  It is `r[k] = Σ x[n+k]·conj x[n]` for lags 0 to `max_lag`, NumPy's `correlate` side. It is
+  scaled by `1/N` (the default), `1/(N − k)` or not at all, and the mean is kept. The vectors are
+  worked in exact (Gaussian) integers. The tests cover a direct two-sided sum (and the conjugate
+  symmetry), the energy at lag 0, and a periodic signal peaking at its period.
+  Python 4855 passed, 2 skipped; .NET 4191 passed; conformance 2562/2562 in both. Version
+  2026.11.16.46.
 
 ## Not built
 

@@ -34,6 +34,29 @@ def convolve(x: ArrayLike, h: ArrayLike) -> NDArray[np.complex128] | NDArray[np.
     return cast("NDArray[np.complex128] | NDArray[np.float64]", y)
 
 
+def autocorrelation(
+    samples: ArrayLike, max_lag: int | None = None, *, scaling: str = "biased"
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """``r[k] = sum x[n+k] conj(x[n])`` for lags ``0 ... max_lag``, scaled ``"biased"`` (1/N),
+    ``"unbiased"`` (1/(N - k)) or ``"none"`` (conventions: Pulse shaping, Autocorrelation;
+    ADR 0148)."""
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.size
+    top = n - 1 if max_lag is None else count(max_lag, "max_lag")
+    if top > n - 1:
+        raise ValueError("max_lag must be at most len(samples) - 1")
+    if scaling not in ("biased", "unbiased", "none"):
+        raise ValueError('scaling must be "biased", "unbiased" or "none"')
+    r = np.array([np.sum(x[k:] * np.conj(x[: n - k])) for k in range(top + 1)], dtype=x.dtype)
+    if scaling == "biased":
+        r = r / n
+    elif scaling == "unbiased":
+        r = r / (n - np.arange(top + 1))
+    return cast("NDArray[np.complex128] | NDArray[np.float64]", r)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

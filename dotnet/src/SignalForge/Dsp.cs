@@ -2,11 +2,102 @@ using System.Numerics;
 
 namespace SignalForge;
 
+/// <summary>How <see cref="Dsp.Autocorrelation(ReadOnlySpan{double}, int?, CorrelationScaling)"/> scales each lag (conventions: Pulse shaping, Autocorrelation; ADR 0148).</summary>
+public enum CorrelationScaling
+{
+    /// <summary>Each lag over <c>N</c>.</summary>
+    Biased,
+
+    /// <summary>Lag <c>k</c> over <c>N − k</c>.</summary>
+    Unbiased,
+
+    /// <summary>The raw sums.</summary>
+    None,
+}
+
 /// <summary>Convolution, upsampling, root-raised-cosine pulse shaping, FIR and IIR design and
 /// response, resampling. Definitions in docs/conventions.md (Pulse shaping, FIR filters, IIR
 /// filters, Resampling).</summary>
 public static partial class Dsp
 {
+    /// <summary><c>r[k] = Σ x[n+k]·x[n]</c> for lags <c>0 … maxLag</c>, scaled (conventions: Pulse
+    /// shaping, Autocorrelation; ADR 0148).</summary>
+    /// <param name="samples">Real samples, at least one, finite.</param>
+    /// <param name="maxLag">The last lag, 0 to <c>N − 1</c>; <c>N − 1</c> when null.</param>
+    /// <param name="scaling">How each lag is scaled.</param>
+    /// <returns>The lags 0 to <paramref name="maxLag"/>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Autocorrelation(ReadOnlySpan<double> samples, int? maxLag = null, CorrelationScaling scaling = CorrelationScaling.Biased)
+    {
+        if (samples.IsEmpty)
+            throw new ArgumentException("needs at least one sample", nameof(samples));
+        int top = CorrelationLags(samples.Length, maxLag, scaling);
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        var r = new double[top + 1];
+        for (int k = 0; k <= top; k++)
+        {
+            double sum = 0;
+            for (int n = 0; n + k < samples.Length; n++)
+                sum += samples[n + k] * samples[n];
+            r[k] = sum / CorrelationDivisor(samples.Length, k, scaling);
+        }
+        return r;
+    }
+
+    /// <summary><c>r[k] = Σ x[n+k]·conj(x[n])</c> for lags <c>0 … maxLag</c>, scaled (conventions:
+    /// Pulse shaping, Autocorrelation; ADR 0148).</summary>
+    /// <param name="samples">Complex samples, at least one, finite.</param>
+    /// <param name="maxLag">The last lag, 0 to <c>N − 1</c>; <c>N − 1</c> when null.</param>
+    /// <param name="scaling">How each lag is scaled.</param>
+    /// <returns>The lags 0 to <paramref name="maxLag"/>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Autocorrelation(ReadOnlySpan<Complex> samples, int? maxLag = null, CorrelationScaling scaling = CorrelationScaling.Biased)
+    {
+        if (samples.IsEmpty)
+            throw new ArgumentException("needs at least one sample", nameof(samples));
+        int top = CorrelationLags(samples.Length, maxLag, scaling);
+        foreach (Complex v in samples)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        var r = new Complex[top + 1];
+        for (int k = 0; k <= top; k++)
+        {
+            double re = 0, im = 0;
+            for (int n = 0; n + k < samples.Length; n++)
+            {
+                Complex a = samples[n + k], b = samples[n];
+                re += a.Real * b.Real + a.Imaginary * b.Imaginary;
+                im += a.Imaginary * b.Real - a.Real * b.Imaginary;
+            }
+            double d = CorrelationDivisor(samples.Length, k, scaling);
+            r[k] = new Complex(re / d, im / d);
+        }
+        return r;
+    }
+
+    private static int CorrelationLags(int length, int? maxLag, CorrelationScaling scaling)
+    {
+        int top = maxLag ?? length - 1;
+        if (top < 0 || top > length - 1)
+            throw new ArgumentOutOfRangeException(nameof(maxLag), "maxLag must be from 0 to N - 1");
+        if (scaling is not (CorrelationScaling.Biased or CorrelationScaling.Unbiased or CorrelationScaling.None))
+            throw new ArgumentOutOfRangeException(nameof(scaling), "unknown scaling");
+        return top;
+    }
+
+    private static double CorrelationDivisor(int length, int k, CorrelationScaling scaling) => scaling switch
+    {
+        CorrelationScaling.Biased => length,
+        CorrelationScaling.Unbiased => length - k,
+        _ => 1,
+    };
+
     /// <summary>Full linear convolution y[n] = Σ h[k]·x[n−k], length len(x) + len(h) − 1.</summary>
     public static double[] Convolve(ReadOnlySpan<double> x, ReadOnlySpan<double> h)
     {
