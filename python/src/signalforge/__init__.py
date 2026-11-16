@@ -120,6 +120,7 @@ from .measurements import (
     iacc,
     integrated_phase_noise,
     kay_frequency,
+    lateral_fraction,
     noise_figure_cascade,
     noise_figure_y_factor,
     octave_band_levels,
@@ -308,7 +309,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.72"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.73"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -476,6 +477,7 @@ __all__ = [
     "iq_imbalance",
     "kaiser_parameters",
     "kay_frequency",
+    "lateral_fraction",
     "levinson",
     "lin_to_db",
     "lms_equalizer",

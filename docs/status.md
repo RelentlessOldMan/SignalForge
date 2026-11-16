@@ -4,16 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Lateral energy fraction**: `lateral_fraction(omni, figure_eight, sample_rate)` in
-   `measurements`. It is ISO 3382-1 `LF = Σ_{5 ms ≤ t < 80 ms} h_8² / Σ_{t < 80 ms} h_o²`, from
-   an omnidirectional and a figure-of-eight response that start together at index 0. Not built
-   yet. Needs an ADR covering three points:
-   - how the 5 ms and 80 ms bounds round, using the rule from ADR 0172;
-   - the equal-length rule;
-   - whether LF may exceed 1, which it can, because the two microphones are calibrated
-     separately.
+1. **Modulation transfer function**: `modulation_transfer(impulse_response, sample_rate,
+   frequencies)` in `measurements`. It is Schroeder's
+   `m(F) = |Σ |h[n]|² e^{−j2πF n/fs}| / Σ |h[n]|²`, the base of the speech transmission index.
+   Not built yet. Needs an ADR covering:
+   - the time origin (index 0);
+   - the sign of the exponent, which does not affect `|·|`;
+   - the frequency rules (finite, `≥ 0`).
 
-   Expected values: hand sums, plus geometric sums over the two windows.
+   Expected values: geometric decays give `|(1 − (q z)^L)/(1 − q z)|/((1 − q^L)/(1 − q))`, with
+   `z = e^{−j2πF/fs}`, which is close to the classic `1/√(1 + (2πF T/13.8)²)`.
 
 ## Built
 
@@ -1664,6 +1664,15 @@ Updated with every chunk of work. Dates are absolute.
 
   Python 5328 passed, 2 skipped; .NET 4646 passed; conformance 2951/2951 in both. Version
   2026.11.16.72.
+- 2026-11-16: lateral energy fraction (ADR 0175): `lateral_fraction(omni, figure_eight,
+  sample_rate, *, start=0.005, stop=0.08)` in `measurements` (C# `Measurements.LateralFraction`).
+  - The formula is `Σ_{N_a ≤ n < N_b} h_8² / Σ_{n < N_b} h_o²`, with `N = ⌊t·fs + 1/2⌋`.
+  - Both sums are clipped to the length.
+  - The result is not clamped, so it can exceed 1.
+
+  The vectors are exact hand sums and geometric window sums in 50-digit `decimal`.
+  Python 5345 passed, 2 skipped; .NET 4663 passed; conformance 2966/2966 in both. Version
+  2026.11.16.73.
 
 ## Not built
 

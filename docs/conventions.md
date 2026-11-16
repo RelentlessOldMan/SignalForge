@@ -94,6 +94,12 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Lateral energy fraction** ([ADR 0175](adr/0175-lateral-fraction.md); `lateral_fraction(omni,
+  figure_eight, sample_rate, *, start=0.005, stop=0.08)`, C# `Measurements.LateralFraction`):
+  `N_a = ⌊start·fs + 1/2⌋`, `N_b = ⌊stop·fs + 1/2⌋`; `Σ_{N_a ≤ n < N_b} h_8² / Σ_{n < N_b} h_o²`,
+  clipped to the length, both from index 0, not clamped (can exceed 1). Real, finite, equal
+  non-zero length; `fs` finite and positive; `0 ≤ start < stop` finite, `N_b ≥ 1`; omni energy
+  below `N_b` not zero. **(implemented)**
 - **Interaural cross-correlation** ([ADR 0174](adr/0174-iacc.md); `iacc(left, right, sample_rate, *,
   max_lag=0.001)`, C# `Measurements.Iacc`): `max_{|τ| ≤ L} |Σ_n l[n] r[n+τ]| / √(Σl² Σr²)` over
   integer lags, `L = ⌊max_lag·fs + 1/2⌋` (lags past the length skipped; `τ > 0`: right lags),

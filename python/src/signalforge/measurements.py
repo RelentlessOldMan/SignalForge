@@ -1383,3 +1383,43 @@ def iacc(left: ArrayLike, right: ArrayLike, sample_rate: float, *, max_lag: floa
         r = float(np.dot(lv[: n - t], rv[t:])) if t >= 0 else float(np.dot(lv[-t:], rv[: n + t]))
         best = max(best, abs(r))
     return best / math.sqrt(el * er)
+
+
+def lateral_fraction(
+    omni: ArrayLike,
+    figure_eight: ArrayLike,
+    sample_rate: float,
+    *,
+    start: float = 0.005,
+    stop: float = 0.08,
+) -> float:
+    """The lateral energy fraction ``sum_{Na <= n < Nb} h8^2 / sum_{n < Nb} ho^2`` (conventions:
+    Lateral energy fraction; ADR 0175)."""
+    o = np.asarray(omni)
+    e = np.asarray(figure_eight)
+    if o.ndim != 1 or e.ndim != 1 or o.shape[0] == 0 or o.shape != e.shape:
+        raise ValueError(
+            "omni and figure_eight must be one-dimensional, non-empty and of equal length"
+        )
+    if np.iscomplexobj(o) or np.iscomplexobj(e):
+        raise ValueError("omni and figure_eight must be real")
+    ov = o.astype(np.float64)
+    ev = e.astype(np.float64)
+    if not (np.all(np.isfinite(ov)) and np.all(np.isfinite(ev))):
+        raise ValueError("omni and figure_eight must be finite")
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    a = real(start, "start")
+    b = real(stop, "stop")
+    if not (math.isfinite(a) and math.isfinite(b) and 0 <= a < b):
+        raise ValueError("start and stop must be finite with 0 <= start < stop")
+    na = math.floor(a * fs + 0.5)
+    nb = math.floor(b * fs + 0.5)
+    if nb < 1:
+        raise ValueError("stop * sample_rate must round to at least 1 sample")
+    den = float(np.dot(ov[:nb], ov[:nb]))
+    if not den > 0:
+        raise ValueError("omni must have energy before stop")
+    num = float(np.dot(ev[na:nb], ev[na:nb]))
+    return num / den
