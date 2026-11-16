@@ -57,6 +57,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "tone_metrics": measurements.tone_metrics,
     "sfdr": measurements.sfdr,
     "two_tone_imd": measurements.two_tone_imd,
+    "phase_noise_ssb": measurements.phase_noise_ssb,
     "noise_figure_y_factor": measurements.noise_figure_y_factor,
     "noise_figure_cascade": measurements.noise_figure_cascade,
     "qpsk_map": modulation.qpsk_map,

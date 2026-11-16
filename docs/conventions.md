@@ -442,6 +442,27 @@ C#: `Measurements.TwoToneImd`. Same spectrum, half-width and groups as the tone 
   `P_t` the mean tone power (`−∞` for a product with no power), `worst_imd_dbc` (the larger) and
   `ip3_db = 10·log10 P_t − worst_imd_dbc/2`. **(implemented)**
 
+## Phase noise measurement
+
+Decided in [ADR 0108](adr/0108-phase-noise-measurement.md). Python:
+`signalforge.measurements.phase_noise_ssb`; C#: `Measurements.PhaseNoiseSsb`.
+
+- **Call:** `phase_noise_ssb(samples, sample_rate, offsets, *, carrier=None, nperseg=None,
+  window="blackman_harris", beta=None, width=None)`, real or complex, at least two samples.
+  `offsets` 1-D, non-empty, finite and positive; `carrier` as the tone metrics' fundamental.
+  **(implemented)**
+- **Spectrum and carrier:** `welch_psd(samples, sample_rate, nperseg=nperseg, window=window,
+  beta=beta)`. The carrier bin `k_c` is the first with the largest PSD, or the one nearest
+  `carrier`; its group is the bins within `w` of it (the tone metrics' half-width unless `width`
+  is given), clipped. `carrier_power` is the group's PSD · bin width summed, `carrier_frequency`
+  its power centroid. No DC group. Zero carrier power is `invalid_argument`. **(implemented)**
+- **Sidebands:** for each offset `o`, the bins nearest `carrier_frequency ± o`; both frequencies
+  within `0 ≤ f ≤ fs/2` (real) or `−fs/2 ≤ f < fs/2` (complex), and both bins with `|k − k_c| > w`, else
+  `invalid_argument`. `l_dbc_hz = 10·log10(mean of the two PSD values / carrier_power)`, `−∞`
+  when both are zero. **(implemented)**
+- **Result** (`PhaseNoise`): `carrier_frequency`, `carrier_power`, `offsets`, `l_dbc_hz`.
+  **(implemented)**
+
 ## Noise figure
 
 Decided in [ADR 0105](adr/0105-noise-figure-y-factor.md). Python:

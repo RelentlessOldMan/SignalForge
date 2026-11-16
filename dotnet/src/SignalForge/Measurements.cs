@@ -88,6 +88,14 @@ public sealed record TwoToneImd(
     double WorstImdDbc,
     double Ip3Db);
 
+/// <summary>Single-sideband phase noise of a carrier (conventions: Phase noise measurement;
+/// ADR 0108).</summary>
+/// <param name="CarrierFrequency">The carrier group's power centroid, in Hz.</param>
+/// <param name="CarrierPower">The carrier group's power, in sample units².</param>
+/// <param name="Offsets">The offsets from the carrier, in Hz.</param>
+/// <param name="LDbcHz">L at each offset: the two sidebands' mean PSD over the carrier power, in dBc/Hz.</param>
+public sealed record PhaseNoise(double CarrierFrequency, double CarrierPower, double[] Offsets, double[] LDbcHz);
+
 /// <summary>A Y-factor noise figure measurement (conventions: Noise figure; ADR 0105).</summary>
 /// <param name="YFactor">Hot over cold output power.</param>
 /// <param name="NoiseFactor">The linear noise factor F.</param>
@@ -314,6 +322,109 @@ public static class Measurements
     {
         CheckTones(samples.Length, width, f1, f2);
         return Imd(new ToneGroups(Spectral.WelchPsd(samples, sampleRate, window: window, beta: beta), window, beta, width, f1), f1, f2);
+    }
+
+    /// <summary>L(f) in dBc/Hz of real samples at each offset from the strongest bin (or the one
+    /// at <paramref name="carrier"/>), from a Welch PSD (conventions: Phase noise measurement;
+    /// ADR 0108).</summary>
+    /// <param name="samples">Real samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="offsets">Offsets from the carrier in Hz, finite and positive.</param>
+    /// <param name="carrier">The carrier's frequency; by default the strongest bin.</param>
+    /// <param name="nperseg">Welch segment length; by default the whole input.</param>
+    /// <param name="window">Window of the Welch segments.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of the carrier group; by default set by the window.</param>
+    /// <returns>The carrier and L at each offset.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or an offset falls in the carrier group or past the spectrum.</exception>
+    public static PhaseNoise PhaseNoiseSsb(ReadOnlySpan<double> samples, double sampleRate, ReadOnlySpan<double> offsets,
+        double? carrier = null, int? nperseg = null, WindowType window = WindowType.BlackmanHarris, double? beta = null, int? width = null)
+    {
+        CheckOffsets(samples.Length, offsets, width, carrier);
+        return Ssb(Spectral.WelchPsd(samples, sampleRate, nperseg, window: window, beta: beta), offsets, carrier, window, beta, width);
+    }
+
+    /// <summary>As for real samples, from the two-sided spectrum of complex samples.</summary>
+    /// <param name="samples">Complex samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="offsets">Offsets from the carrier in Hz, finite and positive.</param>
+    /// <param name="carrier">The carrier's frequency; by default the strongest bin.</param>
+    /// <param name="nperseg">Welch segment length; by default the whole input.</param>
+    /// <param name="window">Window of the Welch segments.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of the carrier group; by default set by the window.</param>
+    /// <returns>The carrier and L at each offset.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or an offset falls in the carrier group or past the spectrum.</exception>
+    public static PhaseNoise PhaseNoiseSsb(ReadOnlySpan<Complex> samples, double sampleRate, ReadOnlySpan<double> offsets,
+        double? carrier = null, int? nperseg = null, WindowType window = WindowType.BlackmanHarris, double? beta = null, int? width = null)
+    {
+        CheckOffsets(samples.Length, offsets, width, carrier);
+        return Ssb(Spectral.WelchPsd(samples, sampleRate, nperseg, window: window, beta: beta), offsets, carrier, window, beta, width);
+    }
+
+    private static void CheckOffsets(int samples, ReadOnlySpan<double> offsets, int? width, double? carrier)
+    {
+        if (offsets.IsEmpty)
+            throw new ArgumentException("offsets must not be empty", nameof(offsets));
+        foreach (double o in offsets)
+            if (!(o > 0) || !double.IsFinite(o))
+                throw new ArgumentOutOfRangeException(nameof(offsets), o, "offsets must be finite and positive");
+        if (samples < 2)
+            throw new ArgumentException("phase noise needs at least two samples", nameof(samples));
+        if (width is < 0)
+            throw new ArgumentOutOfRangeException(nameof(width), "width must be non-negative");
+        if (carrier is { } f && !double.IsFinite(f))
+            throw new ArgumentException("carrier must be finite", nameof(carrier));
+    }
+
+    private static PhaseNoise Ssb(SpectralDensity d, ReadOnlySpan<double> offsets, double? carrier, WindowType window, double? beta, int? width)
+    {
+        double fs = d.SampleRate, df = d.BinWidth;
+        double[] psd = d.Psd;
+        int n = psd.Length;
+        double total = 0;
+        foreach (double v in psd)
+            total += v * df;
+        if (!double.IsFinite(total))
+            throw new ArgumentException("samples must be finite and small enough for a finite spectrum", nameof(d));
+        int w = Math.Min(width ?? HalfWidth(window, beta), n);
+        int Nearest(double x) => (int)Math.Clamp(Math.Floor((x - d.Frequencies[0]) / df + 0.5), 0, n - 1);
+        int c = 0;
+        if (carrier is { } given)
+        {
+            if (!(Math.Abs(given) <= fs / 2 && (given >= 0 || !d.OneSided)))
+                throw new ArgumentException("carrier must satisfy |f| <= sample_rate/2 (and f >= 0 for real input)", nameof(carrier));
+            c = Nearest(d.OneSided ? given : FlooredMod(given + fs / 2, fs) - fs / 2);
+        }
+        else
+        {
+            for (int k = 1; k < n; k++)
+                if (psd[k] > psd[c])
+                    c = k;
+        }
+        double pc = 0, moment = 0;
+        for (int k = Math.Max(c - w, 0); k <= Math.Min(c + w, n - 1); k++)
+        {
+            pc += psd[k] * df;
+            moment += psd[k] * df * d.Frequencies[k];
+        }
+        if (!(pc > 0))
+            throw new ArgumentException("no power at the carrier", nameof(carrier));
+        double fc = moment / pc;
+        double lo = d.OneSided ? 0 : -fs / 2;
+        var l = new double[offsets.Length];
+        for (int i = 0; i < l.Length; i++)
+        {
+            double o = offsets[i];
+            if (!(fc - o >= lo && (d.OneSided ? fc + o <= fs / 2 : fc + o < fs / 2)))
+                throw new ArgumentException("an offset reaches past the spectrum", nameof(offsets));
+            int ka = Nearest(fc - o), kb = Nearest(fc + o);
+            if (Math.Abs(ka - c) <= w || Math.Abs(kb - c) <= w)
+                throw new ArgumentException("an offset falls in the carrier group", nameof(offsets));
+            double s = (psd[ka] + psd[kb]) / 2;
+            l[i] = s > 0 ? 10 * Math.Log10(s / pc) : double.NegativeInfinity;
+        }
+        return new PhaseNoise(fc, pc, offsets.ToArray(), l);
     }
 
     private static void CheckTones(int samples, int? width, double f1, double f2)

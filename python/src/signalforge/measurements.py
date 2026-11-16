@@ -243,6 +243,84 @@ def two_tone_imd(
     )
 
 
+@dataclass(frozen=True, eq=False)
+class PhaseNoise:
+    """Single-sideband phase noise of a carrier (conventions: Phase noise measurement).
+
+    ``l_dbc_hz`` is ``L`` at each of ``offsets``: the mean PSD of the two sidebands relative to
+    ``carrier_power``, in dBc/Hz.
+    """
+
+    carrier_frequency: float
+    carrier_power: float
+    offsets: NDArray[np.float64]
+    l_dbc_hz: NDArray[np.float64]
+
+
+def phase_noise_ssb(
+    samples: ArrayLike,
+    sample_rate: float,
+    offsets: ArrayLike,
+    *,
+    carrier: float | None = None,
+    nperseg: int | None = None,
+    window: str = "blackman_harris",
+    beta: float | None = None,
+    width: int | None = None,
+) -> PhaseNoise:
+    """``L(f)`` in dBc/Hz at each offset from the strongest bin (or the one at ``carrier``), from
+    a Welch PSD (conventions: Phase noise measurement; ADR 0108)."""
+    off = np.asarray(offsets, dtype=np.float64)
+    if off.ndim != 1 or off.size == 0:
+        raise ValueError("offsets must be a non-empty one-dimensional array")
+    if not np.all(np.isfinite(off) & (off > 0)):
+        raise ValueError("offsets must be finite and positive")
+    if np.asarray(samples).size < 2:
+        raise ValueError("phase noise needs at least two samples")
+    seg = None if nperseg is None else count(nperseg, "nperseg")
+    w_given = None if width is None else count(width, "width")
+    given = None if carrier is None else real(carrier, "carrier")
+    with np.errstate(over="ignore"):  # an overflowing spectrum is rejected below
+        d = spectral.welch_psd(samples, sample_rate, nperseg=seg, window=window, beta=beta)
+    fs = d.sample_rate
+    psd = d.psd
+    p = psd * d.bin_width
+    if not math.isfinite(float(np.sum(p))):
+        raise ValueError("samples must be finite and small enough for a finite spectrum")
+    w = _half_width(window, beta) if w_given is None else w_given
+
+    def nearest(freq: float) -> int:
+        k = math.floor((freq - float(d.frequencies[0])) / d.bin_width + 0.5)
+        return min(max(k, 0), psd.size - 1)
+
+    if given is None:
+        c = int(np.argmax(psd))
+    else:
+        if not (abs(given) <= fs / 2 and (given >= 0 or not d.one_sided)):
+            raise ValueError(
+                "carrier must satisfy |f| <= sample_rate/2 (and f >= 0 for real input)"
+            )
+        if not d.one_sided:
+            given = (given + fs / 2) % fs - fs / 2  # +fs/2 is the bin at -fs/2
+        c = nearest(given)
+    group = slice(max(c - w, 0), min(c + w, psd.size - 1) + 1)
+    pc = float(np.sum(p[group]))
+    if not pc > 0:
+        raise ValueError("no power at the carrier")
+    fc = float(np.sum(p[group] * d.frequencies[group])) / pc
+    lo = 0.0 if d.one_sided else -fs / 2
+    out = np.empty(off.size)
+    for i, o in enumerate(off.tolist()):
+        if not (fc - o >= lo and (fc + o <= fs / 2 if d.one_sided else fc + o < fs / 2)):
+            raise ValueError("an offset reaches past the spectrum")
+        ka, kb = nearest(fc - o), nearest(fc + o)
+        if abs(ka - c) <= w or abs(kb - c) <= w:
+            raise ValueError("an offset falls in the carrier group")
+        s = (float(psd[ka]) + float(psd[kb])) / 2
+        out[i] = 10 * math.log10(s / pc) if s > 0 else -math.inf
+    return PhaseNoise(fc, pc, off.copy(), out)
+
+
 _FLOOR = 1e-20  # bins at or below this fraction of the total power are rounding error: zero
 
 

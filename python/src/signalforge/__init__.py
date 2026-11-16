@@ -85,12 +85,14 @@ from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import (
     CascadeNoiseFigure,
     NoiseFigure,
+    PhaseNoise,
     PowerStats,
     Sfdr,
     ToneMetrics,
     TwoToneImd,
     noise_figure_cascade,
     noise_figure_y_factor,
+    phase_noise_ssb,
     power_stats,
     sfdr,
     tone_metrics,
@@ -200,7 +202,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.5"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.6"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -217,6 +219,7 @@ __all__ = [
     "LineRemoval",
     "NoiseFigure",
     "OccupiedBandwidth",
+    "PhaseNoise",
     "PowerStats",
     "QpskLinkConfig",
     "QpskLinkReport",
@@ -320,6 +323,7 @@ __all__ = [
     "ofdm_demodulate",
     "ofdm_modulate",
     "phase_noise",
+    "phase_noise_ssb",
     "pi_loop_gains",
     "power_frequency_offset",
     "power_stats",
