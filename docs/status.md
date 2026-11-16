@@ -4,14 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Noise figure by the Y-factor method**: `noise_figure_y_factor(hot_power, cold_power,
-   enr_db, *, cold_temperature=290.0)`, the RF measurement the brief lists as not built. It takes
-   the two measured noise powers (linear, the same units) and the noise source's excess noise
-   ratio, and returns the noise figure in dB and the noise temperature. Needs an ADR: the formula
-   with a cold temperature other than `T₀ = 290 K` (`F = (ENR − Y·(T_c/T₀ − 1))/(Y − 1)` in its
-   usual form), the limits (`Y > 1`), and whether a second-stage correction (Friis) is in it.
-   Expected values: textbook examples worked by hand (ENR 15 dB, Y = 10 dB gives NF ≈ 5.5 dB),
-   and `T_c = T₀` reducing to `ENR/(Y − 1)`.
+1. **Cascaded noise figure (Friis)**: `noise_figure_cascade(noise_figures_db, gains_db)`, the
+   total noise figure of stages in a chain, `F = F₁ + (F₂ − 1)/G₁ + (F₃ − 1)/(G₁G₂) + …`. ADR
+   0105 left the second-stage correction to it. Needs an ADR: linear gains or dB, whether a stage
+   with gain below 1 (a loss) is allowed, and the result (the total F and NF, maybe each stage's
+   share). Expected values: textbook chains worked by hand (an LNA of NF 1 dB and gain 20 dB
+   before a mixer of NF 10 dB), and a single stage returning itself.
 
 ## Built
 
@@ -1079,13 +1077,21 @@ Updated with every chunk of work. Dates are absolute.
   `2(1 − e^{−(2πf·rms)²/2})` and that the recovered offsets are white with the given spread.
   Python 3949 passed, 2 skipped; .NET 3324 passed; conformance 2018/2018 in both. Version
   2026.11.16.2.
+- 2026-11-16: noise figure by the Y-factor method (ADR 0105): `noise_figure_y_factor(hot_power,
+  cold_power, enr_db, *, cold_temperature=290.0)` (C# `Measurements.NoiseFigureYFactor`) returns
+  a `NoiseFigure` with Y, F, the noise figure in dB and the noise temperature, from
+  `F = (ENR − Y·(T_c/T₀ − 1))/(Y − 1)`, `T₀ = 290 K`, so a cold load away from `T₀` is handled.
+  A non-positive F is rejected; `0 < F < 1` is returned. The vectors are hand derivations; the
+  tests also measure a simulated device of known noise temperature.
+  Python 4028 passed, 2 skipped; .NET 3402 passed; conformance 2040/2040 in both. Version
+  2026.11.16.3.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
-phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
+phase noise, NF beyond the Y-factor method), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.
 

@@ -56,6 +56,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "power_stats": measurements.power_stats,
     "tone_metrics": measurements.tone_metrics,
     "sfdr": measurements.sfdr,
+    "noise_figure_y_factor": measurements.noise_figure_y_factor,
     "qpsk_map": modulation.qpsk_map,
     "qpsk_demap_hard": modulation.qpsk_demap_hard,
     "qpsk_demap_llr": modulation.qpsk_demap_llr,

@@ -82,7 +82,16 @@ from .files import (
     write_wav,
 )
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
-from .measurements import PowerStats, Sfdr, ToneMetrics, power_stats, sfdr, tone_metrics
+from .measurements import (
+    NoiseFigure,
+    PowerStats,
+    Sfdr,
+    ToneMetrics,
+    noise_figure_y_factor,
+    power_stats,
+    sfdr,
+    tone_metrics,
+)
 from .metrics import (
     ErrorCount,
     Evm,
@@ -187,7 +196,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.2"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.3"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -201,6 +210,7 @@ __all__ = [
     "HarmonicFTest",
     "IirFilter",
     "LineRemoval",
+    "NoiseFigure",
     "OccupiedBandwidth",
     "PowerStats",
     "QpskLinkConfig",
@@ -298,6 +308,7 @@ __all__ = [
     "multitaper_psd",
     "multitone",
     "newman_phases",
+    "noise_figure_y_factor",
     "occupied_bandwidth",
     "ofdm_demodulate",
     "ofdm_modulate",

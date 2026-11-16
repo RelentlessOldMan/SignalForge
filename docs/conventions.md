@@ -425,6 +425,21 @@ groups as the tone metrics (ADR 0015).
   `sfdr_db = −spur_dbc[0]`, in dB below the carrier (negative when a spur is stronger than a
   named carrier); `+∞` and empty arrays when no spur is found. **(implemented)**
 
+## Noise figure
+
+Decided in [ADR 0105](adr/0105-noise-figure-y-factor.md). Python:
+`signalforge.measurements.noise_figure_y_factor`; C#: `Measurements.NoiseFigureYFactor`.
+
+- **Call:** `noise_figure_y_factor(hot_power, cold_power, enr_db, *, cold_temperature=290.0)`.
+  Linear powers in one unit; `cold_power` finite and positive, `hot_power` finite and above it;
+  `enr_db` finite; `cold_temperature` in kelvin, finite and positive. **(implemented)**
+- **Formula:** `T₀ = 290 K` fixed, `Y = hot/cold`, `ENR = 10^(enr_db/10)`,
+  `F = (ENR − Y·(T_c/T₀ − 1))/(Y − 1)` (so `ENR/(Y − 1)` when `T_c = T₀`). `F` not finite or
+  `≤ 0` is `invalid_argument`; `0 < F < 1` is returned. No second-stage correction.
+  **(implemented)**
+- **Result** (`NoiseFigure`): `y_factor = Y`, `noise_factor = F`, `noise_figure_db = 10·log10 F`,
+  `noise_temperature = T₀(F − 1)` in kelvin. **(implemented)**
+
 ## Bits and symbols
 
 - Bits are integers 0 or 1 (`uint8` / `byte`). **(implemented)**

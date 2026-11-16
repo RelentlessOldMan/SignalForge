@@ -68,6 +68,13 @@ public sealed record Sfdr(
     double[] SpurPowers,
     double[] SpurDbc);
 
+/// <summary>A Y-factor noise figure measurement (conventions: Noise figure; ADR 0105).</summary>
+/// <param name="YFactor">Hot over cold output power.</param>
+/// <param name="NoiseFactor">The linear noise factor F.</param>
+/// <param name="NoiseFigureDb">10·log10 F.</param>
+/// <param name="NoiseTemperature">290·(F − 1), in kelvin.</param>
+public sealed record NoiseFigure(double YFactor, double NoiseFactor, double NoiseFigureDb, double NoiseTemperature);
+
 /// <summary>Power measurements and tone metrics. Definitions in docs/conventions.md.</summary>
 public static class Measurements
 {
@@ -182,6 +189,32 @@ public static class Measurements
         ArgumentOutOfRangeException.ThrowIfLessThan(numSpurs, 1);
         Check(samples.Length, width, fundamental);
         return Spurs(new ToneGroups(Spectral.WelchPsd(samples, sampleRate, window: window, beta: beta), window, beta, width, fundamental), numSpurs);
+    }
+
+    /// <summary>Noise figure from the output powers with a noise source hot and cold:
+    /// F = (ENR − Y·(T_c/T₀ − 1))/(Y − 1), T₀ = 290 K (conventions: Noise figure; ADR 0105).</summary>
+    /// <param name="hotPower">Output power with the source on, linear, above <paramref name="coldPower"/>.</param>
+    /// <param name="coldPower">Output power with the source off, linear, positive, same unit.</param>
+    /// <param name="enrDb">The source's excess noise ratio in dB, finite.</param>
+    /// <param name="coldTemperature">The cold source's temperature in kelvin, positive.</param>
+    /// <returns>Y, F, the noise figure in dB and the noise temperature.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or F is not finite and positive.</exception>
+    public static NoiseFigure NoiseFigureYFactor(double hotPower, double coldPower, double enrDb, double coldTemperature = 290)
+    {
+        const double t0 = 290;
+        if (!(coldPower > 0) || !double.IsFinite(coldPower))
+            throw new ArgumentOutOfRangeException(nameof(coldPower), coldPower, "must be finite and positive");
+        if (!double.IsFinite(hotPower) || !(hotPower > coldPower))
+            throw new ArgumentOutOfRangeException(nameof(hotPower), hotPower, "must be finite and greater than coldPower");
+        if (!double.IsFinite(enrDb))
+            throw new ArgumentOutOfRangeException(nameof(enrDb), enrDb, "must be finite");
+        if (!(coldTemperature > 0) || !double.IsFinite(coldTemperature))
+            throw new ArgumentOutOfRangeException(nameof(coldTemperature), coldTemperature, "must be finite and positive");
+        double y = hotPower / coldPower;
+        double f = (Math.Pow(10, enrDb / 10) - y * (coldTemperature / t0 - 1)) / (y - 1);
+        if (!(f > 0) || !double.IsFinite(f))
+            throw new ArgumentException("the measurement gives no finite positive noise factor", nameof(hotPower));
+        return new NoiseFigure(y, f, 10 * Math.Log10(f), t0 * (f - 1));
     }
 
     private static void Check(int samples, int? width, double? fundamental)

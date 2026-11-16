@@ -250,6 +250,49 @@ class _Groups:
         return float(np.sum(self.p[idx] * self.f[idx])) / power
 
 
+@dataclass(frozen=True)
+class NoiseFigure:
+    """A Y-factor noise figure measurement (conventions: Noise figure).
+
+    ``y_factor`` is hot over cold power, ``noise_factor`` the linear F, ``noise_figure_db``
+    ``10*log10(F)`` and ``noise_temperature`` ``290*(F - 1)`` in kelvin.
+    """
+
+    y_factor: float
+    noise_factor: float
+    noise_figure_db: float
+    noise_temperature: float
+
+
+_T0 = 290.0
+
+
+def noise_figure_y_factor(
+    hot_power: float, cold_power: float, enr_db: float, *, cold_temperature: float = 290.0
+) -> NoiseFigure:
+    """Noise figure from the output powers with a noise source hot and cold (conventions: Noise
+    figure; ADR 0105): ``F = (ENR - Y*(T_c/T0 - 1))/(Y - 1)``, ``T0 = 290 K``."""
+    hot = real(hot_power, "hot_power")
+    cold = real(cold_power, "cold_power")
+    if not cold > 0:
+        raise ValueError("cold_power must be positive")
+    if not hot > cold:
+        raise ValueError("hot_power must be greater than cold_power")
+    e = real(enr_db, "enr_db")
+    tc = real(cold_temperature, "cold_temperature")
+    if not tc > 0:
+        raise ValueError("cold_temperature must be positive")
+    try:
+        enr = 10.0 ** (e / 10)
+    except OverflowError:
+        raise ValueError("enr_db is too large") from None
+    y = hot / cold
+    f = (enr - y * (tc / _T0 - 1)) / (y - 1)
+    if not (math.isfinite(f) and f > 0):
+        raise ValueError("the measurement gives no finite positive noise factor")
+    return NoiseFigure(y, f, 10 * math.log10(f), _T0 * (f - 1))
+
+
 def _half_width(window: str, beta: float | None) -> int:
     if window == "kaiser":
         if beta is None:
