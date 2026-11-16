@@ -117,6 +117,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "interpolate_peak": spectral.interpolate_peak,
     "find_tones": spectral.find_tones,
     "peak_widths": spectral.peak_widths,
+    "harmonic_series": spectral.harmonic_series,
     "spectral_variation": spectral.spectral_variation,
     "band_energy_ratio": spectral.band_energy_ratio,
     "spectral_contrast": spectral.spectral_contrast,

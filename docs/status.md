@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Harmonic series**: the fundamental that best explains a list of tones, and which tones are
-   its harmonics. Not built yet. Needs an ADR: `harmonic_series(tones, *, tolerance, max_order)`
-   taking `find_tones` output, how candidate fundamentals are scored (count of matched
-   harmonics, then the least-squares fit of the matched ones), the tolerance in Hz or as a
-   fraction, and ties. Expected values: hand-built tone lists at exact and slightly detuned
-   multiples, whose least-squares fundamental is worked by hand.
+1. **Inharmonicity**: how far a set of tones sits from an exact harmonic series. Not built yet.
+   Needs an ADR: `inharmonicity(frequencies, heights, fundamental, orders)` taking the output of
+   `harmonic_series` (and `find_tones` heights), the definition (the usual one: the
+   height-weighted mean of `|t − m·f0|/(m·f0)`, or of `|t − m·f0|/f0`), what unmatched tones
+   (order 0) contribute, and its units. Expected values: hand-built tones at known detunings,
+   worked in Fractions.
 
 ## Built
 
@@ -1366,6 +1366,15 @@ Updated with every chunk of work. Dates are absolute.
   scaling and a zero-padded Hann lobe's half-power width of 1.44 bins.
   Python 4718 passed, 2 skipped; .NET 4055 passed; conformance 2451/2451 in both. Version
   2026.11.16.36.
+- 2026-11-16: harmonic series (ADR 0139): `harmonic_series(frequencies, tolerance, *,
+  max_order=10)` (C# `Spectral.HarmonicSeries`) tries every `t_i/m` as the fundamental and keeps
+  the candidate matching the most tones within `tolerance` Hz, ties to the highest. It refines
+  the winner by least squares over its matched tones. It gives `HarmonicSeries(fundamental,
+  orders, matched)`, with order 0 for an unmatched tone. The vectors are worked by hand: exact
+  and detuned harmonics, a stray tone at two `max_order`s, a missing fundamental. The tests cover
+  permuting and scaling the tones, and a clipped sine through `find_tones`.
+  Python 4731 passed, 2 skipped; .NET 4068 passed; conformance 2461/2461 in both. Version
+  2026.11.16.37.
 
 ## Not built
 

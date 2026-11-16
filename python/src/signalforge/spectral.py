@@ -1218,6 +1218,17 @@ class SpectralSlope:
 
 
 @dataclass(frozen=True)
+class HarmonicSeries:
+    """The fundamental that best explains a list of tones (conventions: Spectra, Harmonic
+    series; ADR 0139): its least-squares ``fundamental``, each tone's harmonic ``orders`` (0 when
+    unmatched), and how many tones ``matched``."""
+
+    fundamental: float
+    orders: NDArray[np.int64]
+    matched: int
+
+
+@dataclass(frozen=True)
 class PeakWidth:
     """A peak's width at a level below its top (conventions: Spectra, Peak widths; ADR 0138):
     its bin ``index``, the ``level``, the crossings ``left`` and ``right`` in Hz, and the
@@ -1541,6 +1552,44 @@ def peak_widths(
         left, right = float(f[0]) + lo * delta, float(f[0]) + hi * delta
         out.append(PeakWidth(p.index, level, left, right, right - left))
     return out
+
+
+def harmonic_series(
+    frequencies: ArrayLike, tolerance: float, *, max_order: int = 10
+) -> HarmonicSeries:
+    """The candidate ``t_i/m`` that matches the most tones within ``tolerance`` Hz (ties to the
+    highest), refined by least squares over its matched tones."""
+    t = np.asarray(frequencies, dtype=np.float64)
+    if t.ndim != 1 or t.size < 1:
+        raise ValueError("frequencies must be a 1-D array of at least one tone")
+    if not (np.all(np.isfinite(t)) and np.all(t > 0)):
+        raise ValueError("frequencies must be finite and positive")
+    tol = real(tolerance, "tolerance")
+    if not tol > 0:
+        raise ValueError("tolerance must be > 0")
+    top = count(max_order, "max_order")
+    if top < 1:
+        raise ValueError("max_order must be at least 1")
+    tones = [float(v) for v in t]
+
+    def orders_for(c: float) -> list[int]:
+        out = []
+        for v in tones:
+            m = math.floor(v / c + 0.5)
+            out.append(m if 1 <= m <= top and abs(v - m * c) <= tol else 0)
+        return out
+
+    best_c, best_orders, best_n = 0.0, [0] * len(tones), -1
+    for v in tones:
+        for m in range(1, top + 1):
+            c = v / m
+            orders = orders_for(c)
+            n = sum(1 for o in orders if o)
+            if n > best_n or (n == best_n and c > best_c):
+                best_c, best_orders, best_n = c, orders, n
+    num = sum(o * v for o, v in zip(best_orders, tones, strict=True))
+    den = sum(o * o for o in best_orders)
+    return HarmonicSeries(num / den, np.array(best_orders, dtype=np.int64), best_n)
 
 
 def find_tones(

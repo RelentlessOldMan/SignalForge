@@ -488,6 +488,13 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   level`, the crossing is `k + (level − x_k)/(x_{k+1} − x_k)` bins on the left (mirrored on the
   right), in Hz `f_0 + position·δ`; `width = right − left`. Gives `PeakWidth(index, level, left,
   right, width)`. `0 < rel_height ≤ 1`. **(implemented)**
+- **Harmonic series** (`harmonic_series(frequencies, tolerance, max_order=10)`,
+  [ADR 0139](adr/0139-harmonic-series.md)): candidates `t_i/m`, `m = 1..max_order`; tone `t`
+  matches `c` at `m = ⌊t/c + 1/2⌋` when `1 ≤ m ≤ max_order` and `|t − m·c| ≤ tolerance`. The
+  candidate matching most tones wins, ties to the highest; `fundamental = Σ m_i t_i / Σ m_i²`
+  over its matches. Gives `HarmonicSeries(fundamental, orders, matched)`, with `orders[i] = 0`
+  for an unmatched tone. Tones finite and positive, `tolerance > 0` Hz, `max_order ≥ 1`.
+  **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

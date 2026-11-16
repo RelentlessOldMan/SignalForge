@@ -223,6 +223,12 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
 
+/// <summary>The fundamental that best explains a list of tones (conventions: Spectra, Harmonic series; ADR 0139).</summary>
+/// <param name="Fundamental">The least-squares fundamental over the matched tones, in Hz.</param>
+/// <param name="Orders">Each tone's harmonic order, 0 when unmatched.</param>
+/// <param name="Matched">How many tones matched.</param>
+public sealed record HarmonicSeries(double Fundamental, int[] Orders, int Matched);
+
 /// <summary>A peak's width at a level below its top (conventions: Spectra, Peak widths; ADR 0138).</summary>
 /// <param name="Index">The peak's bin.</param>
 /// <param name="Level">The level the width is measured at, height − relHeight·prominence.</param>
@@ -2075,6 +2081,63 @@ public static class Spectral
         double delta = (f[^1] - f[0]) / (f.Length - 1);
         double height = scale == PeakScale.Decibel ? Math.Pow(10, vertex / 10) : vertex;
         return new PeakEstimate(f[k] + offset * delta, height, offset);
+    }
+
+    /// <summary>
+    /// The candidate <c>t_i/m</c> that matches the most tones within <paramref name="tolerance"/>
+    /// Hz (ties to the highest), refined by least squares over its matched tones (conventions:
+    /// Spectra, Harmonic series; ADR 0139).
+    /// </summary>
+    /// <param name="frequencies">Tone frequencies in Hz, finite and positive, in any order.</param>
+    /// <param name="tolerance">How far a tone may be from its harmonic, in Hz, positive.</param>
+    /// <param name="maxOrder">The highest harmonic order, at least 1.</param>
+    /// <returns>The fundamental, each tone's order and the number matched.</returns>
+    /// <exception cref="ArgumentException">There are no tones, a tone is not finite and positive, <paramref name="tolerance"/> is not finite and positive, or <paramref name="maxOrder"/> is below 1.</exception>
+    public static HarmonicSeries HarmonicSeries(ReadOnlySpan<double> frequencies, double tolerance, int maxOrder = 10)
+    {
+        if (frequencies.Length < 1)
+            throw new ArgumentException("frequencies must hold at least one tone", nameof(frequencies));
+        foreach (double v in frequencies)
+        {
+            if (!(double.IsFinite(v) && v > 0))
+                throw new ArgumentException("frequencies must be finite and positive", nameof(frequencies));
+        }
+        if (!(double.IsFinite(tolerance) && tolerance > 0))
+            throw new ArgumentOutOfRangeException(nameof(tolerance), "tolerance must be finite and > 0");
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxOrder, 1);
+        int n = frequencies.Length;
+        double bestC = 0;
+        int bestN = -1;
+        var best = new int[n];
+        var orders = new int[n];
+        foreach (double v in frequencies)
+        {
+            for (int m = 1; m <= maxOrder; m++)
+            {
+                double c = v / m;
+                int matched = 0;
+                for (int i = 0; i < n; i++)
+                {
+                    double k = Math.Floor(frequencies[i] / c + 0.5);
+                    bool hit = k >= 1 && k <= maxOrder && Math.Abs(frequencies[i] - k * c) <= tolerance;
+                    orders[i] = hit ? (int)k : 0;
+                    matched += hit ? 1 : 0;
+                }
+                if (matched > bestN || (matched == bestN && c > bestC))
+                {
+                    bestC = c;
+                    bestN = matched;
+                    orders.CopyTo(best, 0);
+                }
+            }
+        }
+        double num = 0, den = 0;
+        for (int i = 0; i < n; i++)
+        {
+            num += best[i] * frequencies[i];
+            den += (double)best[i] * best[i];
+        }
+        return new HarmonicSeries(num / den, best, bestN);
     }
 
     /// <summary>

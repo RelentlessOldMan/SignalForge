@@ -341,6 +341,8 @@ public static class Conformance
                 t => Spectral.SpectralCrest(t.Item1, t.Item2, t.Item3, t.Item4)),
             "spectral_variation" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("previous")), Reals(a.Get("current")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
                 t => Spectral.SpectralVariation(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "harmonic_series" => Bind((Reals(a.Get("frequencies")), a.D("tolerance"), a.Has("max_order") ? a.I("max_order") : 10),
+                t => Spectral.HarmonicSeries(t.Item1, t.Item2, t.Item3)),
             "peak_widths" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Opt("rel_height", 0.5), a.Opt("min_prominence", 0)),
                 t => Spectral.PeakWidths(t.Item1, t.Item2, t.Item3, t.Item4).Select(p => (object?)p).ToList()),
             "find_tones" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.I("count"), a.Opt("min_prominence", 0),

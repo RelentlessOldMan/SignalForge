@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "harmonic_series",
+  "description": "Harmonic series (conventions: Spectra, Harmonic series; ADR 0139).",
+  "cases": [
+    {"id": "harmonic_series.exact", "op": "harmonic_series", "args": {"frequencies": [100.0, 200.0, 300.0, 500.0], "tolerance": 1.0}, "expected": {"fundamental": 100.0, "orders": [1.0, 2.0, 3.0, 5.0], "matched": 4.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "100 Hz and 50 Hz both match all four; the tie goes to the higher, 100 Hz"},
+    {"id": "harmonic_series.detuned", "op": "harmonic_series", "args": {"frequencies": [101.0, 199.0, 302.0], "tolerance": 5.0}, "expected": {"fundamental": 100.35714285714286, "orders": [1.0, 2.0, 3.0], "matched": 3.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "101/1, 199/2 and 302/3 all match all three at orders 1, 2, 3, as do their halves; fundamental (101 + 398 + 906)/14 = 1405/14"},
+    {"id": "harmonic_series.stray", "op": "harmonic_series", "args": {"frequencies": [100.0, 200.0, 250.0, 300.0], "tolerance": 2.0}, "expected": {"fundamental": 50.0, "orders": [2.0, 4.0, 5.0, 6.0], "matched": 4.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the 250 Hz tone makes 50 Hz match all four, so it beats 100 Hz's three"},
+    {"id": "harmonic_series.stray_low_order", "op": "harmonic_series", "args": {"frequencies": [100.0, 200.0, 250.0, 300.0], "tolerance": 2.0, "max_order": 4}, "expected": {"fundamental": 100.0, "orders": [1.0, 2.0, 0.0, 3.0], "matched": 3.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "with max_order 4, 50 Hz matches only 100 and 200; 100 Hz matches three, 250 unmatched"},
+    {"id": "harmonic_series.missing_fundamental", "op": "harmonic_series", "args": {"frequencies": [300.0, 200.0, 400.0], "tolerance": 0.5}, "expected": {"fundamental": 100.0, "orders": [3.0, 2.0, 4.0], "matched": 3.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "200, 300 and 400 Hz in any order: 100 Hz matches all three, and is the highest that does"},
+    {"id": "harmonic_series.single", "op": "harmonic_series", "args": {"frequencies": [440.0], "tolerance": 1.0}, "expected": {"fundamental": 440.0, "orders": [1.0], "matched": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "one tone is its own fundamental, the highest candidate"},
+    {"id": "harmonic_series.no_tones", "op": "harmonic_series", "args": {"frequencies": [], "tolerance": 1.0}, "error": "invalid_argument", "source": "need at least one tone"},
+    {"id": "harmonic_series.negative_tone", "op": "harmonic_series", "args": {"frequencies": [100.0, -200.0], "tolerance": 1.0}, "error": "invalid_argument", "source": "tones must be positive"},
+    {"id": "harmonic_series.zero_tolerance", "op": "harmonic_series", "args": {"frequencies": [100.0], "tolerance": 0.0}, "error": "invalid_argument", "source": "tolerance must be > 0"},
+    {"id": "harmonic_series.max_order_zero", "op": "harmonic_series", "args": {"frequencies": [100.0], "tolerance": 1.0, "max_order": 0}, "error": "invalid_argument", "source": "max_order must be at least 1"}
+  ]
+}
