@@ -590,6 +590,10 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   kept, no liftering. Power 1-D, finite, `≥ 0`, at least one bin; filterbank 2-D, at least one
   row, each of `K` finite non-negative weights; `1 ≤ n_coefficients ≤ n_filters`; floor finite
   and positive. **(implemented)**
+- **Delta coefficients** (`delta(frames, width=2)`, C# `Spectral.Delta`,
+  [ADR 0158](adr/0158-delta-coefficients.md)): per column `d_t = Σ_{n=1}^{W} n (c_{t+n} −
+  c_{t−n}) / (2 Σ n²)`, indices outside `0 … T−1` clamped to the nearest frame (HTK); output `T`
+  rows. Frames 2-D, at least one row and one column, finite; `width ≥ 1`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

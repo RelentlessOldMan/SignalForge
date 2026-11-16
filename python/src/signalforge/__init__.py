@@ -193,6 +193,7 @@ from .spectral import (
     channel_power,
     db_bandwidth,
     dct,
+    delta,
     dpss_tapers,
     fft,
     fft_frequencies,
@@ -283,7 +284,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.55"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.56"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -387,6 +388,7 @@ __all__ = [
     "dct",
     "decimate",
     "decode_samples",
+    "delta",
     "dfe_equalizer",
     "dfe_least_squares",
     "dpss_tapers",

@@ -1899,6 +1899,26 @@ def mfcc(
     return dct(np.log(np.maximum(w @ p, lo)))[:k]
 
 
+def delta(frames: ArrayLike, width: int = 2) -> NDArray[np.float64]:
+    """HTK delta coefficients of a sequence of feature frames (rows), with the first and last
+    frames repeated past the edges (conventions: Spectra, Delta coefficients; ADR 0158)."""
+    c = np.asarray(frames)
+    if np.iscomplexobj(c) or c.ndim != 2 or c.shape[0] == 0 or c.shape[1] == 0:
+        raise ValueError("frames must be a real two-dimensional array with at least one value")
+    c = c.astype(np.float64)
+    if not np.all(np.isfinite(c)):
+        raise ValueError("frames must be finite")
+    w = count(width, "width")
+    if w < 1:
+        raise ValueError("width must be at least 1")
+    t = np.arange(c.shape[0])
+    last = c.shape[0] - 1
+    out = np.zeros_like(c)
+    for n in range(1, w + 1):
+        out += n * (c[np.minimum(t + n, last)] - c[np.maximum(t - n, 0)])
+    return np.asarray(out / (2 * sum(n * n for n in range(1, w + 1))), dtype=np.float64)
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,

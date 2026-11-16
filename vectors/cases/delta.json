@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "delta",
+  "description": "HTK delta coefficients (conventions: Delta coefficients; ADR 0158).",
+  "cases": [
+    {"id": "delta.ramp_width1", "op": "delta", "args": {"frames": [[0.0, 1.0], [1.0, 3.0], [2.0, 5.0], [3.0, 7.0], [4.0, 9.0], [5.0, 11.0]], "width": 1}, "expected": [[0.5, 1.0], [1.0, 2.0], [1.0, 2.0], [1.0, 2.0], [1.0, 2.0], [0.5, 1.0]], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "c_t = (t, 2t+1), W = 1: (c[t+1] - c[t-1])/2 = slope inside, half slope at each end"},
+    {"id": "delta.ramp_width2", "op": "delta", "args": {"frames": [[0.0, 1.0], [1.0, 3.0], [2.0, 5.0], [3.0, 7.0], [4.0, 9.0], [5.0, 11.0]]}, "expected": [[0.5, 1.0], [0.8, 1.6], [1.0, 2.0], [1.0, 2.0], [0.8, 1.6], [0.5, 1.0]], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "W = 2, norm 10: interior slope; t = 0 gives (1*1 + 2*2)/10 = 1/2, t = 1 gives (1*2 + 2*3)/10 = 4/5 for the first column"},
+    {"id": "delta.single_frame", "op": "delta", "args": {"frames": [[3.0, -1.0, 7.0]]}, "expected": [[0.0, 0.0, 0.0]], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one frame: every clamped difference is 0"},
+    {"id": "delta.wide", "op": "delta", "args": {"frames": [[0.0], [1.0], [4.0]], "width": 5}, "expected": [[0.5181818181818182], [0.5454545454545454], [0.5363636363636364]], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "W = 5 over 3 frames, norm 110: every index beyond the ends clamps; exact fractions"},
+    {"id": "delta.alternating", "op": "delta", "args": {"frames": [[1.0], [-1.0], [1.0], [-1.0], [1.0]], "width": 1}, "expected": [[-1.0], [0.0], [0.0], [0.0], [1.0]], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "an alternating sequence with W = 1: c[t+1] = c[t-1] inside, so 0; the ends are -1 and 1"},
+    {"id": "delta.no_frames", "op": "delta", "args": {"frames": []}, "error": "invalid_argument", "source": "needs at least one frame"},
+    {"id": "delta.empty_frame", "op": "delta", "args": {"frames": [[]]}, "error": "invalid_argument", "source": "needs at least one value per frame"},
+    {"id": "delta.nan", "op": "delta", "args": {"frames": [[1.0], ["nan"]]}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "delta.zero_width", "op": "delta", "args": {"frames": [[1.0], [2.0]], "width": 0}, "error": "invalid_argument", "source": "width must be at least 1"}
+  ]
+}

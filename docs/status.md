@@ -4,12 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Delta coefficients**: `delta(frames, width=2)` over a sequence of feature frames (rows),
-   using the HTK regression `d_t = Σ_{n=1}^{W} n (c_{t+n} − c_{t−n}) / (2 Σ n²)`, applied per
-   column. Not built yet. Needs an ADR: the edges (repeat the first and last frame, as HTK
-   does, or shorten the output), the 2-D shape in both languages, and `width ≥ 1`. Expected
-   values: a linear ramp `c_t = a t + b` has delta `a` away from the edges, and the edge values
-   are worked by hand from the repeated frames.
+1. **Cepstral liftering**: `lifter(coefficients, lifter=22)`, the HTK sinusoidal lifter
+   `c'_n = (1 + (L/2)·sin(π n / L))·c_n`, `n = 0 …`, which ADR 0157 left out of MFCC. Not
+   built yet. Needs an ADR: `L ≥ 1`, whether `L = 0` means none, 1-D (one frame) or 2-D
+   (frames), and the inverse. Expected values: `sin(π n/L)` exact at `n = L/2, L/6, L/4`, for
+   example with `L = 12`.
 
 ## Built
 
@@ -1523,6 +1522,13 @@ Updated with every chunk of work. Dates are absolute.
   `decimal`. The tests check that scaling the power moves only `c_0`, by `√N·ln a`.
   Python 5038 passed, 2 skipped; .NET 4357 passed; conformance 2703/2703 in both. Version
   2026.11.16.55.
+- 2026-11-16: delta coefficients (ADR 0158): `delta(frames, width=2)` (C# `Spectral.Delta`,
+  `double[][]`). It uses the HTK regression `Σ n (c_{t+n} − c_{t−n}) / (2 Σ n²)` per column,
+  with indices clamped to the first and last frames, so the output has `T` rows. The vectors
+  are exact fractions. A ragged-frames case is a unit test in both languages, not a vector,
+  because the Python vector decoder can't build a ragged array.
+  Python 5052 passed, 2 skipped; .NET 4371 passed; conformance 2712/2712 in both. Version
+  2026.11.16.56.
 
 ## Not built
 

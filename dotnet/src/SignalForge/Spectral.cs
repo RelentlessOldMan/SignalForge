@@ -2567,6 +2567,54 @@ public static class Spectral
         return Dct(logs)[..nCoefficients];
     }
 
+    /// <summary>
+    /// HTK delta coefficients of a sequence of feature frames, with the first and last frames
+    /// repeated past the edges (conventions: Spectra, Delta coefficients; ADR 0158).
+    /// </summary>
+    /// <param name="frames">One row of features per frame, at least one, all the same length and finite.</param>
+    /// <param name="width">The regression half-width <c>W</c>, at least 1.</param>
+    /// <returns>One row of deltas per frame.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[][] Delta(double[][] frames, int width = 2)
+    {
+        ArgumentNullException.ThrowIfNull(frames);
+        if (frames.Length == 0 || frames[0] is null || frames[0].Length == 0)
+            throw new ArgumentException("needs at least one frame of at least one value", nameof(frames));
+        int d = frames[0].Length;
+        foreach (double[] row in frames)
+        {
+            if (row is null || row.Length != d)
+                throw new ArgumentException("every frame needs the same length", nameof(frames));
+            foreach (double v in row)
+            {
+                if (!double.IsFinite(v))
+                    throw new ArgumentException("values must be finite", nameof(frames));
+            }
+        }
+        if (width < 1)
+            throw new ArgumentOutOfRangeException(nameof(width), "width must be at least 1");
+        int last = frames.Length - 1;
+        double norm = 0;
+        for (int n = 1; n <= width; n++)
+            norm += n * n;
+        norm *= 2;
+        var result = new double[frames.Length][];
+        for (int t = 0; t <= last; t++)
+        {
+            var row = new double[d];
+            for (int n = 1; n <= width; n++)
+            {
+                double[] ahead = frames[Math.Min(t + n, last)], behind = frames[Math.Max(t - n, 0)];
+                for (int j = 0; j < d; j++)
+                    row[j] += n * (ahead[j] - behind[j]);
+            }
+            for (int j = 0; j < d; j++)
+                row[j] /= norm;
+            result[t] = row;
+        }
+        return result;
+    }
+
     private static void CheckDctInput(ReadOnlySpan<double> samples)
     {
         if (samples.IsEmpty)
