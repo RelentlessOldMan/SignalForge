@@ -4,12 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Cepstrum pitch**: the fundamental from the highest real-cepstrum peak (ADR 0151) among the
-   quefrencies `ceil(fs/max)` to `floor(fs/min)`, the cepstral twin of the autocorrelation pitch
-   (ADR 0150). Not built yet. Needs an ADR: whether `nfft` is passed through, refinement (the
-   same parabola rule as ADR 0150, or none), and what is reported besides the frequency (the
-   peak's cepstral value as a strength). Expected values: the peak and parabola worked from the
-   Fractions series of ADR 0151 for two-tap sequences, plus a pulse train test.
+1. **Minimum phase from the cepstrum**: the homomorphic minimum-phase sequence with the same
+   magnitude spectrum, `IFFT(exp(FFT(fold(c))))` with `c = real_cepstrum(x, nfft)` (ADR 0151),
+   where the fold keeps `c[0]`, doubles `c[1 … ⌈M/2⌉−1]`, keeps `c[M/2]` for even `M`, and zeroes
+   the rest. Not built yet. Needs an ADR: the fold for odd and even `M`, the output length (`M`),
+   the default `nfft` (it aliases, so perhaps a larger default than `N`), and real output (drop the
+   imaginary residue). Expected values: analytic. `[a, 1]` with `|a| < 1` maps to `[1, a]`, and
+   `[1, a]` maps to itself, with an aliasing error near `a^M` that the tolerance must cover.
+   A gain carries through. Also a two-zero case, `(1 − z₁z⁻¹)(1 − z₂z⁻¹)` with one zero outside the
+   unit circle, which maps to the reflected zero `1/z̄`, scaled by `|z|`.
 
 ## Built
 
@@ -1473,6 +1476,15 @@ Updated with every chunk of work. Dates are absolute.
   and complex rejection.
   Python 4901 passed, 2 skipped; .NET 4234 passed; conformance 2599/2599 in both. Version
   2026.11.16.49.
+- 2026-11-16: cepstrum pitch (ADR 0152): `cepstrum_pitch(samples, sample_rate, min_frequency,
+  max_frequency, nfft=None)` (C# `Measurements.CepstrumPitch`). It finds the highest real-cepstrum
+  peak among the quefrencies `ceil(fs/max)` to `floor(fs/min)`, with `2·hi < nfft`. The peak and
+  the parabola follow ADR 0150, through a private helper the two pitch functions now share. It
+  returns `CepstrumPitch(frequency, quefrency, strength = c[L])`. The vectors come from the
+  Fractions series of an echo `δ + a·δ[n−P]`, aliased at `nfft`. They cover an echo, an
+  adjacent two-tap with a moved peak, a rising edge, an impulse tie, and the errors.
+  Python 4915 passed, 2 skipped; .NET 4247 passed; conformance 2610/2610 in both. Version
+  2026.11.16.50.
 
 ## Not built
 

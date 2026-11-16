@@ -208,6 +208,12 @@ public sealed record TemporalCentroid(double Centroid, double Spread);
 /// <param name="Voicing"><c>r[L] / r[0]</c> at the integer peak lag, −1 to 1.</param>
 public sealed record AutocorrelationPitch(double Frequency, double Lag, double Voicing);
 
+/// <summary>The fundamental from the highest real-cepstrum peak (conventions: Cepstrum pitch; ADR 0152).</summary>
+/// <param name="Frequency">The fundamental in Hz, <c>fs / Quefrency</c>.</param>
+/// <param name="Quefrency">The refined quefrency in samples.</param>
+/// <param name="Strength"><c>c[L]</c> at the integer peak quefrency.</param>
+public sealed record CepstrumPitch(double Frequency, double Quefrency, double Strength);
+
 /// <summary>Power measurements and tone metrics. Definitions in docs/conventions.md.</summary>
 public static class Measurements
 {
@@ -229,6 +235,40 @@ public static class Measurements
             if (!double.IsFinite(v))
                 throw new ArgumentException("samples must be finite", nameof(samples));
         }
+        var (lo, hi) = LagRange(sampleRate, minFrequency, maxFrequency);
+        if (hi > samples.Length - 2)
+            throw new ArgumentException("minFrequency needs a lag longer than the samples allow (at most N - 2)", nameof(minFrequency));
+        int first = (int)lo, last = (int)hi;
+        double[] r = Dsp.Autocorrelation(samples, last + 1);
+        if (!(r[0] > 0))
+            throw new ArgumentException("the samples' energy must be more than 0", nameof(samples));
+        var (best, lag) = RefinedPeak(r, first, last);
+        return new AutocorrelationPitch(sampleRate / lag, lag, r[best] / r[0]);
+    }
+
+    /// <summary>The highest real-cepstrum peak among the quefrencies whose <c>fs/q</c> lies in
+    /// [<paramref name="minFrequency"/>, <paramref name="maxFrequency"/>], refined by a parabola
+    /// when it is a local maximum (conventions: Cepstrum pitch; ADR 0152).</summary>
+    /// <param name="samples">Real samples, at least one, finite, with no spectrum bin exactly 0.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <param name="minFrequency">The lowest fundamental searched, Hz, finite and positive.</param>
+    /// <param name="maxFrequency">The highest fundamental searched, Hz, finite, at least <paramref name="minFrequency"/>.</param>
+    /// <param name="nfft">The FFT length, at least the sample count; the sample count when null.</param>
+    /// <returns>The frequency, the refined quefrency and the strength.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or the quefrency range is empty or too long.</exception>
+    public static CepstrumPitch CepstrumPitch(ReadOnlySpan<double> samples, double sampleRate, double minFrequency, double maxFrequency, int? nfft = null)
+    {
+        var (lo, hi) = LagRange(sampleRate, minFrequency, maxFrequency);
+        double[] c = Spectral.RealCepstrum(samples, nfft);
+        if (2 * hi >= c.Length)
+            throw new ArgumentException("minFrequency needs a quefrency in the second half of the cepstrum", nameof(minFrequency));
+        var (best, quefrency) = RefinedPeak(c, (int)lo, (int)hi);
+        return new CepstrumPitch(sampleRate / quefrency, quefrency, c[best]);
+    }
+
+    /// <summary>The whole lags <c>ceil(fs/max)</c> to <c>floor(fs/min)</c>, not empty.</summary>
+    private static (double Lo, double Hi) LagRange(double sampleRate, double minFrequency, double maxFrequency)
+    {
         if (!(double.IsFinite(sampleRate) && sampleRate > 0))
             throw new ArgumentException("sampleRate must be finite and positive", nameof(sampleRate));
         if (!(double.IsFinite(minFrequency) && double.IsFinite(maxFrequency) && minFrequency > 0 && minFrequency <= maxFrequency))
@@ -236,23 +276,23 @@ public static class Measurements
         double lo = Math.Ceiling(sampleRate / maxFrequency), hi = Math.Floor(sampleRate / minFrequency);
         if (lo > hi)
             throw new ArgumentException("no whole lag has fs/lag between minFrequency and maxFrequency", nameof(maxFrequency));
-        if (hi > samples.Length - 2)
-            throw new ArgumentException("minFrequency needs a lag longer than the samples allow (at most N - 2)", nameof(minFrequency));
-        int first = (int)lo, last = (int)hi;
-        double[] r = Dsp.Autocorrelation(samples, last + 1);
-        if (!(r[0] > 0))
-            throw new ArgumentException("the samples' energy must be more than 0", nameof(samples));
-        int best = first;
-        for (int k = first + 1; k <= last; k++)
+        return (lo, hi);
+    }
+
+    /// <summary>The first largest value in <c>lo … hi</c> and its position, moved by a parabola
+    /// through it and its neighbours when it is a strict local maximum (ADR 0150).</summary>
+    private static (int Best, double Position) RefinedPeak(double[] values, int lo, int hi)
+    {
+        int best = lo;
+        for (int k = lo + 1; k <= hi; k++)
         {
-            if (r[k] > r[best])
+            if (values[k] > values[best])
                 best = k;
         }
-        double left = r[best - 1], peak = r[best], right = r[best + 1];
+        double left = values[best - 1], peak = values[best], right = values[best + 1];
         double curve = left - 2 * peak + right;
         double delta = peak >= left && peak >= right && curve < 0 ? (left - right) / (2 * curve) : 0;
-        double lag = best + delta;
-        return new AutocorrelationPitch(sampleRate / lag, lag, peak / r[0]);
+        return (best, best + delta);
     }
 
     /// <summary>The <c>|x|²</c>-weighted mean of the sample times <c>n / sampleRate</c>, and the

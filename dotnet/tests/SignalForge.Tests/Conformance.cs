@@ -229,6 +229,8 @@ public static class Conformance
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2)),
             "autocorrelation_pitch" => Bind((Reals(a.Get("samples")), a.D("sample_rate"), a.D("min_frequency"), a.D("max_frequency")),
                 t => Measurements.AutocorrelationPitch(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "cepstrum_pitch" => Bind((Reals(a.Get("samples")), a.D("sample_rate"), a.D("min_frequency"), a.D("max_frequency"), a.Has("nfft") ? a.I("nfft") : (int?)null),
+                t => Measurements.CepstrumPitch(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "zero_crossing_rate" => Bind(Reals(a.Get("samples")), x => Measurements.ZeroCrossingRate(x)),
             "power_stats" => a.Get("samples") is Complex[] cs
                 ? () => Measurements.PowerStats(cs)

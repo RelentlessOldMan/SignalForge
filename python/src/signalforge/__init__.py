@@ -91,6 +91,7 @@ from .measurements import (
     AmAmPm,
     AutocorrelationPitch,
     CascadeNoiseFigure,
+    CepstrumPitch,
     GainCompression,
     IntegratedPhaseNoise,
     NoiseFigure,
@@ -106,6 +107,7 @@ from .measurements import (
     TwoToneIp5,
     am_am_pm,
     autocorrelation_pitch,
+    cepstrum_pitch,
     gain_compression,
     integrated_phase_noise,
     kay_frequency,
@@ -274,7 +276,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.49"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.50"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -283,6 +285,7 @@ __all__ = [
     "BandEnergyRatio",
     "CarrierRecovery",
     "CascadeNoiseFigure",
+    "CepstrumPitch",
     "DbBandwidth",
     "DfeEqualization",
     "DfeTaps",
@@ -352,6 +355,7 @@ __all__ = [
     "butterworth_bandstop",
     "butterworth_highpass",
     "butterworth_lowpass",
+    "cepstrum_pitch",
     "channel_power",
     "chebyshev1_bandpass",
     "chebyshev1_bandstop",

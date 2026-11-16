@@ -69,6 +69,16 @@ class AutocorrelationPitch:
 
 
 @dataclass(frozen=True)
+class CepstrumPitch:
+    """The fundamental from the highest real-cepstrum peak: the frequency in Hz, the refined
+    quefrency in samples and the strength ``c[L]`` (conventions: Cepstrum pitch; ADR 0152)."""
+
+    frequency: float
+    quefrency: float
+    strength: float
+
+
+@dataclass(frozen=True)
 class TemporalCentroid:
     """The energy-weighted mean time of a signal and its spread about it, both in seconds
     (conventions: Temporal centroid; ADR 0147)."""
@@ -151,26 +161,57 @@ def autocorrelation_pitch(
         raise ValueError("samples must be a one-dimensional array of at least three samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
-    fs, fmin, fmax = float(sample_rate), float(min_frequency), float(max_frequency)
-    if not (math.isfinite(fs) and fs > 0):
-        raise ValueError("sample_rate must be finite and positive")
-    if not (math.isfinite(fmin) and math.isfinite(fmax) and 0 < fmin <= fmax):
-        raise ValueError("need 0 < min_frequency <= max_frequency, both finite")
+    fs, lo, hi = _lag_range(sample_rate, min_frequency, max_frequency)
     n = x.shape[0]
-    lo, hi = math.ceil(fs / fmax), math.floor(fs / fmin)
-    if lo > hi:
-        raise ValueError("no whole lag has fs/lag between min_frequency and max_frequency")
     if hi > n - 2:
         raise ValueError("min_frequency needs a lag longer than the samples allow (at most N - 2)")
     r = dsp.autocorrelation(x, hi + 1).real
     if not r[0] > 0:
         raise ValueError("the samples' energy must be more than 0")
-    best = lo + int(np.argmax(r[lo : hi + 1]))
-    left, peak, right = float(r[best - 1]), float(r[best]), float(r[best + 1])
+    best, lag = _refined_peak(r, lo, hi)
+    return AutocorrelationPitch(fs / lag, lag, float(r[best]) / float(r[0]))
+
+
+def cepstrum_pitch(
+    samples: ArrayLike,
+    sample_rate: float,
+    min_frequency: float,
+    max_frequency: float,
+    nfft: int | None = None,
+) -> CepstrumPitch:
+    """The highest real-cepstrum peak among the quefrencies whose ``fs/q`` lies in
+    ``[min_frequency, max_frequency]``, refined by a parabola when it is a local maximum."""
+    fs, lo, hi = _lag_range(sample_rate, min_frequency, max_frequency)
+    c = spectral.real_cepstrum(samples, nfft)
+    if 2 * hi >= c.shape[0]:
+        raise ValueError("min_frequency needs a quefrency in the second half of the cepstrum")
+    best, quefrency = _refined_peak(c, lo, hi)
+    return CepstrumPitch(fs / quefrency, quefrency, float(c[best]))
+
+
+def _lag_range(
+    sample_rate: float, min_frequency: float, max_frequency: float
+) -> tuple[float, int, int]:
+    """The sample rate and the whole lags ``ceil(fs/max)`` to ``floor(fs/min)``, not empty."""
+    fs, fmin, fmax = float(sample_rate), float(min_frequency), float(max_frequency)
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    if not (math.isfinite(fmin) and math.isfinite(fmax) and 0 < fmin <= fmax):
+        raise ValueError("need 0 < min_frequency <= max_frequency, both finite")
+    lo, hi = math.ceil(fs / fmax), math.floor(fs / fmin)
+    if lo > hi:
+        raise ValueError("no whole lag has fs/lag between min_frequency and max_frequency")
+    return fs, lo, hi
+
+
+def _refined_peak(values: NDArray[np.float64], lo: int, hi: int) -> tuple[int, float]:
+    """The first largest value in ``lo … hi`` and its position, moved by a parabola through it
+    and its neighbours when it is a strict local maximum (ADR 0150)."""
+    best = lo + int(np.argmax(values[lo : hi + 1]))
+    left, peak, right = float(values[best - 1]), float(values[best]), float(values[best + 1])
     curve = left - 2 * peak + right
     delta = (left - right) / (2 * curve) if peak >= left and peak >= right and curve < 0 else 0.0
-    lag = best + delta
-    return AutocorrelationPitch(fs / lag, lag, peak / float(r[0]))
+    return best, best + delta
 
 
 def power_ccdf(samples: ArrayLike, levels_db: ArrayLike) -> PowerCcdf:

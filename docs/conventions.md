@@ -102,6 +102,14 @@ rule for code not written yet.
   r[L+1]) / (2c)`, else 0. `lag = L + δ`, `frequency = fs / lag`, `voicing = r[L]/r[0]`. Gives
   `AutocorrelationPitch(frequency, lag, voicing)`. Real, finite, `N ≥ 3`, energy above 0;
   `sample_rate` finite and positive; `0 < min ≤ max`, finite. **(implemented)**
+- **Cepstrum pitch** ([ADR 0152](adr/0152-cepstrum-pitch.md);
+  `cepstrum_pitch(samples, sample_rate, min_frequency, max_frequency, nfft=None)`, C#
+  `Measurements.CepstrumPitch`): `c = real_cepstrum(samples, nfft)`, `M = nfft` (default `N`);
+  quefrencies `lo = ceil(fs/max)` to `hi = floor(fs/min)`, `lo ≤ hi`, `2·hi < M`; peak, ties
+  and parabola exactly as Autocorrelation pitch. `quefrency = L + δ`, `frequency = fs /
+  quefrency`, `strength = c[L]`. Gives `CepstrumPitch(frequency, quefrency, strength)`. The
+  rules of the real cepstrum, plus `sample_rate` finite and positive and `0 < min ≤ max`,
+  finite. **(implemented)**
 - **Power CCDF** ([ADR 0119](adr/0119-power-ccdf.md); `power_ccdf(samples, levels_db)`, C#
   `Measurements.PowerCcdf`): for each level `L` dB, `#{n : |x[n]|² > P̄·10^{L/10}} / N`, strict, with
   `P̄` the mean power; result `PowerCcdf(mean_power, levels_db, probabilities)` in the order given.
