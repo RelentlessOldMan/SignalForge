@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Centre time**: `centre_time(impulse_response, sample_rate)` in `measurements`. It is ISO 3382
-   `T_s = Σ t_n |h[n]|² / Σ |h[n]|²` with `t_n = n/fs`. The early decay time needs no new
-   function: it is `reverberation_time(h, fs, start_db=0, stop_db=-10)`, but with
-   `start_db = 0` the fit starts at `n = 0`. A test should confirm this and the conventions
-   should say so. Not built yet. Needs an ADR: the time origin (index 0) and how it relates to
-   `temporal_centroid` (ADR 0147), which uses the envelope rather than the energy. Expected
-   values: geometric decays have a closed form, `Σ n q^n`.
+1. **Interaural cross-correlation**: `iacc(left, right, sample_rate, *, max_lag=0.001)` in
+   `measurements`. It is ISO 3382-1 `IACC = max_{|τ| ≤ 1 ms} |Σ l[n] r[n+τ]| / √(Σ l² Σ r²)`,
+   over whole real responses. Not built yet. Needs an ADR: integer lags only, or with
+   interpolation; how `max_lag·fs` is rounded; whether the result also returns the lag; and
+   the equal-length rule. Expected values: hand cross-correlations of short sequences, and a
+   delayed copy, which gives exactly 1 at its lag.
 
 ## Built
 
@@ -1642,6 +1641,14 @@ Updated with every chunk of work. Dates are absolute.
   the geometric sums of `r^n` decays in 50-digit `decimal`.
   Python 5298 passed, 2 skipped; .NET 4617 passed; conformance 2925/2925 in both. Version
   2026.11.16.70.
+- 2026-11-16: centre time (ADR 0173): `centre_time(impulse_response, sample_rate)` in
+  `measurements` (C# `Measurements.CentreTime`, real and complex). It is the energy centroid
+  `Σ (n/fs)|h|²/Σ|h|²` from index 0. The early decay time needs no new function: it is
+  `reverberation_time(h, fs, start_db=0, stop_db=-10)`, and the tests pin it to
+  `60/(−20 log10 r·fs)`. The vectors are exact hand sums, plus the closed-form geometric moments
+  in 50-digit `decimal`, checked against the direct sums.
+  Python 5311 passed, 2 skipped; .NET 4630 passed; conformance 2936/2936 in both. Version
+  2026.11.16.71.
 
 ## Not built
 

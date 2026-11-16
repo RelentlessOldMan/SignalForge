@@ -111,6 +111,7 @@ from .measurements import (
     am_am_pm,
     autocorrelation_pitch,
     block_leq,
+    centre_time,
     cepstrum_pitch,
     clarity,
     definition,
@@ -306,7 +307,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.70"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.71"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -391,6 +392,7 @@ __all__ = [
     "butterworth_lowpass",
     "c_weighting",
     "c_weighting_sos",
+    "centre_time",
     "cepstral_lifter",
     "cepstrum_pitch",
     "channel_power",

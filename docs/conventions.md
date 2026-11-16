@@ -94,6 +94,11 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Centre time** ([ADR 0173](adr/0173-centre-time.md); `centre_time(impulse_response, sample_rate)`,
+  C# `Measurements.CentreTime`): `T_s = Σ (n/fs)|h[n]|² / Σ |h[n]|²` from index 0, in seconds
+  (energy-weighted, unlike the envelope-weighted temporal centroid). The early decay time is
+  `reverberation_time(h, fs, start_db=0, stop_db=-10)`: the fit starts at `n = 0`. Real or
+  complex, finite, not empty, not all zero; `fs` finite and positive. **(implemented)**
 - **Clarity and definition** ([ADR 0172](adr/0172-clarity-definition.md); `clarity(impulse_response,
   sample_rate, *, time=0.08)`, `definition(impulse_response, sample_rate, *, time=0.05)`, C#
   `Measurements.Clarity`, `Measurements.Definition`): the response starts at index 0; `N =

@@ -1332,3 +1332,22 @@ def definition(impulse_response: ArrayLike, sample_rate: float, *, time: float =
     conventions: Clarity and definition; ADR 0172)."""
     early, late = _early_late(impulse_response, sample_rate, time)
     return early / (early + late)
+
+
+def centre_time(impulse_response: ArrayLike, sample_rate: float) -> float:
+    """The centre time ``sum (n/fs)|h[n]|^2 / sum |h[n]|^2`` in seconds, from index 0
+    (conventions: Centre time; ADR 0173)."""
+    h = np.asarray(impulse_response)
+    if h.ndim != 1 or h.shape[0] == 0:
+        raise ValueError("impulse_response must be a non-empty one-dimensional array")
+    h = h.astype(np.complex128 if np.iscomplexobj(h) else np.float64, copy=False)
+    if not np.all(np.isfinite(h)):
+        raise ValueError("impulse_response must be finite")
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    p = h.real * h.real + h.imag * h.imag
+    total = float(np.sum(p))
+    if not total > 0:
+        raise ValueError("impulse_response must not be all zero")
+    return float(np.sum(np.arange(p.shape[0], dtype=np.float64) * p)) / total / fs

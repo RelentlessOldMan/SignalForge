@@ -238,6 +238,8 @@ public static class Conformance
                 t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "temporal_centroid" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2)),
+            "centre_time" => a.Get("impulse_response") is Complex[]? Bind((Complexes(a.Get("impulse_response")), a.D("sample_rate")), t => Measurements.CentreTime(t.Item1, t.Item2))
+                : Bind((Reals(a.Get("impulse_response")), a.D("sample_rate")), t => Measurements.CentreTime(t.Item1, t.Item2)),
             "clarity" => a.Get("impulse_response") is Complex[]? Bind((Complexes(a.Get("impulse_response")), a.D("sample_rate"), a.Opt("time", 0.08)), t => Measurements.Clarity(t.Item1, t.Item2, t.Item3))
                 : Bind((Reals(a.Get("impulse_response")), a.D("sample_rate"), a.Opt("time", 0.08)), t => Measurements.Clarity(t.Item1, t.Item2, t.Item3)),
             "definition" => a.Get("impulse_response") is Complex[]? Bind((Complexes(a.Get("impulse_response")), a.D("sample_rate"), a.Opt("time", 0.05)), t => Measurements.Definition(t.Item1, t.Item2, t.Item3))

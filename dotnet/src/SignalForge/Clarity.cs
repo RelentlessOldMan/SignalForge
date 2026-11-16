@@ -48,6 +48,39 @@ public static partial class Measurements
     public static double Definition(ReadOnlySpan<double> impulseResponse, double sampleRate, double time = 0.05) =>
         EarlyFraction(EarlyLate(ResponsePowers(impulseResponse), sampleRate, time));
 
+    /// <summary>The centre time <c>Σ (n/fs)·|h[n]|² / Σ |h[n]|²</c> in seconds, from index 0
+    /// (conventions: Centre time; ADR 0173).</summary>
+    /// <param name="impulseResponse">Complex response from index 0, finite, not all zero.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <returns>The centre time in seconds.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double CentreTime(ReadOnlySpan<Complex> impulseResponse, double sampleRate) =>
+        EnergyCentre(ResponsePowers(impulseResponse), sampleRate);
+
+    /// <summary>The centre time <c>Σ (n/fs)·h[n]² / Σ h[n]²</c> in seconds, from index 0
+    /// (conventions: Centre time; ADR 0173).</summary>
+    /// <param name="impulseResponse">Real response from index 0, finite, not all zero.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <returns>The centre time in seconds.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double CentreTime(ReadOnlySpan<double> impulseResponse, double sampleRate) =>
+        EnergyCentre(ResponsePowers(impulseResponse), sampleRate);
+
+    private static double EnergyCentre(double[] p, double sampleRate)
+    {
+        if (!(double.IsFinite(sampleRate) && sampleRate > 0))
+            throw new ArgumentOutOfRangeException(nameof(sampleRate), sampleRate, "must be finite and positive");
+        double total = 0, moment = 0;
+        for (int n = 0; n < p.Length; n++)
+        {
+            total += p[n];
+            moment += n * p[n];
+        }
+        if (!(total > 0))
+            throw new ArgumentException("impulseResponse must not be all zero", nameof(p));
+        return moment / total / sampleRate;
+    }
+
     private static double[] ResponsePowers(ReadOnlySpan<Complex> impulseResponse)
     {
         if (impulseResponse.IsEmpty)
