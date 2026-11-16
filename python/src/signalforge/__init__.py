@@ -280,6 +280,7 @@ from .units import (
     dbm_to_w,
     erb_bandwidth,
     erb_rate_to_hz,
+    erb_space,
     hz_to_erb_rate,
     hz_to_mel,
     lin_to_db,
@@ -289,7 +290,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.59"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.60"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -405,6 +406,7 @@ __all__ = [
     "encode_samples",
     "erb_bandwidth",
     "erb_rate_to_hz",
+    "erb_space",
     "evm",
     "fft",
     "fft_frequencies",

@@ -106,6 +106,31 @@ public static class Units
         return 24.7 * (4.37 * hz / 1000.0 + 1.0);
     }
 
+    /// <summary>Frequencies equally spaced in ERB rate from <paramref name="minFrequency"/> to
+    /// <paramref name="maxFrequency"/>, both included, ascending (conventions: ERB-spaced
+    /// frequencies; ADR 0162).</summary>
+    /// <param name="minFrequency">The lowest frequency in Hz, at least 0.</param>
+    /// <param name="maxFrequency">The highest frequency in Hz, above the lowest, finite.</param>
+    /// <param name="nFrequencies">How many frequencies, at least 1.</param>
+    /// <returns>The frequencies in Hz.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ErbSpace(double minFrequency, double maxFrequency, int nFrequencies)
+    {
+        if (!(double.IsFinite(minFrequency) && double.IsFinite(maxFrequency) && minFrequency >= 0 && minFrequency < maxFrequency))
+            throw new ArgumentException("need 0 <= minFrequency < maxFrequency, both finite", nameof(maxFrequency));
+        if (nFrequencies < 1)
+            throw new ArgumentOutOfRangeException(nameof(nFrequencies), "nFrequencies must be at least 1");
+        if (nFrequencies == 1)
+            return [minFrequency];
+        double eLo = HzToErbRate(minFrequency), eHi = HzToErbRate(maxFrequency);
+        var result = new double[nFrequencies];
+        for (int i = 0; i < nFrequencies; i++)
+            result[i] = ErbRateToHz(eLo + (eHi - eLo) * i / (nFrequencies - 1));
+        result[0] = minFrequency;
+        result[^1] = maxFrequency;
+        return result;
+    }
+
     private const double SlaneyHzPerMel = 200.0 / 3.0;
     private static readonly double SlaneyLogStep = Math.Log(6.4) / 27.0;
 

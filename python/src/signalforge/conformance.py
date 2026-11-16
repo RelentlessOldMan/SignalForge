@@ -48,6 +48,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "hz_to_erb_rate": units.hz_to_erb_rate,
     "erb_rate_to_hz": units.erb_rate_to_hz,
     "erb_bandwidth": units.erb_bandwidth,
+    "erb_space": units.erb_space,
     "w_to_dbm": units.w_to_dbm,
     "dbm_to_w": units.dbm_to_w,
     "vrms_to_dbm": units.vrms_to_dbm,

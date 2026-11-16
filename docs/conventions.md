@@ -142,6 +142,10 @@ rule for code not written yet.
   [ADR 0160](adr/0160-erb-scale.md)): Glasberg & Moore (1990) with the published constants:
   `ERB(f) = 24.7·(4.37 f/1000 + 1)` Hz, `E = 21.4·log10(4.37 f/1000 + 1)`, inverse
   `(10^(E/21.4) − 1)·1000/4.37`. Values finite and `≥ 0`. **(implemented)**
+- **ERB-spaced frequencies** (`erb_space(min_frequency, max_frequency, n_frequencies)`, C#
+  `Units.ErbSpace`, [ADR 0162](adr/0162-erb-space.md)): `f_i = erb_rate_to_hz(E_lo + (E_hi −
+  E_lo)·i/(n − 1))`, ascending, first exactly `min` and last exactly `max`; `n = 1` gives
+  `[min]`. `0 ≤ min < max` finite, `n ≥ 1`. **(implemented)**
 
 ## Spectra
 

@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **ERB-spaced center frequencies**: `erb_space(min_frequency, max_frequency, count)`, center
-   frequencies equally spaced in ERB rate (ADR 0160), from `min` to `max` inclusive and
-   ascending, in `units`. With `gammatone` (ADR 0161) it makes a gammatone filterbank. Not built
-   yet. Needs an ADR: whether the endpoints are included (yes, like `linspace`), `count = 1`,
-   and the order (ascending; some libraries return descending). Expected values: `E` is
-   linear in the index, and in `decimal` the frequencies are `(10^(E_i/21.4) − 1)·1000/4.37`.
+1. **Bark scale**: `hz_to_bark(hz)` and `bark_to_hz(bark)` in `units`, after Traunmüller
+   (1990): `z = 26.81 f/(1960 + f) − 0.53`, with the low and high corrections (`z < 2`:
+   `z + 0.15 (2 − z)`; `z > 20.1`: `z + 0.22 (z − 20.1)`). Not built yet. Needs an ADR: whether
+   to apply the corrections (as an option, or always), the inverse (closed form through each
+   branch), and the domain. Expected values: the rational closed form is exact in
+   `fractions`, and the branch edges are checked from both sides.
 
 ## Built
 
@@ -1551,6 +1551,12 @@ Updated with every chunk of work. Dates are absolute.
   `2√(2^(1/4) − 1)·b·ERB` to 2 %.
   Python 5102 passed, 2 skipped; .NET 4424 passed; conformance 2756/2756 in both. Version
   2026.11.16.59.
+- 2026-11-16: ERB-spaced frequencies (ADR 0162): `erb_space(min_frequency, max_frequency,
+  n_frequencies)` in `units` (C# `Units.ErbSpace`). It gives equal ERB-rate steps, ascending,
+  with the endpoints returned exactly. `n = 1` gives `[min]`. The vectors are in 50-digit
+  `decimal`, with a point placed at `E = 21.4` by construction.
+  Python 5113 passed, 2 skipped; .NET 4435 passed; conformance 2766/2766 in both. Version
+  2026.11.16.60.
 
 ## Not built
 

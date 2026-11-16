@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "erb_space",
+  "description": "ERB-spaced frequencies (conventions: ERB-spaced frequencies; ADR 0162).",
+  "cases": [
+    {"id": "erb_space.two_decades", "op": "erb_space", "args": {"min_frequency": 0.0, "max_frequency": 22654.462242562928, "n_frequencies": 3}, "expected": [0.0, 2059.4965675057206, 22654.462242562928], "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "min 0, max (1000/4.37) 99 (E = 42.8): the middle point is at E = 21.4, f = 9000/4.37"},
+    {"id": "erb_space.eight", "op": "erb_space", "args": {"min_frequency": 50.0, "max_frequency": 8000.0, "n_frequencies": 8}, "expected": [50.0, 223.3802747312671, 504.56961383671376, 960.6044456485184, 1700.204917299517, 2899.694121870009, 4845.034081793775, 8000.0], "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "8 points from 50 Hz to 8 kHz, equal ERB-rate steps in decimal"},
+    {"id": "erb_space.thirty_two", "op": "erb_space", "args": {"min_frequency": 100.0, "max_frequency": 4000.0, "n_frequencies": 32}, "expected": [100.0, 128.24039502063084, 158.90609415450174, 192.20538414963454, 228.36443956002336, 267.6288589624394, 310.26533310456756, 356.5634563148272, 406.83769347728565, 461.4295159317006, 520.7097208060936, 585.0809495351654, 654.9804226707647, 730.882909559721, 813.3039530596047, 902.803371195246, 999.9890595398693, 1105.5211201472775, 1220.1163450795073, 1344.5530849828542, 1479.676535780482, 1626.404479389746, 1785.7335174561813, 1958.7458404447577, 2146.6165780652427, 2350.621780957036, 2572.1470878464675, 2812.6971370453894, 3073.905786215594, 3357.547209813479, 3665.547949590711, 4000.0], "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "32 points from 100 Hz to 4 kHz in decimal"},
+    {"id": "erb_space.one", "op": "erb_space", "args": {"min_frequency": 300.0, "max_frequency": 5000.0, "n_frequencies": 1}, "expected": [300.0], "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "n = 1 gives [min]"},
+    {"id": "erb_space.endpoints", "op": "erb_space", "args": {"min_frequency": 20.0, "max_frequency": 20000.0, "n_frequencies": 2}, "expected": [20.0, 20000.0], "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "n = 2 gives exactly [min, max]"},
+    {"id": "erb_space.zero_count", "op": "erb_space", "args": {"min_frequency": 100.0, "max_frequency": 4000.0, "n_frequencies": 0}, "error": "invalid_argument", "source": "n_frequencies must be at least 1"},
+    {"id": "erb_space.min_at_max", "op": "erb_space", "args": {"min_frequency": 4000.0, "max_frequency": 4000.0, "n_frequencies": 8}, "error": "invalid_argument", "source": "min_frequency must be below max_frequency"},
+    {"id": "erb_space.negative_min", "op": "erb_space", "args": {"min_frequency": -1.0, "max_frequency": 4000.0, "n_frequencies": 8}, "error": "invalid_argument", "source": "min_frequency must be at least 0"},
+    {"id": "erb_space.inf_max", "op": "erb_space", "args": {"min_frequency": 100.0, "max_frequency": "inf", "n_frequencies": 8}, "error": "invalid_argument", "source": "max_frequency must be finite"},
+    {"id": "erb_space.nan_min", "op": "erb_space", "args": {"min_frequency": "nan", "max_frequency": 4000.0, "n_frequencies": 8}, "error": "invalid_argument", "source": "min_frequency must be finite"}
+  ]
+}

@@ -7,6 +7,8 @@ import math
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from ._checks import count, real
+
 #: Default reference impedance in ohms.
 DEFAULT_IMPEDANCE = 50.0
 
@@ -141,3 +143,24 @@ def erb_bandwidth(hz: ArrayLike) -> NDArray[np.float64] | float:
     (conventions: ERB scale; ADR 0160)."""
     f = _finite_non_negative(hz, "hz")
     return _out(24.7 * (4.37 * f / 1000.0 + 1.0))
+
+
+def erb_space(
+    min_frequency: float, max_frequency: float, n_frequencies: int
+) -> NDArray[np.float64]:
+    """Frequencies equally spaced in ERB rate from ``min_frequency`` to ``max_frequency``, both
+    included, ascending (conventions: ERB-spaced frequencies; ADR 0162)."""
+    lo = real(min_frequency, "min_frequency")
+    hi = real(max_frequency, "max_frequency")
+    if not (math.isfinite(lo) and math.isfinite(hi) and 0 <= lo < hi):
+        raise ValueError("need 0 <= min_frequency < max_frequency, both finite")
+    n = count(n_frequencies, "n_frequencies")
+    if n < 1:
+        raise ValueError("n_frequencies must be at least 1")
+    if n == 1:
+        return np.array([lo])
+    e_lo, e_hi = float(hz_to_erb_rate(lo)), float(hz_to_erb_rate(hi))
+    rates = np.array([e_lo + (e_hi - e_lo) * i / (n - 1) for i in range(n)])
+    out = np.asarray(erb_rate_to_hz(rates), dtype=np.float64)
+    out[0], out[-1] = lo, hi
+    return out
