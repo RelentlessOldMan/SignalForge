@@ -4,14 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Octave-band levels**: `octave_band_levels(samples, sample_rate, fraction, min_frequency,
-   max_frequency, *, order=3)` in `measurements`. Each band of ADR 0167 below Nyquist is
-   filtered with `butterworth_bandpass(order, lower, upper, fs)`, and its mean power is
-   returned. Not built yet. Needs an ADR: the filter (Butterworth of order 3, the usual
-   IEC 61260 class-1 design), how bands near or above Nyquist are handled, whether the start
-   transient is skipped, and the result shape. Expected values: the band-pass has gain exactly 1
-   at its center in the warped domain (conventions: band Butterworth), so a long tone there
-   gives `A²/2`. A white-noise test checks that the band powers sum to the total.
+1. **Percentile levels**: `exceedance_levels(powers, percents)` in `measurements`. It gives the
+   level `L_N` exceeded `N` % of the time (L10, L50, L90), from a series of time-weighted powers
+   (`time_weighting`). Not built yet. Needs an ADR: the quantile definition (which
+   interpolation, so both languages agree with each other and with a hand sort), whether the
+   result is a power or dB, and the range of `N`. Expected values: hand-sorted small series.
 
 ## Built
 
@@ -1601,6 +1598,16 @@ Updated with every chunk of work. Dates are absolute.
   centers lie within 1.5 % of the standard's nominal names.
   Python 5211 passed, 2 skipped; .NET 4535 passed; conformance 2848/2848 in both. Version
   2026.11.16.65.
+- 2026-11-16: octave-band levels (ADR 0168): `octave_band_levels(samples, sample_rate, fraction,
+  min_frequency, max_frequency, *, order=3)` in `measurements` (C# `Measurements.OctaveBandLevels`,
+  real and complex). It gives one mean power per band of `octave_bands`. Each band runs
+  `butterworth_bandpass(order, lower, upper, fs)` from rest over the whole input, transient
+  included. A band whose upper edge reaches Nyquist is `invalid_argument`. The vectors come from
+  an independent float design (the analog band poles through the bilinear transform), run as a
+  plain-Python direct-form-I cascade, at relative `1e-9`. The tests check a tone at a band center
+  and the white-noise power sum.
+  Python 5224 passed, 2 skipped; .NET 4547 passed; conformance 2859/2859 in both. Version
+  2026.11.16.66.
 
 ## Not built
 

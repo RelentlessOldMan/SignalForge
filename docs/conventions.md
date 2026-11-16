@@ -94,6 +94,13 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Octave-band levels** ([ADR 0168](adr/0168-octave-band-levels.md);
+  `octave_band_levels(samples, sample_rate, fraction, min_frequency, max_frequency, *,
+  order=3)`, C# `Measurements.OctaveBandLevels`): one mean power per band of `octave_bands(...)`,
+  in order: `butterworth_bandpass(order, lower, upper, fs)` from rest (`IirFilter`) over the
+  whole input, then the mean of `|y|²`, transient included. Real or complex, finite, not
+  empty; every selected upper edge `< fs/2` (else `invalid_argument`); `order ≥ 1`; no band
+  gives an empty result. **(implemented)**
 - **Time weighting** ([ADR 0166](adr/0166-time-weighting.md);
   `time_weighting(samples, sample_rate, time_constant)`, C# `Measurements.TimeWeighting`):
   `y[n] = α y[n−1] + (1 − α)|x[n]|²`, `y[−1] = 0`, `α = exp(−1/(τ fs))`, `1 − α =

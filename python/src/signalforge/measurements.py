@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from . import dsp, spectral
+from . import dsp, spectral, units
 from ._checks import count, real
 
 
@@ -1144,4 +1144,37 @@ def time_weighting(
     for n, v in enumerate(p.tolist()):
         y = alpha * y + gain * v
         out[n] = y
+    return out
+
+
+def octave_band_levels(
+    samples: ArrayLike,
+    sample_rate: float,
+    fraction: int,
+    min_frequency: float,
+    max_frequency: float,
+    *,
+    order: int = 3,
+) -> NDArray[np.float64]:
+    """The mean power in each band of ``octave_bands(fraction, min_frequency, max_frequency)``,
+    through a Butterworth band-pass from rest (conventions: Octave-band levels; ADR 0168)."""
+    x = np.asarray(samples)
+    if x.ndim != 1 or x.shape[0] == 0:
+        raise ValueError("samples must be a non-empty one-dimensional array")
+    x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    n = count(order, "order")
+    if n < 1:
+        raise ValueError("order must be at least 1")
+    bands = units.octave_bands(fraction, min_frequency, max_frequency)
+    if bands.shape[0] and bands[-1, 2] >= fs / 2:
+        raise ValueError("every band's upper edge must be below sample_rate / 2")
+    out = np.empty(bands.shape[0], dtype=np.float64)
+    for i, (lower, _, upper) in enumerate(bands.tolist()):
+        y = dsp.IirFilter(dsp.butterworth_bandpass(n, lower, upper, fs)).process(x)
+        out[i] = float(np.mean(y.real * y.real + y.imag * y.imag))
     return out
