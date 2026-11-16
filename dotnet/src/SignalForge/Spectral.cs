@@ -35,6 +35,16 @@ public enum LombScargleNormalization
     Power,
 }
 
+/// <summary>The scale <see cref="Spectral.InterpolatePeak"/> fits its parabola on (conventions: Spectra, Peak interpolation).</summary>
+public enum PeakScale
+{
+    /// <summary><c>10 log10</c> of the PSD; exact for a Gaussian peak.</summary>
+    Decibel,
+
+    /// <summary>The PSD as it is; exact for a parabolic peak.</summary>
+    Linear,
+}
+
 /// <summary>Named windows. Formulas in docs/conventions.md (Spectra).</summary>
 public enum WindowType
 {
@@ -212,6 +222,12 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Level">The line's value at the centre: the band's mean PSD (or mean dB).</param>
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
+
+/// <summary>A peak's vertex from a parabola through three bins (conventions: Spectra, Peak interpolation; ADR 0136).</summary>
+/// <param name="Frequency">The vertex's frequency in Hz.</param>
+/// <param name="Height">The vertex's height in PSD units.</param>
+/// <param name="Offset">The vertex's offset from the peak bin, in bins, within ±1/2.</param>
+public sealed record PeakEstimate(double Frequency, double Height, double Offset);
 
 /// <summary>A local maximum of a PSD (conventions: Spectra, Spectral peaks; ADR 0135).</summary>
 /// <param name="Index">The middle bin of the peak's run, ⌊(i + j)/2⌋.</param>
@@ -1996,6 +2012,45 @@ public static class Spectral
         if (!(rest > 0))
             throw new ArgumentException("the band has no power after its first bin", nameof(psd));
         return sum / rest;
+    }
+
+    /// <summary>
+    /// The vertex of the parabola through the peak bin <paramref name="index"/> and its two
+    /// neighbours (conventions: Spectra, Peak interpolation; ADR 0136).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="index">The peak bin, 1 to n − 2, not lower than either neighbour.</param>
+    /// <param name="scale">The scale the parabola is fitted on.</param>
+    /// <returns>The vertex's frequency, height and offset.</returns>
+    /// <exception cref="ArgumentException">The arrays are invalid, the bin is at an edge, lower than a neighbour or flat with both, a dB value is not positive, or <paramref name="scale"/> is unknown.</exception>
+    public static PeakEstimate InterpolatePeak(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, int index, PeakScale scale = PeakScale.Decibel)
+    {
+        if (scale is not (PeakScale.Decibel or PeakScale.Linear))
+            throw new ArgumentOutOfRangeException(nameof(scale), "unknown scale");
+        Bins(frequencies, psd, null);
+        int n = psd.Length;
+        if (index < 1 || index > n - 2)
+            throw new ArgumentOutOfRangeException(nameof(index), "index must be an interior bin, 1 <= index <= n - 2");
+        double a = psd[index - 1], b = psd[index], c = psd[index + 1];
+        if (b < a || b < c)
+            throw new ArgumentException("the bin at index must not be lower than its neighbours", nameof(index));
+        if (scale == PeakScale.Decibel)
+        {
+            if (!(Math.Min(a, Math.Min(b, c)) > 0))
+                throw new ArgumentException("the three bins must be positive on the dB scale", nameof(psd));
+            a = 10 * Math.Log10(a);
+            b = 10 * Math.Log10(b);
+            c = 10 * Math.Log10(c);
+        }
+        double curve = a - 2 * b + c;
+        if (!(curve < 0))
+            throw new ArgumentException("the three bins are flat", nameof(psd));
+        double offset = (a - c) / (2 * curve);
+        double vertex = b - (a - c) * offset / 4;
+        double delta = (frequencies[n - 1] - frequencies[0]) / (n - 1);
+        double height = scale == PeakScale.Decibel ? Math.Pow(10, vertex / 10) : vertex;
+        return new PeakEstimate(frequencies[index] + offset * delta, height, offset);
     }
 
     /// <summary>

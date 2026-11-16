@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Peak interpolation**: a sub-bin estimate of each spectral peak's frequency and height.
-   Not built yet. Needs an ADR: a function `interpolate_peak(frequencies, psd, index, *,
-   method="parabolic")` fitting a parabola through the peak bin and its two neighbours (on the
-   PSD, or on its dB, and which is the default), the offset formula and its range (±1/2 bin),
-   and what is returned for an edge bin or a plateau. Expected values: parabolas and Gaussians
-   sampled at known offsets, whose vertex is known analytically.
+1. **Find tones**: the `count` most prominent spectral peaks, each with an interpolated
+   frequency and height. Not built yet. Needs an ADR: `find_tones(frequencies, psd, count, *,
+   min_prominence=0.0, scale="db")` built on `spectral_peaks` and `interpolate_peak`. It must
+   settle how ties in prominence are broken, the order of the results, and what a plateau of
+   three or more bins (which `interpolate_peak` rejects as flat) or a zero neighbour on the dB
+   scale gives. Expected values: hand-built PSDs of Gaussians with known centres and heights.
 
 ## Built
 
@@ -1338,6 +1338,15 @@ Updated with every chunk of work. Dates are absolute.
   zero-valley and zero-power cases are vectors now, written `"inf"` and `"-inf"`.
   Python 4661 passed, 2 skipped; .NET 4000 passed; conformance 2412/2412 in both. Version
   2026.11.16.33.
+- 2026-11-16: peak interpolation (ADR 0136): `interpolate_peak(frequencies, psd, index, *,
+  scale="db")` (C# `Spectral.InterpolatePeak` with `PeakScale`) fits a parabola through the peak
+  bin and its neighbours, on the dB scale (exact for a Gaussian) or the linear one (exact for a
+  parabola). It gives `PeakEstimate(frequency, height, offset)`, with `|offset| ≤ 1/2`; two equal
+  top bins give their middle. The vectors are parabolas and Gaussians at known vertices, worked
+  analytically. The tests cover Gaussians shifted across a bin, scaling, and a Hann-windowed
+  tone between bins.
+  Python 4685 passed, 2 skipped; .NET 4023 passed; conformance 2427/2427 in both. Version
+  2026.11.16.34.
 
 ## Not built
 

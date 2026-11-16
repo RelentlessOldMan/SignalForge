@@ -469,6 +469,13 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   the end; `prominence = height − max(bases)`. Kept when `prominence ≥ min_prominence`, in
   order of frequency, as `SpectralPeak(index, frequency, height, prominence)`.
   `min_prominence` finite and `≥ 0`. **(implemented)**
+- **Peak interpolation** (`interpolate_peak(frequencies, psd, index, scale="db")`,
+  [ADR 0136](adr/0136-peak-interpolation.md)): `α, β, γ` the values at `index − 1, index,
+  index + 1`, in `10 log10` for `"db"` or as they are for `"linear"`; `offset = (α − γ)/(2(α −
+  2β + γ))` bins; `frequency = f_index + offset·δ`; `height = β − (α − γ)·offset/4`, back in PSD
+  units for `"db"`. Needs `1 ≤ index ≤ n − 2`, `β ≥ α, γ`, `α − 2β + γ < 0`, and positive
+  values for `"db"`; then `|offset| ≤ 1/2`. Gives `PeakEstimate(frequency, height, offset)`.
+  **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

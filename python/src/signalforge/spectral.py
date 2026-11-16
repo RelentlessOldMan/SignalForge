@@ -1217,6 +1217,16 @@ class SpectralSlope:
 
 
 @dataclass(frozen=True)
+class PeakEstimate:
+    """A peak's vertex from a parabola through three bins (conventions: Spectra, Peak
+    interpolation; ADR 0136): its ``frequency``, its ``height``, and its ``offset`` in bins."""
+
+    frequency: float
+    height: float
+    offset: float
+
+
+@dataclass(frozen=True)
 class SpectralPeak:
     """A local maximum of a PSD (conventions: Spectra, Spectral peaks; ADR 0135): its middle
     bin ``index``, the ``frequency`` at its middle, its ``height`` and its ``prominence``."""
@@ -1425,6 +1435,37 @@ def spectral_peaks(
                 out.append(SpectralPeak((i + j) // 2, float(f[i] + f[j]) / 2, h, prom))
         i = j + 1
     return out
+
+
+def interpolate_peak(
+    frequencies: ArrayLike, psd: ArrayLike, index: int, *, scale: str = "db"
+) -> PeakEstimate:
+    """The vertex of the parabola through the peak bin ``index`` and its neighbours, fitted to
+    the PSD in dB (``"db"``) or as it is (``"linear"``)."""
+    if scale not in ("db", "linear"):
+        raise ValueError('scale must be "db" or "linear"')
+    k = count(index, "index")
+    _bins(frequencies, psd, None)
+    f = np.asarray(frequencies, dtype=float)
+    x = np.asarray(psd, dtype=float)
+    n = f.size
+    if not 1 <= k <= n - 2:
+        raise ValueError("index must be an interior bin, 1 <= index <= n - 2")
+    a, b, c = float(x[k - 1]), float(x[k]), float(x[k + 1])
+    if b < a or b < c:
+        raise ValueError("the bin at index must not be lower than its neighbours")
+    if scale == "db":
+        if not min(a, b, c) > 0:
+            raise ValueError("the three bins must be positive on the dB scale")
+        a, b, c = 10 * math.log10(a), 10 * math.log10(b), 10 * math.log10(c)
+    curve = a - 2 * b + c
+    if not curve < 0:
+        raise ValueError("the three bins are flat")
+    offset = (a - c) / (2 * curve)
+    vertex = b - (a - c) * offset / 4
+    delta = float(f[-1] - f[0]) / (n - 1)
+    height = 10 ** (vertex / 10) if scale == "db" else vertex
+    return PeakEstimate(float(f[k]) + offset * delta, height, offset)
 
 
 def band_energy_ratio(

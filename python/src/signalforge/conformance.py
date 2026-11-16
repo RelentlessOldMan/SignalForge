@@ -114,6 +114,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "spectral_flux": spectral.spectral_flux,
     "spectral_irregularity": spectral.spectral_irregularity,
     "spectral_peaks": spectral.spectral_peaks,
+    "interpolate_peak": spectral.interpolate_peak,
     "spectral_variation": spectral.spectral_variation,
     "band_energy_ratio": spectral.band_energy_ratio,
     "spectral_contrast": spectral.spectral_contrast,

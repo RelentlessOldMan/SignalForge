@@ -158,6 +158,7 @@ from .spectral import (
     LineRemoval,
     NoisePowerRatio,
     OccupiedBandwidth,
+    PeakEstimate,
     SpectralContrast,
     SpectralCrest,
     SpectralDensity,
@@ -181,6 +182,7 @@ from .spectral import (
     generalized_lomb_scargle,
     harmonic_f_test,
     ifft,
+    interpolate_peak,
     lomb_scargle,
     lomb_scargle_bootstrap,
     lomb_scargle_false_alarm,
@@ -248,7 +250,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.33"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.34"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -271,6 +273,7 @@ __all__ = [
     "NoiseFigure",
     "NoisePowerRatio",
     "OccupiedBandwidth",
+    "PeakEstimate",
     "PhaseNoise",
     "PhaseNoiseSpurs",
     "PowerCcdf",
@@ -369,6 +372,7 @@ __all__ = [
     "ifft",
     "integrated_phase_noise",
     "interpolate",
+    "interpolate_peak",
     "iq_image_rejection_db",
     "iq_imbalance",
     "kaiser_parameters",

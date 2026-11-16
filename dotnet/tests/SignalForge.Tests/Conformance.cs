@@ -341,6 +341,14 @@ public static class Conformance
                 t => Spectral.SpectralCrest(t.Item1, t.Item2, t.Item3, t.Item4)),
             "spectral_variation" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("previous")), Reals(a.Get("current")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
                 t => Spectral.SpectralVariation(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "interpolate_peak" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.I("index"),
+                    !a.Has("scale") ? PeakScale.Decibel : Str(a, "scale") switch
+                    {
+                        "db" => PeakScale.Decibel,
+                        "linear" => PeakScale.Linear,
+                        _ => (PeakScale)(-1), // the library rejects it, as Python does
+                    }),
+                t => Spectral.InterpolatePeak(t.Item1, t.Item2, t.Item3, t.Item4)),
             "spectral_peaks" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Opt("min_prominence", 0)),
                 t => Spectral.SpectralPeaks(t.Item1, t.Item2, t.Item3).Select(p => (object?)p).ToList()),
             "spectral_irregularity" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
