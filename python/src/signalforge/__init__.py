@@ -112,6 +112,8 @@ from .measurements import (
     autocorrelation_pitch,
     block_leq,
     cepstrum_pitch,
+    clarity,
+    definition,
     exceedance_levels,
     gain_compression,
     integrated_phase_noise,
@@ -304,7 +306,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.69"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.70"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -401,6 +403,7 @@ __all__ = [
     "chebyshev2_highpass",
     "chebyshev2_lowpass",
     "chirp",
+    "clarity",
     "clock_drift",
     "clock_jitter",
     "clock_offset",
@@ -415,6 +418,7 @@ __all__ = [
     "dct",
     "decimate",
     "decode_samples",
+    "definition",
     "delta",
     "dfe_equalizer",
     "dfe_least_squares",

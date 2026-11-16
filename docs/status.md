@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Clarity and definition**: `clarity(impulse_response, sample_rate, *, time=0.08)` (ISO 3382
-   `C_te = 10 log10(E_early/E_late)`: C80 by default, C50 with 0.05) and
-   `definition(impulse_response, sample_rate, *, time=0.05)` (`D50 = E_early/E_total`) in
-   `measurements`. Not built yet. Needs an ADR: where the impulse starts (index 0, or found from
-   the peak or a −20 dB onset), how the boundary sample `t·fs` is rounded and which side it
-   falls on, and what a zero late energy gives. Expected values: geometric decays again have
-   exact sums.
+1. **Centre time**: `centre_time(impulse_response, sample_rate)` in `measurements`. It is ISO 3382
+   `T_s = Σ t_n |h[n]|² / Σ |h[n]|²` with `t_n = n/fs`. The early decay time needs no new
+   function: it is `reverberation_time(h, fs, start_db=0, stop_db=-10)`, but with
+   `start_db = 0` the fit starts at `n = 0`. A test should confirm this and the conventions
+   should say so. Not built yet. Needs an ADR: the time origin (index 0) and how it relates to
+   `temporal_centroid` (ADR 0147), which uses the envelope rather than the energy. Expected
+   values: geometric decays have a closed form, `Σ n q^n`.
 
 ## Built
 
@@ -1634,6 +1634,14 @@ Updated with every chunk of work. Dates are absolute.
   `decimal`. Long decays are checked against `60/(−20 log10 r·fs)`.
   Python 5278 passed, 2 skipped; .NET 4598 passed; conformance 2907/2907 in both. Version
   2026.11.16.69.
+- 2026-11-16: clarity and definition (ADR 0172): `clarity(impulse_response, sample_rate, *,
+  time=0.08)` and `definition(impulse_response, sample_rate, *, time=0.05)` in `measurements`
+  (C# `Measurements.Clarity`, `Measurements.Definition`, real and complex). The response starts
+  at index 0. The boundary is `N = ⌊time·fs + 1/2⌋`, and sample `N` counts as late. With no late
+  energy, clarity is `+inf`; with no early energy, `−inf`. The vectors are exact hand sums and
+  the geometric sums of `r^n` decays in 50-digit `decimal`.
+  Python 5298 passed, 2 skipped; .NET 4617 passed; conformance 2925/2925 in both. Version
+  2026.11.16.70.
 
 ## Not built
 

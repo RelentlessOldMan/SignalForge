@@ -94,6 +94,13 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Clarity and definition** ([ADR 0172](adr/0172-clarity-definition.md); `clarity(impulse_response,
+  sample_rate, *, time=0.08)`, `definition(impulse_response, sample_rate, *, time=0.05)`, C#
+  `Measurements.Clarity`, `Measurements.Definition`): the response starts at index 0; `N =
+  ⌊time·fs + 1/2⌋ ≥ 1`; `E_early = Σ_{n<N}|h|²`, `E_late = Σ_{n≥N}|h|²` (`N` past the end: all
+  early). Clarity `10 log10(E_early/E_late)` (`+inf` for no late energy, `−inf` for no early);
+  definition `E_early/(E_early + E_late)`. Real or complex, finite, not empty, not all zero;
+  `fs` and `time` finite and positive. **(implemented)**
 - **Reverberation time** ([ADR 0171](adr/0171-reverberation-time.md); `schroeder_decay(impulse_response)`,
   `reverberation_time(impulse_response, sample_rate, *, start_db=-5.0, stop_db=-25.0)`, C#
   `Measurements.SchroederDecay`, `Measurements.ReverberationTime`): `d[n] = 10 log10(E[n]/E[0])`,

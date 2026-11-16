@@ -1287,3 +1287,48 @@ def reverberation_time(
     if not slope < 0:
         raise ValueError("the decay slope must be negative")
     return -60.0 / slope
+
+
+def _early_late(
+    impulse_response: ArrayLike, sample_rate: float, time: float
+) -> tuple[float, float]:
+    """The energies before and from sample ``round(time sample_rate)`` (conventions: Clarity and
+    definition; ADR 0172)."""
+    h = np.asarray(impulse_response)
+    if h.ndim != 1 or h.shape[0] == 0:
+        raise ValueError("impulse_response must be a non-empty one-dimensional array")
+    h = h.astype(np.complex128 if np.iscomplexobj(h) else np.float64, copy=False)
+    if not np.all(np.isfinite(h)):
+        raise ValueError("impulse_response must be finite")
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    t = real(time, "time")
+    if not (math.isfinite(t) and t > 0):
+        raise ValueError("time must be finite and positive")
+    n = math.floor(t * fs + 0.5)
+    if n < 1:
+        raise ValueError("time * sample_rate must round to at least 1 sample")
+    p = h.real * h.real + h.imag * h.imag
+    early, late = float(np.sum(p[:n])), float(np.sum(p[n:]))
+    if not early + late > 0:
+        raise ValueError("impulse_response must not be all zero")
+    return early, late
+
+
+def clarity(impulse_response: ArrayLike, sample_rate: float, *, time: float = 0.08) -> float:
+    """The clarity ``10 log10(E_early/E_late)`` with the boundary at ``time`` seconds (C80 by
+    default; conventions: Clarity and definition; ADR 0172)."""
+    early, late = _early_late(impulse_response, sample_rate, time)
+    if late == 0:
+        return math.inf
+    if early == 0:
+        return -math.inf
+    return 10 * math.log10(early / late)
+
+
+def definition(impulse_response: ArrayLike, sample_rate: float, *, time: float = 0.05) -> float:
+    """The definition ``E_early/E_total`` with the boundary at ``time`` seconds (D50 by default;
+    conventions: Clarity and definition; ADR 0172)."""
+    early, late = _early_late(impulse_response, sample_rate, time)
+    return early / (early + late)
