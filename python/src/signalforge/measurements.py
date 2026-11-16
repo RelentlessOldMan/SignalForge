@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from . import spectral
+from . import dsp, spectral
 from ._checks import count, real
 
 
@@ -55,6 +55,17 @@ def power_stats(samples: ArrayLike) -> PowerStats:
         papr_db=papr_db,
         dc=complex(np.mean(x)),
     )
+
+
+@dataclass(frozen=True)
+class AutocorrelationPitch:
+    """The fundamental from the highest autocorrelation peak: the frequency in Hz, the refined
+    lag in samples and the voicing ``r[L]/r[0]`` (conventions: Autocorrelation pitch;
+    ADR 0150)."""
+
+    frequency: float
+    lag: float
+    voicing: float
 
 
 @dataclass(frozen=True)
@@ -125,6 +136,41 @@ def temporal_centroid(samples: ArrayLike, sample_rate: float) -> TemporalCentroi
     centroid = float(np.sum(p * t)) / total
     spread = math.sqrt(float(np.sum(p * (t - centroid) ** 2)) / total)
     return TemporalCentroid(centroid, spread)
+
+
+def autocorrelation_pitch(
+    samples: ArrayLike, sample_rate: float, min_frequency: float, max_frequency: float
+) -> AutocorrelationPitch:
+    """The highest biased autocorrelation peak among the lags whose ``fs/lag`` lies in
+    ``[min_frequency, max_frequency]``, refined by a parabola when it is a local maximum."""
+    x = np.asarray(samples)
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if x.ndim != 1 or x.shape[0] < 3:
+        raise ValueError("samples must be a one-dimensional array of at least three samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    fs, fmin, fmax = float(sample_rate), float(min_frequency), float(max_frequency)
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    if not (math.isfinite(fmin) and math.isfinite(fmax) and 0 < fmin <= fmax):
+        raise ValueError("need 0 < min_frequency <= max_frequency, both finite")
+    n = x.shape[0]
+    lo, hi = math.ceil(fs / fmax), math.floor(fs / fmin)
+    if lo > hi:
+        raise ValueError("no whole lag has fs/lag between min_frequency and max_frequency")
+    if hi > n - 2:
+        raise ValueError("min_frequency needs a lag longer than the samples allow (at most N - 2)")
+    r = dsp.autocorrelation(x, hi + 1).real
+    if not r[0] > 0:
+        raise ValueError("the samples' energy must be more than 0")
+    best = lo + int(np.argmax(r[lo : hi + 1]))
+    left, peak, right = float(r[best - 1]), float(r[best]), float(r[best + 1])
+    curve = left - 2 * peak + right
+    delta = (left - right) / (2 * curve) if peak >= left and peak >= right and curve < 0 else 0.0
+    lag = best + delta
+    return AutocorrelationPitch(fs / lag, lag, peak / float(r[0]))
 
 
 def power_ccdf(samples: ArrayLike, levels_db: ArrayLike) -> PowerCcdf:

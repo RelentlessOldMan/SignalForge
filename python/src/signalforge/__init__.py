@@ -89,6 +89,7 @@ from .files import (
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import (
     AmAmPm,
+    AutocorrelationPitch,
     CascadeNoiseFigure,
     GainCompression,
     IntegratedPhaseNoise,
@@ -104,6 +105,7 @@ from .measurements import (
     TwoToneIp2,
     TwoToneIp5,
     am_am_pm,
+    autocorrelation_pitch,
     gain_compression,
     integrated_phase_noise,
     kay_frequency,
@@ -271,11 +273,12 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.47"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.48"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
     "AmAmPm",
+    "AutocorrelationPitch",
     "BandEnergyRatio",
     "CarrierRecovery",
     "CascadeNoiseFigure",
@@ -336,6 +339,7 @@ __all__ = [
     "am_am_pm",
     "amp_to_db",
     "autocorrelation",
+    "autocorrelation_pitch",
     "awgn",
     "band_energy_ratio",
     "bessel_bandpass",

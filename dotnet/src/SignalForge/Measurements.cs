@@ -202,9 +202,59 @@ public sealed record GainCompression(double SmallSignalGainDb, double[] GainDb, 
 /// <param name="Spread">The weighted standard deviation about it in seconds.</param>
 public sealed record TemporalCentroid(double Centroid, double Spread);
 
+/// <summary>The fundamental from the highest autocorrelation peak (conventions: Autocorrelation pitch; ADR 0150).</summary>
+/// <param name="Frequency">The fundamental in Hz, <c>fs / Lag</c>.</param>
+/// <param name="Lag">The refined lag in samples.</param>
+/// <param name="Voicing"><c>r[L] / r[0]</c> at the integer peak lag, −1 to 1.</param>
+public sealed record AutocorrelationPitch(double Frequency, double Lag, double Voicing);
+
 /// <summary>Power measurements and tone metrics. Definitions in docs/conventions.md.</summary>
 public static class Measurements
 {
+    /// <summary>The highest biased autocorrelation peak among the lags whose <c>fs/lag</c> lies in
+    /// [<paramref name="minFrequency"/>, <paramref name="maxFrequency"/>], refined by a parabola
+    /// when it is a local maximum (conventions: Autocorrelation pitch; ADR 0150).</summary>
+    /// <param name="samples">Real samples, at least three, finite, with energy above 0.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <param name="minFrequency">The lowest fundamental searched, Hz, finite and positive.</param>
+    /// <param name="maxFrequency">The highest fundamental searched, Hz, finite, at least <paramref name="minFrequency"/>.</param>
+    /// <returns>The frequency, the refined lag and the voicing.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or the lag range is empty or too long.</exception>
+    public static AutocorrelationPitch AutocorrelationPitch(ReadOnlySpan<double> samples, double sampleRate, double minFrequency, double maxFrequency)
+    {
+        if (samples.Length < 3)
+            throw new ArgumentException("needs at least three samples", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        if (!(double.IsFinite(sampleRate) && sampleRate > 0))
+            throw new ArgumentException("sampleRate must be finite and positive", nameof(sampleRate));
+        if (!(double.IsFinite(minFrequency) && double.IsFinite(maxFrequency) && minFrequency > 0 && minFrequency <= maxFrequency))
+            throw new ArgumentException("need 0 < minFrequency <= maxFrequency, both finite", nameof(minFrequency));
+        double lo = Math.Ceiling(sampleRate / maxFrequency), hi = Math.Floor(sampleRate / minFrequency);
+        if (lo > hi)
+            throw new ArgumentException("no whole lag has fs/lag between minFrequency and maxFrequency", nameof(maxFrequency));
+        if (hi > samples.Length - 2)
+            throw new ArgumentException("minFrequency needs a lag longer than the samples allow (at most N - 2)", nameof(minFrequency));
+        int first = (int)lo, last = (int)hi;
+        double[] r = Dsp.Autocorrelation(samples, last + 1);
+        if (!(r[0] > 0))
+            throw new ArgumentException("the samples' energy must be more than 0", nameof(samples));
+        int best = first;
+        for (int k = first + 1; k <= last; k++)
+        {
+            if (r[k] > r[best])
+                best = k;
+        }
+        double left = r[best - 1], peak = r[best], right = r[best + 1];
+        double curve = left - 2 * peak + right;
+        double delta = peak >= left && peak >= right && curve < 0 ? (left - right) / (2 * curve) : 0;
+        double lag = best + delta;
+        return new AutocorrelationPitch(sampleRate / lag, lag, peak / r[0]);
+    }
+
     /// <summary>The <c>|x|²</c>-weighted mean of the sample times <c>n / sampleRate</c>, and the
     /// weighted standard deviation about it (conventions: Temporal centroid; ADR 0147).</summary>
     /// <param name="samples">Complex samples, at least one, finite, with energy above 0.</param>

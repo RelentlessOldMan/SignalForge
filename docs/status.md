@@ -4,14 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Autocorrelation pitch**: the fundamental of a real signal from the highest autocorrelation
-   peak (ADR 0148) between a lowest and a highest frequency, refined by a parabola through the
-   peak lag and its neighbours, `f0 = fs / lag`. Not built yet (`harmonic_series` works from
-   spectral tones instead). Needs an ADR: the scaling used (`unbiased` favours long lags,
-   `biased` short ones), the search range (`min_frequency`, `max_frequency` and their lag
-   bounds), a peak at the range's edge, the voicing measure returned (`r[lag]/r[0]`), and a
-   silent signal (`invalid_argument`). Expected values: hand-built periodic sequences whose
-   autocorrelation is worked exactly.
+1. **Real cepstrum**: `c = IFFT(ln|FFT(x)|)` of a real signal, real valued and `nfft` long.
+   Not built yet (no cepstral function exists yet). Needs an ADR: the log base (natural), the
+   FFT length (`nfft ≥ N`, zero padded, and its default), a zero bin (`ln 0`: an error or a floor
+   such as `eps`), whether the result is the full `nfft` or the first half, and complex input
+   (`invalid_argument`). Expected values: sequences with exact cepstra. A minimum-phase
+   `x = δ + a·δ[n−1]` (`|a| < 1`) has `c[n] = −(−a)ⁿ/n` for `n ≥ 1` and `c[0] = 0` (from the
+   series of `ln(1 + a z⁻¹)`), up to the aliasing that `nfft` brings, worked exactly.
 
 ## Built
 
@@ -1457,6 +1456,15 @@ Updated with every chunk of work. Dates are absolute.
   from `re² + im²` so it is exactly real.
   Python 4872 passed, 2 skipped; .NET 4207 passed; conformance 2576/2576 in both. Version
   2026.11.16.47.
+- 2026-11-16: autocorrelation pitch (ADR 0150): `autocorrelation_pitch(samples, sample_rate,
+  min_frequency, max_frequency)` (C# `Measurements.AutocorrelationPitch`). It finds the highest
+  biased autocorrelation peak among lags `ceil(fs/max)` to `floor(fs/min)` (ties go to the
+  shorter lag). A parabola refines it only at a true local maximum. It returns
+  `AutocorrelationPitch(frequency, lag, voicing = r[L]/r[0])`. The vectors are worked from the
+  definition in Fractions, with hand values for the symmetric, edge and tie cases. The tests
+  cover a period of 36.6 samples recovered to 0.5% and scaling.
+  Python 4887 passed, 2 skipped; .NET 4221 passed; conformance 2588/2588 in both. Version
+  2026.11.16.48.
 
 ## Not built
 
