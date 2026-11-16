@@ -197,9 +197,73 @@ public sealed record AmAmPm(double[] LevelsDb, int[] Counts, double[] GainDb, do
 public sealed record GainCompression(double SmallSignalGainDb, double[] GainDb, double[] Compression, double InputPointDb,
     double OutputPointDb, double SaturatedOutputDb);
 
+/// <summary>The energy-weighted mean time of a signal and its spread about it (conventions: Temporal centroid; ADR 0147).</summary>
+/// <param name="Centroid">The weighted mean time in seconds, sample 0 being at 0.</param>
+/// <param name="Spread">The weighted standard deviation about it in seconds.</param>
+public sealed record TemporalCentroid(double Centroid, double Spread);
+
 /// <summary>Power measurements and tone metrics. Definitions in docs/conventions.md.</summary>
 public static class Measurements
 {
+    /// <summary>The <c>|x|²</c>-weighted mean of the sample times <c>n / sampleRate</c>, and the
+    /// weighted standard deviation about it (conventions: Temporal centroid; ADR 0147).</summary>
+    /// <param name="samples">Complex samples, at least one, finite, with energy above 0.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <returns>The centroid and spread in seconds.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static TemporalCentroid TemporalCentroid(ReadOnlySpan<Complex> samples, double sampleRate)
+    {
+        var p = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            if (!(double.IsFinite(samples[n].Real) && double.IsFinite(samples[n].Imaginary)))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            p[n] = samples[n].Real * samples[n].Real + samples[n].Imaginary * samples[n].Imaginary;
+        }
+        return EnergyCentroid(p, sampleRate);
+    }
+
+    /// <summary>The <c>x²</c>-weighted mean of the sample times <c>n / sampleRate</c>, and the
+    /// weighted standard deviation about it (conventions: Temporal centroid; ADR 0147).</summary>
+    /// <param name="samples">Real samples, at least one, finite, with energy above 0.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <returns>The centroid and spread in seconds.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static TemporalCentroid TemporalCentroid(ReadOnlySpan<double> samples, double sampleRate)
+    {
+        var p = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            if (!double.IsFinite(samples[n]))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            p[n] = samples[n] * samples[n];
+        }
+        return EnergyCentroid(p, sampleRate);
+    }
+
+    private static TemporalCentroid EnergyCentroid(double[] samples, double sampleRate)
+    {
+        if (samples.Length == 0)
+            throw new ArgumentException("needs at least one sample", nameof(samples));
+        if (!(double.IsFinite(sampleRate) && sampleRate > 0))
+            throw new ArgumentException("sampleRate must be finite and positive", nameof(sampleRate));
+        double total = 0, moment = 0;
+        for (int n = 0; n < samples.Length; n++)
+        {
+            total += samples[n];
+            moment += samples[n] * (n / sampleRate);
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the samples' energy must be more than 0", nameof(samples));
+        double centroid = moment / total, square = 0;
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double d = n / sampleRate - centroid;
+            square += samples[n] * d * d;
+        }
+        return new TemporalCentroid(centroid, Math.Sqrt(square / total));
+    }
+
     /// <summary>The fraction of adjacent sample pairs whose signs differ, a sample being positive
     /// when <c>x ≥ 0</c> (conventions: Zero-crossing rate; ADR 0146).</summary>
     /// <param name="samples">Real samples, at least two, finite.</param>

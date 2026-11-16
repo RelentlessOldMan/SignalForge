@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Temporal centroid**: the energy-weighted mean time of a real or complex signal,
-   `Σ n|x[n]|² / Σ|x[n]|²` divided by `fs`, and its spread about it. Not built yet (only the
-   spectral centroid exists). Needs an ADR: energy or amplitude weights, the time origin (sample
-   0 at t = 0), seconds or samples (and so whether `fs` is needed), and a silent signal
-   (`invalid_argument`). Expected values: hand-built sequences worked in Fractions.
+1. **Autocorrelation**: `r[k] = Σ x[n+k]·conj x[n]` for lags `0 … max_lag`, real or complex.
+   Not built yet (no correlation function exists yet). Needs an ADR: the conjugate placement
+   (which side, so `r[−k] = conj r[k]`), the scaling (`biased` 1/N, `unbiased` 1/(N − k), or
+   none), whether the mean is removed, the default and limits of `max_lag` and the result
+   type. Expected values: hand-built sequences worked in exact integers.
 
 ## Built
 
@@ -1429,6 +1429,13 @@ Updated with every chunk of work. Dates are absolute.
   per cycle), positive scaling and complex input.
   Python 4827 passed, 2 skipped; .NET 4163 passed; conformance 2539/2539 in both. Version
   2026.11.16.44.
+- 2026-11-16: temporal centroid (ADR 0147): `temporal_centroid(samples, sample_rate)` (C#
+  `Measurements.TemporalCentroid`, real and complex) is the mean of the sample times `n / fs`,
+  weighted by energy `|x|²`, with its weighted standard deviation. Both are in seconds, with
+  sample 0 at t = 0. The vectors are worked in Fractions and checked against the definition.
+  The tests cover a delay (only the centroid moves) and complex scaling.
+  Python 4840 passed, 2 skipped; .NET 4176 passed; conformance 2550/2550 in both. Version
+  2026.11.16.45.
 
 ## Not built
 

@@ -95,6 +95,7 @@ from .measurements import (
     PowerCcdf,
     PowerStats,
     Sfdr,
+    TemporalCentroid,
     ToneMetrics,
     TwoToneImd,
     TwoToneIp2,
@@ -111,6 +112,7 @@ from .measurements import (
     power_ccdf_level,
     power_stats,
     sfdr,
+    temporal_centroid,
     tone_metrics,
     two_tone_imd,
     two_tone_ip2,
@@ -266,7 +268,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.44"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.45"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -314,6 +316,7 @@ __all__ = [
     "SpectralSlope",
     "Spectrogram",
     "TaperSet",
+    "TemporalCentroid",
     "TimingRecovery",
     "Tone",
     "ToneMetrics",
@@ -502,6 +505,7 @@ __all__ = [
     "spectral_slope",
     "spectral_variation",
     "spectrogram",
+    "temporal_centroid",
     "timing_offset",
     "tone",
     "tone_metrics",

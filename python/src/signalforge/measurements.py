@@ -57,6 +57,15 @@ def power_stats(samples: ArrayLike) -> PowerStats:
     )
 
 
+@dataclass(frozen=True)
+class TemporalCentroid:
+    """The energy-weighted mean time of a signal and its spread about it, both in seconds
+    (conventions: Temporal centroid; ADR 0147)."""
+
+    centroid: float
+    spread: float
+
+
 @dataclass(frozen=True, eq=False)
 class PowerCcdf:
     """Fraction of samples whose instantaneous power exceeds the mean by each level (conventions:
@@ -94,6 +103,28 @@ def zero_crossing_rate(samples: ArrayLike) -> float:
         raise ValueError("samples must be finite")
     positive = x >= 0
     return int(np.count_nonzero(positive[1:] != positive[:-1])) / int(x.shape[0] - 1)
+
+
+def temporal_centroid(samples: ArrayLike, sample_rate: float) -> TemporalCentroid:
+    """The ``|x|²``-weighted mean of the sample times ``n / sample_rate``, and the weighted
+    standard deviation about it (conventions: Temporal centroid; ADR 0147)."""
+    x = np.asarray(samples)
+    if x.ndim != 1 or x.shape[0] == 0:
+        raise ValueError("samples must be a non-empty one-dimensional array")
+    x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    fs = float(sample_rate)
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    p = x.real * x.real + x.imag * x.imag if np.iscomplexobj(x) else x * x
+    total = float(np.sum(p))
+    if not total > 0:
+        raise ValueError("the samples' energy must be more than 0")
+    t = np.arange(x.shape[0], dtype=np.float64) / fs
+    centroid = float(np.sum(p * t)) / total
+    spread = math.sqrt(float(np.sum(p * (t - centroid) ** 2)) / total)
+    return TemporalCentroid(centroid, spread)
 
 
 def power_ccdf(samples: ArrayLike, levels_db: ArrayLike) -> PowerCcdf:

@@ -88,6 +88,12 @@ rule for code not written yet.
   `x ≥ 0` (so 0 and −0.0 are positive), negative otherwise; `rate = #{n : sign x[n] ≠ sign
   x[n+1]} / (N − 1)`, per adjacent pair, from 0 to 1. Real, finite, at least two samples.
   **(implemented)**
+- **Temporal centroid** ([ADR 0147](adr/0147-temporal-centroid.md);
+  `temporal_centroid(samples, sample_rate)`, C# `Measurements.TemporalCentroid`): weights
+  `p_n = |x[n]|²` at `t_n = n / fs` (sample 0 at t = 0); `centroid = Σ p t / Σ p` and
+  `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
+  spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
+  and positive. **(implemented)**
 - **Power CCDF** ([ADR 0119](adr/0119-power-ccdf.md); `power_ccdf(samples, levels_db)`, C#
   `Measurements.PowerCcdf`): for each level `L` dB, `#{n : |x[n]|² > P̄·10^{L/10}} / N`, strict, with
   `P̄` the mean power; result `PowerCcdf(mean_power, levels_db, probabilities)` in the order given.
