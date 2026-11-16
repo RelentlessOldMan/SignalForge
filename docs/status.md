@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Noise power ratio (NPR)**: the two-tone functions read discrete products; nothing measures
-   the distortion a wideband load puts into a notch cut in it. Not built yet. Needs an ADR: a
-   function `noise_power_ratio(samples, sample_rate, band, notch, ...)` on the Welch spectrum, the
-   mean PSD in the loaded band outside the notch over the mean PSD in the notch (in dB), how the
-   band and notch edges map to bins, and errors for a notch outside the band or an empty notch.
-   Expected values: a coherent multitone with a notch through `y = x + a3·x³`, its in-notch lines
-   expanded exactly in rational arithmetic, by hand.
+1. **Power CCDF**: `power_stats` gives PAPR, the single peak; nothing gives the CCDF, the fraction
+   of samples whose instantaneous power `|x|²` exceeds the mean by each level, which the brief
+   asks for and conventions (Power) already promise. Not built yet. Needs an ADR: a function
+   `power_ccdf(samples, levels_db)`, strict or non-strict exceedance, levels in dB above the mean
+   power, an optional level for a given probability (the "PAPR at 0.01 %"), and how ties and
+   all-zero input behave. Expected values: short sample sets counted by hand, and statistics of
+   complex Gaussian noise against `exp(−10^{L/10})`.
 
 ## Built
 
@@ -1193,6 +1193,13 @@ Updated with every chunk of work. Dates are absolute.
   drives and the textbook limit `A_IP5^4 = 8/(5|a5|)`.
   Python 4334 passed, 2 skipped; .NET 3669 passed; conformance 2195/2195 in both. Version
   2026.11.16.15.
+- 2026-11-16: noise power ratio (ADR 0118): `noise_power_ratio(frequencies, psd, band, notch, *,
+  span=None)` (C# `Spectral.NoisePowerRatio`) is the mean PSD of the band outside the notch over
+  the mean PSD in the notch, by the channel power rule, in dB; `+inf` for an empty notch. Vectors
+  are short PSDs worked by hand; the tests fill a notched multitone's notch with a cubic and check
+  the result against the cubic expanded by convolution, and the 2 dB-per-dB slope.
+  Python 4353 passed, 2 skipped; .NET 3689 passed; conformance 2206/2206 in both. Version
+  2026.11.16.16.
 
 ## Not built
 

@@ -150,6 +150,7 @@ from .spectral import (
     Acpr,
     HarmonicFTest,
     LineRemoval,
+    NoisePowerRatio,
     OccupiedBandwidth,
     SpectralDensity,
     Spectrogram,
@@ -174,6 +175,7 @@ from .spectral import (
     lomb_scargle_multiterm,
     multitaper_line_removal,
     multitaper_psd,
+    noise_power_ratio,
     occupied_bandwidth,
     spectrogram,
     welch_psd,
@@ -217,7 +219,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.15"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.16"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -236,6 +238,7 @@ __all__ = [
     "IntegratedPhaseNoise",
     "LineRemoval",
     "NoiseFigure",
+    "NoisePowerRatio",
     "OccupiedBandwidth",
     "PhaseNoise",
     "PhaseNoiseSpurs",
@@ -344,6 +347,7 @@ __all__ = [
     "newman_phases",
     "noise_figure_cascade",
     "noise_figure_y_factor",
+    "noise_power_ratio",
     "occupied_bandwidth",
     "ofdm_demodulate",
     "ofdm_modulate",

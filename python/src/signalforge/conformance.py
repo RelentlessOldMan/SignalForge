@@ -106,6 +106,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "occupied_bandwidth": spectral.occupied_bandwidth,
     "channel_power": spectral.channel_power,
     "acpr": spectral.acpr,
+    "noise_power_ratio": spectral.noise_power_ratio,
     "acpr_rrc": spectral.acpr_rrc,
     "convolve": dsp.convolve,
     "upsample": dsp.upsample,

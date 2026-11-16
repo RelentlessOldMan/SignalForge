@@ -359,6 +359,14 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   - `center` finite; `bandwidth` and `adjacent_bandwidth` finite and `> 0`; `offsets` a non-empty
     list of finite values `> 0`; `main_power > 0`. Channels may overlap one another.
   **(implemented)**
+- **Noise power ratio** (`noise_power_ratio(frequencies, psd, band, notch, span=None)`,
+  [ADR 0118](adr/0118-noise-power-ratio.md)): `band = (b_lo, b_hi)` is the loaded band and
+  `notch = (n_lo, n_hi)` the notch, finite, with `b_lo < n_lo < n_hi < b_hi`. By the channel power
+  rule (same `span`), `loaded_density = (P[b_lo, n_lo] + P[n_hi, b_hi]) / ((n_lo − b_lo) + (b_hi −
+  n_hi))` and `notch_density = P[n_lo, n_hi] / (n_hi − n_lo)`. Result `NoisePowerRatio`:
+  `loaded_density`, `notch_density`, `npr_db = 10·log10 loaded_density − 10·log10 notch_density`
+  (`+∞` for an empty notch). The band lies inside the spectrum as ACPR's channels do (same
+  slack); `loaded_density > 0` required. **(implemented)**
 - **ACPR through an RRC filter** (`acpr_rrc(frequencies, psd, center, symbol_rate, alpha, offsets,
   span=None)`, [ADR 0111](adr/0111-acpr-rrc.md)): channels centred at `center` and `center ∓ o`,
   each power `Σ psd_k·Δ·G(f_k − c)` with `G` the RRC's `|H|²` at peak 1: `1` for

@@ -1129,6 +1129,52 @@ def acpr(
         )
 
 
+@dataclass(frozen=True)
+class NoisePowerRatio:
+    """Loaded and notch power densities and their ratio (conventions: Spectra, Noise power
+    ratio; ADR 0118). Densities are in the PSD's units."""
+
+    loaded_density: float
+    notch_density: float
+    npr_db: float
+
+
+def noise_power_ratio(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    band: ArrayLike,
+    notch: ArrayLike,
+    *,
+    span: Span | ArrayLike | None = None,
+) -> NoisePowerRatio:
+    """Mean PSD of the loaded ``band`` outside the ``notch`` over the mean PSD in the notch, each
+    by the channel power rule; ``band = (low, high)`` and ``notch = (low, high)`` in Hz."""
+    b = np.asarray(band, dtype=np.float64)
+    n = np.asarray(notch, dtype=np.float64)
+    if b.shape != (2,) or n.shape != (2,):
+        raise ValueError("band and notch must each be (low, high)")
+    if not (np.all(np.isfinite(b)) and np.all(np.isfinite(n))):
+        raise ValueError("band and notch edges must be finite")
+    b_lo, b_hi, n_lo, n_hi = float(b[0]), float(b[1]), float(n[0]), float(n[1])
+    if not b_lo < n_lo < n_hi < b_hi:
+        raise ValueError("need band low < notch low < notch high < band high")
+    power, left, right = _bins(frequencies, psd, span)
+    slack = 1e-9 * float(np.max(right - left))  # as for acpr
+    if b_lo < left[0] - slack or b_hi > right[-1] + slack:
+        raise ValueError(f"band [{b_lo}, {b_hi}] leaves the spectrum [{left[0]}, {right[-1]}]")
+
+    def channel(low: float, high: float) -> float:
+        overlap = np.clip(np.minimum(right, high) - np.maximum(left, low), 0.0, None)
+        return float(np.sum(power * overlap / (right - left)))
+
+    loaded = (channel(b_lo, n_lo) + channel(n_hi, b_hi)) / ((n_lo - b_lo) + (b_hi - n_hi))
+    if not loaded > 0:
+        raise ValueError("the loaded band has no power")
+    inside = channel(n_lo, n_hi) / (n_hi - n_lo)
+    npr = math.inf if inside == 0 else 10 * (math.log10(loaded) - math.log10(inside))
+    return NoisePowerRatio(loaded, inside, npr)
+
+
 def acpr_rrc(
     frequencies: ArrayLike,
     psd: ArrayLike,

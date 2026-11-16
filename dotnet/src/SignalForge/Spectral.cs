@@ -170,6 +170,13 @@ public sealed record OccupiedBandwidth(double Bandwidth, double Lower, double Up
 /// <param name="UpperDbc">10·log10(upper / main) per offset; −∞ for an empty channel.</param>
 public sealed record Acpr(double MainPower, double[] LowerPower, double[] UpperPower, double[] LowerDbc, double[] UpperDbc);
 
+/// <summary>Loaded and notch power densities and their ratio (conventions: Spectra, Noise power
+/// ratio; ADR 0118).</summary>
+/// <param name="LoadedDensity">Mean PSD of the band outside the notch, in the PSD's units.</param>
+/// <param name="NotchDensity">Mean PSD inside the notch.</param>
+/// <param name="NprDb">10·log10(loaded) − 10·log10(notch); +∞ for an empty notch.</param>
+public sealed record NoisePowerRatio(double LoadedDensity, double NotchDensity, double NprDb);
+
 /// <summary>
 /// FFT, frequency axes, windows, Welch PSD, occupied bandwidth and channel power. Definitions in
 /// docs/conventions.md (Spectra) and docs/adr/0006-fft-windows-spectra.md.
@@ -1573,6 +1580,49 @@ public static class Spectral
             upperDbc[i] = 10 * (Math.Log10(upper[i]) - Math.Log10(main));
         }
         return new Acpr(main, lower, upper, lowerDbc, upperDbc);
+    }
+
+    /// <summary>
+    /// Mean PSD of the loaded <paramref name="band"/> outside the <paramref name="notch"/> over the
+    /// mean PSD in the notch, each by the <see cref="ChannelPower"/> rule (conventions: Spectra,
+    /// Noise power ratio; ADR 0118).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The loaded band's edges in Hz.</param>
+    /// <param name="notch">The notch's edges in Hz, strictly inside the band.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The two densities and the ratio.</returns>
+    /// <exception cref="ArgumentException">An edge is out of order or not finite, the band leaves the spectrum, or the loaded band has no power.</exception>
+    public static NoisePowerRatio NoisePowerRatio(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High) band, (double Low, double High) notch, (double Low, double High)? span = null)
+    {
+        if (!(double.IsFinite(band.Low) && double.IsFinite(band.High) && double.IsFinite(notch.Low) && double.IsFinite(notch.High)))
+            throw new ArgumentException("band and notch edges must be finite", nameof(band));
+        if (!(band.Low < notch.Low && notch.Low < notch.High && notch.High < band.High))
+            throw new ArgumentException("need band low < notch low < notch high < band high", nameof(notch));
+        var (power, left, right) = Bins(frequencies, psd, span);
+        double slack = 0; // as for Acpr
+        for (int k = 0; k < power.Length; k++)
+            slack = Math.Max(slack, 1e-9 * (right[k] - left[k]));
+        if (band.Low < left[0] - slack || band.High > right[^1] + slack)
+            throw new ArgumentException($"band [{band.Low}, {band.High}] leaves the spectrum [{left[0]}, {right[^1]}]", nameof(band));
+
+        double Channel(double low, double high)
+        {
+            double sum = 0;
+            for (int k = 0; k < power.Length; k++)
+                sum += power[k] * Math.Max(Math.Min(right[k], high) - Math.Max(left[k], low), 0.0) / (right[k] - left[k]);
+            return sum;
+        }
+
+        double loaded = (Channel(band.Low, notch.Low) + Channel(notch.High, band.High))
+            / ((notch.Low - band.Low) + (band.High - notch.High));
+        if (!(loaded > 0))
+            throw new ArgumentException("the loaded band has no power", nameof(psd));
+        double inside = Channel(notch.Low, notch.High) / (notch.High - notch.Low);
+        double npr = inside == 0 ? double.PositiveInfinity : 10 * (Math.Log10(loaded) - Math.Log10(inside));
+        return new NoisePowerRatio(loaded, inside, npr);
     }
 
     /// <summary>
