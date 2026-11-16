@@ -20,6 +20,7 @@ from .core import Signal
 from .dsp import (
     FirFilter,
     IirFilter,
+    Levinson,
     Resampler,
     allpass_first_order,
     allpass_second_order,
@@ -56,6 +57,7 @@ from .dsp import (
     fir_response,
     interpolate,
     kaiser_parameters,
+    levinson,
     pulse_shape,
     resample,
     resample_taps,
@@ -269,7 +271,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.46"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.47"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -291,6 +293,7 @@ __all__ = [
     "HarmonicToNoise",
     "IirFilter",
     "IntegratedPhaseNoise",
+    "Levinson",
     "LineRemoval",
     "NoiseFigure",
     "NoisePowerRatio",
@@ -410,6 +413,7 @@ __all__ = [
     "iq_imbalance",
     "kaiser_parameters",
     "kay_frequency",
+    "levinson",
     "lin_to_db",
     "lms_equalizer",
     "lomb_scargle",

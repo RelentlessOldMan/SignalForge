@@ -10,6 +10,7 @@ from __future__ import annotations
 import cmath
 import math
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any, cast
 
 import numpy as np
@@ -50,11 +51,58 @@ def autocorrelation(
     if scaling not in ("biased", "unbiased", "none"):
         raise ValueError('scaling must be "biased", "unbiased" or "none"')
     r = np.array([np.sum(x[k:] * np.conj(x[: n - k])) for k in range(top + 1)], dtype=x.dtype)
+    r[0] = np.sum(x.real * x.real + x.imag * x.imag)  # exactly real, whatever the FMA does
     if scaling == "biased":
         r = r / n
     elif scaling == "unbiased":
         r = r / (n - np.arange(top + 1))
     return cast("NDArray[np.complex128] | NDArray[np.float64]", r)
+
+
+@dataclass(frozen=True, eq=False)
+class Levinson:
+    """The prediction-error filter (``a[0] = 1``), the reflection coefficients and the final
+    prediction error from Levinson-Durbin (conventions: Pulse shaping, Linear prediction;
+    ADR 0149)."""
+
+    coefficients: NDArray[np.complex128] | NDArray[np.float64]
+    reflection: NDArray[np.complex128] | NDArray[np.float64]
+    error: float
+
+
+def levinson(r: ArrayLike, order: int) -> Levinson:
+    """Solve the Toeplitz normal equations of the autocorrelation ``r`` for the order-``order``
+    prediction-error filter ``e[n] = sum a[j] x[n-j]``, ``a[0] = 1``."""
+    lags = _vector(r, "r")
+    if not np.all(np.isfinite(lags)):
+        raise ValueError("r must be finite")
+    p = count(order, "order")
+    if p < 1:
+        raise ValueError("order must be at least 1")
+    if lags.size < p + 1:
+        raise ValueError("r must have at least order + 1 lags")
+    if np.iscomplexobj(lags) and lags[0].imag != 0:
+        raise ValueError("r[0] must be real")
+    error = float(lags[0].real)
+    if not error > 0:
+        raise ValueError("r[0] must be positive")
+    a = np.zeros(p + 1, dtype=lags.dtype)
+    a[0] = 1
+    k = np.zeros(p, dtype=lags.dtype)
+    for m in range(1, p + 1):
+        acc = lags[m] + np.sum(a[1:m] * lags[m - 1 : 0 : -1])
+        km = -acc / error
+        if not abs(km) < 1:
+            raise ValueError("r is not positive definite: a reflection coefficient has |k| >= 1")
+        a[1:m] = a[1:m] + km * np.conj(a[m - 1 : 0 : -1])
+        a[m] = km
+        k[m - 1] = km
+        error *= 1 - abs(km) ** 2
+    return Levinson(
+        cast("NDArray[np.complex128] | NDArray[np.float64]", a),
+        cast("NDArray[np.complex128] | NDArray[np.float64]", k),
+        error,
+    )
 
 
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:

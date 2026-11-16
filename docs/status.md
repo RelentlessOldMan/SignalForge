@@ -4,14 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Linear prediction (Levinson-Durbin)**: `levinson(r, order)` solves the Toeplitz normal
-   equations from an autocorrelation (ADR 0148), giving the predictor `a` (with `a[0] = 1`),
-   the reflection coefficients and the final prediction error. Not built yet. Needs an ADR: the
-   sign convention of `a` (`e[n] = Σ a[k] x[n−k]`, as SciPy's `lfilter` form), complex input
-   (Hermitian Toeplitz, conjugates on the reflection update), `r[0] ≤ 0` and a
-   non-positive-definite sequence (`|k| ≥ 1`: `invalid_argument`), and the result type.
-   Expected values: hand-solved small Toeplitz systems in Fractions (an AR(1) and an AR(2)
-   whose `r` is known exactly).
+1. **Autocorrelation pitch**: the fundamental of a real signal from the highest autocorrelation
+   peak (ADR 0148) between a lowest and a highest frequency, refined by a parabola through the
+   peak lag and its neighbours, `f0 = fs / lag`. Not built yet (`harmonic_series` works from
+   spectral tones instead). Needs an ADR: the scaling used (`unbiased` favours long lags,
+   `biased` short ones), the search range (`min_frequency`, `max_frequency` and their lag
+   bounds), a peak at the range's edge, the voicing measure returned (`r[lag]/r[0]`), and a
+   silent signal (`invalid_argument`). Expected values: hand-built periodic sequences whose
+   autocorrelation is worked exactly.
 
 ## Built
 
@@ -1447,6 +1447,16 @@ Updated with every chunk of work. Dates are absolute.
   symmetry), the energy at lag 0, and a periodic signal peaking at its period.
   Python 4855 passed, 2 skipped; .NET 4191 passed; conformance 2562/2562 in both. Version
   2026.11.16.46.
+- 2026-11-16: linear prediction by Levinson-Durbin (ADR 0149): `levinson(r, order)` (C#
+  `Dsp.Levinson`, giving `Levinson` for real `r` and `ComplexLevinson` for complex `r`). It
+  gives the prediction-error filter `a` (`a[0] = 1`, `e[n] = Σ a[j] x[n−j]`), the reflection
+  coefficients and the final error. `r[0]` must be real and positive, and every `|k| < 1`. The
+  vectors are checked by exact Gaussian elimination of each order's normal equations, over
+  complex Fractions. The tests cover a dense Toeplitz solve, AR(2) recovery, and the error
+  equal to the full residual's energy over `N`. The Python autocorrelation now computes lag 0
+  from `re² + im²` so it is exactly real.
+  Python 4872 passed, 2 skipped; .NET 4207 passed; conformance 2576/2576 in both. Version
+  2026.11.16.47.
 
 ## Not built
 
@@ -1459,6 +1469,9 @@ packaging and publishing.
 
 ## Lessons
 
+- 2026-11-16: NumPy's complex product `x * conj(x)` need not have an exactly zero imaginary part (it can
+  use fused multiply-add), so a quantity defined as real, such as an autocorrelation's lag 0,
+  is computed from `re² + im²` directly.
 - 2026-11-13: Before putting a feature in Next, grep for it: "mixing" was planned while
   `frequency_offset` already multiplied by `e^(j(2π f n/fs + φ))` in both languages.
 - 2026-11-12: The test for any dependency is whether it could ever force our code under the GPL or

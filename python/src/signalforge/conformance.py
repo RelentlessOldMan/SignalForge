@@ -140,6 +140,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "acpr_rrc": spectral.acpr_rrc,
     "convolve": dsp.convolve,
     "autocorrelation": dsp.autocorrelation,
+    "levinson": dsp.levinson,
     "upsample": dsp.upsample,
     "rrc_taps": dsp.rrc_taps,
     "pulse_shape": dsp.pulse_shape,

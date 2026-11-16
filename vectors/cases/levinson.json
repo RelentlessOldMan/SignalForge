@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "levinson",
+  "description": "Linear prediction by Levinson-Durbin (conventions: Pulse shaping, Linear prediction; ADR 0149).",
+  "cases": [
+    {"id": "levinson.first_order", "op": "levinson", "args": {"r": [1.0, 0.5], "order": 1}, "expected": {"coefficients": [1.0, -0.5], "reflection": [-0.5], "error": 0.75}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "r = 1, 1/2: k1 = -1/2, a = 1, -1/2, E = 1 - 1/4 = 3/4"},
+    {"id": "levinson.ar1_order2", "op": "levinson", "args": {"r": [1.0, 0.5, 0.25], "order": 2}, "expected": {"coefficients": [1.0, -0.5, 0.0], "reflection": [-0.5, 0.0], "error": 0.75}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "r = (1/2)^k, an AR(1): k2 = -(1/4 - 1/4)/(3/4) = 0, so a = 1, -1/2, 0 and E stays 3/4"},
+    {"id": "levinson.second_order", "op": "levinson", "args": {"r": [4.0, 2.0, 3.0], "order": 2}, "expected": {"coefficients": [1.0, -0.16666666666666666, -0.6666666666666666], "reflection": [-0.5, -0.6666666666666666], "error": 1.6666666666666667}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "r = 4, 2, 3: k1 = -1/2, E1 = 3; acc = 3 - 1 = 2, k2 = -2/3; a1 = -1/2 + (-2/3)(-1/2) = -1/6; E = 3(1 - 4/9) = 5/3"},
+    {"id": "levinson.extra_lags", "op": "levinson", "args": {"r": [4.0, 2.0, 3.0, 7.0], "order": 2}, "expected": {"coefficients": [1.0, -0.16666666666666666, -0.6666666666666666], "reflection": [-0.5, -0.6666666666666666], "error": 1.6666666666666667}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the second-order case with an unused fourth lag"},
+    {"id": "levinson.complex_first_order", "op": "levinson", "args": {"r": {"re": [2.0, 1.0], "im": [0.0, 1.0]}, "order": 1}, "expected": {"coefficients": {"re": [1.0, -0.5], "im": [0.0, -0.5]}, "reflection": {"re": [-0.5], "im": [-0.5]}, "error": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "r = 2, 1+i: k1 = -(1+i)/2, E = 2(1 - 1/2) = 1"},
+    {"id": "levinson.complex_second_order", "op": "levinson", "args": {"r": {"re": [4.0, 0.0, 1.0], "im": [0.0, 2.0, 0.0]}, "order": 2}, "expected": {"coefficients": {"re": [1.0, 0.0, -0.6666666666666666], "im": [0.0, -0.8333333333333334, 0.0]}, "reflection": {"re": [0.0, -0.6666666666666666], "im": [-0.5, 0.0]}, "error": 1.6666666666666667}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "r = 4, 2i, 1: k1 = -i/2, E1 = 3; acc = 1 + (-i/2)(2i) = 2, k2 = -2/3; a1 = -i/2 + (-2/3)conj(-i/2) = -5i/6; E = 3(1 - 4/9) = 5/3"},
+    {"id": "levinson.order_zero", "op": "levinson", "args": {"r": [4.0, 2.0, 3.0], "order": 0}, "error": "invalid_argument", "source": "order must be at least 1"},
+    {"id": "levinson.too_few_lags", "op": "levinson", "args": {"r": [4.0, 2.0, 3.0], "order": 3}, "error": "invalid_argument", "source": "r needs order + 1 = 4 lags"},
+    {"id": "levinson.r0_zero", "op": "levinson", "args": {"r": [0.0, 0.0, 0.0], "order": 2}, "error": "invalid_argument", "source": "r[0] must be positive"},
+    {"id": "levinson.r0_negative", "op": "levinson", "args": {"r": [-1.0, 0.0, 0.0], "order": 2}, "error": "invalid_argument", "source": "r[0] must be positive"},
+    {"id": "levinson.r0_complex", "op": "levinson", "args": {"r": {"re": [4.0, 2.0, 3.0], "im": [1.0, 0.0, 0.0]}, "order": 2}, "error": "invalid_argument", "source": "r[0] must be real"},
+    {"id": "levinson.unit_reflection", "op": "levinson", "args": {"r": [1.0, 1.0, 1.0], "order": 2}, "error": "invalid_argument", "source": "k1 = -1: not positive definite"},
+    {"id": "levinson.large_reflection", "op": "levinson", "args": {"r": [1.0, 2.0, 0.0], "order": 1}, "error": "invalid_argument", "source": "k1 = -2: not positive definite"},
+    {"id": "levinson.nan", "op": "levinson", "args": {"r": [4.0, "nan", 3.0], "order": 2}, "error": "invalid_argument", "source": "r must be finite"}
+  ]
+}

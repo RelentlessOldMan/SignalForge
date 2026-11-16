@@ -870,6 +870,13 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `"biased"` divides by `N`, `"unbiased"` by `N − k`, `"none"` not at all. The mean is kept.
   Real in, real out. At least one finite sample; `max_lag` an integer in `0 … N − 1`, default
   `N − 1`. **(implemented)**
+- **Linear prediction** (`levinson(r, order)`, C# `Dsp.Levinson`,
+  [ADR 0149](adr/0149-levinson-durbin.md)): Levinson-Durbin on an autocorrelation `r` (lags
+  `0 … order` used). The prediction-error filter `a`, `a[0] = 1`, `order + 1` taps,
+  `e[n] = Σ a[j] x[n−j]`, solves `Σ_j a[j] r[i−j] = 0` for `i = 1 … p` with `r[−k] = conj r[k]`.
+  Recursion: `k_m = −(r[m] + Σ_{j<m} a[j] r[m−j]) / E`, `a[j] += k_m conj a[m−j]`, `a[m] = k_m`,
+  `E *= 1 − |k_m|²`, from `E = r[0]`. Gives `Levinson(coefficients, reflection, error)`. `r`
+  finite with `r[0]` real and positive; `order ≥ 1`; every `|k_m| < 1`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

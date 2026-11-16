@@ -2,6 +2,18 @@ using System.Numerics;
 
 namespace SignalForge;
 
+/// <summary>Levinson-Durbin on a real autocorrelation (conventions: Pulse shaping, Linear prediction; ADR 0149).</summary>
+/// <param name="Coefficients">The prediction-error filter, <c>a[0] = 1</c>, <c>order + 1</c> taps.</param>
+/// <param name="Reflection">The reflection coefficients <c>k_1 … k_p</c>.</param>
+/// <param name="Error">The final prediction error.</param>
+public sealed record Levinson(double[] Coefficients, double[] Reflection, double Error);
+
+/// <summary>Levinson-Durbin on a complex autocorrelation (conventions: Pulse shaping, Linear prediction; ADR 0149).</summary>
+/// <param name="Coefficients">The prediction-error filter, <c>a[0] = 1</c>, <c>order + 1</c> taps.</param>
+/// <param name="Reflection">The reflection coefficients <c>k_1 … k_p</c>.</param>
+/// <param name="Error">The final prediction error, real.</param>
+public sealed record ComplexLevinson(Complex[] Coefficients, Complex[] Reflection, double Error);
+
 /// <summary>How <see cref="Dsp.Autocorrelation(ReadOnlySpan{double}, int?, CorrelationScaling)"/> scales each lag (conventions: Pulse shaping, Autocorrelation; ADR 0148).</summary>
 public enum CorrelationScaling
 {
@@ -79,6 +91,67 @@ public static partial class Dsp
             r[k] = new Complex(re / d, im / d);
         }
         return r;
+    }
+
+    /// <summary>Levinson-Durbin: the order-<paramref name="order"/> prediction-error filter
+    /// <c>e[n] = Σ a[j]·x[n−j]</c>, <c>a[0] = 1</c>, from a real autocorrelation (conventions:
+    /// Pulse shaping, Linear prediction; ADR 0149).</summary>
+    /// <param name="r">Lags 0 and up, at least <c>order + 1</c>, finite, <c>r[0] &gt; 0</c>.</param>
+    /// <param name="order">The filter order, at least 1.</param>
+    /// <returns>The filter, the reflection coefficients and the final error.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or <paramref name="r"/> is not positive definite.</exception>
+    public static Levinson Levinson(ReadOnlySpan<double> r, int order)
+    {
+        Complex[] lags = new Complex[r.Length];
+        for (int i = 0; i < r.Length; i++)
+            lags[i] = r[i];
+        var c = Levinson((ReadOnlySpan<Complex>)lags, order);
+        return new Levinson([.. c.Coefficients.Select(v => v.Real)], [.. c.Reflection.Select(v => v.Real)], c.Error);
+    }
+
+    /// <summary>Levinson-Durbin: the order-<paramref name="order"/> prediction-error filter
+    /// <c>e[n] = Σ a[j]·x[n−j]</c>, <c>a[0] = 1</c>, from a complex autocorrelation with
+    /// <c>r[−k] = conj r[k]</c> (conventions: Pulse shaping, Linear prediction; ADR 0149).</summary>
+    /// <param name="r">Lags 0 and up, at least <c>order + 1</c>, finite, <c>r[0]</c> real and positive.</param>
+    /// <param name="order">The filter order, at least 1.</param>
+    /// <returns>The filter, the reflection coefficients and the final error.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or <paramref name="r"/> is not positive definite.</exception>
+    public static ComplexLevinson Levinson(ReadOnlySpan<Complex> r, int order)
+    {
+        foreach (Complex v in r)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("r must be finite", nameof(r));
+        }
+        if (order < 1)
+            throw new ArgumentOutOfRangeException(nameof(order), "order must be at least 1");
+        if (r.Length < order + 1)
+            throw new ArgumentException("r must have at least order + 1 lags", nameof(r));
+        if (r[0].Imaginary != 0)
+            throw new ArgumentException("r[0] must be real", nameof(r));
+        double error = r[0].Real;
+        if (!(error > 0))
+            throw new ArgumentException("r[0] must be positive", nameof(r));
+        var a = new Complex[order + 1];
+        var k = new Complex[order];
+        a[0] = 1;
+        var previous = new Complex[order + 1];
+        for (int m = 1; m <= order; m++)
+        {
+            Complex acc = r[m];
+            for (int j = 1; j < m; j++)
+                acc += a[j] * r[m - j];
+            Complex km = -acc / error;
+            if (!(Complex.Abs(km) < 1))
+                throw new ArgumentException("r is not positive definite: a reflection coefficient has |k| >= 1", nameof(r));
+            Array.Copy(a, previous, m);
+            for (int j = 1; j < m; j++)
+                a[j] = previous[j] + km * Complex.Conjugate(previous[m - j]);
+            a[m] = km;
+            k[m - 1] = km;
+            error *= 1 - (km.Real * km.Real + km.Imaginary * km.Imaginary);
+        }
+        return new ComplexLevinson(a, k, error);
     }
 
     private static int CorrelationLags(int length, int? maxLag, CorrelationScaling scaling)

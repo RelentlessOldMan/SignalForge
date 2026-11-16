@@ -400,6 +400,8 @@ public static class Conformance
                 t => Spectral.AcprRrc(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
             "convolve" => Convolve(a),
             "autocorrelation" => Autocorrelation(a),
+            "levinson" => a.Get("r") is Complex[]? Bind((Complexes(a.Get("r")), a.I("order")), t => Dsp.Levinson(t.Item1, t.Item2))
+                : Bind((Reals(a.Get("r")), a.I("order")), t => Dsp.Levinson(t.Item1, t.Item2)),
             "upsample" => a.Get("x") is Complex[] ux
                 ? Bind((ux, a.I("factor")), t => Dsp.Upsample(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("x")), a.I("factor")), t => Dsp.Upsample(t.Item1, t.Item2)),
