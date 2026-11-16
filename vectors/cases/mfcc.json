@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "suite": "mfcc",
+  "description": "MFCC of one frame (conventions: MFCC; ADR 0157).",
+  "cases": [
+    {"id": "mfcc.identity", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 4.0], "filterbank": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "n_coefficients": 3}, "expected": [1.2005661338529436, -0.9802581434685472, -8.16496580927726e-51], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "identity bank: logs 0, ln 2, 2 ln 2; N = 3 DCT gives sqrt(3) ln 2, -sqrt(2) ln 2, 0"},
+    {"id": "mfcc.equal_bands", "op": "mfcc", "args": {"power_spectrum": [1.0, 1.0, 1.0], "filterbank": [[1.0, 1.0, 0.0], [0.0, 1.0, 1.0]], "n_coefficients": 2}, "expected": [0.9802581434685472, 0.0], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "both bands are 2: ln 2 twice, so c_0 = sqrt(2) ln 2 and c_1 = 0"},
+    {"id": "mfcc.truncated", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 4.0], "filterbank": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "n_coefficients": 1}, "expected": [1.2005661338529436], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the identity case keeping c_0 only: sqrt(3) ln 2"},
+    {"id": "mfcc.floor_default", "op": "mfcc", "args": {"power_spectrum": [0.0, 0.0, 0.0, 0.0], "filterbank": [[1.0, 0, 0, 0], [0, 1.0, 0, 0], [0, 0, 1.0, 0], [0, 0, 0, 1.0]], "n_coefficients": 4}, "expected": [-46.051701859880914, 0.0, 0.0, -7.071067811865475e-50], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "all bands 0 hit the floor 1e-10: c_0 = 2 ln(1e-10), the rest 0"},
+    {"id": "mfcc.floor_custom", "op": "mfcc", "args": {"power_spectrum": [0.25, 0.0, 3.0], "filterbank": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "n_coefficients": 3, "floor": 0.5}, "expected": [-0.16609332197106513, -1.2669652709463668, 0.731482740234792], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "floor 0.5 lifts 0.25 and 0 to 0.5: logs ln 0.5, ln 0.5, ln 3, N = 3 DCT"},
+    {"id": "mfcc.triangles", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0], "filterbank": [[0.5, 1.0, 0.5, 0.0, 0.0, 0.0], [0.0, 0.5, 1.0, 0.5, 0.0, 0.0], [0.0, 0.0, 0.5, 1.0, 0.5, 0.0], [0.0, 0.0, 0.0, 0.5, 1.0, 0.5]], "n_coefficients": 2}, "expected": [3.7800402325109137, -0.6764419755095603], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "overlapping triangles: bands 4, 6, 8, 10, logs and N = 4 DCT in decimal"},
+    {"id": "mfcc.no_coefficients", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 4.0], "filterbank": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "n_coefficients": 0}, "error": "invalid_argument", "source": "n_coefficients must be at least 1"},
+    {"id": "mfcc.too_many_coefficients", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 4.0], "filterbank": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "n_coefficients": 4}, "error": "invalid_argument", "source": "n_coefficients must not exceed n_filters = 3"},
+    {"id": "mfcc.negative_power", "op": "mfcc", "args": {"power_spectrum": [1.0, -1.0, 4.0], "filterbank": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "n_coefficients": 2}, "error": "invalid_argument", "source": "power must be non-negative"},
+    {"id": "mfcc.nan_power", "op": "mfcc", "args": {"power_spectrum": [1.0, "nan", 4.0], "filterbank": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "n_coefficients": 2}, "error": "invalid_argument", "source": "power must be finite"},
+    {"id": "mfcc.empty_power", "op": "mfcc", "args": {"power_spectrum": [], "filterbank": [[]], "n_coefficients": 2}, "error": "invalid_argument", "source": "needs at least one bin"},
+    {"id": "mfcc.row_length", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 4.0], "filterbank": [[1.0, 0.0], [0.0, 1.0]], "n_coefficients": 2}, "error": "invalid_argument", "source": "each row needs len(power) weights"},
+    {"id": "mfcc.no_filters", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 4.0], "filterbank": [], "n_coefficients": 2}, "error": "invalid_argument", "source": "needs at least one filter"},
+    {"id": "mfcc.negative_weight", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 4.0], "filterbank": [[1.0, -0.5, 0.0], [0.0, 1.0, 0.0]], "n_coefficients": 2}, "error": "invalid_argument", "source": "weights must be non-negative"},
+    {"id": "mfcc.zero_floor", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 4.0], "filterbank": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "n_coefficients": 2, "floor": 0.0}, "error": "invalid_argument", "source": "floor must be positive"},
+    {"id": "mfcc.inf_floor", "op": "mfcc", "args": {"power_spectrum": [1.0, 2.0, 4.0], "filterbank": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], "n_coefficients": 2, "floor": "inf"}, "error": "invalid_argument", "source": "floor must be finite"}
+  ]
+}

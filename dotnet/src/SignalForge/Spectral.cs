@@ -2523,6 +2523,50 @@ public static class Spectral
         return result;
     }
 
+    /// <summary>
+    /// Mel-frequency cepstral coefficients of one frame: the first <paramref name="nCoefficients"/>
+    /// of the orthonormal DCT-II of <c>ln(max(W·P, floor))</c> (conventions: Spectra, MFCC; ADR 0157).
+    /// </summary>
+    /// <param name="powerSpectrum">One frame's one-sided power spectrum, finite and non-negative.</param>
+    /// <param name="filterbank">One row of weights per filter, each as long as the spectrum, finite and non-negative.</param>
+    /// <param name="nCoefficients">How many coefficients to keep, from 1 to the number of filters.</param>
+    /// <param name="floor">The smallest band energy taken to the log, finite and positive.</param>
+    /// <returns>The coefficients, <c>c_0</c> first.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Mfcc(ReadOnlySpan<double> powerSpectrum, double[][] filterbank, int nCoefficients, double floor = 1e-10)
+    {
+        ArgumentNullException.ThrowIfNull(filterbank);
+        if (powerSpectrum.IsEmpty)
+            throw new ArgumentException("needs at least one bin", nameof(powerSpectrum));
+        foreach (double v in powerSpectrum)
+        {
+            if (!(double.IsFinite(v) && v >= 0))
+                throw new ArgumentException("power must be finite and non-negative", nameof(powerSpectrum));
+        }
+        if (filterbank.Length == 0)
+            throw new ArgumentException("needs at least one filter", nameof(filterbank));
+        if (nCoefficients < 1 || nCoefficients > filterbank.Length)
+            throw new ArgumentOutOfRangeException(nameof(nCoefficients), "must be between 1 and the number of filters");
+        if (!(double.IsFinite(floor) && floor > 0))
+            throw new ArgumentOutOfRangeException(nameof(floor), "floor must be finite and positive");
+        var logs = new double[filterbank.Length];
+        for (int i = 0; i < filterbank.Length; i++)
+        {
+            double[] row = filterbank[i];
+            if (row is null || row.Length != powerSpectrum.Length)
+                throw new ArgumentException("every row needs one weight per bin", nameof(filterbank));
+            double energy = 0;
+            for (int k = 0; k < row.Length; k++)
+            {
+                if (!(double.IsFinite(row[k]) && row[k] >= 0))
+                    throw new ArgumentException("weights must be finite and non-negative", nameof(filterbank));
+                energy += row[k] * powerSpectrum[k];
+            }
+            logs[i] = Math.Log(Math.Max(energy, floor));
+        }
+        return Dct(logs)[..nCoefficients];
+    }
+
     private static void CheckDctInput(ReadOnlySpan<double> samples)
     {
         if (samples.IsEmpty)

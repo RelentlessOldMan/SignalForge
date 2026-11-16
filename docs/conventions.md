@@ -584,6 +584,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   the exact inverse for the same scaling (orthonormal `x[n] = Σ s_k X[k] cos(…)`; unnormalized
   `x[n] = (X[0]/2 + Σ_{k≥1} X[k] cos(…))/N`). Direct `O(N²)` from one table `cos(πj/(2N))`,
   `j = k(2n+1) mod 4N`. Real, finite, at least one value. **(implemented)**
+- **MFCC** (`mfcc(power_spectrum, filterbank, n_coefficients, *, floor=1e-10)`, C#
+  `Spectral.Mfcc`, [ADR 0157](adr/0157-mfcc.md)): `E_i = Σ_k W[i][k] P[k]`, `L_i = ln(max(E_i,
+  floor))` (natural log), result the first `n_coefficients` of the orthonormal `dct(L)`, `c_0`
+  kept, no liftering. Power 1-D, finite, `≥ 0`, at least one bin; filterbank 2-D, at least one
+  row, each of `K` finite non-negative weights; `1 ≤ n_coefficients ≤ n_filters`; floor finite
+  and positive. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

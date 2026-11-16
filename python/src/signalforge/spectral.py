@@ -1869,6 +1869,36 @@ def idct(coefficients: ArrayLike, *, orthonormal: bool = True) -> NDArray[np.flo
     return np.asarray(_dct_matrix(n).T @ c, dtype=np.float64)
 
 
+def mfcc(
+    power_spectrum: ArrayLike,
+    filterbank: ArrayLike,
+    n_coefficients: int,
+    *,
+    floor: float = 1e-10,
+) -> NDArray[np.float64]:
+    """Mel-frequency cepstral coefficients of one frame: the first ``n_coefficients`` of the
+    orthonormal DCT-II of ``ln(max(W @ P, floor))`` (conventions: Spectra, MFCC; ADR 0157)."""
+    p = np.asarray(power_spectrum)
+    if np.iscomplexobj(p) or p.ndim != 1 or p.shape[0] == 0:
+        raise ValueError("power_spectrum must be a non-empty real one-dimensional array")
+    p = p.astype(np.float64)
+    if not np.all(np.isfinite(p)) or np.any(p < 0):
+        raise ValueError("power_spectrum must be finite and non-negative")
+    w = np.asarray(filterbank)
+    if np.iscomplexobj(w) or w.ndim != 2 or w.shape[0] == 0 or w.shape[1] != p.shape[0]:
+        raise ValueError("filterbank must have at least one row of len(power_spectrum) weights")
+    w = w.astype(np.float64)
+    if not np.all(np.isfinite(w)) or np.any(w < 0):
+        raise ValueError("filterbank weights must be finite and non-negative")
+    k = count(n_coefficients, "n_coefficients")
+    if not 1 <= k <= w.shape[0]:
+        raise ValueError("n_coefficients must be between 1 and the number of filters")
+    lo = real(floor, "floor")
+    if not (math.isfinite(lo) and lo > 0):
+        raise ValueError("floor must be finite and positive")
+    return dct(np.log(np.maximum(w @ p, lo)))[:k]
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,

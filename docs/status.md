@@ -4,10 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **MFCC**: `mfcc(power_spectrum, filterbank, n_coefficients)`, which takes the log of the mel
-   band energies, `ln(W @ P)`, then the orthonormal DCT-II, keeping the first `n_coefficients`.
-   It uses `dct`. Needs an ADR: the log (natural, or `10·log10`), a zero band (an error or
-   a floor), and liftering (none at first).
+1. **Delta coefficients**: `delta(frames, width=2)` over a sequence of feature frames (rows),
+   using the HTK regression `d_t = Σ_{n=1}^{W} n (c_{t+n} − c_{t−n}) / (2 Σ n²)`, applied per
+   column. Not built yet. Needs an ADR: the edges (repeat the first and last frame, as HTK
+   does, or shorten the output), the 2-D shape in both languages, and `width ≥ 1`. Expected
+   values: a linear ramp `c_t = a t + b` has delta `a` away from the edges, and the edge values
+   are worked by hand from the repeated frames.
 
 ## Built
 
@@ -1514,6 +1516,13 @@ Updated with every chunk of work. Dates are absolute.
   energy.
   Python 5020 passed, 2 skipped; .NET 4339 passed; conformance 2687/2687 in both. Version
   2026.11.16.54.
+- 2026-11-16: MFCC (ADR 0157): `mfcc(power_spectrum, filterbank, n_coefficients, *,
+  floor=1e-10)` (C# `Spectral.Mfcc`). It takes one frame and any filterbank: `ln(max(W @ P,
+  floor))`, then the orthonormal `dct`, keeping the first `n_coefficients` with `c_0`. There is
+  no liftering. The vectors use exact cosines for `N = 2, 3, 4` and logs in 50-digit
+  `decimal`. The tests check that scaling the power moves only `c_0`, by `√N·ln a`.
+  Python 5038 passed, 2 skipped; .NET 4357 passed; conformance 2703/2703 in both. Version
+  2026.11.16.55.
 
 ## Not built
 
