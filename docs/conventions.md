@@ -83,6 +83,11 @@ rule for code not written yet.
   `w_n = 3N/(2(N² − 1))·(1 − ((n − (N/2 − 1))/(N/2))²)` (sum 1); `f = fs·Σ w_n Δ_n / (2π)` Hz.
   At least two samples, all finite and non-zero; `sample_rate` finite and positive.
   **(implemented)**
+- **Zero-crossing rate** ([ADR 0146](adr/0146-zero-crossing-rate.md);
+  `zero_crossing_rate(samples)`, C# `Measurements.ZeroCrossingRate`): a sample is positive when
+  `x ≥ 0` (so 0 and −0.0 are positive), negative otherwise; `rate = #{n : sign x[n] ≠ sign
+  x[n+1]} / (N − 1)`, per adjacent pair, from 0 to 1. Real, finite, at least two samples.
+  **(implemented)**
 - **Power CCDF** ([ADR 0119](adr/0119-power-ccdf.md); `power_ccdf(samples, levels_db)`, C#
   `Measurements.PowerCcdf`): for each level `L` dB, `#{n : |x[n]|² > P̄·10^{L/10}} / N`, strict, with
   `P̄` the mean power; result `PowerCcdf(mean_power, levels_db, probabilities)` in the order given.

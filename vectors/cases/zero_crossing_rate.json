@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "zero_crossing_rate",
+  "description": "Zero-crossing rate (conventions: Zero-crossing rate; ADR 0146).",
+  "cases": [
+    {"id": "zero_crossing_rate.alternating", "op": "zero_crossing_rate", "args": {"samples": [1.0, -1.0, 1.0, -1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "every pair changes sign: 3 of 3"},
+    {"id": "zero_crossing_rate.constant_sign", "op": "zero_crossing_rate", "args": {"samples": [1.0, 2.0, 3.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no pair changes sign: 0 of 2"},
+    {"id": "zero_crossing_rate.zero_after_positive", "op": "zero_crossing_rate", "args": {"samples": [1.0, 0.0, -1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "0 counts as positive, so only (0, -1) crosses: 1 of 2"},
+    {"id": "zero_crossing_rate.touch_from_below", "op": "zero_crossing_rate", "args": {"samples": [-1.0, 0.0, -1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "0 counts as positive, so touching it from below crosses twice: 2 of 2"},
+    {"id": "zero_crossing_rate.touch_from_above", "op": "zero_crossing_rate", "args": {"samples": [1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "0 counts as positive: no crossing"},
+    {"id": "zero_crossing_rate.negative_zero", "op": "zero_crossing_rate", "args": {"samples": [-0.0, -1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "-0.0 >= 0, so it counts as positive: 1 of 1"},
+    {"id": "zero_crossing_rate.mixed", "op": "zero_crossing_rate", "args": {"samples": [3.0, -2.0, -5.0, 4.0, 4.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "crossings at (3, -2) and (-5, 4): 2 of 4"},
+    {"id": "zero_crossing_rate.one_sample", "op": "zero_crossing_rate", "args": {"samples": [1.0]}, "error": "invalid_argument", "source": "needs at least two samples"},
+    {"id": "zero_crossing_rate.empty", "op": "zero_crossing_rate", "args": {"samples": []}, "error": "invalid_argument", "source": "needs at least two samples"},
+    {"id": "zero_crossing_rate.nan", "op": "zero_crossing_rate", "args": {"samples": [1.0, "nan"]}, "error": "invalid_argument", "source": "samples must be finite"},
+    {"id": "zero_crossing_rate.inf", "op": "zero_crossing_rate", "args": {"samples": ["inf", 1.0]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

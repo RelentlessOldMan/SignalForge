@@ -81,6 +81,21 @@ def _instantaneous_power(samples: ArrayLike) -> tuple[NDArray[np.float64], float
     return np.asarray(p, dtype=np.float64), mean
 
 
+def zero_crossing_rate(samples: ArrayLike) -> float:
+    """The fraction of adjacent sample pairs whose signs differ, a sample being positive when
+    ``x >= 0`` (conventions: Zero-crossing rate; ADR 0146)."""
+    x = np.asarray(samples)
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if x.ndim != 1 or x.shape[0] < 2:
+        raise ValueError("samples must be a one-dimensional array of at least two samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    positive = x >= 0
+    return int(np.count_nonzero(positive[1:] != positive[:-1])) / int(x.shape[0] - 1)
+
+
 def power_ccdf(samples: ArrayLike, levels_db: ArrayLike) -> PowerCcdf:
     """For each level ``L`` in dB, the fraction of samples with ``|x|^2 > mean * 10**(L/10)``
     (strict; conventions: Power CCDF; ADR 0119)."""

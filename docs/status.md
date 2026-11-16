@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Zero-crossing rate**: the share of adjacent sample pairs whose signs differ, for a real
-   signal. Not built yet (no zero-crossing measure exists yet). Needs an ADR: the sign of an
-   exact 0 (count it with the positives, or carry the last nonzero sign), whether it is per
-   sample pair or per second (and so needs `fs`), the frame form (`frame`, `hop`, as for the
-   spectrogram) and complex input (`invalid_argument`). Expected values: hand-built sequences.
+1. **Temporal centroid**: the energy-weighted mean time of a real or complex signal,
+   `Σ n|x[n]|² / Σ|x[n]|²` divided by `fs`, and its spread about it. Not built yet (only the
+   spectral centroid exists). Needs an ADR: energy or amplitude weights, the time origin (sample
+   0 at t = 0), seconds or samples (and so whether `fs` is needed), and a silent signal
+   (`invalid_argument`). Expected values: hand-built sequences worked in Fractions.
 
 ## Built
 
@@ -1422,6 +1422,13 @@ Updated with every chunk of work. Dates are absolute.
   and the frequencies.
   Python 4813 passed, 2 skipped; .NET 4150 passed; conformance 2528/2528 in both. Version
   2026.11.16.43.
+- 2026-11-16: zero-crossing rate (ADR 0146): `zero_crossing_rate(samples)` (C#
+  `Measurements.ZeroCrossingRate`) is the share of adjacent sample pairs whose signs differ. A
+  sample is positive when `x >= 0`, so 0 and -0.0 count as positive. Real samples only (Python
+  rejects complex). Not framed. The vectors are counted by hand. The tests cover a sine (twice
+  per cycle), positive scaling and complex input.
+  Python 4827 passed, 2 skipped; .NET 4163 passed; conformance 2539/2539 in both. Version
+  2026.11.16.44.
 
 ## Not built
 

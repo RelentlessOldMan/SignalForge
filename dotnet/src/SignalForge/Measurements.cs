@@ -200,6 +200,26 @@ public sealed record GainCompression(double SmallSignalGainDb, double[] GainDb, 
 /// <summary>Power measurements and tone metrics. Definitions in docs/conventions.md.</summary>
 public static class Measurements
 {
+    /// <summary>The fraction of adjacent sample pairs whose signs differ, a sample being positive
+    /// when <c>x ≥ 0</c> (conventions: Zero-crossing rate; ADR 0146).</summary>
+    /// <param name="samples">Real samples, at least two, finite.</param>
+    /// <returns>The rate per adjacent pair, from 0 to 1.</returns>
+    /// <exception cref="ArgumentException">There are fewer than two samples, or one is not finite.</exception>
+    public static double ZeroCrossingRate(ReadOnlySpan<double> samples)
+    {
+        if (samples.Length < 2)
+            throw new ArgumentException("needs at least two samples", nameof(samples));
+        int crossings = 0;
+        for (int n = 0; n < samples.Length; n++)
+        {
+            if (!double.IsFinite(samples[n]))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            if (n > 0 && (samples[n] >= 0) != (samples[n - 1] >= 0))
+                crossings++;
+        }
+        return (double)crossings / (samples.Length - 1);
+    }
+
     /// <summary>For each level L in dB, the fraction of complex samples with |x|² &gt; mean·10^(L/10),
     /// strict (conventions: Power CCDF; ADR 0119).</summary>
     /// <param name="samples">Samples, at least one, finite, with positive mean power.</param>

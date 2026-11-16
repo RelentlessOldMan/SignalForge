@@ -225,6 +225,7 @@ public static class Conformance
             "chirp" => Chirp(a),
             "pulse_train" => Bind((a.I("num_samples"), a.I("period"), a.I("width"), a.Opt("amplitude", 1), a.Has("delay") ? a.I("delay") : 0),
                 t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "zero_crossing_rate" => Bind(Reals(a.Get("samples")), x => Measurements.ZeroCrossingRate(x)),
             "power_stats" => a.Get("samples") is Complex[] cs
                 ? () => Measurements.PowerStats(cs)
                 : Bind(Reals(a.Get("samples")), x => Measurements.PowerStats(x)),
