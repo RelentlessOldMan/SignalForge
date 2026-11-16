@@ -94,6 +94,12 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Noise-compensated decay** ([ADR 0183](adr/0183-noise-compensated-decay.md);
+  `noise_compensated_decay(impulse_response, *, tail=0.1)`, C# `Measurements.NoiseCompensatedDecay`):
+  noise window the last `M = ⌊tail·N + 1/2⌋` samples (`1 ≤ M < N`), `ν` their mean `|h|²`;
+  `E[n] = Σ_{k=n}^{N−M−1} (|h[k]|² − ν)` for `n < N − M`; result `10 log10(E[n]/E[0])`, `N − M`
+  values, `−inf` where `E[n] ≤ 0`; `E[0] ≤ 0` invalid. `tail` finite in `(0, 1)`; real or
+  complex, finite, not empty. **(implemented)**
 - **Decay curvature** ([ADR 0182](adr/0182-decay-curvature.md); `decay_curvature(impulse_response,
   sample_rate)`, C# `Measurements.DecayCurvature`): `C = 100·(T30/T20 − 1)` percent with T20
   the `reverberation_time` fit from −5 to −25 dB and T30 from −5 to −35 dB; signed, unclipped;

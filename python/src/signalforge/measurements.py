@@ -1256,6 +1256,36 @@ def schroeder_decay(impulse_response: ArrayLike) -> NDArray[np.float64]:
         return np.asarray(10 * np.log10(energy / energy[0]), dtype=np.float64)
 
 
+def noise_compensated_decay(
+    impulse_response: ArrayLike, *, tail: float = 0.1
+) -> NDArray[np.float64]:
+    """The Schroeder decay with the mean power of the last ``tail`` of the response subtracted
+    before integrating, up to that noise window (conventions: Noise-compensated decay;
+    ADR 0183)."""
+    h = np.asarray(impulse_response)
+    if h.ndim != 1 or h.shape[0] == 0:
+        raise ValueError("impulse_response must be a non-empty one-dimensional array")
+    h = h.astype(np.complex128 if np.iscomplexobj(h) else np.float64, copy=False)
+    if not np.all(np.isfinite(h)):
+        raise ValueError("impulse_response must be finite")
+    t = real(tail, "tail")
+    if not (math.isfinite(t) and 0 < t < 1):
+        raise ValueError("tail must be finite and in (0, 1)")
+    n = h.shape[0]
+    m = math.floor(t * n + 0.5)
+    if not 1 <= m < n:
+        raise ValueError("tail * length must round to between 1 and length - 1 samples")
+    p = np.asarray(h.real * h.real + h.imag * h.imag, dtype=np.float64)
+    noise = math.fsum(p[n - m :].tolist()) / m
+    energy = np.cumsum((p[: n - m] - noise)[::-1])[::-1]
+    if not energy[0] > 0:
+        raise ValueError("impulse_response must have energy above the noise")
+    out = np.full(n - m, -np.inf)
+    above = energy > 0
+    out[above] = 10 * np.log10(energy[above] / energy[0])
+    return out
+
+
 def reverberation_time(
     impulse_response: ArrayLike,
     sample_rate: float,

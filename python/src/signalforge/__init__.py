@@ -125,6 +125,7 @@ from .measurements import (
     kay_frequency,
     lateral_fraction,
     modulation_transfer,
+    noise_compensated_decay,
     noise_figure_cascade,
     noise_figure_y_factor,
     octave_band_levels,
@@ -317,7 +318,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.80"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.81"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -510,6 +511,7 @@ __all__ = [
     "multitaper_psd",
     "multitone",
     "newman_phases",
+    "noise_compensated_decay",
     "noise_figure_cascade",
     "noise_figure_y_factor",
     "noise_power_ratio",

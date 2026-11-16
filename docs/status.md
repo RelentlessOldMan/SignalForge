@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Noise-compensated decay**: `noise_compensated_decay(impulse_response, *, tail=0.1)` in
-   `measurements`. It is ISO 3382-1 §5.3.3 b: estimate the noise power as the mean `|h|²` over
-   the last `M = ⌊tail·N + 1/2⌋` samples, subtract it from every `|h|²`, then backward-integrate
-   and give `10 log10(E[n]/E[0])`. Not built yet. Needs an ADR: the rounding of `M`
-   (`1 ≤ M < N`), that `E[n] ≤ 0` gives `−inf`, and that `E[0] ≤ 0` is invalid. Expected
-   values: exact fraction tails of a decay followed by a constant-power tail.
+1. **Decay time from a curve**: `decay_time(decay, sample_rate, *, start_db=-5, stop_db=-25)` in
+   `measurements`. It is the ADR 0171 fit applied to a dB decay the caller supplies, for
+   example the output of `noise_compensated_decay`. Not built yet. Needs an ADR: what the curve
+   may hold (`−inf` allowed; NaN and `+inf` not), and that the threshold samples and errors are
+   those of `reverberation_time`. Expected values: exact least-squares slopes of hand-made
+   curves.
 
 ## Built
 
@@ -1733,6 +1733,16 @@ Updated with every chunk of work. Dates are absolute.
   two slopes.
   Python 5437 passed, 2 skipped; .NET 4754 passed; conformance 3048/3048 in both. Version
   2026.11.16.80.
+- 2026-11-16: noise-compensated decay (ADR 0183): `noise_compensated_decay(impulse_response, *,
+  tail=0.1)` in `measurements` (C# `Measurements.NoiseCompensatedDecay`, real and complex). It
+  is ISO 3382-1 §5.3.3 b.
+  - The noise power `ν` is the mean `|h|²` of the last `⌊tail·N + 1/2⌋` samples.
+  - `E[n] = Σ (|h|² − ν)` runs up to the noise window, so the result has `N − M` values.
+  - `E ≤ 0` gives `−inf`.
+
+  The vectors are exact rational sums of the stored samples.
+  Python 5450 passed, 2 skipped; .NET 4766 passed; conformance 3059/3059 in both. Version
+  2026.11.16.81.
 
 ## Not built
 
