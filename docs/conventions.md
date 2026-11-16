@@ -560,6 +560,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   [ADR 0151](adr/0151-real-cepstrum.md)): `c = Re IFFT(ln|FFT(x, M)|)`, natural log, `M = nfft`
   (zero padded; default `N`, at least `N`), all `M` values returned. A bin of magnitude exactly
   0 is `invalid_argument` (no floor). Real, finite, at least one sample. **(implemented)**
+- **Minimum phase** (`minimum_phase(samples, nfft=None)`, C# `Spectral.MinimumPhase`,
+  [ADR 0153](adr/0153-minimum-phase.md)): `c = real_cepstrum(x, M)`; fold `ĉ[0] = c[0]`,
+  `ĉ[m] = 2c[m]` for `1 ≤ m ≤ ⌈M/2⌉ − 1`, `ĉ[M/2] = c[M/2]` for even `M`, else 0;
+  `y = Re IFFT(exp(FFT(ĉ)))`, all `M` values. `M = nfft ≥ N`; default the smallest power of two
+  `≥ max(64, 8N)`. The rules of the real cepstrum. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

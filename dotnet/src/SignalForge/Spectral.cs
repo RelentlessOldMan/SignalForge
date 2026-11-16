@@ -2393,6 +2393,35 @@ public static class Spectral
     }
 
     /// <summary>
+    /// The minimum-phase sequence with the magnitude spectrum of <paramref name="samples"/>, by
+    /// folding the real cepstrum (conventions: Spectra, Minimum phase; ADR 0153).
+    /// </summary>
+    /// <param name="samples">Real samples, at least one, finite, with no spectrum bin exactly 0.</param>
+    /// <param name="nfft">The FFT length, at least the sample count; when null, the smallest power of two at least max(64, 8N).</param>
+    /// <returns>All <c>nfft</c> values; the tail past the sample count is near zero.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a spectrum bin is exactly 0.</exception>
+    public static double[] MinimumPhase(ReadOnlySpan<double> samples, int? nfft = null)
+    {
+        int length = nfft ?? (int)BitOperations.RoundUpToPowerOf2((uint)Math.Max(64, 8 * samples.Length));
+        double[] c = RealCepstrum(samples, length);
+        int m = c.Length, half = (m + 1) / 2;
+        var folded = new Complex[m];
+        folded[0] = c[0];
+        for (int i = 1; i < half; i++)
+            folded[i] = 2 * c[i];
+        if (m % 2 == 0)
+            folded[m / 2] = c[m / 2];
+        Complex[] spectrum = Fft(folded);
+        for (int k = 0; k < m; k++)
+            spectrum[k] = Complex.Exp(spectrum[k]);
+        Complex[] y = Ifft(spectrum);
+        var result = new double[m];
+        for (int i = 0; i < m; i++)
+            result[i] = y[i].Real;
+        return result;
+    }
+
+    /// <summary>
     /// Each spectral peak's width where the PSD crosses height − relHeight·prominence,
     /// interpolated linearly between bins; in order of frequency (conventions: Spectra, Peak
     /// widths; ADR 0138).

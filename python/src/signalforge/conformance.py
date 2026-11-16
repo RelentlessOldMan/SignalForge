@@ -128,6 +128,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "harmonic_deviation": spectral.harmonic_deviation,
     "harmonic_centroid": spectral.harmonic_centroid,
     "real_cepstrum": spectral.real_cepstrum,
+    "minimum_phase": spectral.minimum_phase,
     "spectral_variation": spectral.spectral_variation,
     "band_energy_ratio": spectral.band_energy_ratio,
     "harmonic_to_noise": spectral.harmonic_to_noise,

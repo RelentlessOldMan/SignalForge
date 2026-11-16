@@ -1765,6 +1765,24 @@ def real_cepstrum(samples: ArrayLike, nfft: int | None = None) -> NDArray[np.flo
     return np.asarray(np.fft.ifft(np.log(magnitude)).real, dtype=np.float64)
 
 
+def minimum_phase(samples: ArrayLike, nfft: int | None = None) -> NDArray[np.float64]:
+    """The minimum-phase sequence with the magnitude spectrum of ``samples``, by folding the real
+    cepstrum: ``nfft`` values (conventions: Spectra, Minimum phase; ADR 0153)."""
+    if nfft is None:
+        x = np.asarray(samples)
+        n = x.shape[0] if x.ndim == 1 else 0
+        nfft = 1 << (max(64, 8 * n) - 1).bit_length()
+    c = real_cepstrum(samples, nfft)
+    m = c.shape[0]
+    half = (m + 1) // 2
+    folded = np.zeros(m)
+    folded[0] = c[0]
+    folded[1:half] = 2 * c[1:half]
+    if m % 2 == 0:
+        folded[m // 2] = c[m // 2]
+    return np.asarray(np.fft.ifft(np.exp(np.fft.fft(folded))).real, dtype=np.float64)
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,

@@ -4,15 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Minimum phase from the cepstrum**: the homomorphic minimum-phase sequence with the same
-   magnitude spectrum, `IFFT(exp(FFT(fold(c))))` with `c = real_cepstrum(x, nfft)` (ADR 0151),
-   where the fold keeps `c[0]`, doubles `c[1 … ⌈M/2⌉−1]`, keeps `c[M/2]` for even `M`, and zeroes
-   the rest. Not built yet. Needs an ADR: the fold for odd and even `M`, the output length (`M`),
-   the default `nfft` (it aliases, so perhaps a larger default than `N`), and real output (drop the
-   imaginary residue). Expected values: analytic. `[a, 1]` with `|a| < 1` maps to `[1, a]`, and
-   `[1, a]` maps to itself, with an aliasing error near `a^M` that the tolerance must cover.
-   A gain carries through. Also a two-zero case, `(1 − z₁z⁻¹)(1 − z₂z⁻¹)` with one zero outside the
-   unit circle, which maps to the reflected zero `1/z̄`, scaled by `|z|`.
+1. **Mel scale**: `hz_to_mel(f)` and `mel_to_hz(m)`, elementwise, the first step towards a mel
+   filterbank and MFCCs. Not built yet. Needs an ADR: which formula (HTK
+   `2595·log10(1 + f/700)`, or Slaney's linear below 1 kHz and log above), whether both are
+   offered (a `scale` argument), the input domain (`f ≥ 0`? negative frequencies), and scalar or
+   array returns in each language. Expected values: exact points. HTK gives 1000 mel at
+   `f = 700·(10^(1000/2595) − 1)`, `0 ↦ 0`, and the two functions are inverses. Slaney is
+   linear, `f/(200/3)`, up to 1000 Hz (15 mel), and above that it adds `ln(f/1000)/(ln 6.4/27)`.
+   So `6400 Hz ↦ 42` exactly.
 
 ## Built
 
@@ -1485,6 +1484,15 @@ Updated with every chunk of work. Dates are absolute.
   adjacent two-tap with a moved peak, a rising edge, an impulse tie, and the errors.
   Python 4915 passed, 2 skipped; .NET 4247 passed; conformance 2610/2610 in both. Version
   2026.11.16.50.
+- 2026-11-16: minimum phase from the cepstrum (ADR 0153): `minimum_phase(samples, nfft=None)`
+  (C# `Spectral.MinimumPhase`) folds the real cepstrum and returns `Re IFFT(exp(FFT(ĉ)))`, all
+  `nfft` values. The fold keeps `c[0]` and the even-`M` middle, and doubles `1 … ⌈M/2⌉−1`. The
+  default `nfft` is the smallest power of two `≥ max(64, 8N)`, because the cepstrum aliases.
+  The vectors are analytic: zeros outside the circle reflect to `1/z` with gain `|z|`, multiplied
+  out in Fractions, with the aliasing bound checked. The tests cover the magnitude being kept,
+  the partial energies, and (in Python) the zeros lying inside.
+  Python 4930 passed, 2 skipped; .NET 4260 passed; conformance 2621/2621 in both. Version
+  2026.11.16.51.
 
 ## Not built
 
