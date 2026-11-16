@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "suite": "mel_scale",
+  "description": "Mel scale, HTK and Slaney (conventions: Mel scale; ADR 0154).",
+  "cases": [
+    {"id": "hz_to_mel.htk_zero", "op": "hz_to_mel", "args": {"hz": 0.0}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "log10(1 + 0) = 0"},
+    {"id": "mel_to_hz.htk_zero", "op": "mel_to_hz", "args": {"mel": 0.0}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "log10(1 + 0) = 0"},
+    {"id": "hz_to_mel.htk_6300", "op": "hz_to_mel", "args": {"hz": 6300.0}, "expected": 2595.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "1 + 6300/700 = 10, log10 10 = 1, times 2595"},
+    {"id": "mel_to_hz.htk_6300", "op": "mel_to_hz", "args": {"mel": 2595.0}, "expected": 6300.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "1 + 6300/700 = 10, log10 10 = 1, times 2595"},
+    {"id": "hz_to_mel.htk_69300_named", "op": "hz_to_mel", "args": {"hz": 69300.0, "scale": "htk"}, "expected": 5190.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "1 + 69300/700 = 100, log10 100 = 2, times 2595"},
+    {"id": "mel_to_hz.htk_69300_named", "op": "mel_to_hz", "args": {"mel": 5190.0, "scale": "htk"}, "expected": 69300.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "1 + 69300/700 = 100, log10 100 = 2, times 2595"},
+    {"id": "hz_to_mel.htk_700", "op": "hz_to_mel", "args": {"hz": 700.0}, "expected": 781.1728387480312, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "2595 log10 2, in 50-digit decimal"},
+    {"id": "mel_to_hz.htk_700", "op": "mel_to_hz", "args": {"mel": 781.1728387480312}, "expected": 700.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "2595 log10 2, in 50-digit decimal"},
+    {"id": "hz_to_mel.slaney_zero", "op": "hz_to_mel", "args": {"hz": 0.0, "scale": "slaney"}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "linear branch: 0 / (200/3)"},
+    {"id": "mel_to_hz.slaney_zero", "op": "mel_to_hz", "args": {"mel": 0.0, "scale": "slaney"}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "linear branch: 0 / (200/3)"},
+    {"id": "hz_to_mel.slaney_500", "op": "hz_to_mel", "args": {"hz": 500.0, "scale": "slaney"}, "expected": 7.5, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "linear branch: 500 / (200/3) = 7.5"},
+    {"id": "mel_to_hz.slaney_500", "op": "mel_to_hz", "args": {"mel": 7.5, "scale": "slaney"}, "expected": 500.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "linear branch: 500 / (200/3) = 7.5"},
+    {"id": "hz_to_mel.slaney_1000", "op": "hz_to_mel", "args": {"hz": 1000.0, "scale": "slaney"}, "expected": 15.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "where the branches meet: 1000 / (200/3) = 15 = 15 + 0"},
+    {"id": "mel_to_hz.slaney_1000", "op": "mel_to_hz", "args": {"mel": 15.0, "scale": "slaney"}, "expected": 1000.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "where the branches meet: 1000 / (200/3) = 15 = 15 + 0"},
+    {"id": "hz_to_mel.slaney_6400", "op": "hz_to_mel", "args": {"hz": 6400.0, "scale": "slaney"}, "expected": 42.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "log branch: ln(6.4) / (ln 6.4 / 27) = 27, plus 15"},
+    {"id": "mel_to_hz.slaney_6400", "op": "mel_to_hz", "args": {"mel": 42.0, "scale": "slaney"}, "expected": 6400.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "log branch: ln(6.4) / (ln 6.4 / 27) = 27, plus 15"},
+    {"id": "hz_to_mel.slaney_2000", "op": "hz_to_mel", "args": {"hz": 2000.0, "scale": "slaney"}, "expected": 25.081880157308323, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "log branch: 15 + 27 ln 2 / ln 6.4, in decimal"},
+    {"id": "mel_to_hz.slaney_2000", "op": "mel_to_hz", "args": {"mel": 25.081880157308323, "scale": "slaney"}, "expected": 2000.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "log branch: 15 + 27 ln 2 / ln 6.4, in decimal"},
+    {"id": "hz_to_mel.negative", "op": "hz_to_mel", "args": {"hz": -1.0}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "hz_to_mel.nan", "op": "hz_to_mel", "args": {"hz": "nan"}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "hz_to_mel.inf", "op": "hz_to_mel", "args": {"hz": "inf"}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "hz_to_mel.bad_scale", "op": "hz_to_mel", "args": {"hz": 100.0, "scale": "bark"}, "error": "invalid_argument", "source": "scale must be \"htk\" or \"slaney\""},
+    {"id": "mel_to_hz.negative", "op": "mel_to_hz", "args": {"mel": -1.0}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "mel_to_hz.nan", "op": "mel_to_hz", "args": {"mel": "nan"}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "mel_to_hz.inf", "op": "mel_to_hz", "args": {"mel": "inf"}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "mel_to_hz.bad_scale", "op": "mel_to_hz", "args": {"mel": 100.0, "scale": "bark"}, "error": "invalid_argument", "source": "scale must be \"htk\" or \"slaney\""}
+  ]
+}

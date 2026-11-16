@@ -271,13 +271,15 @@ from .units import (
     db_to_lin,
     dbm_to_vrms,
     dbm_to_w,
+    hz_to_mel,
     lin_to_db,
+    mel_to_hz,
     vrms_to_dbm,
     w_to_dbm,
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.51"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.52"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -414,6 +416,7 @@ __all__ = [
     "harmonic_f_test",
     "harmonic_series",
     "harmonic_to_noise",
+    "hz_to_mel",
     "ifft",
     "inharmonicity",
     "integrated_phase_noise",
@@ -434,6 +437,7 @@ __all__ = [
     "lomb_scargle_false_alarm_level_baluev",
     "lomb_scargle_frequencies",
     "lomb_scargle_multiterm",
+    "mel_to_hz",
     "minimum_phase",
     "multipath",
     "multitaper_line_removal",

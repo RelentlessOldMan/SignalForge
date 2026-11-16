@@ -39,9 +39,62 @@ public static class Units
         return Math.Sqrt(1e-3 * Math.Pow(10.0, dbm / 10.0) * r);
     }
 
+    /// <summary>Frequency in Hz to mel: HTK <c>2595·log10(1 + f/700)</c>, or Slaney, linear below
+    /// 1 kHz and logarithmic above (conventions: Mel scale; ADR 0154).</summary>
+    /// <param name="hz">A frequency, finite and non-negative.</param>
+    /// <param name="scale">Which mel definition.</param>
+    /// <returns>The mel value.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double HzToMel(double hz, MelScale scale = MelScale.Htk)
+    {
+        FiniteNonNegative(hz, nameof(hz));
+        return scale switch
+        {
+            MelScale.Htk => 2595.0 * Math.Log10(1.0 + hz / 700.0),
+            MelScale.Slaney => hz >= 1000.0 ? 15.0 + Math.Log(hz / 1000.0) / SlaneyLogStep : hz / SlaneyHzPerMel,
+            _ => throw new ArgumentOutOfRangeException(nameof(scale), scale, "unknown mel scale"),
+        };
+    }
+
+    /// <summary>Mel to frequency in Hz, the inverse of <see cref="HzToMel"/> (conventions: Mel
+    /// scale; ADR 0154).</summary>
+    /// <param name="mel">A mel value, finite and non-negative.</param>
+    /// <param name="scale">Which mel definition.</param>
+    /// <returns>The frequency in Hz.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double MelToHz(double mel, MelScale scale = MelScale.Htk)
+    {
+        FiniteNonNegative(mel, nameof(mel));
+        return scale switch
+        {
+            MelScale.Htk => 700.0 * (Math.Pow(10.0, mel / 2595.0) - 1.0),
+            MelScale.Slaney => mel >= 15.0 ? 1000.0 * Math.Exp((mel - 15.0) * SlaneyLogStep) : mel * SlaneyHzPerMel,
+            _ => throw new ArgumentOutOfRangeException(nameof(scale), scale, "unknown mel scale"),
+        };
+    }
+
+    private const double SlaneyHzPerMel = 200.0 / 3.0;
+    private static readonly double SlaneyLogStep = Math.Log(6.4) / 27.0;
+
+    private static void FiniteNonNegative(double x, string name)
+    {
+        if (!(double.IsFinite(x) && x >= 0))
+            throw new ArgumentOutOfRangeException(name, x, "must be finite and non-negative");
+    }
+
     private static double NonNegative(double x, string name) =>
         x >= 0 ? x : throw new ArgumentOutOfRangeException(name, x, "must be non-negative");
 
     private static double Positive(double x, string name) =>
         Check.PositiveFinite(x, name);
+}
+
+/// <summary>Which mel scale (conventions: Mel scale; ADR 0154).</summary>
+public enum MelScale
+{
+    /// <summary>HTK: <c>2595·log10(1 + f/700)</c>.</summary>
+    Htk,
+
+    /// <summary>Slaney: linear at 200/3 Hz per mel to 1 kHz (15 mel), then 27 mel per factor of 6.4.</summary>
+    Slaney,
 }

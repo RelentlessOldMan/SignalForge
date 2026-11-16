@@ -214,6 +214,8 @@ public static class Conformance
             "db_to_lin" => Bind(a.D("db"), Units.DbToLin),
             "amp_to_db" => Bind(a.D("ratio"), Units.AmpToDb),
             "db_to_amp" => Bind(a.D("db"), Units.DbToAmp),
+            "hz_to_mel" => Bind((a.D("hz"), Mel(a)), t => Units.HzToMel(t.Item1, t.Item2)),
+            "mel_to_hz" => Bind((a.D("mel"), Mel(a)), t => Units.MelToHz(t.Item1, t.Item2)),
             "w_to_dbm" => Bind(a.D("watts"), Units.WToDbm),
             "dbm_to_w" => Bind(a.D("dbm"), Units.DbmToW),
             "vrms_to_dbm" => Bind((a.D("vrms"), a.Opt("impedance", Units.DefaultImpedance)), t => Units.VrmsToDbm(t.Item1, t.Item2)),
@@ -813,6 +815,13 @@ public static class Conformance
     }
 
     /// <summary>Real only when both inputs are real, as in NumPy.</summary>
+    private static MelScale Mel(Args a) => a.Has("scale") ? Str(a, "scale") switch
+    {
+        "htk" => MelScale.Htk,
+        "slaney" => MelScale.Slaney,
+        _ => (MelScale)(-1), // the library rejects it, as Python does
+    } : MelScale.Htk;
+
     private static Func<object?> Autocorrelation(Args a)
     {
         object? x = a.Get("samples");

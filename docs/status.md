@@ -4,14 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Mel scale**: `hz_to_mel(f)` and `mel_to_hz(m)`, elementwise, the first step towards a mel
-   filterbank and MFCCs. Not built yet. Needs an ADR: which formula (HTK
-   `2595·log10(1 + f/700)`, or Slaney's linear below 1 kHz and log above), whether both are
-   offered (a `scale` argument), the input domain (`f ≥ 0`? negative frequencies), and scalar or
-   array returns in each language. Expected values: exact points. HTK gives 1000 mel at
-   `f = 700·(10^(1000/2595) − 1)`, `0 ↦ 0`, and the two functions are inverses. Slaney is
-   linear, `f/(200/3)`, up to 1000 Hz (15 mel), and above that it adds `ln(f/1000)/(ln 6.4/27)`.
-   So `6400 Hz ↦ 42` exactly.
+1. **Mel filterbank**: `mel_filterbank(n_filters, nfft, sample_rate, min_frequency=0,
+   max_frequency=None, *, scale="htk", normalization=None)`, a `(n_filters, nfft//2 + 1)` matrix
+   of triangular weights on the one-sided FFT bins. Not built yet. Needs an ADR: the edges
+   (`n_filters + 2` points equally spaced in mel, ADR 0154, from min to max, which defaults to
+   `fs/2`), the triangles evaluated at each bin frequency `k·fs/nfft` (librosa style, not
+   rounded to bins as in HTK), the optional Slaney area normalization `2/(f[i+2] − f[i])`, the
+   C# return shape (`double[][]`), and empty filters (allowed, or `invalid_argument`).
+   Expected values: hand-worked triangles where the mel edges fall on exact frequencies. For
+   example, Slaney below 1 kHz is linear, so the edges are evenly spaced in Hz and the weights
+   are simple fractions.
 
 ## Built
 
@@ -1493,6 +1495,14 @@ Updated with every chunk of work. Dates are absolute.
   the partial energies, and (in Python) the zeros lying inside.
   Python 4930 passed, 2 skipped; .NET 4260 passed; conformance 2621/2621 in both. Version
   2026.11.16.51.
+- 2026-11-16: mel scale (ADR 0154): `hz_to_mel(hz, *, scale="htk")` and `mel_to_hz` in `units`
+  (C# `Units.HzToMel`, `Units.MelToHz`, `MelScale { Htk, Slaney }`), elementwise in Python. HTK
+  is `2595·log10(1 + f/700)`. Slaney is linear at 200/3 Hz per mel to 1 kHz, then 27 mel per
+  factor of 6.4. Values are finite and `≥ 0`. The vectors are exact points (`6300 ↦ 2595`,
+  `6400 ↦ 42` Slaney) and 50-digit `decimal` values, both ways. The tests cover the round trip,
+  monotonicity, and arrays.
+  Python 4962 passed, 2 skipped; .NET 4288 passed; conformance 2647/2647 in both. Version
+  2026.11.16.52.
 
 ## Not built
 

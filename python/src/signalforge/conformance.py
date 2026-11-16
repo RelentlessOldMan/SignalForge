@@ -43,6 +43,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "db_to_lin": units.db_to_lin,
     "amp_to_db": units.amp_to_db,
     "db_to_amp": units.db_to_amp,
+    "hz_to_mel": units.hz_to_mel,
+    "mel_to_hz": units.mel_to_hz,
     "w_to_dbm": units.w_to_dbm,
     "dbm_to_w": units.dbm_to_w,
     "vrms_to_dbm": units.vrms_to_dbm,

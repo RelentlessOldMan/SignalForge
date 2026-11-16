@@ -132,6 +132,11 @@ rule for code not written yet.
   So a complex tone of amplitude FS is **0 dBFS** and a real sine of peak FS is **−3.01 dBFS**.
   This is the RF/IQ convention. It is **not** the AES17 audio convention, where a full-scale sine is
   0 dBFS; if audio support needs AES17 it gets its own explicitly named function. **(defined)**
+- **Mel scale** (`hz_to_mel(hz, *, scale="htk")`, `mel_to_hz`, C# `Units.HzToMel`,
+  `Units.MelToHz`, [ADR 0154](adr/0154-mel-scale.md)): HTK `m = 2595·log10(1 + f/700)`, inverse
+  `700·(10^(m/2595) − 1)`; Slaney `m = f/(200/3)` below 1000 Hz, `15 + ln(f/1000)/(ln 6.4/27)`
+  from 1000 Hz, inverse `(200/3)·m` below 15 mel, `1000·exp((m − 15)·ln 6.4/27)` from 15. Values
+  finite and `≥ 0`; `scale` is `"htk"` or `"slaney"`. **(implemented)**
 
 ## Spectra
 

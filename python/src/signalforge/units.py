@@ -79,3 +79,44 @@ def dbm_to_vrms(
     r = _positive(impedance, "impedance")
     p = 1e-3 * np.power(10.0, np.asarray(dbm, dtype=np.float64) / 10.0)
     return _out(np.sqrt(p * r))
+
+
+def _mel_scale(scale: str) -> str:
+    if scale not in ("htk", "slaney"):
+        raise ValueError('scale must be "htk" or "slaney"')
+    return scale
+
+
+def _finite_non_negative(x: ArrayLike, what: str) -> NDArray[np.float64]:
+    a = np.asarray(x, dtype=np.float64)
+    if not np.all(np.isfinite(a)) or np.any(a < 0):
+        raise ValueError(f"{what} must be finite and non-negative")
+    return a
+
+
+_SLANEY_HZ_PER_MEL = 200.0 / 3.0
+_SLANEY_LOG_STEP = math.log(6.4) / 27.0
+
+
+def hz_to_mel(hz: ArrayLike, *, scale: str = "htk") -> NDArray[np.float64] | float:
+    """Frequency in Hz to mel: HTK ``2595*log10(1 + f/700)``, or Slaney, linear below 1 kHz and
+    logarithmic above (conventions: Mel scale; ADR 0154)."""
+    kind = _mel_scale(scale)
+    f = _finite_non_negative(hz, "hz")
+    if kind == "htk":
+        return _out(2595.0 * np.log10(1.0 + f / 700.0))
+    linear = f / _SLANEY_HZ_PER_MEL
+    with np.errstate(divide="ignore"):
+        logarithmic = 15.0 + np.log(f / 1000.0) / _SLANEY_LOG_STEP
+    return _out(np.where(f >= 1000.0, logarithmic, linear))
+
+
+def mel_to_hz(mel: ArrayLike, *, scale: str = "htk") -> NDArray[np.float64] | float:
+    """Mel to frequency in Hz, the inverse of ``hz_to_mel`` (conventions: Mel scale; ADR 0154)."""
+    kind = _mel_scale(scale)
+    m = _finite_non_negative(mel, "mel")
+    if kind == "htk":
+        return _out(700.0 * (np.power(10.0, m / 2595.0) - 1.0))
+    linear = m * _SLANEY_HZ_PER_MEL
+    logarithmic = 1000.0 * np.exp((m - 15.0) * _SLANEY_LOG_STEP)
+    return _out(np.where(m >= 15.0, logarithmic, linear))
