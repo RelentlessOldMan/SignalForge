@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "harmonic_centroid",
+  "description": "Harmonic centroid and spread (conventions: Spectra, Harmonic centroid; ADR 0145).",
+  "cases": [
+    {"id": "harmonic_centroid.falling", "op": "harmonic_centroid", "args": {"frequencies": [100.0, 200.0, 300.0], "heights": [9.0, 4.0, 1.0], "orders": [1, 2, 3]}, "expected": {"centroid": 166.66666666666666, "spread": 74.53559924999298}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "amplitudes 3, 2, 1: centroid (300 + 400 + 300)/6 = 500/3; squared deviations 40000/9, 10000/9, 160000/9 weighted 3, 2, 1 sum to 300000/9, over 6 is 50000/9"},
+    {"id": "harmonic_centroid.equal", "op": "harmonic_centroid", "args": {"frequencies": [100.0, 200.0, 300.0, 400.0], "heights": [4.0, 4.0, 4.0, 4.0], "orders": [1, 2, 3, 4]}, "expected": {"centroid": 250.0, "spread": 111.80339887498948}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "equal weights: mean 250, variance (150\u00b2 + 50\u00b2 + 50\u00b2 + 150\u00b2)/4 = 12500"},
+    {"id": "harmonic_centroid.single", "op": "harmonic_centroid", "args": {"frequencies": [440.0], "heights": [25.0], "orders": [1]}, "expected": {"centroid": 440.0, "spread": 0.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "one tone: centroid 440, spread 0"},
+    {"id": "harmonic_centroid.unmatched", "op": "harmonic_centroid", "args": {"frequencies": [100.0, 150.0, 300.0], "heights": [1.0, 81.0, 1.0], "orders": [1, 0, 3]}, "expected": {"centroid": 200.0, "spread": 100.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the 150 Hz tone is left out: mean of 100 and 300 is 200, variance 100\u00b2 = 10000"},
+    {"id": "harmonic_centroid.zero_height", "op": "harmonic_centroid", "args": {"frequencies": [100.0, 200.0, 900.0], "heights": [16.0, 16.0, 0.0], "orders": [1, 2, 9]}, "expected": {"centroid": 150.0, "spread": 50.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the 900 Hz tone has no weight: mean 150, variance 50\u00b2 = 2500"},
+    {"id": "harmonic_centroid.none_matched", "op": "harmonic_centroid", "args": {"frequencies": [100.0, 200.0], "heights": [1.0, 1.0], "orders": [0, 0]}, "error": "invalid_argument", "source": "no tone has order >= 1"},
+    {"id": "harmonic_centroid.matched_silent", "op": "harmonic_centroid", "args": {"frequencies": [100.0, 200.0], "heights": [0.0, 1.0], "orders": [1, 0]}, "error": "invalid_argument", "source": "the matched tone's height is 0"},
+    {"id": "harmonic_centroid.length_mismatch", "op": "harmonic_centroid", "args": {"frequencies": [100.0, 200.0], "heights": [1.0, 1.0], "orders": [1, 2, 3]}, "error": "invalid_argument", "source": "orders is longer than frequencies"},
+    {"id": "harmonic_centroid.negative_height", "op": "harmonic_centroid", "args": {"frequencies": [100.0, 200.0], "heights": [1.0, -1.0], "orders": [1, 2]}, "error": "invalid_argument", "source": "heights must be non-negative"},
+    {"id": "harmonic_centroid.negative_order", "op": "harmonic_centroid", "args": {"frequencies": [100.0, 200.0], "heights": [1.0, 1.0], "orders": [1, -2]}, "error": "invalid_argument", "source": "orders must be >= 0"},
+    {"id": "harmonic_centroid.zero_tone", "op": "harmonic_centroid", "args": {"frequencies": [0.0, 200.0], "heights": [1.0, 1.0], "orders": [1, 2]}, "error": "invalid_argument", "source": "frequencies must be positive"}
+  ]
+}

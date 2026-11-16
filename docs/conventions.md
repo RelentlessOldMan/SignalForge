@@ -523,6 +523,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   left out); envelope `e_m` the mean of `a_{m−1}, a_m, a_{m+1}` inside `1..H`;
   `deviation = Σ |a_m − e_m| / Σ a_m`. Arrays 1-D of one length; heights finite and `≥ 0`;
   orders whole and `≥ 0`; `Σ a > 0`. **(implemented)**
+- **Harmonic centroid** (`harmonic_centroid(frequencies, heights, orders)`,
+  [ADR 0145](adr/0145-harmonic-centroid.md)): weights `a_i = sqrt(h_i)` over the tones with
+  order `≥ 1`, each at its measured frequency; `centroid = Σ a t / Σ a` and
+  `spread = sqrt(Σ a (t − centroid)² / Σ a)`, both in Hz. Gives `HarmonicCentroid(centroid,
+  spread)`. Arrays 1-D of one length; tones finite and positive; heights finite and `≥ 0`;
+  orders whole and `≥ 0`; the matched amplitudes must sum to more than 0. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

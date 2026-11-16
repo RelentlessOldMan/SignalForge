@@ -1218,6 +1218,15 @@ class SpectralSlope:
 
 
 @dataclass(frozen=True)
+class HarmonicCentroid:
+    """The amplitude-weighted mean frequency of the harmonic tones and their spread about it,
+    both in Hz (conventions: Spectra, Harmonic centroid; ADR 0145)."""
+
+    centroid: float
+    spread: float
+
+
+@dataclass(frozen=True)
 class Tristimulus:
     """The share of harmonic amplitude in the fundamental (``first``), orders 2-4 (``second``)
     and orders 5 and up (``third``) (conventions: Spectra, Tristimulus; ADR 0142)."""
@@ -1708,6 +1717,32 @@ def harmonic_deviation(heights: ArrayLike, orders: ArrayLike) -> float:
     counts[-1] -= 1  # with one order, both ends are the same: 1
     envelope = (padded[:-2] + padded[1:-1] + padded[2:]) / counts
     return float(np.sum(np.abs(a - envelope))) / total
+
+
+def harmonic_centroid(
+    frequencies: ArrayLike, heights: ArrayLike, orders: ArrayLike
+) -> HarmonicCentroid:
+    """The ``sqrt(height)``-weighted mean of the tone frequencies with order ``>= 1``, and their
+    weighted standard deviation about it."""
+    t = np.asarray(frequencies, dtype=np.float64)
+    h = np.asarray(heights, dtype=np.float64)
+    m = np.asarray(orders, dtype=np.float64)
+    if t.ndim != 1 or h.shape != t.shape or m.shape != t.shape:
+        raise ValueError("frequencies, heights and orders must be 1-D arrays of the same length")
+    if not (np.all(np.isfinite(t)) and np.all(t > 0)):
+        raise ValueError("frequencies must be finite and positive")
+    if not (np.all(np.isfinite(h)) and np.all(h >= 0)):
+        raise ValueError("heights must be finite and non-negative")
+    if not (np.all(np.isfinite(m)) and np.all(m >= 0) and np.all(m == np.floor(m))):
+        raise ValueError("orders must be whole numbers >= 0")
+    use = m >= 1
+    a, f = np.sqrt(h[use]), t[use]
+    total = float(np.sum(a))
+    if not total > 0:
+        raise ValueError("the matched tones' heights must sum to more than 0")
+    centroid = float(np.sum(a * f)) / total
+    spread = math.sqrt(float(np.sum(a * (f - centroid) ** 2)) / total)
+    return HarmonicCentroid(centroid, spread)
 
 
 def find_tones(

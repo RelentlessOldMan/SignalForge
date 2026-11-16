@@ -4,12 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Harmonic centroid and spread**: the amplitude-weighted mean frequency of the harmonic
-   tones and their spread about it, from `find_tones` frequencies and heights and
-   `harmonic_series` orders. Not built yet. Needs an ADR: amplitudes or powers as weights (the
-   deviation and tristimulus use amplitudes), whether to use measured tone frequencies or
-   `m·f0`, what unmatched tones contribute, and the result type. Expected values: hand-built
-   tones, worked in Fractions.
+1. **Zero-crossing rate**: the share of adjacent sample pairs whose signs differ, for a real
+   signal. Not built yet (no zero-crossing measure exists yet). Needs an ADR: the sign of an
+   exact 0 (count it with the positives, or carry the last nonzero sign), whether it is per
+   sample pair or per second (and so needs `fs`), the frame form (`frame`, `hop`, as for the
+   spectrogram) and complex input (`invalid_argument`). Expected values: hand-built sequences.
 
 ## Built
 
@@ -1415,6 +1414,14 @@ Updated with every chunk of work. Dates are absolute.
   linear fall that deviates only at its two ends.
   Python 4800 passed, 2 skipped; .NET 4137 passed; conformance 2517/2517 in both. Version
   2026.11.16.42.
+- 2026-11-16: harmonic centroid and spread (ADR 0145): `harmonic_centroid(frequencies, heights,
+  orders)` (C# `Spectral.HarmonicCentroid`) is the mean of the matched tones' measured
+  frequencies, weighted by amplitude `sqrt(height)`, with their weighted standard deviation
+  about it. Both are in Hz, and order 0 is left out. The vectors use perfect-square heights,
+  worked in Fractions and checked against the definition. The tests cover scaling the heights
+  and the frequencies.
+  Python 4813 passed, 2 skipped; .NET 4150 passed; conformance 2528/2528 in both. Version
+  2026.11.16.43.
 
 ## Not built
 

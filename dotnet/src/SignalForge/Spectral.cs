@@ -223,6 +223,11 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
 
+/// <summary>The amplitude-weighted mean frequency of the harmonic tones and their spread about it (conventions: Spectra, Harmonic centroid; ADR 0145).</summary>
+/// <param name="Centroid">The weighted mean frequency in Hz.</param>
+/// <param name="Spread">The weighted standard deviation about it in Hz.</param>
+public sealed record HarmonicCentroid(double Centroid, double Spread);
+
 /// <summary>The share of harmonic amplitude in the fundamental, orders 2–4 and orders 5 and up (conventions: Spectra, Tristimulus; ADR 0142).</summary>
 /// <param name="First">The fundamental's share.</param>
 /// <param name="Second">The share of orders 2 to 4.</param>
@@ -2305,6 +2310,47 @@ public static class Spectral
             spread += Math.Abs(a[k] - sum / (hi - lo + 1));
         }
         return spread / total;
+    }
+
+    /// <summary>
+    /// The <c>sqrt(height)</c>-weighted mean of the tone frequencies with order <c>≥ 1</c>, and
+    /// their weighted standard deviation about it (conventions: Spectra, Harmonic centroid;
+    /// ADR 0145).
+    /// </summary>
+    /// <param name="frequencies">Tone frequencies in Hz, finite and positive.</param>
+    /// <param name="heights">Tone heights (powers), finite and non-negative.</param>
+    /// <param name="orders">Each tone's harmonic order, 0 when unmatched.</param>
+    /// <returns>The centroid and spread in Hz.</returns>
+    /// <exception cref="ArgumentException">The arrays differ in length or hold bad values, or the matched tones' heights do not sum to more than 0.</exception>
+    public static HarmonicCentroid HarmonicCentroid(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> heights, ReadOnlySpan<int> orders)
+    {
+        if (heights.Length != frequencies.Length || orders.Length != frequencies.Length)
+            throw new ArgumentException("frequencies, heights and orders must have the same length", nameof(orders));
+        double total = 0, moment = 0;
+        for (int i = 0; i < frequencies.Length; i++)
+        {
+            if (!(double.IsFinite(frequencies[i]) && frequencies[i] > 0))
+                throw new ArgumentException("frequencies must be finite and positive", nameof(frequencies));
+            if (!(double.IsFinite(heights[i]) && heights[i] >= 0))
+                throw new ArgumentException("heights must be finite and non-negative", nameof(heights));
+            if (orders[i] < 0)
+                throw new ArgumentException("orders must be >= 0", nameof(orders));
+            if (orders[i] >= 1)
+            {
+                double a = Math.Sqrt(heights[i]);
+                total += a;
+                moment += a * frequencies[i];
+            }
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the matched tones' heights must sum to more than 0", nameof(heights));
+        double centroid = moment / total, square = 0;
+        for (int i = 0; i < frequencies.Length; i++)
+        {
+            if (orders[i] >= 1)
+                square += Math.Sqrt(heights[i]) * (frequencies[i] - centroid) * (frequencies[i] - centroid);
+        }
+        return new HarmonicCentroid(centroid, Math.Sqrt(square / total));
     }
 
     /// <summary>

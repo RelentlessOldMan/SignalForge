@@ -154,6 +154,7 @@ from .spectral import (
     Acpr,
     BandEnergyRatio,
     DbBandwidth,
+    HarmonicCentroid,
     HarmonicFTest,
     HarmonicSeries,
     HarmonicToNoise,
@@ -186,6 +187,7 @@ from .spectral import (
     fft_frequencies,
     find_tones,
     generalized_lomb_scargle,
+    harmonic_centroid,
     harmonic_deviation,
     harmonic_f_test,
     harmonic_series,
@@ -263,7 +265,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.42"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.43"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -279,6 +281,7 @@ __all__ = [
     "Evm",
     "FirFilter",
     "GainCompression",
+    "HarmonicCentroid",
     "HarmonicFTest",
     "HarmonicSeries",
     "HarmonicToNoise",
@@ -387,6 +390,7 @@ __all__ = [
     "gain_compression",
     "gardner_timing",
     "generalized_lomb_scargle",
+    "harmonic_centroid",
     "harmonic_deviation",
     "harmonic_f_test",
     "harmonic_series",
