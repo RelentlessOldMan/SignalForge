@@ -71,6 +71,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "time_weighting": measurements.time_weighting,
     "octave_band_levels": measurements.octave_band_levels,
     "exceedance_levels": measurements.exceedance_levels,
+    "block_leq": measurements.block_leq,
+    "sound_exposure": measurements.sound_exposure,
     "zero_crossing_rate": measurements.zero_crossing_rate,
     "power_ccdf": measurements.power_ccdf,
     "kay_frequency": measurements.kay_frequency,

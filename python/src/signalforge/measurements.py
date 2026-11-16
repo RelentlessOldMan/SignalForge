@@ -1200,3 +1200,40 @@ def exceedance_levels(powers: ArrayLike, percents: ArrayLike) -> NDArray[np.floa
         k = min(math.floor(h), len(s) - 1)
         out[i] = s[k] if k == len(s) - 1 else s[k] + (h - k) * (s[k + 1] - s[k])
     return out
+
+
+def _level_powers(samples: ArrayLike, sample_rate: float) -> tuple[NDArray[np.float64], float]:
+    """``|x|^2`` of finite one-dimensional real or complex samples, and the checked rate."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be a one-dimensional array")
+    x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    return np.asarray(x.real * x.real + x.imag * x.imag, dtype=np.float64), fs
+
+
+def block_leq(samples: ArrayLike, sample_rate: float, duration: float) -> NDArray[np.float64]:
+    """The mean ``|x|^2`` over consecutive blocks of ``round(duration sample_rate)`` samples, a
+    partial last block dropped (conventions: Short Leq series and sound exposure; ADR 0170)."""
+    p, fs = _level_powers(samples, sample_rate)
+    d = real(duration, "duration")
+    if not (math.isfinite(d) and d > 0):
+        raise ValueError("duration must be finite and positive")
+    n = math.floor(d * fs + 0.5)
+    if n < 1:
+        raise ValueError("duration * sample_rate must round to at least 1 sample")
+    blocks = p.shape[0] // n
+    return np.array(
+        [float(np.mean(p[i * n : (i + 1) * n])) for i in range(blocks)], dtype=np.float64
+    )
+
+
+def sound_exposure(samples: ArrayLike, sample_rate: float) -> float:
+    """The sound exposure ``sum |x|^2 / sample_rate`` (conventions: Short Leq series and sound
+    exposure; ADR 0170)."""
+    p, fs = _level_powers(samples, sample_rate)
+    return float(np.sum(p)) / fs

@@ -4,11 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Short Leq series and sound exposure**: `block_leq(samples, sample_rate, duration)` (the mean
-   `|x|²` over consecutive blocks of `duration` seconds) and `sound_exposure(samples, sample_rate)`
-   (`Σ|x|²/fs`, the energy integral behind SEL) in `measurements`. Not built yet. Needs an ADR:
-   how a non-integer `duration·fs` is rounded, what happens to a partial last block (dropped
-   or kept), and the units. Expected values: hand sums over short series.
+1. **Reverberation time**: `schroeder_decay(impulse_response)` (the backward-integrated energy
+   curve in dB, `10 log10(Σ_{k≥n} h²/Σ h²)`) and `reverberation_time(impulse_response,
+   sample_rate, *, start_db=-5, stop_db=-25)` (ISO 3382: a least-squares line fitted to the
+   decay between the two levels, extrapolated to −60 dB: T20 by default, T30 with −35). In
+   `measurements`. Not built yet. Needs an ADR: the fit (which samples, ordinary least
+   squares on time), the error when the decay never reaches `stop_db`, and noise compensation
+   (none). Expected values: an exponential decay `h[n] = r^n` has an exact geometric tail, so
+   the curve is a straight line and `T = 60/(−20 log10 r · fs)`.
 
 ## Built
 
@@ -1615,6 +1618,13 @@ Updated with every chunk of work. Dates are absolute.
   exact fractions. A Python test checks the result against `np.quantile`.
   Python 5240 passed, 2 skipped; .NET 4562 passed; conformance 2873/2873 in both. Version
   2026.11.16.67.
+- 2026-11-16: short Leq series and sound exposure (ADR 0170): `block_leq(samples, sample_rate,
+  duration)` and `sound_exposure(samples, sample_rate)` in `measurements` (C#
+  `Measurements.BlockLeq`, `Measurements.SoundExposure`, real and complex). `block_leq` gives
+  the mean `|x|²` over blocks of `⌊duration·fs + 1/2⌋` samples, dropping a partial last block.
+  `sound_exposure` gives `Σ|x|²/fs`. The vectors are exact hand sums in fractions.
+  Python 5259 passed, 2 skipped; .NET 4580 passed; conformance 2890/2890 in both. Version
+  2026.11.16.68.
 
 ## Not built
 

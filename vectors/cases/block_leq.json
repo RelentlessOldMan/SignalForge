@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "suite": "block_leq",
+  "description": "Short Leq series and sound exposure (conventions: Short Leq series and sound exposure; ADR 0170).",
+  "cases": [
+    {"id": "block_leq.exact", "op": "block_leq", "args": {"samples": [1.0, -1.0, 2.0, 0.0, 0.5, 0.5], "sample_rate": 4.0, "duration": 0.5}, "expected": [1.0, 2.0, 0.25], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "N = 0.5 * 4 = 2: means of 1, 1 / 4, 0 / 0.25, 0.25"},
+    {"id": "block_leq.rounded", "op": "block_leq", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], "sample_rate": 10.0, "duration": 0.26}, "expected": [4.666666666666667, 25.666666666666668], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "N = floor(2.6 + 0.5) = 3: (1 + 4 + 9)/3, (16 + 25 + 36)/3, the 7 dropped"},
+    {"id": "block_leq.half_up", "op": "block_leq", "args": {"samples": [2.0, 0.0, 0.0, 4.0, 0.0, 0.0], "sample_rate": 1.0, "duration": 2.5}, "expected": [1.3333333333333333, 5.333333333333333], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "N = floor(2.5 + 0.5) = 3: 4/3 and 16/3"},
+    {"id": "block_leq.complex", "op": "block_leq", "args": {"samples": {"re": [3.0, 0.0, 1.0, 1.0], "im": [4.0, 1.0, 1.0, 0.0]}, "sample_rate": 8.0, "duration": 0.25}, "expected": [13.0, 1.5], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "N = 2: |x|^2 = 25, 1, 2, 1: means 13 and 1.5"},
+    {"id": "block_leq.too_short", "op": "block_leq", "args": {"samples": [1.0, 2.0], "sample_rate": 100.0, "duration": 0.05}, "expected": [], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "N = 5 > 2 samples: no whole block"},
+    {"id": "block_leq.single_samples", "op": "block_leq", "args": {"samples": [0.5, -2.0, 1.5], "sample_rate": 1000.0, "duration": 0.001}, "expected": [0.25, 4.0, 2.25], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "N = 1: each sample's power"},
+    {"id": "block_leq.exposure", "op": "sound_exposure", "args": {"samples": [1.0, -2.0, 3.0, 0.5], "sample_rate": 4.0}, "expected": 3.5625, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "(1 + 4 + 9 + 0.25)/4 = 3.5625"},
+    {"id": "block_leq.exposure_complex", "op": "sound_exposure", "args": {"samples": {"re": [3.0, 0.0], "im": [4.0, 2.0]}, "sample_rate": 10.0}, "expected": 2.9, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "(25 + 4)/10 = 2.9"},
+    {"id": "block_leq.exposure_empty", "op": "sound_exposure", "args": {"samples": [], "sample_rate": 48000.0}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "an empty input has zero exposure"},
+    {"id": "block_leq.nan_sample", "op": "block_leq", "args": {"samples": [1.0, "nan"], "sample_rate": 8.0, "duration": 0.25}, "error": "invalid_argument", "source": "samples must be finite"},
+    {"id": "block_leq.zero_duration", "op": "block_leq", "args": {"samples": [1.0, 2.0], "sample_rate": 8.0, "duration": 0.0}, "error": "invalid_argument", "source": "duration must be positive"},
+    {"id": "block_leq.inf_duration", "op": "block_leq", "args": {"samples": [1.0, 2.0], "sample_rate": 8.0, "duration": "inf"}, "error": "invalid_argument", "source": "duration must be finite"},
+    {"id": "block_leq.rounds_to_zero", "op": "block_leq", "args": {"samples": [1.0, 2.0], "sample_rate": 8.0, "duration": 0.05}, "error": "invalid_argument", "source": "0.05 * 8 + 0.5 = 0.9 rounds down to 0 samples"},
+    {"id": "block_leq.zero_rate", "op": "block_leq", "args": {"samples": [1.0, 2.0], "sample_rate": 0.0, "duration": 0.25}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "block_leq.exposure_nan", "op": "sound_exposure", "args": {"samples": ["nan"], "sample_rate": 8.0}, "error": "invalid_argument", "source": "samples must be finite"},
+    {"id": "block_leq.exposure_zero_rate", "op": "sound_exposure", "args": {"samples": [1.0, 2.0], "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "block_leq.exposure_inf_rate", "op": "sound_exposure", "args": {"samples": [1.0, 2.0], "sample_rate": "inf"}, "error": "invalid_argument", "source": "sample_rate must be finite"}
+  ]
+}

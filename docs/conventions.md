@@ -94,6 +94,13 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Short Leq series and sound exposure** ([ADR 0170](adr/0170-block-leq-and-exposure.md);
+  `block_leq(samples, sample_rate, duration)`, `sound_exposure(samples, sample_rate)`, C#
+  `Measurements.BlockLeq`, `Measurements.SoundExposure`): `block_leq` is the mean `|x|²` over
+  each of the `⌊len/N⌋` consecutive blocks of `N = ⌊duration·fs + 1/2⌋ ≥ 1` samples, a partial
+  last block dropped (shorter than `N` gives empty); `sound_exposure` is `Σ|x|²/fs` (empty gives
+  0). Real or complex, finite; `sample_rate` and `duration` finite and positive.
+  **(implemented)**
 - **Exceedance levels** ([ADR 0169](adr/0169-exceedance-levels.md); `exceedance_levels(powers,
   percents)`, C# `Measurements.ExceedanceLevels`): `L_N` is the `q = 1 − N/100` quantile of the
   powers by linear interpolation (Hyndman–Fan type 7): sort ascending, `h = (n − 1)q`, `s_⌊h⌋ +

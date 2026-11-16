@@ -110,6 +110,7 @@ from .measurements import (
     TwoToneIp5,
     am_am_pm,
     autocorrelation_pitch,
+    block_leq,
     cepstrum_pitch,
     exceedance_levels,
     gain_compression,
@@ -124,6 +125,7 @@ from .measurements import (
     power_ccdf_level,
     power_stats,
     sfdr,
+    sound_exposure,
     temporal_centroid,
     time_weighting,
     tone_metrics,
@@ -300,7 +302,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.67"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.68"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -378,6 +380,7 @@ __all__ = [
     "bessel_highpass",
     "bessel_lowpass",
     "bit_errors",
+    "block_leq",
     "butterworth_bandpass",
     "butterworth_bandstop",
     "butterworth_highpass",
@@ -554,6 +557,7 @@ __all__ = [
     "sfdr",
     "sos_group_delay",
     "sos_response",
+    "sound_exposure",
     "spectral_contrast",
     "spectral_crest",
     "spectral_decrease",
