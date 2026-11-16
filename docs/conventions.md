@@ -517,6 +517,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   order 1's share, `second` orders 2–4, `third` orders 5 and up; they sum to 1. Order 0 is left
   out. Arrays 1-D of one length; heights finite and `≥ 0`; orders whole and `≥ 0`; `A > 0`.
   **(implemented)**
+- **Harmonic deviation** (`harmonic_deviation(heights, orders)`,
+  [ADR 0144](adr/0144-harmonic-deviation.md)): `a_m = sqrt(Σ h)` over the tones of order `m`,
+  `m = 1..H` (`H` the highest order; duplicates add as powers, a missing order is 0, order 0
+  left out); envelope `e_m` the mean of `a_{m−1}, a_m, a_{m+1}` inside `1..H`;
+  `deviation = Σ |a_m − e_m| / Σ a_m`. Arrays 1-D of one length; heights finite and `≥ 0`;
+  orders whole and `≥ 0`; `Σ a > 0`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

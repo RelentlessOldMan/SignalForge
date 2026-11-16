@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Harmonic spectral deviation**: how far the harmonic amplitudes stray from a smooth envelope
-   (each harmonic against the mean of it and its neighbours), from `find_tones` heights and
-   `harmonic_series` orders. Not built yet. Needs an ADR: amplitudes or dB, the envelope's
-   neighbours at the first and last harmonic, what missing orders (gaps in the series) do, and
-   whether duplicate orders are summed. Expected values: hand-built amplitudes, worked in
-   Fractions.
+1. **Harmonic centroid and spread**: the amplitude-weighted mean frequency of the harmonic
+   tones and their spread about it, from `find_tones` frequencies and heights and
+   `harmonic_series` orders. Not built yet. Needs an ADR: amplitudes or powers as weights (the
+   deviation and tristimulus use amplitudes), whether to use measured tone frequencies or
+   `m·f0`, what unmatched tones contribute, and the result type. Expected values: hand-built
+   tones, worked in Fractions.
 
 ## Built
 
@@ -1407,6 +1407,14 @@ Updated with every chunk of work. Dates are absolute.
   (ratio about 50) as a statistic.
   Python 4786 passed, 2 skipped; .NET 4123 passed; conformance 2505/2505 in both. Version
   2026.11.16.41.
+- 2026-11-16: harmonic spectral deviation (ADR 0144): `harmonic_deviation(heights, orders)` (C#
+  `Spectral.HarmonicDeviation`) is `Σ|a_m − e_m| / Σ a_m` over orders 1 to the highest. The
+  amplitudes are `a_m = sqrt` of each order's summed power, 0 for a missing order, and the
+  envelope `e_m` is the mean of the amplitude and its neighbours. The vectors use perfect-square
+  powers, worked in Fractions and checked against the definition. The tests cover scaling, and a
+  linear fall that deviates only at its two ends.
+  Python 4800 passed, 2 skipped; .NET 4137 passed; conformance 2517/2517 in both. Version
+  2026.11.16.42.
 
 ## Not built
 
@@ -1430,6 +1438,8 @@ packaging and publishing.
 - 2026-11-12: Binary wheels can bundle libraries under other licenses; read the wheel's own
   `LICENSE.txt`, not just the project's top-level license.
 - 2026-11-12: The `dotnet new xunit` template is xunit v2; there is no `xunit3` template in the SDK.
+- 2026-11-16: `np.convolve(..., "same")` returns the longer input's length, so it pads a short
+  signal out to the kernel. Pad explicitly when the data can be shorter than the kernel.
 - 2026-11-12: Avoid long bash heredocs with quotes in JSON or C#; write such files directly.
 - 2026-11-13: Windows PowerShell 5.1 splits a splatted `-m:1` into `- m : 1` for native commands;
   pass MSBuild switches as `/m:1`. Git Bash does the opposite: it turns `/m:1` into a path, so

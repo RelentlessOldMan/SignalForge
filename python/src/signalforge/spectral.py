@@ -1682,6 +1682,34 @@ def tristimulus(heights: ArrayLike, orders: ArrayLike) -> Tristimulus:
     return Tristimulus(first / total, second / total, third / total)
 
 
+def harmonic_deviation(heights: ArrayLike, orders: ArrayLike) -> float:
+    """``Σ|a_m - e_m| / Σ a_m`` over orders ``1..H``, with amplitudes ``a_m = sqrt(Σ height)`` per
+    order (0 when missing) and ``e_m`` the mean of ``a_m`` and its neighbours inside ``1..H``."""
+    h = np.asarray(heights, dtype=np.float64)
+    m = np.asarray(orders, dtype=np.float64)
+    if h.ndim != 1 or m.shape != h.shape:
+        raise ValueError("heights and orders must be 1-D arrays of the same length")
+    if not (np.all(np.isfinite(h)) and np.all(h >= 0)):
+        raise ValueError("heights must be finite and non-negative")
+    if not (np.all(np.isfinite(m)) and np.all(m >= 0) and np.all(m == np.floor(m))):
+        raise ValueError("orders must be whole numbers >= 0")
+    top = int(np.max(m)) if m.size else 0
+    if top < 1:
+        raise ValueError("no tone has an order >= 1")
+    power = np.zeros(top + 1)
+    np.add.at(power, m.astype(np.int64), h)
+    a = np.sqrt(power[1:])
+    total = float(np.sum(a))
+    if not total > 0:
+        raise ValueError("the harmonics' heights must sum to more than 0")
+    padded = np.concatenate(([0.0], a, [0.0]))
+    counts = np.full(top, 3.0)
+    counts[0] -= 1
+    counts[-1] -= 1  # with one order, both ends are the same: 1
+    envelope = (padded[:-2] + padded[1:-1] + padded[2:]) / counts
+    return float(np.sum(np.abs(a - envelope))) / total
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,

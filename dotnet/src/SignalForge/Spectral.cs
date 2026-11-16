@@ -2257,6 +2257,57 @@ public static class Spectral
     }
 
     /// <summary>
+    /// <c>Σ|a_m − e_m| / Σ a_m</c> over orders <c>1..H</c>, with amplitudes
+    /// <c>a_m = sqrt(Σ height)</c> per order (0 when missing) and <c>e_m</c> the mean of
+    /// <c>a_m</c> and its neighbours inside <c>1..H</c> (conventions: Spectra, Harmonic deviation;
+    /// ADR 0144).
+    /// </summary>
+    /// <param name="heights">Tone heights (powers), finite and non-negative.</param>
+    /// <param name="orders">Each tone's harmonic order, 0 when unmatched.</param>
+    /// <returns>The deviation, dimensionless.</returns>
+    /// <exception cref="ArgumentException">The arrays differ in length or hold bad values, no tone has an order of at least 1, or the harmonics' heights do not sum to more than 0.</exception>
+    public static double HarmonicDeviation(ReadOnlySpan<double> heights, ReadOnlySpan<int> orders)
+    {
+        if (orders.Length != heights.Length)
+            throw new ArgumentException("heights and orders must have the same length", nameof(orders));
+        int top = 0;
+        for (int i = 0; i < heights.Length; i++)
+        {
+            if (!(double.IsFinite(heights[i]) && heights[i] >= 0))
+                throw new ArgumentException("heights must be finite and non-negative", nameof(heights));
+            if (orders[i] < 0)
+                throw new ArgumentException("orders must be >= 0", nameof(orders));
+            top = Math.Max(top, orders[i]);
+        }
+        if (top < 1)
+            throw new ArgumentException("no tone has an order >= 1", nameof(orders));
+        var a = new double[top];
+        for (int i = 0; i < heights.Length; i++)
+        {
+            if (orders[i] >= 1)
+                a[orders[i] - 1] += heights[i];
+        }
+        double total = 0;
+        for (int k = 0; k < top; k++)
+        {
+            a[k] = Math.Sqrt(a[k]);
+            total += a[k];
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the harmonics' heights must sum to more than 0", nameof(heights));
+        double spread = 0;
+        for (int k = 0; k < top; k++)
+        {
+            int lo = Math.Max(k - 1, 0), hi = Math.Min(k + 1, top - 1);
+            double sum = 0;
+            for (int j = lo; j <= hi; j++)
+                sum += a[j];
+            spread += Math.Abs(a[k] - sum / (hi - lo + 1));
+        }
+        return spread / total;
+    }
+
+    /// <summary>
     /// Each spectral peak's width where the PSD crosses height − relHeight·prominence,
     /// interpolated linearly between bins; in order of frequency (conventions: Spectra, Peak
     /// widths; ADR 0138).

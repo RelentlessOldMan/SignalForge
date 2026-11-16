@@ -186,6 +186,7 @@ from .spectral import (
     fft_frequencies,
     find_tones,
     generalized_lomb_scargle,
+    harmonic_deviation,
     harmonic_f_test,
     harmonic_series,
     harmonic_to_noise,
@@ -262,7 +263,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.41"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.42"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -386,6 +387,7 @@ __all__ = [
     "gain_compression",
     "gardner_timing",
     "generalized_lomb_scargle",
+    "harmonic_deviation",
     "harmonic_f_test",
     "harmonic_series",
     "harmonic_to_noise",

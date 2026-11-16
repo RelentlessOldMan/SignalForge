@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "harmonic_deviation",
+  "description": "Harmonic spectral deviation (conventions: Spectra, Harmonic deviation; ADR 0144).",
+  "cases": [
+    {"id": "harmonic_deviation.flat", "op": "harmonic_deviation", "args": {"heights": [1.0, 1.0, 1.0, 1.0], "orders": [1, 2, 3, 4]}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "equal amplitudes match their envelope"},
+    {"id": "harmonic_deviation.bowl", "op": "harmonic_deviation", "args": {"heights": [36.0, 9.0, 9.0, 36.0], "orders": [1, 2, 3, 4]}, "expected": 0.2777777777777778, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "amplitudes 6, 3, 3, 6; envelope 9/2, 4, 4, 9/2; |deviations| 3/2 + 1 + 1 + 3/2 = 5 over 18"},
+    {"id": "harmonic_deviation.gap", "op": "harmonic_deviation", "args": {"heights": [16.0, 4.0], "orders": [1, 3]}, "expected": 0.8333333333333334, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "amplitudes 4, 0, 2 (order 2 missing); envelope 2, 2, 1; 2 + 2 + 1 = 5 over 6"},
+    {"id": "harmonic_deviation.duplicates", "op": "harmonic_deviation", "args": {"heights": [9.0, 16.0, 1.0], "orders": [1, 1, 2]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "order 1 powers 9 + 16 = 25, amplitude 5; order 2 amplitude 1; envelope 3, 3; 4 over 6"},
+    {"id": "harmonic_deviation.unmatched", "op": "harmonic_deviation", "args": {"heights": [4.0, 100.0, 1.0], "orders": [1, 0, 2]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "order 0 left out: amplitudes 2, 1; envelope 3/2, 3/2; 1 over 3"},
+    {"id": "harmonic_deviation.permuted", "op": "harmonic_deviation", "args": {"heights": [36.0, 9.0, 9.0, 36.0], "orders": [4, 2, 3, 1]}, "expected": 0.2777777777777778, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the bowl, tones in another order"},
+    {"id": "harmonic_deviation.single", "op": "harmonic_deviation", "args": {"heights": [4.0], "orders": [1]}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "one harmonic is its own envelope"},
+    {"id": "harmonic_deviation.nothing", "op": "harmonic_deviation", "args": {"heights": [1.0, 4.0], "orders": [0, 0]}, "error": "invalid_argument", "source": "no tone has order >= 1"},
+    {"id": "harmonic_deviation.all_silent", "op": "harmonic_deviation", "args": {"heights": [0.0, 0.0], "orders": [1, 2]}, "error": "invalid_argument", "source": "the harmonics have no power"},
+    {"id": "harmonic_deviation.length_mismatch", "op": "harmonic_deviation", "args": {"heights": [1.0, 4.0], "orders": [1]}, "error": "invalid_argument", "source": "orders is shorter than heights"},
+    {"id": "harmonic_deviation.negative_height", "op": "harmonic_deviation", "args": {"heights": [1.0, -4.0], "orders": [1, 2]}, "error": "invalid_argument", "source": "heights must be non-negative"},
+    {"id": "harmonic_deviation.negative_order", "op": "harmonic_deviation", "args": {"heights": [1.0, 4.0], "orders": [1, -2]}, "error": "invalid_argument", "source": "orders must be >= 0"}
+  ]
+}
