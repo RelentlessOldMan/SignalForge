@@ -4,12 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Sound strength**: `sound_strength(impulse_response, reference)` in `measurements`. It is
-   ISO 3382-1 `G = 10 log10(Σ h² / Σ h_ref²)`, where `reference` is the same source's response
-   measured in a free field at 10 m. Not built yet. Needs an ADR: whether the two responses must
-   have the same sample rate or length (the sums don't need it), the zero rules, and whether an
-   early or late window (G80, G_late) belongs here or stays the caller's slice. Expected values:
-   hand sums.
+1. **Stage support**: `stage_support(impulse_response, sample_rate, *, late=False)` in
+   `measurements`. It is ISO 3382-1 Annex C:
+   - `ST_early = 10 log10(E_{20–100 ms}/E_{0–10 ms})`;
+   - `ST_late = 10 log10(E_{100–1000 ms}/E_{0–10 ms})`.
+
+   The response is measured 1 m from the source. Not built yet. Needs an ADR: the window
+   bounds, using the rounding of ADR 0172 with half-open windows; what windows past the end
+   give; and the zero rules. Expected values: hand sums, plus geometric window sums.
 
 ## Built
 
@@ -1690,6 +1692,16 @@ Updated with every chunk of work. Dates are absolute.
   ragged matrix, so the unequal-rows case is a unit test in both languages.
   Python 5374 passed, 2 skipped; .NET 4691 passed; conformance 2991/2991 in both. Version
   2026.11.16.75.
+- 2026-11-16: sound strength (ADR 0178): `sound_strength(impulse_response, reference)` in
+  `measurements` (C# `Measurements.SoundStrength`, real and complex). It is
+  `G = 10 log10(Σ|h|²/Σ|h_ref|²)` against the free-field response at 10 m.
+  - It takes no sample rate, and the two lengths may differ.
+  - G80 and G_late are the caller's slices.
+  - A silent response gives `−inf`, and a silent reference is invalid.
+
+  The vectors are exact hand sums.
+  Python 5386 passed, 2 skipped; .NET 4704 passed; conformance 3002/3002 in both. Version
+  2026.11.16.76.
 
 ## Not built
 

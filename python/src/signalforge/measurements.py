@@ -1485,3 +1485,25 @@ def speech_transmission_index(mtf: ArrayLike) -> float:
     sti = sum(a * t for a, t in zip(_STI_ALPHA, mti, strict=True))
     sti -= sum(b * math.sqrt(mti[k] * mti[k + 1]) for k, b in enumerate(_STI_BETA))
     return float(sti)
+
+
+def _response_energy(x: ArrayLike, name: str) -> float:
+    h = np.asarray(x)
+    if h.ndim != 1 or h.shape[0] == 0:
+        raise ValueError(f"{name} must be a non-empty one-dimensional array")
+    h = h.astype(np.complex128 if np.iscomplexobj(h) else np.float64, copy=False)
+    if not np.all(np.isfinite(h)):
+        raise ValueError(f"{name} must be finite")
+    return float(np.sum(h.real * h.real + h.imag * h.imag))
+
+
+def sound_strength(impulse_response: ArrayLike, reference: ArrayLike) -> float:
+    """The sound strength ``10 log10(sum |h|^2 / sum |h_ref|^2)`` in dB against the free-field
+    response at 10 m (conventions: Sound strength; ADR 0178)."""
+    energy = _response_energy(impulse_response, "impulse_response")
+    ref = _response_energy(reference, "reference")
+    if not ref > 0:
+        raise ValueError("reference must not be all zero")
+    if energy == 0:
+        return -math.inf
+    return 10 * math.log10(energy / ref)

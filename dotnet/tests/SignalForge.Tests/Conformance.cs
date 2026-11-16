@@ -238,6 +238,8 @@ public static class Conformance
                 t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "temporal_centroid" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2)),
+            "sound_strength" => a.Get("impulse_response") is Complex[]? Bind((Complexes(a.Get("impulse_response")), Complexes(a.Get("reference"))), t => Measurements.SoundStrength(t.Item1, t.Item2))
+                : Bind((Reals(a.Get("impulse_response")), Reals(a.Get("reference"))), t => Measurements.SoundStrength(t.Item1, t.Item2)),
             "speech_transmission_index" => Bind(Rows(a.Get("mtf")), Measurements.SpeechTransmissionIndex),
             "modulation_transfer" => a.Get("impulse_response") is Complex[]? Bind((Complexes(a.Get("impulse_response")), a.D("sample_rate"), Reals(a.Get("frequencies"))), t => Measurements.ModulationTransfer(t.Item1, t.Item2, t.Item3))
                 : Bind((Reals(a.Get("impulse_response")), a.D("sample_rate"), Reals(a.Get("frequencies"))), t => Measurements.ModulationTransfer(t.Item1, t.Item2, t.Item3)),

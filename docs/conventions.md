@@ -94,6 +94,12 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Sound strength** ([ADR 0178](adr/0178-sound-strength.md); `sound_strength(impulse_response,
+  reference)`, C# `Measurements.SoundStrength`): `G = 10 log10(Σ|h|² / Σ|h_ref|²)` with the
+  reference the free-field response at 10 m; lengths may differ, no sample rate (same rate is
+  the caller's), G80 and G_late are the caller's slices. A silent response gives `−inf`; a
+  silent reference is invalid. Both real or both complex, one-dimensional, finite, not empty.
+  **(implemented)**
 - **Speech transmission index** ([ADR 0177](adr/0177-speech-transmission-index.md);
   `speech_transmission_index(mtf)`, C# `Measurements.SpeechTransmissionIndex`): `mtf` is 7 rows
   (octave bands 125 Hz to 8 kHz) by `M ≥ 1` columns. `SNR = 10 log10(m/(1 − m))` clipped to

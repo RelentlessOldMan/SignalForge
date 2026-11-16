@@ -134,6 +134,7 @@ from .measurements import (
     schroeder_decay,
     sfdr,
     sound_exposure,
+    sound_strength,
     speech_transmission_index,
     temporal_centroid,
     time_weighting,
@@ -311,7 +312,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.75"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.76"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -575,6 +576,7 @@ __all__ = [
     "sos_group_delay",
     "sos_response",
     "sound_exposure",
+    "sound_strength",
     "spectral_contrast",
     "spectral_crest",
     "spectral_decrease",

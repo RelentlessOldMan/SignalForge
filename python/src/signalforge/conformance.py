@@ -82,6 +82,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "lateral_fraction": measurements.lateral_fraction,
     "modulation_transfer": measurements.modulation_transfer,
     "speech_transmission_index": measurements.speech_transmission_index,
+    "sound_strength": measurements.sound_strength,
     "zero_crossing_rate": measurements.zero_crossing_rate,
     "power_ccdf": measurements.power_ccdf,
     "kay_frequency": measurements.kay_frequency,
