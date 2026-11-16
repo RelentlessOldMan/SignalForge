@@ -157,6 +157,7 @@ from .spectral import (
     LineRemoval,
     NoisePowerRatio,
     OccupiedBandwidth,
+    SpectralContrast,
     SpectralCrest,
     SpectralDensity,
     SpectralEntropy,
@@ -189,6 +190,7 @@ from .spectral import (
     multitaper_psd,
     noise_power_ratio,
     occupied_bandwidth,
+    spectral_contrast,
     spectral_crest,
     spectral_decrease,
     spectral_entropy,
@@ -242,7 +244,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.30"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.31"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -273,6 +275,7 @@ __all__ = [
     "Resampler",
     "Sfdr",
     "Signal",
+    "SpectralContrast",
     "SpectralCrest",
     "SpectralDensity",
     "SpectralEntropy",
@@ -444,6 +447,7 @@ __all__ = [
     "sfdr",
     "sos_group_delay",
     "sos_response",
+    "spectral_contrast",
     "spectral_crest",
     "spectral_decrease",
     "spectral_entropy",

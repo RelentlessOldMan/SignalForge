@@ -213,6 +213,13 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
 
+/// <summary>The loudest and quietest parts of a band (conventions: Spectra, Spectral contrast; ADR
+/// 0133).</summary>
+/// <param name="Peak">Mean density over the top fraction of the band's width.</param>
+/// <param name="Valley">Mean density over the bottom fraction of the band's width.</param>
+/// <param name="ContrastDb">10 log10(Peak / Valley), +∞ when Valley is 0.</param>
+public sealed record SpectralContrast(double Peak, double Valley, double ContrastDb);
+
 /// <summary>Differential entropy of a band's normalized PSD (conventions: Spectra, Spectral entropy;
 /// ADR 0128).</summary>
 /// <param name="Entropy">−∫ p ln p df of the unit-power step density, in nats.</param>
@@ -1974,6 +1981,62 @@ public static class Spectral
         if (!(rest > 0))
             throw new ArgumentException("the band has no power after its first bin", nameof(psd));
         return sum / rest;
+    }
+
+    /// <summary>
+    /// The mean PSD over the loudest and the quietest <paramref name="fraction"/> of the band's
+    /// width, and their ratio in dB, the PSD taken as constant over each bin, over
+    /// <paramref name="band"/> (the whole spectrum when null) (conventions: Spectra, Spectral
+    /// contrast; ADR 0133).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <param name="fraction">The share of the band's width for the peak and for the valley, in (0, 1/2].</param>
+    /// <returns>The peak, the valley and the contrast in dB.</returns>
+    /// <exception cref="ArgumentException">The fraction is out of range, an edge is out of order or not finite, the band leaves the spectrum, or it has no power.</exception>
+    public static SpectralContrast SpectralContrast(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High)? band = null, (double Low, double High)? span = null, double fraction = 0.2)
+    {
+        if (!(double.IsFinite(fraction) && fraction > 0 && fraction <= 0.5))
+            throw new ArgumentOutOfRangeException(nameof(fraction), "fraction must be in (0, 1/2]");
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        var pieces = new List<(double W, double D)>();
+        double total = 0, sum = 0;
+        for (int k = 0; k < power.Length; k++)
+        {
+            double a = Math.Max(left[k], lo), b = Math.Min(right[k], hi);
+            if (!(b > a))
+                continue;
+            double d = power[k] / (right[k] - left[k]);
+            pieces.Add((b - a, d));
+            total += d * (b - a);
+            sum += b - a;
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        double width = fraction * sum;
+        var up = pieces.Select((p, i) => (p, i)).OrderBy(t => t.p.D).ThenBy(t => t.i).Select(t => t.p).ToList();
+        var down = Enumerable.Range(0, up.Count).Select(i => up[up.Count - 1 - i]);
+        double peak = Fill(down, width), valley = Fill(up, width);
+        double db = valley == 0 ? double.PositiveInfinity : 10 * Math.Log10(peak / valley);
+        return new SpectralContrast(peak, valley, db);
+    }
+
+    private static double Fill(IEnumerable<(double W, double D)> pieces, double width)
+    {
+        double taken = 0, acc = 0;
+        foreach (var (w, d) in pieces)
+        {
+            double t = Math.Min(w, width - taken);
+            if (!(t > 0))
+                break;
+            acc += t * d;
+            taken += t;
+        }
+        return acc / width;
     }
 
     /// <summary>

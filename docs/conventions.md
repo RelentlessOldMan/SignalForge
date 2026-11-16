@@ -448,6 +448,13 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   with density `d_k` and width `w_k`, `irregularity = Σ_k (d_k − d_{k+1})² (w_k + w_{k+1})/2 /
   Σ_k d_k² w_k`; on uncut bins this is Jensen's `Σ (P_k − P_{k+1})² / Σ P_k²`. Band rules as for
   spectral flatness; at least two pieces and positive power. **(implemented)**
+- **Spectral contrast** (`spectral_contrast(frequencies, psd, band=None, span=None,
+  fraction=0.2)`, [ADR 0133](adr/0133-spectral-contrast.md)): on the spectral moments' pieces
+  with density `d_k` and width `w_k`, band width `W = Σ w_k`; sorted by density, `peak` is the
+  mean density over the top `fraction · W` of width and `valley` over the bottom, a straddling
+  piece counting only for the width needed; `contrast_db = 10 log10(peak / valley)`, +∞ for a
+  zero valley. Result `SpectralContrast(peak, valley, contrast_db)`. `0 < fraction ≤ 1/2`; band
+  rules as for spectral flatness; power `> 0`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

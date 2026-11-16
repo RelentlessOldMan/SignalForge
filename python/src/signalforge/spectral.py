@@ -1217,6 +1217,17 @@ class SpectralSlope:
 
 
 @dataclass(frozen=True)
+class SpectralContrast:
+    """The loudest and quietest parts of a band (conventions: Spectra, Spectral contrast; ADR
+    0133): the mean densities ``peak`` and ``valley`` over the top and bottom fraction of the
+    band's width, and ``contrast_db = 10 log10(peak / valley)``."""
+
+    peak: float
+    valley: float
+    contrast_db: float
+
+
+@dataclass(frozen=True)
 class SpectralEntropy:
     """Differential entropy of a band's normalized PSD (conventions: Spectra, Spectral entropy;
     ADR 0128): ``entropy`` in nats, ``entropy_bandwidth = exp(entropy)`` in Hz, and that over
@@ -1355,6 +1366,47 @@ def spectral_decrease(
     if not rest > 0:
         raise ValueError("the band has no power after its first bin")
     return float(np.sum((d[1:] - d[0]) * w[1:] * step / (m[1:] - m[0]))) / rest
+
+
+def _fill(w: NDArray[np.float64], d: NDArray[np.float64], width: float) -> float:
+    """The mean of ``d`` over the first ``width`` of the widths ``w``, in order."""
+    taken = acc = 0.0
+    for wi, di in zip(w, d, strict=True):
+        t = min(float(wi), width - taken)
+        if not t > 0:
+            break
+        acc += t * float(di)
+        taken += t
+    return acc / width
+
+
+def spectral_contrast(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+    fraction: float = 0.2,
+) -> SpectralContrast:
+    """The mean PSD over the loudest and the quietest ``fraction`` of the band's width, and their
+    ratio in dB, the PSD taken as constant over each bin, over ``band = (low, high)`` in Hz (the
+    whole spectrum by default)."""
+    q = real(fraction, "fraction")
+    if not 0 < q <= 0.5:
+        raise ValueError("fraction must be in (0, 1/2]")
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    a, b = np.maximum(left, lo), np.minimum(right, hi)
+    keep = b > a
+    w, d = (b - a)[keep], (power / (right - left))[keep]
+    if not float(np.sum(d * w)) > 0:
+        raise ValueError("the band has no power")
+    width = q * float(np.sum(w))
+    up = np.argsort(d, kind="stable")
+    down = up[::-1]
+    peak, valley = _fill(w[down], d[down], width), _fill(w[up], d[up], width)
+    db = math.inf if valley == 0 else 10 * math.log10(peak / valley)
+    return SpectralContrast(peak, valley, db)
 
 
 def spectral_entropy(

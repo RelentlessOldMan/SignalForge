@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral contrast**: the dB gap between the loudest and quietest parts of a band (the
-   mean density of the top and bottom fraction α of the band's width, after sorting the
-   pieces by density). Not built yet. Needs an ADR: a function `spectral_contrast(frequencies,
-   psd, *, band=None, span=None, fraction=0.2)` returning peak, valley and contrast in dB,
-   how a piece straddling the fraction is split, and zero valleys. Expected values: short PSDs
-   worked by hand with Fractions (the peak and valley means are rational, only the dB is not),
-   a flat PSD giving 0 dB.
+1. **Band energy ratio**: the power above a split frequency over the power below it, in dB (the
+   audio feature, and a quick tilt measure in RF). Not built yet. Needs an ADR: a function
+   `band_energy_ratio(frequencies, psd, split, *, band=None, span=None)` returning the low and
+   high powers, their ratio and its dB, how a bin straddling the split is shared, and zero low
+   power. Expected values: short PSDs worked by hand with Fractions (the powers are rational, only
+   the dB is not), a flat PSD split in the middle giving 0 dB.
 
 ## Built
 
@@ -1312,6 +1311,15 @@ Updated with every chunk of work. Dates are absolute.
   axis stretch, reversal and Jensen's form.
   Python 4606 passed, 2 skipped; .NET 3945 passed; conformance 2372/2372 in both. Version
   2026.11.16.30.
+- 2026-11-16: spectral contrast (ADR 0133): `spectral_contrast(frequencies, psd, *,
+  band=None, span=None, fraction=0.2)` (C# `Spectral.SpectralContrast`) sorts the band's pieces
+  by density. `peak` is the mean over the top `fraction` of the band's width and `valley` the
+  mean over the bottom; a straddling piece counts only for the width needed. It gives
+  `SpectralContrast(peak, valley, contrast_db)`, with +∞ for a zero valley. The vectors assert
+  the peak and valley exactly in Fractions. The tests cover scaling, the half split's mean, a
+  zero valley, and a tone over a floor at 40 dB.
+  Python 4622 passed, 2 skipped; .NET 3961 passed; conformance 2384/2384 in both. Version
+  2026.11.16.31.
 
 ## Not built
 
