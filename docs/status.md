@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Cepstral liftering**: `lifter(coefficients, lifter=22)`, the HTK sinusoidal lifter
-   `c'_n = (1 + (L/2)·sin(π n / L))·c_n`, `n = 0 …`, which ADR 0157 left out of MFCC. Not
-   built yet. Needs an ADR: `L ≥ 1`, whether `L = 0` means none, 1-D (one frame) or 2-D
-   (frames), and the inverse. Expected values: `sin(π n/L)` exact at `n = L/2, L/6, L/4`, for
-   example with `L = 12`.
+1. **ERB scale**: `hz_to_erb_rate(hz)`, `erb_rate_to_hz(erb)` and `erb_bandwidth(hz)`, after
+   Glasberg & Moore (1990): `E = 21.4·log10(1 + 0.00437 f)` and `ERB(f) = 24.7·(4.37 f/1000 + 1)`,
+   in `units`. Not built yet. Needs an ADR: the constants (the rounded `21.4` or the exact
+   `1000/(24.7·4.37·ln 10)`), and the domain (`f ≥ 0`). Expected values: these come from the
+   closed forms. `f = 1000/4.37·(10^k − 1)` gives `E = 21.4·k` exactly in decimal.
 
 ## Built
 
@@ -1529,6 +1529,12 @@ Updated with every chunk of work. Dates are absolute.
   because the Python vector decoder can't build a ragged array.
   Python 5052 passed, 2 skipped; .NET 4371 passed; conformance 2712/2712 in both. Version
   2026.11.16.56.
+- 2026-11-16: cepstral liftering (ADR 0159): `cepstral_lifter(coefficients, length=22)` (C#
+  `Spectral.CepstralLifter`), the HTK sinusoidal lifter `(1 + (L/2)·sin(π n/L))·c_n` on one
+  frame. `L ≥ 1`, with no inverse, since the weight can be 0 past `n = L`. The vectors use exact
+  sines of 15° steps for `L = 12`, plus `L = 1`, `2` and the default 22.
+  Python 5063 passed, 2 skipped; .NET 4381 passed; conformance 2721/2721 in both. Version
+  2026.11.16.57.
 
 ## Not built
 

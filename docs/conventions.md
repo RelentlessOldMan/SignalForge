@@ -594,6 +594,10 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   [ADR 0158](adr/0158-delta-coefficients.md)): per column `d_t = Σ_{n=1}^{W} n (c_{t+n} −
   c_{t−n}) / (2 Σ n²)`, indices outside `0 … T−1` clamped to the nearest frame (HTK); output `T`
   rows. Frames 2-D, at least one row and one column, finite; `width ≥ 1`. **(implemented)**
+- **Cepstral liftering** (`cepstral_lifter(coefficients, length=22)`, C#
+  `Spectral.CepstralLifter`, [ADR 0159](adr/0159-cepstral-lifter.md)): `c'_n = (1 + (L/2)
+  sin(π n / L)) c_n`, `n = 0 …`; one frame, 1-D, real, finite, at least one value; `L ≥ 1`; no
+  inverse. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

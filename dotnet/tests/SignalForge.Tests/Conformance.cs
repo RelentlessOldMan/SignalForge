@@ -361,6 +361,7 @@ public static class Conformance
             "mfcc" => Bind((Reals(a.Get("power_spectrum")), Rows(a.Get("filterbank")), a.I("n_coefficients"), a.OptD("floor") ?? 1e-10),
                 t => Spectral.Mfcc(t.Item1, t.Item2, t.Item3, t.Item4)),
             "delta" => Bind((Rows(a.Get("frames")), a.OptInt("width") ?? 2), t => Spectral.Delta(t.Item1, t.Item2)),
+            "cepstral_lifter" => Bind((Reals(a.Get("coefficients")), a.OptInt("length") ?? 22), t => Spectral.CepstralLifter(t.Item1, t.Item2)),
             "real_cepstrum" => Bind((Reals(a.Get("samples")), a.Has("nfft") ? a.I("nfft") : (int?)null),
                 t => Spectral.RealCepstrum(t.Item1, t.Item2)),
             "harmonic_centroid" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("heights")), Ints(a.Get("orders"))),

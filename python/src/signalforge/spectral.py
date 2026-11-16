@@ -1919,6 +1919,17 @@ def delta(frames: ArrayLike, width: int = 2) -> NDArray[np.float64]:
     return np.asarray(out / (2 * sum(n * n for n in range(1, w + 1))), dtype=np.float64)
 
 
+def cepstral_lifter(coefficients: ArrayLike, length: int = 22) -> NDArray[np.float64]:
+    """HTK sinusoidal lifter ``(1 + (L/2) sin(pi n / L)) c_n`` on one frame of cepstral
+    coefficients (conventions: Spectra, Cepstral liftering; ADR 0159)."""
+    c = _dct_input(coefficients, "coefficients")
+    lift = count(length, "length")
+    if lift < 1:
+        raise ValueError("length must be at least 1")
+    n = np.arange(c.shape[0])
+    return np.asarray((1.0 + lift / 2 * np.sin(np.pi * n / lift)) * c, dtype=np.float64)
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,

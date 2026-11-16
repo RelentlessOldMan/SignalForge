@@ -2615,6 +2615,25 @@ public static class Spectral
         return result;
     }
 
+    /// <summary>
+    /// HTK sinusoidal lifter <c>(1 + (L/2)·sin(π n / L))·c_n</c> on one frame of cepstral
+    /// coefficients (conventions: Spectra, Cepstral liftering; ADR 0159).
+    /// </summary>
+    /// <param name="coefficients">The coefficients <c>c_0, c_1, …</c>, at least one, finite.</param>
+    /// <param name="length">The lifter length <c>L</c>, at least 1.</param>
+    /// <returns>The liftered coefficients.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] CepstralLifter(ReadOnlySpan<double> coefficients, int length = 22)
+    {
+        CheckDctInput(coefficients);
+        if (length < 1)
+            throw new ArgumentOutOfRangeException(nameof(length), "length must be at least 1");
+        var result = new double[coefficients.Length];
+        for (int n = 0; n < result.Length; n++)
+            result[n] = (1.0 + length / 2.0 * Math.Sin(Math.PI * n / length)) * coefficients[n];
+        return result;
+    }
+
     private static void CheckDctInput(ReadOnlySpan<double> samples)
     {
         if (samples.IsEmpty)
