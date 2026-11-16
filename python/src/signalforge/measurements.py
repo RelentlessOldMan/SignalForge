@@ -57,6 +57,55 @@ def power_stats(samples: ArrayLike) -> PowerStats:
     )
 
 
+@dataclass(frozen=True, eq=False)
+class PowerCcdf:
+    """Fraction of samples whose instantaneous power exceeds the mean by each level (conventions:
+    Power CCDF; ADR 0119)."""
+
+    mean_power: float
+    levels_db: NDArray[np.float64]
+    probabilities: NDArray[np.float64]
+
+
+def _instantaneous_power(samples: ArrayLike) -> tuple[NDArray[np.float64], float]:
+    x = np.asarray(samples)
+    if x.ndim != 1 or x.shape[0] == 0:
+        raise ValueError("samples must be a non-empty one-dimensional array")
+    x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    p = x.real * x.real + x.imag * x.imag if np.iscomplexobj(x) else x * x
+    mean = float(np.mean(p))
+    if not mean > 0:
+        raise ValueError("the mean power must be positive")
+    return np.asarray(p, dtype=np.float64), mean
+
+
+def power_ccdf(samples: ArrayLike, levels_db: ArrayLike) -> PowerCcdf:
+    """For each level ``L`` in dB, the fraction of samples with ``|x|^2 > mean * 10**(L/10)``
+    (strict; conventions: Power CCDF; ADR 0119)."""
+    p, mean = _instantaneous_power(samples)
+    levels = np.asarray(levels_db, dtype=np.float64)
+    if levels.ndim != 1 or levels.size == 0 or not np.all(np.isfinite(levels)):
+        raise ValueError("levels_db must be a non-empty list of finite values")
+    probs = np.array(
+        [np.count_nonzero(p > mean * 10.0 ** (float(v) / 10)) / p.size for v in levels]
+    )
+    return PowerCcdf(mean, levels.copy(), probs)
+
+
+def power_ccdf_level(samples: ArrayLike, probability: float) -> float:
+    """The smallest level in dB above the mean power whose CCDF is at most ``probability``: the
+    ``(floor(probability*N) + 1)``-th largest power over the mean (conventions: Power CCDF)."""
+    q = real(probability, "probability")
+    if not 0 < q < 1:
+        raise ValueError("probability must be in (0, 1)")
+    p, mean = _instantaneous_power(samples)
+    m = math.floor(q * p.size)
+    t = float(np.sort(p)[p.size - 1 - m])
+    return 10 * (math.log10(t) - math.log10(mean)) if t > 0 else -math.inf
+
+
 @dataclass(frozen=True)
 class ToneMetrics:
     """SNR, SINAD, THD and ENOB of one tone (conventions: Tone metrics).

@@ -228,6 +228,12 @@ public static class Conformance
             "power_stats" => a.Get("samples") is Complex[] cs
                 ? () => Measurements.PowerStats(cs)
                 : Bind(Reals(a.Get("samples")), x => Measurements.PowerStats(x)),
+            "power_ccdf" => a.Get("samples") is Complex[] cc
+                ? Bind(Reals(a.Get("levels_db")), l => Measurements.PowerCcdf(cc, l))
+                : Bind((Reals(a.Get("samples")), Reals(a.Get("levels_db"))), t => Measurements.PowerCcdf(t.Item1, t.Item2)),
+            "power_ccdf_level" => a.Get("samples") is Complex[] cl
+                ? Bind(a.D("probability"), q => Measurements.PowerCcdfLevel(cl, q))
+                : Bind((Reals(a.Get("samples")), a.D("probability")), t => Measurements.PowerCcdfLevel(t.Item1, t.Item2)),
             "tone_metrics" => ToneMetricsOp(a),
             "sfdr" => SfdrOp(a),
             "two_tone_imd" => TwoToneImdOp(a),

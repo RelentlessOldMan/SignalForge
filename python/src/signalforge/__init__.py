@@ -92,6 +92,7 @@ from .measurements import (
     NoiseFigure,
     PhaseNoise,
     PhaseNoiseSpurs,
+    PowerCcdf,
     PowerStats,
     Sfdr,
     ToneMetrics,
@@ -105,6 +106,8 @@ from .measurements import (
     noise_figure_y_factor,
     phase_noise_spurs,
     phase_noise_ssb,
+    power_ccdf,
+    power_ccdf_level,
     power_stats,
     sfdr,
     tone_metrics,
@@ -219,7 +222,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.16"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.17"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -242,6 +245,7 @@ __all__ = [
     "OccupiedBandwidth",
     "PhaseNoise",
     "PhaseNoiseSpurs",
+    "PowerCcdf",
     "PowerStats",
     "QpskLinkConfig",
     "QpskLinkReport",
@@ -355,6 +359,8 @@ __all__ = [
     "phase_noise_spurs",
     "phase_noise_ssb",
     "pi_loop_gains",
+    "power_ccdf",
+    "power_ccdf_level",
     "power_frequency_offset",
     "power_stats",
     "prbs",

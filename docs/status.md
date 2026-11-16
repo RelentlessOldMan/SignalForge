@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Power CCDF**: `power_stats` gives PAPR, the single peak; nothing gives the CCDF, the fraction
-   of samples whose instantaneous power `|x|²` exceeds the mean by each level, which the brief
-   asks for and conventions (Power) already promise. Not built yet. Needs an ADR: a function
-   `power_ccdf(samples, levels_db)`, strict or non-strict exceedance, levels in dB above the mean
-   power, an optional level for a given probability (the "PAPR at 0.01 %"), and how ties and
-   all-zero input behave. Expected values: short sample sets counted by hand, and statistics of
-   complex Gaussian noise against `exp(−10^{L/10})`.
+1. **Spectral flatness**: nothing measures how noise-like a spectrum is: the geometric mean of
+   the PSD over its arithmetic mean (Wiener entropy), 1 for white noise and near 0 for a tone.
+   Not built yet. Needs an ADR: a function `spectral_flatness(frequencies, psd, *, band=None)`,
+   the bins used (whole bins only, or the channel power rule), the result as a ratio and in dB,
+   and what a zero bin does (the geometric mean is 0, so −∞ dB). Expected values: short PSDs
+   worked by hand, and the flatness of a two-level PSD in closed form.
 
 ## Built
 
@@ -1200,6 +1199,14 @@ Updated with every chunk of work. Dates are absolute.
   the result against the cubic expanded by convolution, and the 2 dB-per-dB slope.
   Python 4353 passed, 2 skipped; .NET 3689 passed; conformance 2206/2206 in both. Version
   2026.11.16.16.
+- 2026-11-16: power CCDF (ADR 0119): `power_ccdf(samples, levels_db)` (C#
+  `Measurements.PowerCcdf`) is the fraction of samples whose `|x|²` is strictly above the mean
+  power by each level; `power_ccdf_level(samples, probability)` (C# `Measurements.PowerCcdfLevel`)
+  reads it the other way, the `(⌊pN⌋ + 1)`-th largest power over the mean in dB, the PAPR for
+  `p < 1/N`. Vectors are integer-power sets counted by hand, with ties; the tests check complex
+  Gaussian noise against `exp(−g)` and real Gaussian noise against `erfc(√(g/2))`.
+  Python 4378 passed, 2 skipped; .NET 3714 passed; conformance 2222/2222 in both. Version
+  2026.11.16.17.
 
 ## Not built
 

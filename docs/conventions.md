@@ -76,8 +76,15 @@ rule for code not written yet.
 - **RMS** is `sqrt(mean |x|²)`. **Peak power** is `max |x|²`; **peak amplitude** is `max |x|`.
   **(implemented)**
 - **PAPR** is `10·log10(peak power / mean power)` in dB. A constant-envelope signal (complex tone,
-  ±1 square) has 0 dB; a real sine has 3.0103 dB. **CCDF** will use the same instantaneous power
-  `|x|²`. **(implemented for PAPR)**
+  ±1 square) has 0 dB; a real sine has 3.0103 dB. **(implemented)**
+- **Power CCDF** ([ADR 0119](adr/0119-power-ccdf.md); `power_ccdf(samples, levels_db)`, C#
+  `Measurements.PowerCcdf`): for each level `L` dB, `#{n : |x[n]|² > P̄·10^{L/10}} / N`, strict, with
+  `P̄` the mean power; result `PowerCcdf(mean_power, levels_db, probabilities)` in the order given.
+  `power_ccdf_level(samples, probability)` (C# `Measurements.PowerCcdfLevel`) is the smallest
+  level whose CCDF is at most `probability`: `10·log10(p_(m+1)/P̄)`, `p_(m+1)` the
+  `(m + 1)`-th largest power, `m = ⌊probability·N⌋` (`−∞` for a zero power). Samples 1-D,
+  non-empty, finite, `P̄ > 0`; levels a non-empty list of finite values; `0 < probability < 1`.
+  **(implemented)**
 - **DC offset** is the complex mean of the samples (real mean for real input). **(implemented)**
 - **dB from a power ratio:** `10·log10(r)`. **dB from an amplitude ratio:** `20·log10(r)`. Zero gives
   −∞; a negative ratio is an error (`ValueError` / `ArgumentOutOfRangeException`), never NaN.

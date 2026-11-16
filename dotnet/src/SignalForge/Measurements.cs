@@ -25,6 +25,13 @@ public sealed record PowerStats(
     double PaprDb,
     Complex Dc);
 
+/// <summary>Fraction of samples whose instantaneous power exceeds the mean by each level
+/// (conventions: Power CCDF; ADR 0119).</summary>
+/// <param name="MeanPower">Mean of |x|².</param>
+/// <param name="LevelsDb">The levels in dB above the mean power, in the order given.</param>
+/// <param name="Probabilities">For each level, the fraction of samples strictly above it.</param>
+public sealed record PowerCcdf(double MeanPower, double[] LevelsDb, double[] Probabilities);
+
 /// <summary>
 /// SNR, SINAD, THD and ENOB of one tone (conventions: Tone metrics). Powers are in sample units²,
 /// summed over bin groups of one windowed spectrum.
@@ -193,6 +200,111 @@ public sealed record GainCompression(double SmallSignalGainDb, double[] GainDb, 
 /// <summary>Power measurements and tone metrics. Definitions in docs/conventions.md.</summary>
 public static class Measurements
 {
+    /// <summary>For each level L in dB, the fraction of complex samples with |x|² &gt; mean·10^(L/10),
+    /// strict (conventions: Power CCDF; ADR 0119).</summary>
+    /// <param name="samples">Samples, at least one, finite, with positive mean power.</param>
+    /// <param name="levelsDb">Levels in dB above the mean power, at least one, finite.</param>
+    /// <returns>The mean power, the levels and the probabilities.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static PowerCcdf PowerCcdf(ReadOnlySpan<Complex> samples, ReadOnlySpan<double> levelsDb) =>
+        Ccdf(InstantaneousPower(samples), levelsDb);
+
+    /// <summary>As for complex samples, with |x|² = x².</summary>
+    /// <param name="samples">Samples, at least one, finite, with positive mean power.</param>
+    /// <param name="levelsDb">Levels in dB above the mean power, at least one, finite.</param>
+    /// <returns>The mean power, the levels and the probabilities.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static PowerCcdf PowerCcdf(ReadOnlySpan<double> samples, ReadOnlySpan<double> levelsDb) =>
+        Ccdf(InstantaneousPower(samples), levelsDb);
+
+    /// <summary>The smallest level in dB above the mean power whose CCDF is at most
+    /// <paramref name="probability"/>: the (⌊probability·N⌋ + 1)-th largest power over the mean
+    /// (conventions: Power CCDF; ADR 0119).</summary>
+    /// <param name="samples">Samples, at least one, finite, with positive mean power.</param>
+    /// <param name="probability">In (0, 1).</param>
+    /// <returns>The level in dB; −∞ when that power is zero.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double PowerCcdfLevel(ReadOnlySpan<Complex> samples, double probability)
+    {
+        CheckProbability(probability);
+        return CcdfLevel(InstantaneousPower(samples), probability);
+    }
+
+    /// <summary>As for complex samples, with |x|² = x².</summary>
+    /// <param name="samples">Samples, at least one, finite, with positive mean power.</param>
+    /// <param name="probability">In (0, 1).</param>
+    /// <returns>The level in dB; −∞ when that power is zero.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double PowerCcdfLevel(ReadOnlySpan<double> samples, double probability)
+    {
+        CheckProbability(probability);
+        return CcdfLevel(InstantaneousPower(samples), probability);
+    }
+
+    private static void CheckProbability(double probability)
+    {
+        if (!(probability > 0 && probability < 1))
+            throw new ArgumentOutOfRangeException(nameof(probability), "probability must be in (0, 1)");
+    }
+
+    private static (double[] P, double Mean) InstantaneousPower(ReadOnlySpan<Complex> samples)
+    {
+        var p = new double[samples.Length];
+        for (int i = 0; i < samples.Length; i++)
+        {
+            Complex x = samples[i];
+            if (!(double.IsFinite(x.Real) && double.IsFinite(x.Imaginary)))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            p[i] = x.Real * x.Real + x.Imaginary * x.Imaginary;
+        }
+        return WithMean(p);
+    }
+
+    private static (double[] P, double Mean) InstantaneousPower(ReadOnlySpan<double> samples)
+    {
+        var p = new double[samples.Length];
+        for (int i = 0; i < samples.Length; i++)
+        {
+            if (!double.IsFinite(samples[i]))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            p[i] = samples[i] * samples[i];
+        }
+        return WithMean(p);
+    }
+
+    private static (double[] P, double Mean) WithMean(double[] p)
+    {
+        if (p.Length == 0)
+            throw new ArgumentException("needs at least one sample", nameof(p));
+        double mean = p.Sum() / p.Length;
+        if (!(mean > 0))
+            throw new ArgumentException("the mean power must be positive", nameof(p));
+        return (p, mean);
+    }
+
+    private static PowerCcdf Ccdf((double[] P, double Mean) s, ReadOnlySpan<double> levelsDb)
+    {
+        if (levelsDb.IsEmpty)
+            throw new ArgumentException("at least one level required", nameof(levelsDb));
+        var probs = new double[levelsDb.Length];
+        for (int i = 0; i < levelsDb.Length; i++)
+        {
+            double t = s.Mean * Math.Pow(10, SignalForge.Check.Finite(levelsDb[i], nameof(levelsDb)) / 10);
+            probs[i] = (double)s.P.Count(v => v > t) / s.P.Length;
+        }
+        return new PowerCcdf(s.Mean, levelsDb.ToArray(), probs);
+    }
+
+    private static double CcdfLevel((double[] P, double Mean) s, double probability)
+    {
+        int n = s.P.Length;
+        int m = (int)Math.Floor(probability * n);
+        double[] sorted = [.. s.P];
+        Array.Sort(sorted);
+        double t = sorted[n - 1 - m];
+        return t > 0 ? 10 * (Math.Log10(t) - Math.Log10(s.Mean)) : double.NegativeInfinity;
+    }
+
     /// <summary>Mean power, RMS, peak, PAPR and DC of complex samples (at least one).</summary>
     public static PowerStats PowerStats(ReadOnlySpan<Complex> samples)
     {
