@@ -1289,6 +1289,12 @@ def reverberation_time(
     return -60.0 / slope
 
 
+def early_decay_time(impulse_response: ArrayLike, sample_rate: float) -> float:
+    """The early decay time: ``reverberation_time`` fitted from 0 to -10 dB (conventions: Early
+    decay time; ADR 0181)."""
+    return reverberation_time(impulse_response, sample_rate, start_db=0.0, stop_db=-10.0)
+
+
 def _early_late(
     impulse_response: ArrayLike, sample_rate: float, time: float
 ) -> tuple[float, float]:

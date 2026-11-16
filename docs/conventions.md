@@ -94,6 +94,10 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Early decay time** ([ADR 0181](adr/0181-early-decay-time.md); `early_decay_time(impulse_response,
+  sample_rate)`, C# `Measurements.EarlyDecayTime`): exactly `reverberation_time` with
+  `start_db = 0`, `stop_db = −10`, so the fit starts at sample 0; same rules and errors.
+  **(implemented)**
 - **Bass and treble ratio** ([ADR 0180](adr/0180-bass-treble-ratio.md); `bass_ratio(times)`,
   `treble_ratio(times)`, C# `Measurements.BassRatio`, `Measurements.TrebleRatio`): `times` is
   exactly six octave-band reverberation times at 125, 250, 500, 1000, 2000, 4000 Hz, all finite

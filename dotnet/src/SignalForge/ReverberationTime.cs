@@ -65,6 +65,24 @@ public static partial class Measurements
         double startDb = -5, double stopDb = -25) =>
         FitDecay(SchroederDecay(impulseResponse), sampleRate, startDb, stopDb);
 
+    /// <summary>The early decay time: <see cref="ReverberationTime(ReadOnlySpan{Complex}, double, double, double)"/>
+    /// fitted from 0 to −10 dB (conventions: Early decay time; ADR 0181).</summary>
+    /// <param name="impulseResponse">Complex response, finite, not empty, not all zero.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <returns>The early decay time in seconds.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double EarlyDecayTime(ReadOnlySpan<Complex> impulseResponse, double sampleRate) =>
+        ReverberationTime(impulseResponse, sampleRate, 0, -10);
+
+    /// <summary>The early decay time: <see cref="ReverberationTime(ReadOnlySpan{double}, double, double, double)"/>
+    /// fitted from 0 to −10 dB (conventions: Early decay time; ADR 0181).</summary>
+    /// <param name="impulseResponse">Real response, finite, not empty, not all zero.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <returns>The early decay time in seconds.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double EarlyDecayTime(ReadOnlySpan<double> impulseResponse, double sampleRate) =>
+        ReverberationTime(impulseResponse, sampleRate, 0, -10);
+
     private static double[] Decay(double[] p, string paramName)
     {
         if (p.Length == 0)

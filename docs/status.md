@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Early decay time**: `early_decay_time(impulse_response, sample_rate)` in `measurements`.
-   It is ISO 3382-1's EDT: the reverberation time fitted from 0 to −10 dB of the Schroeder decay,
-   which is `reverberation_time` with `start_db=0, stop_db=-10`. Not built yet. Needs an ADR:
-   that it is exactly that call, with the same rules. Expected values: `−3/(fs·log10 q)` for
-   `h = qⁿ`.
+1. **Decay curvature**: `decay_curvature(impulse_response, sample_rate)` in `measurements`.
+   It is ISO 3382-2 Annex B: `C = 100·(T30/T20 − 1)` percent, where T20 is the fit from −5 to
+   −25 dB and T30 the fit from −5 to −35 dB. Not built yet. Needs an ADR: that it is exactly
+   two `reverberation_time` calls, with the same errors (the decay must reach −35 dB). Expected
+   values: 0 for a single exponential; the exact tails for a sum of two decays.
 
 ## Built
 
@@ -1717,6 +1717,13 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are exact fractions.
   Python 5418 passed, 2 skipped; .NET 4735 passed; conformance 3031/3031 in both. Version
   2026.11.16.78.
+- 2026-11-16: early decay time (ADR 0181): `early_decay_time(impulse_response, sample_rate)` in
+  `measurements` (C# `Measurements.EarlyDecayTime`, real and complex). It is exactly
+  `reverberation_time` with `start_db=0, stop_db=-10`.
+
+  The vectors use the exact geometric Schroeder tails, including a two-slope decay.
+  Python 5429 passed, 2 skipped; .NET 4746 passed; conformance 3041/3041 in both. Version
+  2026.11.16.79.
 
 ## Not built
 

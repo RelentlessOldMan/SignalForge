@@ -86,6 +86,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "stage_support": measurements.stage_support,
     "bass_ratio": measurements.bass_ratio,
     "treble_ratio": measurements.treble_ratio,
+    "early_decay_time": measurements.early_decay_time,
     "zero_crossing_rate": measurements.zero_crossing_rate,
     "power_ccdf": measurements.power_ccdf,
     "kay_frequency": measurements.kay_frequency,

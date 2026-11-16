@@ -116,6 +116,7 @@ from .measurements import (
     cepstrum_pitch,
     clarity,
     definition,
+    early_decay_time,
     exceedance_levels,
     gain_compression,
     iacc,
@@ -315,7 +316,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.78"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.79"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -434,6 +435,7 @@ __all__ = [
     "dfe_equalizer",
     "dfe_least_squares",
     "dpss_tapers",
+    "early_decay_time",
     "elliptic_bandpass",
     "elliptic_bandstop",
     "elliptic_highpass",
