@@ -1782,7 +1782,8 @@ Updated with every chunk of work. Dates are absolute.
 
   The vectors are closed-form analytic signals at bin frequencies: single tones, DC plus a tone,
   and two tones.
-  Python PYCOUNT; .NET CSCOUNT; conformance CONFX in both. Version VERSIONX.
+  Python 5506 passed, 2 skipped; .NET 4813 passed; conformance 3102/3102 in both. Version
+  2026.11.16.85.
 
 ## Not built
 
