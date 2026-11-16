@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral rolloff**: the frequency below which a given fraction (often 85 % or 95 %) of a
-   band's power lies, the audio feature that goes with the centroid and flatness. Not built
-   yet. Needs an ADR: a function `spectral_rolloff(frequencies, psd, fraction, *, band=None)`
-   on the same step-density model as `spectral_moments` (bins as flat steps, cut by the band),
-   linear inside the bin where the running power crosses, the fraction in `(0, 1]`, and zero
-   power. Expected values: short PSDs worked by hand with Fractions, and a flat PSD whose
-   rolloff is `low + fraction·(high − low)`.
+1. **Spectral crest factor**: the PSD's peak over its mean across a band, the audio feature
+   that goes with the flatness (a tone gives a high crest, noise a low one). Not built yet.
+   Needs an ADR: a function `spectral_crest(frequencies, psd, *, band=None, span=None)` on the
+   flatness's overlap weights (the mean weighted by overlap, the peak over bins that overlap
+   the band), the ratio and its dB, and zero power. Expected values: short PSDs worked by hand,
+   and a flat PSD with crest 1 (0 dB).
 
 ## Built
 
@@ -1237,6 +1236,15 @@ Updated with every chunk of work. Dates are absolute.
   SNR is within 15 % of the CRLB.
   Python 4459 passed, 2 skipped; .NET 3797 passed; conformance 2272/2272 in both. Version
   2026.11.16.21.
+- 2026-11-16: spectral rolloff (ADR 0124): `spectral_rolloff(frequencies, psd, fraction, *,
+  band=None, span=None)` (C# `Spectral.SpectralRolloff`) walks the step density of the spectral
+  moments to where the running power reaches `fraction` of the band's, interpolating linearly in
+  that bin. Empty bins before the answer are passed over. Fraction 1 gives the top of the last
+  bin with power. The vectors are worked by hand with Fractions, and the generator asserts that
+  its walk agrees with each hand value. The tests cover a flat PSD, scaling, rising with the
+  fraction, symmetry and a cut band.
+  Python 4485 passed, 2 skipped; .NET 3823 passed; conformance 2287/2287 in both. Version
+  2026.11.16.22.
 
 ## Not built
 

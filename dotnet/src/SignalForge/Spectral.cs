@@ -1773,6 +1773,55 @@ public static class Spectral
     }
 
     /// <summary>
+    /// The frequency below which <paramref name="fraction"/> of the band's power lies, the PSD
+    /// taken as constant over each bin (conventions: Spectra, Spectral rolloff; ADR 0124).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="fraction">The share of the band's power, finite, in (0, 1].</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The rolloff frequency in Hz.</returns>
+    /// <exception cref="ArgumentException">The fraction is out of range, an edge is out of order or not finite, the band leaves the spectrum, or the band has no power.</exception>
+    public static double SpectralRolloff(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double fraction,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        if (!(double.IsFinite(fraction) && fraction > 0 && fraction <= 1))
+            throw new ArgumentOutOfRangeException(nameof(fraction), "fraction must be in (0, 1]");
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        int n = power.Length;
+        double[] a = new double[n], b = new double[n], d = new double[n], piece = new double[n];
+        double total = 0;
+        for (int k = 0; k < n; k++)
+        {
+            a[k] = Math.Max(left[k], lo);
+            b[k] = Math.Min(right[k], hi);
+            if (!(b[k] > a[k]))
+                continue;
+            d[k] = power[k] / (right[k] - left[k]);
+            piece[k] = d[k] * (b[k] - a[k]);
+            total += piece[k];
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        double target = fraction * total, running = 0;
+        int last = -1;
+        for (int k = 0; k < n; k++)
+        {
+            if (!(b[k] > a[k]))
+                continue;
+            if (piece[k] > 0)
+                last = k;
+            double after = running + piece[k];
+            if (after >= target)
+                return Math.Min(Math.Max(a[k] + (target - running) / d[k], a[k]), b[k]);
+            running = after;
+        }
+        return b[last]; // rounding left the running sum short of 1·power
+    }
+
+    /// <summary>
     /// The PSD's geometric mean over its arithmetic mean across <paramref name="band"/> (the whole
     /// spectrum when null), each bin weighted by its overlap with the band (conventions: Spectra,
     /// Spectral flatness; ADR 0120).

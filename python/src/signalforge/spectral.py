@@ -1260,6 +1260,40 @@ def spectral_flatness(
     return SpectralFlatness(geo, arith, geo / arith, 10 * (math.log10(geo) - math.log10(arith)))
 
 
+def spectral_rolloff(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    fraction: float,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+) -> float:
+    """The frequency in Hz below which ``fraction`` of the band's power lies, the PSD taken as
+    constant over each bin (conventions: Spectra, Spectral rolloff; ADR 0124)."""
+    q = real(fraction, "fraction")
+    if not 0 < q <= 1:
+        raise ValueError("fraction must be in (0, 1]")
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    a, b = np.maximum(left, lo), np.minimum(right, hi)
+    keep = b > a
+    a, b, d = a[keep], b[keep], (power / (right - left))[keep]
+    pieces = d * (b - a)
+    total = float(np.sum(pieces))
+    if not total > 0:
+        raise ValueError("the band has no power")
+    target = q * total
+    running = 0.0
+    for k in range(a.size):
+        after = running + float(pieces[k])
+        if after >= target:
+            at = float(a[k]) + (target - running) / float(d[k])
+            return min(max(at, float(a[k])), float(b[k]))
+        running = after
+    k = int(np.flatnonzero(pieces > 0)[-1])  # rounding left the running sum short of 1·power
+    return float(b[k])
+
+
 @dataclass(frozen=True)
 class DbBandwidth:
     """Where the PSD falls ``drop_db`` below its peak (conventions: Spectra, x dB bandwidth; ADR

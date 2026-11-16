@@ -396,6 +396,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   about the centroid `c`. Result `SpectralMoments(power, centroid, rms_bandwidth)`. A flat band of
   width `B` gives `B/√12`. Band rules as for spectral flatness; `power > 0` required.
   **(implemented)**
+- **Spectral rolloff** (`spectral_rolloff(frequencies, psd, fraction, band=None, span=None)`,
+  [ADR 0124](adr/0124-spectral-rolloff.md)): on the step density and pieces `[a_k, b_k]` of the
+  spectral moments, the target is `fraction·power`; at the first piece whose running sum `S_k`
+  (including it) reaches the target, the rolloff is `a_k + (target − S_{k−1})/d_k`, limited to
+  `[a_k, b_k]`. `fraction` finite in `(0, 1]`; band rules as for spectral flatness; `power > 0`.
+  **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on
