@@ -2380,3 +2380,16 @@ def analytic_signal(samples: ArrayLike) -> NDArray[np.complex128]:
     w = np.where(twice < n, 2.0, np.where(twice == n, 1.0, 0.0))
     w[0] = 1.0
     return np.asarray(np.fft.ifft(np.fft.fft(x) * w), dtype=np.complex128)
+
+
+def instantaneous_frequency(samples: ArrayLike, sample_rate: float) -> NDArray[np.float64]:
+    """The instantaneous frequency ``fs/(2 pi) arg(z[n+1] conj z[n])`` in Hz, ``N - 1`` values,
+    with ``z`` the analytic signal (conventions: Instantaneous frequency; ADR 0187)."""
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    z = analytic_signal(samples)
+    if z.shape[0] < 2:
+        raise ValueError("samples must hold at least two values")
+    w = z[1:] * np.conj(z[:-1])
+    return np.asarray(np.arctan2(w.imag, w.real) * (fs / (2 * math.pi)), dtype=np.float64)

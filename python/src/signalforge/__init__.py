@@ -235,6 +235,7 @@ from .spectral import (
     idct,
     ifft,
     inharmonicity,
+    instantaneous_frequency,
     interpolate_peak,
     lomb_scargle,
     lomb_scargle_bootstrap,
@@ -321,7 +322,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.84"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.85"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -488,6 +489,7 @@ __all__ = [
     "idct",
     "ifft",
     "inharmonicity",
+    "instantaneous_frequency",
     "integrated_phase_noise",
     "interpolate",
     "interpolate_peak",

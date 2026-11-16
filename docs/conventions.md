@@ -740,6 +740,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   [ADR 0185](adr/0185-analytic-signal.md)): `z = ifft(fft(x)·W)` with `W[0] = 1`, `W[k] = 2`
   for `0 < 2k < N`, `W[N/2] = 1` for even `N`, `W[k] = 0` for `2k > N` (Marple); `Re z = x` up
   to rounding. Input real, 1-D, finite, not empty; complex input is invalid. **(implemented)**
+- **Instantaneous frequency** (`instantaneous_frequency(samples, sample_rate)`, C#
+  `Spectral.InstantaneousFrequency`, [ADR 0187](adr/0187-instantaneous-frequency.md)): `f[n] =
+  fs/(2π)·atan2(Im w, Re w)`, `w = z[n+1]·conj z[n]`, `z` the analytic signal; `N − 1` values in
+  Hz in `(−fs/2, fs/2]`, no unwrapping; undefined where `z` is zero. Analytic-signal input rules
+  with `N ≥ 2`; `sample_rate` finite and positive. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

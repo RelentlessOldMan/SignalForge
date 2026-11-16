@@ -4,12 +4,17 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Instantaneous frequency**: `instantaneous_frequency(samples, sample_rate)` in `spectral`
-   (C# `Spectral.InstantaneousFrequency`). It is
-   `f[n] = fs/(2π)·arg(z[n+1]·conj z[n])`, giving `N − 1` values in `(−fs/2, fs/2]`, where `z`
-   is the analytic signal of ADR 0185. Not built yet. Needs an ADR: the phase-difference form
-   (no unwrapping); the result length; and what happens where `z` is zero (arg 0 → 0 Hz).
-   Expected values: constant `k·fs/N` for cosines at bin `k`, and hand impulse sums.
+1. **Teager-Kaiser energy**: `teager_energy(samples)` in `measurements` (C#
+   `Measurements.TeagerEnergy`), defined as `ψ[n] = x[n]² − x[n−1]·x[n+1]`. Not built yet.
+   - Real input gives `N − 2` values.
+   - Complex input uses `|x[n]|² − Re(x[n−1]·conj x[n+1])`.
+
+   Needs an ADR covering:
+   - the result length (no padding);
+   - the complex form;
+   - at least three samples.
+
+   Expected values: `A²·sin²Ω` for `A·cos(Ωn + φ)` exactly, and hand sums.
 
 ## Built
 
@@ -1770,6 +1775,14 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are hand impulse sums, an AM tone at bin frequencies and a constant.
   Python 5494 passed, 2 skipped; .NET 4802 passed; conformance 3092/3092 in both. Version
   2026.11.16.84.
+- 2026-11-16: instantaneous frequency (ADR 0187): `instantaneous_frequency(samples,
+  sample_rate)` in `spectral` (C# `Spectral.InstantaneousFrequency`).
+  - It computes `fs/(2π)·arg(z[n+1]·conj z[n])` from the analytic signal.
+  - It returns `N − 1` values in Hz, with no unwrapping.
+
+  The vectors are closed-form analytic signals at bin frequencies: single tones, DC plus a tone,
+  and two tones.
+  Python PYCOUNT; .NET CSCOUNT; conformance CONFX in both. Version VERSIONX.
 
 ## Not built
 

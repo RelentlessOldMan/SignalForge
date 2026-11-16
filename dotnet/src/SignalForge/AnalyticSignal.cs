@@ -26,4 +26,26 @@ public static partial class Spectral
             x[k] *= 2 * k < n ? 2 : 2 * k == n ? 1 : 0;
         return Ifft(x);
     }
+
+    /// <summary>The instantaneous frequency <c>fs/(2π)·arg(z[n+1]·conj z[n])</c> in Hz, with
+    /// <c>z</c> the analytic signal (conventions: Instantaneous frequency; ADR 0187).</summary>
+    /// <param name="samples">Real samples, finite, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <returns><c>N − 1</c> values in Hz, in <c>(−fs/2, fs/2]</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] InstantaneousFrequency(ReadOnlySpan<double> samples, double sampleRate)
+    {
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        Complex[] z = AnalyticSignal(samples);
+        if (z.Length < 2)
+            throw new ArgumentException("samples must hold at least two values", nameof(samples));
+        var f = new double[z.Length - 1];
+        double scale = sampleRate / (2 * Math.PI);
+        for (int n = 0; n < f.Length; n++)
+        {
+            Complex w = z[n + 1] * Complex.Conjugate(z[n]);
+            f[n] = Math.Atan2(w.Imaginary, w.Real) * scale;
+        }
+        return f;
+    }
 }
