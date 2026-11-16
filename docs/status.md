@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral irregularity**: how jagged a PSD is from bin to bin (Jensen's form, `Σ (P_k −
-   P_{k+1})² / Σ P_k²`). Not built yet. Needs an ADR: a function
-   `spectral_irregularity(frequencies, psd, *, band=None, span=None)`, recast on the step
-   density's pieces (the jumps between neighbouring pieces and the piece widths), what a cut
-   band does at its edges, and zero power. Expected values: short PSDs worked by hand with
-   Fractions, a flat PSD giving 0, and an alternating PSD giving the largest value.
+1. **Spectral contrast**: the dB gap between the loudest and quietest parts of a band (the
+   mean density of the top and bottom fraction α of the band's width, after sorting the
+   pieces by density). Not built yet. Needs an ADR: a function `spectral_contrast(frequencies,
+   psd, *, band=None, span=None, fraction=0.2)` returning peak, valley and contrast in dB,
+   how a piece straddling the fraction is split, and zero valleys. Expected values: short PSDs
+   worked by hand with Fractions (the peak and valley means are rational, only the dB is not),
+   a flat PSD giving 0 dB.
 
 ## Built
 
@@ -1303,6 +1304,14 @@ Updated with every chunk of work. Dates are absolute.
   the range on random frames.
   Python 4592 passed, 2 skipped; .NET 3931 passed; conformance 2362/2362 in both. Version
   2026.11.16.29.
+- 2026-11-16: spectral irregularity (ADR 0132): `spectral_irregularity(frequencies, psd, *,
+  band=None, span=None)` (C# `Spectral.SpectralIrregularity`) gives the squared jumps between
+  neighbouring pieces of the step density, each weighted by the two pieces' mean width, over
+  the squared norm. On uncut bins this is exactly Jensen's form, and a sliver at a band edge
+  counts for little. The vectors are exact Fractions with hand values. The tests cover scaling,
+  axis stretch, reversal and Jensen's form.
+  Python 4606 passed, 2 skipped; .NET 3945 passed; conformance 2372/2372 in both. Version
+  2026.11.16.30.
 
 ## Not built
 

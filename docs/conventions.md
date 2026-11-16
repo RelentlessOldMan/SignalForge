@@ -443,6 +443,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   the spectral moments' pieces (widths `w_k`, same bins and `span`); `variation = 1 − Σ d₀d₁w /
   sqrt(Σ d₀²w · Σ d₁²w)`, in [0, 1]. Band rules as for spectral flatness; each frame's power
   `> 0`. **(implemented)**
+- **Spectral irregularity** (`spectral_irregularity(frequencies, psd, band=None,
+  span=None)`, [ADR 0132](adr/0132-spectral-irregularity.md)): on the spectral moments' pieces
+  with density `d_k` and width `w_k`, `irregularity = Σ_k (d_k − d_{k+1})² (w_k + w_{k+1})/2 /
+  Σ_k d_k² w_k`; on uncut bins this is Jensen's `Σ (P_k − P_{k+1})² / Σ P_k²`. Band rules as for
+  spectral flatness; at least two pieces and positive power. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

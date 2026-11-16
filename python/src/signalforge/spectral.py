@@ -1440,6 +1440,29 @@ def spectral_variation(
     return 1.0 - cross / math.sqrt(float(np.sum(d0 * d0 * w)) * float(np.sum(d1 * d1 * w)))
 
 
+def spectral_irregularity(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+) -> float:
+    """How jagged the PSD is from bin to bin: the squared jumps between neighbouring pieces,
+    each weighted by the two pieces' mean width, over the PSD's squared norm (conventions:
+    Spectra, Spectral irregularity; ADR 0132)."""
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    a, b = np.maximum(left, lo), np.minimum(right, hi)
+    keep = b > a
+    w, d = (b - a)[keep], (power / (right - left))[keep]
+    if d.size < 2:
+        raise ValueError("the band must hold at least two bins")
+    if not float(np.sum(d * w)) > 0:
+        raise ValueError("the band has no power")
+    jumps = float(np.sum(np.diff(d) ** 2 * (w[:-1] + w[1:]) / 2))
+    return jumps / float(np.sum(d * d * w))
+
+
 def spectral_flatness(
     frequencies: ArrayLike,
     psd: ArrayLike,

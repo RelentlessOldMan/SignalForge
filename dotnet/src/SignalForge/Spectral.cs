@@ -2104,6 +2104,49 @@ public static class Spectral
     }
 
     /// <summary>
+    /// How jagged the PSD is from bin to bin: the squared jumps between neighbouring pieces, each
+    /// weighted by the two pieces' mean width, over the PSD's squared norm, over
+    /// <paramref name="band"/> (the whole spectrum when null) (conventions: Spectra, Spectral
+    /// irregularity; ADR 0132).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The irregularity, dimensionless: 0 for a flat PSD.</returns>
+    /// <exception cref="ArgumentException">An edge is out of order or not finite, the band leaves the spectrum or holds fewer than two bins, or it has no power.</exception>
+    public static double SpectralIrregularity(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        var pieces = new List<(double W, double D)>();
+        for (int k = 0; k < power.Length; k++)
+        {
+            double a = Math.Max(left[k], lo), b = Math.Min(right[k], hi);
+            if (b > a)
+                pieces.Add((b - a, power[k] / (right[k] - left[k])));
+        }
+        if (pieces.Count < 2)
+            throw new ArgumentException("the band must hold at least two bins", nameof(band));
+        double total = 0, norm = 0, jumps = 0;
+        for (int k = 0; k < pieces.Count; k++)
+        {
+            var (w, d) = pieces[k];
+            total += d * w;
+            norm += d * d * w;
+            if (k + 1 < pieces.Count)
+            {
+                double step = pieces[k + 1].D - d;
+                jumps += step * step * (w + pieces[k + 1].W) / 2;
+            }
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        return jumps / norm;
+    }
+
+    /// <summary>
     /// The PSD's geometric mean over its arithmetic mean across <paramref name="band"/> (the whole
     /// spectrum when null), each bin weighted by its overlap with the band (conventions: Spectra,
     /// Spectral flatness; ADR 0120).
