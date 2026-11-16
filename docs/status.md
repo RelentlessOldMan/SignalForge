@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral decrease**: the audio feature that weighs each bin's drop from the first bin by
-   1/k. Not built yet. Needs an ADR: a function `spectral_decrease(frequencies, psd, *,
-   band=None, span=None)`, recast on the step density so it does not depend on bin counts (the
-   mean of `(d(f) − d(low)) / (f − low)` weighted by power, or the library's bin form with a
-   stated bin width), the band edges, and zero power. Expected values: short PSDs worked by hand
-   with Fractions, a flat PSD giving 0, and a falling ramp giving a known negative value.
+1. **Spectral variation**: one minus the normalized correlation between two PSD frames, the
+   level-free companion of the spectral flux. Not built yet. Needs an ADR: a function
+   `spectral_variation(frequencies, previous, current, *, band=None, span=None)`, as
+   `1 − ∫ d₀d₁ df / sqrt(∫ d₀² df ∫ d₁² df)` on the step densities, the band rules, and frames
+   with no power. Expected values: short PSD pairs worked by hand (the correlation squared is
+   rational), identical frames and a frame against its double giving 0, and disjoint frames
+   giving 1.
 
 ## Built
 
@@ -1288,6 +1289,14 @@ Updated with every chunk of work. Dates are absolute.
   rectifying, rises and falls adding in squares, and level changes when normalized.
   Python 4567 passed, 2 skipped; .NET 3906 passed; conformance 2343/2343 in both. Version
   2026.11.16.27.
+- 2026-11-16: spectral decrease (ADR 0130): `spectral_decrease(frequencies, psd, *,
+  band=None, span=None)` (C# `Spectral.SpectralDecrease`) weighs each later piece's change in
+  density from the band's first piece by its width times `δ/(m_k − m_0)`, over the later
+  pieces' power. On uncut bins it is exactly the library form `Σ (P_k − P_0)/k / Σ P_k`, and a
+  cut band has a defined meaning. The vectors are exact Fractions with hand values. The tests
+  cover scaling, axis stretch and the library form.
+  Python 4579 passed, 2 skipped; .NET 3918 passed; conformance 2352/2352 in both. Version
+  2026.11.16.28.
 
 ## Not built
 

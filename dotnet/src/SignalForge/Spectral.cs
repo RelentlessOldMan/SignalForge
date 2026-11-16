@@ -1938,6 +1938,45 @@ public static class Spectral
     }
 
     /// <summary>
+    /// How fast the PSD falls from the band's first bin: each later piece's change in density
+    /// over its distance in bins, weighted by width, over the later pieces' power (conventions:
+    /// Spectra, Spectral decrease; ADR 0130).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The decrease, dimensionless: 0 for a flat PSD, negative for a falling one.</returns>
+    /// <exception cref="ArgumentException">An edge is out of order or not finite, the band leaves the spectrum or holds fewer than two bins, or it has no power after its first bin.</exception>
+    public static double SpectralDecrease(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        double step = frequencies[1] - frequencies[0];
+        var pieces = new List<(double W, double M, double D)>();
+        for (int k = 0; k < power.Length; k++)
+        {
+            double a = Math.Max(left[k], lo), b = Math.Min(right[k], hi);
+            if (b > a)
+                pieces.Add((b - a, (a + b) / 2, power[k] / (right[k] - left[k])));
+        }
+        if (pieces.Count < 2)
+            throw new ArgumentException("the band must hold at least two bins", nameof(band));
+        var first = pieces[0];
+        double rest = 0, sum = 0;
+        for (int k = 1; k < pieces.Count; k++)
+        {
+            var (w, m, d) = pieces[k];
+            rest += d * w;
+            sum += (d - first.D) * w * step / (m - first.M);
+        }
+        if (!(rest > 0))
+            throw new ArgumentException("the band has no power after its first bin", nameof(psd));
+        return sum / rest;
+    }
+
+    /// <summary>
     /// The differential entropy of the PSD, taken as constant over each bin and normalized to
     /// unit power, over <paramref name="band"/> (the whole spectrum when null) (conventions:
     /// Spectra, Spectral entropy; ADR 0128).

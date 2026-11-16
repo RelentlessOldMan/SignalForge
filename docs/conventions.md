@@ -432,6 +432,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `normalize` each is divided by its own band power; `Δ_k = current_k − previous_k`, `max(Δ_k,
   0)` with `rectify`; `flux = sqrt(Σ Δ_k² (b_k − a_k))`. Band rules as for spectral flatness;
   with `normalize`, each frame's power `> 0`. **(implemented)**
+- **Spectral decrease** (`spectral_decrease(frequencies, psd, band=None, span=None)`,
+  [ADR 0130](adr/0130-spectral-decrease.md)): on the spectral moments' pieces, with density
+  `d_k`, width `w_k` and midpoint `m_k` (piece 0 the first in the band) and bin spacing `δ`,
+  `decrease = Σ_{k≥1} (d_k − d_0) w_k δ/(m_k − m_0) / Σ_{k≥1} d_k w_k`; on uncut bins this is
+  the library form `Σ (P_k − P_0)/k / Σ P_k`. Band rules as for spectral flatness; at least two
+  pieces and positive power after the first. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

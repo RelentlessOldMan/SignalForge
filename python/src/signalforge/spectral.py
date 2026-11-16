@@ -1331,6 +1331,32 @@ def spectral_slope(
     return SpectralSlope(center, level, moment / (width**3 / 12))
 
 
+def spectral_decrease(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+) -> float:
+    """How fast the PSD falls from the band's first bin: each later piece's change in density
+    over its distance in bins, weighted by width, over the later pieces' power (conventions:
+    Spectra, Spectral decrease; ADR 0130)."""
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    f = np.asarray(frequencies, dtype=float)
+    step = float(f[1] - f[0])
+    a, b = np.maximum(left, lo), np.minimum(right, hi)
+    keep = b > a
+    a, b, d = a[keep], b[keep], (power / (right - left))[keep]
+    if d.size < 2:
+        raise ValueError("the band must hold at least two bins")
+    w, m = b - a, (a + b) / 2
+    rest = float(np.sum(d[1:] * w[1:]))
+    if not rest > 0:
+        raise ValueError("the band has no power after its first bin")
+    return float(np.sum((d[1:] - d[0]) * w[1:] * step / (m[1:] - m[0]))) / rest
+
+
 def spectral_entropy(
     frequencies: ArrayLike,
     psd: ArrayLike,
