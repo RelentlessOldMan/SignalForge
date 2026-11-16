@@ -4,13 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **x dB bandwidth**: spectrum analyzers report the width at which the PSD has fallen x dB below
-   its peak (3 dB, 6 dB, 26 dB for emission masks); occupied bandwidth and the RMS bandwidth are
-   power-based and differ. Not built yet. Needs an ADR: a function `db_bandwidth(frequencies,
-   psd, drop_db, *, band=None)`, the peak (largest bin, first on ties), walking out to the first
-   bin at or below the drop on each side, linear interpolation in dB or in power between bins,
-   and what happens when the PSD never falls that far. Expected values: short PSDs worked by
-   hand, and a Gaussian PSD, whose x dB width is `2σ·sqrt(x·ln 10 / 5)`.
+1. **Single-tone frequency estimate (Kay)**: nothing estimates a complex tone's frequency finer
+   than an FFT bin. Kay's weighted phase-difference estimator is closed form: `f = fs/(2π)·Σ w_n
+   arg(x[n+1]·conj x[n])` with parabolic weights `w_n`, exact for a noiseless tone and near the
+   Cramér-Rao bound at high SNR. Not built yet. Needs an ADR: a function
+   `kay_frequency(samples, sample_rate)`, the weights' exact form and normalization, the range
+   `(−fs/2, fs/2)`, the minimum length, and zero samples. Expected values: noiseless tones worked
+   by hand (the phase step is exact), and the variance against the CRLB `6/((2π)²·SNR·N(N²−1))`
+   at high SNR.
 
 ## Built
 
@@ -1222,6 +1223,13 @@ Updated with every chunk of work. Dates are absolute.
   rectangles, a cut band, a Gaussian PSD, an axis shift and agreement with channel power.
   Python 4417 passed, 2 skipped; .NET 3753 passed; conformance 2247/2247 in both. Version
   2026.11.16.19.
+- 2026-11-16: x dB bandwidth (ADR 0122): `db_bandwidth(frequencies, psd, drop_db, *, band=None)`
+  (C# `Spectral.DbBandwidth`) walks out from the peak (the first on ties) to the first bin at or
+  below `drop_db` under it on each side and interpolates the edge linearly in power; no crossing
+  is an error. Vectors are short PSDs worked by hand with Fractions; the tests check a Gaussian
+  PSD's `2σ·sqrt(x·ln 10 / 5)`, a rectangle, scaling, and a dip that ends the walk.
+  Python 4435 passed, 2 skipped; .NET 3771 passed; conformance 2259/2259 in both. Version
+  2026.11.16.20.
 
 ## Not built
 

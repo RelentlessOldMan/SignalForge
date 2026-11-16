@@ -192,6 +192,15 @@ public sealed record SpectralFlatness(double GeometricMean, double ArithmeticMea
 /// <param name="RmsBandwidth">Power-weighted RMS spread about the centroid.</param>
 public sealed record SpectralMoments(double Power, double Centroid, double RmsBandwidth);
 
+/// <summary>Where the PSD falls a given number of dB below its peak (conventions: Spectra, x dB
+/// bandwidth; ADR 0122).</summary>
+/// <param name="PeakFrequency">The peak bin's center, in the PSD's axis.</param>
+/// <param name="PeakPsd">The peak bin's PSD.</param>
+/// <param name="Lower">The lower edge, interpolated linearly in power.</param>
+/// <param name="Upper">The upper edge, interpolated linearly in power.</param>
+/// <param name="Bandwidth">Upper − Lower.</param>
+public sealed record DbBandwidth(double PeakFrequency, double PeakPsd, double Lower, double Upper, double Bandwidth);
+
 /// <summary>
 /// FFT, frequency axes, windows, Welch PSD, occupied bandwidth and channel power. Definitions in
 /// docs/conventions.md (Spectra) and docs/adr/0006-fft-windows-spectra.md.
@@ -1638,6 +1647,72 @@ public static class Spectral
         double inside = Channel(notch.Low, notch.High) / (notch.High - notch.Low);
         double npr = inside == 0 ? double.PositiveInfinity : 10 * (Math.Log10(loaded) - Math.Log10(inside));
         return new NoisePowerRatio(loaded, inside, npr);
+    }
+
+    /// <summary>
+    /// The span between the first points either side of the peak where the PSD has fallen
+    /// <paramref name="dropDb"/> below it, interpolated linearly in power between bins
+    /// (conventions: Spectra, x dB bandwidth; ADR 0122).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="dropDb">How far below the peak, in dB; finite and positive.</param>
+    /// <param name="band">Only bins whose centers lie in it take part; null for all.</param>
+    /// <returns>The peak and the two edges.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, the band has no bin or no power, or the PSD does not fall that far on a side.</exception>
+    public static DbBandwidth DbBandwidth(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double dropDb,
+        (double Low, double High)? band = null)
+    {
+        if (!(double.IsFinite(dropDb) && dropDb > 0))
+            throw new ArgumentOutOfRangeException(nameof(dropDb), "drop_db must be finite and positive");
+        Bins(frequencies, psd, null);
+        int first = 0, last = frequencies.Length - 1;
+        if (band is { } b)
+        {
+            if (!(double.IsFinite(b.Low) && double.IsFinite(b.High)))
+                throw new ArgumentException("band must be (low, high) with finite edges", nameof(band));
+            if (!(b.Low < b.High))
+                throw new ArgumentException("band low must be below band high", nameof(band));
+            first = -1;
+            for (int i = 0; i < frequencies.Length; i++)
+            {
+                if (frequencies[i] >= b.Low && frequencies[i] <= b.High)
+                {
+                    if (first < 0)
+                        first = i;
+                    last = i;
+                }
+            }
+            if (first < 0)
+                throw new ArgumentException("no bin lies in the band", nameof(band));
+        }
+        int k = first;
+        for (int i = first + 1; i <= last; i++)
+        {
+            if (psd[i] > psd[k])
+                k = i;
+        }
+        double peak = psd[k];
+        if (!(peak > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        double t = peak * Math.Pow(10, -dropDb / 10);
+        double delta = (frequencies[^1] - frequencies[0]) / (frequencies.Length - 1);
+
+        double Edge(ReadOnlySpan<double> f, ReadOnlySpan<double> p, int step)
+        {
+            for (int i = k + step; i >= first && i <= last; i += step)
+            {
+                if (p[i] <= t)
+                {
+                    int j = i - step; // the neighbour towards the peak, above t
+                    return f[i] - step * ((t - p[i]) / (p[j] - p[i])) * delta;
+                }
+            }
+            throw new ArgumentException($"the PSD does not fall {dropDb} dB below the peak within the band", nameof(psd));
+        }
+
+        double lower = Edge(frequencies, psd, -1), upper = Edge(frequencies, psd, +1);
+        return new DbBandwidth(frequencies[k], peak, lower, upper, upper - lower);
     }
 
     /// <summary>The band's edges, checked as for ACPR's channels; the whole spectrum when null.</summary>

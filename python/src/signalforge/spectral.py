@@ -1260,6 +1260,62 @@ def spectral_flatness(
     return SpectralFlatness(geo, arith, geo / arith, 10 * (math.log10(geo) - math.log10(arith)))
 
 
+@dataclass(frozen=True)
+class DbBandwidth:
+    """Where the PSD falls ``drop_db`` below its peak (conventions: Spectra, x dB bandwidth; ADR
+    0122). Frequencies are in the PSD's axis."""
+
+    peak_frequency: float
+    peak_psd: float
+    lower: float
+    upper: float
+    bandwidth: float
+
+
+def db_bandwidth(
+    frequencies: ArrayLike, psd: ArrayLike, drop_db: float, *, band: ArrayLike | None = None
+) -> DbBandwidth:
+    """The span between the first points either side of the peak where the PSD has fallen
+    ``drop_db`` below it, interpolated linearly in power between bins."""
+    drop = real(drop_db, "drop_db")
+    if not drop > 0:
+        raise ValueError("drop_db must be positive")
+    _bins(frequencies, psd, None)
+    f = np.asarray(frequencies, dtype=np.float64)
+    p = np.asarray(psd, dtype=np.float64)
+    if band is None:
+        idx = np.arange(f.size)
+    else:
+        b = np.asarray(band, dtype=np.float64)
+        if b.shape != (2,) or not np.all(np.isfinite(b)):
+            raise ValueError("band must be (low, high) with finite edges")
+        if not b[0] < b[1]:
+            raise ValueError("band low must be below band high")
+        idx = np.flatnonzero((f >= b[0]) & (f <= b[1]))
+        if idx.size == 0:
+            raise ValueError("no bin lies in the band")
+    first, last = int(idx[0]), int(idx[-1])
+    k = first + int(np.argmax(p[first : last + 1]))
+    peak = float(p[k])
+    if not peak > 0:
+        raise ValueError("the band has no power")
+    t = peak * 10.0 ** (-drop / 10)
+    delta = float(f[-1] - f[0]) / (f.size - 1)
+
+    def edge(step: int) -> float:
+        i = k + step
+        while first <= i <= last:
+            if p[i] <= t:
+                j = i - step  # the neighbour towards the peak, above t
+                frac = (t - p[i]) / (p[j] - p[i])
+                return float(f[i] - step * frac * delta)
+            i += step
+        raise ValueError(f"the PSD does not fall {drop} dB below the peak within the band")
+
+    lower, upper = edge(-1), edge(+1)
+    return DbBandwidth(float(f[k]), peak, lower, upper, upper - lower)
+
+
 def acpr_rrc(
     frequencies: ArrayLike,
     psd: ArrayLike,

@@ -151,6 +151,7 @@ from .modulation import (
 )
 from .spectral import (
     Acpr,
+    DbBandwidth,
     HarmonicFTest,
     LineRemoval,
     NoisePowerRatio,
@@ -164,6 +165,7 @@ from .spectral import (
     acpr,
     acpr_rrc,
     channel_power,
+    db_bandwidth,
     dpss_tapers,
     fft,
     fft_frequencies,
@@ -226,13 +228,14 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.19"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.20"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
     "AmAmPm",
     "CarrierRecovery",
     "CascadeNoiseFigure",
+    "DbBandwidth",
     "DfeEqualization",
     "DfeTaps",
     "Equalization",
@@ -298,6 +301,7 @@ __all__ = [
     "clock_offset",
     "cma_equalizer",
     "convolve",
+    "db_bandwidth",
     "db_to_amp",
     "db_to_lin",
     "dbm_to_vrms",

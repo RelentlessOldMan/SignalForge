@@ -390,6 +390,14 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   about the centroid `c`. Result `SpectralMoments(power, centroid, rms_bandwidth)`. A flat band of
   width `B` gives `B/√12`. Band rules as for spectral flatness; `power > 0` required.
   **(implemented)**
+- **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
+  [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
+  whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on
+  ties, and must be positive; `t = peak·10^{−drop_db/10}`. Walking down from the peak to the first
+  bin `i` with `psd[i] ≤ t`, the lower edge is `f_i + (t − psd[i])/(psd[i+1] − psd[i])·Δ`, linear
+  in power; the upper edge likewise walking up. No crossing on a side is `invalid_argument`.
+  Result `DbBandwidth(peak_frequency, peak_psd, lower, upper, bandwidth)`. `drop_db` finite and
+  positive; band edges finite, `low < high`, at least one bin in the band. **(implemented)**
 - **ACPR through an RRC filter** (`acpr_rrc(frequencies, psd, center, symbol_rate, alpha, offsets,
   span=None)`, [ADR 0111](adr/0111-acpr-rrc.md)): channels centred at `center` and `center ∓ o`,
   each power `Σ psd_k·Δ·G(f_k − c)` with `G` the RRC's `|H|²` at peak 1: `1` for

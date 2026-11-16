@@ -110,6 +110,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "acpr": spectral.acpr,
     "noise_power_ratio": spectral.noise_power_ratio,
     "spectral_flatness": spectral.spectral_flatness,
+    "db_bandwidth": spectral.db_bandwidth,
     "spectral_moments": spectral.spectral_moments,
     "acpr_rrc": spectral.acpr_rrc,
     "convolve": dsp.convolve,
