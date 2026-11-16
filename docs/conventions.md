@@ -461,6 +461,13 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `ratio = high / low`, `ratio_db = 10 log10(ratio)`, +∞ for zero `low` and 0 and −∞ for zero
   `high`. Result `BandEnergyRatio(low, high, ratio, ratio_db)`. `split` finite and strictly
   inside the band; band rules as for spectral flatness; power `> 0`. **(implemented)**
+- **Harmonic-to-noise ratio** (`harmonic_to_noise(frequencies, psd, fundamental, half_width)`,
+  [ADR 0143](adr/0143-harmonic-to-noise.md)): bin `k` carries `psd_k·Δ` and is harmonic when
+  `m = ⌊f_k/f0 + 1/2⌋ ≥ 1` and `|f_k − m·f0| ≤ half_width`; every other bin, DC included, is
+  noise; whole bins, never split. `ratio = harmonic / noise`, `ratio_db = 10 log10(ratio)`, +∞
+  for zero noise, 0 and −∞ for zero harmonic power, both zero `invalid_argument`. Result
+  `HarmonicToNoise(harmonic, noise, ratio, ratio_db)`. Bin rules as for the band energy ratio;
+  `f0` finite and positive; `0 ≤ half_width < f0/2`. **(implemented)**
 - **Spectral peaks** (`spectral_peaks(frequencies, psd, min_prominence=0.0)`,
   [ADR 0135](adr/0135-spectral-peaks.md)): a peak is a maximal run `i..j` of equal PSD values
   with both neighbours strictly lower; the first and last bins never are. `index = ⌊(i +

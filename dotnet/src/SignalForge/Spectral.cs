@@ -271,6 +271,14 @@ public sealed record SpectralPeak(int Index, double Frequency, double Height, do
 /// <param name="RatioDb">10 log10(Ratio).</param>
 public sealed record BandEnergyRatio(double Low, double High, double Ratio, double RatioDb);
 
+/// <summary>The power at a fundamental's harmonics and everywhere else (conventions: Spectra,
+/// Harmonic-to-noise ratio; ADR 0143).</summary>
+/// <param name="Harmonic">Bin power within the half width of a harmonic.</param>
+/// <param name="Noise">Bin power everywhere else, DC included.</param>
+/// <param name="Ratio">Harmonic / Noise: +∞ when Noise is 0, 0 when Harmonic is 0.</param>
+/// <param name="RatioDb">10 log10(Ratio).</param>
+public sealed record HarmonicToNoise(double Harmonic, double Noise, double Ratio, double RatioDb);
+
 /// <summary>The loudest and quietest parts of a band (conventions: Spectra, Spectral contrast; ADR
 /// 0133).</summary>
 /// <param name="Peak">Mean density over the top fraction of the band's width.</param>
@@ -2393,6 +2401,42 @@ public static class Spectral
         if (high == 0)
             return new BandEnergyRatio(low, high, 0, double.NegativeInfinity);
         return new BandEnergyRatio(low, high, high / low, 10 * Math.Log10(high / low));
+    }
+
+    /// <summary>
+    /// The bin power within <paramref name="halfWidth"/> Hz of a harmonic <c>m·fundamental</c>
+    /// (<c>m ≥ 1</c>) over the bin power everywhere else, DC included; whole bins, never split
+    /// (conventions: Spectra, Harmonic-to-noise ratio; ADR 0143).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="fundamental">The fundamental in Hz, finite and positive.</param>
+    /// <param name="halfWidth">How far from a harmonic a bin may be, in Hz: at least 0 and below half the fundamental.</param>
+    /// <returns>The harmonic and noise powers, their ratio and its dB.</returns>
+    /// <exception cref="ArgumentException">The bins break the band energy ratio's rules, <paramref name="fundamental"/> is not finite and positive, <paramref name="halfWidth"/> is out of range, or the spectrum has no power.</exception>
+    public static HarmonicToNoise HarmonicToNoise(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double fundamental, double halfWidth)
+    {
+        if (!(double.IsFinite(fundamental) && fundamental > 0))
+            throw new ArgumentOutOfRangeException(nameof(fundamental), "fundamental must be finite and > 0");
+        if (!(halfWidth >= 0 && halfWidth < fundamental / 2))
+            throw new ArgumentOutOfRangeException(nameof(halfWidth), "halfWidth must be >= 0 and below half the fundamental");
+        var (power, _, _) = Bins(frequencies, psd, null);
+        double harmonic = 0, noise = 0;
+        for (int k = 0; k < power.Length; k++)
+        {
+            double m = Math.Floor(frequencies[k] / fundamental + 0.5);
+            if (m >= 1 && Math.Abs(frequencies[k] - m * fundamental) <= halfWidth)
+                harmonic += power[k];
+            else
+                noise += power[k];
+        }
+        if (!(harmonic + noise > 0))
+            throw new ArgumentException("the spectrum has no power", nameof(psd));
+        if (noise == 0)
+            return new HarmonicToNoise(harmonic, noise, double.PositiveInfinity, double.PositiveInfinity);
+        if (harmonic == 0)
+            return new HarmonicToNoise(harmonic, noise, 0, double.NegativeInfinity);
+        return new HarmonicToNoise(harmonic, noise, harmonic / noise, 10 * Math.Log10(harmonic / noise));
     }
 
     /// <summary>

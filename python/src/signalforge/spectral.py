@@ -1284,6 +1284,18 @@ class SpectralPeak:
 
 
 @dataclass(frozen=True)
+class HarmonicToNoise:
+    """The power at a fundamental's harmonics and everywhere else (conventions: Spectra,
+    Harmonic-to-noise ratio; ADR 0143): ``harmonic`` and ``noise``, ``ratio = harmonic / noise``
+    and ``ratio_db`` in dB."""
+
+    harmonic: float
+    noise: float
+    ratio: float
+    ratio_db: float
+
+
+@dataclass(frozen=True)
 class BandEnergyRatio:
     """The power above and below a split frequency (conventions: Spectra, Band energy ratio;
     ADR 0134): ``low`` and ``high``, ``ratio = high / low`` and ``ratio_db`` in dB."""
@@ -1726,6 +1738,32 @@ def band_energy_ratio(
     if high == 0:
         return BandEnergyRatio(low, high, 0.0, -math.inf)
     return BandEnergyRatio(low, high, high / low, 10 * math.log10(high / low))
+
+
+def harmonic_to_noise(
+    frequencies: ArrayLike, psd: ArrayLike, fundamental: float, half_width: float
+) -> HarmonicToNoise:
+    """The bin power within ``half_width`` Hz of a harmonic ``m*fundamental`` (``m >= 1``) over
+    the bin power everywhere else, DC included; whole bins, never split."""
+    f0 = real(fundamental, "fundamental")
+    if not f0 > 0:
+        raise ValueError("fundamental must be > 0")
+    w = real(half_width, "half_width")
+    if not 0 <= w < f0 / 2:
+        raise ValueError("half_width must be >= 0 and below half the fundamental")
+    power, _, _ = _bins(frequencies, psd, None)
+    f = np.asarray(frequencies, dtype=np.float64)
+    m = np.floor(f / f0 + 0.5)
+    near = (m >= 1) & (np.abs(f - m * f0) <= w)
+    harmonic = float(np.sum(power[near]))
+    noise = float(np.sum(power[~near]))
+    if not harmonic + noise > 0:
+        raise ValueError("the spectrum has no power")
+    if noise == 0:
+        return HarmonicToNoise(harmonic, noise, math.inf, math.inf)
+    if harmonic == 0:
+        return HarmonicToNoise(harmonic, noise, 0.0, -math.inf)
+    return HarmonicToNoise(harmonic, noise, harmonic / noise, 10 * math.log10(harmonic / noise))
 
 
 def _fill(w: NDArray[np.float64], d: NDArray[np.float64], width: float) -> float:

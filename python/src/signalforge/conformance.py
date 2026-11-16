@@ -123,6 +123,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "tristimulus": spectral.tristimulus,
     "spectral_variation": spectral.spectral_variation,
     "band_energy_ratio": spectral.band_energy_ratio,
+    "harmonic_to_noise": spectral.harmonic_to_noise,
     "spectral_contrast": spectral.spectral_contrast,
     "spectral_crest": spectral.spectral_crest,
     "spectral_decrease": spectral.spectral_decrease,

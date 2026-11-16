@@ -4,10 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Harmonic-to-noise ratio**: the power near the harmonics of a fundamental over the rest of a
-   PSD. Not built yet. Needs an ADR: how wide a band around each `m·f0` counts as harmonic (in
-   bins or Hz), whether DC and the bins above the last harmonic count as noise, dB or a ratio,
-   and what no noise gives. Expected values: hand-built PSDs, worked in Fractions.
+1. **Harmonic spectral deviation**: how far the harmonic amplitudes stray from a smooth envelope
+   (each harmonic against the mean of it and its neighbours), from `find_tones` heights and
+   `harmonic_series` orders. Not built yet. Needs an ADR: amplitudes or dB, the envelope's
+   neighbours at the first and last harmonic, what missing orders (gaps in the series) do, and
+   whether duplicate orders are summed. Expected values: hand-built amplitudes, worked in
+   Fractions.
 
 ## Built
 
@@ -1396,6 +1398,15 @@ Updated with every chunk of work. Dates are absolute.
   amplitudes.
   Python 4772 passed, 2 skipped; .NET 4109 passed; conformance 2493/2493 in both. Version
   2026.11.16.40.
+- 2026-11-16: harmonic-to-noise ratio (ADR 0143): `harmonic_to_noise(frequencies, psd,
+  fundamental, half_width)` (C# `Spectral.HarmonicToNoise`) sorts whole bins. A bin within
+  `half_width` Hz of some `m·f0`, `m ≥ 1`, is harmonic; every other bin, DC included, is noise.
+  It gives `HarmonicToNoise(harmonic, noise, ratio, ratio_db)`, with infinities as for the band
+  energy ratio. The vectors list the harmonic bins by hand and check them against the rule, with
+  the sums worked in Fractions. The tests cover scaling the PSD, and a sine in white noise
+  (ratio about 50) as a statistic.
+  Python 4786 passed, 2 skipped; .NET 4123 passed; conformance 2505/2505 in both. Version
+  2026.11.16.41.
 
 ## Not built
 
