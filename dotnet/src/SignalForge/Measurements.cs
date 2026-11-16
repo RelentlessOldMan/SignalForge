@@ -88,6 +88,26 @@ public sealed record TwoToneImd(
     double WorstImdDbc,
     double Ip3Db);
 
+/// <summary>
+/// Second-order intermodulation of two tones (conventions: Two-tone intermodulation; ADR 0110).
+/// Products come difference first, then sum; powers in sample units².
+/// </summary>
+/// <param name="ToneFrequencies">The two tones' power centroids, in Hz.</param>
+/// <param name="TonePowers">The two tones' group powers.</param>
+/// <param name="ImdFrequencies">f₂ − f₁ and f₁ + f₂, aliased into the spectrum, in Hz.</param>
+/// <param name="ImdPowers">The two products' group powers.</param>
+/// <param name="ImdDbc">Each product relative to the mean tone power; −∞ for no power.</param>
+/// <param name="WorstImdDbc">The larger of <paramref name="ImdDbc"/>.</param>
+/// <param name="Ip2Db">10·log10(mean tone power) − <paramref name="WorstImdDbc"/>.</param>
+public sealed record TwoToneIp2(
+    double[] ToneFrequencies,
+    double[] TonePowers,
+    double[] ImdFrequencies,
+    double[] ImdPowers,
+    double[] ImdDbc,
+    double WorstImdDbc,
+    double Ip2Db);
+
 /// <summary>Single-sideband phase noise of a carrier (conventions: Phase noise measurement;
 /// ADR 0108).</summary>
 /// <param name="CarrierFrequency">The carrier group's power centroid, in Hz.</param>
@@ -535,7 +555,56 @@ public static class Measurements
             throw new ArgumentException("f1 must be below f2", nameof(f1));
     }
 
+    /// <summary>The tones at <paramref name="f1"/> &lt; <paramref name="f2"/> of real samples and
+    /// their second-order products f₂ − f₁ and f₁ + f₂, grouped as for <see cref="TwoToneImd(ReadOnlySpan{double}, double, double, double, WindowType, double?, int?)"/>
+    /// (conventions: Two-tone intermodulation; ADR 0110).</summary>
+    /// <param name="samples">Real samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="f1">The lower tone's frequency.</param>
+    /// <param name="f2">The upper tone's frequency.</param>
+    /// <param name="window">Window of the spectrum.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of each group; by default set by the window.</param>
+    /// <returns>The tones, the products and the second-order intercept.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a group lands on one already claimed.</exception>
+    public static TwoToneIp2 TwoToneIp2(ReadOnlySpan<double> samples, double sampleRate, double f1, double f2,
+        WindowType window = WindowType.BlackmanHarris, double? beta = null, int? width = null)
+    {
+        CheckTones(samples.Length, width, f1, f2);
+        return Ip2(new ToneGroups(Spectral.WelchPsd(samples, sampleRate, window: window, beta: beta), window, beta, width, f1), f1, f2);
+    }
+
+    /// <summary>As for real samples, from the two-sided spectrum of complex samples.</summary>
+    /// <param name="samples">Complex samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="f1">The lower tone's frequency.</param>
+    /// <param name="f2">The upper tone's frequency.</param>
+    /// <param name="window">Window of the spectrum.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of each group; by default set by the window.</param>
+    /// <returns>The tones, the products and the second-order intercept.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a group lands on one already claimed.</exception>
+    public static TwoToneIp2 TwoToneIp2(ReadOnlySpan<Complex> samples, double sampleRate, double f1, double f2,
+        WindowType window = WindowType.BlackmanHarris, double? beta = null, int? width = null)
+    {
+        CheckTones(samples.Length, width, f1, f2);
+        return Ip2(new ToneGroups(Spectral.WelchPsd(samples, sampleRate, window: window, beta: beta), window, beta, width, f1), f1, f2);
+    }
+
     private static TwoToneImd Imd(ToneGroups g, double f1, double f2)
+    {
+        var t = TwoTones(g, f1, f2, 2 * f1 - f2, 2 * f2 - f1);
+        return new TwoToneImd(t.Tf, t.Tp, t.ImdF, t.ImdP, t.Dbc, t.Worst, t.PtDb - t.Worst / 2);
+    }
+
+    private static TwoToneIp2 Ip2(ToneGroups g, double f1, double f2)
+    {
+        var t = TwoTones(g, f1, f2, f2 - f1, f1 + f2);
+        return new TwoToneIp2(t.Tf, t.Tp, t.ImdF, t.ImdP, t.Dbc, t.Worst, t.PtDb - t.Worst);
+    }
+
+    private static (double[] Tf, double[] Tp, double[] ImdF, double[] ImdP, double[] Dbc, double Worst, double PtDb) TwoTones(
+        ToneGroups g, double f1, double f2, double product1, double product2)
     {
         double fs = g.D.SampleRate;
         if (!(Math.Abs(f2) <= fs / 2 && (f2 >= 0 || !g.D.OneSided)))
@@ -547,7 +616,7 @@ public static class Measurements
         double p2 = g.Power(idx);
         if (!(p2 > 0))
             throw new ArgumentException("no signal power at f2", nameof(f2));
-        double[] imdF = [g.Alias(2 * f1 - f2), g.Alias(2 * f2 - f1)];
+        double[] imdF = [g.Alias(product1), g.Alias(product2)];
         var imdP = new double[2];
         for (int i = 0; i < 2; i++)
         {
@@ -558,8 +627,7 @@ public static class Measurements
         }
         double pt = (g.Signal + p2) / 2;
         double[] dbc = [.. imdP.Select(p => p > 0 ? 10 * Math.Log10(p / pt) : double.NegativeInfinity)];
-        double worst = Math.Max(dbc[0], dbc[1]);
-        return new TwoToneImd([g.F1, g.Centroid(idx, p2)], [g.Signal, p2], imdF, imdP, dbc, worst, 10 * Math.Log10(pt) - worst / 2);
+        return ([g.F1, g.Centroid(idx, p2)], [g.Signal, p2], imdF, imdP, dbc, Math.Max(dbc[0], dbc[1]), 10 * Math.Log10(pt));
     }
 
     private static void Check(int samples, int? width, double? fundamental)

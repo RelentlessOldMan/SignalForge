@@ -231,6 +231,7 @@ public static class Conformance
             "tone_metrics" => ToneMetricsOp(a),
             "sfdr" => SfdrOp(a),
             "two_tone_imd" => TwoToneImdOp(a),
+            "two_tone_ip2" => TwoToneIp2Op(a),
             "phase_noise_ssb" => PhaseNoiseSsbOp(a),
             "integrated_phase_noise" => IntegratedPhaseNoiseOp(a),
             "noise_figure_cascade" => Bind((Reals(a.Get("noise_figures_db")), Reals(a.Get("gains_db"))), t => Measurements.NoiseFigureCascade(t.Item1, t.Item2)),
@@ -587,6 +588,18 @@ public static class Conformance
             return () => Measurements.TwoToneImd(cs, fs, f1, f2, window, beta, width);
         double[] x = Reals(samples);
         return () => Measurements.TwoToneImd(x, fs, f1, f2, window, beta, width);
+    }
+
+    private static Func<object?> TwoToneIp2Op(Args a)
+    {
+        object? samples = a.Get("samples");
+        var (fs, f1, f2) = (a.D("sample_rate"), a.D("f1"), a.D("f2"));
+        var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.BlackmanHarris;
+        var (beta, width) = (a.OptD("beta"), a.OptInt("width"));
+        if (samples is Complex[] cs)
+            return () => Measurements.TwoToneIp2(cs, fs, f1, f2, window, beta, width);
+        double[] x = Reals(samples);
+        return () => Measurements.TwoToneIp2(x, fs, f1, f2, window, beta, width);
     }
 
     private static Func<object?> PhaseNoiseSsbOp(Args a)

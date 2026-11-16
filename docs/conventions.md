@@ -441,6 +441,11 @@ C#: `Measurements.TwoToneImd`. Same spectrum, half-width and groups as the tone 
   (the aliased nominal ones, lower first), `imd_powers`, `imd_dbc = 10·log10(P_IM/P_t)` with
   `P_t` the mean tone power (`−∞` for a product with no power), `worst_imd_dbc` (the larger) and
   `ip3_db = 10·log10 P_t − worst_imd_dbc/2`. **(implemented)**
+- **Second order** ([ADR 0110](adr/0110-two-tone-ip2.md); `two_tone_ip2`, C#
+  `Measurements.TwoToneIp2`): same call, arguments and groups, with the products the difference
+  `f₂ − f₁` then the sum `f₁ + f₂` (aliased; third-order products not claimed). Result
+  `TwoToneIp2`: the fields above with `ip2_db = 10·log10 P_t − worst_imd_dbc` (`+∞` for no
+  product power) in place of `ip3_db`. **(implemented)**
 
 ## Phase noise measurement
 

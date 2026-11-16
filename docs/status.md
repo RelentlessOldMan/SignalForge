@@ -4,15 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Second-order intermodulation and IP2**: `two_tone_imd2(samples, sample_rate, f1, f2, ...)`
-   (or a field on the two-tone result), the products at `f₂ − f₁` and `f₁ + f₂` and the
-   second-order intercept `IP2 = 2P_t − P_IM2` in dB. Not built yet; the figure quoted for
-   direct-conversion receivers beside IP3 (ADR 0107). Needs an ADR: a new function or new fields,
-   which product sets IP2 (the worse, as for IP3), and how the groups are claimed (DC, the tones,
-   the third-order products, then these). Expected values: `y = x + a₂x²` on two cosines expands
-   by hand to products of amplitude `a₂A₁A₂` at the sum and difference, and the small-drive
-   intercept `A_IP2 = 1/|a₂|`; complex input has no second-order products from `|x|²x`-type
-   devices, so the cases are real.
+1. **ACPR with a channel filter**: an optional `weighting` on `acpr` (and `channel_power`) so each
+   channel's power is the PSD weighted by a filter's `|H(f)|²` rather than a brick wall: a
+   root-raised-cosine with roll-off `α` at the symbol rate, as the 3GPP and TETRA measurements
+   specify. Not built yet (ADR 0019 integrates rectangles only). Needs an ADR: how the weighting
+   is given (a named RRC with `α` and symbol rate, or any sampled response), how it meets the
+   channel-power bin rule (ADR 0019's partial edge bins), and whether the bandwidth argument then
+   means the symbol rate. Expected values: a flat PSD through an RRC weight integrates by hand to
+   exactly the symbol rate (the raised-cosine's area); a line at a known offset reads `|H(f)|²` of
+   its frequency from the RRC formula.
 
 ## Built
 
@@ -1124,12 +1124,20 @@ Updated with every chunk of work. Dates are absolute.
   arctan integral as a statistic.
   Python 4115 passed, 2 skipped; .NET 3489 passed; conformance 2092/2092 in both. Version
   2026.11.16.7.
+- 2026-11-16: second-order intermodulation (ADR 0110): `two_tone_ip2(samples, sample_rate, f1,
+  f2, *, window, beta, width)` (C# `Measurements.TwoToneIp2`, real and complex) groups the
+  products `f₂ − f₁` and `f₁ + f₂` after DC and the tones, sharing `two_tone_imd`'s code, and
+  returns `ip2_db = 10·log10 P_t − worst_imd_dbc`. The vectors are a square law expanded by hand
+  on real tones (one sum folded) and `x + a₂|x|²` on complex tones, whose sum product is empty;
+  the tests check the intercept `A_IP2 = 1/|a₂|` and that it does not move with drive.
+  Python 4130 passed, 2 skipped; .NET 3504 passed; conformance 2101/2101 in both. Version
+  2026.11.16.8.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond third order and IP2, ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond second and third order, ACPR channel filtering,
 phase noise with spurs removed, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.

@@ -91,6 +91,7 @@ from .measurements import (
     Sfdr,
     ToneMetrics,
     TwoToneImd,
+    TwoToneIp2,
     integrated_phase_noise,
     noise_figure_cascade,
     noise_figure_y_factor,
@@ -99,6 +100,7 @@ from .measurements import (
     sfdr,
     tone_metrics,
     two_tone_imd,
+    two_tone_ip2,
 )
 from .metrics import (
     ErrorCount,
@@ -204,7 +206,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.7"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.8"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -235,6 +237,7 @@ __all__ = [
     "TimingRecovery",
     "ToneMetrics",
     "TwoToneImd",
+    "TwoToneIp2",
     "WindowStats",
     "acpr",
     "allpass_first_order",
@@ -386,6 +389,7 @@ __all__ = [
     "tone",
     "tone_metrics",
     "two_tone_imd",
+    "two_tone_ip2",
     "upsample",
     "vrms_to_dbm",
     "w_to_dbm",

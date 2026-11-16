@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
@@ -207,6 +208,66 @@ def two_tone_imd(
 ) -> TwoToneImd:
     """The tones at ``f1 < f2`` and their third-order products ``2*f1 - f2`` and ``2*f2 - f1``,
     grouped as for :func:`tone_metrics` (conventions: Two-tone intermodulation; ADR 0107)."""
+    t = _two_tones(
+        samples, sample_rate, f1, f2, window, beta, width, lambda a, b: (2 * a - b, 2 * b - a)
+    )
+    return TwoToneImd(*t[:6], ip3_db=t[6] - t[5] / 2)
+
+
+@dataclass(frozen=True, eq=False)
+class TwoToneIp2:
+    """Second-order intermodulation of two tones (conventions: Two-tone intermodulation).
+
+    The products come difference ``f2 - f1`` first, then sum ``f1 + f2``. ``imd_dbc`` is each
+    relative to the mean tone power; ``ip2_db`` is the second-order intercept from the worse
+    product, in dB of sample units squared.
+    """
+
+    tone_frequencies: NDArray[np.float64]
+    tone_powers: NDArray[np.float64]
+    imd_frequencies: NDArray[np.float64]
+    imd_powers: NDArray[np.float64]
+    imd_dbc: NDArray[np.float64]
+    worst_imd_dbc: float
+    ip2_db: float
+
+
+def two_tone_ip2(
+    samples: ArrayLike,
+    sample_rate: float,
+    f1: float,
+    f2: float,
+    *,
+    window: str = "blackman_harris",
+    beta: float | None = None,
+    width: int | None = None,
+) -> TwoToneIp2:
+    """The tones at ``f1 < f2`` and their second-order products ``f2 - f1`` and ``f1 + f2``,
+    grouped as for :func:`two_tone_imd` (conventions: Two-tone intermodulation; ADR 0110)."""
+    t = _two_tones(samples, sample_rate, f1, f2, window, beta, width, lambda a, b: (b - a, a + b))
+    return TwoToneIp2(*t[:6], ip2_db=t[6] - t[5])
+
+
+def _two_tones(
+    samples: ArrayLike,
+    sample_rate: float,
+    f1: float,
+    f2: float,
+    window: str,
+    beta: float | None,
+    width: int | None,
+    products: Callable[[float, float], tuple[float, float]],
+) -> tuple[
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    float,
+    float,
+]:
+    """Tone frequencies and powers, product frequencies, powers and dBc, the worst dBc and the
+    mean tone power in dB, for the two products at ``products(f1, f2)``."""
     lo = real(f1, "f1")
     hi = real(f2, "f2")
     if not lo < hi:
@@ -222,7 +283,7 @@ def two_tone_imd(
     p2 = g.power(idx)
     if not p2 > 0:
         raise ValueError("no signal power at f2")
-    imd_f = [g.alias(2 * lo - hi), g.alias(2 * hi - lo)]
+    imd_f = [g.alias(x) for x in products(lo, hi)]
     imd_p = []
     for x in imd_f:
         k = g.nearest(x)
@@ -231,15 +292,14 @@ def two_tone_imd(
         imd_p.append(g.power(g.group(k)))
     pt = (g.signal + p2) / 2
     dbc = [10 * math.log10(p / pt) if p > 0 else -math.inf for p in imd_p]
-    worst = max(dbc)
-    return TwoToneImd(
-        tone_frequencies=np.array([g.f1, g.centroid(idx, p2)], dtype=np.float64),
-        tone_powers=np.array([g.signal, p2], dtype=np.float64),
-        imd_frequencies=np.array(imd_f, dtype=np.float64),
-        imd_powers=np.array(imd_p, dtype=np.float64),
-        imd_dbc=np.array(dbc, dtype=np.float64),
-        worst_imd_dbc=worst,
-        ip3_db=10 * math.log10(pt) - worst / 2,
+    return (
+        np.array([g.f1, g.centroid(idx, p2)], dtype=np.float64),
+        np.array([g.signal, p2], dtype=np.float64),
+        np.array(imd_f, dtype=np.float64),
+        np.array(imd_p, dtype=np.float64),
+        np.array(dbc, dtype=np.float64),
+        max(dbc),
+        10 * math.log10(pt),
     )
 
 
