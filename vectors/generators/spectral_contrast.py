@@ -54,7 +54,8 @@ def case(cid, args, peak, valley, why):
     assert got == (peak, valley), (cid, got, peak, valley)
     cases.append({"id": f"spectral_contrast.{cid}", "op": "spectral_contrast", "args": args,
                   "expected": {"peak": float(peak), "valley": float(valley),
-                               "contrast_db": 10 * math.log10(peak / valley)},
+                               "contrast_db": "inf" if valley == 0
+                               else 10 * math.log10(peak / valley)},
                   "tol": TOL, "source": why})
 
 
@@ -84,6 +85,8 @@ case("span_clipped", {"frequencies": F4, "psd": [2.0, 1.0, 1.0, 2.0], "span": [0
                       "fraction": 0.5}, F(3), F(1),
      "span (0, 3): densities 4, 1, 1, 4 on widths 1/2, 1, 1, 1/2; half of 3 is 3/2: top "
      "4 x 1/2 + 4 x 1/2 + 1 x 1/2 over 3/2, bottom 1 + 1 x 1/2 over 3/2")
+case("zero_valley", {"frequencies": F4, "psd": [0.0, 1.0, 2.0, 3.0], "fraction": 0.25},
+     F(3), F(0), "the quietest quarter is the empty bin: valley 0, contrast +inf")
 
 err("fraction_zero", {"frequencies": F4, "psd": RAMP, "fraction": 0.0}, "fraction must be > 0")
 err("fraction_over_half", {"frequencies": F4, "psd": RAMP, "fraction": 0.6},

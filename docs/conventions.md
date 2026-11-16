@@ -461,6 +461,14 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `ratio = high / low`, `ratio_db = 10 log10(ratio)`, +∞ for zero `low` and 0 and −∞ for zero
   `high`. Result `BandEnergyRatio(low, high, ratio, ratio_db)`. `split` finite and strictly
   inside the band; band rules as for spectral flatness; power `> 0`. **(implemented)**
+- **Spectral peaks** (`spectral_peaks(frequencies, psd, min_prominence=0.0)`,
+  [ADR 0135](adr/0135-spectral-peaks.md)): a peak is a maximal run `i..j` of equal PSD values
+  with both neighbours strictly lower; the first and last bins never are. `index = ⌊(i +
+  j)/2⌋`, `frequency = (f_i + f_j)/2`, `height` the run's value. Each side's base is the lowest
+  value from the run out to (not including) the first bin strictly higher than `height`, or to
+  the end; `prominence = height − max(bases)`. Kept when `prominence ≥ min_prominence`, in
+  order of frequency, as `SpectralPeak(index, frequency, height, prominence)`.
+  `min_prominence` finite and `≥ 0`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

@@ -39,8 +39,9 @@ straddling bin on one side.
   - a ramp split inside a bin.
   - a cut band.
   - the span.
+  - no power below the split, and none above, whose infinities are written `"inf"` and
+    `"-inf"` (vectors/README.md).
   - the errors.
-  - The infinite cases are not vectors, since JSON has no ∞. They are in the tests.
 - **Tests.**
   - `low + high` equals the channel power over the band.
   - Mirroring the PSD about the split inverts the ratio.

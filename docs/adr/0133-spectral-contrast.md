@@ -40,8 +40,8 @@ That count of bins is rounded, and it ignores bin widths.
   - a ramp at several fractions, including ones that split a piece.
   - a cut band.
   - the span.
+  - a zero valley, whose +∞ is written `"inf"` (vectors/README.md).
   - the errors.
-  - A zero valley is not a vector, since JSON has no ∞. It is in the tests.
 - **Tests.**
   - Scaling the PSD scales the peak and the valley and leaves the dB unchanged.
   - The half split gives the band's mean.

@@ -1217,6 +1217,17 @@ class SpectralSlope:
 
 
 @dataclass(frozen=True)
+class SpectralPeak:
+    """A local maximum of a PSD (conventions: Spectra, Spectral peaks; ADR 0135): its middle
+    bin ``index``, the ``frequency`` at its middle, its ``height`` and its ``prominence``."""
+
+    index: int
+    frequency: float
+    height: float
+    prominence: float
+
+
+@dataclass(frozen=True)
 class BandEnergyRatio:
     """The power above and below a split frequency (conventions: Spectra, Band energy ratio;
     ADR 0134): ``low`` and ``high``, ``ratio = high / low`` and ``ratio_db`` in dB."""
@@ -1377,6 +1388,43 @@ def spectral_decrease(
     if not rest > 0:
         raise ValueError("the band has no power after its first bin")
     return float(np.sum((d[1:] - d[0]) * w[1:] * step / (m[1:] - m[0]))) / rest
+
+
+def spectral_peaks(
+    frequencies: ArrayLike, psd: ArrayLike, *, min_prominence: float = 0.0
+) -> list[SpectralPeak]:
+    """The PSD's local maxima with their prominence, in order of frequency; a plateau is one
+    peak, and the first and last bins are never peaks."""
+    floor = real(min_prominence, "min_prominence")
+    if floor < 0:
+        raise ValueError("min_prominence must be >= 0")
+    _bins(frequencies, psd, None)
+    f = np.asarray(frequencies, dtype=float)
+    x = [float(v) for v in np.asarray(psd, dtype=float)]
+    n = len(x)
+    out = []
+    i = 1
+    while i < n - 1:
+        j = i
+        while j + 1 < n and x[j + 1] == x[i]:
+            j += 1
+        h = x[i]
+        if x[i - 1] < h and j < n - 1 and x[j + 1] < h:
+            lo_left = h
+            k = i
+            while k >= 0 and x[k] <= h:
+                lo_left = min(lo_left, x[k])
+                k -= 1
+            lo_right = h
+            k = j
+            while k < n and x[k] <= h:
+                lo_right = min(lo_right, x[k])
+                k += 1
+            prom = h - max(lo_left, lo_right)
+            if prom >= floor:
+                out.append(SpectralPeak((i + j) // 2, float(f[i] + f[j]) / 2, h, prom))
+        i = j + 1
+    return out
 
 
 def band_energy_ratio(

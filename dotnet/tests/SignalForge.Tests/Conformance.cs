@@ -341,6 +341,8 @@ public static class Conformance
                 t => Spectral.SpectralCrest(t.Item1, t.Item2, t.Item3, t.Item4)),
             "spectral_variation" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("previous")), Reals(a.Get("current")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
                 t => Spectral.SpectralVariation(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "spectral_peaks" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Opt("min_prominence", 0)),
+                t => Spectral.SpectralPeaks(t.Item1, t.Item2, t.Item3).Select(p => (object?)p).ToList()),
             "spectral_irregularity" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
                 t => Spectral.SpectralIrregularity(t.Item1, t.Item2, t.Item3, t.Item4)),
             "spectral_flux" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("previous")), Reals(a.Get("current")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a), a.Flag("normalize", true), a.Flag("rectify", true)),

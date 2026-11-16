@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral peaks**: the local maxima of a PSD with their prominence, the first step toward
-   listing the tones in a spectrum. Not built yet. Needs an ADR: a function
-   `spectral_peaks(frequencies, psd, *, min_prominence=0.0, band=None)` returning each peak's
-   bin, frequency, height and prominence (the usual definition: the height above the higher of
-   the two lowest points reached before a taller peak or the edge on each side), how plateaus and
-   edge bins are handled, and the order of the results. Expected values: short PSDs worked by
-   hand, with plateaus, edge peaks, nested peaks and a prominence threshold.
+1. **Peak interpolation**: a sub-bin estimate of each spectral peak's frequency and height.
+   Not built yet. Needs an ADR: a function `interpolate_peak(frequencies, psd, index, *,
+   method="parabolic")` fitting a parabola through the peak bin and its two neighbours (on the
+   PSD, or on its dB, and which is the default), the offset formula and its range (±1/2 bin),
+   and what is returned for an edge bin or a plateau. Expected values: parabolas and Gaussians
+   sampled at known offsets, whose vertex is known analytically.
 
 ## Built
 
@@ -1329,6 +1328,16 @@ Updated with every chunk of work. Dates are absolute.
   `channel_power`, mirroring, and both infinite cases.
   Python 4636 passed, 2 skipped; .NET 3975 passed; conformance 2394/2394 in both. Version
   2026.11.16.32.
+- 2026-11-16: spectral peaks (ADR 0135): `spectral_peaks(frequencies, psd, *,
+  min_prominence=0.0)` (C# `Spectral.SpectralPeaks`) lists each maximal run of equal values with
+  both neighbours strictly lower, as `SpectralPeak(index, frequency, height, prominence)` in order
+  of frequency. The edge bins are never peaks, a plateau's frequency is its middle, and each base
+  stops at the first strictly higher bin. The vectors are worked by hand: nested peaks, odd and
+  even plateaus, edges, a shoulder, equal neighbours, thresholds. The tests cover scaling, the
+  threshold and two tones in noise. ADRs 0133 and 0134 no longer say ∞ can't be a vector; their
+  zero-valley and zero-power cases are vectors now, written `"inf"` and `"-inf"`.
+  Python 4661 passed, 2 skipped; .NET 4000 passed; conformance 2412/2412 in both. Version
+  2026.11.16.33.
 
 ## Not built
 

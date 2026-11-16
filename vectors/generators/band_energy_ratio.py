@@ -39,10 +39,15 @@ def case(cid, args, low, high, why):
     got = powers(args["frequencies"], args["psd"], args["split"], args.get("band"),
                  args.get("span"))
     assert got == (low, high), (cid, got, low, high)
+    if low == 0:
+        ratio, db = "inf", "inf"
+    elif high == 0:
+        ratio, db = 0.0, "-inf"
+    else:
+        ratio, db = float(high / low), 10 * math.log10(high / low)
     cases.append({"id": f"band_energy_ratio.{cid}", "op": "band_energy_ratio", "args": args,
-                  "expected": {"low": float(low), "high": float(high),
-                               "ratio": float(high / low),
-                               "ratio_db": 10 * math.log10(high / low)},
+                  "expected": {"low": float(low), "high": float(high), "ratio": ratio,
+                               "ratio_db": db},
                   "tol": TOL, "source": why})
 
 
@@ -67,6 +72,10 @@ case("span_clipped", {"frequencies": F4, "psd": [2.0, 1.0, 1.0, 2.0], "split": 0
                       "span": [0.0, 3.0]}, F(1), F(5),
      "span (0, 3): bin 0 is [0, 1/2] at density 4; split 1/4: 4 x 1/4 and 4 x 1/4 + 1 + 1 + "
      "4 x 1/2")
+case("no_low_power", {"frequencies": F4, "psd": [0.0, 0.0, 3.0, 4.0], "split": 1.5}, F(0),
+     F(7), "nothing below the split: ratio and dB +inf")
+case("no_high_power", {"frequencies": F4, "psd": [1.0, 2.0, 0.0, 0.0], "split": 1.5}, F(3),
+     F(0), "nothing above the split: ratio 0, dB -inf")
 
 err("split_at_edge", {"frequencies": F4, "psd": RAMP, "split": -0.5},
     "split must be strictly inside the band")

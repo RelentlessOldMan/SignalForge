@@ -213,6 +213,13 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
 
+/// <summary>A local maximum of a PSD (conventions: Spectra, Spectral peaks; ADR 0135).</summary>
+/// <param name="Index">The middle bin of the peak's run, ⌊(i + j)/2⌋.</param>
+/// <param name="Frequency">The run's middle in Hz, (f_i + f_j)/2.</param>
+/// <param name="Height">The run's PSD value.</param>
+/// <param name="Prominence">Height above the higher of the two bases.</param>
+public sealed record SpectralPeak(int Index, double Frequency, double Height, double Prominence);
+
 /// <summary>The power above and below a split frequency (conventions: Spectra, Band energy ratio;
 /// ADR 0134).</summary>
 /// <param name="Low">Power from the band's low edge to the split.</param>
@@ -1989,6 +1996,46 @@ public static class Spectral
         if (!(rest > 0))
             throw new ArgumentException("the band has no power after its first bin", nameof(psd));
         return sum / rest;
+    }
+
+    /// <summary>
+    /// The PSD's local maxima with their prominence, in order of frequency; a plateau is one
+    /// peak, and the first and last bins are never peaks (conventions: Spectra, Spectral peaks;
+    /// ADR 0135).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="minProminence">The least prominence kept, finite and non-negative.</param>
+    /// <returns>The peaks, lowest frequency first.</returns>
+    /// <exception cref="ArgumentException">The arrays are invalid, or <paramref name="minProminence"/> is negative or not finite.</exception>
+    public static IReadOnlyList<SpectralPeak> SpectralPeaks(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double minProminence = 0)
+    {
+        if (!(double.IsFinite(minProminence) && minProminence >= 0))
+            throw new ArgumentOutOfRangeException(nameof(minProminence), "minProminence must be finite and >= 0");
+        Bins(frequencies, psd, null);
+        int n = psd.Length;
+        var peaks = new List<SpectralPeak>();
+        int i = 1;
+        while (i < n - 1)
+        {
+            int j = i;
+            while (j + 1 < n && psd[j + 1] == psd[i])
+                j++;
+            double h = psd[i];
+            if (psd[i - 1] < h && j < n - 1 && psd[j + 1] < h)
+            {
+                double left = h, right = h;
+                for (int k = i; k >= 0 && psd[k] <= h; k--)
+                    left = Math.Min(left, psd[k]);
+                for (int k = j; k < n && psd[k] <= h; k++)
+                    right = Math.Min(right, psd[k]);
+                double prominence = h - Math.Max(left, right);
+                if (prominence >= minProminence)
+                    peaks.Add(new SpectralPeak((i + j) / 2, (frequencies[i] + frequencies[j]) / 2, h, prominence));
+            }
+            i = j + 1;
+        }
+        return peaks;
     }
 
     /// <summary>
