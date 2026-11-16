@@ -115,6 +115,7 @@ from .measurements import (
     centre_time,
     cepstrum_pitch,
     clarity,
+    decay_curvature,
     definition,
     early_decay_time,
     exceedance_levels,
@@ -316,7 +317,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.79"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.80"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -428,6 +429,7 @@ __all__ = [
     "dbm_to_w",
     "dc_offset",
     "dct",
+    "decay_curvature",
     "decimate",
     "decode_samples",
     "definition",

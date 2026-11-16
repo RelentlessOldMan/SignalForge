@@ -94,6 +94,10 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Decay curvature** ([ADR 0182](adr/0182-decay-curvature.md); `decay_curvature(impulse_response,
+  sample_rate)`, C# `Measurements.DecayCurvature`): `C = 100·(T30/T20 − 1)` percent with T20
+  the `reverberation_time` fit from −5 to −25 dB and T30 from −5 to −35 dB; signed, unclipped;
+  the same rules and errors (the decay must reach −35 dB). **(implemented)**
 - **Early decay time** ([ADR 0181](adr/0181-early-decay-time.md); `early_decay_time(impulse_response,
   sample_rate)`, C# `Measurements.EarlyDecayTime`): exactly `reverberation_time` with
   `start_db = 0`, `stop_db = −10`, so the fit starts at sample 0; same rules and errors.

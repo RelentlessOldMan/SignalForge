@@ -83,6 +83,31 @@ public static partial class Measurements
     public static double EarlyDecayTime(ReadOnlySpan<double> impulseResponse, double sampleRate) =>
         ReverberationTime(impulseResponse, sampleRate, 0, -10);
 
+    /// <summary>The decay curvature <c>100·(T30/T20 − 1)</c> in percent (conventions: Decay
+    /// curvature; ADR 0182).</summary>
+    /// <param name="impulseResponse">Complex response, finite, not empty, not all zero.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <returns>The curvature in percent, signed.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double DecayCurvature(ReadOnlySpan<Complex> impulseResponse, double sampleRate) =>
+        Curvature(SchroederDecay(impulseResponse), sampleRate);
+
+    /// <summary>The decay curvature <c>100·(T30/T20 − 1)</c> in percent (conventions: Decay
+    /// curvature; ADR 0182).</summary>
+    /// <param name="impulseResponse">Real response, finite, not empty, not all zero.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <returns>The curvature in percent, signed.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double DecayCurvature(ReadOnlySpan<double> impulseResponse, double sampleRate) =>
+        Curvature(SchroederDecay(impulseResponse), sampleRate);
+
+    private static double Curvature(double[] d, double sampleRate)
+    {
+        double t20 = FitDecay(d, sampleRate, -5, -25);
+        double t30 = FitDecay(d, sampleRate, -5, -35);
+        return 100 * (t30 / t20 - 1);
+    }
+
     private static double[] Decay(double[] p, string paramName)
     {
         if (p.Length == 0)

@@ -1295,6 +1295,14 @@ def early_decay_time(impulse_response: ArrayLike, sample_rate: float) -> float:
     return reverberation_time(impulse_response, sample_rate, start_db=0.0, stop_db=-10.0)
 
 
+def decay_curvature(impulse_response: ArrayLike, sample_rate: float) -> float:
+    """The decay curvature ``100 (T30/T20 - 1)`` in percent (conventions: Decay curvature;
+    ADR 0182)."""
+    t20 = reverberation_time(impulse_response, sample_rate, start_db=-5.0, stop_db=-25.0)
+    t30 = reverberation_time(impulse_response, sample_rate, start_db=-5.0, stop_db=-35.0)
+    return 100 * (t30 / t20 - 1)
+
+
 def _early_late(
     impulse_response: ArrayLike, sample_rate: float, time: float
 ) -> tuple[float, float]:

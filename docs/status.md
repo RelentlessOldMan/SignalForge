@@ -4,11 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Decay curvature**: `decay_curvature(impulse_response, sample_rate)` in `measurements`.
-   It is ISO 3382-2 Annex B: `C = 100·(T30/T20 − 1)` percent, where T20 is the fit from −5 to
-   −25 dB and T30 the fit from −5 to −35 dB. Not built yet. Needs an ADR: that it is exactly
-   two `reverberation_time` calls, with the same errors (the decay must reach −35 dB). Expected
-   values: 0 for a single exponential; the exact tails for a sum of two decays.
+1. **Noise-compensated decay**: `noise_compensated_decay(impulse_response, *, tail=0.1)` in
+   `measurements`. It is ISO 3382-1 §5.3.3 b: estimate the noise power as the mean `|h|²` over
+   the last `M = ⌊tail·N + 1/2⌋` samples, subtract it from every `|h|²`, then backward-integrate
+   and give `10 log10(E[n]/E[0])`. Not built yet. Needs an ADR: the rounding of `M`
+   (`1 ≤ M < N`), that `E[n] ≤ 0` gives `−inf`, and that `E[0] ≤ 0` is invalid. Expected
+   values: exact fraction tails of a decay followed by a constant-power tail.
 
 ## Built
 
@@ -1724,6 +1725,14 @@ Updated with every chunk of work. Dates are absolute.
   The vectors use the exact geometric Schroeder tails, including a two-slope decay.
   Python 5429 passed, 2 skipped; .NET 4746 passed; conformance 3041/3041 in both. Version
   2026.11.16.79.
+- 2026-11-16: decay curvature (ADR 0182): `decay_curvature(impulse_response, sample_rate)` in
+  `measurements` (C# `Measurements.DecayCurvature`, real and complex). It is ISO 3382-2 Annex B,
+  `C = 100·(T30/T20 − 1)` percent, from two `reverberation_time` fits with the same errors.
+
+  The vectors use the exact geometric tails: about 0 for a single exponential, and positive for
+  two slopes.
+  Python 5437 passed, 2 skipped; .NET 4754 passed; conformance 3048/3048 in both. Version
+  2026.11.16.80.
 
 ## Not built
 
