@@ -111,6 +111,7 @@ from .measurements import (
     am_am_pm,
     autocorrelation_pitch,
     cepstrum_pitch,
+    exceedance_levels,
     gain_compression,
     integrated_phase_noise,
     kay_frequency,
@@ -299,7 +300,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.66"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.67"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -422,6 +423,7 @@ __all__ = [
     "erb_rate_to_hz",
     "erb_space",
     "evm",
+    "exceedance_levels",
     "fft",
     "fft_frequencies",
     "find_tones",

@@ -238,6 +238,7 @@ public static class Conformance
                 t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "temporal_centroid" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2)),
+            "exceedance_levels" => Bind((Reals(a.Get("powers")), Reals(a.Get("percents"))), t => Measurements.ExceedanceLevels(t.Item1, t.Item2)),
             "octave_band_levels" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate"), a.I("fraction"), a.D("min_frequency"), a.D("max_frequency"), a.OptInt("order") ?? 3),
                     t => Measurements.OctaveBandLevels(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6))
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate"), a.I("fraction"), a.D("min_frequency"), a.D("max_frequency"), a.OptInt("order") ?? 3),

@@ -94,6 +94,12 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Exceedance levels** ([ADR 0169](adr/0169-exceedance-levels.md); `exceedance_levels(powers,
+  percents)`, C# `Measurements.ExceedanceLevels`): `L_N` is the `q = 1 − N/100` quantile of the
+  powers by linear interpolation (Hyndman–Fan type 7): sort ascending, `h = (n − 1)q`, `s_⌊h⌋ +
+  (h − ⌊h⌋)(s_⌊h⌋+1 − s_⌊h⌋)`; `L_0` the maximum, `L_100` the minimum; in power, the caller takes
+  dB. `powers` not empty, finite, `≥ 0`; `percents` finite in `[0, 100]`, may be empty.
+  **(implemented)**
 - **Octave-band levels** ([ADR 0168](adr/0168-octave-band-levels.md);
   `octave_band_levels(samples, sample_rate, fraction, min_frequency, max_frequency, *,
   order=3)`, C# `Measurements.OctaveBandLevels`): one mean power per band of `octave_bands(...)`,

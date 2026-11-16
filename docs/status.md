@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Percentile levels**: `exceedance_levels(powers, percents)` in `measurements`. It gives the
-   level `L_N` exceeded `N` % of the time (L10, L50, L90), from a series of time-weighted powers
-   (`time_weighting`). Not built yet. Needs an ADR: the quantile definition (which
-   interpolation, so both languages agree with each other and with a hand sort), whether the
-   result is a power or dB, and the range of `N`. Expected values: hand-sorted small series.
+1. **Short Leq series and sound exposure**: `block_leq(samples, sample_rate, duration)` (the mean
+   `|x|²` over consecutive blocks of `duration` seconds) and `sound_exposure(samples, sample_rate)`
+   (`Σ|x|²/fs`, the energy integral behind SEL) in `measurements`. Not built yet. Needs an ADR:
+   how a non-integer `duration·fs` is rounded, what happens to a partial last block (dropped
+   or kept), and the units. Expected values: hand sums over short series.
 
 ## Built
 
@@ -1608,6 +1608,13 @@ Updated with every chunk of work. Dates are absolute.
   and the white-noise power sum.
   Python 5224 passed, 2 skipped; .NET 4547 passed; conformance 2859/2859 in both. Version
   2026.11.16.66.
+- 2026-11-16: exceedance levels (ADR 0169): `exceedance_levels(powers, percents)` in
+  `measurements` (C# `Measurements.ExceedanceLevels`). `L_N` is the `1 − N/100` quantile of the
+  powers by linear interpolation between order statistics (Hyndman–Fan type 7, NumPy's default),
+  in power. `L_0` is the maximum and `L_100` the minimum. The vectors are hand-sorted series in
+  exact fractions. A Python test checks the result against `np.quantile`.
+  Python 5240 passed, 2 skipped; .NET 4562 passed; conformance 2873/2873 in both. Version
+  2026.11.16.67.
 
 ## Not built
 

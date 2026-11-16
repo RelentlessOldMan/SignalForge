@@ -1178,3 +1178,25 @@ def octave_band_levels(
         y = dsp.IirFilter(dsp.butterworth_bandpass(n, lower, upper, fs)).process(x)
         out[i] = float(np.mean(y.real * y.real + y.imag * y.imag))
     return out
+
+
+def exceedance_levels(powers: ArrayLike, percents: ArrayLike) -> NDArray[np.float64]:
+    """The level exceeded ``N`` % of the time for each ``N`` in ``percents``: the ``1 - N/100``
+    quantile of ``powers`` by linear interpolation (conventions: Exceedance levels; ADR 0169)."""
+    p = np.asarray(powers, dtype=np.float64)
+    if p.ndim != 1 or p.shape[0] == 0:
+        raise ValueError("powers must be a non-empty one-dimensional array")
+    if not np.all(np.isfinite(p)) or np.any(p < 0):
+        raise ValueError("powers must be finite and non-negative")
+    pct = np.asarray(percents, dtype=np.float64)
+    if pct.ndim != 1:
+        raise ValueError("percents must be a one-dimensional array")
+    if not np.all(np.isfinite(pct)) or np.any((pct < 0) | (pct > 100)):
+        raise ValueError("percents must be finite and in [0, 100]")
+    s = np.sort(p).tolist()
+    out = np.empty(pct.shape[0], dtype=np.float64)
+    for i, n in enumerate(pct.tolist()):
+        h = (len(s) - 1) * (1 - n / 100)
+        k = min(math.floor(h), len(s) - 1)
+        out[i] = s[k] if k == len(s) - 1 else s[k] + (h - k) * (s[k + 1] - s[k])
+    return out

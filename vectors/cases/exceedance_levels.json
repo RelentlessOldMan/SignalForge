@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "exceedance_levels",
+  "description": "Exceedance (percentile) levels (conventions: Exceedance levels; ADR 0169).",
+  "cases": [
+    {"id": "exceedance_levels.odd_length", "op": "exceedance_levels", "args": {"powers": [5.0, 1.0, 4.0, 2.0, 3.0], "percents": [10.0, 50.0, 90.0]}, "expected": [4.6, 3.0, 1.4], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "sorted 1..5, h = 4(1 - N/100): L10 at h = 3.6 is 4.6, L50 at h = 2 is 3, L90 at h = 0.4 is 1.4"},
+    {"id": "exceedance_levels.even_length", "op": "exceedance_levels", "args": {"powers": [0.25, 1.0, 0.5, 2.0], "percents": [50.0, 25.0]}, "expected": [0.75, 1.25], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "sorted 0.25, 0.5, 1, 2: L50 at h = 1.5 is 0.75, L25 at h = 2.25 is 1.25"},
+    {"id": "exceedance_levels.extremes", "op": "exceedance_levels", "args": {"powers": [3.0, 9.0, 1.0], "percents": [0.0, 100.0]}, "expected": [9.0, 1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "L0 is the maximum 9, L100 the minimum 1"},
+    {"id": "exceedance_levels.repeats", "op": "exceedance_levels", "args": {"powers": [2.0, 2.0, 2.0, 8.0], "percents": [10.0, 90.0]}, "expected": [6.2, 2.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "sorted 2, 2, 2, 8: L10 at h = 2.7 is 2 + 0.7(6) = 6.2, L90 at h = 0.3 is 2"},
+    {"id": "exceedance_levels.single", "op": "exceedance_levels", "args": {"powers": [0.125], "percents": [0.0, 37.5, 100.0]}, "expected": [0.125, 0.125, 0.125], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one value: every level is that value"},
+    {"id": "exceedance_levels.zeros", "op": "exceedance_levels", "args": {"powers": [0.0, 0.0, 1.0], "percents": [75.0]}, "expected": [0.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "sorted 0, 0, 1: L75 at h = 0.5 is 0"},
+    {"id": "exceedance_levels.no_percents", "op": "exceedance_levels", "args": {"powers": [1.0, 2.0], "percents": []}, "expected": [], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "no percents give an empty result"},
+    {"id": "exceedance_levels.empty_powers", "op": "exceedance_levels", "args": {"powers": [], "percents": [50.0]}, "error": "invalid_argument", "source": "powers must not be empty"},
+    {"id": "exceedance_levels.negative_power", "op": "exceedance_levels", "args": {"powers": [1.0, -0.5], "percents": [50.0]}, "error": "invalid_argument", "source": "powers must be non-negative"},
+    {"id": "exceedance_levels.nan_power", "op": "exceedance_levels", "args": {"powers": ["nan", 1.0], "percents": [50.0]}, "error": "invalid_argument", "source": "powers must be finite"},
+    {"id": "exceedance_levels.inf_power", "op": "exceedance_levels", "args": {"powers": ["inf", 1.0], "percents": [50.0]}, "error": "invalid_argument", "source": "powers must be finite"},
+    {"id": "exceedance_levels.percent_above", "op": "exceedance_levels", "args": {"powers": [1.0, 2.0], "percents": [100.5]}, "error": "invalid_argument", "source": "percents must be at most 100"},
+    {"id": "exceedance_levels.percent_below", "op": "exceedance_levels", "args": {"powers": [1.0, 2.0], "percents": [-1.0]}, "error": "invalid_argument", "source": "percents must be at least 0"},
+    {"id": "exceedance_levels.percent_nan", "op": "exceedance_levels", "args": {"powers": [1.0, 2.0], "percents": ["nan"]}, "error": "invalid_argument", "source": "percents must be finite"}
+  ]
+}

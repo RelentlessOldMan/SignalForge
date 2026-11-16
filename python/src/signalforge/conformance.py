@@ -70,6 +70,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "temporal_centroid": measurements.temporal_centroid,
     "time_weighting": measurements.time_weighting,
     "octave_band_levels": measurements.octave_band_levels,
+    "exceedance_levels": measurements.exceedance_levels,
     "zero_crossing_rate": measurements.zero_crossing_rate,
     "power_ccdf": measurements.power_ccdf,
     "kay_frequency": measurements.kay_frequency,
