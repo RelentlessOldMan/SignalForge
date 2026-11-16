@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "suite": "bark_scale",
+  "description": "Bark scale, Traunm\u00fcller (1990) with corrections (conventions: Bark scale; ADR 0163).",
+  "cases": [
+    {"id": "hz_to_bark.zero", "op": "hz_to_bark", "args": {"hz": 0.0}, "expected": -0.1505, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "z = -0.53 corrected to -0.53 + 0.15 x 2.53 = -0.1505"},
+    {"id": "hz_to_bark.f_1960", "op": "hz_to_bark", "args": {"hz": 1960.0}, "expected": 12.875, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "26.81/2 - 0.53 = 12.875, the middle branch, exact"},
+    {"id": "hz_to_bark.below_2", "op": "hz_to_bark", "args": {"hz": 204.0}, "expected": 1.9977689463955637, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "just below the z = 2 edge (f = 204.23...): low correction, in fractions"},
+    {"id": "hz_to_bark.above_2", "op": "hz_to_bark", "args": {"hz": 205.0}, "expected": 2.008591224018476, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "just above the z = 2 edge: uncorrected, in fractions"},
+    {"id": "hz_to_bark.below_20_1", "op": "hz_to_bark", "args": {"hz": 6542.0}, "expected": 20.099383674429546, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "just below the z = 20.1 edge (f = 6542.8...): uncorrected"},
+    {"id": "hz_to_bark.above_20_1", "op": "hz_to_bark", "args": {"hz": 6543.0}, "expected": 20.100134870045867, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "just above the z = 20.1 edge: high correction, in fractions"},
+    {"id": "hz_to_bark.f_20000", "op": "hz_to_bark", "args": {"hz": 20000.0}, "expected": 24.720288888888888, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "high correction, in fractions"},
+    {"id": "hz_to_bark.f_1e6", "op": "hz_to_bark", "args": {"hz": 1000000.0}, "expected": 27.57561733402531, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "near the limit 27.6396, in fractions"},
+    {"id": "bark_to_hz.b_12_875", "op": "bark_to_hz", "args": {"bark": 12.875}, "expected": 1960.0, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "the middle branch: 1960 (13.405)/(13.405) = 1960 exactly"},
+    {"id": "bark_to_hz.zero", "op": "bark_to_hz", "args": {"bark": 0.0}, "expected": 13.030303030303031, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "low branch: z = -0.3/0.85, then 1960 (z + 0.53)/(26.28 - z), in fractions"},
+    {"id": "bark_to_hz.b_1_999", "op": "bark_to_hz", "args": {"bark": 1.999}, "expected": 204.12907602112506, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "just below 2: low branch, in fractions"},
+    {"id": "bark_to_hz.b_2_001", "op": "bark_to_hz", "args": {"bark": 2.001}, "expected": 204.32307755673625, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "just above 2: middle branch, in fractions"},
+    {"id": "bark_to_hz.b_20", "op": "bark_to_hz", "args": {"bark": 20.0}, "expected": 6407.452229299363, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "just below 20.1: middle branch, in fractions"},
+    {"id": "bark_to_hz.b_20_2", "op": "bark_to_hz", "args": {"bark": 20.2}, "expected": 6657.139631162965, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "just above 20.1: high branch, in fractions"},
+    {"id": "bark_to_hz.b_27", "op": "bark_to_hz", "args": {"bark": 27.0}, "expected": 98271.507191995, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "near the limit: high branch, in fractions"},
+    {"id": "hz_to_bark.negative", "op": "hz_to_bark", "args": {"hz": -1.0}, "error": "invalid_argument", "source": "hz must be non-negative"},
+    {"id": "hz_to_bark.nan", "op": "hz_to_bark", "args": {"hz": "nan"}, "error": "invalid_argument", "source": "hz must be finite"},
+    {"id": "hz_to_bark.inf", "op": "hz_to_bark", "args": {"hz": "inf"}, "error": "invalid_argument", "source": "hz must be finite"},
+    {"id": "bark_to_hz.below_zero_hz", "op": "bark_to_hz", "args": {"bark": -0.2}, "error": "invalid_argument", "source": "bark must be at least hz_to_bark(0) = -0.1505"},
+    {"id": "bark_to_hz.at_limit", "op": "bark_to_hz", "args": {"bark": 27.64}, "error": "invalid_argument", "source": "bark must be below the limit 27.6396"},
+    {"id": "bark_to_hz.nan", "op": "bark_to_hz", "args": {"bark": "nan"}, "error": "invalid_argument", "source": "bark must be finite"},
+    {"id": "bark_to_hz.inf", "op": "bark_to_hz", "args": {"bark": "inf"}, "error": "invalid_argument", "source": "bark must be finite"}
+  ]
+}

@@ -146,6 +146,12 @@ rule for code not written yet.
   `Units.ErbSpace`, [ADR 0162](adr/0162-erb-space.md)): `f_i = erb_rate_to_hz(E_lo + (E_hi −
   E_lo)·i/(n − 1))`, ascending, first exactly `min` and last exactly `max`; `n = 1` gives
   `[min]`. `0 ≤ min < max` finite, `n ≥ 1`. **(implemented)**
+- **Bark scale** (`hz_to_bark(hz)`, `bark_to_hz(bark)`, C# `Units.HzToBark`, `Units.BarkToHz`,
+  [ADR 0163](adr/0163-bark-scale.md)): Traunmüller (1990), `z = 26.81 f/(1960 + f) − 0.53`, then
+  `z < 2`: `z + 0.15 (2 − z)`; `z > 20.1`: `z + 0.22 (z − 20.1)`. Inverse: below 2 `z = (b −
+  0.3)/0.85`, above 20.1 `z = (b + 4.422)/1.22`, then `f = 1960 (z + 0.53)/(26.28 − z)`, clamped
+  at 0. `hz` finite and `≥ 0`; `bark` finite, `≥ −0.53 + 0.15 (2 + 0.53)` (computed in floating
+  point) and with `z < 26.28`. **(implemented)**
 
 ## Spectra
 

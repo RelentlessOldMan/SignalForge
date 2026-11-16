@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Bark scale**: `hz_to_bark(hz)` and `bark_to_hz(bark)` in `units`, after Traunmüller
-   (1990): `z = 26.81 f/(1960 + f) − 0.53`, with the low and high corrections (`z < 2`:
-   `z + 0.15 (2 − z)`; `z > 20.1`: `z + 0.22 (z − 20.1)`). Not built yet. Needs an ADR: whether
-   to apply the corrections (as an option, or always), the inverse (closed form through each
-   branch), and the domain. Expected values: the rational closed form is exact in
-   `fractions`, and the branch edges are checked from both sides.
+1. **Frequency weightings**: `a_weighting(frequency)` and `c_weighting(frequency)` in
+   `units`, the IEC 61672-1 curves in dB, from the analytic pole frequencies 20.6, 107.7,
+   737.9 and 12194 Hz, normalized to 0 dB at 1 kHz. Not built yet. Needs an ADR: whether the
+   normalization constant is computed exactly or taken as the standard's rounded −2.000 and
+   −0.062 dB, the value at 0 Hz (−inf), and whether the filter (bilinear SOS) is in scope.
+   Expected values: the closed form in `decimal`, checked against the standard's
+   nominal table to its 0.1 dB rounding.
 
 ## Built
 
@@ -1557,6 +1558,13 @@ Updated with every chunk of work. Dates are absolute.
   `decimal`, with a point placed at `E = 21.4` by construction.
   Python 5113 passed, 2 skipped; .NET 4435 passed; conformance 2766/2766 in both. Version
   2026.11.16.60.
+- 2026-11-16: Bark scale (ADR 0163): `hz_to_bark` and `bark_to_hz` in `units` (C#
+  `Units.HzToBark`, `Units.BarkToHz`), after Traunmüller (1990) with both end corrections always
+  applied. The inverse is closed form by branch and clamped at 0. Its domain runs from
+  `hz_to_bark(0)` to the limit 27.6396. The vectors are exact in `fractions`, with points on
+  both sides of each branch edge.
+  Python 5138 passed, 2 skipped; .NET 4460 passed; conformance 2788/2788 in both. Version
+  2026.11.16.61.
 
 ## Not built
 

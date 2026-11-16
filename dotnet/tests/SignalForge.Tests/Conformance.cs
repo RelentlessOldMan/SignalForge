@@ -219,6 +219,8 @@ public static class Conformance
             "hz_to_erb_rate" => Bind(a.D("hz"), Units.HzToErbRate),
             "erb_rate_to_hz" => Bind(a.D("erb"), Units.ErbRateToHz),
             "erb_bandwidth" => Bind(a.D("hz"), Units.ErbBandwidth),
+            "hz_to_bark" => Bind(a.D("hz"), Units.HzToBark),
+            "bark_to_hz" => Bind(a.D("bark"), Units.BarkToHz),
             "erb_space" => Bind((a.D("min_frequency"), a.D("max_frequency"), a.I("n_frequencies")), t => Units.ErbSpace(t.Item1, t.Item2, t.Item3)),
             "w_to_dbm" => Bind(a.D("watts"), Units.WToDbm),
             "dbm_to_w" => Bind(a.D("dbm"), Units.DbmToW),

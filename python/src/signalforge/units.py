@@ -164,3 +164,28 @@ def erb_space(
     out = np.asarray(erb_rate_to_hz(rates), dtype=np.float64)
     out[0], out[-1] = lo, hi
     return out
+
+
+_BARK_AT_ZERO = -0.53 + 0.15 * (2.0 - -0.53)
+
+
+def hz_to_bark(hz: ArrayLike) -> NDArray[np.float64] | float:
+    """Frequency in Hz to Bark, Traunmüller (1990) with both corrections (conventions: Bark
+    scale; ADR 0163)."""
+    f = _finite_non_negative(hz, "hz")
+    z = 26.81 * f / (1960.0 + f) - 0.53
+    return _out(
+        np.where(z < 2.0, z + 0.15 * (2.0 - z), np.where(z > 20.1, z + 0.22 * (z - 20.1), z))
+    )
+
+
+def bark_to_hz(bark: ArrayLike) -> NDArray[np.float64] | float:
+    """Bark to frequency in Hz, the inverse of ``hz_to_bark`` (conventions: Bark scale;
+    ADR 0163)."""
+    b = np.asarray(bark, dtype=np.float64)
+    if not (np.all(np.isfinite(b)) and np.all(b >= _BARK_AT_ZERO)):
+        raise ValueError("bark must be finite and at least hz_to_bark(0)")
+    z = np.where(b < 2.0, (b - 0.3) / 0.85, np.where(b > 20.1, (b + 4.422) / 1.22, b))
+    if not np.all(z < 26.28):
+        raise ValueError("bark must be below the limit 27.6396")
+    return _out(np.maximum(0.0, 1960.0 * (z + 0.53) / (26.28 - z)))

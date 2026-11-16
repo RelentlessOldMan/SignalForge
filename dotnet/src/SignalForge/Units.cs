@@ -131,6 +131,35 @@ public static class Units
         return result;
     }
 
+    /// <summary>Frequency in Hz to Bark, Traunmüller (1990) with both corrections (conventions:
+    /// Bark scale; ADR 0163).</summary>
+    /// <param name="hz">A frequency, finite and non-negative.</param>
+    /// <returns>The critical-band rate in Bark.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double HzToBark(double hz)
+    {
+        FiniteNonNegative(hz, nameof(hz));
+        double z = 26.81 * hz / (1960.0 + hz) - 0.53;
+        return z < 2.0 ? z + 0.15 * (2.0 - z) : z > 20.1 ? z + 0.22 * (z - 20.1) : z;
+    }
+
+    /// <summary>Bark to frequency in Hz, the inverse of <see cref="HzToBark"/> (conventions: Bark
+    /// scale; ADR 0163).</summary>
+    /// <param name="bark">A Bark value, finite, at least <c>HzToBark(0)</c> and below 27.6396.</param>
+    /// <returns>The frequency in Hz.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double BarkToHz(double bark)
+    {
+        if (!(double.IsFinite(bark) && bark >= BarkAtZero))
+            throw new ArgumentOutOfRangeException(nameof(bark), bark, "must be finite and at least HzToBark(0)");
+        double z = bark < 2.0 ? (bark - 0.3) / 0.85 : bark > 20.1 ? (bark + 4.422) / 1.22 : bark;
+        if (!(z < 26.28))
+            throw new ArgumentOutOfRangeException(nameof(bark), bark, "must be below the limit 27.6396");
+        return Math.Max(0.0, 1960.0 * (z + 0.53) / (26.28 - z));
+    }
+
+    private const double BarkAtZero = -0.53 + 0.15 * (2.0 - -0.53);
+
     private const double SlaneyHzPerMel = 200.0 / 3.0;
     private static readonly double SlaneyLogStep = Math.Log(6.4) / 27.0;
 
