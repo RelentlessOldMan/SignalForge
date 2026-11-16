@@ -754,6 +754,64 @@ def generalized_lomb_scargle(
     return out
 
 
+def lomb_scargle_multiterm(
+    times: ArrayLike,
+    values: ArrayLike,
+    frequencies: ArrayLike,
+    terms: int,
+    *,
+    uncertainties: ArrayLike | None = None,
+    normalization: str = "standard",
+) -> NDArray[np.float64]:
+    """The weighted fit of a constant and ``terms`` harmonics at each frequency (Hz), as the
+    fraction ``(chi2_0 - chi2)/chi2_0`` or for ``"power"`` half the drop in chi2 (conventions:
+    Spectra, Multiterm Lomb-Scargle; ADR 0103)."""
+    t = _finite_reals(times, "times")
+    y = _finite_reals(values, "values")
+    f = _finite_reals(frequencies, "frequencies")
+    if t.size != y.size or t.size < 2:
+        raise ValueError("times and values must have the same length, at least 2")
+    k_max = count(terms, "terms")
+    if k_max < 1:
+        raise ValueError("terms must be at least 1")
+    if uncertainties is None:
+        inv = np.ones(t.size)
+    else:
+        sigma = _finite_reals(uncertainties, "uncertainties")
+        if sigma.size != t.size or np.any(sigma <= 0):
+            raise ValueError("uncertainties must be positive, one per sample")
+        inv = 1 / sigma**2
+    if np.any(f <= 0):
+        raise ValueError("frequencies must be positive")
+    if normalization not in ("standard", "power"):
+        raise ValueError('normalization must be "standard" or "power"')
+    big_w = float(np.sum(inv))
+    w = inv / big_w
+    yc = y - float(np.dot(w, y))
+    yy = float(np.dot(w, yc * yc))
+    # the weights need not sum to exactly 1, so equal values can leave a tiny yy
+    if normalization == "standard" and (np.all(y == y[0]) or not yy > 0):
+        raise ValueError("the standard normalization needs values that are not all equal")
+    out = np.empty(f.size)
+    for i, fi in enumerate(f):
+        om = 2 * math.pi * float(fi)
+        kept: list[tuple[NDArray[np.float64], float]] = []
+        explained = 0.0
+        for k in range(1, k_max + 1):
+            arg = om * k * t
+            for column in (np.cos(arg), np.sin(arg)):
+                q = column - float(np.dot(w, column))
+                for b, bb in kept:
+                    q = q - (float(np.dot(w, q * b)) / bb) * b
+                qq = float(np.dot(w, q * q))
+                if qq < 1e-12:
+                    continue
+                kept.append((q, qq))
+                explained += float(np.dot(w, yc * q)) ** 2 / qq
+        out[i] = explained / yy if normalization == "standard" else big_w * explained / 2
+    return out
+
+
 def lomb_scargle_false_alarm(
     power: float, num_samples: int, *, num_frequencies: int = 1, center: bool = True
 ) -> float:

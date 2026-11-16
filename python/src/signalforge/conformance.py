@@ -82,6 +82,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "dpss_tapers": spectral.dpss_tapers,
     "harmonic_f_test": spectral.harmonic_f_test,
     "generalized_lomb_scargle": spectral.generalized_lomb_scargle,
+    "lomb_scargle_multiterm": spectral.lomb_scargle_multiterm,
     "multitaper_line_removal": spectral.multitaper_line_removal,
     "multitaper_psd": spectral.multitaper_psd,
     "spectrogram": spectral.spectrogram,

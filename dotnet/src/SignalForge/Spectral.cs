@@ -1043,6 +1043,119 @@ public static class Spectral
         return out_;
     }
 
+    /// <summary>
+    /// Multiterm Lomb-Scargle periodogram: the weighted fit of a constant and <paramref name="terms"/>
+    /// harmonics <c>aₖ cos kωt + bₖ sin kωt</c> at each frequency (conventions: Spectra, Multiterm
+    /// Lomb-Scargle; ADR 0103).
+    /// </summary>
+    /// <param name="times">Sample times, finite, in any order; at least two.</param>
+    /// <param name="values">Finite values, one per time.</param>
+    /// <param name="frequencies">Trial frequencies in Hz, finite and positive; may be empty.</param>
+    /// <param name="terms">The number of harmonics, at least 1.</param>
+    /// <param name="uncertainties">σ per sample, finite and positive; null for all 1.</param>
+    /// <param name="normalization">Standard <c>(χ²₀ − χ²)/χ²₀</c>, or power <c>(χ²₀ − χ²)/2</c>.</param>
+    /// <returns>The periodogram at each frequency, in their order.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LombScargleMultiterm(ReadOnlySpan<double> times, ReadOnlySpan<double> values,
+        ReadOnlySpan<double> frequencies, int terms, double[]? uncertainties = null,
+        LombScargleNormalization normalization = LombScargleNormalization.Standard)
+    {
+        int n = times.Length;
+        if (values.Length != n || n < 2)
+            throw new ArgumentException("times and values must have the same length, at least 2", nameof(values));
+        foreach (double v in times)
+            if (!double.IsFinite(v)) throw new ArgumentException("times must be finite", nameof(times));
+        foreach (double v in values)
+            if (!double.IsFinite(v)) throw new ArgumentException("values must be finite", nameof(values));
+        ArgumentOutOfRangeException.ThrowIfLessThan(terms, 1);
+        var w = new double[n];
+        for (int i = 0; i < n; i++)
+            w[i] = 1;
+        if (uncertainties is not null)
+        {
+            if (uncertainties.Length != n)
+                throw new ArgumentException("uncertainties must have one value per sample", nameof(uncertainties));
+            for (int i = 0; i < n; i++)
+            {
+                double s = uncertainties[i];
+                if (!(double.IsFinite(s) && s > 0))
+                    throw new ArgumentException("uncertainties must be finite and positive", nameof(uncertainties));
+                w[i] = 1 / (s * s);
+            }
+        }
+        foreach (double v in frequencies)
+            if (!(double.IsFinite(v) && v > 0)) throw new ArgumentException("frequencies must be finite and positive", nameof(frequencies));
+        if (normalization is not (LombScargleNormalization.Standard or LombScargleNormalization.Power))
+            throw new ArgumentException($"unknown normalization {normalization}", nameof(normalization));
+        double bigW = 0;
+        foreach (double v in w)
+            bigW += v;
+        for (int i = 0; i < n; i++)
+            w[i] /= bigW;
+        var yc = new double[n];
+        double mean = Dot(w, values.ToArray());
+        for (int i = 0; i < n; i++)
+            yc[i] = values[i] - mean;
+        double yy = Dot3(w, yc, yc);
+        // the weights need not sum to exactly 1, so equal values can leave a tiny yy
+        if (normalization == LombScargleNormalization.Standard && (!values.ContainsAnyExcept(values[0]) || !(yy > 0)))
+            throw new ArgumentException("the standard normalization needs values that are not all equal", nameof(values));
+        var out_ = new double[frequencies.Length];
+        for (int j = 0; j < out_.Length; j++)
+        {
+            double om = 2 * Math.PI * frequencies[j];
+            var kept = new List<(double[] Q, double QQ)>();
+            double explained = 0;
+            for (int k = 1; k <= terms; k++)
+            {
+                for (int part = 0; part < 2; part++)
+                {
+                    var q = new double[n];
+                    for (int i = 0; i < n; i++)
+                    {
+                        double arg = om * k * times[i];
+                        q[i] = part == 0 ? Math.Cos(arg) : Math.Sin(arg);
+                    }
+                    double m = Dot(w, q);
+                    for (int i = 0; i < n; i++)
+                        q[i] -= m;
+                    foreach (var (b, bb) in kept)
+                    {
+                        double c = Dot3(w, q, b) / bb;
+                        for (int i = 0; i < n; i++)
+                            q[i] -= c * b[i];
+                    }
+                    double qq = Dot3(w, q, q);
+                    if (qq < 1e-12)
+                        continue;
+                    kept.Add((q, qq));
+                    double yq = Dot3(w, yc, q);
+                    explained += yq * yq / qq;
+                }
+            }
+            out_[j] = normalization == LombScargleNormalization.Standard ? explained / yy : bigW * explained / 2;
+        }
+        return out_;
+    }
+
+    /// <summary>Σ w a.</summary>
+    private static double Dot(double[] w, double[] a)
+    {
+        double s = 0;
+        for (int i = 0; i < w.Length; i++)
+            s += w[i] * a[i];
+        return s;
+    }
+
+    /// <summary>Σ w a b.</summary>
+    private static double Dot3(double[] w, double[] a, double[] b)
+    {
+        double s = 0;
+        for (int i = 0; i < w.Length; i++)
+            s += w[i] * a[i] * b[i];
+        return s;
+    }
+
     /// <summary>The weighted centered sum Σ w a b − (Σ w a)(Σ w b), weights summing to 1.</summary>
     private static double Cov(double[] w, double[] a, double[] b)
     {

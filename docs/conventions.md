@@ -260,6 +260,17 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `(χ²₀ − χ²)/χ²₀` of the weighted fit of `a cos ωt + b sin ωt + c`, with `χ²₀` the weighted scatter
   about the weighted mean. With unit σ on even samples at a bin it equals the classic centered
   form. **(implemented)**
+- **Multiterm Lomb-Scargle** (`lomb_scargle_multiterm(times, values, frequencies, terms, *,
+  uncertainties=None, normalization="standard")`, [ADR 0103](adr/0103-multiterm-lomb-scargle.md)).
+  Arguments as for the generalized form, plus `terms`, an integer `≥ 1`. For each `f`, the
+  weighted fit of `c + Σₖ aₖ cos kωt + bₖ sin kωt`, `k = 1 … terms`, by modified Gram-Schmidt with
+  `⟨a, b⟩ = Σ wₙaₙbₙ`. The columns are taken in the order `cos ωt, sin ωt, cos 2ωt, …`, with the
+  argument `(ω·k)·t`, each with its weighted mean subtracted. Each has its projections onto the
+  kept columns removed in order, `q ← q − (⟨q, qᵢ⟩/⟨qᵢ, qᵢ⟩)qᵢ`, and is dropped if
+  `⟨q, q⟩ < 1e-12`. With `S` the sum of `⟨y_c, q⟩²/⟨q, q⟩` over the kept columns (`y_c` the
+  centered values), `"standard"` returns `S/YY` (needs values not all equal) and `"power"` `½·W·S`. That is
+  `(χ²₀ − χ²)/χ²₀` and `½(χ²₀ − χ²)`. `terms = 1` is the generalized form to rounding.
+  **(implemented)**
 - **Lomb-Scargle false-alarm probability** (`lomb_scargle_false_alarm(power, num_samples,
   num_frequencies=1, center=True)`, [ADR 0062](adr/0062-lomb-scargle-significance.md)), for the
   standard normalization: `P₁ = (1 − z)^((N − d)/2)` with `d = 3` centered, `2` not (the Beta

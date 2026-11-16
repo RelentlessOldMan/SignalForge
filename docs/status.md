@@ -4,14 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Multiterm Lomb-Scargle**: `lomb_scargle_multiterm(times, values, frequencies, terms, *,
-   uncertainties=None)`, the generalized periodogram (ADR 0081) with `terms` harmonics: for each
-   `f`, `(χ²₀ − χ²)/χ²₀` of the weighted least-squares fit of `c + Σₖ aₖ cos kωt + bₖ sin kωt`,
-   `k = 1 … terms`. Needs an ADR: how the fit is solved in both languages (the same small solver,
-   in the same order), what happens when the design is singular (a frequency where harmonics
-   alias, too few samples), and the limits on `terms`. Expected values: `terms = 1` gives
-   `generalized_lomb_scargle`; a generator that solves the normal equations in exact rationals
-   from the floating-point design; a square wave whose harmonics a multiterm fit captures by hand.
+1. **Sample clock jitter**: `clock_jitter(samples, rms, *, seed, half_width=16)`, a receiver
+   whose sampling instants wander, `y[n] = z(n + σ·gₙ)`, with `gₙ` independent standard Gaussians
+   and `z` the fractional delay kernel read of ADR 0045. ADR 0045 left jitter for later. Needs an
+   ADR: white jitter only or also a random walk, the limit on `σ` (the kernel's reach), what
+   happens at the ends (reads before 0 or after `N − 1`), and the seed rules of AWGN. Expected
+   values: `σ = 0` gives the input; the random streams differ between languages, so the
+   cross-language checks are statistics. For a tone at `f` cycles per sample, the error power is
+   `2(1 − e^{−(2πfσ)²/2})` by hand, the classic jitter SNR.
 
 ## Built
 
@@ -1060,11 +1060,22 @@ Updated with every chunk of work. Dates are absolute.
   worked by hand. 15 vectors.
   Python 3886 passed, 2 skipped; .NET 3269 passed; conformance 1988/1988 in both. Version
   2026.11.16.0.
+- 2026-11-16: multiterm Lomb-Scargle (ADR 0103): `lomb_scargle_multiterm(times, values,
+  frequencies, terms, *, uncertainties=None, normalization="standard")` (C#
+  `Spectral.LombScargleMultiterm`) fits a constant and `terms` harmonics at each frequency, with
+  weights. It is solved by modified Gram-Schmidt on weighted, centered columns in a fixed order,
+  dropping a column the earlier ones already span, below the ADR 0081 threshold. `terms = 1` is
+  the generalized form to rounding. The generator solves the uncentered normal equations in
+  exact rationals. A square wave on eight samples is worked by hand from its DFT: one term
+  explains `(1 + √2/2)/2`, three explain all of it. The standard form rejects equal values
+  outright, because weights that do not sum to exactly 1 could leave a tiny scatter. 22 vectors.
+  Python 3929 passed, 2 skipped; .NET 3305 passed; conformance 2010/2010 in both. Version
+  2026.11.16.1.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
-and Lomb-Scargle (multiband and multiterm forms), the rest of modulation (PSK/QAM
+and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset and linear clock drift, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,

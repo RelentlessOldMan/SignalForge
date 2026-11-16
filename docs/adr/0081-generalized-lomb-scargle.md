@@ -36,7 +36,8 @@ left this for a separate function.
 
 The false-alarm probability for the generalized form. The ADR 0062 formula with `d = 3` holds
 here exactly, because the constant is fitted at each frequency, but it is not wired up.
-Uncertainties for the classic function are also left out.
+Uncertainties for the classic function are also left out. Harmonics are
+[ADR 0103](0103-multiterm-lomb-scargle.md).
 
 ## Consequences
 
