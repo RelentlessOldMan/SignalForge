@@ -1592,6 +1592,33 @@ def harmonic_series(
     return HarmonicSeries(num / den, np.array(best_orders, dtype=np.int64), best_n)
 
 
+def inharmonicity(
+    frequencies: ArrayLike, heights: ArrayLike, fundamental: float, orders: ArrayLike
+) -> float:
+    """``(2/f0)·Σ h|t - m·f0| / Σ h`` over the tones with order ``m >= 1``: 0 for exact
+    harmonics, 1 for partials half a fundamental away."""
+    t = np.asarray(frequencies, dtype=np.float64)
+    h = np.asarray(heights, dtype=np.float64)
+    m = np.asarray(orders, dtype=np.float64)
+    if t.ndim != 1 or h.shape != t.shape or m.shape != t.shape:
+        raise ValueError("frequencies, heights and orders must be 1-D arrays of the same length")
+    if not (np.all(np.isfinite(t)) and np.all(t > 0)):
+        raise ValueError("frequencies must be finite and positive")
+    if not (np.all(np.isfinite(h)) and np.all(h >= 0)):
+        raise ValueError("heights must be finite and non-negative")
+    if not (np.all(np.isfinite(m)) and np.all(m >= 0) and np.all(m == np.floor(m))):
+        raise ValueError("orders must be whole numbers >= 0")
+    f0 = real(fundamental, "fundamental")
+    if not f0 > 0:
+        raise ValueError("fundamental must be > 0")
+    use = m >= 1
+    total = float(np.sum(h[use]))
+    if not total > 0:
+        raise ValueError("the matched tones' heights must sum to more than 0")
+    spread = float(np.sum(h[use] * np.abs(t[use] - m[use] * f0)))
+    return 2 / f0 * spread / total
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,

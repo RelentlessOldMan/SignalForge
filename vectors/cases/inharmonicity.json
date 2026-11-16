@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "inharmonicity",
+  "description": "Inharmonicity (conventions: Spectra, Inharmonicity; ADR 0140).",
+  "cases": [
+    {"id": "inharmonicity.exact", "op": "inharmonicity", "args": {"frequencies": [100.0, 200.0, 300.0], "heights": [1.0, 1.0, 1.0], "fundamental": 100.0, "orders": [1, 2, 3]}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "exact multiples of 100 Hz: no spread"},
+    {"id": "inharmonicity.detuned", "op": "inharmonicity", "args": {"frequencies": [100.0, 202.0, 297.0], "heights": [4.0, 2.0, 1.0], "fundamental": 100.0, "orders": [1, 2, 3]}, "expected": 0.02, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "spreads 0, 2, 3 weighted 4, 2, 1: (0 + 4 + 3)/7 = 1 Hz, times 2/100"},
+    {"id": "inharmonicity.unmatched", "op": "inharmonicity", "args": {"frequencies": [100.0, 150.0, 205.0], "heights": [1.0, 9.0, 1.0], "fundamental": 100.0, "orders": [1, 0, 2]}, "expected": 0.05, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the order-0 tone at 150 Hz is left out: spreads 0 and 5, mean 5/2, times 2/100"},
+    {"id": "inharmonicity.zero_height", "op": "inharmonicity", "args": {"frequencies": [100.0, 230.0], "heights": [1.0, 0.0], "fundamental": 100.0, "orders": [1, 2]}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the 230 Hz tone has no weight"},
+    {"id": "inharmonicity.half_fundamental", "op": "inharmonicity", "args": {"frequencies": [150.0], "heights": [3.0], "fundamental": 100.0, "orders": [1]}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "a partial half a fundamental from its harmonic: 2/100 times 50"},
+    {"id": "inharmonicity.none_matched", "op": "inharmonicity", "args": {"frequencies": [100.0, 200.0], "heights": [1.0, 1.0], "fundamental": 100.0, "orders": [0, 0]}, "error": "invalid_argument", "source": "no tone has order >= 1"},
+    {"id": "inharmonicity.matched_silent", "op": "inharmonicity", "args": {"frequencies": [100.0, 200.0], "heights": [0.0, 1.0], "fundamental": 100.0, "orders": [1, 0]}, "error": "invalid_argument", "source": "the matched tone's height is 0"},
+    {"id": "inharmonicity.length_mismatch", "op": "inharmonicity", "args": {"frequencies": [100.0, 200.0], "heights": [1.0, 1.0], "fundamental": 100.0, "orders": [1, 2, 3]}, "error": "invalid_argument", "source": "orders is longer than frequencies"},
+    {"id": "inharmonicity.negative_height", "op": "inharmonicity", "args": {"frequencies": [100.0, 200.0], "heights": [1.0, -1.0], "fundamental": 100.0, "orders": [1, 2]}, "error": "invalid_argument", "source": "heights must be non-negative"},
+    {"id": "inharmonicity.zero_fundamental", "op": "inharmonicity", "args": {"frequencies": [100.0, 200.0], "heights": [1.0, 1.0], "fundamental": 0.0, "orders": [1, 2]}, "error": "invalid_argument", "source": "fundamental must be > 0"},
+    {"id": "inharmonicity.negative_order", "op": "inharmonicity", "args": {"frequencies": [100.0, 200.0], "heights": [1.0, 1.0], "fundamental": 100.0, "orders": [1, -2]}, "error": "invalid_argument", "source": "orders must be >= 0"},
+    {"id": "inharmonicity.zero_tone", "op": "inharmonicity", "args": {"frequencies": [0.0, 200.0], "heights": [1.0, 1.0], "fundamental": 100.0, "orders": [1, 2]}, "error": "invalid_argument", "source": "frequencies must be positive"}
+  ]
+}

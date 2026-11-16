@@ -4,12 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Inharmonicity**: how far a set of tones sits from an exact harmonic series. Not built yet.
-   Needs an ADR: `inharmonicity(frequencies, heights, fundamental, orders)` taking the output of
-   `harmonic_series` (and `find_tones` heights), the definition (the usual one: the
-   height-weighted mean of `|t − m·f0|/(m·f0)`, or of `|t − m·f0|/f0`), what unmatched tones
-   (order 0) contribute, and its units. Expected values: hand-built tones at known detunings,
-   worked in Fractions.
+1. **Odd-to-even harmonic ratio**: the power in odd harmonics over the power in even ones, from
+   `find_tones` heights and `harmonic_series` orders. Not built yet. Needs an ADR: whether the
+   fundamental (order 1) counts as odd (some definitions leave it out), what an empty even set
+   gives (`inf`, or `invalid_argument`), and whether it is a ratio or in dB. Expected values:
+   hand-built heights, worked in Fractions.
 
 ## Built
 
@@ -1375,6 +1374,14 @@ Updated with every chunk of work. Dates are absolute.
   permuting and scaling the tones, and a clipped sine through `find_tones`.
   Python 4731 passed, 2 skipped; .NET 4068 passed; conformance 2461/2461 in both. Version
   2026.11.16.37.
+- 2026-11-16: inharmonicity (ADR 0140): `inharmonicity(frequencies, heights, fundamental,
+  orders)` (C# `Spectral.Inharmonicity`) is `(2/f0)·Σ h|t − m·f0| / Σ h` over the tones with
+  order at least 1. It takes `harmonic_series` output and `find_tones` heights. It is
+  dimensionless: 0 for exact harmonics, 1 for partials half a fundamental away. The vectors are
+  worked by hand in Fractions. The tests cover scaling the frequencies and the heights, and a
+  stiff-string series that grows with stiffness.
+  Python 4746 passed, 2 skipped; .NET 4083 passed; conformance 2473/2473 in both. Version
+  2026.11.16.38.
 
 ## Not built
 

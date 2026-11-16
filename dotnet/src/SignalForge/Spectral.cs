@@ -2141,6 +2141,43 @@ public static class Spectral
     }
 
     /// <summary>
+    /// <c>(2/f0)·Σ h|t − m·f0| / Σ h</c> over the tones with order <c>m ≥ 1</c>: 0 for exact
+    /// harmonics, 1 for partials half a fundamental away (conventions: Spectra,
+    /// Inharmonicity; ADR 0140).
+    /// </summary>
+    /// <param name="frequencies">Tone frequencies in Hz, finite and positive.</param>
+    /// <param name="heights">Tone heights (powers), finite and non-negative.</param>
+    /// <param name="fundamental">The fundamental in Hz, finite and positive.</param>
+    /// <param name="orders">Each tone's harmonic order, 0 when unmatched.</param>
+    /// <returns>The inharmonicity, dimensionless.</returns>
+    /// <exception cref="ArgumentException">The arrays differ in length or hold bad values, <paramref name="fundamental"/> is not finite and positive, or the matched tones' heights do not sum to more than 0.</exception>
+    public static double Inharmonicity(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> heights, double fundamental, ReadOnlySpan<int> orders)
+    {
+        if (heights.Length != frequencies.Length || orders.Length != frequencies.Length)
+            throw new ArgumentException("frequencies, heights and orders must have the same length", nameof(orders));
+        if (!(double.IsFinite(fundamental) && fundamental > 0))
+            throw new ArgumentOutOfRangeException(nameof(fundamental), "fundamental must be finite and > 0");
+        double total = 0, spread = 0;
+        for (int i = 0; i < frequencies.Length; i++)
+        {
+            if (!(double.IsFinite(frequencies[i]) && frequencies[i] > 0))
+                throw new ArgumentException("frequencies must be finite and positive", nameof(frequencies));
+            if (!(double.IsFinite(heights[i]) && heights[i] >= 0))
+                throw new ArgumentException("heights must be finite and non-negative", nameof(heights));
+            if (orders[i] < 0)
+                throw new ArgumentException("orders must be >= 0", nameof(orders));
+            if (orders[i] >= 1)
+            {
+                total += heights[i];
+                spread += heights[i] * Math.Abs(frequencies[i] - orders[i] * fundamental);
+            }
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the matched tones' heights must sum to more than 0", nameof(heights));
+        return 2 / fundamental * spread / total;
+    }
+
+    /// <summary>
     /// Each spectral peak's width where the PSD crosses height − relHeight·prominence,
     /// interpolated linearly between bins; in order of frequency (conventions: Spectra, Peak
     /// widths; ADR 0138).

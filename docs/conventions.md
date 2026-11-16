@@ -495,6 +495,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   over its matches. Gives `HarmonicSeries(fundamental, orders, matched)`, with `orders[i] = 0`
   for an unmatched tone. Tones finite and positive, `tolerance > 0` Hz, `max_order ≥ 1`.
   **(implemented)**
+- **Inharmonicity** (`inharmonicity(frequencies, heights, fundamental, orders)`,
+  [ADR 0140](adr/0140-inharmonicity.md)): `(2/f0)·Σ h_i |t_i − m_i f0| / Σ h_i` over the tones
+  with `m_i ≥ 1`; order 0 is left out. Dimensionless, 0 for exact harmonics. Arrays 1-D of one
+  length; tones finite and positive, heights finite and `≥ 0`, orders whole and `≥ 0`, `f0`
+  finite and positive; the matched heights must sum to more than 0. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on
