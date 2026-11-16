@@ -397,6 +397,39 @@ def _carrier(
     return _Carrier(d, c, w, pc, fc)
 
 
+def _spur_list(spur_offsets: ArrayLike | None) -> list[float]:
+    if spur_offsets is None:
+        return []
+    s = np.asarray(spur_offsets, dtype=np.float64)
+    if s.ndim != 1:
+        raise ValueError("spur_offsets must be one-dimensional")
+    if not np.all(np.isfinite(s) & (s > 0)):
+        raise ValueError("spur_offsets must be finite and positive")
+    return [float(v) for v in s]
+
+
+def _without_spurs(k: _Carrier, spurs: list[float]) -> NDArray[np.float64]:
+    """A copy of the PSD with each spur's group, on each side, replaced by a straight line between
+    the bins just outside it (conventions: Phase noise with spurs removed; ADR 0115)."""
+    psd = np.array(k.d.psd, dtype=np.float64)
+    fs = k.d.sample_rate
+    lo = 0.0 if k.d.one_sided else -fs / 2
+    n = psd.size
+    for o in spurs:
+        for f in (k.fc - o, k.fc + o):
+            if not (f >= lo and (f <= fs / 2 if k.d.one_sided else f < fs / 2)):
+                continue
+            s = k.nearest(f)
+            if abs(s - k.c) <= 2 * k.w + 1:
+                raise ValueError("a spur's group reaches the carrier group")
+            a, b = s - k.w - 1, s + k.w + 1
+            va = float(psd[a]) if a >= 0 else float(psd[b])
+            vb = float(psd[b]) if b < n else va
+            for j in range(max(a + 1, 0), min(b - 1, n - 1) + 1):
+                psd[j] = va + (vb - va) * (j - a) / (2 * k.w + 2)
+    return psd
+
+
 def phase_noise_ssb(
     samples: ArrayLike,
     sample_rate: float,
@@ -407,16 +440,19 @@ def phase_noise_ssb(
     window: str = "blackman_harris",
     beta: float | None = None,
     width: int | None = None,
+    spur_offsets: ArrayLike | None = None,
 ) -> PhaseNoise:
     """``L(f)`` in dBc/Hz at each offset from the strongest bin (or the one at ``carrier``), from
-    a Welch PSD (conventions: Phase noise measurement; ADR 0108)."""
+    a Welch PSD, with any ``spur_offsets`` removed first (conventions: Phase noise measurement;
+    ADR 0108, 0115)."""
     off = np.asarray(offsets, dtype=np.float64)
     if off.ndim != 1 or off.size == 0:
         raise ValueError("offsets must be a non-empty one-dimensional array")
     if not np.all(np.isfinite(off) & (off > 0)):
         raise ValueError("offsets must be finite and positive")
+    spurs = _spur_list(spur_offsets)
     k = _carrier(samples, sample_rate, carrier, nperseg, window, beta, width)
-    psd = k.d.psd
+    psd = _without_spurs(k, spurs)
     out = np.empty(off.size)
     for i, o in enumerate(off.tolist()):
         k.check_reach(o, "an offset")
@@ -439,12 +475,15 @@ def integrated_phase_noise(
     window: str = "blackman_harris",
     beta: float | None = None,
     width: int | None = None,
+    spur_offsets: ArrayLike | None = None,
 ) -> IntegratedPhaseNoise:
     """RMS phase error and jitter from the PSD over offsets ``f_lo ... f_hi`` on both sides of the
-    carrier, whole bins only (conventions: Integrated phase noise; ADR 0109)."""
+    carrier, whole bins only, with any ``spur_offsets`` removed first (conventions: Integrated
+    phase noise; ADR 0109, 0115)."""
     lo, hi = real(f_lo, "f_lo"), real(f_hi, "f_hi")
     if not 0 < lo < hi < math.inf:
         raise ValueError("the band needs 0 < f_lo < f_hi, finite")
+    spurs = _spur_list(spur_offsets)
     k = _carrier(samples, sample_rate, carrier, nperseg, window, beta, width)
     k.check_reach(hi, "the band")
     off = np.abs(k.d.frequencies - k.fc)
@@ -452,7 +491,7 @@ def integrated_phase_noise(
     bins = np.flatnonzero(band)
     if np.any(np.abs(bins - k.c) <= k.w):
         raise ValueError("the band reaches into the carrier group")
-    ratio = float(np.sum(k.d.psd[band])) * k.d.bin_width / k.pc
+    ratio = float(np.sum(_without_spurs(k, spurs)[band])) * k.d.bin_width / k.pc
     rms = math.sqrt(ratio)
     if k.fc != 0:
         jitter = rms / (2 * math.pi * abs(k.fc))

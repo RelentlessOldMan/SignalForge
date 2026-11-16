@@ -491,6 +491,22 @@ Decided in [ADR 0109](adr/0109-integrated-phase-noise.md). Python:
   zero); `phase_rms = √ratio` rad; `jitter_rms = phase_rms/(2π|carrier_frequency|)` s, `+∞` when
   `carrier_frequency = 0` (`0` if `phase_rms` is `0`). **(implemented)**
 
+## Phase noise with spurs removed
+
+Decided in [ADR 0115](adr/0115-phase-noise-spur-removal.md). A keyword `spur_offsets` (C#
+`spurOffsets`) on `phase_noise_ssb` and `integrated_phase_noise`.
+
+- **Argument:** 1-D, every offset finite and positive, in Hz from `carrier_frequency`; `None` (C#
+  `null`) or empty removes nothing. Spurs are named, not detected. **(implemented)**
+- **Removal:** on a copy of the Welch PSD, before the sidebands or the band are read. The offsets
+  are taken in the order given; for each, the side `carrier_frequency − o` and then
+  `carrier_frequency + o`. A side outside the spectrum (the test for an offset's reach) is
+  skipped. Otherwise `s` is the bin nearest it, `w` the carrier group's half-width, and
+  `a = s − w − 1`, `b = s + w + 1`. Each bin `j` with `a < j < b` in the spectrum gets
+  `p_a + (p_b − p_a)·(j − a)/(2w + 2)`, computed in that order, from the PSD as it stands. An
+  edge past the spectrum takes the other edge's value. `|s − k_c| ≤ 2w + 1` is
+  `invalid_argument`. **(implemented)**
+
 ## Noise figure
 
 Decided in [ADR 0105](adr/0105-noise-figure-y-factor.md). Python:

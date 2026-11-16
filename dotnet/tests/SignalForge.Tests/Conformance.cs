@@ -617,24 +617,26 @@ public static class Conformance
         object? samples = a.Get("samples");
         double fs = a.D("sample_rate");
         double[] offsets = Reals(a.Get("offsets"));
+        double[]? spurs = a.Has("spur_offsets") ? Reals(a.Get("spur_offsets")) : null;
         var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.BlackmanHarris;
         var (carrier, nperseg, beta, width) = (a.OptD("carrier"), a.OptInt("nperseg"), a.OptD("beta"), a.OptInt("width"));
         if (samples is Complex[] cs)
-            return () => Measurements.PhaseNoiseSsb(cs, fs, offsets, carrier, nperseg, window, beta, width);
+            return () => Measurements.PhaseNoiseSsb(cs, fs, offsets, carrier, nperseg, window, beta, width, spurs);
         double[] x = Reals(samples);
-        return () => Measurements.PhaseNoiseSsb(x, fs, offsets, carrier, nperseg, window, beta, width);
+        return () => Measurements.PhaseNoiseSsb(x, fs, offsets, carrier, nperseg, window, beta, width, spurs);
     }
 
     private static Func<object?> IntegratedPhaseNoiseOp(Args a)
     {
         object? samples = a.Get("samples");
         double fs = a.D("sample_rate"), lo = a.D("f_lo"), hi = a.D("f_hi");
+        double[]? spurs = a.Has("spur_offsets") ? Reals(a.Get("spur_offsets")) : null;
         var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.BlackmanHarris;
         var (carrier, nperseg, beta, width) = (a.OptD("carrier"), a.OptInt("nperseg"), a.OptD("beta"), a.OptInt("width"));
         if (samples is Complex[] cs)
-            return () => Measurements.IntegratedPhaseNoise(cs, fs, lo, hi, carrier, nperseg, window, beta, width);
+            return () => Measurements.IntegratedPhaseNoise(cs, fs, lo, hi, carrier, nperseg, window, beta, width, spurs);
         double[] x = Reals(samples);
-        return () => Measurements.IntegratedPhaseNoise(x, fs, lo, hi, carrier, nperseg, window, beta, width);
+        return () => Measurements.IntegratedPhaseNoise(x, fs, lo, hi, carrier, nperseg, window, beta, width, spurs);
     }
 
     private static Func<object?> FTestOp(Args a)
