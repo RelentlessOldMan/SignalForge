@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Band energy ratio**: the power above a split frequency over the power below it, in dB (the
-   audio feature, and a quick tilt measure in RF). Not built yet. Needs an ADR: a function
-   `band_energy_ratio(frequencies, psd, split, *, band=None, span=None)` returning the low and
-   high powers, their ratio and its dB, how a bin straddling the split is shared, and zero low
-   power. Expected values: short PSDs worked by hand with Fractions (the powers are rational, only
-   the dB is not), a flat PSD split in the middle giving 0 dB.
+1. **Spectral peaks**: the local maxima of a PSD with their prominence, the first step toward
+   listing the tones in a spectrum. Not built yet. Needs an ADR: a function
+   `spectral_peaks(frequencies, psd, *, min_prominence=0.0, band=None)` returning each peak's
+   bin, frequency, height and prominence (the usual definition: the height above the higher of
+   the two lowest points reached before a taller peak or the edge on each side), how plateaus and
+   edge bins are handled, and the order of the results. Expected values: short PSDs worked by
+   hand, with plateaus, edge peaks, nested peaks and a prominence threshold.
 
 ## Built
 
@@ -1320,6 +1321,14 @@ Updated with every chunk of work. Dates are absolute.
   zero valley, and a tone over a floor at 40 dB.
   Python 4622 passed, 2 skipped; .NET 3961 passed; conformance 2384/2384 in both. Version
   2026.11.16.31.
+- 2026-11-16: band energy ratio (ADR 0134): `band_energy_ratio(frequencies, psd, split, *,
+  band=None, span=None)` (C# `Spectral.BandEnergyRatio`) integrates the band's step density
+  below and above `split`, sharing a straddling bin by width. It gives `BandEnergyRatio(low,
+  high, ratio, ratio_db)`. The ratio is +∞ for zero `low`, and 0 (−∞ dB) for zero `high`. The
+  vectors assert both powers exactly in Fractions. The tests check the sum against
+  `channel_power`, mirroring, and both infinite cases.
+  Python 4636 passed, 2 skipped; .NET 3975 passed; conformance 2394/2394 in both. Version
+  2026.11.16.32.
 
 ## Not built
 

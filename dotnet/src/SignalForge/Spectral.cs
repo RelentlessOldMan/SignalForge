@@ -213,6 +213,14 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
 
+/// <summary>The power above and below a split frequency (conventions: Spectra, Band energy ratio;
+/// ADR 0134).</summary>
+/// <param name="Low">Power from the band's low edge to the split.</param>
+/// <param name="High">Power from the split to the band's high edge.</param>
+/// <param name="Ratio">High / Low: +∞ when Low is 0, 0 when High is 0.</param>
+/// <param name="RatioDb">10 log10(Ratio).</param>
+public sealed record BandEnergyRatio(double Low, double High, double Ratio, double RatioDb);
+
 /// <summary>The loudest and quietest parts of a band (conventions: Spectra, Spectral contrast; ADR
 /// 0133).</summary>
 /// <param name="Peak">Mean density over the top fraction of the band's width.</param>
@@ -1981,6 +1989,43 @@ public static class Spectral
         if (!(rest > 0))
             throw new ArgumentException("the band has no power after its first bin", nameof(psd));
         return sum / rest;
+    }
+
+    /// <summary>
+    /// The PSD's power above <paramref name="split"/> over its power below, the PSD taken as
+    /// constant over each bin, over <paramref name="band"/> (the whole spectrum when null)
+    /// (conventions: Spectra, Band energy ratio; ADR 0134).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="split">The split frequency in Hz, strictly inside the band.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The low and high powers, their ratio and its dB.</returns>
+    /// <exception cref="ArgumentException">The split is not finite or not inside the band, an edge is out of order or not finite, the band leaves the spectrum, or it has no power.</exception>
+    public static BandEnergyRatio BandEnergyRatio(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double split,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        if (!double.IsFinite(split))
+            throw new ArgumentOutOfRangeException(nameof(split), "split must be a finite number");
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        if (!(lo < split && split < hi))
+            throw new ArgumentOutOfRangeException(nameof(split), "split must be strictly inside the band");
+        double low = 0, high = 0;
+        for (int k = 0; k < power.Length; k++)
+        {
+            double d = power[k] / (right[k] - left[k]);
+            low += d * Math.Max(Math.Min(right[k], split) - Math.Max(left[k], lo), 0);
+            high += d * Math.Max(Math.Min(right[k], hi) - Math.Max(left[k], split), 0);
+        }
+        if (!(low + high > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        if (low == 0)
+            return new BandEnergyRatio(low, high, double.PositiveInfinity, double.PositiveInfinity);
+        if (high == 0)
+            return new BandEnergyRatio(low, high, 0, double.NegativeInfinity);
+        return new BandEnergyRatio(low, high, high / low, 10 * Math.Log10(high / low));
     }
 
     /// <summary>

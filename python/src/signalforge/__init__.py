@@ -152,6 +152,7 @@ from .modulation import (
 )
 from .spectral import (
     Acpr,
+    BandEnergyRatio,
     DbBandwidth,
     HarmonicFTest,
     LineRemoval,
@@ -170,6 +171,7 @@ from .spectral import (
     WindowStats,
     acpr,
     acpr_rrc,
+    band_energy_ratio,
     channel_power,
     db_bandwidth,
     dpss_tapers,
@@ -244,11 +246,12 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.31"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.32"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
     "AmAmPm",
+    "BandEnergyRatio",
     "CarrierRecovery",
     "CascadeNoiseFigure",
     "DbBandwidth",
@@ -298,6 +301,7 @@ __all__ = [
     "am_am_pm",
     "amp_to_db",
     "awgn",
+    "band_energy_ratio",
     "bessel_bandpass",
     "bessel_bandstop",
     "bessel_highpass",

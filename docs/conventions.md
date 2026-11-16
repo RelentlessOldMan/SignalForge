@@ -455,6 +455,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   piece counting only for the width needed; `contrast_db = 10 log10(peak / valley)`, +∞ for a
   zero valley. Result `SpectralContrast(peak, valley, contrast_db)`. `0 < fraction ≤ 1/2`; band
   rules as for spectral flatness; power `> 0`. **(implemented)**
+- **Band energy ratio** (`band_energy_ratio(frequencies, psd, split, band=None, span=None)`,
+  [ADR 0134](adr/0134-band-energy-ratio.md)): on the band's step density, `low = ∫_{low
+  edge}^{split} d df` and `high = ∫_{split}^{high edge} d df`, a straddling bin shared by width;
+  `ratio = high / low`, `ratio_db = 10 log10(ratio)`, +∞ for zero `low` and 0 and −∞ for zero
+  `high`. Result `BandEnergyRatio(low, high, ratio, ratio_db)`. `split` finite and strictly
+  inside the band; band rules as for spectral flatness; power `> 0`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

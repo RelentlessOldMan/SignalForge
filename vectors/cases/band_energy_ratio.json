@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "band_energy_ratio",
+  "description": "Band energy ratio (conventions: Spectra, Band energy ratio; ADR 0134).",
+  "cases": [
+    {"id": "band_energy_ratio.flat", "op": "band_energy_ratio", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [2.0, 2.0, 2.0, 2.0], "split": 1.5}, "expected": {"low": 4.0, "high": 4.0, "ratio": 1.0, "ratio_db": 0.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "flat split in the middle: 4 and 4, ratio 1, 0 dB"},
+    {"id": "band_energy_ratio.ramp_between_bins", "op": "band_energy_ratio", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 4.0], "split": 1.5}, "expected": {"low": 3.0, "high": 7.0, "ratio": 2.3333333333333335, "ratio_db": 3.679767852945944}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "split at the edge between bins 1 and 2: 1 + 2 and 3 + 4"},
+    {"id": "band_energy_ratio.ramp_inside_bin", "op": "band_energy_ratio", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 4.0], "split": 2.0}, "expected": {"low": 4.5, "high": 5.5, "ratio": 1.2222222222222223, "ratio_db": 0.871501757189002}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "split at bin 2's center: 1 + 2 + 3/2 and 3/2 + 4"},
+    {"id": "band_energy_ratio.spaced", "op": "band_energy_ratio", "args": {"frequencies": [10.0, 30.0, 50.0, 70.0], "psd": [1.0, 2.0, 3.0, 4.0], "split": 40.0}, "expected": {"low": 60.0, "high": 140.0, "ratio": 2.3333333333333335, "ratio_db": 3.679767852945944}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the ramp on 20 Hz bins split at 40 Hz: 20 x 3 and 20 x 7"},
+    {"id": "band_energy_ratio.cut_band", "op": "band_energy_ratio", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 4.0], "split": 1.0, "band": [0.25, 3.0]}, "expected": {"low": 1.25, "high": 6.0, "ratio": 4.8, "ratio_db": 6.812412373755872}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "band [0.25, 3], split 1: 1 x 1/4 + 2 x 1/2 and 2 x 1/2 + 3 + 4 x 1/2"},
+    {"id": "band_energy_ratio.span_clipped", "op": "band_energy_ratio", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [2.0, 1.0, 1.0, 2.0], "split": 0.25, "span": [0.0, 3.0]}, "expected": {"low": 1.0, "high": 5.0, "ratio": 5.0, "ratio_db": 6.989700043360188}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "span (0, 3): bin 0 is [0, 1/2] at density 4; split 1/4: 4 x 1/4 and 4 x 1/4 + 1 + 1 + 4 x 1/2"},
+    {"id": "band_energy_ratio.split_at_edge", "op": "band_energy_ratio", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 4.0], "split": -0.5}, "error": "invalid_argument", "source": "split must be strictly inside the band"},
+    {"id": "band_energy_ratio.split_outside_band", "op": "band_energy_ratio", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 4.0], "split": 3.2, "band": [0.0, 3.0]}, "error": "invalid_argument", "source": "split 3.2 is above the band [0, 3]"},
+    {"id": "band_energy_ratio.no_power", "op": "band_energy_ratio", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [0.0, 0.0, 0.0, 0.0], "split": 1.5}, "error": "invalid_argument", "source": "the band has no power"},
+    {"id": "band_energy_ratio.band_outside", "op": "band_energy_ratio", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 4.0], "split": 1.5, "band": [0.0, 4.0]}, "error": "invalid_argument", "source": "band [0, 4] leaves the spectrum [-0.5, 3.5]"}
+  ]
+}

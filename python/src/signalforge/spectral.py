@@ -1217,6 +1217,17 @@ class SpectralSlope:
 
 
 @dataclass(frozen=True)
+class BandEnergyRatio:
+    """The power above and below a split frequency (conventions: Spectra, Band energy ratio;
+    ADR 0134): ``low`` and ``high``, ``ratio = high / low`` and ``ratio_db`` in dB."""
+
+    low: float
+    high: float
+    ratio: float
+    ratio_db: float
+
+
+@dataclass(frozen=True)
 class SpectralContrast:
     """The loudest and quietest parts of a band (conventions: Spectra, Spectral contrast; ADR
     0133): the mean densities ``peak`` and ``valley`` over the top and bottom fraction of the
@@ -1366,6 +1377,35 @@ def spectral_decrease(
     if not rest > 0:
         raise ValueError("the band has no power after its first bin")
     return float(np.sum((d[1:] - d[0]) * w[1:] * step / (m[1:] - m[0]))) / rest
+
+
+def band_energy_ratio(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    split: float,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+) -> BandEnergyRatio:
+    """The PSD's power above ``split`` (Hz) over its power below, the PSD taken as constant over
+    each bin, over ``band = (low, high)`` in Hz (the whole spectrum by default)."""
+    s = real(split, "split")
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    if not lo < s < hi:
+        raise ValueError("split must be strictly inside the band")
+    d = power / (right - left)
+    below = np.minimum(right, s) - np.maximum(left, lo)
+    above = np.minimum(right, hi) - np.maximum(left, s)
+    low = float(np.sum(d * np.maximum(below, 0.0)))
+    high = float(np.sum(d * np.maximum(above, 0.0)))
+    if not low + high > 0:
+        raise ValueError("the band has no power")
+    if low == 0:
+        return BandEnergyRatio(low, high, math.inf, math.inf)
+    if high == 0:
+        return BandEnergyRatio(low, high, 0.0, -math.inf)
+    return BandEnergyRatio(low, high, high / low, 10 * math.log10(high / low))
 
 
 def _fill(w: NDArray[np.float64], d: NDArray[np.float64], width: float) -> float:
