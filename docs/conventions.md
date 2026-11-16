@@ -94,6 +94,12 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Modulation transfer function** ([ADR 0176](adr/0176-modulation-transfer.md);
+  `modulation_transfer(impulse_response, sample_rate, frequencies)`, C#
+  `Measurements.ModulationTransfer`): `m(F) = |Σ |h[n]|² e^{−j2πF n/fs}| / Σ |h[n]|²` from
+  index 0, the phase `2π·F·n/fs` in double without reduction; one value per frequency, in order.
+  Frequencies finite and `≥ 0` (above `fs/2` allowed), non-empty; response real or complex,
+  finite, not empty, not all zero; `fs` finite and positive. **(implemented)**
 - **Lateral energy fraction** ([ADR 0175](adr/0175-lateral-fraction.md); `lateral_fraction(omni,
   figure_eight, sample_rate, *, start=0.005, stop=0.08)`, C# `Measurements.LateralFraction`):
   `N_a = ⌊start·fs + 1/2⌋`, `N_b = ⌊stop·fs + 1/2⌋`; `Σ_{N_a ≤ n < N_b} h_8² / Σ_{n < N_b} h_o²`,

@@ -4,16 +4,18 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Modulation transfer function**: `modulation_transfer(impulse_response, sample_rate,
-   frequencies)` in `measurements`. It is Schroeder's
-   `m(F) = |Σ |h[n]|² e^{−j2πF n/fs}| / Σ |h[n]|²`, the base of the speech transmission index.
-   Not built yet. Needs an ADR covering:
-   - the time origin (index 0);
-   - the sign of the exponent, which does not affect `|·|`;
-   - the frequency rules (finite, `≥ 0`).
+1. **Speech transmission index from an MTF matrix**:
+   `speech_transmission_index(mtf)` in `measurements`, taking the 7 octave bands
+   (125 Hz to 8 kHz) by 14 modulation frequencies (0.63 to 12.5 Hz).
+   - Each `m` becomes `SNR = 10 log10(m/(1 − m))`, clipped to ±15 dB.
+   - That gives `TI = (SNR + 15)/30`; `MTI_k` is the mean of a band's 14 TIs.
+   - The result is `STI = Σ α_k MTI_k − Σ β_k √(MTI_k MTI_{k+1})`.
 
-   Expected values: geometric decays give `|(1 − (q z)^L)/(1 − q z)|/((1 − q^L)/(1 − q))`, with
-   `z = e^{−j2πF/fs}`, which is close to the classic `1/√(1 + (2πF T/13.8)²)`.
+   The level-dependent masking and the hearing threshold are left out. Not built yet. Needs an
+   ADR: the α and β weights must be confirmed from a published source, not from memory, and the
+   ADR must say which revision of IEC 60268-16 they come from. It must also say how `m ≥ 1` and
+   `m ≤ 0` clip. Expected values: hand MTF matrices give exact STIs (all `m = 1` gives 1, all
+   `m = 0` gives 0, and a uniform `m` gives a closed form).
 
 ## Built
 
@@ -1673,6 +1675,14 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are exact hand sums and geometric window sums in 50-digit `decimal`.
   Python 5345 passed, 2 skipped; .NET 4663 passed; conformance 2966/2966 in both. Version
   2026.11.16.73.
+- 2026-11-16: modulation transfer function (ADR 0176): `modulation_transfer(impulse_response,
+  sample_rate, frequencies)` in `measurements` (C# `Measurements.ModulationTransfer`, real and
+  complex). It is Schroeder's `|Σ |h|² e^{−j2πF n/fs}|/Σ |h|²` from index 0, one value per
+  frequency. The vectors use the geometric closed form evaluated with `cmath`, plus exact hand
+  pairs. A test checks `1/√(1 + (2πF T/(6 ln 10))²)` at 0.1 %. The textbook 13.8 is 6 ln 10
+  rounded, and that rounding alone gave a 0.1 % miss.
+  Python 5359 passed, 2 skipped; .NET 4677 passed; conformance 2979/2979 in both. Version
+  2026.11.16.74.
 
 ## Not built
 

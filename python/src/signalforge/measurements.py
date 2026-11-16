@@ -1423,3 +1423,35 @@ def lateral_fraction(
         raise ValueError("omni must have energy before stop")
     num = float(np.dot(ev[na:nb], ev[na:nb]))
     return num / den
+
+
+def modulation_transfer(
+    impulse_response: ArrayLike, sample_rate: float, frequencies: ArrayLike
+) -> NDArray[np.float64]:
+    """Schroeder's modulation transfer ``|sum |h[n]|^2 e^(-j 2 pi F n/fs)| / sum |h[n]|^2`` for
+    each frequency (conventions: Modulation transfer function; ADR 0176)."""
+    h = np.asarray(impulse_response)
+    if h.ndim != 1 or h.shape[0] == 0:
+        raise ValueError("impulse_response must be a non-empty one-dimensional array")
+    h = h.astype(np.complex128 if np.iscomplexobj(h) else np.float64, copy=False)
+    if not np.all(np.isfinite(h)):
+        raise ValueError("impulse_response must be finite")
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    f = np.asarray(frequencies)
+    if f.ndim != 1 or f.shape[0] == 0 or np.iscomplexobj(f):
+        raise ValueError("frequencies must be a non-empty one-dimensional real array")
+    fv = f.astype(np.float64)
+    if not (np.all(np.isfinite(fv)) and np.all(fv >= 0)):
+        raise ValueError("frequencies must be finite and non-negative")
+    p = h.real * h.real + h.imag * h.imag
+    total = float(np.sum(p))
+    if not total > 0:
+        raise ValueError("impulse_response must not be all zero")
+    n = np.arange(p.shape[0], dtype=np.float64)
+    out = np.empty(fv.shape[0], dtype=np.float64)
+    for k, freq in enumerate(fv):
+        phase = 2 * math.pi * float(freq) * n / fs
+        out[k] = math.hypot(float(np.sum(p * np.cos(phase))), float(np.sum(p * np.sin(phase))))
+    return out / total
