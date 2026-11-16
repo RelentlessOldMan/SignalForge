@@ -407,6 +407,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   (including it) reaches the target, the rolloff is `a_k + (target − S_{k−1})/d_k`, limited to
   `[a_k, b_k]`. `fraction` finite in `(0, 1]`; band rules as for spectral flatness; `power > 0`.
   **(implemented)**
+- **Spectral skewness and kurtosis** (`spectral_shape(frequencies, psd, band=None, span=None)`,
+  [ADR 0126](adr/0126-spectral-shape.md)): on the step density, pieces and centroid `c` of the
+  spectral moments, `m_j = Σ d_k ((b_k − c)^{j+1} − (a_k − c)^{j+1})/(j + 1) / power` for
+  `j = 2, 3, 4`; result `SpectralShape(skewness = m3/m2^{3/2}, kurtosis = m4/m2²)`, not excess (a
+  flat band gives 0 and 9/5). Band rules as for spectral flatness; `power > 0` and `m2 > 0`.
+  **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

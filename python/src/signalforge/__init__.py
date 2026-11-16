@@ -161,6 +161,7 @@ from .spectral import (
     SpectralDensity,
     SpectralFlatness,
     SpectralMoments,
+    SpectralShape,
     Spectrogram,
     TaperSet,
     WindowStats,
@@ -190,6 +191,7 @@ from .spectral import (
     spectral_flatness,
     spectral_moments,
     spectral_rolloff,
+    spectral_shape,
     spectrogram,
     welch_psd,
     window,
@@ -232,7 +234,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.23"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.24"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -267,6 +269,7 @@ __all__ = [
     "SpectralDensity",
     "SpectralFlatness",
     "SpectralMoments",
+    "SpectralShape",
     "Spectrogram",
     "TaperSet",
     "TimingRecovery",
@@ -435,6 +438,7 @@ __all__ = [
     "spectral_flatness",
     "spectral_moments",
     "spectral_rolloff",
+    "spectral_shape",
     "spectrogram",
     "timing_offset",
     "tone",

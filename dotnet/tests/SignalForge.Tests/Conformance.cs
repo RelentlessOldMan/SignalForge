@@ -337,6 +337,8 @@ public static class Conformance
                 t => Spectral.SpectralMoments(t.Item1, t.Item2, t.Item3, t.Item4)),
             "spectral_rolloff" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.D("fraction"), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
                 t => Spectral.SpectralRolloff(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "spectral_shape" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
+                t => Spectral.SpectralShape(t.Item1, t.Item2, t.Item3, t.Item4)),
             "db_bandwidth" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.D("drop_db"), a.Has("band") ? Pair(Reals(a.Get("band"))) : null),
                 t => Spectral.DbBandwidth(t.Item1, t.Item2, t.Item3, t.Item4)),
             "noise_power_ratio" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), Pair(Reals(a.Get("band")))!.Value, Pair(Reals(a.Get("notch")))!.Value, Span(a)),

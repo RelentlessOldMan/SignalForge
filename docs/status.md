@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral skewness and kurtosis**: the third and fourth standardized moments of a band's
-   PSD, the audio features after the centroid and RMS bandwidth. Not built yet. Needs an ADR:
-   a function `spectral_shape(frequencies, psd, *, band=None, span=None)` on the step density
-   of `spectral_moments`, integrated exactly about the centroid (`∫ (f − c)^k d`), skewness
-   `m3/σ³` and kurtosis `m4/σ⁴` (not excess), and zero spread. Expected values: short PSDs
-   worked by hand with Fractions (by raw moments, a different route), and a flat band's 0 and
-   9/5.
+1. **Spectral slope**: the least-squares line through a band's PSD against frequency, the
+   audio feature for how fast the power falls (tilt). Not built yet. Needs an ADR: a function
+   `spectral_slope(frequencies, psd, *, band=None, span=None, db=False)`, whether the fit is in
+   linear PSD or in dB (with zero bins then an error), the weights (bin overlap with the band),
+   and the result (slope and intercept at the band's centre). Expected values: straight lines
+   fitted exactly, and short PSDs worked by hand with Fractions.
 
 ## Built
 
@@ -1254,6 +1253,14 @@ Updated with every chunk of work. Dates are absolute.
   flat PSD.
   Python 4499 passed, 2 skipped; .NET 3837 passed; conformance 2297/2297 in both. Version
   2026.11.16.23.
+- 2026-11-16: spectral skewness and kurtosis (ADR 0126): `spectral_shape(frequencies, psd, *,
+  band=None, span=None)` (C# `Spectral.SpectralShape`) integrates the step density of the
+  spectral moments exactly about the centroid. The result is `SpectralShape(skewness, kurtosis)`,
+  not excess, so a flat band gives 0 and 9/5. The vectors use Fraction raw moments expanded
+  binomially, a different route from the libraries'. The tests cover mirroring, axis shift and
+  stretch, scaling, a Gaussian with the step's own spread, and a flat cut band.
+  Python 4515 passed, 2 skipped; .NET 3854 passed; conformance 2308/2308 in both. Version
+  2026.11.16.24.
 
 ## Not built
 

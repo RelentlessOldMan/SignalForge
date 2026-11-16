@@ -200,6 +200,12 @@ public sealed record SpectralCrest(double Peak, double Mean, double Crest, doubl
 /// <param name="RmsBandwidth">Power-weighted RMS spread about the centroid.</param>
 public sealed record SpectralMoments(double Power, double Centroid, double RmsBandwidth);
 
+/// <summary>Skewness and kurtosis of a PSD over a band (conventions: Spectra, Spectral skewness and
+/// kurtosis; ADR 0126).</summary>
+/// <param name="Skewness">m3 / m2^(3/2) about the centroid.</param>
+/// <param name="Kurtosis">m4 / m2², not the excess: a flat band gives 9/5.</param>
+public sealed record SpectralShape(double Skewness, double Kurtosis);
+
 /// <summary>Where the PSD falls a given number of dB below its peak (conventions: Spectra, x dB
 /// bandwidth; ADR 0122).</summary>
 /// <param name="PeakFrequency">The peak bin's center, in the PSD's axis.</param>
@@ -1827,6 +1833,55 @@ public static class Spectral
             running = after;
         }
         return b[last]; // rounding left the running sum short of 1·power
+    }
+
+    /// <summary>
+    /// Skewness and kurtosis of the PSD taken as constant over each bin, integrated exactly about
+    /// the centroid over <paramref name="band"/> (the whole spectrum when null) (conventions:
+    /// Spectra, Spectral skewness and kurtosis; ADR 0126).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The skewness and the kurtosis.</returns>
+    /// <exception cref="ArgumentException">An edge is out of order or not finite, the band leaves the spectrum, or the band has no power or no spread.</exception>
+    public static SpectralShape SpectralShape(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        int n = power.Length;
+        double[] a = new double[n], b = new double[n], d = new double[n];
+        double total = 0, first = 0;
+        for (int k = 0; k < n; k++)
+        {
+            a[k] = Math.Max(left[k], lo);
+            b[k] = Math.Min(right[k], hi);
+            if (!(b[k] > a[k]))
+                continue;
+            d[k] = power[k] / (right[k] - left[k]);
+            total += d[k] * (b[k] - a[k]);
+            first += d[k] * (b[k] - a[k]) * (a[k] + b[k]) / 2;
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        double c = first / total, m2 = 0, m3 = 0, m4 = 0;
+        for (int k = 0; k < n; k++)
+        {
+            if (!(b[k] > a[k]))
+                continue;
+            double u = b[k] - c, v = a[k] - c;
+            m2 += d[k] * (Math.Pow(u, 3) - Math.Pow(v, 3)) / 3;
+            m3 += d[k] * (Math.Pow(u, 4) - Math.Pow(v, 4)) / 4;
+            m4 += d[k] * (Math.Pow(u, 5) - Math.Pow(v, 5)) / 5;
+        }
+        m2 /= total;
+        m3 /= total;
+        m4 /= total;
+        if (!(m2 > 0))
+            throw new ArgumentException("the band has no spread", nameof(psd));
+        return new SpectralShape(m3 / Math.Pow(m2, 1.5), m4 / (m2 * m2));
     }
 
     /// <summary>

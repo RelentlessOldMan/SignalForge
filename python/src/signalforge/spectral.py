@@ -1197,6 +1197,15 @@ class SpectralCrest:
     crest_db: float
 
 
+@dataclass(frozen=True)
+class SpectralShape:
+    """Skewness and kurtosis of a PSD over a band (conventions: Spectra, Spectral skewness and
+    kurtosis; ADR 0126). The kurtosis is not the excess: a flat band gives 9/5."""
+
+    skewness: float
+    kurtosis: float
+
+
 def _band_edges(
     band: ArrayLike | None, left: NDArray[np.float64], right: NDArray[np.float64]
 ) -> tuple[float, float]:
@@ -1245,6 +1254,33 @@ def spectral_moments(
     c = float(np.sum(d * (b - a) * (a + b) / 2)) / total
     var = float(np.sum(d * ((b - c) ** 3 - (a - c) ** 3) / 3)) / total
     return SpectralMoments(total, c, math.sqrt(max(var, 0.0)))
+
+
+def spectral_shape(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+) -> SpectralShape:
+    """Skewness and kurtosis of the PSD taken as constant over each bin, integrated exactly about
+    the centroid over ``band = (low, high)`` in Hz (the whole spectrum by default)."""
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    a, b = np.maximum(left, lo), np.minimum(right, hi)
+    keep = b > a
+    a, b, d = a[keep], b[keep], (power / (right - left))[keep]
+    total = float(np.sum(d * (b - a)))
+    if not total > 0:
+        raise ValueError("the band has no power")
+    c = float(np.sum(d * (b - a) * (a + b) / 2)) / total
+    m2, m3, m4 = (
+        float(np.sum(d * ((b - c) ** (j + 1) - (a - c) ** (j + 1)) / (j + 1))) / total
+        for j in (2, 3, 4)
+    )
+    if not m2 > 0:
+        raise ValueError("the band has no spread")
+    return SpectralShape(m3 / m2**1.5, m4 / (m2 * m2))
 
 
 def spectral_flatness(
