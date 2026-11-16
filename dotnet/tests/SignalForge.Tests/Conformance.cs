@@ -219,6 +219,7 @@ public static class Conformance
             "hz_to_erb_rate" => Bind(a.D("hz"), Units.HzToErbRate),
             "erb_rate_to_hz" => Bind(a.D("erb"), Units.ErbRateToHz),
             "erb_bandwidth" => Bind(a.D("hz"), Units.ErbBandwidth),
+            "octave_bands" => Bind((a.I("fraction"), a.D("min_frequency"), a.D("max_frequency")), t => Units.OctaveBands(t.Item1, t.Item2, t.Item3)),
             "a_weighting" => Bind(a.D("frequency"), Units.AWeighting),
             "c_weighting" => Bind(a.D("frequency"), Units.CWeighting),
             "hz_to_bark" => Bind(a.D("hz"), Units.HzToBark),

@@ -165,6 +165,12 @@ rule for code not written yet.
   `f4 = 12194.217` Hz: `A_raw = 20 log10(f4² f⁴/((f² + f1²) √((f² + f2²)(f² + f3²)) (f² +
   f4²)))`, `C_raw = 20 log10(f4² f²/((f² + f1²)(f² + f4²)))`, each minus its own value at
   1000 Hz (so exactly 0 there). `f = 0` gives `−inf`. Finite and `≥ 0`. **(implemented)**
+- **Fractional-octave bands** (`octave_bands(fraction, min_frequency, max_frequency)`, C#
+  `Units.OctaveBands`, [ADR 0167](adr/0167-octave-bands.md)): IEC 61260-1 base 10, `G =
+  10^(3/10)`, `b = fraction`: mid-band `f_m = 1000·G^(x/b)` (odd `b`) or `1000·G^((2x +
+  1)/(2b))` (even `b`), edges `f_m·G^(∓1/(2b))`; rows `[lower, center, upper]` ascending for
+  every integer `x` with `min ≤ f_m ≤ max` in floating point; none gives 0 rows. `fraction ≥ 1`
+  an integer, `0 < min ≤ max` finite. **(implemented)**
 
 ## Spectra
 

@@ -230,3 +230,26 @@ def c_weighting(frequency: ArrayLike) -> NDArray[np.float64] | float:
     """The IEC 61672-1 C-weighting in dB, 0 at 1 kHz (conventions: Frequency weightings;
     ADR 0164)."""
     return _out(_c_raw(_finite_non_negative(frequency, "frequency")) - _C1000)
+
+
+def octave_bands(fraction: int, min_frequency: float, max_frequency: float) -> NDArray[np.float64]:
+    """IEC 61260-1 base-10 fractional-octave bands with mid-band frequencies in
+    ``[min_frequency, max_frequency]``, as rows ``[lower, center, upper]`` (conventions:
+    Fractional-octave bands; ADR 0167)."""
+    b = count(fraction, "fraction")
+    if b < 1:
+        raise ValueError("fraction must be at least 1")
+    lo = real(min_frequency, "min_frequency")
+    hi = real(max_frequency, "max_frequency")
+    if not (math.isfinite(lo) and math.isfinite(hi) and 0 < lo <= hi):
+        raise ValueError("need 0 < min_frequency <= max_frequency, both finite")
+    shift = 0.5 if b % 2 == 0 else 0.0
+    first = math.floor(b * 10 / 3 * math.log10(lo / 1000) - shift) - 1
+    last = math.ceil(b * 10 / 3 * math.log10(hi / 1000) - shift) + 1
+    rows = []
+    for x in range(first, last + 1):
+        center = 1000 * 10 ** (3 * (x + shift) / (10 * b))
+        if lo <= center <= hi:
+            half = 10 ** (3 / (20 * b))
+            rows.append([center / half, center, center * half])
+    return np.array(rows, dtype=np.float64).reshape(len(rows), 3)

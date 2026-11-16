@@ -4,14 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Fractional-octave bands**: `octave_bands(fraction, min_frequency, max_frequency)` in
-   `units`. It gives the IEC 61260-1 exact mid-band frequencies `f_m = 1000·G^(x/b)` (odd `b`)
-   or `1000·G^((2x+1)/(2b))` (even `b`), with `G = 10^(3/10)`, plus the band edges `f_m·G^(±1/(2b))`,
-   for every band whose mid-band frequency lies in `[min, max]`. Not built yet. Needs an ADR: base 10
-   (not base 2), the result type (centers and edges), `fraction` in `{1, 2, 3, 6, 12, 24}`
-   or any positive integer, and the inclusion rule. Expected values: `G` powers in 50-digit
-   `decimal`, checked against the standard's nominal frequencies (31.5, 63, 125, …) to
-   their rounding.
+1. **Octave-band levels**: `octave_band_levels(samples, sample_rate, fraction, min_frequency,
+   max_frequency, *, order=3)` in `measurements`. Each band of ADR 0167 below Nyquist is
+   filtered with `butterworth_bandpass(order, lower, upper, fs)`, and its mean power is
+   returned. Not built yet. Needs an ADR: the filter (Butterworth of order 3, the usual
+   IEC 61260 class-1 design), how bands near or above Nyquist are handled, whether the start
+   transient is skipped, and the result shape. Expected values: the band-pass has gain exactly 1
+   at its center in the warped domain (conventions: band Butterworth), so a long tone there
+   gives `A²/2`. A white-noise test checks that the band powers sum to the total.
 
 ## Built
 
@@ -1593,6 +1593,14 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements` class is now `partial`.
   Python 5199 passed, 2 skipped; .NET 4523 passed; conformance 2838/2838 in both. Version
   2026.11.16.64.
+- 2026-11-16: fractional-octave bands (ADR 0167): `octave_bands(fraction, min_frequency,
+  max_frequency)` in `units` (C# `Units.OctaveBands`). It gives the IEC 61260-1 base-10 exact
+  mid-band frequencies, for odd and even `b`, as rows `[lower, center, upper]`, for every band
+  whose center lies in the range. An empty range gives 0 rows. The vectors use powers of
+  `10^(3/10)` in 50-digit `decimal`. The generator asserts that the octave and third-octave
+  centers lie within 1.5 % of the standard's nominal names.
+  Python 5211 passed, 2 skipped; .NET 4535 passed; conformance 2848/2848 in both. Version
+  2026.11.16.65.
 
 ## Not built
 

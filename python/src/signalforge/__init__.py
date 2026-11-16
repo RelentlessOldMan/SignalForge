@@ -292,12 +292,13 @@ from .units import (
     hz_to_mel,
     lin_to_db,
     mel_to_hz,
+    octave_bands,
     vrms_to_dbm,
     w_to_dbm,
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.64"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.65"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -483,6 +484,7 @@ __all__ = [
     "noise_figure_y_factor",
     "noise_power_ratio",
     "occupied_bandwidth",
+    "octave_bands",
     "odd_even_ratio",
     "ofdm_demodulate",
     "ofdm_modulate",

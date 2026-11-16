@@ -180,6 +180,34 @@ public static class Units
         return CRaw(frequency) - C1000;
     }
 
+    /// <summary>IEC 61260-1 base-10 fractional-octave bands with mid-band frequencies in
+    /// [<paramref name="minFrequency"/>, <paramref name="maxFrequency"/>], as rows
+    /// <c>[lower, center, upper]</c> (conventions: Fractional-octave bands; ADR 0167).</summary>
+    /// <param name="fraction">Bands per octave <c>b</c>, at least 1.</param>
+    /// <param name="minFrequency">The lowest mid-band frequency in Hz, positive and finite.</param>
+    /// <param name="maxFrequency">The highest mid-band frequency in Hz, at least the lowest, finite.</param>
+    /// <returns>The bands, ascending; empty if none qualifies.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[][] OctaveBands(int fraction, double minFrequency, double maxFrequency)
+    {
+        if (fraction < 1)
+            throw new ArgumentOutOfRangeException(nameof(fraction), fraction, "must be at least 1");
+        if (!(double.IsFinite(minFrequency) && double.IsFinite(maxFrequency) && minFrequency > 0 && minFrequency <= maxFrequency))
+            throw new ArgumentException("need 0 < minFrequency <= maxFrequency, both finite", nameof(maxFrequency));
+        double shift = fraction % 2 == 0 ? 0.5 : 0.0;
+        long first = (long)Math.Floor(fraction * 10.0 / 3 * Math.Log10(minFrequency / 1000) - shift) - 1;
+        long last = (long)Math.Ceiling(fraction * 10.0 / 3 * Math.Log10(maxFrequency / 1000) - shift) + 1;
+        double half = Math.Pow(10, 3.0 / (20.0 * fraction));
+        var rows = new List<double[]>();
+        for (long x = first; x <= last; x++)
+        {
+            double center = 1000 * Math.Pow(10, 3 * (x + shift) / (10.0 * fraction));
+            if (minFrequency <= center && center <= maxFrequency)
+                rows.Add([center / half, center, center * half]);
+        }
+        return [.. rows];
+    }
+
     internal const double WeightF1 = 20.598997, WeightF2 = 107.65265, WeightF3 = 737.86223, WeightF4 = 12194.217;
 
     private static double ARaw(double f) =>
