@@ -4,14 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Stage support**: `stage_support(impulse_response, sample_rate, *, late=False)` in
-   `measurements`. It is ISO 3382-1 Annex C:
-   - `ST_early = 10 log10(E_{20–100 ms}/E_{0–10 ms})`;
-   - `ST_late = 10 log10(E_{100–1000 ms}/E_{0–10 ms})`.
+1. **Bass and treble ratio**: `bass_ratio(times)` and `treble_ratio(times)` in `measurements`.
+   Both take the octave-band reverberation times at 125, 250, 500, 1000, 2000 and 4000 Hz:
+   - `BR = (T125 + T250)/(T500 + T1000)`;
+   - `TR = (T2000 + T4000)/(T500 + T1000)`.
 
-   The response is measured 1 m from the source. Not built yet. Needs an ADR: the window
-   bounds, using the rounding of ADR 0172 with half-open windows; what windows past the end
-   give; and the zero rules. Expected values: hand sums, plus geometric window sums.
+   These are Beranek's room-acoustic ratios. Not built yet. Needs an ADR: the input shape
+   (six times), and that the times must be finite and positive. Expected values: exact
+   fractions.
 
 ## Built
 
@@ -1702,6 +1702,16 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are exact hand sums.
   Python 5386 passed, 2 skipped; .NET 4704 passed; conformance 3002/3002 in both. Version
   2026.11.16.76.
+- 2026-11-16: stage support (ADR 0179): `stage_support(impulse_response, sample_rate, *,
+  late=False)` in `measurements` (C# `Measurements.StageSupport`, real and complex). It is ISO
+  3382-1 Annex C, `ST_early` and `ST_late` against the direct 0–10 ms.
+  - The windows are half-open, with bounds `⌊t·fs + 1/2⌋`, clipped to the length.
+  - A silent window gives `−inf`.
+  - A silent direct window, or `fs < 50`, is invalid.
+
+  The vectors are hand sums at 100 Hz and geometric window sums at 1 kHz.
+  Python 5398 passed, 2 skipped; .NET 4716 passed; conformance 3013/3013 in both. Version
+  2026.11.16.77.
 
 ## Not built
 

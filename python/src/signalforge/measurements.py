@@ -1507,3 +1507,33 @@ def sound_strength(impulse_response: ArrayLike, reference: ArrayLike) -> float:
     if energy == 0:
         return -math.inf
     return 10 * math.log10(energy / ref)
+
+
+def stage_support(impulse_response: ArrayLike, sample_rate: float, *, late: bool = False) -> float:
+    """The stage support ``ST_early`` (20-100 ms) or ``ST_late`` (100-1000 ms) against the
+    direct 0-10 ms, in dB (conventions: Stage support; ADR 0179)."""
+    h = np.asarray(impulse_response)
+    if h.ndim != 1 or h.shape[0] == 0:
+        raise ValueError("impulse_response must be a non-empty one-dimensional array")
+    h = h.astype(np.complex128 if np.iscomplexobj(h) else np.float64, copy=False)
+    if not np.all(np.isfinite(h)):
+        raise ValueError("impulse_response must be finite")
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    p = h.real * h.real + h.imag * h.imag
+
+    def bound(t: float) -> int:
+        return math.floor(t * fs + 0.5)
+
+    direct_end = bound(0.01)
+    if direct_end < 1:
+        raise ValueError("sample_rate must give at least one direct-sound sample")
+    direct = float(np.sum(p[:direct_end]))
+    if not direct > 0:
+        raise ValueError("impulse_response must have energy in the direct sound")
+    a, b = (bound(0.1), bound(1.0)) if late else (bound(0.02), bound(0.1))
+    window = float(np.sum(p[a:b]))
+    if window == 0:
+        return -math.inf
+    return 10 * math.log10(window / direct)

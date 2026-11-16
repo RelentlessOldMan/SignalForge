@@ -94,6 +94,12 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Stage support** ([ADR 0179](adr/0179-stage-support.md); `stage_support(impulse_response,
+  sample_rate, *, late=False)`, C# `Measurements.StageSupport`): `N(t) = ⌊t·fs + 1/2⌋`; direct
+  `[0, N(0.01))`, early `[N(0.02), N(0.1))`, late `[N(0.1), N(1))`, half-open, clipped to the
+  length; `10 log10(E_window/E_direct)`. A silent window gives `−inf`; a silent direct window
+  or `N(0.01) < 1` is invalid. Real or complex, finite, not empty; `fs` finite and positive.
+  **(implemented)**
 - **Sound strength** ([ADR 0178](adr/0178-sound-strength.md); `sound_strength(impulse_response,
   reference)`, C# `Measurements.SoundStrength`): `G = 10 log10(Σ|h|² / Σ|h_ref|²)` with the
   reference the free-field response at 10 m; lengths may differ, no sample rate (same rate is
