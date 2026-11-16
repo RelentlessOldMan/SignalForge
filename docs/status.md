@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral variation**: one minus the normalized correlation between two PSD frames, the
-   level-free companion of the spectral flux. Not built yet. Needs an ADR: a function
-   `spectral_variation(frequencies, previous, current, *, band=None, span=None)`, as
-   `1 − ∫ d₀d₁ df / sqrt(∫ d₀² df ∫ d₁² df)` on the step densities, the band rules, and frames
-   with no power. Expected values: short PSD pairs worked by hand (the correlation squared is
-   rational), identical frames and a frame against its double giving 0, and disjoint frames
-   giving 1.
+1. **Spectral irregularity**: how jagged a PSD is from bin to bin (Jensen's form, `Σ (P_k −
+   P_{k+1})² / Σ P_k²`). Not built yet. Needs an ADR: a function
+   `spectral_irregularity(frequencies, psd, *, band=None, span=None)`, recast on the step
+   density's pieces (the jumps between neighbouring pieces and the piece widths), what a cut
+   band does at its edges, and zero power. Expected values: short PSDs worked by hand with
+   Fractions, a flat PSD giving 0, and an alternating PSD giving the largest value.
 
 ## Built
 
@@ -1297,6 +1296,13 @@ Updated with every chunk of work. Dates are absolute.
   cover scaling, axis stretch and the library form.
   Python 4579 passed, 2 skipped; .NET 3918 passed; conformance 2352/2352 in both. Version
   2026.11.16.28.
+- 2026-11-16: spectral variation (ADR 0131): `spectral_variation(frequencies, previous,
+  current, *, band=None, span=None)` (C# `Spectral.SpectralVariation`) is `1 − ∫ d₀d₁ df /
+  (‖d₀‖ ‖d₁‖)` on two frames' step densities over a band, in [0, 1]. The vectors assert the
+  correlation squared as an exact Fraction. The tests cover swapping the frames, scaling, and
+  the range on random frames.
+  Python 4592 passed, 2 skipped; .NET 3931 passed; conformance 2362/2362 in both. Version
+  2026.11.16.29.
 
 ## Not built
 

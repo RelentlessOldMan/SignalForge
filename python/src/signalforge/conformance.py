@@ -112,6 +112,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "noise_power_ratio": spectral.noise_power_ratio,
     "spectral_flatness": spectral.spectral_flatness,
     "spectral_flux": spectral.spectral_flux,
+    "spectral_variation": spectral.spectral_variation,
     "spectral_crest": spectral.spectral_crest,
     "spectral_decrease": spectral.spectral_decrease,
     "spectral_entropy": spectral.spectral_entropy,

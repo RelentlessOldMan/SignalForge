@@ -198,6 +198,7 @@ from .spectral import (
     spectral_rolloff,
     spectral_shape,
     spectral_slope,
+    spectral_variation,
     spectrogram,
     welch_psd,
     window,
@@ -240,7 +241,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.28"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.29"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -451,6 +452,7 @@ __all__ = [
     "spectral_rolloff",
     "spectral_shape",
     "spectral_slope",
+    "spectral_variation",
     "spectrogram",
     "timing_offset",
     "tone",

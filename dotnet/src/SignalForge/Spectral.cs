@@ -2068,6 +2068,42 @@ public static class Spectral
     }
 
     /// <summary>
+    /// One minus the normalized correlation of two PSD frames taken as constant over each bin,
+    /// over <paramref name="band"/> (the whole spectrum when null) (conventions: Spectra,
+    /// Spectral variation; ADR 0131).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="previous">The earlier frame's PSD per bin, finite and non-negative.</param>
+    /// <param name="current">The later frame's PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The variation, in [0, 1]: 0 for the same shape, 1 for frames sharing no band.</returns>
+    /// <exception cref="ArgumentException">A frame is invalid or has no power in the band, an edge is out of order or not finite, or the band leaves the spectrum.</exception>
+    public static double SpectralVariation(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> previous, ReadOnlySpan<double> current,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        var (p0, left, right) = Bins(frequencies, previous, span);
+        var (p1, _, _) = Bins(frequencies, current, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        double total0 = 0, total1 = 0, cross = 0, sq0 = 0, sq1 = 0;
+        for (int k = 0; k < p0.Length; k++)
+        {
+            double a = Math.Max(left[k], lo), b = Math.Min(right[k], hi);
+            if (!(b > a))
+                continue;
+            double w = b - a, d0 = p0[k] / (right[k] - left[k]), d1 = p1[k] / (right[k] - left[k]);
+            total0 += d0 * w;
+            total1 += d1 * w;
+            cross += d0 * d1 * w;
+            sq0 += d0 * d0 * w;
+            sq1 += d1 * d1 * w;
+        }
+        if (!(total0 > 0 && total1 > 0))
+            throw new ArgumentException("each frame needs power in the band", nameof(previous));
+        return 1 - cross / Math.Sqrt(sq0 * sq1);
+    }
+
+    /// <summary>
     /// The PSD's geometric mean over its arithmetic mean across <paramref name="band"/> (the whole
     /// spectrum when null), each bin weighted by its overlap with the band (conventions: Spectra,
     /// Spectral flatness; ADR 0120).
