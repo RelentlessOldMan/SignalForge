@@ -132,6 +132,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "real_cepstrum": spectral.real_cepstrum,
     "minimum_phase": spectral.minimum_phase,
     "mel_filterbank": spectral.mel_filterbank,
+    "dct": spectral.dct,
+    "idct": spectral.idct,
     "spectral_variation": spectral.spectral_variation,
     "band_energy_ratio": spectral.band_energy_ratio,
     "harmonic_to_noise": spectral.harmonic_to_noise,

@@ -4,16 +4,9 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **DCT-II**: `dct(x, *, orthonormal=True)`, `X[k] = Σ x[n]·cos(π k (2n + 1) / (2N))`, the
-   transform MFCCs use, with an inverse `idct` (the DCT-III). Not built yet. Needs an ADR: the
-   scaling (unnormalized `2Σ` as SciPy's default, or orthonormal with `√(1/N)` at `k = 0` and
-   `√(2/N)` elsewhere), the default, real input only, and whether to compute it directly in
-   `O(N²)` or through the FFT. Expected values: hand cases. A constant maps to `k = 0` only, and
-   `x[n] = cos(π m (2n+1)/(2N))` maps to bin `m` alone, with exact weights for `N = 2, 4`
-   (`cos(π/4) = √2/2`). Orthonormality is checked against the identity.
-2. **MFCC**: `mfcc(power_spectrum, filterbank, n_coefficients)`, which takes the log of the mel
+1. **MFCC**: `mfcc(power_spectrum, filterbank, n_coefficients)`, which takes the log of the mel
    band energies, `ln(W @ P)`, then the orthonormal DCT-II, keeping the first `n_coefficients`.
-   It needs the DCT-II. Needs an ADR: the log (natural, or `10·log10`), a zero band (an error or
+   It uses `dct`. Needs an ADR: the log (natural, or `10·log10`), a zero band (an error or
    a floor), and liftering (none at first).
 
 ## Built
@@ -1513,6 +1506,14 @@ Updated with every chunk of work. Dates are absolute.
   adjacent filters summing to 1 and unit area.
   Python 4981 passed, 2 skipped; .NET 4306 passed; conformance 2662/2662 in both. Version
   2026.11.16.53.
+- 2026-11-16: DCT-II (ADR 0156): `dct(samples, *, orthonormal=True)` and `idct(coefficients, *,
+  orthonormal=True)` (C# `Spectral.Dct`, `Spectral.Idct`). Orthonormal by default, or `2Σ` as
+  SciPy's default; `idct` is always the exact inverse. Computed directly from one cosine table
+  indexed `k(2n+1) mod 4N`, so both languages use the same cosines. The vectors use exact
+  cosines for `N = 1, 2, 4` in 50-digit `decimal`; the tests cover round trips, orthogonality and
+  energy.
+  Python 5020 passed, 2 skipped; .NET 4339 passed; conformance 2687/2687 in both. Version
+  2026.11.16.54.
 
 ## Not built
 

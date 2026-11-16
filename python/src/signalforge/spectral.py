@@ -1822,6 +1822,53 @@ def mel_filterbank(
     return weights
 
 
+def _dct_input(values: ArrayLike, what: str) -> NDArray[np.float64]:
+    x = np.asarray(values)
+    if np.iscomplexobj(x):
+        raise ValueError(f"{what} must be real")
+    x = x.astype(np.float64, copy=False)
+    if x.ndim != 1 or x.shape[0] == 0:
+        raise ValueError(f"{what} must be a non-empty one-dimensional array")
+    if not np.all(np.isfinite(x)):
+        raise ValueError(f"{what} must be finite")
+    return x
+
+
+def _dct_matrix(n: int) -> NDArray[np.float64]:
+    """``C[k, n] = cos(pi k (2n+1) / (2N))`` from one table indexed ``k(2n+1) mod 4N``."""
+    table = np.cos(np.pi * np.arange(4 * n) / (2 * n))
+    k = np.arange(n)
+    return np.asarray(table[np.outer(k, 2 * k + 1) % (4 * n)], dtype=np.float64)
+
+
+def dct(samples: ArrayLike, *, orthonormal: bool = True) -> NDArray[np.float64]:
+    """DCT-II: ``X[k] = s_k sum x[n] cos(pi k (2n+1) / (2N))``, orthonormal or ``s_k = 2``
+    (conventions: Spectra, DCT-II; ADR 0156)."""
+    x = _dct_input(samples, "samples")
+    n = x.shape[0]
+    out = _dct_matrix(n) @ x
+    if orthonormal:
+        out[0] *= math.sqrt(1 / n)
+        out[1:] *= math.sqrt(2 / n)
+    else:
+        out *= 2
+    return np.asarray(out, dtype=np.float64)
+
+
+def idct(coefficients: ArrayLike, *, orthonormal: bool = True) -> NDArray[np.float64]:
+    """The exact inverse of ``dct`` with the same scaling, a DCT-III (conventions: Spectra,
+    DCT-II; ADR 0156)."""
+    c = _dct_input(coefficients, "coefficients").copy()
+    n = c.shape[0]
+    if orthonormal:
+        c[0] *= math.sqrt(1 / n)
+        c[1:] *= math.sqrt(2 / n)
+    else:
+        c[0] /= 2
+        c /= n
+    return np.asarray(_dct_matrix(n).T @ c, dtype=np.float64)
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,

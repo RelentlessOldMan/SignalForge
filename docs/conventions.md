@@ -578,6 +578,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   (f_{i+2} − b_k)/(f_{i+2} − f_{i+1})))`; `area_normalized` scales row `i` by `2/(f_{i+2} − f_i)`.
   An all-zero row is allowed. `n ≥ 1`, `nfft ≥ 2`, `fs` finite and positive, `0 ≤ min < max ≤
   fs/2`. **(implemented)**
+- **DCT-II** (`dct(samples, *, orthonormal=True)`, `idct(coefficients, *, orthonormal=True)`, C#
+  `Spectral.Dct`, `Spectral.Idct`, [ADR 0156](adr/0156-dct-ii.md)): `X[k] = s_k Σ x[n] cos(π k
+  (2n+1)/(2N))`, orthonormal `s_0 = √(1/N)`, `s_k = √(2/N)`, unnormalized `s_k = 2`. `idct` is
+  the exact inverse for the same scaling (orthonormal `x[n] = Σ s_k X[k] cos(…)`; unnormalized
+  `x[n] = (X[0]/2 + Σ_{k≥1} X[k] cos(…))/N`). Direct `O(N²)` from one table `cos(πj/(2N))`,
+  `j = k(2n+1) mod 4N`. Real, finite, at least one value. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

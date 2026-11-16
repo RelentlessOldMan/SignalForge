@@ -2470,6 +2470,80 @@ public static class Spectral
     }
 
     /// <summary>
+    /// DCT-II: <c>X[k] = s_k·Σ x[n]·cos(π k (2n+1) / (2N))</c>, orthonormal or <c>s_k = 2</c>
+    /// (conventions: Spectra, DCT-II; ADR 0156).
+    /// </summary>
+    /// <param name="samples">Real values, at least one, finite.</param>
+    /// <param name="orthonormal">Orthonormal scaling (<c>√(1/N)</c>, then <c>√(2/N)</c>); otherwise 2.</param>
+    /// <returns>The <c>N</c> coefficients.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Dct(ReadOnlySpan<double> samples, bool orthonormal = true)
+    {
+        CheckDctInput(samples);
+        int n = samples.Length;
+        double[] table = DctTable(n);
+        var result = new double[n];
+        for (int k = 0; k < n; k++)
+        {
+            double sum = 0;
+            for (int i = 0; i < n; i++)
+                sum += table[(int)((long)k * (2 * i + 1) % (4L * n))] * samples[i];
+            result[k] = orthonormal ? sum * Math.Sqrt((k == 0 ? 1.0 : 2.0) / n) : 2 * sum;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// The exact inverse of <see cref="Dct"/> with the same scaling, a DCT-III (conventions:
+    /// Spectra, DCT-II; ADR 0156).
+    /// </summary>
+    /// <param name="coefficients">Real coefficients, at least one, finite.</param>
+    /// <param name="orthonormal">The scaling the coefficients were made with.</param>
+    /// <returns>The <c>N</c> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Idct(ReadOnlySpan<double> coefficients, bool orthonormal = true)
+    {
+        CheckDctInput(coefficients);
+        int n = coefficients.Length;
+        double[] table = DctTable(n);
+        var c = new double[n];
+        for (int k = 0; k < n; k++)
+        {
+            c[k] = orthonormal ? coefficients[k] * Math.Sqrt((k == 0 ? 1.0 : 2.0) / n)
+                : (k == 0 ? coefficients[k] / 2 : coefficients[k]) / n;
+        }
+        var result = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            double sum = 0;
+            for (int k = 0; k < n; k++)
+                sum += table[(int)((long)k * (2 * i + 1) % (4L * n))] * c[k];
+            result[i] = sum;
+        }
+        return result;
+    }
+
+    private static void CheckDctInput(ReadOnlySpan<double> samples)
+    {
+        if (samples.IsEmpty)
+            throw new ArgumentException("needs at least one value", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("values must be finite", nameof(samples));
+        }
+    }
+
+    /// <summary><c>cos(π j / (2N))</c> for <c>j = 0 … 4N − 1</c>.</summary>
+    private static double[] DctTable(int n)
+    {
+        var table = new double[4 * n];
+        for (int j = 0; j < table.Length; j++)
+            table[j] = Math.Cos(Math.PI * j / (2 * n));
+        return table;
+    }
+
+    /// <summary>
     /// Each spectral peak's width where the PSD crosses height − relHeight·prominence,
     /// interpolated linearly between bins; in order of frequency (conventions: Spectra, Peak
     /// widths; ADR 0138).
