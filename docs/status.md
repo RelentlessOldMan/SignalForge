@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral flatness**: nothing measures how noise-like a spectrum is: the geometric mean of
-   the PSD over its arithmetic mean (Wiener entropy), 1 for white noise and near 0 for a tone.
-   Not built yet. Needs an ADR: a function `spectral_flatness(frequencies, psd, *, band=None)`,
-   the bins used (whole bins only, or the channel power rule), the result as a ratio and in dB,
-   and what a zero bin does (the geometric mean is 0, so −∞ dB). Expected values: short PSDs
-   worked by hand, and the flatness of a two-level PSD in closed form.
+1. **Spectral centroid and RMS bandwidth**: occupied bandwidth gives the β/2 edges, but nothing
+   gives the PSD's first two moments: the centroid `Σ f·P / Σ P` and the RMS bandwidth
+   `sqrt(Σ (f − centroid)²·P / Σ P)`, used for ranging accuracy (Gabor bandwidth) and as a
+   spread measure. Not built yet. Needs an ADR: a function `spectral_moments(frequencies, psd, *,
+   band=None, span=None)`, how cut and span-clipped bins are weighted (the bin's centroid of its
+   overlap, or its center), and the zero-power case. Expected values: short PSDs worked by hand,
+   and a rectangular PSD of width `B`, whose RMS bandwidth is `B/√12`.
 
 ## Built
 
@@ -1207,6 +1208,13 @@ Updated with every chunk of work. Dates are absolute.
   Gaussian noise against `exp(−g)` and real Gaussian noise against `erfc(√(g/2))`.
   Python 4378 passed, 2 skipped; .NET 3714 passed; conformance 2222/2222 in both. Version
   2026.11.16.17.
+- 2026-11-16: spectral flatness (ADR 0120): `spectral_flatness(frequencies, psd, *, band=None,
+  span=None)` (C# `Spectral.SpectralFlatness`) is the geometric mean of the PSD over its arithmetic
+  mean, each bin weighted by its overlap with the band, by the channel power rule's bins; 0 and
+  `−∞` dB when a weighted bin is zero. Vectors are short PSDs worked by hand; the tests check the
+  two-level closed form, a tone, white noise against `exp(−γ)`, and scale invariance.
+  Python 4398 passed, 2 skipped; .NET 3734 passed; conformance 2235/2235 in both. Version
+  2026.11.16.18.
 
 ## Not built
 

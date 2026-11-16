@@ -177,6 +177,14 @@ public sealed record Acpr(double MainPower, double[] LowerPower, double[] UpperP
 /// <param name="NprDb">10·log10(loaded) − 10·log10(notch); +∞ for an empty notch.</param>
 public sealed record NoisePowerRatio(double LoadedDensity, double NotchDensity, double NprDb);
 
+/// <summary>Geometric and arithmetic mean of the PSD over a band, and their ratio (conventions:
+/// Spectra, Spectral flatness; ADR 0120).</summary>
+/// <param name="GeometricMean">exp of the width-weighted mean of ln PSD, in the PSD's units.</param>
+/// <param name="ArithmeticMean">Width-weighted mean PSD.</param>
+/// <param name="Flatness">GeometricMean / ArithmeticMean, in [0, 1].</param>
+/// <param name="FlatnessDb">10·log10(Flatness); −∞ when a weighted bin is zero.</param>
+public sealed record SpectralFlatness(double GeometricMean, double ArithmeticMean, double Flatness, double FlatnessDb);
+
 /// <summary>
 /// FFT, frequency axes, windows, Welch PSD, occupied bandwidth and channel power. Definitions in
 /// docs/conventions.md (Spectra) and docs/adr/0006-fft-windows-spectra.md.
@@ -1623,6 +1631,59 @@ public static class Spectral
         double inside = Channel(notch.Low, notch.High) / (notch.High - notch.Low);
         double npr = inside == 0 ? double.PositiveInfinity : 10 * (Math.Log10(loaded) - Math.Log10(inside));
         return new NoisePowerRatio(loaded, inside, npr);
+    }
+
+    /// <summary>
+    /// The PSD's geometric mean over its arithmetic mean across <paramref name="band"/> (the whole
+    /// spectrum when null), each bin weighted by its overlap with the band (conventions: Spectra,
+    /// Spectral flatness; ADR 0120).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The two means, the flatness and the flatness in dB.</returns>
+    /// <exception cref="ArgumentException">An edge is out of order or not finite, the band leaves the spectrum, or the band has no power.</exception>
+    public static SpectralFlatness SpectralFlatness(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        var (power, left, right) = Bins(frequencies, psd, span);
+        double lo = left[0], hi = right[^1];
+        if (band is { } b)
+        {
+            if (!(double.IsFinite(b.Low) && double.IsFinite(b.High)))
+                throw new ArgumentException("band must be (low, high) with finite edges", nameof(band));
+            if (!(b.Low < b.High))
+                throw new ArgumentException("band low must be below band high", nameof(band));
+            double slack = 0; // as for Acpr
+            for (int k = 0; k < power.Length; k++)
+                slack = Math.Max(slack, 1e-9 * (right[k] - left[k]));
+            if (b.Low < left[0] - slack || b.High > right[^1] + slack)
+                throw new ArgumentException($"band [{b.Low}, {b.High}] leaves the spectrum [{left[0]}, {right[^1]}]", nameof(band));
+            (lo, hi) = b;
+        }
+        double total = 0, sum = 0, logSum = 0;
+        bool zero = false;
+        for (int k = 0; k < power.Length; k++)
+        {
+            double w = Math.Max(Math.Min(right[k], hi) - Math.Max(left[k], lo), 0.0);
+            if (!(w > 0))
+                continue;
+            double d = power[k] / (right[k] - left[k]);
+            total += w;
+            sum += w * d;
+            if (d == 0)
+                zero = true;
+            else
+                logSum += w * Math.Log(d);
+        }
+        double arith = sum / total;
+        if (!(arith > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        if (zero)
+            return new SpectralFlatness(0, arith, 0, double.NegativeInfinity);
+        double geo = Math.Exp(logSum / total);
+        return new SpectralFlatness(geo, arith, geo / arith, 10 * (Math.Log10(geo) - Math.Log10(arith)));
     }
 
     /// <summary>

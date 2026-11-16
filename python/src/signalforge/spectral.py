@@ -1175,6 +1175,52 @@ def noise_power_ratio(
     return NoisePowerRatio(loaded, inside, npr)
 
 
+@dataclass(frozen=True)
+class SpectralFlatness:
+    """Geometric and arithmetic mean of the PSD over a band, and their ratio (conventions:
+    Spectra, Spectral flatness; ADR 0120). Means are in the PSD's units."""
+
+    geometric_mean: float
+    arithmetic_mean: float
+    flatness: float
+    flatness_db: float
+
+
+def spectral_flatness(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+) -> SpectralFlatness:
+    """The PSD's geometric mean over its arithmetic mean across ``band = (low, high)`` in Hz (the
+    whole spectrum by default), each bin weighted by its overlap with the band."""
+    power, left, right = _bins(frequencies, psd, span)
+    if band is None:
+        lo, hi = float(left[0]), float(right[-1])
+    else:
+        b = np.asarray(band, dtype=np.float64)
+        if b.shape != (2,) or not np.all(np.isfinite(b)):
+            raise ValueError("band must be (low, high) with finite edges")
+        lo, hi = float(b[0]), float(b[1])
+        if not lo < hi:
+            raise ValueError("band low must be below band high")
+        slack = 1e-9 * float(np.max(right - left))  # as for acpr
+        if lo < left[0] - slack or hi > right[-1] + slack:
+            raise ValueError(f"band [{lo}, {hi}] leaves the spectrum [{left[0]}, {right[-1]}]")
+    w = np.clip(np.minimum(right, hi) - np.maximum(left, lo), 0.0, None)
+    keep = w > 0
+    w, d = w[keep], (power / (right - left))[keep]
+    total = float(np.sum(w))
+    arith = float(np.sum(w * d)) / total
+    if not arith > 0:
+        raise ValueError("the band has no power")
+    if np.any(d == 0):
+        return SpectralFlatness(0.0, arith, 0.0, -math.inf)
+    geo = math.exp(float(np.sum(w * np.log(d))) / total)
+    return SpectralFlatness(geo, arith, geo / arith, 10 * (math.log10(geo) - math.log10(arith)))
+
+
 def acpr_rrc(
     frequencies: ArrayLike,
     psd: ArrayLike,

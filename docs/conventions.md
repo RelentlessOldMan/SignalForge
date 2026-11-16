@@ -374,6 +374,14 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `loaded_density`, `notch_density`, `npr_db = 10·log10 loaded_density − 10·log10 notch_density`
   (`+∞` for an empty notch). The band lies inside the spectrum as ACPR's channels do (same
   slack); `loaded_density > 0` required. **(implemented)**
+- **Spectral flatness** (`spectral_flatness(frequencies, psd, band=None, span=None)`,
+  [ADR 0120](adr/0120-spectral-flatness.md)): over the channel power rule's bins (same `span`),
+  bin `k` has density `d_k = P_k / (right_k − left_k)` and weight `w_k`, the width of its overlap
+  with `band = (low, high)` (default: the whole spectrum). With `W = Σ w_k`: `G = exp(Σ w_k ln d_k
+  / W)`, `A = Σ w_k d_k / W`; result `SpectralFlatness(geometric_mean, arithmetic_mean, flatness =
+  G/A, flatness_db = 10·log10(G/A))`, `0` and `−∞` dB when a weighted bin is zero. Band edges
+  finite, `low < high`, inside the spectrum as ACPR's channels are (same slack); `A > 0` required.
+  **(implemented)**
 - **ACPR through an RRC filter** (`acpr_rrc(frequencies, psd, center, symbol_rate, alpha, offsets,
   span=None)`, [ADR 0111](adr/0111-acpr-rrc.md)): channels centred at `center` and `center ∓ o`,
   each power `Σ psd_k·Δ·G(f_k − c)` with `G` the RRC's `|H|²` at peak 1: `1` for
