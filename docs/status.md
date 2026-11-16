@@ -4,18 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Speech transmission index from an MTF matrix**:
-   `speech_transmission_index(mtf)` in `measurements`, taking the 7 octave bands
-   (125 Hz to 8 kHz) by 14 modulation frequencies (0.63 to 12.5 Hz).
-   - Each `m` becomes `SNR = 10 log10(m/(1 − m))`, clipped to ±15 dB.
-   - That gives `TI = (SNR + 15)/30`; `MTI_k` is the mean of a band's 14 TIs.
-   - The result is `STI = Σ α_k MTI_k − Σ β_k √(MTI_k MTI_{k+1})`.
-
-   The level-dependent masking and the hearing threshold are left out. Not built yet. Needs an
-   ADR: the α and β weights must be confirmed from a published source, not from memory, and the
-   ADR must say which revision of IEC 60268-16 they come from. It must also say how `m ≥ 1` and
-   `m ≤ 0` clip. Expected values: hand MTF matrices give exact STIs (all `m = 1` gives 1, all
-   `m = 0` gives 0, and a uniform `m` gives a closed form).
+1. **Sound strength**: `sound_strength(impulse_response, reference)` in `measurements`. It is
+   ISO 3382-1 `G = 10 log10(Σ h² / Σ h_ref²)`, where `reference` is the same source's response
+   measured in a free field at 10 m. Not built yet. Needs an ADR: whether the two responses must
+   have the same sample rate or length (the sums don't need it), the zero rules, and whether an
+   early or late window (G80, G_late) belongs here or stays the caller's slice. Expected values:
+   hand sums.
 
 ## Built
 
@@ -1683,6 +1677,19 @@ Updated with every chunk of work. Dates are absolute.
   rounded, and that rounding alone gave a 0.1 % miss.
   Python 5359 passed, 2 skipped; .NET 4677 passed; conformance 2979/2979 in both. Version
   2026.11.16.74.
+- 2026-11-16: speech transmission index (ADR 0177): `speech_transmission_index(mtf)` in
+  `measurements` (C# `Measurements.SpeechTransmissionIndex`). The input is a 7-band MTF matrix of
+  any column count (14 for the full method, 2 for STIPA).
+  - Each `m` becomes `SNR = 10 log10(m/(1 − m))`, clipped to ±15 dB, then `TI = (SNR + 15)/30`.
+  - The TIs are averaged over each band.
+  - The bands are combined with the IEC 60268-16:2020 male weights. The weights were checked
+    against two independent published restatements of that edition.
+
+  No level, masking or threshold corrections are applied. `Σα − Σβ = 1`, so a uniform MTF gives
+  its TI. The vectors are worked in 50-digit `decimal`. The Python vector loader can't decode a
+  ragged matrix, so the unequal-rows case is a unit test in both languages.
+  Python 5374 passed, 2 skipped; .NET 4691 passed; conformance 2991/2991 in both. Version
+  2026.11.16.75.
 
 ## Not built
 

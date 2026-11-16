@@ -134,6 +134,7 @@ from .measurements import (
     schroeder_decay,
     sfdr,
     sound_exposure,
+    speech_transmission_index,
     temporal_centroid,
     time_weighting,
     tone_metrics,
@@ -310,7 +311,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.74"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.75"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -588,6 +589,7 @@ __all__ = [
     "spectral_slope",
     "spectral_variation",
     "spectrogram",
+    "speech_transmission_index",
     "temporal_centroid",
     "time_weighting",
     "timing_offset",

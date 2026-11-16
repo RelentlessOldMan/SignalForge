@@ -94,6 +94,13 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Speech transmission index** ([ADR 0177](adr/0177-speech-transmission-index.md);
+  `speech_transmission_index(mtf)`, C# `Measurements.SpeechTransmissionIndex`): `mtf` is 7 rows
+  (octave bands 125 Hz to 8 kHz) by `M ≥ 1` columns. `SNR = 10 log10(m/(1 − m))` clipped to
+  ±15 dB (`m ≤ 0`: TI 0; `m ≥ 1`: TI 1), `TI = (SNR + 15)/30`, `MTI_k` the row mean, `STI = Σ
+  α_k MTI_k − Σ β_k √(MTI_k MTI_{k+1})` with the IEC 60268-16:2020 male weights `α = 0.085,
+  0.127, 0.230, 0.233, 0.309, 0.224, 0.173`, `β = 0.085, 0.078, 0.065, 0.011, 0.047, 0.095`. No
+  level, masking or threshold corrections. Values finite. **(implemented)**
 - **Modulation transfer function** ([ADR 0176](adr/0176-modulation-transfer.md);
   `modulation_transfer(impulse_response, sample_rate, frequencies)`, C#
   `Measurements.ModulationTransfer`): `m(F) = |Σ |h[n]|² e^{−j2πF n/fs}| / Σ |h[n]|²` from

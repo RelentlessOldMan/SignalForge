@@ -1455,3 +1455,33 @@ def modulation_transfer(
         phase = 2 * math.pi * float(freq) * n / fs
         out[k] = math.hypot(float(np.sum(p * np.cos(phase))), float(np.sum(p * np.sin(phase))))
     return out / total
+
+
+_STI_ALPHA = (0.085, 0.127, 0.230, 0.233, 0.309, 0.224, 0.173)
+_STI_BETA = (0.085, 0.078, 0.065, 0.011, 0.047, 0.095)
+
+
+def _transmission_index(m: float) -> float:
+    if m <= 0:
+        return 0.0
+    if m >= 1:
+        return 1.0
+    snr = min(max(10 * math.log10(m / (1 - m)), -15.0), 15.0)
+    return (snr + 15) / 30
+
+
+def speech_transmission_index(mtf: ArrayLike) -> float:
+    """The STI of a 7-band MTF matrix with the IEC 60268-16:2020 male weights, without level,
+    masking or threshold corrections (conventions: Speech transmission index; ADR 0177)."""
+    try:
+        m = np.asarray(mtf, dtype=np.float64)
+    except (TypeError, ValueError):
+        raise ValueError("mtf must be a 7-row matrix of real values") from None
+    if m.ndim != 2 or m.shape[0] != 7 or m.shape[1] == 0:
+        raise ValueError("mtf must have 7 rows and at least one column")
+    if not np.all(np.isfinite(m)):
+        raise ValueError("mtf must be finite")
+    mti = [sum(_transmission_index(float(v)) for v in row) / m.shape[1] for row in m]
+    sti = sum(a * t for a, t in zip(_STI_ALPHA, mti, strict=True))
+    sti -= sum(b * math.sqrt(mti[k] * mti[k + 1]) for k, b in enumerate(_STI_BETA))
+    return float(sti)
