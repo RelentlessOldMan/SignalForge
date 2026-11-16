@@ -293,6 +293,58 @@ def noise_figure_y_factor(
     return NoiseFigure(y, f, 10 * math.log10(f), _T0 * (f - 1))
 
 
+@dataclass(frozen=True)
+class CascadeNoiseFigure:
+    """The noise figure of stages in a chain (conventions: Noise figure, Cascade).
+
+    ``contributions`` holds each stage's term of Friis' sum, in chain order; ``gain_db`` is the
+    total gain.
+    """
+
+    noise_factor: float
+    noise_figure_db: float
+    noise_temperature: float
+    gain_db: float
+    contributions: NDArray[np.float64]
+
+
+def noise_figure_cascade(noise_figures_db: ArrayLike, gains_db: ArrayLike) -> CascadeNoiseFigure:
+    """Friis' noise factor of matched stages in chain order (conventions: Noise figure, Cascade;
+    ADR 0106): ``F = F1 + (F2 - 1)/G1 + (F3 - 1)/(G1*G2) + ...``."""
+    nf = np.asarray(noise_figures_db, dtype=np.float64)
+    g = np.asarray(gains_db, dtype=np.float64)
+    if nf.ndim != 1 or g.ndim != 1:
+        raise ValueError("noise_figures_db and gains_db must be one-dimensional")
+    if nf.size == 0 or nf.size != g.size:
+        raise ValueError("noise_figures_db and gains_db need the same number of stages, at least 1")
+    if not (np.all(np.isfinite(nf)) and np.all(np.isfinite(g))):
+        raise ValueError("noise figures and gains must be finite")
+    if np.any(nf < 0):
+        raise ValueError("noise figures must not be negative")
+    c = np.empty(nf.size)
+    before = 1.0
+    total = 0.0
+    gain_db = 0.0
+    for i in range(nf.size):
+        f = _from_db(float(nf[i]))
+        # a gain that underflowed to 0 leaves no finite factor, as the C# division does
+        c[i] = f if i == 0 else ((f - 1) / before if before else math.inf)
+        total += float(c[i])
+        before *= _from_db(float(g[i]))
+        gain_db += float(g[i])
+    if not math.isfinite(total):
+        raise ValueError("the gains before a noisy stage underflow: no finite noise factor")
+    return CascadeNoiseFigure(total, 10 * math.log10(total), _T0 * (total - 1), gain_db, c)
+
+
+def _from_db(db: float) -> float:
+    """10**(db/10), +inf where it overflows (as in C#)."""
+    try:
+        return float(10.0 ** (db / 10))
+    except OverflowError:
+        return math.inf
+
+
 def _half_width(window: str, beta: float | None) -> int:
     if window == "kaiser":
         if beta is None:

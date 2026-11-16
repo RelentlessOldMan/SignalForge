@@ -4,12 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Cascaded noise figure (Friis)**: `noise_figure_cascade(noise_figures_db, gains_db)`, the
-   total noise figure of stages in a chain, `F = F₁ + (F₂ − 1)/G₁ + (F₃ − 1)/(G₁G₂) + …`. ADR
-   0105 left the second-stage correction to it. Needs an ADR: linear gains or dB, whether a stage
-   with gain below 1 (a loss) is allowed, and the result (the total F and NF, maybe each stage's
-   share). Expected values: textbook chains worked by hand (an LNA of NF 1 dB and gain 20 dB
-   before a mixer of NF 10 dB), and a single stage returning itself.
+1. **Two-tone intermodulation and IP3**: `two_tone_imd(samples, sample_rate, f1, f2, ...)`, the
+   RF linearity measurement: the powers of the two tones and of the third-order products at
+   `2f₁ − f₂` and `2f₂ − f₁`, found with the tone metrics' windowed spectrum and bin groups (ADR
+   0015), and the intercept `IP3 = P_tone + (P_tone − P_IM3)/2` (input- or output-referred is the
+   caller's: pass the output and get OIP3). Needs an ADR: which tone power and which product
+   (the lower, the higher, the mean, or the worse) enter IP3, real or complex input, how a
+   product that falls on another group or aliases is handled. Expected values: a cubic
+   nonlinearity `y = x + a₃x³` on two equal tones, where `IM3 = (3/4)a₃A³` by hand, and the
+   intercept follows exactly.
 
 ## Built
 
@@ -1085,13 +1088,20 @@ Updated with every chunk of work. Dates are absolute.
   tests also measure a simulated device of known noise temperature.
   Python 4028 passed, 2 skipped; .NET 3402 passed; conformance 2040/2040 in both. Version
   2026.11.16.3.
+- 2026-11-16: cascaded noise figure (ADR 0106): `noise_figure_cascade(noise_figures_db,
+  gains_db)` (C# `Measurements.NoiseFigureCascade`) applies Friis' formula to matched stages in
+  chain order and returns a `CascadeNoiseFigure`: F, NF, noise temperature, total gain and each
+  stage's term. Losses are stages with negative gain; a noise figure below 0 dB is rejected. The
+  vectors are hand derivations, including a 6 dB loss before a 2 dB amplifier giving 8 dB.
+  Python 4052 passed, 2 skipped; .NET 3427 passed; conformance 2053/2053 in both. Version
+  2026.11.16.4.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
-phase noise, NF beyond the Y-factor method), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
+phase noise, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.
 

@@ -230,6 +230,7 @@ public static class Conformance
                 : Bind(Reals(a.Get("samples")), x => Measurements.PowerStats(x)),
             "tone_metrics" => ToneMetricsOp(a),
             "sfdr" => SfdrOp(a),
+            "noise_figure_cascade" => Bind((Reals(a.Get("noise_figures_db")), Reals(a.Get("gains_db"))), t => Measurements.NoiseFigureCascade(t.Item1, t.Item2)),
             "noise_figure_y_factor" => Bind((a.D("hot_power"), a.D("cold_power"), a.D("enr_db"), a.Has("cold_temperature") ? a.D("cold_temperature") : 290), t => Measurements.NoiseFigureYFactor(t.Item1, t.Item2, t.Item3, t.Item4)),
             "qpsk_map" => Bind(Bits(a.Get("bits")), b => Modulation.QpskMap(b)),
             "qpsk_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.QpskDemapHard(s)),

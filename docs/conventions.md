@@ -439,6 +439,13 @@ Decided in [ADR 0105](adr/0105-noise-figure-y-factor.md). Python:
   **(implemented)**
 - **Result** (`NoiseFigure`): `y_factor = Y`, `noise_factor = F`, `noise_figure_db = 10·log10 F`,
   `noise_temperature = T₀(F − 1)` in kelvin. **(implemented)**
+- **Cascade** (`noise_figure_cascade(noise_figures_db, gains_db)`,
+  [ADR 0106](adr/0106-noise-figure-cascade.md)): Friis, one value per stage in chain order.
+  `Fᵢ = 10^(NFᵢ/10)`, `Gᵢ = 10^(gᵢ/10)`, `Πᵢ = G₁…Gᵢ₋₁` multiplied in order (`Π₁ = 1`);
+  contributions `c₁ = F₁`, `cᵢ = (Fᵢ − 1)/Πᵢ`; `F = Σ cᵢ` in order. Both 1-D, same length `≥ 1`,
+  finite; every `NFᵢ ≥ 0`; gains may be negative (losses). `F` not finite is `invalid_argument`.
+  Result (`CascadeNoiseFigure`): `noise_factor`, `noise_figure_db`, `noise_temperature`
+  (`T₀(F − 1)`), `gain_db` (the `gᵢ` summed in order) and `contributions`. **(implemented)**
 
 ## Bits and symbols
 

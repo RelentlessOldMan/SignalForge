@@ -75,6 +75,15 @@ public sealed record Sfdr(
 /// <param name="NoiseTemperature">290·(F − 1), in kelvin.</param>
 public sealed record NoiseFigure(double YFactor, double NoiseFactor, double NoiseFigureDb, double NoiseTemperature);
 
+/// <summary>The noise figure of matched stages in a chain (conventions: Noise figure, Cascade;
+/// ADR 0106).</summary>
+/// <param name="NoiseFactor">The chain's linear noise factor F.</param>
+/// <param name="NoiseFigureDb">10·log10 F.</param>
+/// <param name="NoiseTemperature">290·(F − 1), in kelvin.</param>
+/// <param name="GainDb">The stages' gains summed, in dB.</param>
+/// <param name="Contributions">Each stage's term of Friis' sum, in chain order.</param>
+public sealed record CascadeNoiseFigure(double NoiseFactor, double NoiseFigureDb, double NoiseTemperature, double GainDb, double[] Contributions);
+
 /// <summary>Power measurements and tone metrics. Definitions in docs/conventions.md.</summary>
 public static class Measurements
 {
@@ -215,6 +224,38 @@ public static class Measurements
         if (!(f > 0) || !double.IsFinite(f))
             throw new ArgumentException("the measurement gives no finite positive noise factor", nameof(hotPower));
         return new NoiseFigure(y, f, 10 * Math.Log10(f), t0 * (f - 1));
+    }
+
+    /// <summary>Friis' noise factor of matched stages in chain order:
+    /// F = F₁ + (F₂ − 1)/G₁ + (F₃ − 1)/(G₁G₂) + … (conventions: Noise figure, Cascade; ADR 0106).</summary>
+    /// <param name="noiseFiguresDb">Each stage's noise figure in dB, finite, not negative.</param>
+    /// <param name="gainsDb">Each stage's gain in dB, finite; negative for a loss.</param>
+    /// <returns>F, the noise figure in dB, the noise temperature, the total gain and each stage's term.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or F is not finite.</exception>
+    public static CascadeNoiseFigure NoiseFigureCascade(ReadOnlySpan<double> noiseFiguresDb, ReadOnlySpan<double> gainsDb)
+    {
+        if (noiseFiguresDb.IsEmpty || noiseFiguresDb.Length != gainsDb.Length)
+            throw new ArgumentException("noise figures and gains need the same number of stages, at least 1", nameof(gainsDb));
+        for (int i = 0; i < noiseFiguresDb.Length; i++)
+        {
+            if (!double.IsFinite(noiseFiguresDb[i]) || !double.IsFinite(gainsDb[i]))
+                throw new ArgumentException("noise figures and gains must be finite", nameof(noiseFiguresDb));
+            if (noiseFiguresDb[i] < 0)
+                throw new ArgumentOutOfRangeException(nameof(noiseFiguresDb), noiseFiguresDb[i], "must not be negative");
+        }
+        var c = new double[noiseFiguresDb.Length];
+        double before = 1, total = 0, gainDb = 0;
+        for (int i = 0; i < c.Length; i++)
+        {
+            double f = Math.Pow(10, noiseFiguresDb[i] / 10);
+            c[i] = i == 0 ? f : (f - 1) / before;
+            total += c[i];
+            before *= Math.Pow(10, gainsDb[i] / 10);
+            gainDb += gainsDb[i];
+        }
+        if (!double.IsFinite(total))
+            throw new ArgumentException("the gains before a noisy stage underflow: no finite noise factor", nameof(gainsDb));
+        return new CascadeNoiseFigure(total, 10 * Math.Log10(total), 290 * (total - 1), gainDb, c);
     }
 
     private static void Check(int samples, int? width, double? fundamental)

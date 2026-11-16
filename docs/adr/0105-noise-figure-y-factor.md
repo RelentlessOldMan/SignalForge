@@ -43,7 +43,8 @@ to be fixed here.
   (a negative noise temperature) is returned as it is, because it is what the numbers say, and
   a caller checking a bench result needs to see it.
 - No second-stage correction. Removing the noise contribution of the meter (Friis) is a
-  separate cascade calculation and gets its own function later.
+  separate cascade calculation and gets its own function later:
+  [ADR 0106](0106-noise-figure-cascade.md).
 
 ## Consequences
 
