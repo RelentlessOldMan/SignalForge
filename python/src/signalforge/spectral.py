@@ -1186,6 +1186,56 @@ class SpectralFlatness:
     flatness_db: float
 
 
+def _band_edges(
+    band: ArrayLike | None, left: NDArray[np.float64], right: NDArray[np.float64]
+) -> tuple[float, float]:
+    """The band's edges, checked as for ACPR's channels; the whole spectrum for None."""
+    if band is None:
+        return float(left[0]), float(right[-1])
+    b = np.asarray(band, dtype=np.float64)
+    if b.shape != (2,) or not np.all(np.isfinite(b)):
+        raise ValueError("band must be (low, high) with finite edges")
+    lo, hi = float(b[0]), float(b[1])
+    if not lo < hi:
+        raise ValueError("band low must be below band high")
+    slack = 1e-9 * float(np.max(right - left))  # as for acpr
+    if lo < left[0] - slack or hi > right[-1] + slack:
+        raise ValueError(f"band [{lo}, {hi}] leaves the spectrum [{left[0]}, {right[-1]}]")
+    return lo, hi
+
+
+@dataclass(frozen=True)
+class SpectralMoments:
+    """Power, centroid and RMS bandwidth of a PSD over a band (conventions: Spectra, Spectral
+    centroid and RMS bandwidth; ADR 0121). Frequencies are in the PSD's axis."""
+
+    power: float
+    centroid: float
+    rms_bandwidth: float
+
+
+def spectral_moments(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+) -> SpectralMoments:
+    """Power, centroid and RMS bandwidth of the PSD taken as constant over each bin, integrated
+    exactly over ``band = (low, high)`` in Hz (the whole spectrum by default)."""
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    a, b = np.maximum(left, lo), np.minimum(right, hi)
+    keep = b > a
+    a, b, d = a[keep], b[keep], (power / (right - left))[keep]
+    total = float(np.sum(d * (b - a)))
+    if not total > 0:
+        raise ValueError("the band has no power")
+    c = float(np.sum(d * (b - a) * (a + b) / 2)) / total
+    var = float(np.sum(d * ((b - c) ** 3 - (a - c) ** 3) / 3)) / total
+    return SpectralMoments(total, c, math.sqrt(max(var, 0.0)))
+
+
 def spectral_flatness(
     frequencies: ArrayLike,
     psd: ArrayLike,
@@ -1196,18 +1246,7 @@ def spectral_flatness(
     """The PSD's geometric mean over its arithmetic mean across ``band = (low, high)`` in Hz (the
     whole spectrum by default), each bin weighted by its overlap with the band."""
     power, left, right = _bins(frequencies, psd, span)
-    if band is None:
-        lo, hi = float(left[0]), float(right[-1])
-    else:
-        b = np.asarray(band, dtype=np.float64)
-        if b.shape != (2,) or not np.all(np.isfinite(b)):
-            raise ValueError("band must be (low, high) with finite edges")
-        lo, hi = float(b[0]), float(b[1])
-        if not lo < hi:
-            raise ValueError("band low must be below band high")
-        slack = 1e-9 * float(np.max(right - left))  # as for acpr
-        if lo < left[0] - slack or hi > right[-1] + slack:
-            raise ValueError(f"band [{lo}, {hi}] leaves the spectrum [{left[0]}, {right[-1]}]")
+    lo, hi = _band_edges(band, left, right)
     w = np.clip(np.minimum(right, hi) - np.maximum(left, lo), 0.0, None)
     keep = w > 0
     w, d = w[keep], (power / (right - left))[keep]

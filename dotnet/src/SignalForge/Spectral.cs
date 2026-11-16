@@ -185,6 +185,13 @@ public sealed record NoisePowerRatio(double LoadedDensity, double NotchDensity, 
 /// <param name="FlatnessDb">10·log10(Flatness); −∞ when a weighted bin is zero.</param>
 public sealed record SpectralFlatness(double GeometricMean, double ArithmeticMean, double Flatness, double FlatnessDb);
 
+/// <summary>Power, centroid and RMS bandwidth of a PSD over a band (conventions: Spectra, Spectral
+/// centroid and RMS bandwidth; ADR 0121).</summary>
+/// <param name="Power">Integral of the step density over the band.</param>
+/// <param name="Centroid">Power-weighted mean frequency, in the PSD's axis.</param>
+/// <param name="RmsBandwidth">Power-weighted RMS spread about the centroid.</param>
+public sealed record SpectralMoments(double Power, double Centroid, double RmsBandwidth);
+
 /// <summary>
 /// FFT, frequency axes, windows, Welch PSD, occupied bandwidth and channel power. Definitions in
 /// docs/conventions.md (Spectra) and docs/adr/0006-fft-windows-spectra.md.
@@ -1633,6 +1640,63 @@ public static class Spectral
         return new NoisePowerRatio(loaded, inside, npr);
     }
 
+    /// <summary>The band's edges, checked as for ACPR's channels; the whole spectrum when null.</summary>
+    private static (double Low, double High) BandEdges((double Low, double High)? band, double[] left, double[] right)
+    {
+        if (band is not { } b)
+            return (left[0], right[^1]);
+        if (!(double.IsFinite(b.Low) && double.IsFinite(b.High)))
+            throw new ArgumentException("band must be (low, high) with finite edges", nameof(band));
+        if (!(b.Low < b.High))
+            throw new ArgumentException("band low must be below band high", nameof(band));
+        double slack = 0; // as for Acpr
+        for (int k = 0; k < left.Length; k++)
+            slack = Math.Max(slack, 1e-9 * (right[k] - left[k]));
+        if (b.Low < left[0] - slack || b.High > right[^1] + slack)
+            throw new ArgumentException($"band [{b.Low}, {b.High}] leaves the spectrum [{left[0]}, {right[^1]}]", nameof(band));
+        return b;
+    }
+
+    /// <summary>
+    /// Power, centroid and RMS bandwidth of the PSD taken as constant over each bin, integrated
+    /// exactly over <paramref name="band"/> (the whole spectrum when null) (conventions: Spectra,
+    /// Spectral centroid and RMS bandwidth; ADR 0121).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The power, the centroid and the RMS bandwidth.</returns>
+    /// <exception cref="ArgumentException">An edge is out of order or not finite, the band leaves the spectrum, or the band has no power.</exception>
+    public static SpectralMoments SpectralMoments(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        int n = power.Length;
+        double[] a = new double[n], b = new double[n], d = new double[n];
+        double total = 0, first = 0;
+        for (int k = 0; k < n; k++)
+        {
+            a[k] = Math.Max(left[k], lo);
+            b[k] = Math.Min(right[k], hi);
+            if (!(b[k] > a[k]))
+                continue;
+            d[k] = power[k] / (right[k] - left[k]);
+            total += d[k] * (b[k] - a[k]);
+            first += d[k] * (b[k] - a[k]) * (a[k] + b[k]) / 2;
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        double c = first / total, second = 0;
+        for (int k = 0; k < n; k++)
+        {
+            if (b[k] > a[k])
+                second += d[k] * (Math.Pow(b[k] - c, 3) - Math.Pow(a[k] - c, 3)) / 3;
+        }
+        return new SpectralMoments(total, c, Math.Sqrt(Math.Max(second / total, 0)));
+    }
+
     /// <summary>
     /// The PSD's geometric mean over its arithmetic mean across <paramref name="band"/> (the whole
     /// spectrum when null), each bin weighted by its overlap with the band (conventions: Spectra,
@@ -1648,20 +1712,7 @@ public static class Spectral
         (double Low, double High)? band = null, (double Low, double High)? span = null)
     {
         var (power, left, right) = Bins(frequencies, psd, span);
-        double lo = left[0], hi = right[^1];
-        if (band is { } b)
-        {
-            if (!(double.IsFinite(b.Low) && double.IsFinite(b.High)))
-                throw new ArgumentException("band must be (low, high) with finite edges", nameof(band));
-            if (!(b.Low < b.High))
-                throw new ArgumentException("band low must be below band high", nameof(band));
-            double slack = 0; // as for Acpr
-            for (int k = 0; k < power.Length; k++)
-                slack = Math.Max(slack, 1e-9 * (right[k] - left[k]));
-            if (b.Low < left[0] - slack || b.High > right[^1] + slack)
-                throw new ArgumentException($"band [{b.Low}, {b.High}] leaves the spectrum [{left[0]}, {right[^1]}]", nameof(band));
-            (lo, hi) = b;
-        }
+        var (lo, hi) = BandEdges(band, left, right);
         double total = 0, sum = 0, logSum = 0;
         bool zero = false;
         for (int k = 0; k < power.Length; k++)

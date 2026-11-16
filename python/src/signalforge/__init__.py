@@ -157,6 +157,7 @@ from .spectral import (
     OccupiedBandwidth,
     SpectralDensity,
     SpectralFlatness,
+    SpectralMoments,
     Spectrogram,
     TaperSet,
     WindowStats,
@@ -182,6 +183,7 @@ from .spectral import (
     noise_power_ratio,
     occupied_bandwidth,
     spectral_flatness,
+    spectral_moments,
     spectrogram,
     welch_psd,
     window,
@@ -224,7 +226,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.18"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.19"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -256,6 +258,7 @@ __all__ = [
     "Signal",
     "SpectralDensity",
     "SpectralFlatness",
+    "SpectralMoments",
     "Spectrogram",
     "TaperSet",
     "TimingRecovery",
@@ -419,6 +422,7 @@ __all__ = [
     "sos_group_delay",
     "sos_response",
     "spectral_flatness",
+    "spectral_moments",
     "spectrogram",
     "timing_offset",
     "tone",

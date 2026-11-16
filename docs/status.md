@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral centroid and RMS bandwidth**: occupied bandwidth gives the β/2 edges, but nothing
-   gives the PSD's first two moments: the centroid `Σ f·P / Σ P` and the RMS bandwidth
-   `sqrt(Σ (f − centroid)²·P / Σ P)`, used for ranging accuracy (Gabor bandwidth) and as a
-   spread measure. Not built yet. Needs an ADR: a function `spectral_moments(frequencies, psd, *,
-   band=None, span=None)`, how cut and span-clipped bins are weighted (the bin's centroid of its
-   overlap, or its center), and the zero-power case. Expected values: short PSDs worked by hand,
-   and a rectangular PSD of width `B`, whose RMS bandwidth is `B/√12`.
+1. **x dB bandwidth**: spectrum analyzers report the width at which the PSD has fallen x dB below
+   its peak (3 dB, 6 dB, 26 dB for emission masks); occupied bandwidth and the RMS bandwidth are
+   power-based and differ. Not built yet. Needs an ADR: a function `db_bandwidth(frequencies,
+   psd, drop_db, *, band=None)`, the peak (largest bin, first on ties), walking out to the first
+   bin at or below the drop on each side, linear interpolation in dB or in power between bins,
+   and what happens when the PSD never falls that far. Expected values: short PSDs worked by
+   hand, and a Gaussian PSD, whose x dB width is `2σ·sqrt(x·ln 10 / 5)`.
 
 ## Built
 
@@ -1215,6 +1215,13 @@ Updated with every chunk of work. Dates are absolute.
   two-level closed form, a tone, white noise against `exp(−γ)`, and scale invariance.
   Python 4398 passed, 2 skipped; .NET 3734 passed; conformance 2235/2235 in both. Version
   2026.11.16.18.
+- 2026-11-16: spectral centroid and RMS bandwidth (ADR 0121): `spectral_moments(frequencies, psd, *,
+  band=None, span=None)` (C# `Spectral.SpectralMoments`) integrates the PSD as a step density
+  over the band exactly: power, centroid, and the RMS spread about the centroid, so a flat band
+  of width `B` gives `B/√12`. Vectors are worked in exact fractions from `E f²`; the tests check
+  rectangles, a cut band, a Gaussian PSD, an axis shift and agreement with channel power.
+  Python 4417 passed, 2 skipped; .NET 3753 passed; conformance 2247/2247 in both. Version
+  2026.11.16.19.
 
 ## Not built
 

@@ -382,6 +382,14 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   G/A, flatness_db = 10·log10(G/A))`, `0` and `−∞` dB when a weighted bin is zero. Band edges
   finite, `low < high`, inside the spectrum as ACPR's channels are (same slack); `A > 0` required.
   **(implemented)**
+- **Spectral centroid and RMS bandwidth** (`spectral_moments(frequencies, psd, band=None,
+  span=None)`, [ADR 0121](adr/0121-spectral-moments.md)): the PSD is a step density, `d_k = P_k /
+  (right_k − left_k)` on each bin of the channel power rule (same `span`); bin `k` overlaps `band`
+  (default: the whole spectrum) on `[a_k, b_k]`. `power = Σ d_k (b_k − a_k)`, `centroid = Σ d_k
+  (b_k² − a_k²)/2 / power`, `rms_bandwidth = sqrt(Σ d_k ((b_k − c)³ − (a_k − c)³)/3 / power)`
+  about the centroid `c`. Result `SpectralMoments(power, centroid, rms_bandwidth)`. A flat band of
+  width `B` gives `B/√12`. Band rules as for spectral flatness; `power > 0` required.
+  **(implemented)**
 - **ACPR through an RRC filter** (`acpr_rrc(frequencies, psd, center, symbol_rate, alpha, offsets,
   span=None)`, [ADR 0111](adr/0111-acpr-rrc.md)): channels centred at `center` and `center ∓ o`,
   each power `Σ psd_k·Δ·G(f_k − c)` with `G` the RRC's `|H|²` at peak 1: `1` for
