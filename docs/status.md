@@ -4,11 +4,10 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Tristimulus**: the share of harmonic energy in the fundamental, in orders 2–4, and in
-   orders 5 and up, from `find_tones` heights and `harmonic_series` orders. Not built yet. Needs
-   an ADR: amplitudes or powers (the original definition uses amplitudes, so the square root of
-   the PSD heights), what order 0 contributes, and what no harmonic power gives. Expected
-   values: hand-built heights, worked in Fractions.
+1. **Harmonic-to-noise ratio**: the power near the harmonics of a fundamental over the rest of a
+   PSD. Not built yet. Needs an ADR: how wide a band around each `m·f0` counts as harmonic (in
+   bins or Hz), whether DC and the bins above the last harmonic count as noise, dB or a ratio,
+   and what no noise gives. Expected values: hand-built PSDs, worked in Fractions.
 
 ## Built
 
@@ -1390,6 +1389,13 @@ Updated with every chunk of work. Dates are absolute.
   odd only.
   Python 4760 passed, 2 skipped; .NET 4097 passed; conformance 2484/2484 in both. Version
   2026.11.16.39.
+- 2026-11-16: tristimulus (ADR 0142): `tristimulus(heights, orders)` (C# `Spectral.Tristimulus`)
+  gives the shares of harmonic amplitude, `sqrt` of the power heights, in the fundamental, in
+  orders 2–4 and in orders 5 and up. Order 0 is left out. The vectors use perfect-square heights,
+  worked in Fractions. The tests cover scaling, the shares summing to 1, and a sawtooth's `1/m`
+  amplitudes.
+  Python 4772 passed, 2 skipped; .NET 4109 passed; conformance 2493/2493 in both. Version
+  2026.11.16.40.
 
 ## Not built
 

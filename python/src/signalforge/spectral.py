@@ -1218,6 +1218,16 @@ class SpectralSlope:
 
 
 @dataclass(frozen=True)
+class Tristimulus:
+    """The share of harmonic amplitude in the fundamental (``first``), orders 2-4 (``second``)
+    and orders 5 and up (``third``) (conventions: Spectra, Tristimulus; ADR 0142)."""
+
+    first: float
+    second: float
+    third: float
+
+
+@dataclass(frozen=True)
 class HarmonicSeries:
     """The fundamental that best explains a list of tones (conventions: Spectra, Harmonic
     series; ADR 0139): its least-squares ``fundamental``, each tone's harmonic ``orders`` (0 when
@@ -1637,6 +1647,27 @@ def odd_even_ratio(heights: ArrayLike, orders: ArrayLike) -> float:
     if odd > 0:
         return math.inf
     raise ValueError("the harmonics' heights must sum to more than 0")
+
+
+def tristimulus(heights: ArrayLike, orders: ArrayLike) -> Tristimulus:
+    """The shares of harmonic amplitude ``sqrt(height)`` in order 1, orders 2-4 and orders 5 and
+    up; order 0 is left out."""
+    h = np.asarray(heights, dtype=np.float64)
+    m = np.asarray(orders, dtype=np.float64)
+    if h.ndim != 1 or m.shape != h.shape:
+        raise ValueError("heights and orders must be 1-D arrays of the same length")
+    if not (np.all(np.isfinite(h)) and np.all(h >= 0)):
+        raise ValueError("heights must be finite and non-negative")
+    if not (np.all(np.isfinite(m)) and np.all(m >= 0) and np.all(m == np.floor(m))):
+        raise ValueError("orders must be whole numbers >= 0")
+    a = np.sqrt(h)
+    first = float(np.sum(a[m == 1]))
+    second = float(np.sum(a[(m >= 2) & (m <= 4)]))
+    third = float(np.sum(a[m >= 5]))
+    total = first + second + third
+    if not total > 0:
+        raise ValueError("the harmonics' heights must sum to more than 0")
+    return Tristimulus(first / total, second / total, third / total)
 
 
 def find_tones(

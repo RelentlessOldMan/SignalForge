@@ -120,6 +120,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "harmonic_series": spectral.harmonic_series,
     "inharmonicity": spectral.inharmonicity,
     "odd_even_ratio": spectral.odd_even_ratio,
+    "tristimulus": spectral.tristimulus,
     "spectral_variation": spectral.spectral_variation,
     "band_energy_ratio": spectral.band_energy_ratio,
     "spectral_contrast": spectral.spectral_contrast,

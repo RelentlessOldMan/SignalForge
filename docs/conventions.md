@@ -505,6 +505,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   odd) over `Σ h` over even orders; order 0 is left out. A plain power ratio. No even power
   with some odd power gives `+inf`; both 0 is `invalid_argument`. Arrays 1-D of one length;
   heights finite and `≥ 0`; orders whole and `≥ 0`. **(implemented)**
+- **Tristimulus** (`tristimulus(heights, orders)`, [ADR 0142](adr/0142-tristimulus.md)):
+  amplitudes `a = sqrt(h)` from power heights; with `A = Σ a` over orders `≥ 1`, `first` is
+  order 1's share, `second` orders 2–4, `third` orders 5 and up; they sum to 1. Order 0 is left
+  out. Arrays 1-D of one length; heights finite and `≥ 0`; orders whole and `≥ 0`; `A > 0`.
+  **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

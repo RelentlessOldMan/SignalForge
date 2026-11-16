@@ -223,6 +223,12 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
 
+/// <summary>The share of harmonic amplitude in the fundamental, orders 2–4 and orders 5 and up (conventions: Spectra, Tristimulus; ADR 0142).</summary>
+/// <param name="First">The fundamental's share.</param>
+/// <param name="Second">The share of orders 2 to 4.</param>
+/// <param name="Third">The share of orders 5 and up.</param>
+public sealed record Tristimulus(double First, double Second, double Third);
+
 /// <summary>The fundamental that best explains a list of tones (conventions: Spectra, Harmonic series; ADR 0139).</summary>
 /// <param name="Fundamental">The least-squares fundamental over the matched tones, in Hz.</param>
 /// <param name="Orders">Each tone's harmonic order, 0 when unmatched.</param>
@@ -2207,6 +2213,39 @@ public static class Spectral
         if (odd > 0)
             return double.PositiveInfinity;
         throw new ArgumentException("the harmonics' heights must sum to more than 0", nameof(heights));
+    }
+
+    /// <summary>
+    /// The shares of harmonic amplitude <c>sqrt(height)</c> in order 1, orders 2–4 and orders 5
+    /// and up; order 0 is left out (conventions: Spectra, Tristimulus; ADR 0142).
+    /// </summary>
+    /// <param name="heights">Tone heights (powers), finite and non-negative.</param>
+    /// <param name="orders">Each tone's harmonic order, 0 when unmatched.</param>
+    /// <returns>The three shares, which sum to 1.</returns>
+    /// <exception cref="ArgumentException">The arrays differ in length or hold bad values, or the harmonics' heights do not sum to more than 0.</exception>
+    public static Tristimulus Tristimulus(ReadOnlySpan<double> heights, ReadOnlySpan<int> orders)
+    {
+        if (orders.Length != heights.Length)
+            throw new ArgumentException("heights and orders must have the same length", nameof(orders));
+        double first = 0, second = 0, third = 0;
+        for (int i = 0; i < heights.Length; i++)
+        {
+            if (!(double.IsFinite(heights[i]) && heights[i] >= 0))
+                throw new ArgumentException("heights must be finite and non-negative", nameof(heights));
+            if (orders[i] < 0)
+                throw new ArgumentException("orders must be >= 0", nameof(orders));
+            double a = Math.Sqrt(heights[i]);
+            if (orders[i] == 1)
+                first += a;
+            else if (orders[i] >= 2 && orders[i] <= 4)
+                second += a;
+            else if (orders[i] >= 5)
+                third += a;
+        }
+        double total = first + second + third;
+        if (!(total > 0))
+            throw new ArgumentException("the harmonics' heights must sum to more than 0", nameof(heights));
+        return new Tristimulus(first / total, second / total, third / total);
     }
 
     /// <summary>
