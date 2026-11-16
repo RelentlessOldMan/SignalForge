@@ -1619,6 +1619,26 @@ def inharmonicity(
     return 2 / f0 * spread / total
 
 
+def odd_even_ratio(heights: ArrayLike, orders: ArrayLike) -> float:
+    """The power in odd harmonic orders (the fundamental counts as odd) over the power in even
+    ones; order 0 is left out, and no even power gives ``inf``."""
+    h = np.asarray(heights, dtype=np.float64)
+    m = np.asarray(orders, dtype=np.float64)
+    if h.ndim != 1 or m.shape != h.shape:
+        raise ValueError("heights and orders must be 1-D arrays of the same length")
+    if not (np.all(np.isfinite(h)) and np.all(h >= 0)):
+        raise ValueError("heights must be finite and non-negative")
+    if not (np.all(np.isfinite(m)) and np.all(m >= 0) and np.all(m == np.floor(m))):
+        raise ValueError("orders must be whole numbers >= 0")
+    odd = float(np.sum(h[m % 2 == 1]))
+    even = float(np.sum(h[(m >= 2) & (m % 2 == 0)]))
+    if even > 0:
+        return odd / even
+    if odd > 0:
+        return math.inf
+    raise ValueError("the harmonics' heights must sum to more than 0")
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,

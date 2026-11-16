@@ -2178,6 +2178,38 @@ public static class Spectral
     }
 
     /// <summary>
+    /// The power in odd harmonic orders (the fundamental counts as odd) over the power in even
+    /// ones; order 0 is left out, and no even power gives positive infinity (conventions:
+    /// Spectra, Odd-to-even ratio; ADR 0141).
+    /// </summary>
+    /// <param name="heights">Tone heights (powers), finite and non-negative.</param>
+    /// <param name="orders">Each tone's harmonic order, 0 when unmatched.</param>
+    /// <returns>The odd-to-even power ratio.</returns>
+    /// <exception cref="ArgumentException">The arrays differ in length or hold bad values, or the harmonics' heights do not sum to more than 0.</exception>
+    public static double OddEvenRatio(ReadOnlySpan<double> heights, ReadOnlySpan<int> orders)
+    {
+        if (orders.Length != heights.Length)
+            throw new ArgumentException("heights and orders must have the same length", nameof(orders));
+        double odd = 0, even = 0;
+        for (int i = 0; i < heights.Length; i++)
+        {
+            if (!(double.IsFinite(heights[i]) && heights[i] >= 0))
+                throw new ArgumentException("heights must be finite and non-negative", nameof(heights));
+            if (orders[i] < 0)
+                throw new ArgumentException("orders must be >= 0", nameof(orders));
+            if (orders[i] % 2 == 1)
+                odd += heights[i];
+            else if (orders[i] >= 2)
+                even += heights[i];
+        }
+        if (even > 0)
+            return odd / even;
+        if (odd > 0)
+            return double.PositiveInfinity;
+        throw new ArgumentException("the harmonics' heights must sum to more than 0", nameof(heights));
+    }
+
+    /// <summary>
     /// Each spectral peak's width where the PSD crosses height − relHeight·prominence,
     /// interpolated linearly between bins; in order of frequency (conventions: Spectra, Peak
     /// widths; ADR 0138).

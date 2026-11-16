@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Odd-to-even harmonic ratio**: the power in odd harmonics over the power in even ones, from
-   `find_tones` heights and `harmonic_series` orders. Not built yet. Needs an ADR: whether the
-   fundamental (order 1) counts as odd (some definitions leave it out), what an empty even set
-   gives (`inf`, or `invalid_argument`), and whether it is a ratio or in dB. Expected values:
-   hand-built heights, worked in Fractions.
+1. **Tristimulus**: the share of harmonic energy in the fundamental, in orders 2–4, and in
+   orders 5 and up, from `find_tones` heights and `harmonic_series` orders. Not built yet. Needs
+   an ADR: amplitudes or powers (the original definition uses amplitudes, so the square root of
+   the PSD heights), what order 0 contributes, and what no harmonic power gives. Expected
+   values: hand-built heights, worked in Fractions.
 
 ## Built
 
@@ -1382,6 +1382,14 @@ Updated with every chunk of work. Dates are absolute.
   stiff-string series that grows with stiffness.
   Python 4746 passed, 2 skipped; .NET 4083 passed; conformance 2473/2473 in both. Version
   2026.11.16.38.
+- 2026-11-16: odd-to-even ratio (ADR 0141): `odd_even_ratio(heights, orders)` (C#
+  `Spectral.OddEvenRatio`) is the power in odd harmonic orders, with the fundamental counted as
+  odd, over the power in even ones. Order 0 is left out. No even power gives `+inf`, and no power
+  at all is `invalid_argument`. The vectors are worked by hand in Fractions. The tests cover
+  scaling and permuting, and a clipped sine through `find_tones` and `harmonic_series`, which is
+  odd only.
+  Python 4760 passed, 2 skipped; .NET 4097 passed; conformance 2484/2484 in both. Version
+  2026.11.16.39.
 
 ## Not built
 

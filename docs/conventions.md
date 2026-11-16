@@ -500,6 +500,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   with `m_i ≥ 1`; order 0 is left out. Dimensionless, 0 for exact harmonics. Arrays 1-D of one
   length; tones finite and positive, heights finite and `≥ 0`, orders whole and `≥ 0`, `f0`
   finite and positive; the matched heights must sum to more than 0. **(implemented)**
+- **Odd-to-even ratio** (`odd_even_ratio(heights, orders)`,
+  [ADR 0141](adr/0141-odd-even-ratio.md)): `Σ h` over odd orders (the fundamental counts as
+  odd) over `Σ h` over even orders; order 0 is left out. A plain power ratio. No even power
+  with some odd power gives `+inf`; both 0 is `invalid_argument`. Arrays 1-D of one length;
+  heights finite and `≥ 0`; orders whole and `≥ 0`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on
