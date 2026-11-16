@@ -333,6 +333,8 @@ public static class Conformance
                 t => Spectral.SpectralEntropy(t.Item1, t.Item2, t.Item3, t.Item4)),
             "spectral_crest" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
                 t => Spectral.SpectralCrest(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "spectral_flux" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("previous")), Reals(a.Get("current")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a), a.Flag("normalize", true), a.Flag("rectify", true)),
+                t => Spectral.SpectralFlux(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
             "spectral_flatness" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
                 t => Spectral.SpectralFlatness(t.Item1, t.Item2, t.Item3, t.Item4)),
             "spectral_moments" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),

@@ -1980,6 +1980,55 @@ public static class Spectral
     }
 
     /// <summary>
+    /// The L2 distance between two PSD frames taken as constant over each bin, over
+    /// <paramref name="band"/> (the whole spectrum when null); each frame scaled to unit power
+    /// with <paramref name="normalize"/>, only rises counted with <paramref name="rectify"/>
+    /// (conventions: Spectra, Spectral flux; ADR 0129).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="previous">The earlier frame's PSD per bin, finite and non-negative.</param>
+    /// <param name="current">The later frame's PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <param name="normalize">Scale each frame to unit power over the band first.</param>
+    /// <param name="rectify">Count only the bins where the PSD rose.</param>
+    /// <returns>sqrt(∫ Δ² df) over the band.</returns>
+    /// <exception cref="ArgumentException">A frame is invalid, an edge is out of order or not finite, the band leaves the spectrum, or with <paramref name="normalize"/> a frame has no power in the band.</exception>
+    public static double SpectralFlux(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> previous, ReadOnlySpan<double> current,
+        (double Low, double High)? band = null, (double Low, double High)? span = null, bool normalize = true, bool rectify = true)
+    {
+        var (p0, left, right) = Bins(frequencies, previous, span);
+        var (p1, _, _) = Bins(frequencies, current, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        int n = p0.Length;
+        double total0 = 0, total1 = 0;
+        for (int k = 0; k < n; k++)
+        {
+            double a = Math.Max(left[k], lo), b = Math.Min(right[k], hi);
+            if (!(b > a))
+                continue;
+            double width = right[k] - left[k];
+            total0 += p0[k] / width * (b - a);
+            total1 += p1[k] / width * (b - a);
+        }
+        if (normalize && !(total0 > 0 && total1 > 0))
+            throw new ArgumentException("with normalize, each frame needs power in the band", nameof(previous));
+        double s0 = normalize ? total0 : 1, s1 = normalize ? total1 : 1, sum = 0;
+        for (int k = 0; k < n; k++)
+        {
+            double a = Math.Max(left[k], lo), b = Math.Min(right[k], hi);
+            if (!(b > a))
+                continue;
+            double width = right[k] - left[k];
+            double delta = p1[k] / width / s1 - p0[k] / width / s0;
+            if (rectify)
+                delta = Math.Max(delta, 0);
+            sum += delta * delta * (b - a);
+        }
+        return Math.Sqrt(sum);
+    }
+
+    /// <summary>
     /// The PSD's geometric mean over its arithmetic mean across <paramref name="band"/> (the whole
     /// spectrum when null), each bin weighted by its overlap with the band (conventions: Spectra,
     /// Spectral flatness; ADR 0120).

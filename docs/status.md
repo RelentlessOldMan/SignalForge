@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral flux**: how much a PSD changed from one frame to the next, the onset feature of
-   audio analysis. Not built yet. Needs an ADR: a function `spectral_flux(frequencies,
-   previous, current, *, band=None, span=None, normalize=True, rectify=True)`, with each
-   frame's step density (normalized to unit power when asked), the L2 distance `sqrt(∫ (Δd)²
-   df)` of the difference (only its rises when rectified), the band weights, and zero power.
-   Expected values: short PSD pairs worked by hand with Fractions (the result squared is
-   rational), identical frames giving 0, and a frame against its double giving 0 normalized.
+1. **Spectral decrease**: the audio feature that weighs each bin's drop from the first bin by
+   1/k. Not built yet. Needs an ADR: a function `spectral_decrease(frequencies, psd, *,
+   band=None, span=None)`, recast on the step density so it does not depend on bin counts (the
+   mean of `(d(f) − d(low)) / (f − low)` weighted by power, or the library's bin form with a
+   stated bin width), the band edges, and zero power. Expected values: short PSDs worked by hand
+   with Fractions, a flat PSD giving 0, and a falling ramp giving a known negative value.
 
 ## Built
 
@@ -1281,6 +1280,14 @@ Updated with every chunk of work. Dates are absolute.
   Σ q ln d`. The tests cover scaling, axis stretch, a tone, and white noise against `exp(γ − 1)`.
   Python 4550 passed, 2 skipped; .NET 3889 passed; conformance 2330/2330 in both. Version
   2026.11.16.26.
+- 2026-11-16: spectral flux (ADR 0129): `spectral_flux(frequencies, previous, current, *,
+  band=None, span=None, normalize=True, rectify=True)` (C# `Spectral.SpectralFlux`) is the L2
+  distance `sqrt(∫ Δ² df)` between two frames' step densities over a band. With `normalize`
+  each frame is first scaled to unit band power, and with `rectify` only rises count. The
+  vectors assert the squared flux as an exact Fraction. The tests cover symmetry without
+  rectifying, rises and falls adding in squares, and level changes when normalized.
+  Python 4567 passed, 2 skipped; .NET 3906 passed; conformance 2343/2343 in both. Version
+  2026.11.16.27.
 
 ## Not built
 

@@ -426,6 +426,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   nats over pieces with `d_k > 0`, `entropy_bandwidth = exp(entropy)` Hz, `normalized =
   entropy_bandwidth / (high − low)`. Result `SpectralEntropy(entropy, entropy_bandwidth,
   normalized)`. Band rules as for spectral flatness; `power > 0`. **(implemented)**
+- **Spectral flux** (`spectral_flux(frequencies, previous, current, band=None, span=None,
+  normalize=True, rectify=True)`, [ADR 0129](adr/0129-spectral-flux.md)): both frames are step
+  densities on the spectral moments' pieces `[a_k, b_k]` (same bins, same `span`); with
+  `normalize` each is divided by its own band power; `Δ_k = current_k − previous_k`, `max(Δ_k,
+  0)` with `rectify`; `flux = sqrt(Σ Δ_k² (b_k − a_k))`. Band rules as for spectral flatness;
+  with `normalize`, each frame's power `> 0`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

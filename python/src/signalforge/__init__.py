@@ -192,6 +192,7 @@ from .spectral import (
     spectral_crest,
     spectral_entropy,
     spectral_flatness,
+    spectral_flux,
     spectral_moments,
     spectral_rolloff,
     spectral_shape,
@@ -238,7 +239,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.26"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.27"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -443,6 +444,7 @@ __all__ = [
     "spectral_crest",
     "spectral_entropy",
     "spectral_flatness",
+    "spectral_flux",
     "spectral_moments",
     "spectral_rolloff",
     "spectral_shape",

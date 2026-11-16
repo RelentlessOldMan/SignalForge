@@ -1355,6 +1355,39 @@ def spectral_entropy(
     return SpectralEntropy(h, width, width / (hi - lo))
 
 
+def spectral_flux(
+    frequencies: ArrayLike,
+    previous: ArrayLike,
+    current: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+    normalize: bool = True,
+    rectify: bool = True,
+) -> float:
+    """The L2 distance between two PSD frames taken as constant over each bin, over ``band =
+    (low, high)`` in Hz (the whole spectrum by default); each frame scaled to unit power with
+    ``normalize``, only rises counted with ``rectify`` (conventions: Spectra, Spectral flux; ADR
+    0129)."""
+    frames = []
+    for x in (previous, current):
+        power, left, right = _bins(frequencies, x, span)
+        lo, hi = _band_edges(band, left, right)
+        a, b = np.maximum(left, lo), np.minimum(right, hi)
+        keep = b > a
+        a, b, d = a[keep], b[keep], (power / (right - left))[keep]
+        if normalize:
+            total = float(np.sum(d * (b - a)))
+            if not total > 0:
+                raise ValueError("with normalize, each frame needs power in the band")
+            d = d / total
+        frames.append(d)
+    delta = frames[1] - frames[0]
+    if rectify:
+        delta = np.maximum(delta, 0.0)
+    return math.sqrt(float(np.sum(delta * delta * (b - a))))
+
+
 def spectral_flatness(
     frequencies: ArrayLike,
     psd: ArrayLike,
