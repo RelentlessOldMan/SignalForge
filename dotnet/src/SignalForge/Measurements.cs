@@ -108,6 +108,26 @@ public sealed record TwoToneIp2(
     double WorstImdDbc,
     double Ip2Db);
 
+/// <summary>
+/// Fifth-order intermodulation of two tones (conventions: Two-tone intermodulation; ADR 0117).
+/// Products come lower first; powers in sample units².
+/// </summary>
+/// <param name="ToneFrequencies">The two tones' power centroids, in Hz.</param>
+/// <param name="TonePowers">The two tones' group powers.</param>
+/// <param name="ImdFrequencies">3f₁ − 2f₂ and 3f₂ − 2f₁, aliased into the spectrum, in Hz.</param>
+/// <param name="ImdPowers">The two products' group powers.</param>
+/// <param name="ImdDbc">Each product relative to the mean tone power; −∞ for no power.</param>
+/// <param name="WorstImdDbc">The larger of <paramref name="ImdDbc"/>.</param>
+/// <param name="Ip5Db">10·log10(mean tone power) − <paramref name="WorstImdDbc"/>/4.</param>
+public sealed record TwoToneIp5(
+    double[] ToneFrequencies,
+    double[] TonePowers,
+    double[] ImdFrequencies,
+    double[] ImdPowers,
+    double[] ImdDbc,
+    double WorstImdDbc,
+    double Ip5Db);
+
 /// <summary>Single-sideband phase noise of a carrier (conventions: Phase noise measurement;
 /// ADR 0108).</summary>
 /// <param name="CarrierFrequency">The carrier group's power centroid, in Hz.</param>
@@ -881,6 +901,48 @@ public static class Measurements
     {
         CheckTones(samples.Length, width, f1, f2);
         return Ip2(new ToneGroups(Spectral.WelchPsd(samples, sampleRate, window: window, beta: beta), window, beta, width, f1), f1, f2);
+    }
+
+    /// <summary>The tones at <paramref name="f1"/> &lt; <paramref name="f2"/> of real samples and
+    /// their fifth-order products 3f₁ − 2f₂ and 3f₂ − 2f₁, grouped as for <see cref="TwoToneImd(ReadOnlySpan{double}, double, double, double, WindowType, double?, int?)"/>
+    /// (conventions: Two-tone intermodulation; ADR 0117).</summary>
+    /// <param name="samples">Real samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="f1">The lower tone's frequency.</param>
+    /// <param name="f2">The upper tone's frequency.</param>
+    /// <param name="window">Window of the spectrum.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of each group; by default set by the window.</param>
+    /// <returns>The tones, the products and the fifth-order intercept.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a group lands on one already claimed.</exception>
+    public static TwoToneIp5 TwoToneIp5(ReadOnlySpan<double> samples, double sampleRate, double f1, double f2,
+        WindowType window = WindowType.BlackmanHarris, double? beta = null, int? width = null)
+    {
+        CheckTones(samples.Length, width, f1, f2);
+        return Ip5(new ToneGroups(Spectral.WelchPsd(samples, sampleRate, window: window, beta: beta), window, beta, width, f1), f1, f2);
+    }
+
+    /// <summary>As for real samples, from the two-sided spectrum of complex samples.</summary>
+    /// <param name="samples">Complex samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="f1">The lower tone's frequency.</param>
+    /// <param name="f2">The upper tone's frequency.</param>
+    /// <param name="window">Window of the spectrum.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of each group; by default set by the window.</param>
+    /// <returns>The tones, the products and the fifth-order intercept.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a group lands on one already claimed.</exception>
+    public static TwoToneIp5 TwoToneIp5(ReadOnlySpan<Complex> samples, double sampleRate, double f1, double f2,
+        WindowType window = WindowType.BlackmanHarris, double? beta = null, int? width = null)
+    {
+        CheckTones(samples.Length, width, f1, f2);
+        return Ip5(new ToneGroups(Spectral.WelchPsd(samples, sampleRate, window: window, beta: beta), window, beta, width, f1), f1, f2);
+    }
+
+    private static TwoToneIp5 Ip5(ToneGroups g, double f1, double f2)
+    {
+        var t = TwoTones(g, f1, f2, 3 * f1 - 2 * f2, 3 * f2 - 2 * f1);
+        return new TwoToneIp5(t.Tf, t.Tp, t.ImdF, t.ImdP, t.Dbc, t.Worst, t.PtDb - t.Worst / 4);
     }
 
     private static TwoToneImd Imd(ToneGroups g, double f1, double f2)

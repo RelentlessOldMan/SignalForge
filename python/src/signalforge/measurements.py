@@ -248,6 +248,50 @@ def two_tone_ip2(
     return TwoToneIp2(*t[:6], ip2_db=t[6] - t[5])
 
 
+@dataclass(frozen=True, eq=False)
+class TwoToneIp5:
+    """Fifth-order intermodulation of two tones (conventions: Two-tone intermodulation).
+
+    The products come lower ``3*f1 - 2*f2`` first, then upper ``3*f2 - 2*f1``. ``imd_dbc`` is
+    each relative to the mean tone power; ``ip5_db`` is the fifth-order intercept from the worse
+    product, in dB of sample units squared.
+    """
+
+    tone_frequencies: NDArray[np.float64]
+    tone_powers: NDArray[np.float64]
+    imd_frequencies: NDArray[np.float64]
+    imd_powers: NDArray[np.float64]
+    imd_dbc: NDArray[np.float64]
+    worst_imd_dbc: float
+    ip5_db: float
+
+
+def two_tone_ip5(
+    samples: ArrayLike,
+    sample_rate: float,
+    f1: float,
+    f2: float,
+    *,
+    window: str = "blackman_harris",
+    beta: float | None = None,
+    width: int | None = None,
+) -> TwoToneIp5:
+    """The tones at ``f1 < f2`` and their fifth-order products ``3*f1 - 2*f2`` and
+    ``3*f2 - 2*f1``, grouped as for :func:`two_tone_imd` (conventions: Two-tone intermodulation;
+    ADR 0117)."""
+    t = _two_tones(
+        samples,
+        sample_rate,
+        f1,
+        f2,
+        window,
+        beta,
+        width,
+        lambda a, b: (3 * a - 2 * b, 3 * b - 2 * a),
+    )
+    return TwoToneIp5(*t[:6], ip5_db=t[6] - t[5] / 4)
+
+
 def _two_tones(
     samples: ArrayLike,
     sample_rate: float,

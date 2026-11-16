@@ -452,6 +452,11 @@ C#: `Measurements.TwoToneImd`. Same spectrum, half-width and groups as the tone 
   `f₂ − f₁` then the sum `f₁ + f₂` (aliased; third-order products not claimed). Result
   `TwoToneIp2`: the fields above with `ip2_db = 10·log10 P_t − worst_imd_dbc` (`+∞` for no
   product power) in place of `ip3_db`. **(implemented)**
+- **Fifth order** ([ADR 0117](adr/0117-two-tone-ip5.md); `two_tone_ip5`, C#
+  `Measurements.TwoToneIp5`): same call, arguments and groups, with the products `3f₁ − 2f₂` then
+  `3f₂ − 2f₁` (aliased; third-order products not claimed). Result `TwoToneIp5`: the fields above
+  with `ip5_db = 10·log10 P_t − worst_imd_dbc/4` (`+∞` for no product power) in place of
+  `ip3_db`. **(implemented)**
 
 ## Phase noise measurement
 

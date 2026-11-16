@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Fifth-order intermodulation and IP5**: `two_tone_imd` reads the third-order products and
-   `two_tone_ip2` the second; nothing reads `3·f1 − 2·f2` and `3·f2 − 2·f1`. Not built yet. Needs
-   an ADR: a function `two_tone_ip5` built like `two_tone_ip2` (ADR 0110) on the same tone and
-   product grouping, its result fields, the intercept from the worse product
-   (`IP5 = P_tone + (P_tone − P_5)/4`, slope 5), and products that alias or land on a tone.
-   Expected values: two tones through a polynomial `y = x + a5·x⁵` (or a Saleh/Rapp drive), the
-   fifth-order products' amplitudes from the binomial expansion, by hand.
+1. **Noise power ratio (NPR)**: the two-tone functions read discrete products; nothing measures
+   the distortion a wideband load puts into a notch cut in it. Not built yet. Needs an ADR: a
+   function `noise_power_ratio(samples, sample_rate, band, notch, ...)` on the Welch spectrum, the
+   mean PSD in the loaded band outside the notch over the mean PSD in the notch (in dB), how the
+   band and notch edges map to bins, and errors for a notch outside the band or an empty notch.
+   Expected values: a coherent multitone with a notch through `y = x + a3·x³`, its in-notch lines
+   expanded exactly in rational arithmetic, by hand.
 
 ## Built
 
@@ -1185,12 +1185,20 @@ Updated with every chunk of work. Dates are absolute.
   noise alone, and remove what they find.
   Python 4315 passed, 2 skipped; .NET 3651 passed; conformance 2186/2186 in both. Version
   2026.11.16.14.
+- 2026-11-16: fifth-order intermodulation and IP5 (ADR 0117): `two_tone_ip5(samples,
+  sample_rate, f1, f2, ...)` (C# `Measurements.TwoToneIp5`) claims DC, the tones, then
+  `3f1 - 2f2` and `3f2 - 2f1` as `two_tone_ip2` does, and reports `ip5_db = 10 log10 P_t -
+  worst_imd_dbc/4`. Vectors expand `x + a5 x^5` on two cosines and `x + a5 |x|^4 x` on two
+  exponentials exactly, by hand, including a folded product; the tests check the expansion at two
+  drives and the textbook limit `A_IP5^4 = 8/(5|a5|)`.
+  Python 4334 passed, 2 skipped; .NET 3669 passed; conformance 2195/2195 in both. Version
+  2026.11.16.15.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond second and third order, ACPR channel filters beyond RRC,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond second, third and fifth order, ACPR channel filters beyond RRC,
 NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.

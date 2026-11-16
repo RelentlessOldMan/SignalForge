@@ -97,6 +97,7 @@ from .measurements import (
     ToneMetrics,
     TwoToneImd,
     TwoToneIp2,
+    TwoToneIp5,
     am_am_pm,
     gain_compression,
     integrated_phase_noise,
@@ -109,6 +110,7 @@ from .measurements import (
     tone_metrics,
     two_tone_imd,
     two_tone_ip2,
+    two_tone_ip5,
 )
 from .metrics import (
     ErrorCount,
@@ -215,7 +217,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.14"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.15"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -250,6 +252,7 @@ __all__ = [
     "ToneMetrics",
     "TwoToneImd",
     "TwoToneIp2",
+    "TwoToneIp5",
     "WindowStats",
     "acpr",
     "acpr_rrc",
@@ -408,6 +411,7 @@ __all__ = [
     "tone_metrics",
     "two_tone_imd",
     "two_tone_ip2",
+    "two_tone_ip5",
     "upsample",
     "vrms_to_dbm",
     "w_to_dbm",
