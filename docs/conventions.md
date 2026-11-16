@@ -388,6 +388,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   G/A, flatness_db = 10·log10(G/A))`, `0` and `−∞` dB when a weighted bin is zero. Band edges
   finite, `low < high`, inside the spectrum as ACPR's channels are (same slack); `A > 0` required.
   **(implemented)**
+- **Spectral crest factor** (`spectral_crest(frequencies, psd, band=None, span=None)`,
+  [ADR 0125](adr/0125-spectral-crest.md)): on the spectral flatness's bins, densities `d_k` and
+  overlap weights `w_k`: `mean = Σ w_k d_k / Σ w_k`, `peak = max d_k` over bins with `w_k > 0`;
+  result `SpectralCrest(peak, mean, crest = peak/mean, crest_db = 10·log10(peak) −
+  10·log10(mean))`. Band rules as for spectral flatness; `mean > 0` required. **(implemented)**
 - **Spectral centroid and RMS bandwidth** (`spectral_moments(frequencies, psd, band=None,
   span=None)`, [ADR 0121](adr/0121-spectral-moments.md)): the PSD is a step density, `d_k = P_k /
   (right_k − left_k)` on each bin of the channel power rule (same `span`); bin `k` overlaps `band`

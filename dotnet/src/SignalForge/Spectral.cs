@@ -185,6 +185,14 @@ public sealed record NoisePowerRatio(double LoadedDensity, double NotchDensity, 
 /// <param name="FlatnessDb">10·log10(Flatness); −∞ when a weighted bin is zero.</param>
 public sealed record SpectralFlatness(double GeometricMean, double ArithmeticMean, double Flatness, double FlatnessDb);
 
+/// <summary>Peak and mean of a PSD over a band, and their ratio (conventions: Spectra, Spectral
+/// crest factor; ADR 0125).</summary>
+/// <param name="Peak">Largest PSD among the bins that overlap the band.</param>
+/// <param name="Mean">Width-weighted mean PSD.</param>
+/// <param name="Crest">Peak / Mean, at least 1.</param>
+/// <param name="CrestDb">10·log10(Peak) − 10·log10(Mean).</param>
+public sealed record SpectralCrest(double Peak, double Mean, double Crest, double CrestDb);
+
 /// <summary>Power, centroid and RMS bandwidth of a PSD over a band (conventions: Spectra, Spectral
 /// centroid and RMS bandwidth; ADR 0121).</summary>
 /// <param name="Power">Integral of the step density over the band.</param>
@@ -1859,6 +1867,39 @@ public static class Spectral
             return new SpectralFlatness(0, arith, 0, double.NegativeInfinity);
         double geo = Math.Exp(logSum / total);
         return new SpectralFlatness(geo, arith, geo / arith, 10 * (Math.Log10(geo) - Math.Log10(arith)));
+    }
+
+    /// <summary>
+    /// The PSD's peak over its mean across <paramref name="band"/> (the whole spectrum when null),
+    /// the mean weighted by each bin's overlap with the band (conventions: Spectra, Spectral crest
+    /// factor; ADR 0125).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <returns>The peak, the mean, the crest and the crest in dB.</returns>
+    /// <exception cref="ArgumentException">An edge is out of order or not finite, the band leaves the spectrum, or the band has no power.</exception>
+    public static SpectralCrest SpectralCrest(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High)? band = null, (double Low, double High)? span = null)
+    {
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        double total = 0, sum = 0, peak = 0;
+        for (int k = 0; k < power.Length; k++)
+        {
+            double w = Math.Max(Math.Min(right[k], hi) - Math.Max(left[k], lo), 0.0);
+            if (!(w > 0))
+                continue;
+            double d = power[k] / (right[k] - left[k]);
+            total += w;
+            sum += w * d;
+            peak = Math.Max(peak, d);
+        }
+        double mean = sum / total;
+        if (!(mean > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        return new SpectralCrest(peak, mean, peak / mean, 10 * (Math.Log10(peak) - Math.Log10(mean)));
     }
 
     /// <summary>

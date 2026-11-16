@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "spectral_crest",
+  "description": "Spectral crest factor (conventions: Spectra, Spectral crest factor; ADR 0125).",
+  "cases": [
+    {"id": "spectral_crest.flat", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [2.0, 2.0, 2.0, 2.0]}, "expected": {"peak": 2.0, "mean": 2.0, "crest": 1.0, "crest_db": 0.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "flat at 2: peak 2, mean 2, crest 1, 0 dB"},
+    {"id": "spectral_crest.single_bin", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [0.0, 5.0, 0.0, 0.0]}, "expected": {"peak": 5.0, "mean": 1.25, "crest": 4.0, "crest_db": 6.020599913279624}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "one bin of 5 in four equal bins: mean 5/4, crest 4"},
+    {"id": "spectral_crest.uneven", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 4.0]}, "expected": {"peak": 4.0, "mean": 2.5, "crest": 1.6, "crest_db": 2.041199826559248}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "peak 4, mean 10/4 = 5/2, crest 8/5"},
+    {"id": "spectral_crest.cut_band", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 8.0], "band": [0.0, 2.25]}, "expected": {"peak": 3.0, "mean": 2.111111111111111, "crest": 1.4210526315789473, "crest_db": 1.5261016320615832}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "band [0, 2.25]: weights 1/2, 1, 3/4 on densities 1, 2, 3; mean (1/2 + 2 + 9/4) / (9/4) = 19/9; bin 3 does not overlap, so the peak is 3"},
+    {"id": "spectral_crest.touching_bin_counts", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 1.0, 1.0, 9.0], "band": [0.0, 2.75]}, "expected": {"peak": 9.0, "mean": 1.7272727272727273, "crest": 5.2105263157894735, "crest_db": 7.168815936447209}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "band [0, 2.75]: weights 1/2, 1, 1, 1/4 on 1, 1, 1, 9; mean (1/2 + 1 + 1 + 9/4) / (11/4) = 19/11; bin 3 overlaps a quarter, so the peak is 9"},
+    {"id": "spectral_crest.span_clipped", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [2.0, 1.0, 1.0, 2.0], "span": [0.0, 3.0]}, "expected": {"peak": 4.0, "mean": 2.0, "crest": 2.0, "crest_db": 3.010299956639812}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "span (0, 3) halves bins 0 and 3, which keep power 2 at density 4: peak 4; mean (2 + 1 + 1 + 2) / 3 = 2"},
+    {"id": "spectral_crest.band_reversed", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 1.0, 1.0, 1.0], "band": [2.0, 1.0]}, "error": "invalid_argument", "source": "band low must be below band high"},
+    {"id": "spectral_crest.band_outside", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 1.0, 1.0, 1.0], "band": [-1.0, 3.0]}, "error": "invalid_argument", "source": "band [-1, 3] leaves the spectrum [-0.5, 3.5]"},
+    {"id": "spectral_crest.no_power", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [0.0, 0.0, 1.0, 0.0], "band": [-0.5, 1.5]}, "error": "invalid_argument", "source": "the band has no power"},
+    {"id": "spectral_crest.negative_psd", "op": "spectral_crest", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, -1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "psd must be non-negative"}
+  ]
+}

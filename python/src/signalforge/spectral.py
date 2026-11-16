@@ -1186,6 +1186,17 @@ class SpectralFlatness:
     flatness_db: float
 
 
+@dataclass(frozen=True)
+class SpectralCrest:
+    """Peak and mean of the PSD over a band, and their ratio (conventions: Spectra, Spectral
+    crest factor; ADR 0125). Peak and mean are in the PSD's units."""
+
+    peak: float
+    mean: float
+    crest: float
+    crest_db: float
+
+
 def _band_edges(
     band: ArrayLike | None, left: NDArray[np.float64], right: NDArray[np.float64]
 ) -> tuple[float, float]:
@@ -1292,6 +1303,27 @@ def spectral_rolloff(
         running = after
     k = int(np.flatnonzero(pieces > 0)[-1])  # rounding left the running sum short of 1·power
     return float(b[k])
+
+
+def spectral_crest(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+) -> SpectralCrest:
+    """The PSD's peak over its mean across ``band = (low, high)`` in Hz (the whole spectrum by
+    default), the mean weighted by each bin's overlap with the band."""
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    w = np.clip(np.minimum(right, hi) - np.maximum(left, lo), 0.0, None)
+    keep = w > 0
+    w, d = w[keep], (power / (right - left))[keep]
+    mean = float(np.sum(w * d)) / float(np.sum(w))
+    if not mean > 0:
+        raise ValueError("the band has no power")
+    peak = float(np.max(d))
+    return SpectralCrest(peak, mean, peak / mean, 10 * (math.log10(peak) - math.log10(mean)))
 
 
 @dataclass(frozen=True)

@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral crest factor**: the PSD's peak over its mean across a band, the audio feature
-   that goes with the flatness (a tone gives a high crest, noise a low one). Not built yet.
-   Needs an ADR: a function `spectral_crest(frequencies, psd, *, band=None, span=None)` on the
-   flatness's overlap weights (the mean weighted by overlap, the peak over bins that overlap
-   the band), the ratio and its dB, and zero power. Expected values: short PSDs worked by hand,
-   and a flat PSD with crest 1 (0 dB).
+1. **Spectral skewness and kurtosis**: the third and fourth standardized moments of a band's
+   PSD, the audio features after the centroid and RMS bandwidth. Not built yet. Needs an ADR:
+   a function `spectral_shape(frequencies, psd, *, band=None, span=None)` on the step density
+   of `spectral_moments`, integrated exactly about the centroid (`∫ (f − c)^k d`), skewness
+   `m3/σ³` and kurtosis `m4/σ⁴` (not excess), and zero spread. Expected values: short PSDs
+   worked by hand with Fractions (by raw moments, a different route), and a flat band's 0 and
+   9/5.
 
 ## Built
 
@@ -1245,6 +1246,14 @@ Updated with every chunk of work. Dates are absolute.
   fraction, symmetry and a cut band.
   Python 4485 passed, 2 skipped; .NET 3823 passed; conformance 2287/2287 in both. Version
   2026.11.16.22.
+- 2026-11-16: spectral crest factor (ADR 0125): `spectral_crest(frequencies, psd, *, band=None,
+  span=None)` (C# `Spectral.SpectralCrest`) gives `SpectralCrest(peak, mean, crest, crest_db)`.
+  The peak is over every bin that overlaps the band, and the mean is weighted by overlap, as for
+  the flatness. The vectors are worked by hand with Fractions, including a bin that only touches
+  the band. The tests cover scaling, a tone over an exponential noise floor, crest ≥ 1, and a
+  flat PSD.
+  Python 4499 passed, 2 skipped; .NET 3837 passed; conformance 2297/2297 in both. Version
+  2026.11.16.23.
 
 ## Not built
 
