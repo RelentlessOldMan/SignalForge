@@ -83,6 +83,7 @@ from .files import (
 )
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import (
+    AmAmPm,
     CascadeNoiseFigure,
     GainCompression,
     IntegratedPhaseNoise,
@@ -93,6 +94,7 @@ from .measurements import (
     ToneMetrics,
     TwoToneImd,
     TwoToneIp2,
+    am_am_pm,
     gain_compression,
     integrated_phase_noise,
     noise_figure_cascade,
@@ -209,10 +211,11 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.10"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.11"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
+    "AmAmPm",
     "CarrierRecovery",
     "CascadeNoiseFigure",
     "DfeEqualization",
@@ -247,6 +250,7 @@ __all__ = [
     "acpr_rrc",
     "allpass_first_order",
     "allpass_second_order",
+    "am_am_pm",
     "amp_to_db",
     "awgn",
     "bessel_bandpass",

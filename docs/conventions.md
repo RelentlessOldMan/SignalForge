@@ -530,6 +530,23 @@ Decided in [ADR 0112](adr/0112-gain-compression.md). Python:
   `input_point_db`, `output_point_db`, `saturated_output_db` (the largest `outᵢ`).
   **(implemented)**
 
+## AM/AM and AM/PM
+
+Decided in [ADR 0113](adr/0113-am-am-am-pm.md). Python: `signalforge.measurements.am_am_pm`;
+C#: `Measurements.AmAmPm`.
+
+- **Call:** `am_am_pm(input, output, edges_db)`: complex samples of the same length `≥ 1`, finite;
+  `edges_db` at least 2 finite, strictly ascending edges in dB of input amplitude.
+  **(implemented)**
+- **Bins:** a sample's level is `20·log10|xₖ|`; bin `i` holds `eᵢ ≤ L < eᵢ₊₁`, the last bin also
+  its upper edge; samples outside every bin (and `x = 0`) are not counted. A level within
+  rounding of an edge may fall either side. **(implemented)**
+- **Per bin:** `h` the mean of `yₖ/xₖ` summed in order; `gain_db = 20·log10|h|`,
+  `phase_deg = atan2(Im h, Re h)·180/π`. An empty bin gives NaN for both and count 0; `h = 0`
+  gives `−∞` and 0. **(implemented)**
+- **Result** (`AmAmPm`): `levels_db` (each bin's mean edge), `counts`, `gain_db`, `phase_deg`. No
+  small-signal reference: the caller subtracts the bin it wants. **(implemented)**
+
 ## Bits and symbols
 
 - Bits are integers 0 or 1 (`uint8` / `byte`). **(implemented)**

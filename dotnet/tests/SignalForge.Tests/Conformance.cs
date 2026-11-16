@@ -235,6 +235,8 @@ public static class Conformance
             "phase_noise_ssb" => PhaseNoiseSsbOp(a),
             "integrated_phase_noise" => IntegratedPhaseNoiseOp(a),
             "noise_figure_cascade" => Bind((Reals(a.Get("noise_figures_db")), Reals(a.Get("gains_db"))), t => Measurements.NoiseFigureCascade(t.Item1, t.Item2)),
+            "am_am_pm" => Bind((Complexes(a.Get("input")), Complexes(a.Get("output")), Reals(a.Get("edges_db"))),
+                t => Measurements.AmAmPm(t.Item1, t.Item2, t.Item3)),
             "gain_compression" => Bind((Reals(a.Get("input_db")), Reals(a.Get("output_db")), a.Opt("compression_db", 1.0), a.OptInt("linear_points") ?? 1),
                 t => Measurements.GainCompression(t.Item1, t.Item2, t.Item3, t.Item4)),
             "noise_figure_y_factor" => Bind((a.D("hot_power"), a.D("cold_power"), a.D("enr_db"), a.Has("cold_temperature") ? a.D("cold_temperature") : 290), t => Measurements.NoiseFigureYFactor(t.Item1, t.Item2, t.Item3, t.Item4)),
@@ -1105,6 +1107,7 @@ public static class Conformance
         List<object?> l => l.Select(Canonical).ToList(),
         int i => (double)i,
         byte[] b => b.Select(x => (double)x).ToArray(),
+        int[] ia => ia.Select(x => (double)x).ToArray(),
         System.Runtime.CompilerServices.ITuple t => Enumerable.Range(0, t.Length).Select(i => Convert.ToDouble(t[i], CultureInfo.InvariantCulture)).ToArray(),
         _ when v.GetType().Assembly == typeof(Units).Assembly =>
             v.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)

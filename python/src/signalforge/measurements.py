@@ -690,6 +690,55 @@ def gain_compression(
     return GainCompression(gss, g, c, point, point + gss - c_db, float(np.max(y)))
 
 
+@dataclass(frozen=True, eq=False)
+class AmAmPm:
+    """AM/AM and AM/PM by input-level bin (conventions: AM/AM and AM/PM; ADR 0113).
+
+    An empty bin has ``counts`` 0 and NaN gain and phase.
+    """
+
+    levels_db: NDArray[np.float64]
+    counts: NDArray[np.int64]
+    gain_db: NDArray[np.float64]
+    phase_deg: NDArray[np.float64]
+
+
+def am_am_pm(input: ArrayLike, output: ArrayLike, edges_db: ArrayLike) -> AmAmPm:
+    """Gain in dB and phase in degrees of the mean complex ratio ``y/x`` in each bin of input
+    level ``20 log10|x|`` (conventions: AM/AM and AM/PM; ADR 0113)."""
+    x = np.asarray(input, dtype=np.complex128)
+    y = np.asarray(output, dtype=np.complex128)
+    e = np.asarray(edges_db, dtype=np.float64)
+    if x.ndim != 1 or y.ndim != 1 or e.ndim != 1:
+        raise ValueError("input, output and edges_db must be one-dimensional")
+    if x.size == 0 or x.size != y.size:
+        raise ValueError("input and output need the same number of samples, at least 1")
+    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(y))):
+        raise ValueError("input and output must be finite")
+    if e.size < 2 or not np.all(np.isfinite(e)) or not np.all(np.diff(e) > 0):
+        raise ValueError("edges_db must be at least 2 finite, strictly ascending values")
+    nb = e.size - 1
+    sums = [0j] * nb
+    counts = np.zeros(nb, dtype=np.int64)
+    with np.errstate(divide="ignore"):
+        levels = 20 * np.log10(np.abs(x))
+    for k in range(x.size):
+        lv = float(levels[k])
+        if not e[0] <= lv <= e[-1]:
+            continue  # outside every bin, or x = 0
+        i = min(int(np.searchsorted(e, lv, side="right")) - 1, nb - 1)
+        sums[i] += complex(y[k]) / complex(x[k])
+        counts[i] += 1
+    gain = np.full(nb, math.nan)
+    phase = np.full(nb, math.nan)
+    for i in range(nb):
+        if counts[i]:
+            h = sums[i] / int(counts[i])
+            gain[i] = 20 * math.log10(abs(h)) if h != 0 else -math.inf
+            phase[i] = math.atan2(h.imag, h.real) * 180 / math.pi if h != 0 else 0.0
+    return AmAmPm((e[:-1] + e[1:]) / 2, counts, gain, phase)
+
+
 def _from_db(db: float) -> float:
     """10**(db/10), +inf where it overflows (as in C#)."""
     try:

@@ -144,6 +144,13 @@ public sealed record NoiseFigure(double YFactor, double NoiseFactor, double Nois
 /// <param name="Contributions">Each stage's term of Friis' sum, in chain order.</param>
 public sealed record CascadeNoiseFigure(double NoiseFactor, double NoiseFigureDb, double NoiseTemperature, double GainDb, double[] Contributions);
 
+/// <summary>AM/AM and AM/PM by input-level bin (conventions: AM/AM and AM/PM; ADR 0113).</summary>
+/// <param name="LevelsDb">Each bin's centre, the mean of its edges, in dB of input amplitude.</param>
+/// <param name="Counts">How many samples fell in each bin.</param>
+/// <param name="GainDb">20·log10 of the bin's mean y/x; NaN for an empty bin.</param>
+/// <param name="PhaseDeg">The angle of the bin's mean y/x in degrees, in (−180, 180]; NaN for an empty bin.</param>
+public sealed record AmAmPm(double[] LevelsDb, int[] Counts, double[] GainDb, double[] PhaseDeg);
+
 /// <summary>Gain compression from a drive sweep (conventions: Gain compression; ADR 0112).</summary>
 /// <param name="SmallSignalGainDb">The mean gain over the first linear points, in dB.</param>
 /// <param name="GainDb">Each step's gain, output minus input, in dB.</param>
@@ -294,6 +301,66 @@ public static class Measurements
         if (!(f > 0) || !double.IsFinite(f))
             throw new ArgumentException("the measurement gives no finite positive noise factor", nameof(hotPower));
         return new NoiseFigure(y, f, 10 * Math.Log10(f), t0 * (f - 1));
+    }
+
+    /// <summary>Gain in dB and phase in degrees of the mean complex ratio y/x in each bin of input
+    /// level 20·log10|x| (conventions: AM/AM and AM/PM; ADR 0113).</summary>
+    /// <param name="input">The device's input samples, finite.</param>
+    /// <param name="output">Its output samples, as many, finite.</param>
+    /// <param name="edgesDb">Bin edges in dB of input amplitude, at least 2, finite, strictly ascending;
+    /// a bin holds levels from its lower edge up to, not including, its upper edge (the last includes it).</param>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static AmAmPm AmAmPm(ReadOnlySpan<Complex> input, ReadOnlySpan<Complex> output, ReadOnlySpan<double> edgesDb)
+    {
+        if (input.IsEmpty || input.Length != output.Length)
+            throw new ArgumentException("input and output need the same number of samples, at least 1", nameof(output));
+        for (int k = 0; k < input.Length; k++)
+        {
+            if (!double.IsFinite(input[k].Real) || !double.IsFinite(input[k].Imaginary)
+                || !double.IsFinite(output[k].Real) || !double.IsFinite(output[k].Imaginary))
+                throw new ArgumentException("input and output must be finite", nameof(input));
+        }
+        if (edgesDb.Length < 2)
+            throw new ArgumentException("at least 2 edges required", nameof(edgesDb));
+        for (int i = 0; i < edgesDb.Length; i++)
+        {
+            if (!double.IsFinite(edgesDb[i]) || (i > 0 && !(edgesDb[i] > edgesDb[i - 1])))
+                throw new ArgumentException("edges must be finite and strictly ascending", nameof(edgesDb));
+        }
+        int nb = edgesDb.Length - 1;
+        var sums = new Complex[nb];
+        int[] counts = new int[nb];
+        for (int k = 0; k < input.Length; k++)
+        {
+            double level = 20 * Math.Log10(Complex.Abs(input[k]));
+            if (!(level >= edgesDb[0] && level <= edgesDb[^1]))
+                continue; // outside every bin, or x = 0
+            int i = nb - 1;
+            for (int j = 0; j < nb; j++)
+            {
+                if (level < edgesDb[j + 1])
+                {
+                    i = j;
+                    break;
+                }
+            }
+            sums[i] += output[k] / input[k];
+            counts[i]++;
+        }
+        double[] levels = new double[nb], gain = new double[nb], phase = new double[nb];
+        for (int i = 0; i < nb; i++)
+        {
+            levels[i] = (edgesDb[i] + edgesDb[i + 1]) / 2;
+            if (counts[i] == 0)
+            {
+                gain[i] = phase[i] = double.NaN;
+                continue;
+            }
+            Complex h = sums[i] / counts[i];
+            gain[i] = h == Complex.Zero ? double.NegativeInfinity : 20 * Math.Log10(Complex.Abs(h));
+            phase[i] = h == Complex.Zero ? 0 : Math.Atan2(h.Imaginary, h.Real) * 180 / Math.PI;
+        }
+        return new AmAmPm(levels, counts, gain, phase);
     }
 
     /// <summary>Small-signal gain (the mean over the first <paramref name="linearPoints"/> steps) and the

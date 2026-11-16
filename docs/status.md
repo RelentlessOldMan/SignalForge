@@ -4,13 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **AM/AM and AM/PM**: from a memoryless device's complex input and output samples, the gain
-   in dB and the phase shift in degrees as functions of input amplitude, binned by input level in
-   dB, with the small-signal gain and phase. Not built yet. Needs an ADR: the bins (edges in dB,
-   given or a count over the range), how a bin's gain and phase are averaged (the complex ratio
-   `y/x` averaged, or its magnitude and angle separately), and empty bins. Expected values: the
-   Saleh model `A(r) = α_a r/(1 + β_a r²)`, `Φ(r) = α_φ r²/(1 + β_φ r²)` on samples whose
-   amplitudes are set exactly per bin gives each bin's gain and phase by hand.
+1. **Power amplifier models**: memoryless nonlinearities as channel impairments, the Saleh model
+   (`A(r) = α_a r/(1 + β_a r²)`, `Φ(r) = α_φ r²/(1 + β_φ r²)`) and the Rapp model
+   (`A(r) = g r/(1 + (g r/A_sat)^{2p})^{1/(2p)}`, no phase shift), applied as
+   `y = A(|x|)·e^{j(arg x + Φ(|x|))}`. Not built yet. Needs an ADR: the parameter names and
+   ranges, how a real input is treated (the bandpass envelope or the instantaneous value), and
+   `x = 0`. Expected values: the formulas at chosen amplitudes by hand; `am_am_pm` (ADR 0113)
+   reading the curves back, and `gain_compression` finding Rapp's 1 dB point
+   `g r = A_sat (10^{p/10} − 1)^{1/(2p)}`.
 
 ## Built
 
@@ -1147,13 +1148,22 @@ Updated with every chunk of work. Dates are absolute.
   fundamental `a₁A + ¾a₃A³`; the tests find the textbook `A² = (4/3)(1 − 10^(−1/20))|a₁/a₃|`.
   Python 4204 passed, 2 skipped; .NET 3552 passed; conformance 2130/2130 in both. Version
   2026.11.16.10.
+- 2026-11-16: AM/AM and AM/PM (ADR 0113): `am_am_pm(input, output, edges_db)` (C#
+  `Measurements.AmAmPm`) bins paired complex samples by input level `20·log10|x|` and gives each
+  bin's gain and phase from the mean complex ratio `y/x` (so a bin across the ±180° wrap
+  averages correctly), with its centre level and count; empty bins are NaN. The vectors run the
+  Saleh model on samples set to one amplitude per bin, by hand; the tests read a Rapp limiter's
+  curve through `gain_compression` to its analytic 1 dB point. The C# conformance runner now
+  compares integer arrays.
+  Python 4224 passed, 2 skipped; .NET 3566 passed; conformance 2139/2139 in both. Version
+  2026.11.16.11.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond second and third order, ACPR channel filters beyond RRC,
-phase noise with spurs removed, AM/AM and AM/PM, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
+phase noise with spurs removed, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.
 

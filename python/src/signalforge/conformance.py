@@ -63,6 +63,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "noise_figure_y_factor": measurements.noise_figure_y_factor,
     "noise_figure_cascade": measurements.noise_figure_cascade,
     "gain_compression": measurements.gain_compression,
+    "am_am_pm": measurements.am_am_pm,
     "qpsk_map": modulation.qpsk_map,
     "qpsk_demap_hard": modulation.qpsk_demap_hard,
     "qpsk_demap_llr": modulation.qpsk_demap_llr,
