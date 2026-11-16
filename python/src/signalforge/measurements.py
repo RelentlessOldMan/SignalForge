@@ -1256,6 +1256,18 @@ def schroeder_decay(impulse_response: ArrayLike) -> NDArray[np.float64]:
         return np.asarray(10 * np.log10(energy / energy[0]), dtype=np.float64)
 
 
+def energy_time_curve(impulse_response: ArrayLike) -> NDArray[np.float64]:
+    """The energy-time curve ``10 log10(|z|^2 / max |z|^2)`` with ``z`` the analytic signal
+    (conventions: Energy-time curve; ADR 0186)."""
+    z = spectral.analytic_signal(impulse_response)
+    p = np.asarray(z.real * z.real + z.imag * z.imag, dtype=np.float64)
+    peak = float(np.max(p))
+    if not peak > 0:
+        raise ValueError("impulse_response must not be all zero")
+    with np.errstate(divide="ignore"):
+        return np.asarray(10 * np.log10(p / peak), dtype=np.float64)
+
+
 def noise_compensated_decay(
     impulse_response: ArrayLike, *, tail: float = 0.1
 ) -> NDArray[np.float64]:

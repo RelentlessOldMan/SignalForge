@@ -4,11 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Energy-time curve**: `energy_time_curve(impulse_response)` in `measurements` (C#
-   `Measurements.EnergyTimeCurve`). It is `10·log10(|z|²/max|z|²)` dB, where `z` is the analytic
-   signal of ADR 0185. Real input only, not all zero; zero samples give `−inf`. Not built yet.
-   Needs an ADR: the peak reference; and that the dB values follow conventions (Decibels).
-   Expected values: closed forms for cosine-at-bin envelopes and hand impulse sums.
+1. **Instantaneous frequency**: `instantaneous_frequency(samples, sample_rate)` in `spectral`
+   (C# `Spectral.InstantaneousFrequency`). It is
+   `f[n] = fs/(2π)·arg(z[n+1]·conj z[n])`, giving `N − 1` values in `(−fs/2, fs/2]`, where `z`
+   is the analytic signal of ADR 0185. Not built yet. Needs an ADR: the phase-difference form
+   (no unwrapping); the result length; and what happens where `z` is zero (arg 0 → 0 Hz).
+   Expected values: constant `k·fs/N` for cosines at bin `k`, and hand impulse sums.
 
 ## Built
 
@@ -1761,6 +1762,14 @@ Updated with every chunk of work. Dates are absolute.
   hand DFT sums of impulses.
   Python 5484 passed, 2 skipped; .NET 4793 passed; conformance 3084/3084 in both. Version
   2026.11.16.83.
+- 2026-11-16: energy-time curve (ADR 0186): `energy_time_curve(impulse_response)` in
+  `measurements` (C# `Measurements.EnergyTimeCurve`, in a new `EnergyTimeCurve.cs`).
+  - It is `10·log10(|z|²/max|z|²)`, where `z` is the analytic signal.
+  - The peak is 0 dB, and a zero envelope gives `−inf`.
+
+  The vectors are hand impulse sums, an AM tone at bin frequencies and a constant.
+  Python 5494 passed, 2 skipped; .NET 4802 passed; conformance 3092/3092 in both. Version
+  2026.11.16.84.
 
 ## Not built
 
