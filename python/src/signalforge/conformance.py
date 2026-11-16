@@ -152,6 +152,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "fractional_delay": channel.fractional_delay,
     "rician_fading": channel.rician_fading,
     "clock_drift": channel.clock_drift,
+    "clock_jitter": channel.clock_jitter,
     "clock_offset": channel.clock_offset,
     "gardner_timing": sync.gardner_timing,
     "pi_loop_gains": sync.pi_loop_gains,

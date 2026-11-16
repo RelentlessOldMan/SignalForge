@@ -1089,6 +1089,13 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   in Sample clock offset when `d = 0` (also for `N ≤ 1`). `y[n] = z(t_n)` through the same kernel
   for `n = 0, 1, …` while `t_n ≤ N − 1` (none for empty input). Both offsets finite with
   `|·| ≤ 1e5`; `half_width` an integer `≥ 1`. **(implemented)**
+- **Sample clock jitter** (`clock_jitter(samples, rms, *, seed, half_width=16)`,
+  [ADR 0104](adr/0104-clock-jitter.md)): `y[n] = z(n + σ·gₙ)` for `n = 0 … N − 1`, `σ = rms` in
+  samples. `gₙ` are independent standard Gaussians drawn in order (Python `standard_normal(N)`,
+  C# the Box–Muller cosine branch). `z` is read through the same kernel, `x` zero outside
+  `0 … N − 1`. `rms` finite with `0 ≤ rms ≤ 0.5`; `half_width` an integer `≥ 1`. Seeded as for
+  AWGN, with streams that differ between languages. `rms = 0` returns the input.
+  **(implemented)**
 
 ## Synchronization
 

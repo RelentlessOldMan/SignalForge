@@ -306,6 +306,43 @@ public static class Channel
         return [.. y];
     }
 
+    /// <summary>The input read at n + rms·gₙ, gₙ independent standard Gaussians, through the
+    /// fractional-delay kernel: white sampling jitter (conventions: Channel, Sample clock jitter;
+    /// ADR 0104).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="rms">The jitter's standard deviation in samples, finite, from 0 to 0.5.</param>
+    /// <param name="seed">Seed for the jitter; the stream differs from the Python one.</param>
+    /// <param name="halfWidth">Half the interpolator's length in samples, at least 1.</param>
+    /// <returns>One sample per input sample.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">An argument is out of range.</exception>
+    public static Complex[] ClockJitter(ReadOnlySpan<Complex> samples, double rms, int seed, int halfWidth = 16) =>
+        ClockJitter(samples, rms, new Random(seed), halfWidth);
+
+    /// <summary>As <see cref="ClockJitter(ReadOnlySpan{Complex}, double, int, int)"/>, drawing from
+    /// <paramref name="rng"/>.</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="rms">The jitter's standard deviation in samples, finite, from 0 to 0.5.</param>
+    /// <param name="rng">Source of the jitter.</param>
+    /// <param name="halfWidth">Half the interpolator's length in samples, at least 1.</param>
+    /// <returns>One sample per input sample.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">An argument is out of range.</exception>
+    public static Complex[] ClockJitter(ReadOnlySpan<Complex> samples, double rms, Random rng, int halfWidth = 16)
+    {
+        ArgumentNullException.ThrowIfNull(rng);
+        if (!(rms >= 0 && rms <= 0.5))
+            throw new ArgumentOutOfRangeException(nameof(rms), rms, "must be between 0 and 0.5 samples");
+        ArgumentOutOfRangeException.ThrowIfLessThan(halfWidth, 1);
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+        {
+            // Box–Muller, the cosine branch: one pair of uniforms gives one Gaussian.
+            double r = Math.Sqrt(-2 * Math.Log(1 - rng.NextDouble()));
+            double g = r * Math.Cos(2 * Math.PI * rng.NextDouble());
+            y[n] = Interpolate(samples, n + rms * g, halfWidth);
+        }
+        return y;
+    }
+
     // h(f − j) for j = −H+1 … H (conventions: Channel, Fractional delay).
     private static double[] DelayKernel(double f, int halfWidth, double norm)
     {

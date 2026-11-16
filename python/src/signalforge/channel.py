@@ -209,6 +209,34 @@ def clock_drift(
     return _read_at(np.asarray(x, dtype=np.complex128), pos[: past[0]], h)
 
 
+def clock_jitter(
+    samples: ArrayLike,
+    rms: float,
+    *,
+    seed: int | np.random.Generator,
+    half_width: int = 16,
+) -> NDArray[np.complex128]:
+    """The input read at ``n + rms*g[n]``, ``g`` independent standard Gaussians, through the
+    fractional-delay kernel: white sampling jitter of ``rms`` samples (conventions: Channel,
+    Sample clock jitter)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    sigma = real(rms, "rms")
+    if not 0 <= sigma <= 0.5:
+        raise ValueError("rms must be between 0 and 0.5 samples")
+    h = count(half_width, "half_width")
+    if h < 1:
+        raise ValueError("half_width must be at least 1")
+    rng = (
+        seed
+        if isinstance(seed, np.random.Generator)
+        else np.random.default_rng(count(seed, "seed"))
+    )
+    pos = np.arange(x.size, dtype=np.float64) + sigma * rng.standard_normal(x.size)
+    return _read_at(np.asarray(x, dtype=np.complex128), pos, h)
+
+
 def rician_fading(
     samples: ArrayLike,
     k_factor: float,

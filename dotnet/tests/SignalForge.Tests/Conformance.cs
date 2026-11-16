@@ -418,6 +418,7 @@ public static class Conformance
             "pi_loop_gains" => Bind((a.D("loop_bandwidth"), a.D("damping"), a.D("detector_gain")), t => Sync.PiLoopGains(t.Item1, t.Item2, t.Item3)),
             "rician_fading" => Bind((Complexes(a.Get("samples")), a.D("k_factor"), a.I("block_length"), a.I("seed")), t => Channel.RicianFading(t.Item1, t.Item2, t.Item3, t.Item4)),
             "clock_drift" => Bind((Complexes(a.Get("samples")), a.D("ppm_start"), a.D("ppm_end"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.ClockDrift(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "clock_jitter" => Bind((Complexes(a.Get("samples")), a.D("rms"), a.I("seed"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.ClockJitter(t.Item1, t.Item2, t.Item3, t.Item4)),
             "clock_offset" => Bind((Complexes(a.Get("samples")), a.D("ppm"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.ClockOffset(t.Item1, t.Item2, t.Item3)),
             "fractional_delay" => Bind((Complexes(a.Get("samples")), a.D("delay"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.FractionalDelay(t.Item1, t.Item2, t.Item3)),
             "dc_offset" => Bind((Complexes(a.Get("samples")), ComplexScalar(a.Get("offset"))), t => Channel.DcOffset(t.Item1, t.Item2)),
