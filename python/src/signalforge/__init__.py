@@ -214,6 +214,7 @@ from .spectral import (
     WindowStats,
     acpr,
     acpr_rrc,
+    analytic_signal,
     band_energy_ratio,
     cepstral_lifter,
     channel_power,
@@ -319,7 +320,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.82"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.83"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -387,6 +388,7 @@ __all__ = [
     "allpass_second_order",
     "am_am_pm",
     "amp_to_db",
+    "analytic_signal",
     "autocorrelation",
     "autocorrelation_pitch",
     "awgn",

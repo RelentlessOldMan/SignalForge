@@ -2364,3 +2364,19 @@ def channel_power(
     power, left, right = _bins(frequencies, psd, span)
     overlap = np.clip(np.minimum(right, hi) - np.maximum(left, lo), 0.0, None)
     return float(np.sum(power * overlap / (right - left)))
+
+
+def analytic_signal(samples: ArrayLike) -> NDArray[np.complex128]:
+    """The analytic signal ``ifft(fft(x) W)`` with Marple's weights: 1 at DC and at N/2, 2 for
+    the positive bins, 0 for the negative (conventions: Analytic signal; ADR 0185)."""
+    x = np.asarray(samples)
+    if x.ndim != 1 or x.shape[0] == 0 or np.iscomplexobj(x):
+        raise ValueError("samples must be a non-empty one-dimensional real array")
+    x = x.astype(np.float64)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    twice = 2 * np.arange(n)
+    w = np.where(twice < n, 2.0, np.where(twice == n, 1.0, 0.0))
+    w[0] = 1.0
+    return np.asarray(np.fft.ifft(np.fft.fft(x) * w), dtype=np.complex128)

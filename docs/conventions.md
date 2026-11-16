@@ -732,6 +732,10 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `Spectral.CepstralLifter`, [ADR 0159](adr/0159-cepstral-lifter.md)): `c'_n = (1 + (L/2)
   sin(π n / L)) c_n`, `n = 0 …`; one frame, 1-D, real, finite, at least one value; `L ≥ 1`; no
   inverse. **(implemented)**
+- **Analytic signal** (`analytic_signal(samples)`, C# `Spectral.AnalyticSignal`,
+  [ADR 0185](adr/0185-analytic-signal.md)): `z = ifft(fft(x)·W)` with `W[0] = 1`, `W[k] = 2`
+  for `0 < 2k < N`, `W[N/2] = 1` for even `N`, `W[k] = 0` for `2k > N` (Marple); `Re z = x` up
+  to rounding. Input real, 1-D, finite, not empty; complex input is invalid. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

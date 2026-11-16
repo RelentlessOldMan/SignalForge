@@ -4,17 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Analytic signal**: `analytic_signal(samples)` in `spectral` (C# `Spectral.AnalyticSignal`).
-   It is the DFT-based Hilbert transform `ifft(X·H)`, where:
-   - `H[0] = 1`;
-   - `H[k] = 2` for `0 < k < N/2`;
-   - `H[N/2] = 1` when `N` is even;
-   - every other `H` is 0.
-
-   Real input only. Not built yet. Needs an ADR: the bin weights for odd and even `N`; that
-   `N = 1` returns the sample; and that the real part is the input up to rounding. Expected
-   values: `cos θₙ → e^{jθₙ}` at bin frequencies, and hand DFT sums. It is the basis for an
-   energy-time curve next.
+1. **Energy-time curve**: `energy_time_curve(impulse_response)` in `measurements` (C#
+   `Measurements.EnergyTimeCurve`). It is `10·log10(|z|²/max|z|²)` dB, where `z` is the analytic
+   signal of ADR 0185. Real input only, not all zero; zero samples give `−inf`. Not built yet.
+   Needs an ADR: the peak reference; and that the dB values follow conventions (Decibels).
+   Expected values: closed forms for cosine-at-bin envelopes and hand impulse sums.
 
 ## Built
 
@@ -1757,6 +1751,16 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are exact least-squares slopes in fractions.
   Python 5467 passed, 2 skipped; .NET 4782 passed; conformance 3074/3074 in both. Version
   2026.11.16.82.
+- 2026-11-16: analytic signal (ADR 0185): `analytic_signal(samples)` in `spectral` (C#
+  `Spectral.AnalyticSignal`, in a new `AnalyticSignal.cs`; `Spectral` is now partial).
+  - It computes `ifft(fft(x)·W)` with Marple's weights: 1 at DC and at `N/2`, 2 for the positive
+    bins and 0 for the negative bins.
+  - The input must be real; complex input is invalid.
+
+  The vectors are the closed forms `cos → e^{jθ}` and `sin → −j e^{jθ}` at bin frequencies, plus
+  hand DFT sums of impulses.
+  Python 5484 passed, 2 skipped; .NET 4793 passed; conformance 3084/3084 in both. Version
+  2026.11.16.83.
 
 ## Not built
 

@@ -311,7 +311,7 @@ public sealed record DbBandwidth(double PeakFrequency, double PeakPsd, double Lo
 /// FFT, frequency axes, windows, Welch PSD, occupied bandwidth and channel power. Definitions in
 /// docs/conventions.md (Spectra) and docs/adr/0006-fft-windows-spectra.md.
 /// </summary>
-public static class Spectral
+public static partial class Spectral
 {
     /// <summary>Largest Kaiser β: I₀(β) overflows a double just above 713.</summary>
     public const double KaiserMaxBeta = 700.0;
