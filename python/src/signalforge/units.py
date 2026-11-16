@@ -191,7 +191,9 @@ def bark_to_hz(bark: ArrayLike) -> NDArray[np.float64] | float:
     return _out(np.maximum(0.0, 1960.0 * (z + 0.53) / (26.28 - z)))
 
 
-_F1, _F2, _F3, _F4 = 20.598997, 107.65265, 737.86223, 12194.217
+WEIGHTING_POLES = (20.598997, 107.65265, 737.86223, 12194.217)
+"""The IEC 61672-1 pole frequencies f1 to f4 in Hz (conventions: Frequency weightings)."""
+_F1, _F2, _F3, _F4 = WEIGHTING_POLES
 
 
 def _a_raw(f: NDArray[np.float64]) -> NDArray[np.float64]:

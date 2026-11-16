@@ -180,7 +180,7 @@ public static class Units
         return CRaw(frequency) - C1000;
     }
 
-    private const double WeightF1 = 20.598997, WeightF2 = 107.65265, WeightF3 = 737.86223, WeightF4 = 12194.217;
+    internal const double WeightF1 = 20.598997, WeightF2 = 107.65265, WeightF3 = 737.86223, WeightF4 = 12194.217;
 
     private static double ARaw(double f) =>
         40.0 * Math.Log10(WeightF4) + 80.0 * Math.Log10(f)

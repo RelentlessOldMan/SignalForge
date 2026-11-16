@@ -1405,6 +1405,15 @@ and `SignalForge.IirFilter`.
     `cos(π(f₁ + f₂)/fs) = cos(2π·center/fs)·cos(π·bandwidth/fs)`, both inside `(0, fs/2)`.
   - `cutoff`, `center` and `bandwidth` each strictly between 0 and `fs/2`, finite; a design whose
     pole rounds onto the unit circle is `invalid_argument`, as for every IIR design.
+- **Weighting filters** (`a_weighting_sos(sample_rate)`, `c_weighting_sos(sample_rate)`, C#
+  `Dsp.AWeightingSos`, `Dsp.CWeightingSos`, [ADR 0165](adr/0165-weighting-filters.md)): the
+  analog A and C curves (Frequency weightings, ADR 0164; `ω_k = 2π f_k`) by the bilinear
+  transform `s = K(1 − z⁻¹)/(1 + z⁻¹)`, `K = 2fs`, no prewarping. Each section is the product
+  of two first-order factors: high-pass `s/(s + ω)` → `b = [K, −K]/(K + ω)`, low-pass
+  `ω/(s + ω)` → `b = [ω, ω]/(K + ω)`, both `a = [1, (ω − K)/(K + ω)]`. A: `HP ω1·HP ω1`, `HP
+  ω2·HP ω3`, `LP ω4·LP ω4`; C: `HP ω1·HP ω1`, `LP ω4·LP ω4`. The first section's `b` is divided
+  by `Π Ω/√(Ω² + ω²)` (high-pass) and `ω/√(Ω² + ω²)` (low-pass) at `Ω = K tan(π·1000/fs)`, so
+  the gain at 1 kHz is exactly 1. `fs` finite and `> 2000`. **(implemented)**
 - **Frequency response** (`sos_response(sos, frequencies, sample_rate)`): the complex
   `H(f) = Π_i H_i(e^(j2π·f/fs))` at each frequency. Frequencies finite.
 - **Group delay** (`sos_group_delay(sos, frequencies, sample_rate)`,

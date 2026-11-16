@@ -476,6 +476,8 @@ public static class Conformance
             "bessel_lowpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.BesselLowpass(t.Item1, t.Item2, t.Item3)),
             "bessel_highpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.BesselHighpass(t.Item1, t.Item2, t.Item3)),
             "allpass_first_order" => Bind((a.D("cutoff"), a.D("sample_rate")), t => Dsp.AllpassFirstOrder(t.Item1, t.Item2)),
+            "a_weighting_sos" => Bind(a.D("sample_rate"), Dsp.AWeightingSos),
+            "c_weighting_sos" => Bind(a.D("sample_rate"), Dsp.CWeightingSos),
             "allpass_second_order" => Bind((a.D("center"), a.D("bandwidth"), a.D("sample_rate")), t => Dsp.AllpassSecondOrder(t.Item1, t.Item2, t.Item3)),
             "bessel_bandpass" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.BesselBandpass(t.Item1, t.Item2, t.Item3, t.Item4)),
             "bessel_bandstop" => Bind((a.I("order"), a.D("low"), a.D("high"), a.D("sample_rate")), t => Dsp.BesselBandstop(t.Item1, t.Item2, t.Item3, t.Item4)),

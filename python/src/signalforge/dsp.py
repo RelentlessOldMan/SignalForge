@@ -1668,3 +1668,45 @@ def gammatone(
     if not gain > 0:
         raise ValueError("the response is zero at center_frequency; use a longer length")
     return np.asarray(g / gain, dtype=np.float64)
+
+
+def _weighting_sos(
+    sample_rate: float, sections: list[list[tuple[bool, float]]]
+) -> NDArray[np.float64]:
+    """Sections of first-order factors ``(high_pass, pole_hz)`` by the bilinear transform, the
+    first scaled for unit gain at 1 kHz (conventions: Weighting filters; ADR 0165)."""
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 2000):
+        raise ValueError("sample_rate must be finite and above 2000 Hz")
+    k = 2 * fs
+    big_omega = k * math.tan(math.pi * 1000 / fs)
+    rows: list[list[float]] = []
+    magnitude = 1.0
+    for pair in sections:
+        factors = []
+        for high, hz in pair:
+            w = 2 * math.pi * hz
+            d = k + w
+            factors.append((k / d, -k / d, (w - k) / d) if high else (w / d, w / d, (w - k) / d))
+            magnitude *= (big_omega if high else w) / math.hypot(big_omega, w)
+        (p0, p1, pa), (q0, q1, qa) = factors
+        rows.append([p0 * q0, p0 * q1 + p1 * q0, p1 * q1, 1.0, pa + qa, pa * qa])
+    rows[0][:3] = [v / magnitude for v in rows[0][:3]]
+    return _usable(rows)
+
+
+def a_weighting_sos(sample_rate: float) -> NDArray[np.float64]:
+    """The IEC 61672-1 A-weighting filter by the bilinear transform, three second-order sections,
+    0 dB at 1 kHz (conventions: Weighting filters; ADR 0165)."""
+    f1, f2, f3, f4 = units.WEIGHTING_POLES
+    return _weighting_sos(
+        sample_rate,
+        [[(True, f1), (True, f1)], [(True, f2), (True, f3)], [(False, f4), (False, f4)]],
+    )
+
+
+def c_weighting_sos(sample_rate: float) -> NDArray[np.float64]:
+    """The IEC 61672-1 C-weighting filter by the bilinear transform, two second-order sections,
+    0 dB at 1 kHz (conventions: Weighting filters; ADR 0165)."""
+    f1, _, _, f4 = units.WEIGHTING_POLES
+    return _weighting_sos(sample_rate, [[(True, f1), (True, f1)], [(False, f4), (False, f4)]])

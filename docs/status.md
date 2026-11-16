@@ -4,14 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Weighting filters**: `a_weighting_sos(sample_rate)` and `c_weighting_sos(sample_rate)`
-   in `iir`: the analog poles of ADR 0164 (zeros at 0, double poles at `f1` and `f4`, single
-   poles at `f2` and `f3` for A) through the bilinear transform. Each returns sections in the
-   existing SOS layout, normalized to 0 dB at 1 kHz. Not built yet. Needs an ADR: prewarping
-   (none, as in the usual designs, so the response bends near Nyquist), section order and
-   pairing, and the gain normalization point. Expected values: the bilinear map of each pole,
-   `(1 + sT/2)/(1 − sT/2)`, in `decimal`. A test checks `sos_response` against `a_weighting`
-   well below Nyquist.
+1. **Time weighting and Leq**: `time_weighting(samples, sample_rate, time_constant)`, the IEC
+   61672-1 exponential average of the squared signal, one output per input sample (Fast
+   `τ = 0.125` s, Slow `1` s), and `equivalent_level(samples)`, the mean square, in
+   `measurements`. With the weighting filters (ADR 0165) they make a sound level meter. Not
+   built yet. Needs an ADR: the discretization (exact `α = exp(−1/(τ fs))` against the Euler
+   `1/(τ fs)`), the initial state (0), whether the outputs are power or dB, and the reference
+   level. Expected values: a step input gives `1 − α^(n+1)` exactly in `fractions` for a
+   rational `α`, and a constant gives its square.
 
 ## Built
 
@@ -1575,6 +1575,15 @@ Updated with every chunk of work. Dates are absolute.
   frequencies.
   Python 5163 passed, 2 skipped; .NET 4487 passed; conformance 2810/2810 in both. Version
   2026.11.16.62.
+- 2026-11-16: weighting filters (ADR 0165): `a_weighting_sos(sample_rate)` and
+  `c_weighting_sos(sample_rate)` in `dsp` (C# `Dsp.AWeightingSos`, `Dsp.CWeightingSos`). Each
+  section is the product of two bilinear-transformed first-order factors, without prewarping.
+  The first section is scaled so the gain at 1 kHz is exactly 1, from the analog magnitude at
+  `2fs·tan(π·1000/fs)`. `fs > 2000`. The vectors are in 60-digit `decimal`. The tests check
+  the exact bilinear identity: the response in dB at `f` equals the ADR 0164 curve at
+  `(fs/π)·tan(πf/fs)`, relative to 1 kHz, to 1e-9.
+  Python 5185 passed, 2 skipped; .NET 4509 passed; conformance 2826/2826 in both. Version
+  2026.11.16.63.
 
 ## Not built
 

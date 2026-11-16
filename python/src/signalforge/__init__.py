@@ -22,6 +22,7 @@ from .dsp import (
     IirFilter,
     Levinson,
     Resampler,
+    a_weighting_sos,
     allpass_first_order,
     allpass_second_order,
     autocorrelation,
@@ -33,6 +34,7 @@ from .dsp import (
     butterworth_bandstop,
     butterworth_highpass,
     butterworth_lowpass,
+    c_weighting_sos,
     chebyshev1_bandpass,
     chebyshev1_bandstop,
     chebyshev1_highpass,
@@ -294,7 +296,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.62"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.63"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -355,6 +357,7 @@ __all__ = [
     "TwoToneIp5",
     "WindowStats",
     "a_weighting",
+    "a_weighting_sos",
     "acpr",
     "acpr_rrc",
     "allpass_first_order",
@@ -376,6 +379,7 @@ __all__ = [
     "butterworth_highpass",
     "butterworth_lowpass",
     "c_weighting",
+    "c_weighting_sos",
     "cepstral_lifter",
     "cepstrum_pitch",
     "channel_power",
