@@ -177,6 +177,72 @@ def sfdr(
     )
 
 
+@dataclass(frozen=True, eq=False)
+class TwoToneImd:
+    """Third-order intermodulation of two tones (conventions: Two-tone intermodulation).
+
+    Tones and products come lower first. ``imd_dbc`` is each product relative to the mean tone
+    power; ``ip3_db`` is the third-order intercept from the worse product, in dB of sample
+    units squared.
+    """
+
+    tone_frequencies: NDArray[np.float64]
+    tone_powers: NDArray[np.float64]
+    imd_frequencies: NDArray[np.float64]
+    imd_powers: NDArray[np.float64]
+    imd_dbc: NDArray[np.float64]
+    worst_imd_dbc: float
+    ip3_db: float
+
+
+def two_tone_imd(
+    samples: ArrayLike,
+    sample_rate: float,
+    f1: float,
+    f2: float,
+    *,
+    window: str = "blackman_harris",
+    beta: float | None = None,
+    width: int | None = None,
+) -> TwoToneImd:
+    """The tones at ``f1 < f2`` and their third-order products ``2*f1 - f2`` and ``2*f2 - f1``,
+    grouped as for :func:`tone_metrics` (conventions: Two-tone intermodulation; ADR 0107)."""
+    lo = real(f1, "f1")
+    hi = real(f2, "f2")
+    if not lo < hi:
+        raise ValueError("f1 must be below f2")
+    g = _Groups(samples, sample_rate, window, beta, width, lo)
+    fs = g.d.sample_rate
+    if not (abs(hi) <= fs / 2 and (hi >= 0 or not g.d.one_sided)):
+        raise ValueError("f2 must satisfy |f| <= sample_rate/2 (and f >= 0 for real input)")
+    c = g.nearest(g.alias(hi))
+    if g.claimed[c]:
+        raise ValueError("f2 falls in the DC group or the f1 group")
+    idx = g.group(c)
+    p2 = g.power(idx)
+    if not p2 > 0:
+        raise ValueError("no signal power at f2")
+    imd_f = [g.alias(2 * lo - hi), g.alias(2 * hi - lo)]
+    imd_p = []
+    for x in imd_f:
+        k = g.nearest(x)
+        if g.claimed[k]:
+            raise ValueError("an intermodulation product falls on DC, a tone or the other product")
+        imd_p.append(g.power(g.group(k)))
+    pt = (g.signal + p2) / 2
+    dbc = [10 * math.log10(p / pt) if p > 0 else -math.inf for p in imd_p]
+    worst = max(dbc)
+    return TwoToneImd(
+        tone_frequencies=np.array([g.f1, g.centroid(idx, p2)], dtype=np.float64),
+        tone_powers=np.array([g.signal, p2], dtype=np.float64),
+        imd_frequencies=np.array(imd_f, dtype=np.float64),
+        imd_powers=np.array(imd_p, dtype=np.float64),
+        imd_dbc=np.array(dbc, dtype=np.float64),
+        worst_imd_dbc=worst,
+        ip3_db=10 * math.log10(pt) - worst / 2,
+    )
+
+
 _FLOOR = 1e-20  # bins at or below this fraction of the total power are rounding error: zero
 
 
@@ -230,6 +296,14 @@ class _Groups:
         if not self.signal > 0:
             raise ValueError("no signal power at the fundamental")
         self.f1 = self.centroid(fund, self.signal)
+
+    def alias(self, freq: float) -> float:
+        """``freq`` in the spectrum's range: folded for real input, wrapped for complex."""
+        fs = self.d.sample_rate
+        if self.d.one_sided:
+            x = freq % fs
+            return fs - x if x > fs / 2 else x
+        return (freq + fs / 2) % fs - fs / 2
 
     def nearest(self, freq: float) -> int:
         """Index of the bin nearest ``freq``, clipped to the spectrum."""

@@ -425,6 +425,23 @@ groups as the tone metrics (ADR 0015).
   `sfdr_db = −spur_dbc[0]`, in dB below the carrier (negative when a spur is stronger than a
   named carrier); `+∞` and empty arrays when no spur is found. **(implemented)**
 
+## Two-tone intermodulation
+
+Decided in [ADR 0107](adr/0107-two-tone-imd.md). Python: `signalforge.measurements.two_tone_imd`;
+C#: `Measurements.TwoToneImd`. Same spectrum, half-width and groups as the tone metrics.
+
+- **Call:** `two_tone_imd(samples, sample_rate, f1, f2, *, window="blackman_harris", beta=None,
+  width=None)`, real or complex; `f1 < f2`, both finite and following the fundamental's rules.
+  **(implemented)**
+- **Groups:** DC, the tone at `f1` (the fundamental), the tone at `f2`, the lower product
+  `2f₁ − f₂`, the upper product `2f₂ − f₁`, each at the bin nearest its nominal frequency, the
+  products aliased as harmonics are. A centre bin already claimed is `invalid_argument`; so is no
+  power in the `f2` group. **(implemented)**
+- **Result** (`TwoToneImd`): `tone_frequencies` (centroids), `tone_powers`, `imd_frequencies`
+  (the aliased nominal ones, lower first), `imd_powers`, `imd_dbc = 10·log10(P_IM/P_t)` with
+  `P_t` the mean tone power (`−∞` for a product with no power), `worst_imd_dbc` (the larger) and
+  `ip3_db = 10·log10 P_t − worst_imd_dbc/2`. **(implemented)**
+
 ## Noise figure
 
 Decided in [ADR 0105](adr/0105-noise-figure-y-factor.md). Python:

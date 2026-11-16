@@ -68,6 +68,26 @@ public sealed record Sfdr(
     double[] SpurPowers,
     double[] SpurDbc);
 
+/// <summary>
+/// Third-order intermodulation of two tones (conventions: Two-tone intermodulation; ADR 0107).
+/// Tones and products come lower first; powers in sample units².
+/// </summary>
+/// <param name="ToneFrequencies">The two tones' power centroids, in Hz.</param>
+/// <param name="TonePowers">The two tones' group powers.</param>
+/// <param name="ImdFrequencies">2f₁ − f₂ and 2f₂ − f₁, aliased into the spectrum, in Hz.</param>
+/// <param name="ImdPowers">The two products' group powers.</param>
+/// <param name="ImdDbc">Each product relative to the mean tone power; −∞ for no power.</param>
+/// <param name="WorstImdDbc">The larger of <paramref name="ImdDbc"/>.</param>
+/// <param name="Ip3Db">10·log10(mean tone power) − <paramref name="WorstImdDbc"/>/2.</param>
+public sealed record TwoToneImd(
+    double[] ToneFrequencies,
+    double[] TonePowers,
+    double[] ImdFrequencies,
+    double[] ImdPowers,
+    double[] ImdDbc,
+    double WorstImdDbc,
+    double Ip3Db);
+
 /// <summary>A Y-factor noise figure measurement (conventions: Noise figure; ADR 0105).</summary>
 /// <param name="YFactor">Hot over cold output power.</param>
 /// <param name="NoiseFactor">The linear noise factor F.</param>
@@ -258,6 +278,80 @@ public static class Measurements
         return new CascadeNoiseFigure(total, 10 * Math.Log10(total), 290 * (total - 1), gainDb, c);
     }
 
+    /// <summary>
+    /// The tones at <paramref name="f1"/> &lt; <paramref name="f2"/> in real samples and their
+    /// third-order products 2f₁ − f₂ and 2f₂ − f₁, grouped as for the tone metrics (conventions:
+    /// Two-tone intermodulation; ADR 0107).
+    /// </summary>
+    /// <param name="samples">Real samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="f1">The lower tone's frequency in Hz.</param>
+    /// <param name="f2">The upper tone's frequency in Hz.</param>
+    /// <param name="window">Window of the one-segment spectrum.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of each bin group; by default set by the window.</param>
+    /// <returns>The tones, the products, their dBc and the intercept.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a group would overlap another.</exception>
+    public static TwoToneImd TwoToneImd(ReadOnlySpan<double> samples, double sampleRate, double f1, double f2,
+        WindowType window = WindowType.BlackmanHarris, double? beta = null, int? width = null)
+    {
+        CheckTones(samples.Length, width, f1, f2);
+        return Imd(new ToneGroups(Spectral.WelchPsd(samples, sampleRate, window: window, beta: beta), window, beta, width, f1), f1, f2);
+    }
+
+    /// <summary>As for real samples, from the two-sided spectrum of complex samples.</summary>
+    /// <param name="samples">Complex samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="f1">The lower tone's frequency in Hz.</param>
+    /// <param name="f2">The upper tone's frequency in Hz.</param>
+    /// <param name="window">Window of the one-segment spectrum.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of each bin group; by default set by the window.</param>
+    /// <returns>The tones, the products, their dBc and the intercept.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a group would overlap another.</exception>
+    public static TwoToneImd TwoToneImd(ReadOnlySpan<Complex> samples, double sampleRate, double f1, double f2,
+        WindowType window = WindowType.BlackmanHarris, double? beta = null, int? width = null)
+    {
+        CheckTones(samples.Length, width, f1, f2);
+        return Imd(new ToneGroups(Spectral.WelchPsd(samples, sampleRate, window: window, beta: beta), window, beta, width, f1), f1, f2);
+    }
+
+    private static void CheckTones(int samples, int? width, double f1, double f2)
+    {
+        Check(samples, width, f1);
+        if (!double.IsFinite(f2))
+            throw new ArgumentException("f2 must be finite", nameof(f2));
+        if (!(f1 < f2))
+            throw new ArgumentException("f1 must be below f2", nameof(f1));
+    }
+
+    private static TwoToneImd Imd(ToneGroups g, double f1, double f2)
+    {
+        double fs = g.D.SampleRate;
+        if (!(Math.Abs(f2) <= fs / 2 && (f2 >= 0 || !g.D.OneSided)))
+            throw new ArgumentException("f2 must satisfy |f| <= sample_rate/2 (and f >= 0 for real input)", nameof(f2));
+        int c = g.Nearest(g.Alias(f2));
+        if (g.Claimed[c])
+            throw new ArgumentException("f2 falls in the DC group or the f1 group", nameof(f2));
+        var idx = g.Group(c);
+        double p2 = g.Power(idx);
+        if (!(p2 > 0))
+            throw new ArgumentException("no signal power at f2", nameof(f2));
+        double[] imdF = [g.Alias(2 * f1 - f2), g.Alias(2 * f2 - f1)];
+        var imdP = new double[2];
+        for (int i = 0; i < 2; i++)
+        {
+            int k = g.Nearest(imdF[i]);
+            if (g.Claimed[k])
+                throw new ArgumentException("an intermodulation product falls on DC, a tone or the other product", nameof(f2));
+            imdP[i] = g.Power(g.Group(k));
+        }
+        double pt = (g.Signal + p2) / 2;
+        double[] dbc = [.. imdP.Select(p => p > 0 ? 10 * Math.Log10(p / pt) : double.NegativeInfinity)];
+        double worst = Math.Max(dbc[0], dbc[1]);
+        return new TwoToneImd([g.F1, g.Centroid(idx, p2)], [g.Signal, p2], imdF, imdP, dbc, worst, 10 * Math.Log10(pt) - worst / 2);
+    }
+
     private static void Check(int samples, int? width, double? fundamental)
     {
         if (samples < 2)
@@ -381,6 +475,18 @@ public static class Measurements
         public double Signal { get; }
 
         public double F1 { get; }
+
+        /// <summary><paramref name="freq"/> in the spectrum's range: folded for real input, wrapped for complex.</summary>
+        public double Alias(double freq)
+        {
+            double fs = D.SampleRate;
+            if (D.OneSided)
+            {
+                double x = FlooredMod(freq, fs);
+                return x > fs / 2 ? fs - x : x;
+            }
+            return FlooredMod(freq + fs / 2, fs) - fs / 2;
+        }
 
         /// <summary>Index of the bin nearest <paramref name="freq"/>, clipped to the spectrum.</summary>
         public int Nearest(double freq) =>

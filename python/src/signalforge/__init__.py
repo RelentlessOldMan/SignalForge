@@ -88,11 +88,13 @@ from .measurements import (
     PowerStats,
     Sfdr,
     ToneMetrics,
+    TwoToneImd,
     noise_figure_cascade,
     noise_figure_y_factor,
     power_stats,
     sfdr,
     tone_metrics,
+    two_tone_imd,
 )
 from .metrics import (
     ErrorCount,
@@ -198,7 +200,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.4"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.5"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -226,6 +228,7 @@ __all__ = [
     "TaperSet",
     "TimingRecovery",
     "ToneMetrics",
+    "TwoToneImd",
     "WindowStats",
     "acpr",
     "allpass_first_order",
@@ -374,6 +377,7 @@ __all__ = [
     "timing_offset",
     "tone",
     "tone_metrics",
+    "two_tone_imd",
     "upsample",
     "vrms_to_dbm",
     "w_to_dbm",

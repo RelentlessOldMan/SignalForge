@@ -230,6 +230,7 @@ public static class Conformance
                 : Bind(Reals(a.Get("samples")), x => Measurements.PowerStats(x)),
             "tone_metrics" => ToneMetricsOp(a),
             "sfdr" => SfdrOp(a),
+            "two_tone_imd" => TwoToneImdOp(a),
             "noise_figure_cascade" => Bind((Reals(a.Get("noise_figures_db")), Reals(a.Get("gains_db"))), t => Measurements.NoiseFigureCascade(t.Item1, t.Item2)),
             "noise_figure_y_factor" => Bind((a.D("hot_power"), a.D("cold_power"), a.D("enr_db"), a.Has("cold_temperature") ? a.D("cold_temperature") : 290), t => Measurements.NoiseFigureYFactor(t.Item1, t.Item2, t.Item3, t.Item4)),
             "qpsk_map" => Bind(Bits(a.Get("bits")), b => Modulation.QpskMap(b)),
@@ -572,6 +573,18 @@ public static class Conformance
             return () => Measurements.Sfdr(cs, fs, window, beta, width, fundamental, spurs);
         double[] x = Reals(samples);
         return () => Measurements.Sfdr(x, fs, window, beta, width, fundamental, spurs);
+    }
+
+    private static Func<object?> TwoToneImdOp(Args a)
+    {
+        object? samples = a.Get("samples");
+        var (fs, f1, f2) = (a.D("sample_rate"), a.D("f1"), a.D("f2"));
+        var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.BlackmanHarris;
+        var (beta, width) = (a.OptD("beta"), a.OptInt("width"));
+        if (samples is Complex[] cs)
+            return () => Measurements.TwoToneImd(cs, fs, f1, f2, window, beta, width);
+        double[] x = Reals(samples);
+        return () => Measurements.TwoToneImd(x, fs, f1, f2, window, beta, width);
     }
 
     private static Func<object?> FTestOp(Args a)
