@@ -94,6 +94,11 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Decay time from a curve** ([ADR 0184](adr/0184-decay-time.md); `decay_time(decay,
+  sample_rate, *, start_db=-5, stop_db=-25)`, C# `Measurements.DecayTime`): the ADR 0171 fit on
+  a supplied real dB curve; `reverberation_time(h, …)` is `decay_time(schroeder_decay(h), …)`.
+  The curve may hold `−inf` (below every level), not NaN or `+inf`; one-dimensional, not empty;
+  the same threshold samples and errors. **(implemented)**
 - **Noise-compensated decay** ([ADR 0183](adr/0183-noise-compensated-decay.md);
   `noise_compensated_decay(impulse_response, *, tail=0.1)`, C# `Measurements.NoiseCompensatedDecay`):
   noise window the last `M = ⌊tail·N + 1/2⌋` samples (`1 ≤ M < N`), `ν` their mean `|h|²`;

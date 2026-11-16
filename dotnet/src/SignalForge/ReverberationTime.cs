@@ -101,6 +101,28 @@ public static partial class Measurements
     public static double DecayCurvature(ReadOnlySpan<double> impulseResponse, double sampleRate) =>
         Curvature(SchroederDecay(impulseResponse), sampleRate);
 
+    /// <summary>The decay time <c>−60/m</c> from the least-squares slope <c>m</c> (dB/s) of a
+    /// supplied dB decay curve between <paramref name="startDb"/> and <paramref name="stopDb"/>
+    /// (conventions: Decay time from a curve; ADR 0184).</summary>
+    /// <param name="decay">The decay in dB, one value per sample; <c>−∞</c> allowed, NaN and
+    /// <c>+∞</c> not; not empty.</param>
+    /// <param name="sampleRate">Sample rate in Hz, finite and positive.</param>
+    /// <param name="startDb">The upper level of the fit, at most 0.</param>
+    /// <param name="stopDb">The lower level of the fit, below <paramref name="startDb"/>.</param>
+    /// <returns>The decay time in seconds.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double DecayTime(ReadOnlySpan<double> decay, double sampleRate, double startDb = -5, double stopDb = -25)
+    {
+        if (decay.IsEmpty)
+            throw new ArgumentException("decay must not be empty", nameof(decay));
+        foreach (double v in decay)
+        {
+            if (double.IsNaN(v) || double.IsPositiveInfinity(v))
+                throw new ArgumentException("decay must not hold NaN or +inf", nameof(decay));
+        }
+        return FitDecay(decay.ToArray(), sampleRate, startDb, stopDb);
+    }
+
     private static double Curvature(double[] d, double sampleRate)
     {
         double t20 = FitDecay(d, sampleRate, -5, -25);

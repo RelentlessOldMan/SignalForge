@@ -1296,7 +1296,27 @@ def reverberation_time(
     """The reverberation time ``-60/m`` from the least-squares slope ``m`` (dB/s) of the
     Schroeder decay between ``start_db`` and ``stop_db`` (conventions: Reverberation time;
     ADR 0171)."""
-    d = schroeder_decay(impulse_response)
+    return decay_time(
+        schroeder_decay(impulse_response), sample_rate, start_db=start_db, stop_db=stop_db
+    )
+
+
+def decay_time(
+    decay: ArrayLike,
+    sample_rate: float,
+    *,
+    start_db: float = -5.0,
+    stop_db: float = -25.0,
+) -> float:
+    """The decay time ``-60/m`` from the least-squares slope ``m`` (dB/s) of a supplied dB decay
+    curve between ``start_db`` and ``stop_db`` (conventions: Decay time from a curve;
+    ADR 0184)."""
+    d = np.asarray(decay)
+    if d.ndim != 1 or d.shape[0] == 0 or np.iscomplexobj(d):
+        raise ValueError("decay must be a non-empty one-dimensional real array")
+    d = d.astype(np.float64)
+    if np.any(np.isnan(d) | (d == np.inf)):
+        raise ValueError("decay must not hold NaN or +inf")
     fs = real(sample_rate, "sample_rate")
     if not (math.isfinite(fs) and fs > 0):
         raise ValueError("sample_rate must be finite and positive")

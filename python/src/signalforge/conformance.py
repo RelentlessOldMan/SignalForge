@@ -89,6 +89,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "early_decay_time": measurements.early_decay_time,
     "decay_curvature": measurements.decay_curvature,
     "noise_compensated_decay": measurements.noise_compensated_decay,
+    "decay_time": measurements.decay_time,
     "zero_crossing_rate": measurements.zero_crossing_rate,
     "power_ccdf": measurements.power_ccdf,
     "kay_frequency": measurements.kay_frequency,

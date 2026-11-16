@@ -4,12 +4,17 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Decay time from a curve**: `decay_time(decay, sample_rate, *, start_db=-5, stop_db=-25)` in
-   `measurements`. It is the ADR 0171 fit applied to a dB decay the caller supplies, for
-   example the output of `noise_compensated_decay`. Not built yet. Needs an ADR: what the curve
-   may hold (`−inf` allowed; NaN and `+inf` not), and that the threshold samples and errors are
-   those of `reverberation_time`. Expected values: exact least-squares slopes of hand-made
-   curves.
+1. **Analytic signal**: `analytic_signal(samples)` in `spectral` (C# `Spectral.AnalyticSignal`).
+   It is the DFT-based Hilbert transform `ifft(X·H)`, where:
+   - `H[0] = 1`;
+   - `H[k] = 2` for `0 < k < N/2`;
+   - `H[N/2] = 1` when `N` is even;
+   - every other `H` is 0.
+
+   Real input only. Not built yet. Needs an ADR: the bin weights for odd and even `N`; that
+   `N = 1` returns the sample; and that the real part is the input up to rounding. Expected
+   values: `cos θₙ → e^{jθₙ}` at bin frequencies, and hand DFT sums. It is the basis for an
+   energy-time curve next.
 
 ## Built
 
@@ -1743,6 +1748,15 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are exact rational sums of the stored samples.
   Python 5450 passed, 2 skipped; .NET 4766 passed; conformance 3059/3059 in both. Version
   2026.11.16.81.
+- 2026-11-16: decay time from a curve (ADR 0184): `decay_time(decay, sample_rate, *, start_db=-5,
+  stop_db=-25)` in `measurements` (C# `Measurements.DecayTime`). It is the ADR 0171 fit on a
+  supplied dB curve, such as a noise-compensated decay.
+  - `−inf` is allowed in the curve; NaN and `+inf` are not.
+  - Python's `reverberation_time` now goes through it.
+
+  The vectors are exact least-squares slopes in fractions.
+  Python 5467 passed, 2 skipped; .NET 4782 passed; conformance 3074/3074 in both. Version
+  2026.11.16.82.
 
 ## Not built
 
