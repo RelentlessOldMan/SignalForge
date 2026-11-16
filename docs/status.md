@@ -4,15 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **ACPR with a channel filter**: an optional `weighting` on `acpr` (and `channel_power`) so each
-   channel's power is the PSD weighted by a filter's `|H(f)|²` rather than a brick wall: a
-   root-raised-cosine with roll-off `α` at the symbol rate, as the 3GPP and TETRA measurements
-   specify. Not built yet (ADR 0019 integrates rectangles only). Needs an ADR: how the weighting
-   is given (a named RRC with `α` and symbol rate, or any sampled response), how it meets the
-   channel-power bin rule (ADR 0019's partial edge bins), and whether the bandwidth argument then
-   means the symbol rate. Expected values: a flat PSD through an RRC weight integrates by hand to
-   exactly the symbol rate (the raised-cosine's area); a line at a known offset reads `|H(f)|²` of
-   its frequency from the RRC formula.
+1. **Gain compression (P1dB)**: from a drive sweep (input amplitudes or powers and the matching
+   output tone powers, or input and output sample blocks), the small-signal gain, the 1 dB
+   compression point (input and output referred) and the saturated output. Not built yet. Needs
+   an ADR: what the sweep is (measured powers in, or samples through `tone_metrics`), how the
+   small-signal gain is taken (the lowest drives, or a fit), and how the 1 dB point is found
+   between sweep points (interpolation in dB). Expected values: the cubic `y = a₁x + a₃x³` on a
+   tone has fundamental `a₁A + ¾a₃A³`, so the 1 dB point solves
+   `1 + ¾(a₃/a₁)A² = 10^(−1/20)` by hand, `A² = (4/3)(1 − 10^(−1/20))|a₁/a₃|`.
 
 ## Built
 
@@ -1132,12 +1131,21 @@ Updated with every chunk of work. Dates are absolute.
   the tests check the intercept `A_IP2 = 1/|a₂|` and that it does not move with drive.
   Python 4130 passed, 2 skipped; .NET 3504 passed; conformance 2101/2101 in both. Version
   2026.11.16.8.
+- 2026-11-16: ACPR through an RRC channel filter (ADR 0111): `acpr_rrc(frequencies, psd, center,
+  symbol_rate, alpha, offsets, *, span)` (C# `Spectral.AcprRrc`) weights each bin's power at its
+  centre by the RRC's `|H|²`, peak 1, instead of a rectangle, and returns `acpr`'s result. Bins
+  need no partial edges: the raised cosine's bin sum of a flat PSD is exactly the symbol rate
+  whenever `R/Δ` is whole. The vectors work flat, stepped and single-line PSDs by hand (the
+  taper's cosines cancelling in pairs); the tests check an RRC QPSK keeps `1 − α/4` of its power
+  and white noise reads the same in every channel.
+  Python 4175 passed, 2 skipped; .NET 3531 passed; conformance 2116/2116 in both. Version
+  2026.11.16.9.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond second and third order, ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond second and third order, ACPR channel filters beyond RRC,
 phase noise with spurs removed, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.

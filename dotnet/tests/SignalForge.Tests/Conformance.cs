@@ -316,6 +316,8 @@ public static class Conformance
                 t => Spectral.ChannelPower(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "acpr" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.D("center"), a.D("bandwidth"), Reals(a.Get("offsets")), a.OptD("adjacent_bandwidth"), Span(a)),
                 t => Spectral.Acpr(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
+            "acpr_rrc" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("psd")), a.D("center"), a.D("symbol_rate"), a.D("alpha"), Reals(a.Get("offsets")), Span(a)),
+                t => Spectral.AcprRrc(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
             "convolve" => Convolve(a),
             "upsample" => a.Get("x") is Complex[] ux
                 ? Bind((ux, a.I("factor")), t => Dsp.Upsample(t.Item1, t.Item2))

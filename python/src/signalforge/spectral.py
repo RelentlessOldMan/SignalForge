@@ -1129,6 +1129,56 @@ def acpr(
         )
 
 
+def acpr_rrc(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    center: float,
+    symbol_rate: float,
+    alpha: float,
+    offsets: ArrayLike,
+    *,
+    span: Span | ArrayLike | None = None,
+) -> Acpr:
+    """ACPR with every channel weighted by a root-raised-cosine filter's ``|H(f)|^2`` (peak 1,
+    roll-off ``alpha``, at ``symbol_rate``), each bin's power weighted at its center
+    (conventions: Spectra, ACPR; ADR 0111)."""
+    c = real(center, "center")
+    rs = real(symbol_rate, "symbol_rate")
+    a = real(alpha, "alpha")
+    if not rs > 0:
+        raise ValueError("symbol_rate must be positive")
+    if not 0 < a <= 1:
+        raise ValueError("alpha must be in (0, 1]")
+    o = np.asarray(offsets, dtype=np.float64)
+    if o.ndim != 1 or o.size == 0 or not np.all(np.isfinite(o) & (o > 0)):
+        raise ValueError("offsets must be a non-empty list of finite values > 0")
+    power, left, right = _bins(frequencies, psd, span)
+    f = np.asarray(frequencies, dtype=np.float64)
+    slack = 1e-9 * float(np.max(right - left))  # rounding in center +- offset +- support
+    flat, edge = (1 - a) * rs / 2, (1 + a) * rs / 2
+
+    def channel(at: float) -> float:
+        if at - edge < left[0] - slack or at + edge > right[-1] + slack:
+            raise ValueError(
+                f"channel [{at - edge}, {at + edge}] leaves the spectrum [{left[0]}, {right[-1]}]"
+            )
+        x = np.abs(f - at)
+        taper = 0.5 * (1 + np.cos(np.pi * (x - flat) / (a * rs)))
+        g = np.where(x <= flat, 1.0, np.where(x < edge, taper, 0.0))
+        return float(np.sum(power * g))
+
+    main = channel(c)
+    if not main > 0:
+        raise ValueError("the main channel has no power")
+    lower = np.array([channel(c - v) for v in o])
+    upper = np.array([channel(c + v) for v in o])
+    with np.errstate(divide="ignore"):
+        db_main = math.log10(main)  # a difference of logs: the ratio itself could underflow
+        return Acpr(
+            main, lower, upper, 10 * (np.log10(lower) - db_main), 10 * (np.log10(upper) - db_main)
+        )
+
+
 def channel_power(
     frequencies: ArrayLike,
     psd: ArrayLike,

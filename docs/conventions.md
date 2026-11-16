@@ -359,6 +359,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   - `center` finite; `bandwidth` and `adjacent_bandwidth` finite and `> 0`; `offsets` a non-empty
     list of finite values `> 0`; `main_power > 0`. Channels may overlap one another.
   **(implemented)**
+- **ACPR through an RRC filter** (`acpr_rrc(frequencies, psd, center, symbol_rate, alpha, offsets,
+  span=None)`, [ADR 0111](adr/0111-acpr-rrc.md)): channels centred at `center` and `center ∓ o`,
+  each power `Σ psd_k·Δ·G(f_k − c)` with `G` the RRC's `|H|²` at peak 1: `1` for
+  `|f| ≤ (1 − α)R/2`, `½(1 + cos(π(|f| − (1 − α)R/2)/(αR)))` up to `(1 + α)R/2`, `0` beyond
+  (`R = symbol_rate`). Each support `c ± (1 + α)R/2` inside the spectrum as for ACPR; `R` finite
+  `> 0`; `0 < α ≤ 1`; offsets, `main_power > 0` and the result as for ACPR. **(implemented)**
 - Windowed spectra state the window and the correction (coherent gain for tone amplitude, ENBW for
   noise and power) in the result. **(defined)**
 

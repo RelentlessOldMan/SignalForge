@@ -1575,6 +1575,66 @@ public static class Spectral
         return new Acpr(main, lower, upper, lowerDbc, upperDbc);
     }
 
+    /// <summary>
+    /// ACPR with every channel weighted by a root-raised-cosine filter's |H(f)|² (peak 1, roll-off
+    /// <paramref name="alpha"/>, at <paramref name="symbolRate"/>), each bin's power weighted at
+    /// its center (conventions: Spectra, ACPR; ADR 0111).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="center">Main channel center in Hz.</param>
+    /// <param name="symbolRate">The filter's symbol rate in Hz, positive.</param>
+    /// <param name="alpha">The filter's roll-off, in (0, 1].</param>
+    /// <param name="offsets">Center-to-center offsets in Hz, at least one, each positive.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <exception cref="ArgumentException">A channel leaves the spectrum, or the main channel has no power.</exception>
+    public static Acpr AcprRrc(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double center, double symbolRate,
+        double alpha, ReadOnlySpan<double> offsets, (double Low, double High)? span = null)
+    {
+        Check.Finite(center, nameof(center));
+        double rs = Check.PositiveFinite(symbolRate, nameof(symbolRate));
+        if (!(alpha > 0 && alpha <= 1))
+            throw new ArgumentOutOfRangeException(nameof(alpha), alpha, "alpha must be in (0, 1]");
+        if (offsets.IsEmpty)
+            throw new ArgumentException("at least one offset required", nameof(offsets));
+        foreach (double o in offsets)
+            Check.PositiveFinite(o, nameof(offsets));
+        var (power, left, right) = Bins(frequencies, psd, span);
+        double[] f = frequencies.ToArray();
+        double slack = 0; // rounding in center ± offset ± support
+        for (int k = 0; k < power.Length; k++)
+            slack = Math.Max(slack, 1e-9 * (right[k] - left[k]));
+        double flat = (1 - alpha) * rs / 2, edge = (1 + alpha) * rs / 2;
+
+        double Channel(double at, string param)
+        {
+            if (at - edge < left[0] - slack || at + edge > right[^1] + slack)
+                throw new ArgumentException($"channel [{at - edge}, {at + edge}] leaves the spectrum [{left[0]}, {right[^1]}]", param);
+            double sum = 0;
+            for (int k = 0; k < power.Length; k++)
+            {
+                double x = Math.Abs(f[k] - at);
+                double g = x <= flat ? 1 : x < edge ? 0.5 * (1 + Math.Cos(Math.PI * (x - flat) / (alpha * rs))) : 0;
+                sum += power[k] * g;
+            }
+            return sum;
+        }
+
+        double main = Channel(center, nameof(center));
+        if (!(main > 0))
+            throw new ArgumentException("the main channel has no power", nameof(psd));
+        int n = offsets.Length;
+        double[] lower = new double[n], upper = new double[n], lowerDbc = new double[n], upperDbc = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            lower[i] = Channel(center - offsets[i], nameof(offsets));
+            upper[i] = Channel(center + offsets[i], nameof(offsets));
+            lowerDbc[i] = 10 * (Math.Log10(lower[i]) - Math.Log10(main)); // the ratio itself could underflow
+            upperDbc[i] = 10 * (Math.Log10(upper[i]) - Math.Log10(main));
+        }
+        return new Acpr(main, lower, upper, lowerDbc, upperDbc);
+    }
+
     /// <summary>Validates a PSD's bins; returns each bin's power PSD·Δ and its edges, clipped to the span.</summary>
     private static (double[] Power, double[] Left, double[] Right) Bins(ReadOnlySpan<double> f, ReadOnlySpan<double> psd,
         (double Low, double High)? span)
