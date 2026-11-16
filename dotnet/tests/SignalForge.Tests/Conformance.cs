@@ -234,6 +234,7 @@ public static class Conformance
             "two_tone_ip2" => TwoToneIp2Op(a),
             "phase_noise_ssb" => PhaseNoiseSsbOp(a),
             "integrated_phase_noise" => IntegratedPhaseNoiseOp(a),
+            "phase_noise_spurs" => PhaseNoiseSpursOp(a),
             "noise_figure_cascade" => Bind((Reals(a.Get("noise_figures_db")), Reals(a.Get("gains_db"))), t => Measurements.NoiseFigureCascade(t.Item1, t.Item2)),
             "am_am_pm" => Bind((Complexes(a.Get("input")), Complexes(a.Get("output")), Reals(a.Get("edges_db"))),
                 t => Measurements.AmAmPm(t.Item1, t.Item2, t.Item3)),
@@ -637,6 +638,19 @@ public static class Conformance
             return () => Measurements.IntegratedPhaseNoise(cs, fs, lo, hi, carrier, nperseg, window, beta, width, spurs);
         double[] x = Reals(samples);
         return () => Measurements.IntegratedPhaseNoise(x, fs, lo, hi, carrier, nperseg, window, beta, width, spurs);
+    }
+
+    private static Func<object?> PhaseNoiseSpursOp(Args a)
+    {
+        object? samples = a.Get("samples");
+        double fs = a.D("sample_rate"), lo = a.D("f_lo"), hi = a.D("f_hi");
+        double threshold = a.OptD("threshold_db") ?? 10.0;
+        var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.BlackmanHarris;
+        var (carrier, nperseg, beta, width) = (a.OptD("carrier"), a.OptInt("nperseg"), a.OptD("beta"), a.OptInt("width"));
+        if (samples is Complex[] cs)
+            return () => Measurements.PhaseNoiseSpurs(cs, fs, lo, hi, threshold, carrier, nperseg, window, beta, width);
+        double[] x = Reals(samples);
+        return () => Measurements.PhaseNoiseSpurs(x, fs, lo, hi, threshold, carrier, nperseg, window, beta, width);
     }
 
     private static Func<object?> FTestOp(Args a)

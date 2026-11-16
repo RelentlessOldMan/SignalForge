@@ -116,6 +116,15 @@ public sealed record TwoToneIp2(
 /// <param name="LDbcHz">L at each offset: the two sidebands' mean PSD over the carrier power, in dBc/Hz.</param>
 public sealed record PhaseNoise(double CarrierFrequency, double CarrierPower, double[] Offsets, double[] LDbcHz);
 
+/// <summary>Discrete spurs standing above the phase noise (conventions: Phase noise spur finder;
+/// ADR 0116).</summary>
+/// <param name="CarrierFrequency">The carrier group's power centroid, in Hz.</param>
+/// <param name="CarrierPower">The carrier group's power, in sample units².</param>
+/// <param name="Offsets">Each spur's bin frequency minus the carrier frequency, signed, in Hz, ascending;
+/// pass their absolute values as <c>spurOffsets</c> to remove them.</param>
+/// <param name="LevelsDbc">Each spur's group power above the line between its edges, over the carrier power, in dBc.</param>
+public sealed record PhaseNoiseSpurs(double CarrierFrequency, double CarrierPower, double[] Offsets, double[] LevelsDbc);
+
 /// <summary>Phase noise integrated over an offset band (conventions: Integrated phase noise;
 /// ADR 0109).</summary>
 /// <param name="CarrierFrequency">The carrier group's power centroid, in Hz.</param>
@@ -610,6 +619,112 @@ public static class Measurements
             }
         }
         return psd;
+    }
+
+    /// <summary>The bins of real samples in the offset band <paramref name="fLo"/> … <paramref name="fHi"/>
+    /// whose group stands <paramref name="thresholdDb"/> above the straight line between its edge bins,
+    /// each the peak of its group (conventions: Phase noise spur finder; ADR 0116).</summary>
+    /// <param name="samples">Real samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="fLo">The search band's lower offset in Hz, positive.</param>
+    /// <param name="fHi">The search band's upper offset in Hz, above <paramref name="fLo"/> and finite.</param>
+    /// <param name="thresholdDb">How far a group must stand above the line between its edges, in dB, finite and positive.</param>
+    /// <param name="carrier">The carrier's frequency; by default the strongest bin.</param>
+    /// <param name="nperseg">Welch segment length; by default the whole input.</param>
+    /// <param name="window">Window of the Welch segments.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of the carrier group; by default set by the window.</param>
+    /// <returns>The carrier and each spur's signed offset and level.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or the band reaches within 2w + 1 bins of the carrier or past the spectrum.</exception>
+    public static PhaseNoiseSpurs PhaseNoiseSpurs(ReadOnlySpan<double> samples, double sampleRate, double fLo, double fHi,
+        double thresholdDb = 10.0, double? carrier = null, int? nperseg = null, WindowType window = WindowType.BlackmanHarris,
+        double? beta = null, int? width = null)
+    {
+        CheckBand(fLo, fHi);
+        CheckThreshold(thresholdDb);
+        CheckCarrierArgs(samples.Length, width, carrier);
+        return FindSpurs(FindCarrier(Spectral.WelchPsd(samples, sampleRate, nperseg, window: window, beta: beta), carrier, window, beta, width), fLo, fHi, thresholdDb);
+    }
+
+    /// <summary>As for real samples, from the two-sided spectrum of complex samples.</summary>
+    /// <param name="samples">Complex samples, at least two.</param>
+    /// <param name="sampleRate">Sample rate in Hz.</param>
+    /// <param name="fLo">The search band's lower offset in Hz, positive.</param>
+    /// <param name="fHi">The search band's upper offset in Hz, above <paramref name="fLo"/> and finite.</param>
+    /// <param name="thresholdDb">How far a group must stand above the line between its edges, in dB, finite and positive.</param>
+    /// <param name="carrier">The carrier's frequency; by default the strongest bin.</param>
+    /// <param name="nperseg">Welch segment length; by default the whole input.</param>
+    /// <param name="window">Window of the Welch segments.</param>
+    /// <param name="beta">Kaiser β, for the Kaiser window only.</param>
+    /// <param name="width">Half-width of the carrier group; by default set by the window.</param>
+    /// <returns>The carrier and each spur's signed offset and level.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or the band reaches within 2w + 1 bins of the carrier or past the spectrum.</exception>
+    public static PhaseNoiseSpurs PhaseNoiseSpurs(ReadOnlySpan<Complex> samples, double sampleRate, double fLo, double fHi,
+        double thresholdDb = 10.0, double? carrier = null, int? nperseg = null, WindowType window = WindowType.BlackmanHarris,
+        double? beta = null, int? width = null)
+    {
+        CheckBand(fLo, fHi);
+        CheckThreshold(thresholdDb);
+        CheckCarrierArgs(samples.Length, width, carrier);
+        return FindSpurs(FindCarrier(Spectral.WelchPsd(samples, sampleRate, nperseg, window: window, beta: beta), carrier, window, beta, width), fLo, fHi, thresholdDb);
+    }
+
+    private static void CheckThreshold(double thresholdDb)
+    {
+        if (!(thresholdDb > 0) || !double.IsFinite(thresholdDb))
+            throw new ArgumentOutOfRangeException(nameof(thresholdDb), thresholdDb, "threshold_db must be finite and positive");
+    }
+
+    private static PhaseNoiseSpurs FindSpurs(PnCarrier k, double fLo, double fHi, double thresholdDb)
+    {
+        k.CheckReach(fHi, "the band");
+        double df = k.D.BinWidth;
+        int n = k.D.Psd.Length, w = k.W;
+        var p = new double[n];
+        double total = 0;
+        for (int i = 0; i < n; i++)
+        {
+            p[i] = k.D.Psd[i] * df;
+            total += p[i];
+        }
+        for (int i = 0; i < n; i++)
+            if (p[i] <= 1e-20 * total)
+                p[i] = 0;
+        var band = new List<int>();
+        for (int i = 0; i < n; i++)
+        {
+            double off = Math.Abs(k.D.Frequencies[i] - k.Fc);
+            if (off < fLo || off > fHi)
+                continue;
+            if (Math.Abs(i - k.C) <= 2 * w + 1)
+                throw new ArgumentException("the band reaches within 2w + 1 bins of the carrier", nameof(fLo));
+            band.Add(i);
+        }
+        double ratio = Math.Pow(10, thresholdDb / 10);
+        List<double> offsets = [], levels = [];
+        foreach (int j in band)
+        {
+            int a = j - w - 1, b = j + w + 1;
+            if (a < 0 || b >= n)
+                continue;
+            bool peak = true;
+            for (int i = j - w; i < j && peak; i++)
+                peak = p[j] > p[i];
+            for (int i = j + 1; i <= j + w && peak; i++)
+                peak = p[j] >= p[i];
+            if (!peak)
+                continue;
+            double g = 0;
+            for (int i = a + 1; i < b; i++)
+                g += p[i];
+            double line = (2 * w + 1) * (p[a] + p[b]) / 2;
+            if (g > line * ratio)
+            {
+                offsets.Add(k.D.Frequencies[j] - k.Fc);
+                levels.Add(10 * Math.Log10((g - line) / k.Pc));
+            }
+        }
+        return new PhaseNoiseSpurs(k.Fc, k.Pc, [.. offsets], [.. levels]);
     }
 
     private static void CheckBand(double fLo, double fHi)

@@ -4,14 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Phase noise spur finder**: ADR 0115 removes spurs the caller names; nothing finds them.
-   Not built yet. Needs an ADR: a helper `phase_noise_spurs(samples, sample_rate, threshold_db,
-   ...)` returning offsets (and levels in dBc) that feed `spur_offsets`; the test (a bin's group
-   standing `threshold_db` above a straight line between the group's edge bins, the rule ADR
-   0115 already fixes), how a run of neighbouring candidates becomes one spur (the peak bin),
-   the search band and ties. Expected values: the Jacobi-Anger spectra of ADR 0115's generator
-   plus chosen spurs, by hand; the tests find a known spur on Wiener phase noise and none on
-   the noise alone.
+1. **Fifth-order intermodulation and IP5**: `two_tone_imd` reads the third-order products and
+   `two_tone_ip2` the second; nothing reads `3·f1 − 2·f2` and `3·f2 − 2·f1`. Not built yet. Needs
+   an ADR: a function `two_tone_ip5` built like `two_tone_ip2` (ADR 0110) on the same tone and
+   product grouping, its result fields, the intercept from the worse product
+   (`IP5 = P_tone + (P_tone − P_5)/4`, slope 5), and products that alias or land on a tone.
+   Expected values: two tones through a polynomial `y = x + a5·x⁵` (or a Saleh/Rapp drive), the
+   fifth-order products' amplitudes from the binomial expansion, by hand.
 
 ## Built
 
@@ -1176,13 +1175,23 @@ Updated with every chunk of work. Dates are absolute.
   and get the integral without it back.
   Python 4287 passed, 2 skipped; .NET 3625 passed; conformance 2174/2174 in both. Version
   2026.11.16.13.
+- 2026-11-16: phase noise spur finder (ADR 0116): `phase_noise_spurs(samples, sample_rate,
+  f_lo, f_hi, *, threshold_db=10.0, ...)` (C# `Measurements.PhaseNoiseSpurs`) reports each bin in
+  the offset band that is the peak of its group and whose group power stands `threshold_db` above
+  the straight line between its edge bins, the line ADR 0115 would put there. Its offset is signed
+  and its level is the power above the line, in dBc; `abs(offsets)` feeds `spur_offsets`. The
+  band may not come within 2w + 1 bins of the carrier. Vectors are Jacobi-Anger spectra plus
+  spur tones, by hand; the tests find a -20 dBc spur on Wiener phase noise, find none on the
+  noise alone, and remove what they find.
+  Python 4315 passed, 2 skipped; .NET 3651 passed; conformance 2186/2186 in both. Version
+  2026.11.16.14.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond second and third order, ACPR channel filters beyond RRC,
-automatic phase noise spur detection, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
+NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.
 

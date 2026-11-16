@@ -335,6 +335,21 @@ class IntegratedPhaseNoise:
     jitter_rms: float
 
 
+@dataclass(frozen=True, eq=False)
+class PhaseNoiseSpurs:
+    """Discrete spurs standing above the phase noise (conventions: Phase noise spur finder).
+
+    ``offsets`` are each spur's bin frequency minus ``carrier_frequency``, signed, in Hz;
+    ``levels_dbc`` the group's power above the line between its edges, relative to
+    ``carrier_power``. Pass ``abs(offsets)`` as ``spur_offsets`` to remove them.
+    """
+
+    carrier_frequency: float
+    carrier_power: float
+    offsets: NDArray[np.float64]
+    levels_dbc: NDArray[np.float64]
+
+
 @dataclass(frozen=True)
 class _Carrier:
     d: spectral.SpectralDensity
@@ -499,6 +514,61 @@ def integrated_phase_noise(
         jitter = math.inf if rms > 0 else 0.0
     dbc = 10 * math.log10(ratio) if ratio > 0 else -math.inf
     return IntegratedPhaseNoise(k.fc, k.pc, lo, hi, dbc, rms, jitter)
+
+
+def phase_noise_spurs(
+    samples: ArrayLike,
+    sample_rate: float,
+    f_lo: float,
+    f_hi: float,
+    *,
+    threshold_db: float = 10.0,
+    carrier: float | None = None,
+    nperseg: int | None = None,
+    window: str = "blackman_harris",
+    beta: float | None = None,
+    width: int | None = None,
+) -> PhaseNoiseSpurs:
+    """The bins in the offset band ``f_lo ... f_hi`` whose group stands ``threshold_db`` above the
+    straight line between its edge bins, each the peak of its group (conventions: Phase noise spur
+    finder; ADR 0116)."""
+    lo, hi = real(f_lo, "f_lo"), real(f_hi, "f_hi")
+    if not 0 < lo < hi < math.inf:
+        raise ValueError("the band needs 0 < f_lo < f_hi, finite")
+    t = real(threshold_db, "threshold_db")
+    if not 0 < t < math.inf:
+        raise ValueError("threshold_db must be finite and positive")
+    k = _carrier(samples, sample_rate, carrier, nperseg, window, beta, width)
+    k.check_reach(hi, "the band")
+    p = k.d.psd * k.d.bin_width
+    p = np.where(p <= _FLOOR * float(np.sum(p)), 0.0, p)
+    off = np.abs(k.d.frequencies - k.fc)
+    bins = np.flatnonzero((off >= lo) & (off <= hi))
+    w, n = k.w, p.size
+    if np.any(np.abs(bins - k.c) <= 2 * w + 1):
+        raise ValueError("the band reaches within 2w + 1 bins of the carrier")
+    ratio = 10 ** (t / 10)
+    offsets: list[float] = []
+    levels: list[float] = []
+    for j in bins.tolist():
+        a, b = j - w - 1, j + w + 1
+        if a < 0 or b >= n:
+            continue
+        pj = float(p[j])
+        if not all(pj > float(p[i]) for i in range(j - w, j)):
+            continue
+        if not all(pj >= float(p[i]) for i in range(j + 1, j + w + 1)):
+            continue
+        g = 0.0
+        for i in range(a + 1, b):
+            g += float(p[i])
+        line = (2 * w + 1) * (float(p[a]) + float(p[b])) / 2
+        if g > line * ratio:
+            offsets.append(float(k.d.frequencies[j]) - k.fc)
+            levels.append(10 * math.log10((g - line) / k.pc))
+    return PhaseNoiseSpurs(
+        k.fc, k.pc, np.array(offsets, dtype=np.float64), np.array(levels, dtype=np.float64)
+    )
 
 
 _FLOOR = 1e-20  # bins at or below this fraction of the total power are rounding error: zero

@@ -507,6 +507,27 @@ Decided in [ADR 0115](adr/0115-phase-noise-spur-removal.md). A keyword `spur_off
   edge past the spectrum takes the other edge's value. `|s − k_c| ≤ 2w + 1` is
   `invalid_argument`. **(implemented)**
 
+## Phase noise spur finder
+
+Decided in [ADR 0116](adr/0116-phase-noise-spur-finder.md). Python:
+`signalforge.measurements.phase_noise_spurs`; C#: `Measurements.PhaseNoiseSpurs`.
+
+- **Call:** `phase_noise_spurs(samples, sample_rate, f_lo, f_hi, *, threshold_db=10.0,
+  carrier=None, nperseg=None, window="blackman_harris", beta=None, width=None)`. The carrier, its
+  group and `w` are as for `phase_noise_ssb`. `threshold_db` is finite and positive.
+  **(implemented)**
+- **Band:** bins with `f_lo ≤ |f_j − carrier_frequency| ≤ f_hi`, both sides; `0 < f_lo < f_hi`,
+  finite, not past the spectrum (as `integrated_phase_noise`); a band bin with
+  `|j − k_c| ≤ 2w + 1` is `invalid_argument`. **(implemented)**
+- **Test:** bin powers `p = psd·bin_width`, those at or below `1e-20` of the total set to zero.
+  For band bin `j` with `a = j − w − 1 ≥ 0` and `b = j + w + 1` inside the spectrum (others are
+  not tested): `G = Σ_{a<i<b} p_i`, `L = (2w + 1)(p_a + p_b)/2`. `j` is a spur when
+  `p_j > p_i` for `j − w ≤ i < j`, `p_j ≥ p_i` for `j < i ≤ j + w`, and
+  `G > L·10^(threshold_db/10)`. **(implemented)**
+- **Result** (`PhaseNoiseSpurs`): `carrier_frequency`, `carrier_power`; `offsets`
+  (`f_j − carrier_frequency`, signed, Hz) and `levels_dbc` (`10·log10((G − L)/carrier_power)`), in
+  ascending `j`; empty when there are none. **(implemented)**
+
 ## Noise figure
 
 Decided in [ADR 0105](adr/0105-noise-figure-y-factor.md). Python:

@@ -60,6 +60,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "two_tone_ip2": measurements.two_tone_ip2,
     "phase_noise_ssb": measurements.phase_noise_ssb,
     "integrated_phase_noise": measurements.integrated_phase_noise,
+    "phase_noise_spurs": measurements.phase_noise_spurs,
     "noise_figure_y_factor": measurements.noise_figure_y_factor,
     "noise_figure_cascade": measurements.noise_figure_cascade,
     "gain_compression": measurements.gain_compression,

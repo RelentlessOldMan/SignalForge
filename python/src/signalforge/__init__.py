@@ -91,6 +91,7 @@ from .measurements import (
     IntegratedPhaseNoise,
     NoiseFigure,
     PhaseNoise,
+    PhaseNoiseSpurs,
     PowerStats,
     Sfdr,
     ToneMetrics,
@@ -101,6 +102,7 @@ from .measurements import (
     integrated_phase_noise,
     noise_figure_cascade,
     noise_figure_y_factor,
+    phase_noise_spurs,
     phase_noise_ssb,
     power_stats,
     sfdr,
@@ -213,7 +215,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.13"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.14"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -234,6 +236,7 @@ __all__ = [
     "NoiseFigure",
     "OccupiedBandwidth",
     "PhaseNoise",
+    "PhaseNoiseSpurs",
     "PowerStats",
     "QpskLinkConfig",
     "QpskLinkReport",
@@ -342,6 +345,7 @@ __all__ = [
     "ofdm_demodulate",
     "ofdm_modulate",
     "phase_noise",
+    "phase_noise_spurs",
     "phase_noise_ssb",
     "pi_loop_gains",
     "power_frequency_offset",
