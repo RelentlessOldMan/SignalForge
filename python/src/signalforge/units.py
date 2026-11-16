@@ -189,3 +189,42 @@ def bark_to_hz(bark: ArrayLike) -> NDArray[np.float64] | float:
     if not np.all(z < 26.28):
         raise ValueError("bark must be below the limit 27.6396")
     return _out(np.maximum(0.0, 1960.0 * (z + 0.53) / (26.28 - z)))
+
+
+_F1, _F2, _F3, _F4 = 20.598997, 107.65265, 737.86223, 12194.217
+
+
+def _a_raw(f: NDArray[np.float64]) -> NDArray[np.float64]:
+    return (
+        40.0 * math.log10(_F4)
+        + 80.0 * _log10(f)
+        - 40.0 * np.log10(np.hypot(f, _F1))
+        - 20.0 * np.log10(np.hypot(f, _F2))
+        - 20.0 * np.log10(np.hypot(f, _F3))
+        - 40.0 * np.log10(np.hypot(f, _F4))
+    )
+
+
+def _c_raw(f: NDArray[np.float64]) -> NDArray[np.float64]:
+    return (
+        40.0 * math.log10(_F4)
+        + 40.0 * _log10(f)
+        - 40.0 * np.log10(np.hypot(f, _F1))
+        - 40.0 * np.log10(np.hypot(f, _F4))
+    )
+
+
+_A1000 = float(_a_raw(np.asarray(1000.0)))
+_C1000 = float(_c_raw(np.asarray(1000.0)))
+
+
+def a_weighting(frequency: ArrayLike) -> NDArray[np.float64] | float:
+    """The IEC 61672-1 A-weighting in dB, 0 at 1 kHz (conventions: Frequency weightings;
+    ADR 0164)."""
+    return _out(_a_raw(_finite_non_negative(frequency, "frequency")) - _A1000)
+
+
+def c_weighting(frequency: ArrayLike) -> NDArray[np.float64] | float:
+    """The IEC 61672-1 C-weighting in dB, 0 at 1 kHz (conventions: Frequency weightings;
+    ADR 0164)."""
+    return _out(_c_raw(_finite_non_negative(frequency, "frequency")) - _C1000)

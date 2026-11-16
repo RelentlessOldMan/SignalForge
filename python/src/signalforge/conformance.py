@@ -51,6 +51,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "erb_space": units.erb_space,
     "hz_to_bark": units.hz_to_bark,
     "bark_to_hz": units.bark_to_hz,
+    "a_weighting": units.a_weighting,
+    "c_weighting": units.c_weighting,
     "w_to_dbm": units.w_to_dbm,
     "dbm_to_w": units.dbm_to_w,
     "vrms_to_dbm": units.vrms_to_dbm,

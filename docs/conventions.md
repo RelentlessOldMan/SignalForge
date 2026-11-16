@@ -152,6 +152,12 @@ rule for code not written yet.
   0.3)/0.85`, above 20.1 `z = (b + 4.422)/1.22`, then `f = 1960 (z + 0.53)/(26.28 − z)`, clamped
   at 0. `hz` finite and `≥ 0`; `bark` finite, `≥ −0.53 + 0.15 (2 + 0.53)` (computed in floating
   point) and with `z < 26.28`. **(implemented)**
+- **Frequency weightings** (`a_weighting(frequency)`, `c_weighting(frequency)`, C#
+  `Units.AWeighting`, `Units.CWeighting`, [ADR 0164](adr/0164-frequency-weightings.md)): IEC
+  61672-1 curves in dB from the poles `f1 = 20.598997`, `f2 = 107.65265`, `f3 = 737.86223`,
+  `f4 = 12194.217` Hz: `A_raw = 20 log10(f4² f⁴/((f² + f1²) √((f² + f2²)(f² + f3²)) (f² +
+  f4²)))`, `C_raw = 20 log10(f4² f²/((f² + f1²)(f² + f4²)))`, each minus its own value at
+  1000 Hz (so exactly 0 there). `f = 0` gives `−inf`. Finite and `≥ 0`. **(implemented)**
 
 ## Spectra
 

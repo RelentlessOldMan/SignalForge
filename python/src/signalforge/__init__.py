@@ -273,8 +273,10 @@ from .sync import (
     timing_offset,
 )
 from .units import (
+    a_weighting,
     amp_to_db,
     bark_to_hz,
+    c_weighting,
     db_to_amp,
     db_to_lin,
     dbm_to_vrms,
@@ -292,7 +294,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.61"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.62"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -352,6 +354,7 @@ __all__ = [
     "TwoToneIp2",
     "TwoToneIp5",
     "WindowStats",
+    "a_weighting",
     "acpr",
     "acpr_rrc",
     "allpass_first_order",
@@ -372,6 +375,7 @@ __all__ = [
     "butterworth_bandstop",
     "butterworth_highpass",
     "butterworth_lowpass",
+    "c_weighting",
     "cepstral_lifter",
     "cepstrum_pitch",
     "channel_power",

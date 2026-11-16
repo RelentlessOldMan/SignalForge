@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "suite": "frequency_weightings",
+  "description": "IEC 61672-1 A and C weightings (conventions: Frequency weightings; ADR 0164).",
+  "cases": [
+    {"id": "a_weighting.zero", "op": "a_weighting", "args": {"frequency": 0.0}, "expected": "-inf", "source": "log10 of 0 at f = 0"},
+    {"id": "a_weighting.f_1000", "op": "a_weighting", "args": {"frequency": 1000.0}, "expected": 0.0, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "normalized by its own value at 1 kHz: exactly 0"},
+    {"id": "a_weighting.f_10", "op": "a_weighting", "args": {"frequency": 10.0}, "expected": -70.43036825284636, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "a_weighting.f_100", "op": "a_weighting", "args": {"frequency": 100.0}, "expected": -19.142776944083487, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "a_weighting.f_1995", "op": "a_weighting", "args": {"frequency": 1995.2623149688795}, "expected": 1.1999418249490101, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "a_weighting.f_10000", "op": "a_weighting", "args": {"frequency": 10000.0}, "expected": -2.491786731457473, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "a_weighting.f_20000", "op": "a_weighting", "args": {"frequency": 20000.0}, "expected": -9.346912145602278, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "a_weighting.f_1e6", "op": "a_weighting", "args": {"frequency": 1000000.0}, "expected": -74.55548160313175, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "a_weighting.negative", "op": "a_weighting", "args": {"frequency": -1.0}, "error": "invalid_argument", "source": "frequency must be non-negative"},
+    {"id": "a_weighting.nan", "op": "a_weighting", "args": {"frequency": "nan"}, "error": "invalid_argument", "source": "frequency must be finite"},
+    {"id": "a_weighting.inf", "op": "a_weighting", "args": {"frequency": "inf"}, "error": "invalid_argument", "source": "frequency must be finite"},
+    {"id": "c_weighting.zero", "op": "c_weighting", "args": {"frequency": 0.0}, "expected": "-inf", "source": "log10 of 0 at f = 0"},
+    {"id": "c_weighting.f_1000", "op": "c_weighting", "args": {"frequency": 1000.0}, "expected": 0.0, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "normalized by its own value at 1 kHz: exactly 0"},
+    {"id": "c_weighting.f_10", "op": "c_weighting", "args": {"frequency": 10.0}, "expected": -14.330010553779916, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "c_weighting.f_100", "op": "c_weighting", "args": {"frequency": 100.0}, "expected": -0.2996358389366029, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "c_weighting.f_1995", "op": "c_weighting", "args": {"frequency": 1995.2623149688795}, "expected": -0.16851012575287413, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "c_weighting.f_10000", "op": "c_weighting", "args": {"frequency": 10000.0}, "expected": -4.405456505121193, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "c_weighting.f_20000", "op": "c_weighting", "args": {"frequency": 20000.0}, "expected": -11.278632827333489, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "c_weighting.f_1e6", "op": "c_weighting", "args": {"frequency": 1000000.0}, "expected": -76.49323286546765, "tol": {"abs": 1e-11, "rel": 1e-12}, "source": "IEC 61672-1 closed form in 50-digit decimal, minus the 1 kHz value"},
+    {"id": "c_weighting.negative", "op": "c_weighting", "args": {"frequency": -1.0}, "error": "invalid_argument", "source": "frequency must be non-negative"},
+    {"id": "c_weighting.nan", "op": "c_weighting", "args": {"frequency": "nan"}, "error": "invalid_argument", "source": "frequency must be finite"},
+    {"id": "c_weighting.inf", "op": "c_weighting", "args": {"frequency": "inf"}, "error": "invalid_argument", "source": "frequency must be finite"}
+  ]
+}

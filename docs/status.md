@@ -4,13 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Frequency weightings**: `a_weighting(frequency)` and `c_weighting(frequency)` in
-   `units`, the IEC 61672-1 curves in dB, from the analytic pole frequencies 20.6, 107.7,
-   737.9 and 12194 Hz, normalized to 0 dB at 1 kHz. Not built yet. Needs an ADR: whether the
-   normalization constant is computed exactly or taken as the standard's rounded −2.000 and
-   −0.062 dB, the value at 0 Hz (−inf), and whether the filter (bilinear SOS) is in scope.
-   Expected values: the closed form in `decimal`, checked against the standard's
-   nominal table to its 0.1 dB rounding.
+1. **Weighting filters**: `a_weighting_sos(sample_rate)` and `c_weighting_sos(sample_rate)`
+   in `iir`: the analog poles of ADR 0164 (zeros at 0, double poles at `f1` and `f4`, single
+   poles at `f2` and `f3` for A) through the bilinear transform. Each returns sections in the
+   existing SOS layout, normalized to 0 dB at 1 kHz. Not built yet. Needs an ADR: prewarping
+   (none, as in the usual designs, so the response bends near Nyquist), section order and
+   pairing, and the gain normalization point. Expected values: the bilinear map of each pole,
+   `(1 + sT/2)/(1 − sT/2)`, in `decimal`. A test checks `sos_response` against `a_weighting`
+   well below Nyquist.
 
 ## Built
 
@@ -1565,6 +1566,15 @@ Updated with every chunk of work. Dates are absolute.
   both sides of each branch edge.
   Python 5138 passed, 2 skipped; .NET 4460 passed; conformance 2788/2788 in both. Version
   2026.11.16.61.
+- 2026-11-16: frequency weightings (ADR 0164): `a_weighting` and `c_weighting` in `units` (C#
+  `Units.AWeighting`, `Units.CWeighting`), the IEC 61672-1 curves in dB from the four pole
+  frequencies. Each is normalized by its own computed value at 1 kHz, so it is exactly 0 there.
+  The result is `−inf` at 0 Hz. The code works in logs with `hypot`, so large frequencies do
+  not overflow. The vectors are in 50-digit `decimal`. The generator asserts the standard's
+  rounded `A1000 = −2.000` and `C1000 = −0.062`, and its 0.1 dB nominal table at 14 base-10
+  frequencies.
+  Python 5163 passed, 2 skipped; .NET 4487 passed; conformance 2810/2810 in both. Version
+  2026.11.16.62.
 
 ## Not built
 

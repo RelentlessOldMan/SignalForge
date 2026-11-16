@@ -158,6 +158,42 @@ public static class Units
         return Math.Max(0.0, 1960.0 * (z + 0.53) / (26.28 - z));
     }
 
+    /// <summary>The IEC 61672-1 A-weighting in dB, 0 at 1 kHz (conventions: Frequency
+    /// weightings; ADR 0164).</summary>
+    /// <param name="frequency">A frequency in Hz, finite and non-negative.</param>
+    /// <returns>The weighting in dB; negative infinity at 0 Hz.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double AWeighting(double frequency)
+    {
+        FiniteNonNegative(frequency, nameof(frequency));
+        return ARaw(frequency) - A1000;
+    }
+
+    /// <summary>The IEC 61672-1 C-weighting in dB, 0 at 1 kHz (conventions: Frequency
+    /// weightings; ADR 0164).</summary>
+    /// <param name="frequency">A frequency in Hz, finite and non-negative.</param>
+    /// <returns>The weighting in dB; negative infinity at 0 Hz.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double CWeighting(double frequency)
+    {
+        FiniteNonNegative(frequency, nameof(frequency));
+        return CRaw(frequency) - C1000;
+    }
+
+    private const double WeightF1 = 20.598997, WeightF2 = 107.65265, WeightF3 = 737.86223, WeightF4 = 12194.217;
+
+    private static double ARaw(double f) =>
+        40.0 * Math.Log10(WeightF4) + 80.0 * Math.Log10(f)
+        - 40.0 * Math.Log10(double.Hypot(f, WeightF1)) - 20.0 * Math.Log10(double.Hypot(f, WeightF2))
+        - 20.0 * Math.Log10(double.Hypot(f, WeightF3)) - 40.0 * Math.Log10(double.Hypot(f, WeightF4));
+
+    private static double CRaw(double f) =>
+        40.0 * Math.Log10(WeightF4) + 40.0 * Math.Log10(f)
+        - 40.0 * Math.Log10(double.Hypot(f, WeightF1)) - 40.0 * Math.Log10(double.Hypot(f, WeightF4));
+
+    private static readonly double A1000 = ARaw(1000.0);
+    private static readonly double C1000 = CRaw(1000.0);
+
     private const double BarkAtZero = -0.53 + 0.15 * (2.0 - -0.53);
 
     private const double SlaneyHzPerMel = 200.0 / 3.0;
