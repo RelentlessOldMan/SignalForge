@@ -223,6 +223,14 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
 
+/// <summary>A peak's width at a level below its top (conventions: Spectra, Peak widths; ADR 0138).</summary>
+/// <param name="Index">The peak's bin.</param>
+/// <param name="Level">The level the width is measured at, height − relHeight·prominence.</param>
+/// <param name="Left">The left crossing in Hz.</param>
+/// <param name="Right">The right crossing in Hz.</param>
+/// <param name="Width">Right − Left, in Hz.</param>
+public sealed record PeakWidth(int Index, double Level, double Left, double Right, double Width);
+
 /// <summary>A tone found in a PSD (conventions: Spectra, Find tones; ADR 0137).</summary>
 /// <param name="Index">The peak's bin.</param>
 /// <param name="Frequency">The interpolated frequency in Hz, or the peak's where the fit is undefined.</param>
@@ -2067,6 +2075,47 @@ public static class Spectral
         double delta = (f[^1] - f[0]) / (f.Length - 1);
         double height = scale == PeakScale.Decibel ? Math.Pow(10, vertex / 10) : vertex;
         return new PeakEstimate(f[k] + offset * delta, height, offset);
+    }
+
+    /// <summary>
+    /// Each spectral peak's width where the PSD crosses height − relHeight·prominence,
+    /// interpolated linearly between bins; in order of frequency (conventions: Spectra, Peak
+    /// widths; ADR 0138).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="relHeight">How far down the prominence the width is taken, in (0, 1].</param>
+    /// <param name="minProminence">The least prominence kept, finite and non-negative.</param>
+    /// <returns>One width per peak, lowest frequency first.</returns>
+    /// <exception cref="ArgumentException">The arrays are invalid, <paramref name="relHeight"/> is outside (0, 1], or <paramref name="minProminence"/> is negative or not finite.</exception>
+    public static IReadOnlyList<PeakWidth> PeakWidths(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, double relHeight = 0.5, double minProminence = 0)
+    {
+        if (!(relHeight > 0 && relHeight <= 1))
+            throw new ArgumentOutOfRangeException(nameof(relHeight), "relHeight must be in (0, 1]");
+        var peaks = SpectralPeaks(frequencies, psd, minProminence);
+        int n = psd.Length;
+        double delta = (frequencies[n - 1] - frequencies[0]) / (n - 1);
+        var widths = new List<PeakWidth>();
+        foreach (var p in peaks)
+        {
+            double level = p.Height - relHeight * p.Prominence;
+            int i = p.Index, j = p.Index;
+            while (psd[i - 1] == p.Height)
+                i--;
+            while (psd[j + 1] == p.Height)
+                j++;
+            int k = i;
+            while (k > 0 && psd[k] > level)
+                k--;
+            double lo = psd[k] <= level ? k + (level - psd[k]) / (psd[k + 1] - psd[k]) : k;
+            k = j;
+            while (k < n - 1 && psd[k] > level)
+                k++;
+            double hi = psd[k] <= level ? k - (level - psd[k]) / (psd[k - 1] - psd[k]) : k;
+            double left = frequencies[0] + lo * delta, right = frequencies[0] + hi * delta;
+            widths.Add(new PeakWidth(p.Index, level, left, right, right - left));
+        }
+        return widths;
     }
 
     /// <summary>

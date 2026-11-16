@@ -1218,6 +1218,19 @@ class SpectralSlope:
 
 
 @dataclass(frozen=True)
+class PeakWidth:
+    """A peak's width at a level below its top (conventions: Spectra, Peak widths; ADR 0138):
+    its bin ``index``, the ``level``, the crossings ``left`` and ``right`` in Hz, and the
+    ``width`` between them."""
+
+    index: int
+    level: float
+    left: float
+    right: float
+    width: float
+
+
+@dataclass(frozen=True)
 class Tone:
     """A tone found in a PSD (conventions: Spectra, Find tones; ADR 0137): its peak bin
     ``index``, its interpolated ``frequency`` and ``height``, and its peak's ``prominence``."""
@@ -1490,6 +1503,44 @@ def _vertex(
     delta = float(f[-1] - f[0]) / (f.size - 1)
     height = 10 ** (vertex / 10) if scale == "db" else vertex
     return PeakEstimate(float(f[k]) + offset * delta, height, offset)
+
+
+def peak_widths(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    rel_height: float = 0.5,
+    min_prominence: float = 0.0,
+) -> list[PeakWidth]:
+    """Each spectral peak's width where the PSD crosses ``height - rel_height*prominence``,
+    interpolated linearly between bins; in order of frequency."""
+    r = real(rel_height, "rel_height")
+    if not 0 < r <= 1:
+        raise ValueError("rel_height must be in (0, 1]")
+    peaks = spectral_peaks(frequencies, psd, min_prominence=min_prominence)
+    f = np.asarray(frequencies, dtype=np.float64)
+    x = [float(v) for v in np.asarray(psd, dtype=np.float64)]
+    n = len(x)
+    delta = float(f[-1] - f[0]) / (n - 1)
+    out = []
+    for p in peaks:
+        level = p.height - r * p.prominence
+        i = j = p.index
+        while x[i - 1] == p.height:
+            i -= 1
+        while x[j + 1] == p.height:
+            j += 1
+        k = i
+        while k > 0 and x[k] > level:
+            k -= 1
+        lo = k + (level - x[k]) / (x[k + 1] - x[k]) if x[k] <= level else float(k)
+        k = j
+        while k < n - 1 and x[k] > level:
+            k += 1
+        hi = k - (level - x[k]) / (x[k - 1] - x[k]) if x[k] <= level else float(k)
+        left, right = float(f[0]) + lo * delta, float(f[0]) + hi * delta
+        out.append(PeakWidth(p.index, level, left, right, right - left))
+    return out
 
 
 def find_tones(

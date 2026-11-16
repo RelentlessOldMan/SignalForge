@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Peak widths**: each spectral peak's width at a level below its top, as a frequency span.
-   Not built yet. Needs an ADR: `peak_widths(frequencies, psd, *, rel_height=0.5,
-   min_prominence=0.0)` measuring each `spectral_peaks` peak where the PSD crosses `height −
-   rel_height·prominence`, with linear interpolation between bins, and whether `rel_height`
-   counts from the prominence (as peak finders do) or is a fixed ratio such as −3 dB. Expected
-   values: triangles and trapezoids whose crossings are worked by hand.
+1. **Harmonic series**: the fundamental that best explains a list of tones, and which tones are
+   its harmonics. Not built yet. Needs an ADR: `harmonic_series(tones, *, tolerance, max_order)`
+   taking `find_tones` output, how candidate fundamentals are scored (count of matched
+   harmonics, then the least-squares fit of the matched ones), the tolerance in Hz or as a
+   fraction, and ties. Expected values: hand-built tone lists at exact and slightly detuned
+   multiples, whose least-squares fundamental is worked by hand.
 
 ## Built
 
@@ -1358,6 +1358,14 @@ Updated with every chunk of work. Dates are absolute.
   tones in noise.
   Python 4701 passed, 2 skipped; .NET 4038 passed; conformance 2439/2439 in both. Version
   2026.11.16.35.
+- 2026-11-16: peak widths (ADR 0138): `peak_widths(frequencies, psd, *, rel_height=0.5,
+  min_prominence=0.0)` (C# `Spectral.PeakWidths`) measures each `spectral_peaks` peak where the
+  PSD crosses `height − rel_height·prominence`, interpolating linearly between bins. It gives
+  `PeakWidth(index, level, left, right, width)`. The vectors are triangles, an asymmetric peak,
+  nested peaks and a plateau, with crossings worked by hand in Fractions. The tests cover
+  scaling and a zero-padded Hann lobe's half-power width of 1.44 bins.
+  Python 4718 passed, 2 skipped; .NET 4055 passed; conformance 2451/2451 in both. Version
+  2026.11.16.36.
 
 ## Not built
 

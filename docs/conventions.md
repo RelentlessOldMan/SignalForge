@@ -482,6 +482,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   height, prominence)`. `frequency` and `height` are `interpolate_peak`'s at the peak's index,
   or the peak's grid values when the fit is undefined (flat, or a zero bin on the dB scale).
   `count` an integer `≥ 1`. **(implemented)**
+- **Peak widths** (`peak_widths(frequencies, psd, rel_height=0.5, min_prominence=0.0)`,
+  [ADR 0138](adr/0138-peak-widths.md)): for each `spectral_peaks` peak, `level = height −
+  rel_height·prominence`; walking out from the run's ends to the first bin `k` with `x_k ≤
+  level`, the crossing is `k + (level − x_k)/(x_{k+1} − x_k)` bins on the left (mirrored on the
+  right), in Hz `f_0 + position·δ`; `width = right − left`. Gives `PeakWidth(index, level, left,
+  right, width)`. `0 < rel_height ≤ 1`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

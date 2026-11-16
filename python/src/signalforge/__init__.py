@@ -159,6 +159,7 @@ from .spectral import (
     NoisePowerRatio,
     OccupiedBandwidth,
     PeakEstimate,
+    PeakWidth,
     SpectralContrast,
     SpectralCrest,
     SpectralDensity,
@@ -197,6 +198,7 @@ from .spectral import (
     multitaper_psd,
     noise_power_ratio,
     occupied_bandwidth,
+    peak_widths,
     spectral_contrast,
     spectral_crest,
     spectral_decrease,
@@ -252,7 +254,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.35"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.36"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -276,6 +278,7 @@ __all__ = [
     "NoisePowerRatio",
     "OccupiedBandwidth",
     "PeakEstimate",
+    "PeakWidth",
     "PhaseNoise",
     "PhaseNoiseSpurs",
     "PowerCcdf",
@@ -402,6 +405,7 @@ __all__ = [
     "occupied_bandwidth",
     "ofdm_demodulate",
     "ofdm_modulate",
+    "peak_widths",
     "phase_noise",
     "phase_noise_spurs",
     "phase_noise_ssb",
