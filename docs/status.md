@@ -4,14 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Single-tone frequency estimate (Kay)**: nothing estimates a complex tone's frequency finer
-   than an FFT bin. Kay's weighted phase-difference estimator is closed form: `f = fs/(2π)·Σ w_n
-   arg(x[n+1]·conj x[n])` with parabolic weights `w_n`, exact for a noiseless tone and near the
-   Cramér-Rao bound at high SNR. Not built yet. Needs an ADR: a function
-   `kay_frequency(samples, sample_rate)`, the weights' exact form and normalization, the range
-   `(−fs/2, fs/2)`, the minimum length, and zero samples. Expected values: noiseless tones worked
-   by hand (the phase step is exact), and the variance against the CRLB `6/((2π)²·SNR·N(N²−1))`
-   at high SNR.
+1. **Spectral rolloff**: the frequency below which a given fraction (often 85 % or 95 %) of a
+   band's power lies, the audio feature that goes with the centroid and flatness. Not built
+   yet. Needs an ADR: a function `spectral_rolloff(frequencies, psd, fraction, *, band=None)`
+   on the same step-density model as `spectral_moments` (bins as flat steps, cut by the band),
+   linear inside the bin where the running power crosses, the fraction in `(0, 1]`, and zero
+   power. Expected values: short PSDs worked by hand with Fractions, and a flat PSD whose
+   rolloff is `low + fraction·(high − low)`.
 
 ## Built
 
@@ -1230,6 +1229,14 @@ Updated with every chunk of work. Dates are absolute.
   PSD's `2σ·sqrt(x·ln 10 / 5)`, a rectangle, scaling, and a dip that ends the walk.
   Python 4435 passed, 2 skipped; .NET 3771 passed; conformance 2259/2259 in both. Version
   2026.11.16.20.
+- 2026-11-16: single-tone frequency (ADR 0123): `kay_frequency(samples, sample_rate)` (C#
+  `Measurements.KayFrequency`) is Kay's weighted phase-difference estimator, with the phase step
+  as `atan2` of `x[n+1]·conj x[n]` written out, and parabolic weights that sum to 1. Zero samples
+  are an error, because their phase depends on the zero's sign bits. The vectors use samples on
+  the axes and noiseless tones. The tests sweep exact tones and check that the variance at 30 dB
+  SNR is within 15 % of the CRLB.
+  Python 4459 passed, 2 skipped; .NET 3797 passed; conformance 2272/2272 in both. Version
+  2026.11.16.21.
 
 ## Not built
 

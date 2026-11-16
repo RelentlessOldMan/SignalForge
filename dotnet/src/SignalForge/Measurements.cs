@@ -241,6 +241,36 @@ public static class Measurements
         return CcdfLevel(InstantaneousPower(samples), probability);
     }
 
+    /// <summary>A complex tone's frequency in Hz by Kay's weighted phase-difference estimator
+    /// (conventions: Single-tone frequency (Kay); ADR 0123).</summary>
+    /// <param name="samples">At least two samples, finite and non-zero.</param>
+    /// <param name="sampleRate">Samples per second, finite and positive.</param>
+    /// <returns>The frequency in Hz, in (−fs/2, fs/2].</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double KayFrequency(ReadOnlySpan<Complex> samples, double sampleRate)
+    {
+        if (!(double.IsFinite(sampleRate) && sampleRate > 0))
+            throw new ArgumentOutOfRangeException(nameof(sampleRate), "sample_rate must be finite and positive");
+        int total = samples.Length;
+        if (total < 2)
+            throw new ArgumentException("needs at least two samples", nameof(samples));
+        foreach (Complex x in samples)
+        {
+            if (!(double.IsFinite(x.Real) && double.IsFinite(x.Imaginary)))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            if (x == Complex.Zero)
+                throw new ArgumentException("samples must be non-zero", nameof(samples));
+        }
+        double half = total / 2.0, scale = 3.0 * total / (2.0 * ((double)total * total - 1)), sum = 0;
+        for (int n = 0; n < total - 1; n++)
+        {
+            double a = samples[n + 1].Real, b = samples[n + 1].Imaginary, c = samples[n].Real, d = samples[n].Imaginary;
+            double u = (n - (half - 1)) / half;
+            sum += scale * (1 - u * u) * Math.Atan2(b * c - a * d, a * c + b * d);
+        }
+        return sampleRate * sum / (2 * Math.PI);
+    }
+
     private static void CheckProbability(double probability)
     {
         if (!(probability > 0 && probability < 1))

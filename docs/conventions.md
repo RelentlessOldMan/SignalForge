@@ -77,6 +77,12 @@ rule for code not written yet.
   **(implemented)**
 - **PAPR** is `10·log10(peak power / mean power)` in dB. A constant-envelope signal (complex tone,
   ±1 square) has 0 dB; a real sine has 3.0103 dB. **(implemented)**
+- **Single-tone frequency (Kay)** ([ADR 0123](adr/0123-kay-frequency.md);
+  `kay_frequency(samples, sample_rate)`, C# `Measurements.KayFrequency`): `Δ_n = atan2` of
+  `z_n = x[n+1]·conj x[n]`, written `(ac + bd) + i(bc − ad)`, for `n = 0 … N − 2`; weights
+  `w_n = 3N/(2(N² − 1))·(1 − ((n − (N/2 − 1))/(N/2))²)` (sum 1); `f = fs·Σ w_n Δ_n / (2π)` Hz.
+  At least two samples, all finite and non-zero; `sample_rate` finite and positive.
+  **(implemented)**
 - **Power CCDF** ([ADR 0119](adr/0119-power-ccdf.md); `power_ccdf(samples, levels_db)`, C#
   `Measurements.PowerCcdf`): for each level `L` dB, `#{n : |x[n]|² > P̄·10^{L/10}} / N`, strict, with
   `P̄` the mean power; result `PowerCcdf(mean_power, levels_db, probabilities)` in the order given.

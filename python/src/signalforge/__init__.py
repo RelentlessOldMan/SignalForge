@@ -102,6 +102,7 @@ from .measurements import (
     am_am_pm,
     gain_compression,
     integrated_phase_noise,
+    kay_frequency,
     noise_figure_cascade,
     noise_figure_y_factor,
     phase_noise_spurs,
@@ -228,7 +229,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.20"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.21"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -344,6 +345,7 @@ __all__ = [
     "iq_image_rejection_db",
     "iq_imbalance",
     "kaiser_parameters",
+    "kay_frequency",
     "lin_to_db",
     "lms_equalizer",
     "lomb_scargle",

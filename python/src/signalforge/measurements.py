@@ -106,6 +106,30 @@ def power_ccdf_level(samples: ArrayLike, probability: float) -> float:
     return 10 * (math.log10(t) - math.log10(mean)) if t > 0 else -math.inf
 
 
+def kay_frequency(samples: ArrayLike, sample_rate: float) -> float:
+    """A complex tone's frequency in Hz by Kay's weighted phase-difference estimator
+    (conventions: Single-tone frequency (Kay); ADR 0123)."""
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive")
+    x = np.asarray(samples)
+    if x.ndim != 1 or x.shape[0] < 2:
+        raise ValueError("samples must be a one-dimensional array of at least two samples")
+    x = x.astype(np.complex128)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if np.any(x == 0):
+        raise ValueError("samples must be non-zero")
+    a, b = x.real[1:], x.imag[1:]
+    c, d = x.real[:-1], x.imag[:-1]
+    steps = np.arctan2(b * c - a * d, a * c + b * d)
+    n_total = x.size
+    n = np.arange(n_total - 1, dtype=np.float64)
+    half = n_total / 2
+    w = 3 * n_total / (2 * (n_total * n_total - 1)) * (1 - ((n - (half - 1)) / half) ** 2)
+    return fs * float(np.sum(w * steps)) / (2 * math.pi)
+
+
 @dataclass(frozen=True)
 class ToneMetrics:
     """SNR, SINAD, THD and ENOB of one tone (conventions: Tone metrics).
