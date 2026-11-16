@@ -170,6 +170,7 @@ from .spectral import (
     SpectralSlope,
     Spectrogram,
     TaperSet,
+    Tone,
     WindowStats,
     acpr,
     acpr_rrc,
@@ -179,6 +180,7 @@ from .spectral import (
     dpss_tapers,
     fft,
     fft_frequencies,
+    find_tones,
     generalized_lomb_scargle,
     harmonic_f_test,
     ifft,
@@ -250,7 +252,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.34"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.35"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -295,6 +297,7 @@ __all__ = [
     "Spectrogram",
     "TaperSet",
     "TimingRecovery",
+    "Tone",
     "ToneMetrics",
     "TwoToneImd",
     "TwoToneIp2",
@@ -351,6 +354,7 @@ __all__ = [
     "evm",
     "fft",
     "fft_frequencies",
+    "find_tones",
     "fir_bandpass",
     "fir_equiripple",
     "fir_frequency_sampling",

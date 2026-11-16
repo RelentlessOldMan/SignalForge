@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Find tones**: the `count` most prominent spectral peaks, each with an interpolated
-   frequency and height. Not built yet. Needs an ADR: `find_tones(frequencies, psd, count, *,
-   min_prominence=0.0, scale="db")` built on `spectral_peaks` and `interpolate_peak`. It must
-   settle how ties in prominence are broken, the order of the results, and what a plateau of
-   three or more bins (which `interpolate_peak` rejects as flat) or a zero neighbour on the dB
-   scale gives. Expected values: hand-built PSDs of Gaussians with known centres and heights.
+1. **Peak widths**: each spectral peak's width at a level below its top, as a frequency span.
+   Not built yet. Needs an ADR: `peak_widths(frequencies, psd, *, rel_height=0.5,
+   min_prominence=0.0)` measuring each `spectral_peaks` peak where the PSD crosses `height −
+   rel_height·prominence`, with linear interpolation between bins, and whether `rel_height`
+   counts from the prominence (as peak finders do) or is a fixed ratio such as −3 dB. Expected
+   values: triangles and trapezoids whose crossings are worked by hand.
 
 ## Built
 
@@ -1347,6 +1347,17 @@ Updated with every chunk of work. Dates are absolute.
   tone between bins.
   Python 4685 passed, 2 skipped; .NET 4023 passed; conformance 2427/2427 in both. Version
   2026.11.16.34.
+- 2026-11-16: find tones (ADR 0137): `find_tones(frequencies, psd, count, *,
+  min_prominence=0.0, scale="db")` (C# `Spectral.FindTones`) ranks the `spectral_peaks` by
+  prominence, highest first with ties to the lower frequency, and keeps `count`. It refines each
+  with `interpolate_peak` into `Tone(index, frequency, height, prominence)`. A peak whose fit is
+  undefined (a flat plateau, or a zero bin on the dB scale) keeps its grid values. The fit now
+  lives in one helper that both functions use. The vectors are Gaussians sampled on three bins,
+  so their vertices are known analytically, plus hand-worked plateaus, a zero neighbour and a
+  tie. The tests compare against the two functions it composes, and find two Hann-windowed
+  tones in noise.
+  Python 4701 passed, 2 skipped; .NET 4038 passed; conformance 2439/2439 in both. Version
+  2026.11.16.35.
 
 ## Not built
 

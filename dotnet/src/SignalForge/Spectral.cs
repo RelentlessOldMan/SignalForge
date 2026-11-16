@@ -223,6 +223,13 @@ public sealed record SpectralShape(double Skewness, double Kurtosis);
 /// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
 public sealed record SpectralSlope(double Center, double Level, double Slope);
 
+/// <summary>A tone found in a PSD (conventions: Spectra, Find tones; ADR 0137).</summary>
+/// <param name="Index">The peak's bin.</param>
+/// <param name="Frequency">The interpolated frequency in Hz, or the peak's where the fit is undefined.</param>
+/// <param name="Height">The interpolated height in PSD units, or the peak's where the fit is undefined.</param>
+/// <param name="Prominence">The peak's prominence.</param>
+public sealed record Tone(int Index, double Frequency, double Height, double Prominence);
+
 /// <summary>A peak's vertex from a parabola through three bins (conventions: Spectra, Peak interpolation; ADR 0136).</summary>
 /// <param name="Frequency">The vertex's frequency in Hz.</param>
 /// <param name="Height">The vertex's height in PSD units.</param>
@@ -2032,25 +2039,63 @@ public static class Spectral
         int n = psd.Length;
         if (index < 1 || index > n - 2)
             throw new ArgumentOutOfRangeException(nameof(index), "index must be an interior bin, 1 <= index <= n - 2");
-        double a = psd[index - 1], b = psd[index], c = psd[index + 1];
-        if (b < a || b < c)
+        if (psd[index] < psd[index - 1] || psd[index] < psd[index + 1])
             throw new ArgumentException("the bin at index must not be lower than its neighbours", nameof(index));
+        if (scale == PeakScale.Decibel && !(Math.Min(psd[index - 1], Math.Min(psd[index], psd[index + 1])) > 0))
+            throw new ArgumentException("the three bins must be positive on the dB scale", nameof(psd));
+        return Vertex(frequencies, psd, index, scale)
+            ?? throw new ArgumentException("the three bins are flat", nameof(psd));
+    }
+
+    /// <summary>The parabola's vertex through bins <c>k − 1, k, k + 1</c>, or null where it is undefined.</summary>
+    private static PeakEstimate? Vertex(ReadOnlySpan<double> f, ReadOnlySpan<double> psd, int k, PeakScale scale)
+    {
+        double a = psd[k - 1], b = psd[k], c = psd[k + 1];
         if (scale == PeakScale.Decibel)
         {
             if (!(Math.Min(a, Math.Min(b, c)) > 0))
-                throw new ArgumentException("the three bins must be positive on the dB scale", nameof(psd));
+                return null;
             a = 10 * Math.Log10(a);
             b = 10 * Math.Log10(b);
             c = 10 * Math.Log10(c);
         }
         double curve = a - 2 * b + c;
         if (!(curve < 0))
-            throw new ArgumentException("the three bins are flat", nameof(psd));
+            return null;
         double offset = (a - c) / (2 * curve);
         double vertex = b - (a - c) * offset / 4;
-        double delta = (frequencies[n - 1] - frequencies[0]) / (n - 1);
+        double delta = (f[^1] - f[0]) / (f.Length - 1);
         double height = scale == PeakScale.Decibel ? Math.Pow(10, vertex / 10) : vertex;
-        return new PeakEstimate(frequencies[index] + offset * delta, height, offset);
+        return new PeakEstimate(f[k] + offset * delta, height, offset);
+    }
+
+    /// <summary>
+    /// The <paramref name="count"/> most prominent spectral peaks, each with its frequency and
+    /// height interpolated on <paramref name="scale"/>; most prominent first, ties to the lower
+    /// frequency (conventions: Spectra, Find tones; ADR 0137).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="count">How many tones at most, at least 1.</param>
+    /// <param name="minProminence">The least prominence kept, finite and non-negative.</param>
+    /// <param name="scale">The scale each peak's parabola is fitted on.</param>
+    /// <returns>The tones, most prominent first.</returns>
+    /// <exception cref="ArgumentException">The arrays are invalid, <paramref name="count"/> is below 1, <paramref name="minProminence"/> is negative or not finite, or <paramref name="scale"/> is unknown.</exception>
+    public static IReadOnlyList<Tone> FindTones(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd, int count, double minProminence = 0, PeakScale scale = PeakScale.Decibel)
+    {
+        if (scale is not (PeakScale.Decibel or PeakScale.Linear))
+            throw new ArgumentOutOfRangeException(nameof(scale), "unknown scale");
+        ArgumentOutOfRangeException.ThrowIfLessThan(count, 1);
+        var ranked = SpectralPeaks(frequencies, psd, minProminence).OrderByDescending(p => p.Prominence).Take(count);
+        var tones = new List<Tone>();
+        foreach (var p in ranked)
+        {
+            var v = Vertex(frequencies, psd, p.Index, scale);
+            tones.Add(v is null
+                ? new Tone(p.Index, p.Frequency, p.Height, p.Prominence)
+                : new Tone(p.Index, v.Frequency, v.Height, p.Prominence));
+        }
+        return tones;
     }
 
     /// <summary>

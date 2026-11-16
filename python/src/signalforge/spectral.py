@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from . import _checks
 from ._checks import count, real
 
 _COSINE_SUMS: dict[str, tuple[float, ...]] = {
@@ -1217,6 +1218,17 @@ class SpectralSlope:
 
 
 @dataclass(frozen=True)
+class Tone:
+    """A tone found in a PSD (conventions: Spectra, Find tones; ADR 0137): its peak bin
+    ``index``, its interpolated ``frequency`` and ``height``, and its peak's ``prominence``."""
+
+    index: int
+    frequency: float
+    height: float
+    prominence: float
+
+
+@dataclass(frozen=True)
 class PeakEstimate:
     """A peak's vertex from a parabola through three bins (conventions: Spectra, Peak
     interpolation; ADR 0136): its ``frequency``, its ``height``, and its ``offset`` in bins."""
@@ -1451,21 +1463,62 @@ def interpolate_peak(
     n = f.size
     if not 1 <= k <= n - 2:
         raise ValueError("index must be an interior bin, 1 <= index <= n - 2")
-    a, b, c = float(x[k - 1]), float(x[k]), float(x[k + 1])
-    if b < a or b < c:
+    if x[k] < x[k - 1] or x[k] < x[k + 1]:
         raise ValueError("the bin at index must not be lower than its neighbours")
+    if scale == "db" and not min(x[k - 1 : k + 2]) > 0:
+        raise ValueError("the three bins must be positive on the dB scale")
+    got = _vertex(f, x, k, scale)
+    if got is None:
+        raise ValueError("the three bins are flat")
+    return got
+
+
+def _vertex(
+    f: NDArray[np.float64], x: NDArray[np.float64], k: int, scale: str
+) -> PeakEstimate | None:
+    """The parabola's vertex through bins ``k - 1, k, k + 1``, or None where it is undefined."""
+    a, b, c = float(x[k - 1]), float(x[k]), float(x[k + 1])
     if scale == "db":
         if not min(a, b, c) > 0:
-            raise ValueError("the three bins must be positive on the dB scale")
+            return None
         a, b, c = 10 * math.log10(a), 10 * math.log10(b), 10 * math.log10(c)
     curve = a - 2 * b + c
     if not curve < 0:
-        raise ValueError("the three bins are flat")
+        return None
     offset = (a - c) / (2 * curve)
     vertex = b - (a - c) * offset / 4
-    delta = float(f[-1] - f[0]) / (n - 1)
+    delta = float(f[-1] - f[0]) / (f.size - 1)
     height = 10 ** (vertex / 10) if scale == "db" else vertex
     return PeakEstimate(float(f[k]) + offset * delta, height, offset)
+
+
+def find_tones(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    count: int,
+    *,
+    min_prominence: float = 0.0,
+    scale: str = "db",
+) -> list[Tone]:
+    """The ``count`` most prominent spectral peaks, each with its frequency and height
+    interpolated on ``scale``; most prominent first, ties to the lower frequency."""
+    if scale not in ("db", "linear"):
+        raise ValueError('scale must be "db" or "linear"')
+    wanted = _checks.count(count, "count")
+    if wanted < 1:
+        raise ValueError("count must be at least 1")
+    peaks = spectral_peaks(frequencies, psd, min_prominence=min_prominence)
+    ranked = sorted(peaks, key=lambda p: -p.prominence)[:wanted]
+    f = np.asarray(frequencies, dtype=np.float64)
+    x = np.asarray(psd, dtype=np.float64)
+    out = []
+    for p in ranked:
+        v = _vertex(f, x, p.index, scale)
+        if v is None:
+            out.append(Tone(p.index, p.frequency, p.height, p.prominence))
+        else:
+            out.append(Tone(p.index, v.frequency, v.height, p.prominence))
+    return out
 
 
 def band_energy_ratio(

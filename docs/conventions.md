@@ -476,6 +476,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   units for `"db"`. Needs `1 ≤ index ≤ n − 2`, `β ≥ α, γ`, `α − 2β + γ < 0`, and positive
   values for `"db"`; then `|offset| ≤ 1/2`. Gives `PeakEstimate(frequency, height, offset)`.
   **(implemented)**
+- **Find tones** (`find_tones(frequencies, psd, count, min_prominence=0.0, scale="db")`,
+  [ADR 0137](adr/0137-find-tones.md)): the `spectral_peaks` sorted by prominence, highest first,
+  ties to the lower frequency, the first `count` kept, in that order, as `Tone(index, frequency,
+  height, prominence)`. `frequency` and `height` are `interpolate_peak`'s at the peak's index,
+  or the peak's grid values when the fit is undefined (flat, or a zero bin on the dB scale).
+  `count` an integer `≥ 1`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on
