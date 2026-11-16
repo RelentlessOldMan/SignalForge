@@ -110,6 +110,7 @@ from .measurements import (
     TwoToneIp5,
     am_am_pm,
     autocorrelation_pitch,
+    bass_ratio,
     block_leq,
     centre_time,
     cepstrum_pitch,
@@ -140,6 +141,7 @@ from .measurements import (
     temporal_centroid,
     time_weighting,
     tone_metrics,
+    treble_ratio,
     two_tone_imd,
     two_tone_ip2,
     two_tone_ip5,
@@ -313,7 +315,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.77"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.78"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -386,6 +388,7 @@ __all__ = [
     "awgn",
     "band_energy_ratio",
     "bark_to_hz",
+    "bass_ratio",
     "bessel_bandpass",
     "bessel_bandstop",
     "bessel_highpass",
@@ -599,6 +602,7 @@ __all__ = [
     "timing_offset",
     "tone",
     "tone_metrics",
+    "treble_ratio",
     "tristimulus",
     "two_tone_imd",
     "two_tone_ip2",

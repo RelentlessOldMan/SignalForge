@@ -1537,3 +1537,27 @@ def stage_support(impulse_response: ArrayLike, sample_rate: float, *, late: bool
     if window == 0:
         return -math.inf
     return 10 * math.log10(window / direct)
+
+
+def _band_times(times: ArrayLike) -> NDArray[np.float64]:
+    t = np.asarray(times)
+    if t.ndim != 1 or t.shape[0] != 6 or np.iscomplexobj(t):
+        raise ValueError("times must be six real reverberation times (125 Hz to 4 kHz)")
+    t = t.astype(np.float64)
+    if not np.all(np.isfinite(t) & (t > 0)):
+        raise ValueError("times must be finite and positive")
+    return t
+
+
+def bass_ratio(times: ArrayLike) -> float:
+    """Beranek's bass ratio ``(T125 + T250)/(T500 + T1000)`` from the six octave-band times at
+    125 Hz to 4 kHz (conventions: Bass and treble ratio; ADR 0180)."""
+    t = _band_times(times)
+    return float((t[0] + t[1]) / (t[2] + t[3]))
+
+
+def treble_ratio(times: ArrayLike) -> float:
+    """Beranek's treble ratio ``(T2000 + T4000)/(T500 + T1000)`` from the six octave-band times
+    at 125 Hz to 4 kHz (conventions: Bass and treble ratio; ADR 0180)."""
+    t = _band_times(times)
+    return float((t[4] + t[5]) / (t[2] + t[3]))

@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "suite": "bass_ratio",
+  "description": "Bass and treble ratio (conventions: Bass and treble ratio; ADR 0180).",
+  "cases": [
+    {"id": "bass_ratio.hall", "op": "bass_ratio", "args": {"times": [2.5, 2.25, 2.0, 2.0, 1.75, 1.5]}, "expected": 1.1875, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "(2.5 + 2.25)/(2 + 2) = 4.75/4 = 19/16"},
+    {"id": "treble_ratio.hall", "op": "treble_ratio", "args": {"times": [2.5, 2.25, 2.0, 2.0, 1.75, 1.5]}, "expected": 0.8125, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "(1.75 + 1.5)/(2 + 2) = 3.25/4 = 13/16"},
+    {"id": "bass_ratio.flat", "op": "bass_ratio", "args": {"times": [1.2, 1.2, 1.2, 1.2, 1.2, 1.2]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "equal times: 1"},
+    {"id": "treble_ratio.flat", "op": "treble_ratio", "args": {"times": [1.2, 1.2, 1.2, 1.2, 1.2, 1.2]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "equal times: 1"},
+    {"id": "bass_ratio.rising", "op": "bass_ratio", "args": {"times": [0.5, 0.75, 1.0, 1.5, 1.25, 1.25]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "(0.5 + 0.75)/(1 + 1.5) = 1.25/2.5 = 1/2"},
+    {"id": "treble_ratio.rising", "op": "treble_ratio", "args": {"times": [0.5, 0.75, 1.0, 1.5, 1.25, 1.25]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "(1.25 + 1.25)/(1 + 1.5) = 1"},
+    {"id": "bass_ratio.five", "op": "bass_ratio", "args": {"times": [1.0, 1.0, 1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "five times: exactly six are required"},
+    {"id": "bass_ratio.seven", "op": "bass_ratio", "args": {"times": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "seven times: exactly six are required"},
+    {"id": "bass_ratio.zero", "op": "bass_ratio", "args": {"times": [1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a zero time"},
+    {"id": "bass_ratio.negative_unused", "op": "bass_ratio", "args": {"times": [1.0, 1.0, 1.0, 1.0, 1.0, -1.0]}, "error": "invalid_argument", "source": "a negative time in a band the ratio doesn't use"},
+    {"id": "bass_ratio.nan", "op": "bass_ratio", "args": {"times": [1.0, "nan", 1.0, 1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a NaN time"},
+    {"id": "bass_ratio.inf", "op": "bass_ratio", "args": {"times": [1.0, 1.0, "inf", 1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "an infinite time"},
+    {"id": "treble_ratio.five", "op": "treble_ratio", "args": {"times": [1.0, 1.0, 1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "five times: exactly six are required"},
+    {"id": "treble_ratio.seven", "op": "treble_ratio", "args": {"times": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "seven times: exactly six are required"},
+    {"id": "treble_ratio.zero", "op": "treble_ratio", "args": {"times": [1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a zero time"},
+    {"id": "treble_ratio.negative_unused", "op": "treble_ratio", "args": {"times": [-1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a negative time in a band the ratio doesn't use"},
+    {"id": "treble_ratio.nan", "op": "treble_ratio", "args": {"times": [1.0, "nan", 1.0, 1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a NaN time"},
+    {"id": "treble_ratio.inf", "op": "treble_ratio", "args": {"times": [1.0, 1.0, "inf", 1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "an infinite time"}
+  ]
+}

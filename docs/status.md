@@ -4,14 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Bass and treble ratio**: `bass_ratio(times)` and `treble_ratio(times)` in `measurements`.
-   Both take the octave-band reverberation times at 125, 250, 500, 1000, 2000 and 4000 Hz:
-   - `BR = (T125 + T250)/(T500 + T1000)`;
-   - `TR = (T2000 + T4000)/(T500 + T1000)`.
-
-   These are Beranek's room-acoustic ratios. Not built yet. Needs an ADR: the input shape
-   (six times), and that the times must be finite and positive. Expected values: exact
-   fractions.
+1. **Early decay time**: `early_decay_time(impulse_response, sample_rate)` in `measurements`.
+   It is ISO 3382-1's EDT: the reverberation time fitted from 0 to −10 dB of the Schroeder decay,
+   which is `reverberation_time` with `start_db=0, stop_db=-10`. Not built yet. Needs an ADR:
+   that it is exactly that call, with the same rules. Expected values: `−3/(fs·log10 q)` for
+   `h = qⁿ`.
 
 ## Built
 
@@ -1712,6 +1709,14 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are hand sums at 100 Hz and geometric window sums at 1 kHz.
   Python 5398 passed, 2 skipped; .NET 4716 passed; conformance 3013/3013 in both. Version
   2026.11.16.77.
+- 2026-11-16: bass and treble ratio (ADR 0180): `bass_ratio(times)` and `treble_ratio(times)` in
+  `measurements` (C# `Measurements.BassRatio`, `Measurements.TrebleRatio`).
+  - Each takes six octave-band reverberation times, 125 Hz to 4 kHz, all finite and positive.
+  - `BR = (T125 + T250)/(T500 + T1000)` and `TR = (T2000 + T4000)/(T500 + T1000)`.
+
+  The vectors are exact fractions.
+  Python 5418 passed, 2 skipped; .NET 4735 passed; conformance 3031/3031 in both. Version
+  2026.11.16.78.
 
 ## Not built
 

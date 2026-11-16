@@ -94,6 +94,11 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Bass and treble ratio** ([ADR 0180](adr/0180-bass-treble-ratio.md); `bass_ratio(times)`,
+  `treble_ratio(times)`, C# `Measurements.BassRatio`, `Measurements.TrebleRatio`): `times` is
+  exactly six octave-band reverberation times at 125, 250, 500, 1000, 2000, 4000 Hz, all finite
+  and positive; `BR = (T125 + T250)/(T500 + T1000)`, `TR = (T2000 + T4000)/(T500 + T1000)`, a
+  plain ratio. **(implemented)**
 - **Stage support** ([ADR 0179](adr/0179-stage-support.md); `stage_support(impulse_response,
   sample_rate, *, late=False)`, C# `Measurements.StageSupport`): `N(t) = ⌊t·fs + 1/2⌋`; direct
   `[0, N(0.01))`, early `[N(0.02), N(0.1))`, late `[N(0.1), N(1))`, half-open, clipped to the
