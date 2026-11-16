@@ -1237,3 +1237,53 @@ def sound_exposure(samples: ArrayLike, sample_rate: float) -> float:
     exposure; ADR 0170)."""
     p, fs = _level_powers(samples, sample_rate)
     return float(np.sum(p)) / fs
+
+
+def schroeder_decay(impulse_response: ArrayLike) -> NDArray[np.float64]:
+    """The Schroeder backward-integrated energy decay ``10 log10(E[n]/E[0])``, ``E[n] =
+    sum_{k >= n} |h[k]|^2`` (conventions: Reverberation time; ADR 0171)."""
+    h = np.asarray(impulse_response)
+    if h.ndim != 1 or h.shape[0] == 0:
+        raise ValueError("impulse_response must be a non-empty one-dimensional array")
+    h = h.astype(np.complex128 if np.iscomplexobj(h) else np.float64, copy=False)
+    if not np.all(np.isfinite(h)):
+        raise ValueError("impulse_response must be finite")
+    p = np.asarray(h.real * h.real + h.imag * h.imag, dtype=np.float64)
+    energy = np.cumsum(p[::-1])[::-1]
+    if not energy[0] > 0:
+        raise ValueError("impulse_response must not be all zero")
+    with np.errstate(divide="ignore"):
+        return np.asarray(10 * np.log10(energy / energy[0]), dtype=np.float64)
+
+
+def reverberation_time(
+    impulse_response: ArrayLike,
+    sample_rate: float,
+    *,
+    start_db: float = -5.0,
+    stop_db: float = -25.0,
+) -> float:
+    """The reverberation time ``-60/m`` from the least-squares slope ``m`` (dB/s) of the
+    Schroeder decay between ``start_db`` and ``stop_db`` (conventions: Reverberation time;
+    ADR 0171)."""
+    d = schroeder_decay(impulse_response)
+    fs = real(sample_rate, "sample_rate")
+    if not (math.isfinite(fs) and fs > 0):
+        raise ValueError("sample_rate must be finite and positive")
+    a, b = real(start_db, "start_db"), real(stop_db, "stop_db")
+    if not (math.isfinite(a) and math.isfinite(b) and b < a <= 0):
+        raise ValueError("need stop_db < start_db <= 0, both finite")
+    below_a = np.flatnonzero(d <= a)
+    below_b = np.flatnonzero(d <= b)
+    if below_b.shape[0] == 0:
+        raise ValueError("the decay never reaches stop_db")
+    n1, n2 = int(below_a[0]), int(below_b[0])
+    if n2 - n1 < 2:
+        raise ValueError("fewer than two samples lie between start_db and stop_db")
+    n = np.arange(n1, n2, dtype=np.float64)
+    y = d[n1:n2]
+    nc = n - n.mean()
+    slope = float(np.sum(nc * (y - y.mean())) / np.sum(nc * nc)) * fs
+    if not slope < 0:
+        raise ValueError("the decay slope must be negative")
+    return -60.0 / slope

@@ -124,6 +124,8 @@ from .measurements import (
     power_ccdf,
     power_ccdf_level,
     power_stats,
+    reverberation_time,
+    schroeder_decay,
     sfdr,
     sound_exposure,
     temporal_centroid,
@@ -302,7 +304,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.68"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.69"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -550,10 +552,12 @@ __all__ = [
     "real_cepstrum",
     "resample",
     "resample_taps",
+    "reverberation_time",
     "rician_fading",
     "rls_equalizer",
     "rrc_taps",
     "saleh_amplifier",
+    "schroeder_decay",
     "sfdr",
     "sos_group_delay",
     "sos_response",

@@ -94,6 +94,14 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Reverberation time** ([ADR 0171](adr/0171-reverberation-time.md); `schroeder_decay(impulse_response)`,
+  `reverberation_time(impulse_response, sample_rate, *, start_db=-5.0, stop_db=-25.0)`, C#
+  `Measurements.SchroederDecay`, `Measurements.ReverberationTime`): `d[n] = 10 log10(E[n]/E[0])`,
+  `E[n] = Σ_{k≥n}|h[k]|²` (zero tail gives `−inf`; no truncation or noise correction). The fit
+  is ordinary least squares of `d[n]` on `t = n/fs` over `n1 ≤ n < n2`, `n1`/`n2` the first
+  indices with `d ≤ start_db`/`d ≤ stop_db`, at least two samples, slope `m < 0`; `T = −60/m`.
+  Real or complex, finite, not empty, not all zero; `fs` finite and positive; `stop_db <
+  start_db ≤ 0` finite; never reaching `stop_db` is `invalid_argument`. **(implemented)**
 - **Short Leq series and sound exposure** ([ADR 0170](adr/0170-block-leq-and-exposure.md);
   `block_leq(samples, sample_rate, duration)`, `sound_exposure(samples, sample_rate)`, C#
   `Measurements.BlockLeq`, `Measurements.SoundExposure`): `block_leq` is the mean `|x|²` over

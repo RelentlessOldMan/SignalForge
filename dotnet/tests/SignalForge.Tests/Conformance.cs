@@ -238,6 +238,12 @@ public static class Conformance
                 t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "temporal_centroid" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2)),
+            "schroeder_decay" => a.Get("impulse_response") is Complex[]? Bind(Complexes(a.Get("impulse_response")), h => Measurements.SchroederDecay(h))
+                : Bind(Reals(a.Get("impulse_response")), h => Measurements.SchroederDecay(h)),
+            "reverberation_time" => a.Get("impulse_response") is Complex[]? Bind((Complexes(a.Get("impulse_response")), a.D("sample_rate"), a.Opt("start_db", -5.0), a.Opt("stop_db", -25.0)),
+                    t => Measurements.ReverberationTime(t.Item1, t.Item2, t.Item3, t.Item4))
+                : Bind((Reals(a.Get("impulse_response")), a.D("sample_rate"), a.Opt("start_db", -5.0), a.Opt("stop_db", -25.0)),
+                    t => Measurements.ReverberationTime(t.Item1, t.Item2, t.Item3, t.Item4)),
             "block_leq" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate"), a.D("duration")), t => Measurements.BlockLeq(t.Item1, t.Item2, t.Item3))
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate"), a.D("duration")), t => Measurements.BlockLeq(t.Item1, t.Item2, t.Item3)),
             "sound_exposure" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate")), t => Measurements.SoundExposure(t.Item1, t.Item2))

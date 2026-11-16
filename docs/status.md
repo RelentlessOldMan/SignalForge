@@ -4,14 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Reverberation time**: `schroeder_decay(impulse_response)` (the backward-integrated energy
-   curve in dB, `10 log10(Σ_{k≥n} h²/Σ h²)`) and `reverberation_time(impulse_response,
-   sample_rate, *, start_db=-5, stop_db=-25)` (ISO 3382: a least-squares line fitted to the
-   decay between the two levels, extrapolated to −60 dB: T20 by default, T30 with −35). In
-   `measurements`. Not built yet. Needs an ADR: the fit (which samples, ordinary least
-   squares on time), the error when the decay never reaches `stop_db`, and noise compensation
-   (none). Expected values: an exponential decay `h[n] = r^n` has an exact geometric tail, so
-   the curve is a straight line and `T = 60/(−20 log10 r · fs)`.
+1. **Clarity and definition**: `clarity(impulse_response, sample_rate, *, time=0.08)` (ISO 3382
+   `C_te = 10 log10(E_early/E_late)`: C80 by default, C50 with 0.05) and
+   `definition(impulse_response, sample_rate, *, time=0.05)` (`D50 = E_early/E_total`) in
+   `measurements`. Not built yet. Needs an ADR: where the impulse starts (index 0, or found from
+   the peak or a −20 dB onset), how the boundary sample `t·fs` is rounded and which side it
+   falls on, and what a zero late energy gives. Expected values: geometric decays again have
+   exact sums.
 
 ## Built
 
@@ -1625,6 +1624,16 @@ Updated with every chunk of work. Dates are absolute.
   `sound_exposure` gives `Σ|x|²/fs`. The vectors are exact hand sums in fractions.
   Python 5259 passed, 2 skipped; .NET 4580 passed; conformance 2890/2890 in both. Version
   2026.11.16.68.
+- 2026-11-16: reverberation time (ADR 0171): `schroeder_decay(impulse_response)` and
+  `reverberation_time(impulse_response, sample_rate, *, start_db=-5.0, stop_db=-25.0)` in
+  `measurements` (C# `Measurements.SchroederDecay`, `Measurements.ReverberationTime`, real and
+  complex). The first is the backward-integrated decay in dB. The second fits an ordinary
+  least-squares line to the samples between the first crossings of the two levels and returns
+  `T = −60/m`. A decay that never reaches `stop_db` is `invalid_argument`. The vectors come from
+  the exact geometric tails of `r^n` decays, and their cross terms for two slopes, in 50-digit
+  `decimal`. Long decays are checked against `60/(−20 log10 r·fs)`.
+  Python 5278 passed, 2 skipped; .NET 4598 passed; conformance 2907/2907 in both. Version
+  2026.11.16.69.
 
 ## Not built
 
