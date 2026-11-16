@@ -73,6 +73,39 @@ public static class Units
         };
     }
 
+    /// <summary>Frequency in Hz to ERB number, <c>21.4·log10(4.37 f/1000 + 1)</c> (conventions:
+    /// ERB scale; ADR 0160).</summary>
+    /// <param name="hz">A frequency, finite and non-negative.</param>
+    /// <returns>The ERB number.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double HzToErbRate(double hz)
+    {
+        FiniteNonNegative(hz, nameof(hz));
+        return 21.4 * Math.Log10(4.37 * hz / 1000.0 + 1.0);
+    }
+
+    /// <summary>ERB number to frequency in Hz, the inverse of <see cref="HzToErbRate"/>
+    /// (conventions: ERB scale; ADR 0160).</summary>
+    /// <param name="erb">An ERB number, finite and non-negative.</param>
+    /// <returns>The frequency in Hz.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double ErbRateToHz(double erb)
+    {
+        FiniteNonNegative(erb, nameof(erb));
+        return (Math.Pow(10.0, erb / 21.4) - 1.0) * 1000.0 / 4.37;
+    }
+
+    /// <summary>The auditory filter's equivalent rectangular bandwidth in Hz,
+    /// <c>24.7·(4.37 f/1000 + 1)</c> (conventions: ERB scale; ADR 0160).</summary>
+    /// <param name="hz">A frequency, finite and non-negative.</param>
+    /// <returns>The bandwidth in Hz.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double ErbBandwidth(double hz)
+    {
+        FiniteNonNegative(hz, nameof(hz));
+        return 24.7 * (4.37 * hz / 1000.0 + 1.0);
+    }
+
     private const double SlaneyHzPerMel = 200.0 / 3.0;
     private static readonly double SlaneyLogStep = Math.Log(6.4) / 27.0;
 

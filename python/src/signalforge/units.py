@@ -120,3 +120,24 @@ def mel_to_hz(mel: ArrayLike, *, scale: str = "htk") -> NDArray[np.float64] | fl
     linear = m * _SLANEY_HZ_PER_MEL
     logarithmic = 1000.0 * np.exp((m - 15.0) * _SLANEY_LOG_STEP)
     return _out(np.where(m >= 15.0, logarithmic, linear))
+
+
+def hz_to_erb_rate(hz: ArrayLike) -> NDArray[np.float64] | float:
+    """Frequency in Hz to ERB number, ``21.4*log10(4.37 f/1000 + 1)`` (conventions: ERB scale;
+    ADR 0160)."""
+    f = _finite_non_negative(hz, "hz")
+    return _out(21.4 * np.log10(4.37 * f / 1000.0 + 1.0))
+
+
+def erb_rate_to_hz(erb: ArrayLike) -> NDArray[np.float64] | float:
+    """ERB number to frequency in Hz, the inverse of ``hz_to_erb_rate`` (conventions: ERB scale;
+    ADR 0160)."""
+    e = _finite_non_negative(erb, "erb")
+    return _out((np.power(10.0, e / 21.4) - 1.0) * 1000.0 / 4.37)
+
+
+def erb_bandwidth(hz: ArrayLike) -> NDArray[np.float64] | float:
+    """The auditory filter's equivalent rectangular bandwidth in Hz, ``24.7 (4.37 f/1000 + 1)``
+    (conventions: ERB scale; ADR 0160)."""
+    f = _finite_non_negative(hz, "hz")
+    return _out(24.7 * (4.37 * f / 1000.0 + 1.0))

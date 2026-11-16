@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "suite": "erb_scale",
+  "description": "ERB scale, Glasberg & Moore 1990 (conventions: ERB scale; ADR 0160).",
+  "cases": [
+    {"id": "erb_bandwidth.zero", "op": "erb_bandwidth", "args": {"hz": 0.0}, "expected": 24.7, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "24.7 (4.37 x 0/1000 + 1), exact in decimal"},
+    {"id": "hz_to_erb_rate.zero", "op": "hz_to_erb_rate", "args": {"hz": 0.0}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "21.4 log10(4.37 x 0/1000 + 1) in decimal"},
+    {"id": "erb_bandwidth.1khz", "op": "erb_bandwidth", "args": {"hz": 1000.0}, "expected": 132.639, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "24.7 (4.37 x 1000/1000 + 1), exact in decimal"},
+    {"id": "hz_to_erb_rate.1khz", "op": "hz_to_erb_rate", "args": {"hz": 1000.0}, "expected": 15.62144971397049, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "21.4 log10(4.37 x 1000/1000 + 1) in decimal"},
+    {"id": "erb_bandwidth.100hz", "op": "erb_bandwidth", "args": {"hz": 100.0}, "expected": 35.4939, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "24.7 (4.37 x 100/1000 + 1), exact in decimal"},
+    {"id": "hz_to_erb_rate.100hz", "op": "hz_to_erb_rate", "args": {"hz": 100.0}, "expected": 3.369574838072429, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "21.4 log10(4.37 x 100/1000 + 1) in decimal"},
+    {"id": "erb_bandwidth.8khz", "op": "erb_bandwidth", "args": {"hz": 8000.0}, "expected": 888.212, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "24.7 (4.37 x 8000/1000 + 1), exact in decimal"},
+    {"id": "hz_to_erb_rate.8khz", "op": "hz_to_erb_rate", "args": {"hz": 8000.0}, "expected": 33.29454121750949, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "21.4 log10(4.37 x 8000/1000 + 1) in decimal"},
+    {"id": "hz_to_erb_rate.one_decade", "op": "hz_to_erb_rate", "args": {"hz": 2059.496567505721}, "expected": 21.400000000000002, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "f = (1000/4.37)(10 - 1) gives E = 21.4 (to the rounding of f)"},
+    {"id": "erb_rate_to_hz.zero", "op": "erb_rate_to_hz", "args": {"erb": 0.0}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "(10^(0/21.4) - 1) 1000/4.37 in decimal"},
+    {"id": "erb_rate_to_hz.one_decade", "op": "erb_rate_to_hz", "args": {"erb": 21.4}, "expected": 2059.4965675057206, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "(10^(21.4/21.4) - 1) 1000/4.37 in decimal"},
+    {"id": "erb_rate_to_hz.ten", "op": "erb_rate_to_hz", "args": {"erb": 10.0}, "expected": 442.2995671483157, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "(10^(10/21.4) - 1) 1000/4.37 in decimal"},
+    {"id": "erb_rate_to_hz.thirty_five", "op": "erb_rate_to_hz", "args": {"erb": 35.0}, "expected": 9657.439656580586, "tol": {"abs": 1e-12, "rel": 1e-13}, "source": "(10^(35/21.4) - 1) 1000/4.37 in decimal"},
+    {"id": "hz_to_erb_rate.negative", "op": "hz_to_erb_rate", "args": {"hz": -1.0}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "hz_to_erb_rate.nan", "op": "hz_to_erb_rate", "args": {"hz": "nan"}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "hz_to_erb_rate.inf", "op": "hz_to_erb_rate", "args": {"hz": "inf"}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "erb_rate_to_hz.negative", "op": "erb_rate_to_hz", "args": {"erb": -1.0}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "erb_rate_to_hz.nan", "op": "erb_rate_to_hz", "args": {"erb": "nan"}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "erb_rate_to_hz.inf", "op": "erb_rate_to_hz", "args": {"erb": "inf"}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "erb_bandwidth.negative", "op": "erb_bandwidth", "args": {"hz": -1.0}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "erb_bandwidth.nan", "op": "erb_bandwidth", "args": {"hz": "nan"}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "erb_bandwidth.inf", "op": "erb_bandwidth", "args": {"hz": "inf"}, "error": "invalid_argument", "source": "values must be finite"}
+  ]
+}

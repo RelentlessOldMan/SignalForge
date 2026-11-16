@@ -137,6 +137,11 @@ rule for code not written yet.
   `700·(10^(m/2595) − 1)`; Slaney `m = f/(200/3)` below 1000 Hz, `15 + ln(f/1000)/(ln 6.4/27)`
   from 1000 Hz, inverse `(200/3)·m` below 15 mel, `1000·exp((m − 15)·ln 6.4/27)` from 15. Values
   finite and `≥ 0`; `scale` is `"htk"` or `"slaney"`. **(implemented)**
+- **ERB scale** (`hz_to_erb_rate(hz)`, `erb_rate_to_hz(erb)`, `erb_bandwidth(hz)`, C#
+  `Units.HzToErbRate`, `Units.ErbRateToHz`, `Units.ErbBandwidth`,
+  [ADR 0160](adr/0160-erb-scale.md)): Glasberg & Moore (1990) with the published constants:
+  `ERB(f) = 24.7·(4.37 f/1000 + 1)` Hz, `E = 21.4·log10(4.37 f/1000 + 1)`, inverse
+  `(10^(E/21.4) − 1)·1000/4.37`. Values finite and `≥ 0`. **(implemented)**
 
 ## Spectra
 

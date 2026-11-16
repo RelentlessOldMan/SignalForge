@@ -4,11 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **ERB scale**: `hz_to_erb_rate(hz)`, `erb_rate_to_hz(erb)` and `erb_bandwidth(hz)`, after
-   Glasberg & Moore (1990): `E = 21.4·log10(1 + 0.00437 f)` and `ERB(f) = 24.7·(4.37 f/1000 + 1)`,
-   in `units`. Not built yet. Needs an ADR: the constants (the rounded `21.4` or the exact
-   `1000/(24.7·4.37·ln 10)`), and the domain (`f ≥ 0`). Expected values: these come from the
-   closed forms. `f = 1000/4.37·(10^k − 1)` gives `E = 21.4·k` exactly in decimal.
+1. **Gammatone impulse response**: `gammatone(center_frequency, sample_rate, length, *,
+   order=4, bandwidth_factor=1.019)`, the sampled `g[n] = t^(N−1)·exp(−2π b ERB(f_c) t)·
+   cos(2π f_c t)` with `t = n/fs`, using `erb_bandwidth` (ADR 0160). Not built yet. Needs an
+   ADR: the normalization (peak gain 1 at `f_c`, measured from the DFT, or unit peak
+   amplitude), the phase, and `f_c < fs/2`. Expected values: the closed form, evaluated in
+   `decimal` at each sample. The tests check that the magnitude response peaks near `f_c` and
+   that the −3 dB width matches the order-4 bandwidth `≈ 0.887·b·ERB` times 2.
 
 ## Built
 
@@ -1535,6 +1537,13 @@ Updated with every chunk of work. Dates are absolute.
   sines of 15° steps for `L = 12`, plus `L = 1`, `2` and the default 22.
   Python 5063 passed, 2 skipped; .NET 4381 passed; conformance 2721/2721 in both. Version
   2026.11.16.57.
+- 2026-11-16: ERB scale (ADR 0160): `hz_to_erb_rate`, `erb_rate_to_hz` and `erb_bandwidth` in
+  `units` (C# `Units.HzToErbRate`, `ErbRateToHz`, `ErbBandwidth`). They use the published
+  Glasberg & Moore constants: `24.7·(4.37 f/1000 + 1)` and `21.4·log10(4.37 f/1000 + 1)`. A
+  first draft of the ADR said the rounding was 0.14 %; the slope test showed `≈ 0.32 %`
+  (`21.4·24.7·4.37/(1000 ln 10) ≈ 1.0032`), and the ADR was corrected before it was committed.
+  Python 5087 passed, 2 skipped; .NET 4410 passed; conformance 2743/2743 in both. Version
+  2026.11.16.58.
 
 ## Not built
 

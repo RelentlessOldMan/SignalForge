@@ -277,6 +277,9 @@ from .units import (
     db_to_lin,
     dbm_to_vrms,
     dbm_to_w,
+    erb_bandwidth,
+    erb_rate_to_hz,
+    hz_to_erb_rate,
     hz_to_mel,
     lin_to_db,
     mel_to_hz,
@@ -285,7 +288,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.57"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.58"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -399,6 +402,8 @@ __all__ = [
     "elliptic_highpass",
     "elliptic_lowpass",
     "encode_samples",
+    "erb_bandwidth",
+    "erb_rate_to_hz",
     "evm",
     "fft",
     "fft_frequencies",
@@ -425,6 +430,7 @@ __all__ = [
     "harmonic_f_test",
     "harmonic_series",
     "harmonic_to_noise",
+    "hz_to_erb_rate",
     "hz_to_mel",
     "idct",
     "ifft",
