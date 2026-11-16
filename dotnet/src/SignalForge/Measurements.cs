@@ -144,6 +144,16 @@ public sealed record NoiseFigure(double YFactor, double NoiseFactor, double Nois
 /// <param name="Contributions">Each stage's term of Friis' sum, in chain order.</param>
 public sealed record CascadeNoiseFigure(double NoiseFactor, double NoiseFigureDb, double NoiseTemperature, double GainDb, double[] Contributions);
 
+/// <summary>Gain compression from a drive sweep (conventions: Gain compression; ADR 0112).</summary>
+/// <param name="SmallSignalGainDb">The mean gain over the first linear points, in dB.</param>
+/// <param name="GainDb">Each step's gain, output minus input, in dB.</param>
+/// <param name="Compression">Each step's small-signal gain minus its gain, in dB.</param>
+/// <param name="InputPointDb">The input level where the compression reaches the asked value; NaN if no step does.</param>
+/// <param name="OutputPointDb">The input point plus the small-signal gain minus the compression; NaN with it.</param>
+/// <param name="SaturatedOutputDb">The largest output level.</param>
+public sealed record GainCompression(double SmallSignalGainDb, double[] GainDb, double[] Compression, double InputPointDb,
+    double OutputPointDb, double SaturatedOutputDb);
+
 /// <summary>Power measurements and tone metrics. Definitions in docs/conventions.md.</summary>
 public static class Measurements
 {
@@ -284,6 +294,56 @@ public static class Measurements
         if (!(f > 0) || !double.IsFinite(f))
             throw new ArgumentException("the measurement gives no finite positive noise factor", nameof(hotPower));
         return new NoiseFigure(y, f, 10 * Math.Log10(f), t0 * (f - 1));
+    }
+
+    /// <summary>Small-signal gain (the mean over the first <paramref name="linearPoints"/> steps) and the
+    /// point where the gain has fallen by <paramref name="compressionDb"/>, interpolated linearly in dB
+    /// between sweep steps (conventions: Gain compression; ADR 0112).</summary>
+    /// <param name="inputDb">The sweep's input levels in dB, finite and strictly ascending, at least 2.</param>
+    /// <param name="outputDb">The matching output levels in dB of the same unit, finite.</param>
+    /// <param name="compressionDb">The compression to find, in dB, positive; 1 for P1dB.</param>
+    /// <param name="linearPoints">How many of the lowest steps the small-signal gain averages, 1 to the sweep's length.</param>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static GainCompression GainCompression(ReadOnlySpan<double> inputDb, ReadOnlySpan<double> outputDb,
+        double compressionDb = 1.0, int linearPoints = 1)
+    {
+        if (inputDb.Length < 2 || inputDb.Length != outputDb.Length)
+            throw new ArgumentException("input and output levels need the same number of steps, at least 2", nameof(outputDb));
+        for (int i = 0; i < inputDb.Length; i++)
+        {
+            if (!double.IsFinite(inputDb[i]) || !double.IsFinite(outputDb[i]))
+                throw new ArgumentException("input and output levels must be finite", nameof(inputDb));
+            if (i > 0 && !(inputDb[i] > inputDb[i - 1]))
+                throw new ArgumentException("input levels must be strictly ascending", nameof(inputDb));
+        }
+        if (!(compressionDb > 0) || !double.IsFinite(compressionDb))
+            throw new ArgumentOutOfRangeException(nameof(compressionDb), compressionDb, "must be finite and positive");
+        if (linearPoints < 1 || linearPoints > inputDb.Length)
+            throw new ArgumentOutOfRangeException(nameof(linearPoints), linearPoints, "must be from 1 to the number of steps");
+        int n = inputDb.Length;
+        double[] g = new double[n], c = new double[n];
+        for (int i = 0; i < n; i++)
+            g[i] = outputDb[i] - inputDb[i];
+        double total = 0;
+        for (int i = 0; i < linearPoints; i++)
+            total += g[i];
+        double gss = total / linearPoints;
+        for (int i = 0; i < n; i++)
+            c[i] = gss - g[i];
+        double point = double.NaN;
+        for (int k = 0; k < n; k++)
+        {
+            if (c[k] >= compressionDb)
+            {
+                point = k == 0 ? inputDb[0]
+                    : inputDb[k - 1] + (compressionDb - c[k - 1]) / (c[k] - c[k - 1]) * (inputDb[k] - inputDb[k - 1]);
+                break;
+            }
+        }
+        double sat = double.NegativeInfinity;
+        foreach (double v in outputDb)
+            sat = Math.Max(sat, v);
+        return new GainCompression(gss, g, c, point, point + gss - compressionDb, sat);
     }
 
     /// <summary>Friis' noise factor of matched stages in chain order:

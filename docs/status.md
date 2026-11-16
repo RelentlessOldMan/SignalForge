@@ -4,14 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Gain compression (P1dB)**: from a drive sweep (input amplitudes or powers and the matching
-   output tone powers, or input and output sample blocks), the small-signal gain, the 1 dB
-   compression point (input and output referred) and the saturated output. Not built yet. Needs
-   an ADR: what the sweep is (measured powers in, or samples through `tone_metrics`), how the
-   small-signal gain is taken (the lowest drives, or a fit), and how the 1 dB point is found
-   between sweep points (interpolation in dB). Expected values: the cubic `y = a₁x + a₃x³` on a
-   tone has fundamental `a₁A + ¾a₃A³`, so the 1 dB point solves
-   `1 + ¾(a₃/a₁)A² = 10^(−1/20)` by hand, `A² = (4/3)(1 − 10^(−1/20))|a₁/a₃|`.
+1. **AM/AM and AM/PM**: from a memoryless device's complex input and output samples, the gain
+   in dB and the phase shift in degrees as functions of input amplitude, binned by input level in
+   dB, with the small-signal gain and phase. Not built yet. Needs an ADR: the bins (edges in dB,
+   given or a count over the range), how a bin's gain and phase are averaged (the complex ratio
+   `y/x` averaged, or its magnitude and angle separately), and empty bins. Expected values: the
+   Saleh model `A(r) = α_a r/(1 + β_a r²)`, `Φ(r) = α_φ r²/(1 + β_φ r²)` on samples whose
+   amplitudes are set exactly per bin gives each bin's gain and phase by hand.
 
 ## Built
 
@@ -1140,13 +1139,21 @@ Updated with every chunk of work. Dates are absolute.
   and white noise reads the same in every channel.
   Python 4175 passed, 2 skipped; .NET 3531 passed; conformance 2116/2116 in both. Version
   2026.11.16.9.
+- 2026-11-16: gain compression (ADR 0112): `gain_compression(input_db, output_db, *,
+  compression_db=1.0, linear_points=1)` (C# `Measurements.GainCompression`) takes a drive sweep's
+  levels, takes the small-signal gain from the lowest steps and interpolates the compression
+  point linearly in dB between steps (NaN when the sweep never gets there), with the output point
+  and the saturated output. The vectors are piecewise sweeps with round points and the cubic's
+  fundamental `a₁A + ¾a₃A³`; the tests find the textbook `A² = (4/3)(1 − 10^(−1/20))|a₁/a₃|`.
+  Python 4204 passed, 2 skipped; .NET 3552 passed; conformance 2130/2130 in both. Version
+  2026.11.16.10.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond second and third order, ACPR channel filters beyond RRC,
-phase noise with spurs removed, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
+phase noise with spurs removed, AM/AM and AM/PM, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.
 

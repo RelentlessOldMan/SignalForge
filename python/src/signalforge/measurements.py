@@ -630,6 +630,66 @@ def noise_figure_cascade(noise_figures_db: ArrayLike, gains_db: ArrayLike) -> Ca
     return CascadeNoiseFigure(total, 10 * math.log10(total), _T0 * (total - 1), gain_db, c)
 
 
+@dataclass(frozen=True, eq=False)
+class GainCompression:
+    """Gain compression from a drive sweep (conventions: Gain compression; ADR 0112).
+
+    ``gain_db`` and ``compression`` hold one value per step; the points are NaN when no step
+    compresses by ``compression_db``.
+    """
+
+    small_signal_gain_db: float
+    gain_db: NDArray[np.float64]
+    compression: NDArray[np.float64]
+    input_point_db: float
+    output_point_db: float
+    saturated_output_db: float
+
+
+def gain_compression(
+    input_db: ArrayLike,
+    output_db: ArrayLike,
+    *,
+    compression_db: float = 1.0,
+    linear_points: int = 1,
+) -> GainCompression:
+    """Small-signal gain (the mean over the first ``linear_points`` steps) and the point where
+    the gain has fallen by ``compression_db``, interpolated linearly in dB between sweep steps
+    (conventions: Gain compression; ADR 0112)."""
+    x = np.asarray(input_db, dtype=np.float64)
+    y = np.asarray(output_db, dtype=np.float64)
+    if x.ndim != 1 or y.ndim != 1:
+        raise ValueError("input_db and output_db must be one-dimensional")
+    if x.size < 2 or x.size != y.size:
+        raise ValueError("input_db and output_db need the same number of steps, at least 2")
+    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(y))):
+        raise ValueError("input and output levels must be finite")
+    if not np.all(np.diff(x) > 0):
+        raise ValueError("input_db must be strictly ascending")
+    c_db = real(compression_db, "compression_db")
+    if not c_db > 0:
+        raise ValueError("compression_db must be positive")
+    lin = count(linear_points, "linear_points")
+    if not 1 <= lin <= x.size:
+        raise ValueError("linear_points must be from 1 to the number of steps")
+    g = y - x
+    total = 0.0
+    for v in g[:lin]:
+        total += float(v)
+    gss = total / lin
+    c = gss - g
+    point = math.nan
+    for k in range(x.size):
+        if c[k] >= c_db:
+            if k == 0:
+                point = float(x[0])
+            else:
+                t = (c_db - float(c[k - 1])) / (float(c[k]) - float(c[k - 1]))
+                point = float(x[k - 1]) + t * (float(x[k]) - float(x[k - 1]))
+            break
+    return GainCompression(gss, g, c, point, point + gss - c_db, float(np.max(y)))
+
+
 def _from_db(db: float) -> float:
     """10**(db/10), +inf where it overflows (as in C#)."""
     try:

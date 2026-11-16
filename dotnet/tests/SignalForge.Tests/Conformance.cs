@@ -235,6 +235,8 @@ public static class Conformance
             "phase_noise_ssb" => PhaseNoiseSsbOp(a),
             "integrated_phase_noise" => IntegratedPhaseNoiseOp(a),
             "noise_figure_cascade" => Bind((Reals(a.Get("noise_figures_db")), Reals(a.Get("gains_db"))), t => Measurements.NoiseFigureCascade(t.Item1, t.Item2)),
+            "gain_compression" => Bind((Reals(a.Get("input_db")), Reals(a.Get("output_db")), a.Opt("compression_db", 1.0), a.OptInt("linear_points") ?? 1),
+                t => Measurements.GainCompression(t.Item1, t.Item2, t.Item3, t.Item4)),
             "noise_figure_y_factor" => Bind((a.D("hot_power"), a.D("cold_power"), a.D("enr_db"), a.Has("cold_temperature") ? a.D("cold_temperature") : 290), t => Measurements.NoiseFigureYFactor(t.Item1, t.Item2, t.Item3, t.Item4)),
             "qpsk_map" => Bind(Bits(a.Get("bits")), b => Modulation.QpskMap(b)),
             "qpsk_demap_hard" => Bind(Complexes(a.Get("symbols")), s => Modulation.QpskDemapHard(s)),

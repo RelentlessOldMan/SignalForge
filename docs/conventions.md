@@ -513,6 +513,23 @@ Decided in [ADR 0105](adr/0105-noise-figure-y-factor.md). Python:
   Result (`CascadeNoiseFigure`): `noise_factor`, `noise_figure_db`, `noise_temperature`
   (`T₀(F − 1)`), `gain_db` (the `gᵢ` summed in order) and `contributions`. **(implemented)**
 
+## Gain compression
+
+Decided in [ADR 0112](adr/0112-gain-compression.md). Python:
+`signalforge.measurements.gain_compression`; C#: `Measurements.GainCompression`.
+
+- **Call:** `gain_compression(input_db, output_db, *, compression_db=1.0, linear_points=1)`: a
+  drive sweep's levels in dB of one unit. Both 1-D, the same length `≥ 2`, finite; `input_db`
+  strictly ascending; `compression_db` finite `> 0`; `linear_points` whole, `1 … n`.
+  **(implemented)**
+- **Rule:** `gᵢ = outᵢ − inᵢ`; `G` the mean of the first `linear_points` gains, summed in order;
+  `cᵢ = G − gᵢ`. The input point is at the first `k` with `c_k ≥ compression_db`: `in₀` if
+  `k = 0`, else `in_{k−1} + (compression_db − c_{k−1})/(c_k − c_{k−1})·(in_k − in_{k−1})`; NaN if
+  no step reaches it. Output point `= input point + G − compression_db`. **(implemented)**
+- **Result** (`GainCompression`): `small_signal_gain_db`, `gain_db`, `compression`,
+  `input_point_db`, `output_point_db`, `saturated_output_db` (the largest `outᵢ`).
+  **(implemented)**
+
 ## Bits and symbols
 
 - Bits are integers 0 or 1 (`uint8` / `byte`). **(implemented)**
