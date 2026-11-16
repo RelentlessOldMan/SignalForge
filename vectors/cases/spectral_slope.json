@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "spectral_slope",
+  "description": "Spectral slope (conventions: Spectra, Spectral slope; ADR 0127).",
+  "cases": [
+    {"id": "spectral_slope.flat", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [2.0, 2.0, 2.0, 2.0]}, "expected": {"center": 1.5, "level": 2.0, "slope": 0.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "flat at 2: level 2, slope 0"},
+    {"id": "spectral_slope.line_four", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 4.0]}, "expected": {"center": 1.5, "level": 2.5, "slope": 0.9375}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "a line of slope 1 in 4 bins: the staircase gives 1 - 1/16 = 15/16; level 10/4 at 1.5"},
+    {"id": "spectral_slope.line_eight_down", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], "psd": [8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]}, "expected": {"center": 3.5, "level": 4.5, "slope": -0.984375}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "a line of slope -1 in 8 bins: -(1 - 1/64) = -63/64; level 36/8 = 9/2 at 3.5"},
+    {"id": "spectral_slope.uneven", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [4.0, 0.0, 1.0, 3.0]}, "expected": {"center": 1.5, "level": 2.0, "slope": -0.1875}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "an uneven PSD with an empty bin; linear fits allow zero bins"},
+    {"id": "spectral_slope.db_decades", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 10.0, 100.0, 1000.0], "db": true}, "expected": {"center": 1.5, "level": 15.0, "slope": 9.375}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "0, 10, 20, 30 dB: a dB line of 10 per Hz, so 10 x 15/16; level 15 dB"},
+    {"id": "spectral_slope.db_uneven", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [100.0, 1.0, 10.0, 1.0], "db": true}, "expected": {"center": 1.5, "level": 7.5, "slope": -4.6875}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "20, 0, 10, 0 dB, an uneven dB staircase"},
+    {"id": "spectral_slope.cut_band", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 2.0, 3.0, 4.0], "band": [0.25, 2.75]}, "expected": {"center": 1.5, "level": 2.5, "slope": 1.032}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "band [0.25, 2.75] cuts bins 0 and 3 to a quarter"},
+    {"id": "spectral_slope.span_clipped", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [2.0, 1.0, 1.0, 3.0], "span": [0.0, 3.0]}, "expected": {"center": 1.5, "level": 2.3333333333333335, "slope": 0.5555555555555556}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "span (0, 3) halves bins 0 and 3 at doubled density"},
+    {"id": "spectral_slope.offset_axis", "op": "spectral_slope", "args": {"frequencies": [1000.0, 1001.0, 1002.0], "psd": [1.0, 4.0, 2.0]}, "expected": {"center": 1001.0, "level": 2.3333333333333335, "slope": 0.4444444444444444}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "an uneven three-bin PSD far from zero; the uncentered equations are exact in Fractions"},
+    {"id": "spectral_slope.db_zero_bin", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 0.0, 1.0, 1.0], "db": true}, "error": "invalid_argument", "source": "with db, every bin in the band must have a positive PSD"},
+    {"id": "spectral_slope.no_power", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [0.0, 0.0, 1.0, 0.0], "band": [-0.5, 1.5]}, "error": "invalid_argument", "source": "the band has no power"},
+    {"id": "spectral_slope.band_reversed", "op": "spectral_slope", "args": {"frequencies": [0.0, 1.0, 2.0, 3.0], "psd": [1.0, 1.0, 1.0, 1.0], "band": [2.0, 1.0]}, "error": "invalid_argument", "source": "band low must be below band high"}
+  ]
+}

@@ -1206,6 +1206,16 @@ class SpectralShape:
     kurtosis: float
 
 
+@dataclass(frozen=True)
+class SpectralSlope:
+    """The least-squares line through a PSD over a band (conventions: Spectra, Spectral slope;
+    ADR 0127): ``level`` at ``center`` Hz, ``slope`` per Hz, in the PSD's units or dB."""
+
+    center: float
+    level: float
+    slope: float
+
+
 def _band_edges(
     band: ArrayLike | None, left: NDArray[np.float64], right: NDArray[np.float64]
 ) -> tuple[float, float]:
@@ -1281,6 +1291,33 @@ def spectral_shape(
     if not m2 > 0:
         raise ValueError("the band has no spread")
     return SpectralShape(m3 / m2**1.5, m4 / (m2 * m2))
+
+
+def spectral_slope(
+    frequencies: ArrayLike,
+    psd: ArrayLike,
+    *,
+    band: ArrayLike | None = None,
+    span: Span | ArrayLike | None = None,
+    db: bool = False,
+) -> SpectralSlope:
+    """The continuous least-squares line through the PSD, taken as constant over each bin (in dB
+    with ``db``), over ``band = (low, high)`` in Hz (the whole spectrum by default)."""
+    power, left, right = _bins(frequencies, psd, span)
+    lo, hi = _band_edges(band, left, right)
+    a, b = np.maximum(left, lo), np.minimum(right, hi)
+    keep = b > a
+    a, b, d = a[keep], b[keep], (power / (right - left))[keep]
+    if not float(np.sum(d * (b - a))) > 0:
+        raise ValueError("the band has no power")
+    if db:
+        if np.any(d == 0):
+            raise ValueError("with db, every bin in the band must have a positive PSD")
+        d = 10 * np.log10(d)
+    center, width = (lo + hi) / 2, hi - lo
+    level = float(np.sum(d * (b - a))) / width
+    moment = float(np.sum(d * ((b - center) ** 2 - (a - center) ** 2) / 2))
+    return SpectralSlope(center, level, moment / (width**3 / 12))
 
 
 def spectral_flatness(

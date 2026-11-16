@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral slope**: the least-squares line through a band's PSD against frequency, the
-   audio feature for how fast the power falls (tilt). Not built yet. Needs an ADR: a function
-   `spectral_slope(frequencies, psd, *, band=None, span=None, db=False)`, whether the fit is in
-   linear PSD or in dB (with zero bins then an error), the weights (bin overlap with the band),
-   and the result (slope and intercept at the band's centre). Expected values: straight lines
-   fitted exactly, and short PSDs worked by hand with Fractions.
+1. **Spectral entropy**: the Shannon entropy of a band's normalized PSD, how evenly its power
+   spreads (a tone near 0, white noise near the maximum). Not built yet. Needs an ADR: a
+   function `spectral_entropy(frequencies, psd, *, band=None, span=None)` on the step density
+   of `spectral_moments`, the definition (the differential entropy `−∫ p ln p df` of the
+   normalized density, and its value over `ln W` as the 0-to-1 normalized form), the log base,
+   zero bins (`0 ln 0 = 0`), and zero power. Expected values: a flat band's `ln W` and 1, a
+   single bin, and short PSDs worked by hand.
 
 ## Built
 
@@ -1261,6 +1262,16 @@ Updated with every chunk of work. Dates are absolute.
   stretch, scaling, a Gaussian with the step's own spread, and a flat cut band.
   Python 4515 passed, 2 skipped; .NET 3854 passed; conformance 2308/2308 in both. Version
   2026.11.16.24.
+- 2026-11-16: spectral slope (ADR 0127): `spectral_slope(frequencies, psd, *, band=None,
+  span=None, db=False)` (C# `Spectral.SpectralSlope`) is the continuous least-squares line
+  through the PSD's step function over the band (in dB with `db`). It gives `SpectralSlope(center,
+  level, slope)`, with the level at the band's centre. A line sampled into `M` bins gives
+  `β(1 − 1/M²)`, the staircase effect, which is documented. With `db`, zero bins are an error.
+  The vectors are Fraction solutions of the uncentered normal equations, with dB on powers of ten.
+  The tests cover sampled lines, level × width = power, mirroring, axis shift, and an exponential
+  PSD in dB.
+  Python 4536 passed, 2 skipped; .NET 3875 passed; conformance 2320/2320 in both. Version
+  2026.11.16.25.
 
 ## Not built
 

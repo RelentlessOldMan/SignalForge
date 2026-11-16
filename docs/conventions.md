@@ -413,6 +413,13 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `j = 2, 3, 4`; result `SpectralShape(skewness = m3/m2^{3/2}, kurtosis = m4/m2²)`, not excess (a
   flat band gives 0 and 9/5). Band rules as for spectral flatness; `power > 0` and `m2 > 0`.
   **(implemented)**
+- **Spectral slope** (`spectral_slope(frequencies, psd, band=None, span=None, db=False)`,
+  [ADR 0127](adr/0127-spectral-slope.md)): on the pieces `[a_k, b_k]` of the spectral moments,
+  `y_k = d_k` (or `10·log10 d_k` with `db`); the continuous least-squares line over the band,
+  `center = (low + high)/2`, `W = high − low`: `level = Σ y_k (b_k − a_k)/W`, `slope = Σ y_k
+  ((b_k − center)² − (a_k − center)²)/2 / (W³/12)`. Result `SpectralSlope(center, level,
+  slope)`. Band rules as for spectral flatness; power `> 0`, and with `db` every overlapping bin
+  `> 0`. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

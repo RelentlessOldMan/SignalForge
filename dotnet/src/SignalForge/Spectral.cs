@@ -206,6 +206,13 @@ public sealed record SpectralMoments(double Power, double Centroid, double RmsBa
 /// <param name="Kurtosis">m4 / m2², not the excess: a flat band gives 9/5.</param>
 public sealed record SpectralShape(double Skewness, double Kurtosis);
 
+/// <summary>The least-squares line through a PSD over a band (conventions: Spectra, Spectral slope;
+/// ADR 0127).</summary>
+/// <param name="Center">The band's centre in Hz, where <paramref name="Level"/> is given.</param>
+/// <param name="Level">The line's value at the centre: the band's mean PSD (or mean dB).</param>
+/// <param name="Slope">The line's slope, in the PSD's units (or dB) per Hz.</param>
+public sealed record SpectralSlope(double Center, double Level, double Slope);
+
 /// <summary>Where the PSD falls a given number of dB below its peak (conventions: Spectra, x dB
 /// bandwidth; ADR 0122).</summary>
 /// <param name="PeakFrequency">The peak bin's center, in the PSD's axis.</param>
@@ -1882,6 +1889,45 @@ public static class Spectral
         if (!(m2 > 0))
             throw new ArgumentException("the band has no spread", nameof(psd));
         return new SpectralShape(m3 / Math.Pow(m2, 1.5), m4 / (m2 * m2));
+    }
+
+    /// <summary>
+    /// The continuous least-squares line through the PSD, taken as constant over each bin (in dB
+    /// with <paramref name="db"/>), over <paramref name="band"/> (the whole spectrum when null)
+    /// (conventions: Spectra, Spectral slope; ADR 0127).
+    /// </summary>
+    /// <param name="frequencies">Bin centers in Hz, ascending and evenly spaced.</param>
+    /// <param name="psd">PSD per bin, finite and non-negative.</param>
+    /// <param name="band">The band's edges in Hz, or null for the whole spectrum.</param>
+    /// <param name="span">Clips the outer bins, as for <see cref="OccupiedBandwidth"/>.</param>
+    /// <param name="db">Fit 10·log10 of the PSD instead of the PSD.</param>
+    /// <returns>The band's centre, the line's level there and its slope.</returns>
+    /// <exception cref="ArgumentException">An edge is out of order or not finite, the band leaves the spectrum, the band has no power, or with <paramref name="db"/> a bin in the band is zero.</exception>
+    public static SpectralSlope SpectralSlope(ReadOnlySpan<double> frequencies, ReadOnlySpan<double> psd,
+        (double Low, double High)? band = null, (double Low, double High)? span = null, bool db = false)
+    {
+        var (power, left, right) = Bins(frequencies, psd, span);
+        var (lo, hi) = BandEdges(band, left, right);
+        double center = (lo + hi) / 2, width = hi - lo, total = 0, sum = 0, moment = 0;
+        bool zero = false;
+        for (int k = 0; k < power.Length; k++)
+        {
+            double a = Math.Max(left[k], lo), b = Math.Min(right[k], hi);
+            if (!(b > a))
+                continue;
+            double d = power[k] / (right[k] - left[k]);
+            total += d * (b - a);
+            if (d == 0)
+                zero = true;
+            double y = db ? 10 * Math.Log10(d) : d;
+            sum += y * (b - a);
+            moment += y * ((b - center) * (b - center) - (a - center) * (a - center)) / 2;
+        }
+        if (!(total > 0))
+            throw new ArgumentException("the band has no power", nameof(psd));
+        if (db && zero)
+            throw new ArgumentException("with db, every bin in the band must have a positive PSD", nameof(psd));
+        return new SpectralSlope(center, sum / width, moment / (width * width * width / 12));
     }
 
     /// <summary>
