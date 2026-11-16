@@ -1071,6 +1071,13 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   samples are further apart, so a signal of `sps` samples per symbol comes out at `sps/r`.
   `ppm` finite with `|ppm| ≤ 1e5`; `half_width` an integer `≥ 1`. `ppm = 0` returns the input.
   **(implemented)**
+- **Sample clock drift** (`clock_drift(samples, ppm_start, ppm_end, *, half_width=16)`,
+  [ADR 0102](adr/0102-clock-drift.md)): the clock offset linear in input time,
+  `p(t) = p₀ + (p₁ − p₀)·t/(N − 1)`, each step `1 + p(t_n)/1e6`. With `r = 1 + p₀/1e6` and
+  `d = (p₁ − p₀)/1e6/(N − 1)` computed in that order, `t_n = r·expm1(n·log1p(d))/d`, or `n·r` as
+  in Sample clock offset when `d = 0` (also for `N ≤ 1`). `y[n] = z(t_n)` through the same kernel
+  for `n = 0, 1, …` while `t_n ≤ N − 1` (none for empty input). Both offsets finite with
+  `|·| ≤ 1e5`; `half_width` an integer `≥ 1`. **(implemented)**
 
 ## Synchronization
 

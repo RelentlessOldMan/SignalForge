@@ -2,6 +2,7 @@
 
 from .channel import (
     awgn,
+    clock_drift,
     clock_offset,
     dc_offset,
     fractional_delay,
@@ -184,7 +185,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.15.4"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.0"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -235,6 +236,7 @@ __all__ = [
     "chebyshev2_highpass",
     "chebyshev2_lowpass",
     "chirp",
+    "clock_drift",
     "clock_offset",
     "cma_equalizer",
     "convolve",

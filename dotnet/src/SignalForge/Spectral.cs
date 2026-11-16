@@ -1278,14 +1278,14 @@ public static class Spectral
     }
 
     /// <summary>log(1 + x), accurate for small x (Kahan's form).</summary>
-    private static double LogP1(double x)
+    internal static double LogP1(double x)
     {
         double u = 1 + x;
         return u == 1 ? x : Math.Log(u) * x / (u - 1);
     }
 
     /// <summary>exp(x) − 1, accurate for small x (Kahan's form).</summary>
-    private static double ExpM1(double x)
+    internal static double ExpM1(double x)
     {
         double u = Math.Exp(x);
         if (u == 1) return x;

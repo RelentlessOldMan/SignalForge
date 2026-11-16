@@ -4,13 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Clock drift**: a sample clock whose offset changes linearly over the input, `clock_drift(samples,
-   ppm_start, ppm_end, *, half_width=16)`, the time-varying form of `clock_offset` (ADR 0045). It
-   reads `y[n] = z(t_n)` with `t_n` the sum of the step sizes so far, using the same fractional
-   delay kernel. Needs an ADR: how `t_n` is computed (a closed form, `n·r₀ + n(n−1)/2·Δ`, or a
-   running sum, which the two languages must do in the same order), where it stops, and the
-   limits. Expected values: `ppm_start = ppm_end` gives `clock_offset`; a linear input
-   `x[k] = k` read exactly where the kernel is exact; and the output length worked by hand.
+1. **Multiterm Lomb-Scargle**: `lomb_scargle_multiterm(times, values, frequencies, terms, *,
+   uncertainties=None)`, the generalized periodogram (ADR 0081) with `terms` harmonics: for each
+   `f`, `(χ²₀ − χ²)/χ²₀` of the weighted least-squares fit of `c + Σₖ aₖ cos kωt + bₖ sin kωt`,
+   `k = 1 … terms`. Needs an ADR: how the fit is solved in both languages (the same small solver,
+   in the same order), what happens when the design is singular (a frequency where harmonics
+   alias, too few samples), and the limits on `terms`. Expected values: `terms = 1` gives
+   `generalized_lomb_scargle`; a generator that solves the normal equations in exact rationals
+   from the floating-point design; a square wave whose harmonics a multiterm fit captures by hand.
 
 ## Built
 
@@ -1050,12 +1051,21 @@ Updated with every chunk of work. Dates are absolute.
   tone is above every draw.
   Python 3856 passed, 2 skipped; .NET 3242 passed; conformance 1973/1973 in both. Version
   2026.11.15.4.
+- 2026-11-16: sample clock drift (ADR 0102): `clock_drift(samples, ppm_start, ppm_end, *,
+  half_width=16)` (C# `Channel.ClockDrift`), a clock offset linear in input time from `ppm_start`
+  at the first sample to `ppm_end` at the last. The read positions follow the recurrence
+  `t_{n+1} = r + (1 + d)·t_n`, computed in closed form as `r·expm1(n·log1p(d))/d` so a small `d`
+  keeps its digits. Equal offsets give `clock_offset` bit for bit. The generator runs the
+  recurrence in exact rationals and reads with its own kernel; the output length of one case is
+  worked by hand. 15 vectors.
+  Python 3886 passed, 2 skipped; .NET 3269 passed; conformance 1988/1988 in both. Version
+  2026.11.16.0.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband and multiterm forms), the rest of modulation (PSK/QAM
-beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading and a constant clock offset, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
+beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset and linear clock drift, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (ACPR channel filtering,
 phase noise, NF), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.

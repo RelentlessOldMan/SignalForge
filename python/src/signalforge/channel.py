@@ -182,6 +182,33 @@ def clock_offset(samples: ArrayLike, ppm: float, *, half_width: int = 16) -> NDA
     return _read_at(np.asarray(x, dtype=np.complex128), pos, h)
 
 
+def clock_drift(
+    samples: ArrayLike, ppm_start: float, ppm_end: float, *, half_width: int = 16
+) -> NDArray[np.complex128]:
+    """The input read by a receiver whose clock offset moves linearly from ``ppm_start`` at the
+    first input sample to ``ppm_end`` at the last (conventions: Channel, Sample clock drift)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    p0, p1 = real(ppm_start, "ppm_start"), real(ppm_end, "ppm_end")
+    if abs(p0) > 1e5:
+        raise ValueError("ppm_start must be within 1e5")
+    if abs(p1) > 1e5:
+        raise ValueError("ppm_end must be within 1e5")
+    h = count(half_width, "half_width")
+    if h < 1:
+        raise ValueError("half_width must be at least 1")
+    if x.size == 0:
+        return np.zeros(0, dtype=np.complex128)
+    r = 1 + p0 / 1e6
+    d = (p1 - p0) / 1e6 / (x.size - 1) if x.size > 1 else 0.0
+    # every step is at least 0.9, so this many positions reach past the end
+    n = np.arange(int((x.size - 1) / 0.9) + 2, dtype=np.float64)
+    pos = n * r if d == 0 else r * np.expm1(n * math.log1p(d)) / d
+    past = np.flatnonzero(pos > x.size - 1)
+    return _read_at(np.asarray(x, dtype=np.complex128), pos[: past[0]], h)
+
+
 def rician_fading(
     samples: ArrayLike,
     k_factor: float,

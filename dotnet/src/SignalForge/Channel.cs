@@ -274,6 +274,38 @@ public static class Channel
         return [.. y];
     }
 
+    /// <summary>The input read by a receiver whose clock offset moves linearly from
+    /// <paramref name="ppmStart"/> at the first input sample to <paramref name="ppmEnd"/> at the
+    /// last (conventions: Channel, Sample clock drift; ADR 0102).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="ppmStart">Clock offset at the first input sample in parts per million, finite,
+    /// within ±1e5; positive spreads the samples further apart.</param>
+    /// <param name="ppmEnd">Clock offset at the last input sample, as <paramref name="ppmStart"/>.</param>
+    /// <param name="halfWidth">Half the interpolator's length in samples, at least 1.</param>
+    /// <returns>The samples read at each position up to the last input sample.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">An argument is out of range.</exception>
+    public static Complex[] ClockDrift(ReadOnlySpan<Complex> samples, double ppmStart, double ppmEnd, int halfWidth = 16)
+    {
+        if (!(Math.Abs(ppmStart) <= 1e5))
+            throw new ArgumentOutOfRangeException(nameof(ppmStart), ppmStart, "must be finite and within 1e5");
+        if (!(Math.Abs(ppmEnd) <= 1e5))
+            throw new ArgumentOutOfRangeException(nameof(ppmEnd), ppmEnd, "must be finite and within 1e5");
+        ArgumentOutOfRangeException.ThrowIfLessThan(halfWidth, 1);
+        int last = samples.Length - 1;
+        double r = 1 + ppmStart / 1e6;
+        double d = last > 0 ? (ppmEnd - ppmStart) / 1e6 / last : 0;
+        double g = Spectral.LogP1(d);
+        var y = new List<Complex>();
+        for (int n = 0; ; n++)
+        {
+            double t = d == 0 ? n * r : r * Spectral.ExpM1(n * g) / d;
+            if (!(t <= last))
+                break;
+            y.Add(Interpolate(samples, t, halfWidth));
+        }
+        return [.. y];
+    }
+
     // h(f − j) for j = −H+1 … H (conventions: Channel, Fractional delay).
     private static double[] DelayKernel(double f, int halfWidth, double norm)
     {

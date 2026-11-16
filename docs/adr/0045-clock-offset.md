@@ -15,7 +15,8 @@ needs a channel model that samples the signal at a slightly different rate.
   output is as long as the input lasts at that rate.
 - The offset is in parts per million because that is how oscillators are specified; it is held
   to ±10 %, beyond which the call is a resampler, not a clock error.
-- Only a constant offset: a wandering clock (jitter) is a later model.
+- Only a constant offset: a wandering clock (jitter) is a later model. Linear drift is
+  [ADR 0102](0102-clock-drift.md).
 
 ## Consequences
 
