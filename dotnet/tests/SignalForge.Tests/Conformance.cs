@@ -348,6 +348,8 @@ public static class Conformance
                 t => Spectral.SpectralCrest(t.Item1, t.Item2, t.Item3, t.Item4)),
             "spectral_variation" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("previous")), Reals(a.Get("current")), a.Has("band") ? Pair(Reals(a.Get("band"))) : null, Span(a)),
                 t => Spectral.SpectralVariation(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "real_cepstrum" => Bind((Reals(a.Get("samples")), a.Has("nfft") ? a.I("nfft") : (int?)null),
+                t => Spectral.RealCepstrum(t.Item1, t.Item2)),
             "harmonic_centroid" => Bind((Reals(a.Get("frequencies")), Reals(a.Get("heights")), Ints(a.Get("orders"))),
                 t => Spectral.HarmonicCentroid(t.Item1, t.Item2, t.Item3)),
             "harmonic_deviation" => Bind((Reals(a.Get("heights")), Ints(a.Get("orders"))),

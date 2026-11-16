@@ -2354,6 +2354,45 @@ public static class Spectral
     }
 
     /// <summary>
+    /// <c>Re IFFT(ln|FFT(x, nfft)|)</c>: the real cepstrum, <paramref name="nfft"/> values
+    /// (conventions: Spectra, Real cepstrum; ADR 0151).
+    /// </summary>
+    /// <param name="samples">Real samples, at least one, finite.</param>
+    /// <param name="nfft">The FFT length, at least the sample count; the sample count when null.</param>
+    /// <returns>The cepstrum at quefrencies 0 to <c>nfft − 1</c> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a spectrum bin is exactly 0.</exception>
+    public static double[] RealCepstrum(ReadOnlySpan<double> samples, int? nfft = null)
+    {
+        if (samples.IsEmpty)
+            throw new ArgumentException("needs at least one sample", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        int m = nfft ?? samples.Length;
+        if (m < samples.Length)
+            throw new ArgumentOutOfRangeException(nameof(nfft), "nfft must be at least the sample count");
+        var padded = new Complex[m];
+        for (int i = 0; i < samples.Length; i++)
+            padded[i] = samples[i];
+        Complex[] spectrum = Fft(padded);
+        var logs = new Complex[m];
+        for (int k = 0; k < m; k++)
+        {
+            double magnitude = Complex.Abs(spectrum[k]);
+            if (magnitude == 0)
+                throw new ArgumentException("a spectrum bin is exactly 0, so its log is undefined", nameof(samples));
+            logs[k] = Math.Log(magnitude);
+        }
+        Complex[] c = Ifft(logs);
+        var result = new double[m];
+        for (int i = 0; i < m; i++)
+            result[i] = c[i].Real;
+        return result;
+    }
+
+    /// <summary>
     /// Each spectral peak's width where the PSD crosses height − relHeight·prominence,
     /// interpolated linearly between bins; in order of frequency (conventions: Spectra, Peak
     /// widths; ADR 0138).

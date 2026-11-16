@@ -548,6 +548,10 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `spread = sqrt(Σ a (t − centroid)² / Σ a)`, both in Hz. Gives `HarmonicCentroid(centroid,
   spread)`. Arrays 1-D of one length; tones finite and positive; heights finite and `≥ 0`;
   orders whole and `≥ 0`; the matched amplitudes must sum to more than 0. **(implemented)**
+- **Real cepstrum** (`real_cepstrum(samples, nfft=None)`, C# `Spectral.RealCepstrum`,
+  [ADR 0151](adr/0151-real-cepstrum.md)): `c = Re IFFT(ln|FFT(x, M)|)`, natural log, `M = nfft`
+  (zero padded; default `N`, at least `N`), all `M` values returned. A bin of magnitude exactly
+  0 is `invalid_argument` (no floor). Real, finite, at least one sample. **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on

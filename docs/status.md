@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Real cepstrum**: `c = IFFT(ln|FFT(x)|)` of a real signal, real valued and `nfft` long.
-   Not built yet (no cepstral function exists yet). Needs an ADR: the log base (natural), the
-   FFT length (`nfft ≥ N`, zero padded, and its default), a zero bin (`ln 0`: an error or a floor
-   such as `eps`), whether the result is the full `nfft` or the first half, and complex input
-   (`invalid_argument`). Expected values: sequences with exact cepstra. A minimum-phase
-   `x = δ + a·δ[n−1]` (`|a| < 1`) has `c[n] = −(−a)ⁿ/n` for `n ≥ 1` and `c[0] = 0` (from the
-   series of `ln(1 + a z⁻¹)`), up to the aliasing that `nfft` brings, worked exactly.
+1. **Cepstrum pitch**: the fundamental from the highest real-cepstrum peak (ADR 0151) among the
+   quefrencies `ceil(fs/max)` to `floor(fs/min)`, the cepstral twin of the autocorrelation pitch
+   (ADR 0150). Not built yet. Needs an ADR: whether `nfft` is passed through, refinement (the
+   same parabola rule as ADR 0150, or none), and what is reported besides the frequency (the
+   peak's cepstral value as a strength). Expected values: the peak and parabola worked from the
+   Fractions series of ADR 0151 for two-tap sequences, plus a pulse train test.
 
 ## Built
 
@@ -1465,6 +1464,15 @@ Updated with every chunk of work. Dates are absolute.
   cover a period of 36.6 samples recovered to 0.5% and scaling.
   Python 4887 passed, 2 skipped; .NET 4221 passed; conformance 2588/2588 in both. Version
   2026.11.16.48.
+- 2026-11-16: real cepstrum (ADR 0151): `real_cepstrum(samples, nfft=None)` (C#
+  `Spectral.RealCepstrum`) is `Re IFFT(ln|FFT(x, nfft)|)`, with a natural log and all `nfft`
+  values. A zero bin is `invalid_argument`. The vectors come from the series of
+  `ln|1 + a e^(−jω)|`, aliased at `nfft` bins and summed in Fractions. They cover a
+  minimum-phase pair, its time reverse, a delay, a negative `a` with odd `nfft`, a gain, the
+  default `nfft` and an impulse. The tests cover a pulse train peaking at its period, evenness
+  and complex rejection.
+  Python 4901 passed, 2 skipped; .NET 4234 passed; conformance 2599/2599 in both. Version
+  2026.11.16.49.
 
 ## Not built
 

@@ -217,6 +217,7 @@ from .spectral import (
     occupied_bandwidth,
     odd_even_ratio,
     peak_widths,
+    real_cepstrum,
     spectral_contrast,
     spectral_crest,
     spectral_decrease,
@@ -273,7 +274,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.48"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.49"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -492,6 +493,7 @@ __all__ = [
     "read_wav",
     "read_wav_cues",
     "read_wav_info",
+    "real_cepstrum",
     "resample",
     "resample_taps",
     "rician_fading",

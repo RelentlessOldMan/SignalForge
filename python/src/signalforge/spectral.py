@@ -1745,6 +1745,26 @@ def harmonic_centroid(
     return HarmonicCentroid(centroid, spread)
 
 
+def real_cepstrum(samples: ArrayLike, nfft: int | None = None) -> NDArray[np.float64]:
+    """``Re IFFT(ln|FFT(x, nfft)|)``: the real cepstrum, ``nfft`` values (conventions: Spectra,
+    Real cepstrum; ADR 0151)."""
+    x = np.asarray(samples)
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if x.ndim != 1 or x.shape[0] == 0:
+        raise ValueError("samples must be a non-empty one-dimensional array")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    m = x.shape[0] if nfft is None else count(nfft, "nfft")
+    if m < x.shape[0]:
+        raise ValueError("nfft must be at least len(samples)")
+    magnitude = np.abs(np.fft.fft(x, m))
+    if np.any(magnitude == 0):
+        raise ValueError("a spectrum bin is exactly 0, so its log is undefined")
+    return np.asarray(np.fft.ifft(np.log(magnitude)).real, dtype=np.float64)
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,
