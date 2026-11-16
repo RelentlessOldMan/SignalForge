@@ -4,14 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Integrated phase noise and jitter**: `integrated_phase_noise(samples, sample_rate, f_lo,
-   f_hi, ...)`, the RMS phase error `√(2∫L(f)df)` in radians over an offset band and the RMS
-   jitter `φ_rms/(2πf_c)`, from the same PSD and carrier group as `phase_noise_ssb` (ADR 0108).
-   Not built yet; the usual figure quoted beside `L(f)`. Needs an ADR: which bins the band holds
-   (whole bins between the edges, or partial), whether both sidebands are summed (`2∫L` is the
-   double-sideband total), and what a spur in the band does. Expected values: a pure phase line
-   `m·sin(2πf_m n)` gives `φ_rms² = 2·Σ J_k²/J_0²` over the lines in the band, exact by Bessel
-   functions; the Wiener Lorentzian integrates by hand to an arctan, checked as a statistic.
+1. **Second-order intermodulation and IP2**: `two_tone_imd2(samples, sample_rate, f1, f2, ...)`
+   (or a field on the two-tone result), the products at `f₂ − f₁` and `f₁ + f₂` and the
+   second-order intercept `IP2 = 2P_t − P_IM2` in dB. Not built yet; the figure quoted for
+   direct-conversion receivers beside IP3 (ADR 0107). Needs an ADR: a new function or new fields,
+   which product sets IP2 (the worse, as for IP3), and how the groups are claimed (DC, the tones,
+   the third-order products, then these). Expected values: `y = x + a₂x²` on two cosines expands
+   by hand to products of amplitude `a₂A₁A₂` at the sum and difference, and the small-drive
+   intercept `A_IP2 = 1/|a₂|`; complex input has no second-order products from `|x|²x`-type
+   devices, so the cases are real.
 
 ## Built
 
@@ -1113,13 +1114,23 @@ Updated with every chunk of work. Dates are absolute.
   check Wiener phase noise against its discrete Lorentzian as a statistic.
   Python 4098 passed, 2 skipped; .NET 3472 passed; conformance 2082/2082 in both. Version
   2026.11.16.6.
+- 2026-11-16: integrated phase noise (ADR 0109): `integrated_phase_noise(samples, sample_rate,
+  f_lo, f_hi, *, carrier, nperseg, window, beta, width)` (C# `Measurements.IntegratedPhaseNoise`,
+  real and complex) sums the PSD's whole bins with `f_lo ≤ |f − f_c| ≤ f_hi` on both sides over
+  the carrier group's power (the carrier as for `phase_noise_ssb`, now shared code), and returns
+  it in dBc, as the RMS phase `φ_rms` in radians and as the RMS jitter `φ_rms/(2π|f_c|)`. The
+  vectors are pure phase modulation, `ratio = Σ J_k²/J_0²` over the lines in the band, real and
+  complex; the tests check a small sine's `m/√2` and Wiener phase noise against the Lorentzian's
+  arctan integral as a statistic.
+  Python 4115 passed, 2 skipped; .NET 3489 passed; conformance 2092/2092 in both. Version
+  2026.11.16.7.
 
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM
 beyond QPSK, 8-PSK, 16-QAM and 64-QAM, FSK beyond 2- and 4-FSK in the link with noncoherent detection and fixed timing (FSK timing tracking, coherent detection, other modulation indices), OFDM beyond the link's prefix timing, preamble estimate, common-phase and window-offset tracking (pilots, time-varying channels), analog), impairments beyond AWGN, frequency offset, IQ imbalance, DC offset, Wiener phase noise and static multipath, fractional delay, block fading, a constant clock offset, linear clock drift and white clock jitter, tracking loops for modulations beyond QPSK, 8-PSK, 16-QAM and 64-QAM, equalizers beyond normalized LMS, its decision-feedback form, the least-squares start, the phase loop with its pilot slip correction, the constant-modulus (blind) form and RLS with its feedback form in the link (RLS for the blind form), decision-directed equalization beyond the link's preamble-trained ones, RF measurements (IMD beyond third order and IP2, ACPR channel filtering,
-integrated phase noise and jitter, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
+phase noise with spurs removed, NF beyond the Y-factor method and Friis' cascade), standards waveforms, file formats beyond SigMF, WAV and 1-D and 2-D `.npy` (`.npy` and `.npz` shapes beyond 2-D, streaming reads and writes,
 per-channel SigMF metadata, WAV metadata beyond `LIST`/`INFO` tags and `cue ` points with `labl` labels and `ltxt` lengths), plotting, CLI,
 packaging and publishing.
 

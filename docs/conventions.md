@@ -463,6 +463,23 @@ Decided in [ADR 0108](adr/0108-phase-noise-measurement.md). Python:
 - **Result** (`PhaseNoise`): `carrier_frequency`, `carrier_power`, `offsets`, `l_dbc_hz`.
   **(implemented)**
 
+## Integrated phase noise
+
+Decided in [ADR 0109](adr/0109-integrated-phase-noise.md). Python:
+`signalforge.measurements.integrated_phase_noise`; C#: `Measurements.IntegratedPhaseNoise`.
+
+- **Call:** `integrated_phase_noise(samples, sample_rate, f_lo, f_hi, *, carrier=None,
+  nperseg=None, window="blackman_harris", beta=None, width=None)`, real or complex.
+  `0 < f_lo < f_hi`, finite. Spectrum, carrier, group, `carrier_power` and `carrier_frequency` as
+  for Phase noise measurement. **(implemented)**
+- **Band:** the bins with `f_lo ≤ |f_k − carrier_frequency| ≤ f_hi`, both sides, whole bins only.
+  `carrier_frequency ± f_hi` within the spectrum as for an offset, and no band bin in the carrier
+  group, else `invalid_argument`. **(implemented)**
+- **Result** (`IntegratedPhaseNoise`): `carrier_frequency`, `carrier_power`, `f_lo`, `f_hi`;
+  `ratio = Σ PSD_k·Δf / carrier_power` over the band; `integrated_dbc = 10·log10 ratio` (`−∞` for
+  zero); `phase_rms = √ratio` rad; `jitter_rms = phase_rms/(2π|carrier_frequency|)` s, `+∞` when
+  `carrier_frequency = 0` (`0` if `phase_rms` is `0`). **(implemented)**
+
 ## Noise figure
 
 Decided in [ADR 0105](adr/0105-noise-figure-y-factor.md). Python:

@@ -84,12 +84,14 @@ from .files import (
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import (
     CascadeNoiseFigure,
+    IntegratedPhaseNoise,
     NoiseFigure,
     PhaseNoise,
     PowerStats,
     Sfdr,
     ToneMetrics,
     TwoToneImd,
+    integrated_phase_noise,
     noise_figure_cascade,
     noise_figure_y_factor,
     phase_noise_ssb,
@@ -202,7 +204,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.6"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.7"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -216,6 +218,7 @@ __all__ = [
     "FirFilter",
     "HarmonicFTest",
     "IirFilter",
+    "IntegratedPhaseNoise",
     "LineRemoval",
     "NoiseFigure",
     "OccupiedBandwidth",
@@ -298,6 +301,7 @@ __all__ = [
     "generalized_lomb_scargle",
     "harmonic_f_test",
     "ifft",
+    "integrated_phase_noise",
     "interpolate",
     "iq_image_rejection_db",
     "iq_imbalance",

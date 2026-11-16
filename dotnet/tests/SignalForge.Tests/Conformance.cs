@@ -232,6 +232,7 @@ public static class Conformance
             "sfdr" => SfdrOp(a),
             "two_tone_imd" => TwoToneImdOp(a),
             "phase_noise_ssb" => PhaseNoiseSsbOp(a),
+            "integrated_phase_noise" => IntegratedPhaseNoiseOp(a),
             "noise_figure_cascade" => Bind((Reals(a.Get("noise_figures_db")), Reals(a.Get("gains_db"))), t => Measurements.NoiseFigureCascade(t.Item1, t.Item2)),
             "noise_figure_y_factor" => Bind((a.D("hot_power"), a.D("cold_power"), a.D("enr_db"), a.Has("cold_temperature") ? a.D("cold_temperature") : 290), t => Measurements.NoiseFigureYFactor(t.Item1, t.Item2, t.Item3, t.Item4)),
             "qpsk_map" => Bind(Bits(a.Get("bits")), b => Modulation.QpskMap(b)),
@@ -599,6 +600,18 @@ public static class Conformance
             return () => Measurements.PhaseNoiseSsb(cs, fs, offsets, carrier, nperseg, window, beta, width);
         double[] x = Reals(samples);
         return () => Measurements.PhaseNoiseSsb(x, fs, offsets, carrier, nperseg, window, beta, width);
+    }
+
+    private static Func<object?> IntegratedPhaseNoiseOp(Args a)
+    {
+        object? samples = a.Get("samples");
+        double fs = a.D("sample_rate"), lo = a.D("f_lo"), hi = a.D("f_hi");
+        var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.BlackmanHarris;
+        var (carrier, nperseg, beta, width) = (a.OptD("carrier"), a.OptInt("nperseg"), a.OptD("beta"), a.OptInt("width"));
+        if (samples is Complex[] cs)
+            return () => Measurements.IntegratedPhaseNoise(cs, fs, lo, hi, carrier, nperseg, window, beta, width);
+        double[] x = Reals(samples);
+        return () => Measurements.IntegratedPhaseNoise(x, fs, lo, hi, carrier, nperseg, window, beta, width);
     }
 
     private static Func<object?> FTestOp(Args a)
