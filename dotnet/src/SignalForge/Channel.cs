@@ -140,6 +140,57 @@ public static class Channel
         return den <= 0 ? double.PositiveInfinity : 10 * Math.Log10(num / den);
     }
 
+    /// <summary>Saleh's travelling-wave tube model, A(r) = αa·r/(1 + βa·r²) and
+    /// Φ(r) = αφ·r²/(1 + βφ·r²), on the complex envelope (conventions: Channel, Amplifier models; ADR 0114).</summary>
+    /// <param name="samples">Complex envelope samples.</param>
+    /// <param name="alphaA">Small-signal gain αa, positive and finite.</param>
+    /// <param name="betaA">AM/AM knee βa, finite and not negative.</param>
+    /// <param name="alphaPhi">AM/PM scale αφ in radians, finite.</param>
+    /// <param name="betaPhi">AM/PM knee βφ, finite and not negative.</param>
+    /// <exception cref="ArgumentOutOfRangeException">A parameter is out of range.</exception>
+    public static Complex[] SalehAmplifier(ReadOnlySpan<Complex> samples, double alphaA, double betaA, double alphaPhi, double betaPhi)
+    {
+        Check.PositiveFinite(alphaA, nameof(alphaA));
+        Check.Finite(alphaPhi, nameof(alphaPhi));
+        if (!(betaA >= 0) || !double.IsFinite(betaA))
+            throw new ArgumentOutOfRangeException(nameof(betaA), betaA, "must be finite and not negative");
+        if (!(betaPhi >= 0) || !double.IsFinite(betaPhi))
+            throw new ArgumentOutOfRangeException(nameof(betaPhi), betaPhi, "must be finite and not negative");
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+        {
+            double r = Complex.Abs(samples[n]);
+            double r2 = r * r;
+            double phi = alphaPhi * r2 / (1 + betaPhi * r2);
+            y[n] = samples[n] * (alphaA / (1 + betaA * r2)) * new Complex(Math.Cos(phi), Math.Sin(phi));
+        }
+        return y;
+    }
+
+    /// <summary>Rapp's solid-state model, A(r) = g·r/(1 + (g·r/Asat)^(2p))^(1/(2p)) with no phase shift,
+    /// on the complex envelope (conventions: Channel, Amplifier models; ADR 0114).</summary>
+    /// <param name="samples">Complex envelope samples.</param>
+    /// <param name="gain">Small-signal gain g, positive and finite.</param>
+    /// <param name="saturation">Saturated output amplitude Asat, positive and finite.</param>
+    /// <param name="smoothness">Knee smoothness p, positive and finite.</param>
+    /// <exception cref="ArgumentOutOfRangeException">A parameter is out of range.</exception>
+    public static Complex[] RappAmplifier(ReadOnlySpan<Complex> samples, double gain, double saturation, double smoothness)
+    {
+        Check.PositiveFinite(gain, nameof(gain));
+        Check.PositiveFinite(saturation, nameof(saturation));
+        Check.PositiveFinite(smoothness, nameof(smoothness));
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+        {
+            double r = Complex.Abs(samples[n]);
+            double u = gain * r / saturation;
+            y[n] = u <= 1
+                ? samples[n] * (gain / Math.Pow(1 + Math.Pow(u, 2 * smoothness), 1 / (2 * smoothness)))
+                : samples[n] / r * (saturation / Math.Pow(1 + Math.Pow(u, -2 * smoothness), 1 / (2 * smoothness)));
+        }
+        return y;
+    }
+
     /// <summary>samples + offset (conventions: Channel, DC offset).</summary>
     /// <param name="samples">Complex samples.</param>
     /// <param name="offset">The constant added, finite in both parts.</param>

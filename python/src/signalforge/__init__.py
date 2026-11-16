@@ -12,7 +12,9 @@ from .channel import (
     iq_imbalance,
     multipath,
     phase_noise,
+    rapp_amplifier,
     rician_fading,
+    saleh_amplifier,
 )
 from .core import Signal
 from .dsp import (
@@ -211,7 +213,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.11"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.12"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -377,6 +379,7 @@ __all__ = [
     "qpsk_link",
     "qpsk_map",
     "qpsk_phase_offset",
+    "rapp_amplifier",
     "read_npy",
     "read_npy_2d",
     "read_npz",
@@ -391,6 +394,7 @@ __all__ = [
     "rician_fading",
     "rls_equalizer",
     "rrc_taps",
+    "saleh_amplifier",
     "sfdr",
     "sos_group_delay",
     "sos_response",

@@ -4,14 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Power amplifier models**: memoryless nonlinearities as channel impairments, the Saleh model
-   (`A(r) = α_a r/(1 + β_a r²)`, `Φ(r) = α_φ r²/(1 + β_φ r²)`) and the Rapp model
-   (`A(r) = g r/(1 + (g r/A_sat)^{2p})^{1/(2p)}`, no phase shift), applied as
-   `y = A(|x|)·e^{j(arg x + Φ(|x|))}`. Not built yet. Needs an ADR: the parameter names and
-   ranges, how a real input is treated (the bandpass envelope or the instantaneous value), and
-   `x = 0`. Expected values: the formulas at chosen amplitudes by hand; `am_am_pm` (ADR 0113)
-   reading the curves back, and `gain_compression` finding Rapp's 1 dB point
-   `g r = A_sat (10^{p/10} − 1)^{1/(2p)}`.
+1. **Phase noise with spurs removed**: `phase_noise_ssb` and `integrated_phase_noise` read a
+   discrete spur (a reference feedthrough or a mains sideband) as noise. Not built yet. Needs an
+   ADR: how a spur is found in `L(f)` (a bin standing more than a threshold above the median of
+   its neighbours, the window's main lobe wide), what replaces it (the median, or a line
+   between the lobe's edges), whether the spurs removed are reported (offset and dBc), and the
+   default (off). Expected values: a tone with Wiener phase noise of known linewidth (the
+   Lorentzian, ADR 0036) plus a spur of chosen offset and level: with removal the integral
+   matches the Lorentzian's, without it is higher by the spur's power, by hand.
 
 ## Built
 
@@ -1157,6 +1157,15 @@ Updated with every chunk of work. Dates are absolute.
   compares integer arrays.
   Python 4224 passed, 2 skipped; .NET 3566 passed; conformance 2139/2139 in both. Version
   2026.11.16.11.
+- 2026-11-16: Saleh and Rapp amplifier models (ADR 0114): `saleh_amplifier(samples, alpha_a,
+  beta_a, alpha_phi, beta_phi)` and `rapp_amplifier(samples, gain, saturation, smoothness)` (C#
+  `Channel.SalehAmplifier`, `Channel.RappAmplifier`) on the complex envelope,
+  `y = (x/r)·A(r)·e^{jΦ(r)}`, zero to zero; Rapp switches to `A_sat/(1 + u^{−2p})^{1/(2p)}` above
+  the knee so a huge drive reads `A_sat`. Vectors are the formulas by hand at chosen samples;
+  the tests read the curves back through `am_am_pm`, find Rapp's analytic 1 dB point through
+  `gain_compression`, and Saleh's output peak at `1/√β_a`.
+  Python 4260 passed, 2 skipped; .NET 3600 passed; conformance 2157/2157 in both. Version
+  2026.11.16.12.
 
 ## Not built
 

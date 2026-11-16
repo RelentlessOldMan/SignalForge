@@ -1218,6 +1218,17 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   `0 … N − 1`. `rms` finite with `0 ≤ rms ≤ 0.5`; `half_width` an integer `≥ 1`. Seeded as for
   AWGN, with streams that differ between languages. `rms = 0` returns the input.
   **(implemented)**
+- **Amplifier models** ([ADR 0114](adr/0114-amplifier-models.md)): memoryless, on the complex
+  envelope; a real input is `x + 0j`. With `r = |x|`, `y = (x/r)·A(r)·e^{jΦ(r)}` and `x = 0`
+  gives 0. Output complex, as long as the input; samples are not checked. **(implemented)**
+  - **Saleh** (`saleh_amplifier(samples, alpha_a, beta_a, alpha_phi, beta_phi)`):
+    `A(r) = α_a r/(1 + β_a r²)`, `Φ(r) = α_φ r²/(1 + β_φ r²)` radians, computed as
+    `y = x·α_a/(1 + β_a r²)·e^{jΦ(r)}`. `α_a > 0`, `β_a ≥ 0`, `β_φ ≥ 0`, `α_φ` any sign, all
+    finite. **(implemented)**
+  - **Rapp** (`rapp_amplifier(samples, gain, saturation, smoothness)`):
+    `A(r) = g r/(1 + (g r/A_sat)^{2p})^{1/(2p)}`, `Φ = 0`. With `u = g r/A_sat`:
+    `y = x·g/(1 + u^{2p})^{1/(2p)}` for `u ≤ 1`, `y = (x/r)·A_sat/(1 + u^{−2p})^{1/(2p)}` for
+    `u > 1`. `g`, `A_sat`, `p` positive and finite. **(implemented)**
 
 ## Synchronization
 

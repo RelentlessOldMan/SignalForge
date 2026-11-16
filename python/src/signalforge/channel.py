@@ -324,6 +324,52 @@ def iq_image_rejection_db(gain_db: float, phase: float) -> float:
     return math.inf if den <= 0 else 10.0 * math.log10(num / den)
 
 
+def _envelope(samples: ArrayLike) -> NDArray[np.complex128]:
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    return np.asarray(x, dtype=np.complex128)
+
+
+def saleh_amplifier(
+    samples: ArrayLike, alpha_a: float, beta_a: float, alpha_phi: float, beta_phi: float
+) -> NDArray[np.complex128]:
+    """Saleh's travelling-wave tube model ``A(r) = aa r/(1 + ba r^2)``,
+    ``Phi(r) = ap r^2/(1 + bp r^2)`` (conventions: Channel, Amplifier models; ADR 0114)."""
+    x = _envelope(samples)
+    aa = real(alpha_a, "alpha_a")
+    ba = real(beta_a, "beta_a")
+    ap = real(alpha_phi, "alpha_phi")
+    bp = real(beta_phi, "beta_phi")
+    if aa <= 0:
+        raise ValueError("alpha_a must be positive")
+    if ba < 0 or bp < 0:
+        raise ValueError("beta_a and beta_phi must not be negative")
+    r2 = np.abs(x) ** 2
+    return np.asarray(x * (aa / (1 + ba * r2)) * np.exp(1j * (ap * r2 / (1 + bp * r2))))
+
+
+def rapp_amplifier(
+    samples: ArrayLike, gain: float, saturation: float, smoothness: float
+) -> NDArray[np.complex128]:
+    """Rapp's solid-state model ``A(r) = g r/(1 + (g r/A_sat)^(2p))^(1/(2p))``, no phase shift
+    (conventions: Channel, Amplifier models; ADR 0114)."""
+    x = _envelope(samples)
+    g = real(gain, "gain")
+    a_sat = real(saturation, "saturation")
+    p = real(smoothness, "smoothness")
+    if g <= 0 or a_sat <= 0 or p <= 0:
+        raise ValueError("gain, saturation and smoothness must be positive")
+    r = np.abs(x)
+    u = g * r / a_sat
+    y = np.empty_like(x)
+    lo = u <= 1
+    hi = ~lo
+    y[lo] = x[lo] * (g / (1 + u[lo] ** (2 * p)) ** (1 / (2 * p)))
+    y[hi] = x[hi] / r[hi] * (a_sat / (1 + u[hi] ** (-2 * p)) ** (1 / (2 * p)))
+    return y
+
+
 def dc_offset(samples: ArrayLike, offset: complex) -> NDArray[np.complex128]:
     """``samples + offset`` (conventions: Channel, DC offset)."""
     x = np.asarray(samples)
