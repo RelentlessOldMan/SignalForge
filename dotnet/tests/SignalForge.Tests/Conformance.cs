@@ -510,6 +510,10 @@ public static class Conformance
             "reflection_to_arcsine" => Bind(Reals(a.Get("reflection")), t => Dsp.ReflectionToArcsine(t)),
             "arcsine_to_reflection" => Bind(Reals(a.Get("arcsine")), t => Dsp.ArcsineToReflection(t)),
             "lar_to_reflection" => Bind(Reals(a.Get("lar")), t => Dsp.LarToReflection(t)),
+            "cepstral_distance" => a.Get("reference") is Complex[] || a.Get("test") is Complex[]? Bind((Complexes(a.Get("reference")), Complexes(a.Get("test")), a.I("num_coefficients")),
+                    t => Dsp.CepstralDistance(t.Item1, t.Item2, t.Item3))
+                : Bind((Reals(a.Get("reference")), Reals(a.Get("test")), a.I("num_coefficients")),
+                    t => Dsp.CepstralDistance(t.Item1, t.Item2, t.Item3)),
             "itakura_saito" => a.Get("reference") is Complex[] || a.Get("test") is Complex[]? Bind((Complexes(a.Get("reference")), a.D("reference_error"), Complexes(a.Get("test")), a.D("test_error")),
                     t => Dsp.ItakuraSaito(t.Item1, t.Item2, t.Item3, t.Item4))
                 : Bind((Reals(a.Get("reference")), a.D("reference_error"), Reals(a.Get("test")), a.D("test_error")),

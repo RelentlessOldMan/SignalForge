@@ -888,6 +888,46 @@ public static partial class Dsp
         return (q / testError) - Math.Log(referenceError / testError) - 1;
     }
 
+    /// <summary>The truncated cepstral distance between the real AR models <c>1/reference</c> and
+    /// <c>1/test</c>, leaving out <c>c_0</c> (conventions: Cepstral distance between AR models;
+    /// ADR 0218).</summary>
+    /// <param name="reference">The reference prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="test">The test prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="numCoefficients">How many cepstral coefficients after <c>c_0</c>, at least 1.</param>
+    /// <returns>The distance, at least 0.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double CepstralDistance(ReadOnlySpan<double> reference, ReadOnlySpan<double> test, int numCoefficients) =>
+        CepstralDistance((ReadOnlySpan<Complex>)ToComplexArray(reference), (ReadOnlySpan<Complex>)ToComplexArray(test), numCoefficients);
+
+    /// <summary>The truncated cepstral distance between the complex AR models <c>1/reference</c> and
+    /// <c>1/test</c>, leaving out <c>c_0</c> (conventions: Cepstral distance between AR models;
+    /// ADR 0218).</summary>
+    /// <param name="reference">The reference prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="test">The test prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="numCoefficients">How many cepstral coefficients after <c>c_0</c>, at least 1.</param>
+    /// <returns>The distance, at least 0.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double CepstralDistance(ReadOnlySpan<Complex> reference, ReadOnlySpan<Complex> test, int numCoefficients)
+    {
+        CheckModelFilter(reference, nameof(reference));
+        CheckModelFilter(test, nameof(test));
+        if (numCoefficients < 1)
+            throw new ArgumentOutOfRangeException(nameof(numCoefficients), "num_coefficients must be at least 1");
+        if (reference.Length > 1)
+            _ = LpcToReflection(reference);
+        if (test.Length > 1)
+            _ = LpcToReflection(test);
+        Complex[] cr = LpcCepstrum(reference, 1, numCoefficients + 1);
+        Complex[] ct = LpcCepstrum(test, 1, numCoefficients + 1);
+        double sum = 0;
+        for (int i = 1; i <= numCoefficients; i++)
+        {
+            Complex d = cr[i] - ct[i];
+            sum += (d.Real * d.Real) + (d.Imaginary * d.Imaginary);
+        }
+        return Math.Sqrt(sum);
+    }
+
     private static void CheckModelFilter(ReadOnlySpan<Complex> a, string name)
     {
         if (a.IsEmpty)

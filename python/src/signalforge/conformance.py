@@ -216,6 +216,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "reflection_to_arcsine": dsp.reflection_to_arcsine,
     "arcsine_to_reflection": dsp.arcsine_to_reflection,
     "itakura_saito": dsp.itakura_saito,
+    "cepstral_distance": dsp.cepstral_distance,
     "reflection_to_lpc": dsp.reflection_to_lpc,
     "lpc_to_reflection": dsp.lpc_to_reflection,
     "upsample": dsp.upsample,

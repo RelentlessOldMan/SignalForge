@@ -513,6 +513,21 @@ def itakura_saito(
     return q / et - math.log(er / et) - 1.0
 
 
+def cepstral_distance(reference: ArrayLike, test: ArrayLike, num_coefficients: int) -> float:
+    """The truncated cepstral distance between the AR models ``1/reference`` and ``1/test``,
+    leaving out ``c_0`` (conventions: Cepstral distance between AR models; ADR 0218)."""
+    ar = _model_filter(reference, "reference")
+    at = _model_filter(test, "test")
+    n = count(num_coefficients, "num_coefficients")
+    if n < 1:
+        raise ValueError("num_coefficients must be at least 1")
+    for a in (ar, at):
+        if a.size > 1:
+            lpc_to_reflection(a)
+    diff = lpc_cepstrum(ar, 1.0, n + 1)[1:] - lpc_cepstrum(at, 1.0, n + 1)[1:]
+    return math.sqrt(float(np.sum(np.abs(diff) ** 2)))
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

@@ -4,12 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Cepstral distance between AR models**: `cepstral_distance(reference, reference_error, test,
-   test_error, num_coefficients)` in `dsp` (C# `Dsp.CepstralDistance`, real and complex). Not
-   built yet.
-   - It is the truncated `d² = Σ_{n=1}^{L} |c_r[n] − c_t[n]|²`, with the LPC cepstra of ADR 0207.
-     `c_0` is left out, so the distance ignores gain.
-   - Expected values: order-1 cepstra in closed form, `c_n = (−a₁)ⁿ/n`.
+1. **Bandwidth expansion**: `bandwidth_expansion(coefficients, factor)` in `dsp` (C#
+   `Dsp.BandwidthExpansion`, real and complex). Not built yet.
+   - `a_j ← a_j·γʲ` with `0 < γ ≤ 1`. It moves every pole radius from `ρ` to `γρ`, which widens
+     the formant bandwidths.
+   - Expected values: exact fraction powers, and the poles of an order-1 filter.
 
 ## Built
 
@@ -2042,6 +2041,14 @@ Updated with every chunk of work. Dates are absolute.
     the spectra.
   Python 5880 passed, 2 skipped; .NET 5162 passed; conformance 3420/3420 in both. Version
   2026.11.17.15.
+- 2026-11-17: Cepstral distance between AR models (ADR 0218):
+  `cepstral_distance(reference, test, num_coefficients)` in `dsp` (C# `Dsp.CepstralDistance`, real
+  and complex).
+  - It is the truncated Euclidean distance between LPC cepstra, without `c_0`, so it ignores
+    gain. The queued error arguments were dropped because the value never uses them.
+  - The vectors are the closed-form pole cepstra `Σ pⁿ/n`.
+  Python 5895 passed, 2 skipped; .NET 5176 passed; conformance 3433/3433 in both. Version
+  2026.11.17.16.
 
 ## Not built
 
