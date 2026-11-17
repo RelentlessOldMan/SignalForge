@@ -1247,6 +1247,10 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   C# `Dsp.CepstralDistance`, [ADR 0218](adr/0218-cepstral-distance.md)):
   `sqrt(Σ_{n=1}^{L} |c_r[n] − c_t[n]|²)` with the LPC cepstra of `1/A`; `c_0` left out, so gain
   is ignored. Filters finite, `a[0] = 1`, order ≥ 0, minimum phase; `L ≥ 1`. **(implemented)**
+- **Bandwidth expansion** (`bandwidth_expansion(coefficients, factor)`, C#
+  `Dsp.BandwidthExpansion`, [ADR 0219](adr/0219-bandwidth-expansion.md)): `a_j γʲ`, i.e.
+  `A(z/γ)`, every root `p → γp`. Finite, non-empty coefficients, any `a_0`; real
+  `0 < γ ≤ 1`; output dtype follows input. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

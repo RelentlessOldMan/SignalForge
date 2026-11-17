@@ -928,6 +928,38 @@ public static partial class Dsp
         return Math.Sqrt(sum);
     }
 
+    /// <summary>The real filter <c>a_j γʲ</c>, <c>A(z/γ)</c>: every root moves from <c>p</c> to
+    /// <c>γp</c> (conventions: Bandwidth expansion; ADR 0219).</summary>
+    /// <param name="coefficients">The filter, finite, at least one coefficient.</param>
+    /// <param name="factor">The factor <c>γ</c>, in <c>(0, 1]</c>.</param>
+    /// <returns>The expanded filter, as long as the input.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] BandwidthExpansion(ReadOnlySpan<double> coefficients, double factor) =>
+        [.. BandwidthExpansion((ReadOnlySpan<Complex>)ToComplexArray(coefficients), factor).Select(v => v.Real)];
+
+    /// <summary>The complex filter <c>a_j γʲ</c>, <c>A(z/γ)</c>: every root moves from <c>p</c> to
+    /// <c>γp</c> (conventions: Bandwidth expansion; ADR 0219).</summary>
+    /// <param name="coefficients">The filter, finite, at least one coefficient.</param>
+    /// <param name="factor">The factor <c>γ</c>, in <c>(0, 1]</c>.</param>
+    /// <returns>The expanded filter, as long as the input.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] BandwidthExpansion(ReadOnlySpan<Complex> coefficients, double factor)
+    {
+        if (coefficients.IsEmpty)
+            throw new ArgumentException("coefficients must not be empty", nameof(coefficients));
+        foreach (Complex v in coefficients)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("coefficients must be finite", nameof(coefficients));
+        }
+        if (!(factor > 0 && factor <= 1))
+            throw new ArgumentOutOfRangeException(nameof(factor), "factor must be in (0, 1]");
+        var a = new Complex[coefficients.Length];
+        for (int j = 0; j < a.Length; j++)
+            a[j] = coefficients[j] * Math.Pow(factor, j);
+        return a;
+    }
+
     private static void CheckModelFilter(ReadOnlySpan<Complex> a, string name)
     {
         if (a.IsEmpty)

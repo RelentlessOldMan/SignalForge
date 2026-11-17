@@ -528,6 +528,20 @@ def cepstral_distance(reference: ArrayLike, test: ArrayLike, num_coefficients: i
     return math.sqrt(float(np.sum(np.abs(diff) ** 2)))
 
 
+def bandwidth_expansion(
+    coefficients: ArrayLike, factor: float
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The filter ``a_j * factor**j``, ``A(z / factor)``: every root moves from ``p`` to
+    ``factor * p`` (conventions: Bandwidth expansion; ADR 0219)."""
+    a = _vector(coefficients, "coefficients")
+    if not np.all(np.isfinite(a)):
+        raise ValueError("coefficients must be finite")
+    g = real(factor, "factor")
+    if not (0 < g <= 1):
+        raise ValueError("factor must be in (0, 1]")
+    return a * g ** np.arange(a.size, dtype=np.float64)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

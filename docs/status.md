@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Bandwidth expansion**: `bandwidth_expansion(coefficients, factor)` in `dsp` (C#
-   `Dsp.BandwidthExpansion`, real and complex). Not built yet.
-   - `a_j ← a_j·γʲ` with `0 < γ ≤ 1`. It moves every pole radius from `ρ` to `γρ`, which widens
-     the formant bandwidths.
-   - Expected values: exact fraction powers, and the poles of an order-1 filter.
+1. **LPC to autocorrelation**: `lpc_to_autocorrelation(coefficients, error, lags)` in `dsp` (C#
+   `Dsp.LpcToAutocorrelation`, real and complex). Not built yet.
+   - It is the composition of `lpc_to_reflection` and `reflection_to_autocorrelation`, with
+     `r[0] = σ²/Π(1 − |k|²)`. It saves callers the step through `k`.
+   - Expected values: the ADR 0214 fractions, starting from `a` and `σ²`.
 
 ## Built
 
@@ -2049,6 +2049,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are the closed-form pole cepstra `Σ pⁿ/n`.
   Python 5895 passed, 2 skipped; .NET 5176 passed; conformance 3433/3433 in both. Version
   2026.11.17.16.
+- 2026-11-17: Bandwidth expansion (ADR 0219): `bandwidth_expansion(coefficients, factor)` in
+  `dsp` (C# `Dsp.BandwidthExpansion`, real and complex).
+  - It computes `a_j γʲ`, i.e. `A(z/γ)`, with `0 < γ ≤ 1`.
+  - The vectors are exact fraction powers.
+  Python 5908 passed, 2 skipped; .NET 5188 passed; conformance 3444/3444 in both. Version
+  2026.11.17.17.
 
 ## Not built
 
