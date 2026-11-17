@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 import signalforge as sf
 
@@ -18,6 +17,6 @@ def test_filtered_noise_is_coherent_and_independent_noise_is_not() -> None:
     assert np.mean(sf.coherence(x, z, 1.0, nperseg=256).values) < 0.05
 
 
-def test_complex_input_is_rejected() -> None:
-    with pytest.raises(ValueError):
-        sf.coherence(np.ones(8, dtype=np.complex128), np.ones(8), 1.0)
+def test_complex_input_gives_all_bins() -> None:
+    r = sf.coherence(np.ones(8, dtype=np.complex128), np.ones(8), 1.0)
+    assert r.frequencies.size == 8  # ADR 0197

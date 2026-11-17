@@ -694,23 +694,37 @@ public static class Conformance
 
     private static Func<object?> CoherenceOp(Args a)
     {
-        double[] x = Reals(a.Get("x")), y = Reals(a.Get("y"));
+        object? xs = a.Get("x"), ys = a.Get("y");
         var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.OptInt("nperseg"), a.OptInt("noverlap"));
         var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
         double? beta = a.OptD("beta");
         var detrend = DetrendName(a);
         int? nfft = a.OptInt("nfft");
+        if (xs is Complex[] || ys is Complex[])
+        {
+            Complex[] xc = Complexes(xs), yc = Complexes(ys);
+            return () => Spectral.Coherence(xc, yc, fs, nperseg, noverlap, window, beta, detrend, nfft);
+        }
+        double[] x = Reals(xs), y = Reals(ys);
         return () => Spectral.Coherence(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
     }
 
     private static Func<object?> TransferFunctionOp(Args a, bool h2 = false)
     {
-        double[] x = Reals(a.Get("x")), y = Reals(a.Get("y"));
+        object? xs = a.Get("x"), ys = a.Get("y");
         var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.OptInt("nperseg"), a.OptInt("noverlap"));
         var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
         double? beta = a.OptD("beta");
         var detrend = DetrendName(a);
         int? nfft = a.OptInt("nfft");
+        if (xs is Complex[] || ys is Complex[])
+        {
+            Complex[] xc = Complexes(xs), yc = Complexes(ys);
+            return h2
+                ? () => Spectral.TransferFunctionH2(xc, yc, fs, nperseg, noverlap, window, beta, detrend, nfft)
+                : () => Spectral.TransferFunction(xc, yc, fs, nperseg, noverlap, window, beta, detrend, nfft);
+        }
+        double[] x = Reals(xs), y = Reals(ys);
         return h2
             ? () => Spectral.TransferFunctionH2(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft)
             : () => Spectral.TransferFunction(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);

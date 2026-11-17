@@ -372,6 +372,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Complex coherence and transfer functions** ([ADR
+  0197](adr/0197-complex-coherence-transfer.md)): complex `x` or `y` in `coherence`,
+  `transfer_function` or `transfer_function_h2` uses all `M` bins in `fftshift` order with
+  `fft_frequencies(M, fs, shifted=True)`; the definitions and NaN rules are unchanged; real input
+  stays one-sided, and there is no `one_sided` argument. C# `Complex` overloads. **(implemented)**
 - **Transfer function (H2)** ([ADR 0195](adr/0195-transfer-function-h2.md);
   `transfer_function_h2(...)`, the `transfer_function` arguments, C#
   `Spectral.TransferFunctionH2`): `H2[k] = Σ|Y_s|² / Σ conj Y_s·X_s` on the same bins, complex NaN

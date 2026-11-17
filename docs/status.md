@@ -4,15 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Complex input for coherence and the transfer functions**: extend `coherence`,
-   `transfer_function` and `transfer_function_h2` (ADRs 0192, 0193, 0195), as ADR 0196 did for the
-   cross-spectral density. Not built yet. Needs an ADR covering:
-   - complex `x` or `y` gives all `M` bins in `fftshift` order;
-   - C# `Complex` overloads;
-   - the same NaN rules.
+1. **Coherent output power**: `coherent_output_power(x, y, sample_rate, ...)` in `spectral`
+   (C# `Spectral.CoherentOutputPower`). Not built yet.
+   - It splits the output PSD into `γ²·Pyy` (linearly related to `x`) and `(1−γ²)·Pyy` (the
+     rest), on the Welch bins of `welch_psd(y)`.
+   - It returns `frequencies`, `coherent`, `noncoherent` and `num_segments`.
 
-   Expected values: hand DFTs of length-2 complex segments; `y = a·x` gives `H = a` and
-   coherence 1.
+   Needs an ADR covering the NaN bins (where the coherence is NaN) and complex input (ADR 0197).
+   Expected values: `y = a·x` gives noncoherent 0; hand two-segment cases from the coherence
+   vectors.
 
 ## Built
 
@@ -1872,6 +1872,15 @@ Updated with every chunk of work. Dates are absolute.
   There are 4 new hand-DFT vectors and 1 error vector.
   Python 5601 passed, 2 skipped; .NET 4901 passed; conformance 3181/3181 in both. Version
   2026.11.16.94.
+- 2026-11-16: complex input for coherence, H1 and H2 (ADR 0197).
+  - Complex `x` or `y` gives all `M` bins in `fftshift` order, with the rules unchanged.
+  - C# has `Complex` overloads.
+  - The four cross-spectral functions now share one helper per language, and it handles both
+    bin layouts.
+
+  The new suite `complex_cross_spectra` has hand DFTs of length-2 complex segments.
+  Python 5615 passed, 2 skipped; .NET 4914 passed; conformance 3193/3193 in both. Version
+  2026.11.16.95.
 
 ## Not built
 

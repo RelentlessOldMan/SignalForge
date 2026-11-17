@@ -236,7 +236,8 @@ def _segments(
 
 @dataclass(frozen=True)
 class Coherence:
-    """Magnitude-squared coherence per one-sided bin (conventions: Coherence; ADR 0192)."""
+    """Magnitude-squared coherence per bin: one-sided for real input, shifted for complex
+    (conventions: Coherence; ADR 0192, ADR 0197)."""
 
     frequencies: NDArray[np.float64]
     values: NDArray[np.float64]
@@ -253,30 +254,37 @@ def _cross_segments(
     beta: float | None,
     detrend: str,
     nfft: int | None,
+    one_sided: bool | None = None,
 ) -> tuple[_Segments, NDArray[np.complex128], NDArray[np.float64], NDArray[np.float64]]:
-    """Welch's segments of real ``x`` and ``y``: ``(segments, sum conj X Y, sum |X|^2, sum |Y|^2)``
-    on the one-sided bins (ADR 0192)."""
+    """Welch's segments of ``x`` and ``y``: ``(segments, sum conj X Y, sum |X|^2, sum |Y|^2)``
+    on the one-sided bins for real input, or all bins in ``fftshift`` order for complex input
+    or ``one_sided`` false (ADR 0192, ADR 0197)."""
     a, b = np.asarray(x), np.asarray(y)
     if a.shape != b.shape:
         raise ValueError("x and y must have the same shape")
     for v, what in ((a, "x"), (b, "y")):
-        if np.iscomplexobj(v):
-            raise ValueError(f"{what} must be real")
         if not np.all(np.isfinite(v)):
             raise ValueError(f"{what} must be finite")
-    gx = _segments(a, sample_rate, nperseg, noverlap, window, True, beta, detrend, nfft)
-    gy = _segments(b, sample_rate, nperseg, noverlap, window, True, beta, detrend, nfft)
-    m = gx.nfft // 2 + 1
-    sxy = np.zeros(m, dtype=np.complex128)
-    sxx = np.zeros(m)
-    syy = np.zeros(m)
+    is_complex = np.iscomplexobj(a) or np.iscomplexobj(b)
+    if one_sided is None:
+        one_sided = not is_complex
+    elif one_sided and is_complex:
+        raise ValueError("one-sided bins need real samples")
+    gx = _segments(a, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend, nfft)
+    gy = _segments(b, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend, nfft)
+    sxy = np.zeros(gx.nfft, dtype=np.complex128)
+    sxx = np.zeros(gx.nfft)
+    syy = np.zeros(gx.nfft)
     for s in range(gx.count):
-        fx = gx.spectrum(s)[:m]
-        fy = gy.spectrum(s)[:m]
+        fx = gx.spectrum(s)
+        fy = gy.spectrum(s)
         sxy += np.conj(fx) * fy
         sxx += fx.real * fx.real + fx.imag * fx.imag
         syy += fy.real * fy.real + fy.imag * fy.imag
-    return gx, sxy, sxx, syy
+    if one_sided:
+        m = gx.nfft // 2 + 1
+        return gx, sxy[:m], sxx[:m], syy[:m]
+    return gx, np.fft.fftshift(sxy), np.fft.fftshift(sxx), np.fft.fftshift(syy)
 
 
 @dataclass(frozen=True)
@@ -338,30 +346,14 @@ def cross_spectral_density(
     """``Pxy = sum conj(X) Y / (K fs sum w^2)`` over Welch's segments, scaled like ``welch_psd``:
     one-sided (doubled) for real input, two-sided and shifted for complex (conventions:
     Cross-spectral density; ADR 0194, ADR 0196)."""
-    a, b = np.asarray(x), np.asarray(y)
-    if a.shape != b.shape:
-        raise ValueError("x and y must have the same shape")
-    for v, what in ((a, "x"), (b, "y")):
-        if not np.all(np.isfinite(v)):
-            raise ValueError(f"{what} must be finite")
-    is_complex = np.iscomplexobj(a) or np.iscomplexobj(b)
-    if one_sided is None:
-        one_sided = not is_complex
-    elif one_sided and is_complex:
-        raise ValueError("a one-sided cross-spectral density needs real samples")
-    gx = _segments(a, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend, nfft)
-    gy = _segments(b, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend, nfft)
-    sxy = np.zeros(gx.nfft, dtype=np.complex128)
-    for s in range(gx.count):
-        sxy += np.conj(gx.spectrum(s)) * gy.spectrum(s)
-    two = sxy * (gx.scale / gx.count)
-    if one_sided:
-        m = gx.nfft // 2 + 1
-        csd = two[:m].copy()
-        csd[1 : m - 1 if gx.nfft % 2 == 0 else m] *= 2.0
-    else:
-        csd = np.fft.fftshift(two)
-    return CrossSpectralDensity(gx.frequencies(float(sample_rate)), csd, gx.count)
+    g, sxy, _, _ = _cross_segments(
+        x, y, sample_rate, nperseg, noverlap, window, beta, detrend, nfft, one_sided
+    )
+    csd = sxy * (g.scale / g.count)
+    if g.one_sided:
+        m = csd.size
+        csd[1 : m - 1 if g.nfft % 2 == 0 else m] *= 2.0
+    return CrossSpectralDensity(g.frequencies(float(sample_rate)), csd, g.count)
 
 
 def transfer_function_h2(
