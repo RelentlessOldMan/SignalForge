@@ -552,6 +552,57 @@ public static partial class Dsp
         return k;
     }
 
+    /// <summary>The forward prediction error of the real FIR lattice with reflection coefficients
+    /// <paramref name="reflection"/>, from zero state (conventions: Lattice analysis filter;
+    /// ADR 0211).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="reflection">Finite reflection coefficients <c>k_1 … k_p</c>, at least one.</param>
+    /// <returns>The forward error <c>f_p</c>, as many samples as the input.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LatticeFilter(ReadOnlySpan<double> samples, ReadOnlySpan<double> reflection) =>
+        [.. LatticeFilter((ReadOnlySpan<Complex>)ToComplexArray(samples), (ReadOnlySpan<Complex>)ToComplexArray(reflection))
+            .Select(v => v.Real)];
+
+    /// <summary>The forward prediction error of the complex FIR lattice with reflection coefficients
+    /// <paramref name="reflection"/>, from zero state (conventions: Lattice analysis filter;
+    /// ADR 0211).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="reflection">Finite reflection coefficients <c>k_1 … k_p</c>, at least one.</param>
+    /// <returns>The forward error <c>f_p</c>, as many samples as the input.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] LatticeFilter(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> reflection)
+    {
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        if (reflection.IsEmpty)
+            throw new ArgumentException("reflection must not be empty", nameof(reflection));
+        foreach (Complex v in samples)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        foreach (Complex v in reflection)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("reflection must be finite", nameof(reflection));
+        }
+        int n = samples.Length;
+        var f = samples.ToArray();
+        var b = samples.ToArray();
+        foreach (Complex km in reflection)
+        {
+            Complex kc = Complex.Conjugate(km);
+            for (int i = n - 1; i >= 0; i--)
+            {
+                Complex delayed = i > 0 ? b[i - 1] : Complex.Zero;
+                Complex fi = f[i];
+                f[i] = fi + (km * delayed);
+                b[i] = delayed + (kc * fi);
+            }
+        }
+        return f;
+    }
+
     private static Complex[] ToComplexArray(ReadOnlySpan<double> x)
     {
         var c = new Complex[x.Length];

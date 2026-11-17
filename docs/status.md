@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Lattice analysis filter**: `lattice_filter(samples, reflection)` in `dsp` (C#
-   `Dsp.LatticeFilter`, real and complex), the FIR lattice. Not built yet.
-   - It starts with `f_0[n] = b_0[n] = x[n]`.
-   - Then `f_m[n] = f_{m−1}[n] + k_m·b_{m−1}[n−1]` and `b_m[n] = b_{m−1}[n−1] + conj k_m·f_{m−1}[n]`,
-     from zero state.
-   - It returns the forward error `f_p`, which equals `x` filtered by `reflection_to_lpc(k)`.
-   - Expected values: stdlib hand recursions, and the direct-form convolution as a cross-check.
+1. **Lattice synthesis filter**: `lattice_synthesis(excitation, reflection)` in `dsp` (C#
+   `Dsp.LatticeSynthesis`, real and complex), the all-pole IIR lattice and the inverse of
+   ADR 0211. Not built yet.
+   - With `f_p = e`, for `m = p … 1`: `f_{m−1}[n] = f_m[n] − k_m·b_{m−1}[n−1]` and
+     `b_m[n] = b_{m−1}[n−1] + conj k_m·f_{m−1}[n]`, with `b_0 = f_0 = y`.
+   - Expected values: a stdlib recursion, cross-checked against `1/A(z)` filtering by direct
+     recursion.
 
 ## Built
 
@@ -1990,6 +1990,14 @@ Updated with every chunk of work. Dates are absolute.
     both directions.
   Python 5789 passed, 2 skipped; .NET 5078 passed; conformance 3343/3343 in both. Version
   2026.11.17.8.
+- 2026-11-17: Lattice analysis filter (ADR 0211): `lattice_filter(samples, reflection)` in `dsp`
+  (C# `Dsp.LatticeFilter`, real and complex).
+  - It is the FIR lattice from zero state. The forward error equals direct-form filtering by
+    `reflection_to_lpc(k)`.
+  - The vectors use a stdlib recursion, cross-checked in the generator against the
+    direct-form convolution.
+  Python 5802 passed, 2 skipped; .NET 5090 passed; conformance 3354/3354 in both. Version
+  2026.11.17.9.
 
 ## Not built
 

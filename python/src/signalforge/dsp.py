@@ -327,6 +327,26 @@ def lpc_to_reflection(coefficients: ArrayLike) -> NDArray[np.complex128] | NDArr
     return cast("NDArray[np.complex128] | NDArray[np.float64]", k)
 
 
+def lattice_filter(
+    samples: ArrayLike, reflection: ArrayLike
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The forward prediction error of the FIR lattice with reflection coefficients
+    ``reflection``, from zero state (conventions: Lattice analysis filter; ADR 0211)."""
+    x = _vector(samples, "samples")
+    k = _vector(reflection, "reflection")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if not np.all(np.isfinite(k)):
+        raise ValueError("reflection must be finite")
+    dtype = np.complex128 if np.iscomplexobj(x) or np.iscomplexobj(k) else np.float64
+    f = x.astype(dtype)
+    b = f.copy()
+    for km in k:
+        delayed = np.concatenate((np.zeros(1, dtype=dtype), b[:-1]))
+        f, b = f + km * delayed, delayed + np.conj(km) * f
+    return cast("NDArray[np.complex128] | NDArray[np.float64]", f)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

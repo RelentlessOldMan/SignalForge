@@ -207,6 +207,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "lpc_cepstrum": dsp.lpc_cepstrum,
     "line_spectral_frequencies": dsp.line_spectral_frequencies,
     "lsf_to_lpc": dsp.lsf_to_lpc,
+    "lattice_filter": dsp.lattice_filter,
     "reflection_to_lpc": dsp.reflection_to_lpc,
     "lpc_to_reflection": dsp.lpc_to_reflection,
     "upsample": dsp.upsample,

@@ -64,6 +64,7 @@ from .dsp import (
     gammatone,
     interpolate,
     kaiser_parameters,
+    lattice_filter,
     levinson,
     line_spectral_frequencies,
     lpc_cepstrum,
@@ -350,7 +351,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.8"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.9"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -543,6 +544,7 @@ __all__ = [
     "kaiser_parameters",
     "kay_frequency",
     "lateral_fraction",
+    "lattice_filter",
     "levinson",
     "lin_to_db",
     "line_spectral_frequencies",

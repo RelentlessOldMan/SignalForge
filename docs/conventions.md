@@ -1209,6 +1209,11 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `a ← pad(a) + k_m conj reverse(pad(a))`; step-down from `m = p`, `k_m = a_m[m]`,
   `a_{m−1}[j] = (a_m[j] − k_m conj a_m[m−j])/(1 − |k_m|²)`. Every `|k| < 1`; finite, non-empty;
   `a_0 = 1`, order ≥ 1; real in, real out. **(implemented)**
+- **Lattice analysis filter** (`lattice_filter(samples, reflection)`, C# `Dsp.LatticeFilter`,
+  [ADR 0211](adr/0211-lattice-filter.md)): zero state, `f_0 = b_0 = x`,
+  `f_m[n] = f_{m−1}[n] + k_m b_{m−1}[n−1]`, `b_m[n] = b_{m−1}[n−1] + conj k_m f_{m−1}[n]`; returns
+  `f_p`, `N` samples, the same as `x` filtered by `reflection_to_lpc(k)`. Finite, non-empty; any
+  finite `k`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at
