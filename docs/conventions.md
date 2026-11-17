@@ -94,6 +94,12 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Energy separation** ([ADR 0189](adr/0189-energy-separation.md); `energy_separation(samples,
+  sample_rate)`, C# `Measurements.EnergySeparation`): DESA-2 with `y[n] = x[n+1] − x[n−1]`; where
+  `ψ[x] > 0` and `ψ[y] > 0`, `c = 1 − ψ[y]/(2ψ[x])` clamped to `[−1, 1]`, frequency
+  `½·arccos(c)·fs/(2π)` in `[0, fs/4]`, amplitude `2ψ[x]/√ψ[y]`; elsewhere both NaN. Result
+  `EnergySeparation(amplitude, frequency)`, `N − 4` values for `n = 2 … N−3`. Real, 1-D,
+  finite, at least five samples; `sample_rate` finite and positive. **(implemented)**
 - **Teager-Kaiser energy** ([ADR 0188](adr/0188-teager-energy.md); `teager_energy(samples)`, C#
   `Measurements.TeagerEnergy`): `ψ[n] = |x[n]|² − Re(x[n−1]·conj x[n+1])`, `n = 1 … N−2`, so
   `N − 2` values with no padding; real input gives `x[n]² − x[n−1]x[n+1]`. Real or complex,

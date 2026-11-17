@@ -4,21 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Energy separation (DESA-2)**: `energy_separation(samples, sample_rate)` in `measurements`
-   (C# `Measurements.EnergySeparation`). It returns the instantaneous amplitude and frequency
-   from the Teager energy of ADR 0188, using Maragos-Kaiser-Quatieri DESA-2:
-   - `y[n] = x[n+1] − x[n−1]`;
-   - `Ω = ½·arccos(1 − ψ[y]/(2ψ[x]))`;
-   - `|a| = 2ψ[x]/√ψ[y]`.
-
-   The result has `N − 4` values, at `n = 2 … N−3`. Real input only. Not built yet.
+1. **Cross-correlation**: `cross_correlation(x, y)` in `dsp` (C# `Dsp.CrossCorrelation`). It is
+   `r[k] = Σ_n x[n+k]·conj y[n]` for `k = −(M−1) … N−1`. This is the same sign as
+   `autocorrelation` (ADR 0148) and NumPy's `correlate(x, y, "full")`. Not built yet.
    Needs an ADR covering:
-   - the alignment;
-   - what to do where `ψ ≤ 0` or the arccos argument falls outside `[−1, 1]`: clamp, or give
-     NaN;
-   - the result type.
+   - the lag order and the index of lag 0 (`M − 1`);
+   - no scaling;
+   - real in, real out, and mixed input giving complex.
 
-   Expected values: for `A·cos(Ωn + φ)` it is exactly `A` and `Ω·fs/(2π)`.
+   Expected values: hand sums. It is the basis for GCC-PHAT delay estimation next.
 
 ## Built
 
@@ -1797,6 +1791,15 @@ Updated with every chunk of work. Dates are absolute.
   The vectors come from trigonometric identities and hand sums.
   Python 5516 passed, 2 skipped; .NET 4823 passed; conformance 3111/3111 in both. Version
   2026.11.16.86.
+- 2026-11-16: energy separation (ADR 0189): `energy_separation(samples, sample_rate)` in
+  `measurements` (C# `Measurements.EnergySeparation`, with the `EnergySeparation` record).
+  - It is DESA-2 on the Teager energies of `x` and of `x[n+1] − x[n−1]`.
+  - The arccos argument is clamped to `[−1, 1]`, so frequencies lie in `[0, fs/4]`.
+  - Where an energy is not positive, both values are NaN.
+
+  The vectors come from the cosine identity and five-sample hand sums.
+  Python 5528 passed, 2 skipped; .NET 4834 passed; conformance 3121/3121 in both. Version
+  2026.11.16.87.
 
 ## Not built
 

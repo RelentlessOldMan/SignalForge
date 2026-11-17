@@ -95,6 +95,7 @@ from .measurements import (
     AutocorrelationPitch,
     CascadeNoiseFigure,
     CepstrumPitch,
+    EnergySeparation,
     GainCompression,
     IntegratedPhaseNoise,
     NoiseFigure,
@@ -119,6 +120,7 @@ from .measurements import (
     decay_time,
     definition,
     early_decay_time,
+    energy_separation,
     energy_time_curve,
     exceedance_levels,
     gain_compression,
@@ -323,7 +325,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.86"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.87"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -336,6 +338,7 @@ __all__ = [
     "DbBandwidth",
     "DfeEqualization",
     "DfeTaps",
+    "EnergySeparation",
     "Equalization",
     "ErrorCount",
     "Evm",
@@ -451,6 +454,7 @@ __all__ = [
     "elliptic_highpass",
     "elliptic_lowpass",
     "encode_samples",
+    "energy_separation",
     "energy_time_curve",
     "erb_bandwidth",
     "erb_rate_to_hz",

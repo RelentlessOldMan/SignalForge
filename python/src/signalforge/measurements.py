@@ -97,6 +97,15 @@ class PowerCcdf:
     probabilities: NDArray[np.float64]
 
 
+@dataclass(frozen=True, eq=False)
+class EnergySeparation:
+    """DESA-2 instantaneous amplitude and frequency in Hz for ``n = 2 .. N-3`` (conventions:
+    Energy separation; ADR 0189)."""
+
+    amplitude: NDArray[np.float64]
+    frequency: NDArray[np.float64]
+
+
 def _instantaneous_power(samples: ArrayLike) -> tuple[NDArray[np.float64], float]:
     x = np.asarray(samples)
     if x.ndim != 1 or x.shape[0] == 0:
@@ -1268,6 +1277,30 @@ def teager_energy(samples: ArrayLike) -> NDArray[np.float64]:
     mid = x[1:-1]
     cross = x[:-2] * np.conj(x[2:])
     return np.asarray(mid.real * mid.real + mid.imag * mid.imag - cross.real, dtype=np.float64)
+
+
+def energy_separation(samples: ArrayLike, sample_rate: float) -> EnergySeparation:
+    """DESA-2 energy separation into instantaneous amplitude and frequency (conventions: Energy
+    separation; ADR 0189)."""
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    x = np.asarray(samples)
+    if x.ndim != 1 or x.shape[0] < 5 or np.iscomplexobj(x):
+        raise ValueError("samples must be one-dimensional and real with at least five values")
+    x = x.astype(np.float64)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    px = x[2:-2] ** 2 - x[1:-3] * x[3:-1]
+    y = x[2:] - x[:-2]
+    py = y[1:-1] ** 2 - y[:-2] * y[2:]
+    ok = (px > 0) & (py > 0)
+    safe_px = np.where(ok, px, 1.0)
+    safe_py = np.where(ok, py, 1.0)
+    c = np.clip(1 - safe_py / (2 * safe_px), -1.0, 1.0)
+    freq = np.where(ok, 0.5 * np.arccos(c) * (fs / (2 * math.pi)), math.nan)
+    amp = np.where(ok, 2 * safe_px / np.sqrt(safe_py), math.nan)
+    return EnergySeparation(np.asarray(amp, dtype=np.float64), np.asarray(freq, dtype=np.float64))
 
 
 def energy_time_curve(impulse_response: ArrayLike) -> NDArray[np.float64]:
