@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "lpc_to_autocorrelation",
+  "description": "Autocorrelation of a prediction-error filter (conventions: Autocorrelation of a prediction-error filter; ADR 0220).",
+  "cases": [
+    {"id": "lpc_to_autocorrelation.order_two", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0, 0.35, -0.3], "error": 0.6825, "lags": 2}, "expected": [1.0, -0.5, 0.475], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "ADR 0214's k = [1/2, -3/10], P = 1: s = (3/4)(91/100) = 273/400, r = [1, -1/2, 19/40]"},
+    {"id": "lpc_to_autocorrelation.ar1", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0, 0.5], "error": 1.5, "lags": 4}, "expected": [2.0, -1.0, 0.5, -0.25, 0.125], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "AR(1): r0 = s/(1 - 1/4) = 2, r[m] = 2 (-1/2)^m"},
+    {"id": "lpc_to_autocorrelation.extended", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0, 0.35, -0.3], "error": 1.0, "lags": 7}, "expected": [1.465201465201465, -0.7326007326007326, 0.6959706959706959, -0.4633699633699634, 0.370970695970696, -0.2688507326007326, 0.2053889652014652, -0.1525413576007326], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "past the order: the AR extension"},
+    {"id": "lpc_to_autocorrelation.fewer_lags", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0, 0.3333333333333333, 0.25, -0.125], "error": 2.0, "lags": 1}, "expected": [2.425263157894737, -0.6929323308270676], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "lags < order"},
+    {"id": "lpc_to_autocorrelation.white", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0], "error": 5.0, "lags": 3}, "expected": [5.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "order 0: [5, 0, 0, 0]"},
+    {"id": "lpc_to_autocorrelation.burg_three_samples", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0, -1.6941176470588235, 0.9058823529411765], "error": 0.17568627450980392, "lags": 3}, "expected": [4.666666666666667, 4.148148148148148, 2.8, 0.9857952069716776], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "ADR 0205's x = [1, 2, 3] model with r0 = 14/3"},
+    {"id": "lpc_to_autocorrelation.complex", "op": "lpc_to_autocorrelation", "args": {"coefficients": {"re": [1.0, -0.2, 0.0], "im": [0.0, 0.1, 0.25]}, "error": 1.5, "lags": 4}, "expected": {"re": [1.7452006980802794, 0.4188481675392671, 0.05584642233856894, -0.11204188481675398, -0.17762652705061088], "im": [0.0, -0.2792321116928448, -0.5340314136125656, -0.2171029668411868, -0.046178010471204206]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex: the normal equations with conj"},
+    {"id": "lpc_to_autocorrelation.not_minimum_phase", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0, 0.0, 1.0], "error": 1.0, "lags": 3}, "error": "invalid_argument", "source": "a = [1, 0, 1] has k2 = 1"},
+    {"id": "lpc_to_autocorrelation.a0", "op": "lpc_to_autocorrelation", "args": {"coefficients": [2.0, 0.5], "error": 1.0, "lags": 3}, "error": "invalid_argument", "source": "coefficients[0] must be 1"},
+    {"id": "lpc_to_autocorrelation.empty", "op": "lpc_to_autocorrelation", "args": {"coefficients": [], "error": 1.0, "lags": 3}, "error": "invalid_argument", "source": "coefficients must not be empty"},
+    {"id": "lpc_to_autocorrelation.nan", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0, "nan"], "error": 1.0, "lags": 3}, "error": "invalid_argument", "source": "coefficients must be finite"},
+    {"id": "lpc_to_autocorrelation.zero_error", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0, 0.5], "error": 0.0, "lags": 3}, "error": "invalid_argument", "source": "error must be positive"},
+    {"id": "lpc_to_autocorrelation.negative_lags", "op": "lpc_to_autocorrelation", "args": {"coefficients": [1.0, 0.5], "error": 1.0, "lags": -1}, "error": "invalid_argument", "source": "lags must be at least 0"}
+  ]
+}

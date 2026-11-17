@@ -510,6 +510,10 @@ public static class Conformance
             "reflection_to_arcsine" => Bind(Reals(a.Get("reflection")), t => Dsp.ReflectionToArcsine(t)),
             "arcsine_to_reflection" => Bind(Reals(a.Get("arcsine")), t => Dsp.ArcsineToReflection(t)),
             "lar_to_reflection" => Bind(Reals(a.Get("lar")), t => Dsp.LarToReflection(t)),
+            "lpc_to_autocorrelation" => a.Get("coefficients") is Complex[] lac
+                ? Bind((lac, a.D("error"), a.I("lags")), t => Dsp.LpcToAutocorrelation(t.Item1, t.Item2, t.Item3))
+                : Bind((Reals(a.Get("coefficients")), a.D("error"), a.I("lags")),
+                    t => Dsp.LpcToAutocorrelation(t.Item1, t.Item2, t.Item3)),
             "bandwidth_expansion" => a.Get("coefficients") is Complex[] bwc
                 ? Bind((bwc, a.D("factor")), t => Dsp.BandwidthExpansion(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("coefficients")), a.D("factor")), t => Dsp.BandwidthExpansion(t.Item1, t.Item2)),

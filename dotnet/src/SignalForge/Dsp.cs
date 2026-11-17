@@ -859,23 +859,9 @@ public static partial class Dsp
         CheckModelFilter(test, nameof(test));
         Check.PositiveFinite(referenceError, nameof(referenceError));
         Check.PositiveFinite(testError, nameof(testError));
-        int lags = test.Length - 1;
         if (test.Length > 1)
             _ = LpcToReflection(test);
-        Complex[] r;
-        if (reference.Length > 1)
-        {
-            Complex[] k = LpcToReflection(reference);
-            double product = 1;
-            foreach (Complex v in k)
-                product *= 1 - ((v.Real * v.Real) + (v.Imaginary * v.Imaginary));
-            r = ReflectionToAutocorrelation(k, referenceError / product, lags);
-        }
-        else
-        {
-            r = new Complex[lags + 1];
-            r[0] = referenceError;
-        }
+        Complex[] r = LpcToAutocorrelation(reference, referenceError, test.Length - 1);
         double q = 0;
         for (int i = 0; i < test.Length; i++)
         {
@@ -958,6 +944,42 @@ public static partial class Dsp
         for (int j = 0; j < a.Length; j++)
             a[j] = coefficients[j] * Math.Pow(factor, j);
         return a;
+    }
+
+    /// <summary>The autocorrelation <c>r[0 … lags]</c> of the real AR model <c>σ²/|A|²</c>
+    /// (conventions: Autocorrelation of a prediction-error filter; ADR 0220).</summary>
+    /// <param name="coefficients">The prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="error">The prediction error <c>σ²</c>, positive and finite.</param>
+    /// <param name="lags">The last lag, at least 0.</param>
+    /// <returns><c>lags + 1</c> values.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LpcToAutocorrelation(ReadOnlySpan<double> coefficients, double error, int lags) =>
+        [.. LpcToAutocorrelation((ReadOnlySpan<Complex>)ToComplexArray(coefficients), error, lags).Select(v => v.Real)];
+
+    /// <summary>The autocorrelation <c>r[0 … lags]</c> of the complex AR model <c>σ²/|A|²</c>
+    /// (conventions: Autocorrelation of a prediction-error filter; ADR 0220).</summary>
+    /// <param name="coefficients">The prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="error">The prediction error <c>σ²</c>, positive and finite.</param>
+    /// <param name="lags">The last lag, at least 0.</param>
+    /// <returns><c>lags + 1</c> values.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] LpcToAutocorrelation(ReadOnlySpan<Complex> coefficients, double error, int lags)
+    {
+        CheckModelFilter(coefficients, nameof(coefficients));
+        Check.PositiveFinite(error, nameof(error));
+        if (lags < 0)
+            throw new ArgumentOutOfRangeException(nameof(lags), "lags must be at least 0");
+        if (coefficients.Length == 1)
+        {
+            var r = new Complex[lags + 1];
+            r[0] = error;
+            return r;
+        }
+        Complex[] k = LpcToReflection(coefficients);
+        double product = 1;
+        foreach (Complex v in k)
+            product *= 1 - ((v.Real * v.Real) + (v.Imaginary * v.Imaginary));
+        return ReflectionToAutocorrelation(k, error / product, lags);
     }
 
     private static void CheckModelFilter(ReadOnlySpan<Complex> a, string name)

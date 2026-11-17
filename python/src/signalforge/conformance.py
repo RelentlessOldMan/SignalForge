@@ -218,6 +218,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "itakura_saito": dsp.itakura_saito,
     "cepstral_distance": dsp.cepstral_distance,
     "bandwidth_expansion": dsp.bandwidth_expansion,
+    "lpc_to_autocorrelation": dsp.lpc_to_autocorrelation,
     "reflection_to_lpc": dsp.reflection_to_lpc,
     "lpc_to_reflection": dsp.lpc_to_reflection,
     "upsample": dsp.upsample,

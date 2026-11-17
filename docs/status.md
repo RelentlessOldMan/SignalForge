@@ -4,11 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **LPC to autocorrelation**: `lpc_to_autocorrelation(coefficients, error, lags)` in `dsp` (C#
-   `Dsp.LpcToAutocorrelation`, real and complex). Not built yet.
-   - It is the composition of `lpc_to_reflection` and `reflection_to_autocorrelation`, with
-     `r[0] = σ²/Π(1 − |k|²)`. It saves callers the step through `k`.
-   - Expected values: the ADR 0214 fractions, starting from `a` and `σ²`.
+1. **Schur recursion**: `schur(r, order)` in `dsp` (C# `Dsp.Schur`, real and complex). It gets
+   the reflection coefficients and the error straight from the autocorrelation, without forming
+   `a`, and is the parallel-friendly alternative to Levinson. Not built yet.
+   - It returns `(reflection, error)` and must agree with `levinson`.
+   - Expected values: the ADR 0214 fractions in reverse, `r → k`.
 
 ## Built
 
@@ -2055,6 +2055,14 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact fraction powers.
   Python 5908 passed, 2 skipped; .NET 5188 passed; conformance 3444/3444 in both. Version
   2026.11.17.17.
+- 2026-11-17: Autocorrelation of a prediction-error filter (ADR 0220):
+  `lpc_to_autocorrelation(coefficients, error, lags)` in `dsp` (C# `Dsp.LpcToAutocorrelation`,
+  real and complex).
+  - It is the step-down followed by ADR 0214. Itakura-Saito now calls it.
+  - The vectors are exact fractions, cross-checked in the generator against the normal
+    equations.
+  Python 5923 passed, 2 skipped; .NET 5202 passed; conformance 3457/3457 in both. Version
+  2026.11.17.18.
 
 ## Not built
 

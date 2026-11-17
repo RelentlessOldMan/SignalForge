@@ -481,6 +481,24 @@ def _model_filter(coefficients: ArrayLike, name: str) -> NDArray[Any]:
     return a
 
 
+def lpc_to_autocorrelation(
+    coefficients: ArrayLike, error: float, lags: int
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The autocorrelation ``r[0 ... lags]`` of the AR model ``error / |A|^2`` (conventions:
+    Autocorrelation of a prediction-error filter; ADR 0220)."""
+    a = _model_filter(coefficients, "coefficients")
+    e = real(error, "error")
+    if not (e > 0 and np.isfinite(e)):
+        raise ValueError("error must be positive and finite")
+    n = count(lags, "lags")
+    if a.size == 1:
+        r = np.zeros(n + 1, dtype=a.dtype)
+        r[0] = e
+        return cast("NDArray[np.complex128] | NDArray[np.float64]", r)
+    k = lpc_to_reflection(a)
+    return reflection_to_autocorrelation(k, e / float(np.prod(1.0 - np.abs(k) ** 2)), n)
+
+
 def itakura_saito(
     reference: ArrayLike, reference_error: float, test: ArrayLike, test_error: float
 ) -> float:
@@ -495,16 +513,9 @@ def itakura_saito(
         raise ValueError("reference_error must be positive and finite")
     if not (et > 0 and np.isfinite(et)):
         raise ValueError("test_error must be positive and finite")
-    lags = at.size - 1
     if at.size > 1:
         lpc_to_reflection(at)
-    if ar.size > 1:
-        k = lpc_to_reflection(ar)
-        power = er / float(np.prod(1.0 - np.abs(k) ** 2))
-        r = reflection_to_autocorrelation(k, power, lags)
-    else:
-        r = np.zeros(lags + 1)
-        r[0] = er
+    r = lpc_to_autocorrelation(ar, er, at.size - 1)
     q = 0.0
     for i in range(at.size):
         for j in range(at.size):

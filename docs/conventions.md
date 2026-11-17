@@ -1251,6 +1251,11 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `Dsp.BandwidthExpansion`, [ADR 0219](adr/0219-bandwidth-expansion.md)): `a_j γʲ`, i.e.
   `A(z/γ)`, every root `p → γp`. Finite, non-empty coefficients, any `a_0`; real
   `0 < γ ≤ 1`; output dtype follows input. **(implemented)**
+- **Autocorrelation of a prediction-error filter** (`lpc_to_autocorrelation(coefficients, error,
+  lags)`, C# `Dsp.LpcToAutocorrelation`, [ADR 0220](adr/0220-lpc-to-autocorrelation.md)):
+  `k = lpc_to_reflection(a)`, `r = reflection_to_autocorrelation(k, σ²/Π(1 − |k|²), lags)`;
+  order 0 gives `[σ², 0, …]`. Filter finite, `a[0] = 1`, minimum phase; error positive and
+  finite; integer `lags ≥ 0`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at
