@@ -380,6 +380,45 @@ def transfer_function_h2(
     return TransferFunction(g.frequencies(float(sample_rate)), response, g.count)
 
 
+@dataclass(frozen=True)
+class CoherentOutputPower:
+    """The output PSD split by the coherence (conventions: Coherent output power; ADR 0198)."""
+
+    frequencies: NDArray[np.float64]
+    coherent: NDArray[np.float64]
+    noncoherent: NDArray[np.float64]
+    num_segments: int
+
+
+def coherent_output_power(
+    x: ArrayLike,
+    y: ArrayLike,
+    sample_rate: float,
+    *,
+    nperseg: int | None = None,
+    noverlap: int | None = None,
+    window: str = "hann",
+    beta: float | None = None,
+    detrend: str = "none",
+    nfft: int | None = None,
+) -> CoherentOutputPower:
+    """``gamma^2 Pyy`` and ``(1 - gamma^2) Pyy`` on the ``welch_psd(y)`` bins, with ``gamma^2``
+    taken as 0 where an auto-spectrum is 0 (conventions: Coherent output power; ADR 0198)."""
+    g, sxy, sxx, syy = _cross_segments(
+        x, y, sample_rate, nperseg, noverlap, window, beta, detrend, nfft
+    )
+    pyy = syy * (g.scale / g.count)
+    if g.one_sided:
+        m = pyy.size
+        pyy[1 : m - 1 if g.nfft % 2 == 0 else m] *= 2.0
+    d = sxx * syy
+    gamma = np.zeros(pyy.size)
+    pos = d > 0
+    gamma[pos] = np.minimum(1.0, (sxy.real[pos] ** 2 + sxy.imag[pos] ** 2) / d[pos])
+    coherent = gamma * pyy
+    return CoherentOutputPower(g.frequencies(float(sample_rate)), coherent, pyy - coherent, g.count)
+
+
 def coherence(
     x: ArrayLike,
     y: ArrayLike,

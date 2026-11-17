@@ -372,6 +372,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Coherent output power** ([ADR 0198](adr/0198-coherent-output-power.md);
+  `coherent_output_power(...)`, the `coherence` arguments, C# `Spectral.CoherentOutputPower`):
+  `Pyy` as `welch_psd(y)` on the same bins; `coherent = γ²·Pyy`, `noncoherent = Pyy − coherent`,
+  with `γ²` taken as 0 where `Sxx·Syy = 0` (no NaN). Result `(frequencies, coherent,
+  noncoherent, num_segments)`. **(implemented)**
 - **Complex coherence and transfer functions** ([ADR
   0197](adr/0197-complex-coherence-transfer.md)): complex `x` or `y` in `coherence`,
   `transfer_function` or `transfer_function_h2` uses all `M` bins in `fftshift` order with

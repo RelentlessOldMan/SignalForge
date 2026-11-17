@@ -346,6 +346,7 @@ public static class Conformance
             "welch_psd" => Welch(a),
             "coherence" => CoherenceOp(a),
             "transfer_function" => TransferFunctionOp(a),
+            "coherent_output_power" => CoherenceOp(a, cop: true),
             "transfer_function_h2" => TransferFunctionOp(a, h2: true),
             "cross_spectral_density" => CsdOp(a),
             "dpss_tapers" => Bind((a.I("length"), a.D("half_bandwidth"), a.OptInt("num_tapers")), t => Spectral.DpssTapers(t.Item1, t.Item2, t.Item3)),
@@ -692,7 +693,7 @@ public static class Conformance
         return () => Waveforms.Prbs(order, n, seed, invert);
     }
 
-    private static Func<object?> CoherenceOp(Args a)
+    private static Func<object?> CoherenceOp(Args a, bool cop = false)
     {
         object? xs = a.Get("x"), ys = a.Get("y");
         var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.OptInt("nperseg"), a.OptInt("noverlap"));
@@ -703,10 +704,14 @@ public static class Conformance
         if (xs is Complex[] || ys is Complex[])
         {
             Complex[] xc = Complexes(xs), yc = Complexes(ys);
-            return () => Spectral.Coherence(xc, yc, fs, nperseg, noverlap, window, beta, detrend, nfft);
+            return cop
+                ? () => Spectral.CoherentOutputPower(xc, yc, fs, nperseg, noverlap, window, beta, detrend, nfft)
+                : () => Spectral.Coherence(xc, yc, fs, nperseg, noverlap, window, beta, detrend, nfft);
         }
         double[] x = Reals(xs), y = Reals(ys);
-        return () => Spectral.Coherence(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
+        return cop
+            ? () => Spectral.CoherentOutputPower(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft)
+            : () => Spectral.Coherence(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
     }
 
     private static Func<object?> TransferFunctionOp(Args a, bool h2 = false)

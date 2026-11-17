@@ -4,15 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Coherent output power**: `coherent_output_power(x, y, sample_rate, ...)` in `spectral`
-   (C# `Spectral.CoherentOutputPower`). Not built yet.
-   - It splits the output PSD into `γ²·Pyy` (linearly related to `x`) and `(1−γ²)·Pyy` (the
-     rest), on the Welch bins of `welch_psd(y)`.
-   - It returns `frequencies`, `coherent`, `noncoherent` and `num_segments`.
+1. **Coherence significance threshold**: `coherence_threshold(num_segments, alpha)` in
+   `spectral` (C# `Spectral.CoherenceThreshold`). Not built yet.
+   - It is the level that the coherence of two independent Gaussian signals exceeds with
+     probability `alpha`, `1 − alpha^(1/(K−1))`, for `K` non-overlapping segments.
+   - `alpha` is in (0, 1) and `K ≥ 2`.
 
-   Needs an ADR covering the NaN bins (where the coherence is NaN) and complex input (ADR 0197).
-   Expected values: `y = a·x` gives noncoherent 0; hand two-segment cases from the coherence
-   vectors.
+   Needs an ADR covering the overlap caveat: overlapped segments are not independent, so the
+   threshold uses the given `K` as is. Expected values: closed-form cases, e.g. `K = 2`,
+   `alpha = 0.05` gives 0.95; `K = 11` gives `1 − 0.05^0.1`.
 
 ## Built
 
@@ -1881,6 +1881,14 @@ Updated with every chunk of work. Dates are absolute.
   The new suite `complex_cross_spectra` has hand DFTs of length-2 complex segments.
   Python 5615 passed, 2 skipped; .NET 4914 passed; conformance 3193/3193 in both. Version
   2026.11.16.95.
+- 2026-11-16: coherent output power (ADR 0198): `coherent_output_power(x, y, sample_rate,
+  ...)` in `spectral` (C# `Spectral.CoherentOutputPower`, with real and complex overloads).
+  - It splits `welch_psd(y)` into `γ²·Pyy` and the rest, which sum exactly to `Pyy`.
+  - There are no NaN bins: `γ²` is taken as 0 where an auto-spectrum is 0.
+  - A unit test recovers the noise PSD.
+
+  Python 5625 passed, 2 skipped; .NET 4924 passed; conformance 3202/3202 in both. Version
+  2026.11.16.96.
 
 ## Not built
 

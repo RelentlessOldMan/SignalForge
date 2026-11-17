@@ -9,6 +9,13 @@ namespace SignalForge;
 /// <param name="NumSegments">How many segments were averaged.</param>
 public sealed record Coherence(double[] Frequencies, double[] Values, int NumSegments);
 
+/// <summary>The output PSD split by the coherence (conventions: Coherent output power; ADR 0198).</summary>
+/// <param name="Frequencies">The <c>WelchPsd</c> bin frequencies of the output.</param>
+/// <param name="Coherent"><c>γ²·Pyy</c>, units²/Hz.</param>
+/// <param name="Noncoherent"><c>Pyy − Coherent</c>, units²/Hz.</param>
+/// <param name="NumSegments">How many segments were averaged.</param>
+public sealed record CoherentOutputPower(double[] Frequencies, double[] Coherent, double[] Noncoherent, int NumSegments);
+
 /// <summary>Welch cross-spectral density per bin, one-sided for real input, (conventions: Cross-spectral density;
 /// ADR 0194).</summary>
 /// <param name="Frequencies">Bin frequencies <c>k·fs/M</c>, <c>k = 0 … ⌊M/2⌋</c>; for complex
@@ -222,6 +229,63 @@ public static partial class Spectral
             response[k] = syx != Complex.Zero ? new Complex(syy[k], 0) / syx : new Complex(double.NaN, double.NaN);
         }
         return new TransferFunction(g.Frequencies(oneSided), response, g.Count);
+    }
+
+    /// <summary><c>γ²·Pyy</c> and <c>(1 − γ²)·Pyy</c> on the <c>WelchPsd</c> bins of
+    /// <paramref name="y"/>, with <c>γ²</c> taken as 0 where an auto-spectrum is 0 (conventions:
+    /// Coherent output power; ADR 0198).</summary>
+    /// <param name="x">Real input samples, finite.</param>
+    /// <param name="y">Real output samples, finite, as many as <paramref name="x"/>.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="nperseg">Segment length; the whole input when null.</param>
+    /// <param name="noverlap">Overlap; half a segment when null.</param>
+    /// <param name="window">The window applied to each segment.</param>
+    /// <param name="beta">The Kaiser β, for the Kaiser window only.</param>
+    /// <param name="detrend">Detrending of each segment.</param>
+    /// <param name="nfft">Transform length, at least <paramref name="nperseg"/>; the segment length when null.</param>
+    /// <returns>The frequencies, the two parts and the segment count.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static CoherentOutputPower CoherentOutputPower(ReadOnlySpan<double> x, ReadOnlySpan<double> y, double sampleRate,
+        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
+        Detrend detrend = Detrend.None, int? nfft = null) =>
+        CoherentOutputPowerOf(ToComplex(x), ToComplex(y), sampleRate, nperseg, noverlap, window, beta, detrend, nfft, oneSided: true);
+
+    /// <summary>The coherent output power for complex samples: all bins in shifted order (ADR 0197,
+    /// ADR 0198).</summary>
+    /// <param name="x">Complex input samples, finite.</param>
+    /// <param name="y">Complex output samples, finite, as many as <paramref name="x"/>.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="nperseg">Segment length; the whole input when null.</param>
+    /// <param name="noverlap">Overlap; half a segment when null.</param>
+    /// <param name="window">The window applied to each segment.</param>
+    /// <param name="beta">The Kaiser β, for the Kaiser window only.</param>
+    /// <param name="detrend">Detrending of each segment.</param>
+    /// <param name="nfft">Transform length, at least <paramref name="nperseg"/>; the segment length when null.</param>
+    /// <returns>The frequencies, the two parts and the segment count.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static CoherentOutputPower CoherentOutputPower(ReadOnlySpan<Complex> x, ReadOnlySpan<Complex> y, double sampleRate,
+        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
+        Detrend detrend = Detrend.None, int? nfft = null) =>
+        CoherentOutputPowerOf(x.ToArray(), y.ToArray(), sampleRate, nperseg, noverlap, window, beta, detrend, nfft, oneSided: false);
+
+    private static CoherentOutputPower CoherentOutputPowerOf(Complex[] x, Complex[] y, double sampleRate, int? nperseg,
+        int? noverlap, WindowType window, double? beta, Detrend detrend, int? nfft, bool oneSided)
+    {
+        var (g, sxy, sxx, syy) = CrossSegments(x, y, sampleRate, nperseg, noverlap, window, beta, detrend, nfft, oneSided);
+        int m = syy.Length, last = g.Nfft % 2 == 0 ? m - 1 : m;
+        double scale = g.Scale / g.Count;
+        var coherent = new double[m];
+        var noncoherent = new double[m];
+        for (int k = 0; k < m; k++)
+        {
+            double pyy = syy[k] * scale * (oneSided && k >= 1 && k < last ? 2.0 : 1.0);
+            double d = sxx[k] * syy[k];
+            double num = sxy[k].Real * sxy[k].Real + sxy[k].Imaginary * sxy[k].Imaginary;
+            double gamma = d > 0 ? Math.Min(1.0, num / d) : 0.0;
+            coherent[k] = gamma * pyy;
+            noncoherent[k] = pyy - coherent[k];
+        }
+        return new CoherentOutputPower(g.Frequencies(oneSided), coherent, noncoherent, g.Count);
     }
 
     /// <summary>Welch's segments of x and y: (segments, Σ conj X·Y, Σ|X|², Σ|Y|²) on the one-sided
