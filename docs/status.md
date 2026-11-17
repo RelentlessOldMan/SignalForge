@@ -4,14 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Transfer-function estimate (H2)**: `transfer_function_h2(x, y, sample_rate, ...)` in
-   `spectral` (C# `Spectral.TransferFunctionH2`). It is `H2 = Σ|Y_s|² / Σ conj Y_s·X_s`
-   (`Pyy/Pyx`), which is unbiased for noise on the input. It uses the segments of
-   `transfer_function` (ADR 0193). Not built yet. Needs an ADR covering:
-   - bins where `Pyx = 0`;
-   - the relation `|H1/H2| = coherence`.
+1. **Two-sided cross-spectral density for complex input**: extend `cross_spectral_density` (ADR
+   0194) so that complex `x` or `y` gives the two-sided, shifted `Pxy`, as `welch_psd` does for
+   complex samples. C# gets a `Complex` overload of `Spectral.CrossSpectralDensity`. Not built yet.
+   Needs an ADR covering:
+   - the `one_sided` argument (real only, as for `welch_psd`);
+   - mixed real and complex pairs;
+   - the frequency order (`fft_frequencies(shifted=True)`).
 
-   Expected values: the H1 hand cases where they are noise-free, where H1 = H2.
+   Expected values: `y = x` complex equals the complex `welch_psd`; hand DFTs of length-2 and
+   length-4 complex segments.
 
 ## Built
 
@@ -1851,6 +1853,16 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are hand DFTs, each checked against a direct DFT.
   Python 5585 passed, 2 skipped; .NET 4886 passed; conformance 3168/3168 in both. Version
   2026.11.16.92.
+- 2026-11-16: transfer-function estimate H2 (ADR 0195): `transfer_function_h2(x, y, sample_rate,
+  ...)` in `spectral` (C# `Spectral.TransferFunctionH2`), returning the `TransferFunction`
+  result.
+  - It computes `H2 = Σ|Y|²/Σ conj Y·X` over the H1 segments, giving a complex NaN where the
+    cross-spectrum is 0.
+  - `H1/H2` is the coherence, and a unit test checks this.
+
+  The vectors include a case where segments disagree: H1 = 1/3 and H2 = 3.
+  Python 5594 passed, 2 skipped; .NET 4895 passed; conformance 3176/3176 in both. Version
+  2026.11.16.93.
 
 ## Not built
 

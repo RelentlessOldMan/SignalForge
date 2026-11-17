@@ -372,6 +372,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Transfer function (H2)** ([ADR 0195](adr/0195-transfer-function-h2.md);
+  `transfer_function_h2(...)`, the `transfer_function` arguments, C#
+  `Spectral.TransferFunctionH2`): `H2[k] = Σ|Y_s|² / Σ conj Y_s·X_s` on the same bins, complex NaN
+  where the denominator is 0; the `TransferFunction` result. `H1/H2` is the coherence.
+  **(implemented)**
 - **Cross-spectral density** ([ADR 0194](adr/0194-cross-spectral-density.md);
   `cross_spectral_density(x, y, sample_rate, *, nperseg=None, noverlap=None, window="hann",
   beta=None, detrend="none", nfft=None)`, C# `Spectral.CrossSpectralDensity`): the `coherence`

@@ -136,6 +136,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "coherence": spectral.coherence,
     "cross_spectral_density": spectral.cross_spectral_density,
     "transfer_function": spectral.transfer_function,
+    "transfer_function_h2": spectral.transfer_function_h2,
     "dpss_tapers": spectral.dpss_tapers,
     "harmonic_f_test": spectral.harmonic_f_test,
     "generalized_lomb_scargle": spectral.generalized_lomb_scargle,

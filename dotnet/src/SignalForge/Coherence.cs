@@ -106,6 +106,34 @@ public static partial class Spectral
         return new CrossSpectralDensity(g.Frequencies(true), csd, g.Count);
     }
 
+    /// <summary>H2 = <c>Σ|Y|² / Σ conj Y·X</c> over Welch's segments, from input
+    /// <paramref name="x"/> to output <paramref name="y"/>; NaN where the cross-spectrum is 0
+    /// (conventions: Transfer function (H2); ADR 0195).</summary>
+    /// <param name="x">Real input samples, finite.</param>
+    /// <param name="y">Real output samples, finite, as many as <paramref name="x"/>.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="nperseg">Segment length; the whole input when null.</param>
+    /// <param name="noverlap">Overlap; half a segment when null.</param>
+    /// <param name="window">The window applied to each segment.</param>
+    /// <param name="beta">The Kaiser β, for the Kaiser window only.</param>
+    /// <param name="detrend">Detrending of each segment.</param>
+    /// <param name="nfft">Transform length, at least <paramref name="nperseg"/>; the segment length when null.</param>
+    /// <returns>The frequencies, the response and the segment count.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static TransferFunction TransferFunctionH2(ReadOnlySpan<double> x, ReadOnlySpan<double> y, double sampleRate,
+        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
+        Detrend detrend = Detrend.None, int? nfft = null)
+    {
+        var (g, sxy, _, syy) = CrossSegments(x, y, sampleRate, nperseg, noverlap, window, beta, detrend, nfft);
+        var response = new Complex[syy.Length];
+        for (int k = 0; k < response.Length; k++)
+        {
+            Complex syx = Complex.Conjugate(sxy[k]);
+            response[k] = syx != Complex.Zero ? new Complex(syy[k], 0) / syx : new Complex(double.NaN, double.NaN);
+        }
+        return new TransferFunction(g.Frequencies(true), response, g.Count);
+    }
+
     private static (Segments G, Complex[] Sxy, double[] Sxx, double[] Syy) CrossSegments(ReadOnlySpan<double> x,
         ReadOnlySpan<double> y, double sampleRate, int? nperseg, int? noverlap, WindowType window, double? beta,
         Detrend detrend, int? nfft)

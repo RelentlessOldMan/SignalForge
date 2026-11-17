@@ -346,6 +346,7 @@ public static class Conformance
             "welch_psd" => Welch(a),
             "coherence" => CoherenceOp(a),
             "transfer_function" => TransferFunctionOp(a),
+            "transfer_function_h2" => TransferFunctionOp(a, h2: true),
             "cross_spectral_density" => CsdOp(a),
             "dpss_tapers" => Bind((a.I("length"), a.D("half_bandwidth"), a.OptInt("num_tapers")), t => Spectral.DpssTapers(t.Item1, t.Item2, t.Item3)),
             "multitaper_psd" => MultitaperOp(a),
@@ -702,7 +703,7 @@ public static class Conformance
         return () => Spectral.Coherence(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
     }
 
-    private static Func<object?> TransferFunctionOp(Args a)
+    private static Func<object?> TransferFunctionOp(Args a, bool h2 = false)
     {
         double[] x = Reals(a.Get("x")), y = Reals(a.Get("y"));
         var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.OptInt("nperseg"), a.OptInt("noverlap"));
@@ -710,7 +711,9 @@ public static class Conformance
         double? beta = a.OptD("beta");
         var detrend = DetrendName(a);
         int? nfft = a.OptInt("nfft");
-        return () => Spectral.TransferFunction(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
+        return h2
+            ? () => Spectral.TransferFunctionH2(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft)
+            : () => Spectral.TransferFunction(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
     }
 
     private static Func<object?> CsdOp(Args a)

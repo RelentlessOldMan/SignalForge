@@ -345,6 +345,30 @@ def cross_spectral_density(
     return CrossSpectralDensity(g.frequencies(float(sample_rate)), csd, g.count)
 
 
+def transfer_function_h2(
+    x: ArrayLike,
+    y: ArrayLike,
+    sample_rate: float,
+    *,
+    nperseg: int | None = None,
+    noverlap: int | None = None,
+    window: str = "hann",
+    beta: float | None = None,
+    detrend: str = "none",
+    nfft: int | None = None,
+) -> TransferFunction:
+    """H2 = ``sum |Y|^2 / sum conj(Y) X`` over Welch's segments, from input ``x`` to output ``y``;
+    NaN where the cross-spectrum is 0 (conventions: Transfer function (H2); ADR 0195)."""
+    g, sxy, _, syy = _cross_segments(
+        x, y, sample_rate, nperseg, noverlap, window, beta, detrend, nfft
+    )
+    syx = np.conj(sxy)
+    response = np.full(syy.size, complex(math.nan, math.nan))
+    pos = (syx.real != 0) | (syx.imag != 0)
+    response[pos] = syy[pos] / syx[pos]
+    return TransferFunction(g.frequencies(float(sample_rate)), response, g.count)
+
+
 def coherence(
     x: ArrayLike,
     y: ArrayLike,
