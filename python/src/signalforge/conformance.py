@@ -259,6 +259,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "bessel_bandpass": dsp.bessel_bandpass,
     "allpass_first_order": dsp.allpass_first_order,
     "allpass_second_order": dsp.allpass_second_order,
+    "thiran_allpass": dsp.thiran_allpass,
     "a_weighting_sos": dsp.a_weighting_sos,
     "c_weighting_sos": dsp.c_weighting_sos,
     "bessel_bandstop": dsp.bessel_bandstop,

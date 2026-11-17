@@ -1715,6 +1715,13 @@ and `SignalForge.IirFilter`.
   (band-pass) or `s² + W²` (band-stop), band-pass pair gains `|p_k|`, band-stop gains 1. Order 1
   is the order-1 band Butterworth. The delay is flat in the prototype's frequency `x`, not in
   `f`: the band transform does not keep the Bessel's flat group delay.
+- **Thiran allpass** (`thiran_allpass(delay, order)`, C# `Dsp.ThiranAllpass`,
+  [ADR 0227](adr/0227-thiran-allpass.md)): the denominator `a`, `a[0] = 1`, of
+  `H(z) = z^(−N) A(1/z)/A(z)` (numerator `a` reversed); with `N = order`, `D = delay`, `a_0 = 1`,
+  for `k ≥ 1` `a_k = (−1)^k C(N, k) Π_{n=0}^{N} (D − N + n)/(D − N + k + n)`, `C(N, k)` as
+  `Π_{i=1}^{k} (N − k + i)/i`, then the ratios in increasing `n`. DC group delay exactly `D`,
+  maximally flat; `D = N` gives `[1, 0, …, 0]`. Finite `D > N − 1` (stable), integer
+  `order ≥ 1`. **(implemented)**
 - **All-pass sections** (`allpass_first_order(cutoff, sample_rate)`,
   `allpass_second_order(center, bandwidth, sample_rate)`, [ADR 0033](adr/0033-allpass.md)): one
   section each, `|H| = 1` at every frequency, for phase equalization. With `t = tan(π·f/fs)` of

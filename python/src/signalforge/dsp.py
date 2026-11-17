@@ -1815,6 +1815,26 @@ def _allpass_c(f: float, fs: float, what: str) -> float:
     return (t - 1) / (t + 1)
 
 
+def thiran_allpass(delay: float, order: int) -> NDArray[np.float64]:
+    """The denominator ``a`` (``a[0] = 1``) of the Thiran allpass ``z^-N A(1/z) / A(z)`` with
+    maximally flat group delay ``delay`` at DC (conventions: Thiran allpass; ADR 0227)."""
+    d = real(delay, "delay")
+    n = count(order, "order")
+    if n < 1:
+        raise ValueError("order must be at least 1")
+    if not (math.isfinite(d) and d > n - 1):
+        raise ValueError("delay must be finite and greater than order - 1")
+    a = np.ones(n + 1)
+    for k in range(1, n + 1):
+        v = -1.0 if k % 2 else 1.0
+        for i in range(1, k + 1):
+            v *= (n - k + i) / i
+        for m in range(n + 1):
+            v *= (d - n + m) / (d - n + k + m)
+        a[k] = v
+    return a
+
+
 def allpass_first_order(cutoff: float, sample_rate: float) -> NDArray[np.float64]:
     """First-order all-pass section, phase -pi/2 at ``cutoff`` (conventions: IIR filters,
     All-pass sections)."""

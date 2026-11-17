@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "thiran_allpass",
+  "description": "Thiran allpass (conventions: Thiran allpass; ADR 0227).",
+  "cases": [
+    {"id": "thiran_allpass.first_order", "op": "thiran_allpass", "args": {"delay": 0.5, "order": 1}, "expected": [1.0, 0.3333333333333333], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 1, D = 1/2: a_1 = (1 - D)/(1 + D) = 1/3"},
+    {"id": "thiran_allpass.pure_delay", "op": "thiran_allpass", "args": {"delay": 3.0, "order": 3}, "expected": [1.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "D = N: the pure delay z^-3"},
+    {"id": "thiran_allpass.second_order", "op": "thiran_allpass", "args": {"delay": 1.5, "order": 2}, "expected": [1.0, 0.4, -0.02857142857142857], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 2, D = 3/2"},
+    {"id": "thiran_allpass.third_order", "op": "thiran_allpass", "args": {"delay": 3.25, "order": 3}, "expected": [1.0, -0.17647058823529413, 0.04201680672268908, -0.005042016806722689], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 3, D = 13/4"},
+    {"id": "thiran_allpass.near_limit", "op": "thiran_allpass", "args": {"delay": 1.025, "order": 2}, "expected": [1.0, 0.9629629629629629, -0.003979185797367615], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 2, D = 1.025, just above N - 1"},
+    {"id": "thiran_allpass.order_six", "op": "thiran_allpass", "args": {"delay": 5.7, "order": 6}, "expected": [1.0, 0.26865671641791045, -0.06105834464043419, 0.015907921209002012, -0.0033209835513638222, 0.00045935099588957537, -3.075426895556986e-05], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 6, D = 5.7"},
+    {"id": "thiran_allpass.at_limit", "op": "thiran_allpass", "args": {"delay": 1.0, "order": 2}, "error": "invalid_argument", "source": "delay must be greater than order - 1"},
+    {"id": "thiran_allpass.below_limit", "op": "thiran_allpass", "args": {"delay": 0.5, "order": 2}, "error": "invalid_argument", "source": "delay must be greater than order - 1"},
+    {"id": "thiran_allpass.order_zero", "op": "thiran_allpass", "args": {"delay": 0.5, "order": 0}, "error": "invalid_argument", "source": "order must be at least 1"},
+    {"id": "thiran_allpass.nan_delay", "op": "thiran_allpass", "args": {"delay": "nan", "order": 2}, "error": "invalid_argument", "source": "delay must be finite"},
+    {"id": "thiran_allpass.inf_delay", "op": "thiran_allpass", "args": {"delay": "inf", "order": 2}, "error": "invalid_argument", "source": "delay must be finite"}
+  ]
+}

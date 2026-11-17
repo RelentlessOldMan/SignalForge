@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py` and `docs/adr/` before
    picking. Candidates:
-   - a Thiran allpass fractional delay (`thiran_allpass(delay, order)`, maximally flat group
-     delay; closed-form coefficients);
    - a polyphase Farrow resampler on top of ADR 0226 (`farrow_resample(samples, ratio, order)`).
 
 ## Built
@@ -2107,6 +2105,14 @@ Updated with every chunk of work. Dates are absolute.
   - The tests check it against `lagrange_fir` sample by sample in both languages.
   Python 6006 passed, 2 skipped; .NET 5278 passed; conformance 3527/3527 in both. Version
   2026.11.17.24.
+- 2026-11-17: Thiran allpass (ADR 0227): `thiran_allpass(delay, order)` in `dsp` (C#
+  `Dsp.ThiranAllpass`).
+  - It returns the closed-form denominator, with the numerator reversed. The DC group delay is
+    exactly `D` and maximally flat, and `D > N − 1` is required.
+  - `a_0 = 1` is set directly, because the product form is `0/0` at `D = N`.
+  - The vectors are exact fractions, each checked against the DC group-delay identity.
+  Python 6019 passed, 2 skipped; .NET 5290 passed; conformance 3538/3538 in both. Version
+  2026.11.17.25.
 
 ## Not built
 
