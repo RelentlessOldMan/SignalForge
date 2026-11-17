@@ -4,15 +4,18 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Cross-correlation**: `cross_correlation(x, y)` in `dsp` (C# `Dsp.CrossCorrelation`). It is
-   `r[k] = Σ_n x[n+k]·conj y[n]` for `k = −(M−1) … N−1`. This is the same sign as
-   `autocorrelation` (ADR 0148) and NumPy's `correlate(x, y, "full")`. Not built yet.
-   Needs an ADR covering:
-   - the lag order and the index of lag 0 (`M − 1`);
-   - no scaling;
-   - real in, real out, and mixed input giving complex.
+1. **GCC-PHAT delay**: `gcc_phat(x, y, sample_rate, *, max_delay=None)` in `measurements` (C#
+   `Measurements.GccPhat`). It estimates the delay of `x` relative to `y`, with the same sign
+   as `cross_correlation` (ADR 0190), from the PHAT-weighted cross-spectrum
+   `X·conj Y / |X·conj Y|`. Not built yet. Needs an ADR covering:
+   - the zero-padded length;
+   - bins where `|X·conj Y|` is 0;
+   - the lag search range and `max_delay`;
+   - peak interpolation (parabolic or none);
+   - ties.
 
-   Expected values: hand sums. It is the basis for GCC-PHAT delay estimation next.
+   Expected values: integer-delayed impulses and sequences whose phase-only spectra can be
+   worked by hand.
 
 ## Built
 
@@ -1800,6 +1803,14 @@ Updated with every chunk of work. Dates are absolute.
   The vectors come from the cosine identity and five-sample hand sums.
   Python 5528 passed, 2 skipped; .NET 4834 passed; conformance 3121/3121 in both. Version
   2026.11.16.87.
+- 2026-11-16: cross-correlation (ADR 0190): `cross_correlation(x, y)` in `dsp` (C#
+  `Dsp.CrossCorrelation`, in a new `CrossCorrelation.cs`).
+  - It computes `r[k] = Σ x[n+k]·conj y[n]` for `k = −(M−1) … N−1`, with lag 0 at index `M − 1`.
+  - It is unscaled, and matches NumPy's `correlate(x, y, "full")`.
+
+  The vectors are hand sums, each checked against a direct loop.
+  Python 5539 passed, 2 skipped; .NET 4844 passed; conformance 3130/3130 in both. Version
+  2026.11.16.88.
 
 ## Not built
 

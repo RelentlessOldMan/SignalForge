@@ -36,6 +36,19 @@ def convolve(x: ArrayLike, h: ArrayLike) -> NDArray[np.complex128] | NDArray[np.
     return cast("NDArray[np.complex128] | NDArray[np.float64]", y)
 
 
+def cross_correlation(x: ArrayLike, y: ArrayLike) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """``r[k] = sum x[n+k] conj(y[n])`` for lags ``-(M-1) ... N-1``, lag 0 at index ``M - 1``,
+    unscaled (conventions: Cross-correlation; ADR 0190)."""
+    a = _vector(x, "x")
+    b = _vector(y, "y")
+    if not (np.all(np.isfinite(a)) and np.all(np.isfinite(b))):
+        raise ValueError("x and y must be finite")
+    r = np.convolve(a, np.conj(b[::-1]))
+    if np.iscomplexobj(r):
+        return np.asarray(r, dtype=np.complex128)
+    return np.asarray(r, dtype=np.float64)
+
+
 def autocorrelation(
     samples: ArrayLike, max_lag: int | None = None, *, scaling: str = "biased"
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

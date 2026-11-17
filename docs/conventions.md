@@ -1085,6 +1085,11 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `"biased"` divides by `N`, `"unbiased"` by `N − k`, `"none"` not at all. The mean is kept.
   Real in, real out. At least one finite sample; `max_lag` an integer in `0 … N − 1`, default
   `N − 1`. **(implemented)**
+- **Cross-correlation** (`cross_correlation(x, y)`, C# `Dsp.CrossCorrelation`,
+  [ADR 0190](adr/0190-cross-correlation.md)): `r[k] = Σ_n x[n+k]·conj y[n]` for `k = −(M−1) …
+  N−1` (`N = len x`, `M = len y`), lag `k` at index `k + M − 1`; `x[n] = y[n − d]` peaks at lag
+  `d`. NumPy's `correlate(x, y, "full")`; unscaled. Real and real give real, otherwise
+  complex. Both 1-D, finite, not empty. **(implemented)**
 - **Linear prediction** (`levinson(r, order)`, C# `Dsp.Levinson`,
   [ADR 0149](adr/0149-levinson-durbin.md)): Levinson-Durbin on an autocorrelation `r` (lags
   `0 … order` used). The prediction-error filter `a`, `a[0] = 1`, `order + 1` taps,
