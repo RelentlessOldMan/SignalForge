@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a peak hold (`peak_hold(samples, hold, release)`, holding each peak for `hold` samples and
-     then decaying, for meters);
    - a Schmitt trigger (`schmitt_trigger(samples, low, high)`, a comparator with hysteresis).
 
 ## Built
@@ -2224,6 +2222,13 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact rationals, checked against the closed form for a step.
   Python 6223 passed, 2 skipped; .NET 5484 passed; conformance 3715/3715 in both. Version
   2026.11.17.41.
+- 2026-11-17: Peak hold (ADR 0243): `peak_hold(samples, hold, release)` in `dsp` (C#
+  `Dsp.PeakHold`, real and complex).
+  - Each peak of `|x|` is held for `hold` samples, then decays by `release` per sample, never
+    below the input.
+  - The vectors are exact rationals.
+  Python 6235 passed, 2 skipped; .NET 5495 passed; conformance 3725/3725 in both. Version
+  2026.11.17.42.
 
 ## Not built
 

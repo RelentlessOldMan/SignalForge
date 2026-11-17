@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "peak_hold",
+  "description": "Peak hold (conventions: Peak hold; ADR 0243).",
+  "cases": [
+    {"id": "peak_hold.impulse", "op": "peak_hold", "args": {"samples": [4.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "hold": 3, "release": 0.5}, "expected": [4.0, 4.0, 4.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "impulse 4: held 4 samples, then 4 / 2^k"},
+    {"id": "peak_hold.no_hold", "op": "peak_hold", "args": {"samples": [2.0, 0.0, 0.0, 0.0], "hold": 0, "release": 0.75}, "expected": [2.0, 1.5, 1.125, 0.84375], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "hold 0: decays at once"},
+    {"id": "peak_hold.floor", "op": "peak_hold", "args": {"samples": [8.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "hold": 1, "release": 0.5}, "expected": [8.0, 8.0, 4.0, 2.0, 1.0, 1.0, 1.0, 1.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "decay stops at the input, then follows it"},
+    {"id": "peak_hold.signed", "op": "peak_hold", "args": {"samples": [1.0, -3.0, 2.0, -0.5, 0.25, 4.0, -1.0, 0.0, 0.5, -2.0, 0.0, 0.0], "hold": 2, "release": 0.875}, "expected": [1.0, 3.0, 3.0, 3.0, 2.625, 4.0, 4.0, 4.0, 3.5, 3.0625, 2.6796875, 2.3447265625], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "signed real samples: the magnitude is held"},
+    {"id": "peak_hold.retrigger", "op": "peak_hold", "args": {"samples": [2.0, 0.0, 3.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], "hold": 2, "release": 0.25}, "expected": [2.0, 2.0, 3.0, 3.0, 3.0, 1.0, 0.25, 0.0625, 0.015625], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "a larger peak during the hold restarts it"},
+    {"id": "peak_hold.complex", "op": "peak_hold", "args": {"samples": {"re": [3.0, 0.0, 5.0, 0.0, 0.0, 0.0], "im": [4.0, 0.0, -12.0, -1.0, 0.0, 0.0]}, "hold": 1, "release": 0.5}, "expected": [5.0, 5.0, 13.0, 13.0, 6.5, 3.25], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "complex samples with exact magnitudes"},
+    {"id": "peak_hold.hold_negative", "op": "peak_hold", "args": {"samples": [1.0], "hold": -1, "release": 0.5}, "error": "invalid_argument", "source": "hold must be at least 0"},
+    {"id": "peak_hold.release_one", "op": "peak_hold", "args": {"samples": [1.0], "hold": 1, "release": 1.0}, "error": "invalid_argument", "source": "release must be below 1"},
+    {"id": "peak_hold.empty", "op": "peak_hold", "args": {"samples": [], "hold": 1, "release": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "peak_hold.nan_sample", "op": "peak_hold", "args": {"samples": [1.0, "nan"], "hold": 1, "release": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

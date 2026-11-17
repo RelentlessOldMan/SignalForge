@@ -95,6 +95,7 @@ from .dsp import (
     median_filter,
     moving_average,
     moving_rms,
+    peak_hold,
     pulse_shape,
     reflection_to_arcsine,
     reflection_to_autocorrelation,
@@ -387,7 +388,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.41"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.42"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -643,6 +644,7 @@ __all__ = [
     "odd_even_ratio",
     "ofdm_demodulate",
     "ofdm_modulate",
+    "peak_hold",
     "peak_widths",
     "phase_noise",
     "phase_noise_spurs",

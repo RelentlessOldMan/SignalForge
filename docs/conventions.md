@@ -1874,6 +1874,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0242](adr/0242-slew-limiter.md)): `y[−1] = 0`, `d = x[n] − y[n−1]`;
   `y[n] = y[n−1] + rise` if `d > rise`, `y[n−1] − fall` if `d < −fall`, else `x[n]` exactly.
   Finite `rise, fall > 0`; samples real, finite, non-empty. **(implemented)**
+- **Peak hold** (`peak_hold(samples, hold, release)`, C# `Dsp.PeakHold`,
+  [ADR 0243](adr/0243-peak-hold.md)): `r = |x[n]|`, from `p = 0, c = 0`: if `r ≥ p` then
+  `p = r, c = 0`; else if `c < hold` then `c += 1`; else `p = max(release·p, r)` (`c` kept).
+  Output `p`. Integer `hold ≥ 0`, finite `release` in `[0, 1)`; samples finite, non-empty, real or
+  complex; output real. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

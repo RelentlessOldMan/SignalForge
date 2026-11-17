@@ -2508,6 +2508,35 @@ def envelope_follower(samples: ArrayLike, attack: float, release: float) -> NDAr
     return e
 
 
+def peak_hold(samples: ArrayLike, hold: int, release: float) -> NDArray[np.float64]:
+    """Peak of ``|x|`` held for ``hold`` samples, then decaying by ``release`` per sample, from
+    rest (conventions: Peak hold; ADR 0243)."""
+    h = count(hold, "hold")
+    rel = real(release, "release")
+    if not 0 <= rel < 1:
+        raise ValueError("release must be in [0, 1)")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    mag = np.abs(x)
+    y = np.empty(x.size)
+    p = 0.0
+    c = 0
+    for n in range(x.size):
+        r = float(mag[n])
+        if r >= p:
+            p = r
+            c = 0
+        elif c < h:
+            c += 1
+        else:
+            p = rel * p
+            if p < r:
+                p = r
+        y[n] = p
+    return y
+
+
 def slew_limiter(samples: ArrayLike, rise: float, fall: float) -> NDArray[np.float64]:
     """Limit each step to at most ``rise`` up and ``fall`` down, from rest (conventions:
     Slew-rate limiter; ADR 0242)."""
