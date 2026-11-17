@@ -1229,6 +1229,10 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `r[m] = −k_m E − s` then step up `a` and `E ← E(1 − |k_m|²)` while `m ≤ p`, else `r[m] = −s`.
   Inverts `levinson`. Returns `lags + 1` values; finite non-empty `k`, every `|k| < 1`; positive
   finite power; integer `lags ≥ 0`. **(implemented)**
+- **Log-area ratios** (`reflection_to_lar(reflection)`, `lar_to_reflection(lar)`, C#
+  `Dsp.ReflectionToLar`, `Dsp.LarToReflection`, [ADR 0215](adr/0215-log-area-ratios.md)):
+  `g = ln((1 + k)/(1 − k)) = 2 atanh k`, `k = tanh(g/2)`. Real, finite, non-empty; every
+  `|k| < 1`; any finite `g`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

@@ -749,6 +749,47 @@ public static partial class Dsp
         return r;
     }
 
+    /// <summary>The log-area ratios <c>ln((1 + k)/(1 − k))</c> of real reflection coefficients
+    /// (conventions: Log-area ratios; ADR 0215).</summary>
+    /// <param name="reflection">The coefficients, finite, each <c>|k| &lt; 1</c>, at least one.</param>
+    /// <returns>One ratio per coefficient.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ReflectionToLar(ReadOnlySpan<double> reflection)
+    {
+        if (reflection.IsEmpty)
+            throw new ArgumentException("reflection must not be empty", nameof(reflection));
+        var g = new double[reflection.Length];
+        for (int i = 0; i < g.Length; i++)
+        {
+            double k = reflection[i];
+            if (!double.IsFinite(k))
+                throw new ArgumentException("reflection must be finite", nameof(reflection));
+            if (!(Math.Abs(k) < 1))
+                throw new ArgumentException("every reflection coefficient must have |k| < 1", nameof(reflection));
+            g[i] = 2 * Math.Atanh(k);
+        }
+        return g;
+    }
+
+    /// <summary>The reflection coefficients <c>tanh(g/2)</c> of log-area ratios (conventions:
+    /// Log-area ratios; ADR 0215).</summary>
+    /// <param name="lar">The ratios, finite, at least one.</param>
+    /// <returns>One reflection coefficient per ratio.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LarToReflection(ReadOnlySpan<double> lar)
+    {
+        if (lar.IsEmpty)
+            throw new ArgumentException("lar must not be empty", nameof(lar));
+        var k = new double[lar.Length];
+        for (int i = 0; i < k.Length; i++)
+        {
+            if (!double.IsFinite(lar[i]))
+                throw new ArgumentException("lar must be finite", nameof(lar));
+            k[i] = Math.Tanh(lar[i] / 2);
+        }
+        return k;
+    }
+
     private static Complex[] ToComplexArray(ReadOnlySpan<double> x)
     {
         var c = new Complex[x.Length];

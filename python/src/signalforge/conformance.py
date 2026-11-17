@@ -211,6 +211,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "lattice_synthesis": dsp.lattice_synthesis,
     "ar_spectral_flatness": dsp.ar_spectral_flatness,
     "reflection_to_autocorrelation": dsp.reflection_to_autocorrelation,
+    "reflection_to_lar": dsp.reflection_to_lar,
+    "lar_to_reflection": dsp.lar_to_reflection,
     "reflection_to_lpc": dsp.reflection_to_lpc,
     "lpc_to_reflection": dsp.lpc_to_reflection,
     "upsample": dsp.upsample,

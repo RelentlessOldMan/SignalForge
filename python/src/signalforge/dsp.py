@@ -422,6 +422,30 @@ def reflection_to_autocorrelation(
     return cast("NDArray[np.complex128] | NDArray[np.float64]", r)
 
 
+def reflection_to_lar(reflection: ArrayLike) -> NDArray[np.float64]:
+    """The log-area ratios ``ln((1 + k) / (1 - k))`` of real reflection coefficients
+    (conventions: Log-area ratios; ADR 0215)."""
+    k = _vector(reflection, "reflection")
+    if np.iscomplexobj(k):
+        raise ValueError("reflection must be real")
+    if not np.all(np.isfinite(k)):
+        raise ValueError("reflection must be finite")
+    if not np.all(np.abs(k) < 1):
+        raise ValueError("every reflection coefficient must have |k| < 1")
+    return 2.0 * np.arctanh(k)
+
+
+def lar_to_reflection(lar: ArrayLike) -> NDArray[np.float64]:
+    """The reflection coefficients ``tanh(g / 2)`` of log-area ratios (conventions: Log-area
+    ratios; ADR 0215)."""
+    g = _vector(lar, "lar")
+    if np.iscomplexobj(g):
+        raise ValueError("lar must be real")
+    if not np.all(np.isfinite(g)):
+        raise ValueError("lar must be finite")
+    return cast("NDArray[np.float64]", np.tanh(g / 2.0))
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

@@ -65,6 +65,7 @@ from .dsp import (
     gammatone,
     interpolate,
     kaiser_parameters,
+    lar_to_reflection,
     lattice_filter,
     lattice_synthesis,
     levinson,
@@ -74,6 +75,7 @@ from .dsp import (
     lsf_to_lpc,
     pulse_shape,
     reflection_to_autocorrelation,
+    reflection_to_lar,
     reflection_to_lpc,
     resample,
     resample_taps,
@@ -354,7 +356,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.12"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.13"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -547,6 +549,7 @@ __all__ = [
     "iq_imbalance",
     "kaiser_parameters",
     "kay_frequency",
+    "lar_to_reflection",
     "lateral_fraction",
     "lattice_filter",
     "lattice_synthesis",
@@ -640,6 +643,7 @@ __all__ = [
     "read_wav_info",
     "real_cepstrum",
     "reflection_to_autocorrelation",
+    "reflection_to_lar",
     "reflection_to_lpc",
     "resample",
     "resample_taps",

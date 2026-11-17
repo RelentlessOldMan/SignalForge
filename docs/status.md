@@ -4,11 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Log-area ratios**: `reflection_to_lar(reflection)` and `lar_to_reflection(lar)` in `dsp` (C#
-   `Dsp.ReflectionToLar` / `Dsp.LarToReflection`, real only). Not built yet.
-   - `g = ln((1 + k)/(1 − k))` and `k = tanh(g/2)`, the speech-coding quantization domain.
-   - `|k| < 1` is required; any finite `g` is allowed.
-   - Expected values: closed forms such as `k = 1/3 → ln 2` and `k = 3/5 → ln 4`.
+1. **Inverse sine coefficients**: `reflection_to_arcsine(reflection)` and
+   `arcsine_to_reflection(arcsine)` in `dsp` (C# `Dsp.ReflectionToArcsine` /
+   `Dsp.ArcsineToReflection`, real only). Not built yet.
+   - `θ = arcsin k` and `k = sin θ`, the other quantization domain of speech coders.
+   - `|k| < 1` is required; `|θ| < π/2` is required.
+   - Expected values: `k = 1/2 → π/6`, `√2/2 → π/4`, `√3/2 → π/3`.
 
 ## Built
 
@@ -2018,6 +2019,13 @@ Updated with every chunk of work. Dates are absolute.
     recovers `k`.
   Python 5843 passed, 2 skipped; .NET 5128 passed; conformance 3389/3389 in both. Version
   2026.11.17.12.
+- 2026-11-17: Log-area ratios (ADR 0215): `reflection_to_lar(reflection)` and
+  `lar_to_reflection(lar)` in `dsp` (C# `Dsp.ReflectionToLar` and `Dsp.LarToReflection`, real
+  only).
+  - The forward map is `2 atanh k` and the inverse is `tanh(g/2)`.
+  - The vectors are closed forms such as `ln 2`, `ln 4`, `ln 9` and `ln 19`.
+  Python 5854 passed, 2 skipped; .NET 5138 passed; conformance 3398/3398 in both. Version
+  2026.11.17.13.
 
 ## Not built
 
