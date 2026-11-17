@@ -257,6 +257,8 @@ public static class Conformance
                 : Bind((Reals(a.Get("impulse_response")), a.D("sample_rate"), a.Opt("time", 0.05)), t => Measurements.Definition(t.Item1, t.Item2, t.Item3)),
             "schroeder_decay" => a.Get("impulse_response") is Complex[]? Bind(Complexes(a.Get("impulse_response")), h => Measurements.SchroederDecay(h))
                 : Bind(Reals(a.Get("impulse_response")), h => Measurements.SchroederDecay(h)),
+            "teager_energy" => a.Get("samples") is Complex[]? Bind(Complexes(a.Get("samples")), x => Measurements.TeagerEnergy(x))
+                : Bind(Reals(a.Get("samples")), x => Measurements.TeagerEnergy(x)),
             "energy_time_curve" => Bind(Reals(a.Get("impulse_response")), h => Measurements.EnergyTimeCurve(h)),
             "decay_time" => Bind((Reals(a.Get("decay")), a.D("sample_rate"), a.Opt("start_db", -5.0), a.Opt("stop_db", -25.0)), t => Measurements.DecayTime(t.Item1, t.Item2, t.Item3, t.Item4)),
             "noise_compensated_decay" => a.Get("impulse_response") is Complex[]? Bind((Complexes(a.Get("impulse_response")), a.Opt("tail", 0.1)), t => Measurements.NoiseCompensatedDecay(t.Item1, t.Item2))

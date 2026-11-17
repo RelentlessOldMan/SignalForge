@@ -94,6 +94,10 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **Teager-Kaiser energy** ([ADR 0188](adr/0188-teager-energy.md); `teager_energy(samples)`, C#
+  `Measurements.TeagerEnergy`): `ψ[n] = |x[n]|² − Re(x[n−1]·conj x[n+1])`, `n = 1 … N−2`, so
+  `N − 2` values with no padding; real input gives `x[n]² − x[n−1]x[n+1]`. Real or complex,
+  1-D, finite, at least three samples. **(implemented)**
 - **Energy-time curve** ([ADR 0186](adr/0186-energy-time-curve.md); `energy_time_curve(
   impulse_response)`, C# `Measurements.EnergyTimeCurve`): `10·log10(|z[n]|²/max|z|²)` dB with `z`
   the `analytic_signal` (ADR 0185); peak 0 dB, zero gives `−inf`, no smoothing. Real, 1-D,

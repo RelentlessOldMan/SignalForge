@@ -4,17 +4,21 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Teager-Kaiser energy**: `teager_energy(samples)` in `measurements` (C#
-   `Measurements.TeagerEnergy`), defined as `ψ[n] = x[n]² − x[n−1]·x[n+1]`. Not built yet.
-   - Real input gives `N − 2` values.
-   - Complex input uses `|x[n]|² − Re(x[n−1]·conj x[n+1])`.
+1. **Energy separation (DESA-2)**: `energy_separation(samples, sample_rate)` in `measurements`
+   (C# `Measurements.EnergySeparation`). It returns the instantaneous amplitude and frequency
+   from the Teager energy of ADR 0188, using Maragos-Kaiser-Quatieri DESA-2:
+   - `y[n] = x[n+1] − x[n−1]`;
+   - `Ω = ½·arccos(1 − ψ[y]/(2ψ[x]))`;
+   - `|a| = 2ψ[x]/√ψ[y]`.
 
+   The result has `N − 4` values, at `n = 2 … N−3`. Real input only. Not built yet.
    Needs an ADR covering:
-   - the result length (no padding);
-   - the complex form;
-   - at least three samples.
+   - the alignment;
+   - what to do where `ψ ≤ 0` or the arccos argument falls outside `[−1, 1]`: clamp, or give
+     NaN;
+   - the result type.
 
-   Expected values: `A²·sin²Ω` for `A·cos(Ωn + φ)` exactly, and hand sums.
+   Expected values: for `A·cos(Ωn + φ)` it is exactly `A` and `Ω·fs/(2π)`.
 
 ## Built
 
@@ -1784,6 +1788,15 @@ Updated with every chunk of work. Dates are absolute.
   and two tones.
   Python 5506 passed, 2 skipped; .NET 4813 passed; conformance 3102/3102 in both. Version
   2026.11.16.85.
+- 2026-11-16: Teager-Kaiser energy (ADR 0188): `teager_energy(samples)` in `measurements` (C#
+  `Measurements.TeagerEnergy`, in a new `TeagerEnergy.cs`).
+  - It computes `|x[n]|² − Re(x[n−1]·conj x[n+1])`.
+  - It returns `N − 2` values, with no padding.
+  - It takes real and complex input.
+
+  The vectors come from trigonometric identities and hand sums.
+  Python 5516 passed, 2 skipped; .NET 4823 passed; conformance 3111/3111 in both. Version
+  2026.11.16.86.
 
 ## Not built
 

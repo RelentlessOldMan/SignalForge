@@ -1256,6 +1256,20 @@ def schroeder_decay(impulse_response: ArrayLike) -> NDArray[np.float64]:
         return np.asarray(10 * np.log10(energy / energy[0]), dtype=np.float64)
 
 
+def teager_energy(samples: ArrayLike) -> NDArray[np.float64]:
+    """The Teager-Kaiser energy ``|x[n]|^2 - Re(x[n-1] conj x[n+1])``, ``N - 2`` values
+    (conventions: Teager-Kaiser energy; ADR 0188)."""
+    x = np.asarray(samples)
+    if x.ndim != 1 or x.shape[0] < 3:
+        raise ValueError("samples must be one-dimensional with at least three values")
+    x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    mid = x[1:-1]
+    cross = x[:-2] * np.conj(x[2:])
+    return np.asarray(mid.real * mid.real + mid.imag * mid.imag - cross.real, dtype=np.float64)
+
+
 def energy_time_curve(impulse_response: ArrayLike) -> NDArray[np.float64]:
     """The energy-time curve ``10 log10(|z|^2 / max |z|^2)`` with ``z`` the analytic signal
     (conventions: Energy-time curve; ADR 0186)."""
