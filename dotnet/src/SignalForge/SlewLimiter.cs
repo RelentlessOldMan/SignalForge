@@ -32,4 +32,40 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Comparator with hysteresis: 1 after a sample above <paramref name="high"/>, 0
+    /// after one below <paramref name="low"/>, otherwise held, from 0 (conventions: Schmitt
+    /// trigger; ADR 0244).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="low">The lower threshold, finite and below <paramref name="high"/>.</param>
+    /// <param name="high">The upper threshold, finite.</param>
+    /// <returns>The state, 0 or 1, after each sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static byte[] SchmittTrigger(ReadOnlySpan<double> samples, double low, double high)
+    {
+        if (!double.IsFinite(low))
+            throw new ArgumentOutOfRangeException(nameof(low), "low must be finite");
+        if (!double.IsFinite(high))
+            throw new ArgumentOutOfRangeException(nameof(high), "high must be finite");
+        if (!(low < high))
+            throw new ArgumentException("low must be below high", nameof(low));
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        var y = new byte[samples.Length];
+        byte state = 0;
+        for (int n = 0; n < samples.Length; n++)
+        {
+            if (samples[n] > high)
+                state = 1;
+            else if (samples[n] < low)
+                state = 0;
+            y[n] = state;
+        }
+        return y;
+    }
 }

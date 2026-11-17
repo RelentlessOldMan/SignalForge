@@ -6,7 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Schmitt trigger (`schmitt_trigger(samples, low, high)`, a comparator with hysteresis).
+   - a sample-and-hold (`sample_and_hold(samples, period, *, offset=0)`, holding every
+     `period`-th sample, a zero-order hold at the same rate);
+   - a dead zone (`dead_zone(samples, width)`, zeroing `|x| ≤ width` and shifting the rest toward
+     0).
 
 ## Built
 
@@ -2229,6 +2232,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact rationals.
   Python 6235 passed, 2 skipped; .NET 5495 passed; conformance 3725/3725 in both. Version
   2026.11.17.42.
+- 2026-11-17: Schmitt trigger (ADR 0244): `schmitt_trigger(samples, low, high)` in `dsp` (C#
+  `Dsp.SchmittTrigger`, real samples, `uint8` / `byte` states).
+  - It is a comparator with hysteresis, starting from 0, with strict thresholds.
+  - The vectors include samples exactly on each threshold.
+  Python 6245 passed, 2 skipped; .NET 5505 passed; conformance 3733/3733 in both. Version
+  2026.11.17.43.
 
 ## Not built
 

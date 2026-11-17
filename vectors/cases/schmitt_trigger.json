@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "schmitt_trigger",
+  "description": "Schmitt trigger (conventions: Schmitt trigger; ADR 0244).",
+  "cases": [
+    {"id": "schmitt_trigger.noisy_edge", "op": "schmitt_trigger", "args": {"samples": [0.0, 0.375, 0.625, 0.4375, 0.5625, 1.25, 0.875, 0.4375, 0.625, -0.125, 0.25, -0.625, 0.25], "low": -0.5, "high": 0.5}, "expected": [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "high at the first sample above 0.5, held through chatter until -0.625"},
+    {"id": "schmitt_trigger.on_thresholds", "op": "schmitt_trigger", "args": {"samples": [1.0, 2.0, 1.0, -1.0, 2.25, -1.0, -1.25, 2.0], "low": -1.0, "high": 2.0}, "expected": [0, 0, 0, 0, 1, 1, 0, 0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "a sample exactly on a threshold holds the state"},
+    {"id": "schmitt_trigger.never_high", "op": "schmitt_trigger", "args": {"samples": [0.25, -0.75, 0.5, 0.0], "low": 0.0, "high": 1.0}, "expected": [0, 0, 0, 0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "never above high: all 0"},
+    {"id": "schmitt_trigger.square", "op": "schmitt_trigger", "args": {"samples": [3.0, 3.0, -3.0, -3.0, 3.0, 0.0, -3.0, 0.0], "low": -1.0, "high": 1.0}, "expected": [1, 1, 0, 0, 1, 1, 0, 0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "a square wave and its mid value"},
+    {"id": "schmitt_trigger.equal_thresholds", "op": "schmitt_trigger", "args": {"samples": [1.0], "low": 0.5, "high": 0.5}, "error": "invalid_argument", "source": "low must be below high"},
+    {"id": "schmitt_trigger.reversed", "op": "schmitt_trigger", "args": {"samples": [1.0], "low": 1.0, "high": 0.0}, "error": "invalid_argument", "source": "low must be below high"},
+    {"id": "schmitt_trigger.empty", "op": "schmitt_trigger", "args": {"samples": [], "low": 0.0, "high": 1.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "schmitt_trigger.nan_sample", "op": "schmitt_trigger", "args": {"samples": [1.0, "nan"], "low": 0.0, "high": 1.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

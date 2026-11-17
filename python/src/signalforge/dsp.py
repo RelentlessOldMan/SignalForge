@@ -2537,6 +2537,30 @@ def peak_hold(samples: ArrayLike, hold: int, release: float) -> NDArray[np.float
     return y
 
 
+def schmitt_trigger(samples: ArrayLike, low: float, high: float) -> NDArray[np.uint8]:
+    """Comparator with hysteresis: 1 after a sample above ``high``, 0 after one below ``low``,
+    otherwise held, from 0 (conventions: Schmitt trigger; ADR 0244)."""
+    lo = real(low, "low")
+    hi = real(high, "high")
+    if not lo < hi:
+        raise ValueError("low must be below high")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y = np.empty(x.size, dtype=np.uint8)
+    state = 0
+    for n in range(x.size):
+        v = float(x[n])
+        if v > hi:
+            state = 1
+        elif v < lo:
+            state = 0
+        y[n] = state
+    return y
+
+
 def slew_limiter(samples: ArrayLike, rise: float, fall: float) -> NDArray[np.float64]:
     """Limit each step to at most ``rise`` up and ``fall`` down, from rest (conventions:
     Slew-rate limiter; ADR 0242)."""

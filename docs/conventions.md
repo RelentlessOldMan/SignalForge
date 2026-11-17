@@ -1879,6 +1879,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `p = r, c = 0`; else if `c < hold` then `c += 1`; else `p = max(release·p, r)` (`c` kept).
   Output `p`. Integer `hold ≥ 0`, finite `release` in `[0, 1)`; samples finite, non-empty, real or
   complex; output real. **(implemented)**
+- **Schmitt trigger** (`schmitt_trigger(samples, low, high)`, C# `Dsp.SchmittTrigger`,
+  [ADR 0244](adr/0244-schmitt-trigger.md)): state from 0; `x[n] > high` → 1, `x[n] < low` → 0,
+  otherwise kept (strict: on a threshold keeps the state); output the state as `uint8` / `byte`.
+  Finite `low < high`; samples real, finite, non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
