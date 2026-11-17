@@ -1835,6 +1835,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `x[n−w … n+w]`, `w = min(h, n, L−1−n)` (a symmetric window that shrinks at the ends; always an
   odd count, so `y[0] = x[0]`, `y[L−1] = x[L−1]`). Odd `length ≥ 1`; samples real, finite,
   non-empty, any length. **(implemented)**
+- **Hampel filter** (`hampel_filter(samples, length, threshold=3.0)`, C# `Dsp.HampelFilter`,
+  [ADR 0235](adr/0235-hampel-filter.md)): the windows of the running median filter; `m_n` the
+  window median, `MAD_n` the median of `|x_j − m_n|`; `y[n] = m_n` if
+  `|x[n] − m_n| > (threshold·κ)·MAD_n` (strict), else `x[n]`, with `κ = 1/Φ⁻¹(3/4) =
+  1.482602218505602`. Odd `length ≥ 1`, finite `threshold ≥ 0`; samples real, finite, non-empty.
+  **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

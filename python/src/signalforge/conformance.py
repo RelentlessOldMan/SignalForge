@@ -250,6 +250,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "savgol_coefficients": dsp.savgol_coefficients,
     "savgol_filter": dsp.savgol_filter,
     "median_filter": dsp.median_filter,
+    "hampel_filter": dsp.hampel_filter,
     "cic_interpolate": dsp.cic_interpolate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
     "butterworth_lowpass": dsp.butterworth_lowpass,

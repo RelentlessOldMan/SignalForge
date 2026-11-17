@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "hampel_filter",
+  "description": "Hampel filter (conventions: Hampel filter; ADR 0235).",
+  "cases": [
+    {"id": "hampel_filter.spike", "op": "hampel_filter", "args": {"samples": [1.0, 1.25, 0.75, 1.5, 20.0, 0.5, 1.25, 1.0, 0.75, 1.5, 1.0], "length": 5}, "expected": [1.0, 1.25, 0.75, 1.5, 1.25, 0.5, 1.25, 1.0, 0.75, 1.5, 1.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "one spike replaced by its window median, the rest kept"},
+    {"id": "hampel_filter.clean", "op": "hampel_filter", "args": {"samples": [1.0, 1.25, 0.75, 1.5, 1.0, 0.5, 1.25, 1.0, 0.75, 1.5, 1.0], "length": 5}, "expected": [1.0, 1.25, 0.75, 1.5, 1.0, 0.5, 1.25, 1.0, 0.75, 1.5, 1.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "no outliers at threshold 3: unchanged"},
+    {"id": "hampel_filter.zero_threshold", "op": "hampel_filter", "args": {"samples": [3.0, -1.0, 4.0, 1.0, -5.0, 9.0, 2.0, -6.0, 5.0], "length": 3, "threshold": 0.0}, "expected": [3.0, 3.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 5.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "threshold 0: the running median wherever a sample differs from it"},
+    {"id": "hampel_filter.flat_mad_zero", "op": "hampel_filter", "args": {"samples": [2.0, 2.0, 2.0, 7.0, 2.0, 2.0, 2.0], "length": 5}, "expected": [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "MAD 0: the 7 is replaced"},
+    {"id": "hampel_filter.low_threshold", "op": "hampel_filter", "args": {"samples": [0.0, 1.0, 0.25, 2.0, 0.5, -1.0, 0.75, 3.0, 0.0], "length": 5, "threshold": 1.0}, "expected": [0.0, 0.25, 0.25, 0.5, 0.5, -1.0, 0.75, 0.75, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "threshold 1 on mixed data"},
+    {"id": "hampel_filter.single_sample", "op": "hampel_filter", "args": {"samples": [4.0], "length": 3}, "expected": [4.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "one sample: kept"},
+    {"id": "hampel_filter.even_length", "op": "hampel_filter", "args": {"samples": [1.0, 2.0], "length": 2}, "error": "invalid_argument", "source": "length must be odd"},
+    {"id": "hampel_filter.negative_threshold", "op": "hampel_filter", "args": {"samples": [1.0], "length": 3, "threshold": -1.0}, "error": "invalid_argument", "source": "threshold must be non-negative"},
+    {"id": "hampel_filter.empty", "op": "hampel_filter", "args": {"samples": [], "length": 3}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "hampel_filter.nan_sample", "op": "hampel_filter", "args": {"samples": [1.0, "nan"], "length": 3}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

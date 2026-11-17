@@ -657,6 +657,8 @@ public static class Conformance
                 a.Has("delay") ? a.I("delay") : 1), t => Dsp.CicCompensator(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "savgol_coefficients" => Bind((a.I("length"), a.I("order"), a.Has("derivative") ? a.I("derivative") : 0,
                 a.Has("position") ? a.I("position") : 0), t => Dsp.SavgolCoefficients(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "hampel_filter" => Bind((Reals(a.Get("samples")), a.I("length"), a.Has("threshold") ? a.D("threshold") : 3.0),
+                t => Dsp.HampelFilter(t.Item1, t.Item2, t.Item3)),
             "median_filter" => Bind((Reals(a.Get("samples")), a.I("length")), t => Dsp.MedianFilter(t.Item1, t.Item2)),
             "savgol_filter" => Bind((Reals(a.Get("samples")), a.I("length"), a.I("order"), a.Has("derivative") ? a.I("derivative") : 0),
                 t => Dsp.SavgolFilter(t.Item1, t.Item2, t.Item3, t.Item4)),

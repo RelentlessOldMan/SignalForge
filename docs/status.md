@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Hampel outlier filter (`hampel_filter(samples, length, threshold=3)`, the running median
-     with a MAD test, after ADR 0234);
    - a DC blocker (`dc_blocker(samples, pole)`, the one-pole, one-zero high-pass).
 
 ## Built
@@ -2171,6 +2169,13 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are the middle elements of the sorted windows, so they are exact.
   Python 6131 passed, 2 skipped; .NET 5398 passed; conformance 3638/3638 in both. Version
   2026.11.17.33.
+- 2026-11-17: Hampel filter (ADR 0235): `hampel_filter(samples, length, threshold=3.0)` in
+  `dsp` (C# `Dsp.HampelFilter`).
+  - It replaces a sample by its window median when the sample is further than
+    `threshold·1.4826·MAD` from that median.
+  - It uses the windows of ADR 0234. The vectors are exact.
+  Python 6143 passed, 2 skipped; .NET 5409 passed; conformance 3648/3648 in both. Version
+  2026.11.17.34.
 
 ## Not built
 

@@ -2390,6 +2390,37 @@ def median_filter(samples: ArrayLike, length: int) -> NDArray[np.float64]:
     return y
 
 
+_MAD_SCALE = 1.482602218505602
+
+
+def hampel_filter(samples: ArrayLike, length: int, threshold: float = 3.0) -> NDArray[np.float64]:
+    """Replaces each sample further than ``threshold`` robust standard deviations (1.4826 MAD)
+    from its window median by that median (conventions: Hampel filter; ADR 0235)."""
+    m = count(length, "length")
+    if m < 1 or m % 2 == 0:
+        raise ValueError("length must be odd and at least 1")
+    t = real(threshold, "threshold")
+    if t < 0:
+        raise ValueError("threshold must be non-negative")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    h = (m - 1) // 2
+    n_x = x.size
+    y = x.copy()
+    k = t * _MAD_SCALE
+    for n in range(n_x):
+        w = min(h, n, n_x - 1 - n)
+        win = x[n - w : n + w + 1]
+        med = float(np.sort(win)[w])
+        mad = float(np.sort(np.abs(win - med))[w])
+        if abs(float(x[n]) - med) > k * mad:
+            y[n] = med
+    return np.asarray(y, dtype=np.float64)
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:
