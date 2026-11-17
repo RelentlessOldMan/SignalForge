@@ -655,6 +655,35 @@ public static partial class Dsp
         return y;
     }
 
+    /// <summary>The spectral flatness of the AR model with real reflection coefficients,
+    /// <c>Π (1 − k²)</c> (conventions: Spectral flatness of an AR model; ADR 0213).</summary>
+    /// <param name="reflection">The coefficients <c>k_1 … k_p</c>, finite, each <c>|k| &lt; 1</c>, at least one.</param>
+    /// <returns>The flatness, in <c>(0, 1]</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double ArSpectralFlatness(ReadOnlySpan<double> reflection) =>
+        ArSpectralFlatness((ReadOnlySpan<Complex>)ToComplexArray(reflection));
+
+    /// <summary>The spectral flatness of the AR model with complex reflection coefficients,
+    /// <c>Π (1 − |k|²)</c> (conventions: Spectral flatness of an AR model; ADR 0213).</summary>
+    /// <param name="reflection">The coefficients <c>k_1 … k_p</c>, finite, each <c>|k| &lt; 1</c>, at least one.</param>
+    /// <returns>The flatness, in <c>(0, 1]</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double ArSpectralFlatness(ReadOnlySpan<Complex> reflection)
+    {
+        if (reflection.IsEmpty)
+            throw new ArgumentException("reflection must not be empty", nameof(reflection));
+        double product = 1;
+        foreach (Complex v in reflection)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("reflection must be finite", nameof(reflection));
+            if (!(Complex.Abs(v) < 1))
+                throw new ArgumentException("every reflection coefficient must have |k| < 1", nameof(reflection));
+            product *= 1 - ((v.Real * v.Real) + (v.Imaginary * v.Imaginary));
+        }
+        return product;
+    }
+
     private static Complex[] ToComplexArray(ReadOnlySpan<double> x)
     {
         var c = new Complex[x.Length];

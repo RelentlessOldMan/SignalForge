@@ -27,6 +27,7 @@ from .dsp import (
     allpass_first_order,
     allpass_second_order,
     ar_order_selection,
+    ar_spectral_flatness,
     autocorrelation,
     bessel_bandpass,
     bessel_bandstop,
@@ -352,7 +353,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.10"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.11"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -428,6 +429,7 @@ __all__ = [
     "amp_to_db",
     "analytic_signal",
     "ar_order_selection",
+    "ar_spectral_flatness",
     "autocorrelation",
     "autocorrelation_pitch",
     "awgn",

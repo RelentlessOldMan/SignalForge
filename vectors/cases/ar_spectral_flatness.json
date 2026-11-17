@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "ar_spectral_flatness",
+  "description": "Spectral flatness of an AR model (conventions: Spectral flatness of an AR model; ADR 0213).",
+  "cases": [
+    {"id": "ar_spectral_flatness.white", "op": "ar_spectral_flatness", "args": {"reflection": [0.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "k = 0: A = 1, a flat spectrum, flatness 1"},
+    {"id": "ar_spectral_flatness.order_one", "op": "ar_spectral_flatness", "args": {"reflection": [-0.5]}, "expected": 0.75, "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "1 - 1/4 = 3/4"},
+    {"id": "ar_spectral_flatness.order_two", "op": "ar_spectral_flatness", "args": {"reflection": [0.5, -0.3]}, "expected": 0.6825, "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "(3/4)(91/100) = 273/400"},
+    {"id": "ar_spectral_flatness.burg_three_samples", "op": "ar_spectral_flatness", "args": {"reflection": [-0.8888888888888888, 0.9058823529411765]}, "expected": 0.03764705882352941, "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "ADR 0205's x = [1, 2, 3]: (17/81)(1296/7225) = 22032/585225"},
+    {"id": "ar_spectral_flatness.order_three", "op": "ar_spectral_flatness", "args": {"reflection": [0.5, -0.3333333333333333, 0.25]}, "expected": 0.625, "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "(3/4)(8/9)(15/16) = 5/8"},
+    {"id": "ar_spectral_flatness.near_unit", "op": "ar_spectral_flatness", "args": {"reflection": [0.99]}, "expected": 0.0199, "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "1 - 9801/10000 = 199/10000, a sharp peak"},
+    {"id": "ar_spectral_flatness.complex", "op": "ar_spectral_flatness", "args": {"reflection": {"re": [0.3, -0.2], "im": [0.4, 0.1]}}, "expected": 0.7124999999999999, "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "|k|^2 = 1/4 and 1/20: (3/4)(19/20)"},
+    {"id": "ar_spectral_flatness.unit_k", "op": "ar_spectral_flatness", "args": {"reflection": [0.5, -1.0]}, "error": "invalid_argument", "source": "every |k| < 1"},
+    {"id": "ar_spectral_flatness.empty", "op": "ar_spectral_flatness", "args": {"reflection": []}, "error": "invalid_argument", "source": "reflection must not be empty"},
+    {"id": "ar_spectral_flatness.nan", "op": "ar_spectral_flatness", "args": {"reflection": [0.5, "nan"]}, "error": "invalid_argument", "source": "reflection must be finite"}
+  ]
+}

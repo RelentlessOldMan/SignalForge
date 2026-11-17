@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Spectral flatness of an AR model**: `ar_spectral_flatness(reflection)` in `dsp` (C#
-   `Dsp.ArSpectralFlatness`), the closed form `Π (1 − |k_m|²)`. Not built yet.
-   - For a minimum-phase `A`, `exp(mean ln S)/mean S` of `σ²/|A|²` equals `σ²/r[0]`, which is
-     `Π(1 − |k|²)`.
-   - Expected values: exact fractions, plus a stdlib numerical integral of the model spectrum as a
-     cross-check.
+1. **Autocorrelation of an AR model**: `reflection_to_autocorrelation(reflection, power, lags)`
+   in `dsp` (C# `Dsp.ReflectionToAutocorrelation`, real and complex). It is the inverse of the
+   Levinson recursion. Not built yet.
+   - Given `r[0] = power` and `k_1 … k_p`, it returns `r[0 … lags]`.
+   - It extends past `p` by `r[m] = −Σ_{j=1}^{p} a_j r[m−j]`.
+   - Expected values: hand Yule-Walker solutions in exact fractions, cross-checked against
+     `levinson` on the result in the generator (stdlib).
 
 ## Built
 
@@ -2004,6 +2005,13 @@ Updated with every chunk of work. Dates are absolute.
     all-pole recursion and the analysis lattice.
   Python 5815 passed, 2 skipped; .NET 5102 passed; conformance 3365/3365 in both. Version
   2026.11.17.10.
+- 2026-11-17: Spectral flatness of an AR model (ADR 0213): `ar_spectral_flatness(reflection)` in
+  `dsp` (C# `Dsp.ArSpectralFlatness`, real and complex).
+  - It is the closed form `Π(1 − |k|²)`.
+  - The vectors are exact fraction products, cross-checked in the generator by numerically
+    integrating the model spectrum.
+  Python 5827 passed, 2 skipped; .NET 5113 passed; conformance 3375/3375 in both. Version
+  2026.11.17.11.
 
 ## Not built
 

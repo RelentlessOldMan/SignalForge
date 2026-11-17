@@ -1219,6 +1219,10 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `f_p = e[n]`, for `m = p … 1` `f_{m−1} = f_m − k_m b_{m−1}[n−1]`,
   `b_m[n] = b_{m−1}[n−1] + conj k_m f_{m−1}`; `y[n] = b_0[n] = f_0`. It is `1/A(z)` and inverts
   the analysis lattice. Rules as the analysis lattice. **(implemented)**
+- **Spectral flatness of an AR model** (`ar_spectral_flatness(reflection)`, C#
+  `Dsp.ArSpectralFlatness`, [ADR 0213](adr/0213-ar-spectral-flatness.md)): `Π (1 − |k_m|²)`, the
+  geometric over the arithmetic mean of `σ²/|A|²`; in `(0, 1]`. Finite, non-empty, every
+  `|k| < 1`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

@@ -499,6 +499,9 @@ public static class Conformance
                 : Bind((Reals(a.Get("r")), a.I("order")), t => Dsp.Levinson(t.Item1, t.Item2)),
             "burg" => a.Get("samples") is Complex[] bs ? Bind((bs, a.I("order")), t => Dsp.Burg(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.I("order")), t => Dsp.Burg(t.Item1, t.Item2)),
+            "ar_spectral_flatness" => a.Get("reflection") is Complex[] fk
+                ? Bind(fk, t => Dsp.ArSpectralFlatness(t))
+                : Bind(Reals(a.Get("reflection")), t => Dsp.ArSpectralFlatness(t)),
             "reflection_to_lpc" => a.Get("reflection") is Complex[] rk
                 ? Bind(rk, t => Dsp.ReflectionToLpc(t))
                 : Bind(Reals(a.Get("reflection")), t => Dsp.ReflectionToLpc(t)),

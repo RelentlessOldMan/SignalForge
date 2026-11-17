@@ -378,6 +378,17 @@ def lattice_synthesis(
     )
 
 
+def ar_spectral_flatness(reflection: ArrayLike) -> float:
+    """The spectral flatness of the AR model with reflection coefficients ``reflection``,
+    ``prod(1 - |k|^2)`` (conventions: Spectral flatness of an AR model; ADR 0213)."""
+    k = _vector(reflection, "reflection")
+    if not np.all(np.isfinite(k)):
+        raise ValueError("reflection must be finite")
+    if not np.all(np.abs(k) < 1):
+        raise ValueError("every reflection coefficient must have |k| < 1")
+    return float(np.prod(1.0 - np.abs(k) ** 2))
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")
