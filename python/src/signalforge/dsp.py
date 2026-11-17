@@ -190,6 +190,33 @@ def burg(samples: ArrayLike, order: int) -> Levinson:
     return Levinson(a.real.copy(), k.real.copy(), error)
 
 
+def lpc_cepstrum(
+    coefficients: ArrayLike, error: float, num_coefficients: int
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The cepstrum ``c_0 ... c_{num-1}`` of the all-pole model ``sigma / A(z)``: the series of
+    ``ln(sigma / A)`` (conventions: LPC cepstrum; ADR 0207)."""
+    a = _vector(coefficients, "coefficients")
+    if not np.all(np.isfinite(a)):
+        raise ValueError("coefficients must be finite")
+    if a[0] != 1:
+        raise ValueError("coefficients[0] must be 1")
+    e = real(error, "error")
+    if not (e > 0 and np.isfinite(e)):
+        raise ValueError("error must be positive and finite")
+    m = count(num_coefficients, "num_coefficients")
+    if m < 1:
+        raise ValueError("num_coefficients must be at least 1")
+    p = a.size - 1
+    c = np.zeros(m, dtype=a.dtype)
+    c[0] = 0.5 * np.log(e)
+    for n in range(1, m):
+        acc = -a[n] if n <= p else 0.0
+        for k in range(max(1, n - p), n):
+            acc -= k * c[k] * a[n - k] / n
+        c[n] = acc
+    return cast("NDArray[np.complex128] | NDArray[np.float64]", c)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "lpc_cepstrum",
+  "description": "LPC cepstrum (conventions: LPC cepstrum; ADR 0207).",
+  "cases": [
+    {"id": "lpc_cepstrum.order_one", "op": "lpc_cepstrum", "args": {"coefficients": [1.0, 0.5], "error": 2.0, "num_coefficients": 6}, "expected": [0.34657359027997264, -0.5, 0.125, -0.041666666666666664, 0.015625, -0.00625], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "A = 1 + 0.5 z^-1: c_n = (-a_1)^n/n = (-0.5)^n/n, c_0 = ln(2)/2"},
+    {"id": "lpc_cepstrum.order_two_real_roots", "op": "lpc_cepstrum", "args": {"coefficients": [1.0, -0.25, -0.125], "error": 1.0, "num_coefficients": 8}, "expected": [0.0, 0.25, 0.15625, 0.036458333333333336, 0.0166015625, 0.0060546875, 0.0026448567708333335, 0.0011073521205357143], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "roots 0.5 and -0.25, a = [1, -0.25, -0.125]: c_n = (0.5^n + (-0.25)^n)/n, c_0 = 0"},
+    {"id": "lpc_cepstrum.order_two_conjugate_roots", "op": "lpc_cepstrum", "args": {"coefficients": [1.0, -0.6483627670417677, 0.36], "error": 0.3, "num_coefficients": 10}, "expected": [-0.6019864021629681, 0.6483627670417677, -0.14981286115697123, -0.14255891951046412, -0.042356106631962036, 0.008823028616648186, 0.014932568297986485, 0.006029839470624207, -0.0006109604619637203, -0.0020404652879275897], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "roots 0.6 e^(+-i): c_n = 2 (0.6^n) cos(n)/n, c_0 = ln(0.3)/2"},
+    {"id": "lpc_cepstrum.complex_roots", "op": "lpc_cepstrum", "args": {"coefficients": {"re": [1.0, -0.3, 0.0], "im": [0.0, -0.5, 0.15]}, "error": 1.5, "num_coefficients": 7}, "expected": {"re": [0.2027325540540822, 0.3, -0.08, 0.009, 0.01765, 0.0004859999999999999, -0.0024826666666666664], "im": [0.0, 0.5, 0.0, -0.041666666666666664, 0.0, 0.00625, 0.0]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "roots 0.5i and 0.3, complex a: c_n = ((0.5i)^n + 0.3^n)/n, c_0 = ln(1.5)/2"},
+    {"id": "lpc_cepstrum.only_c0", "op": "lpc_cepstrum", "args": {"coefficients": [1.0, -0.9], "error": 4.0, "num_coefficients": 1}, "expected": [0.6931471805599453], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "num_coefficients = 1: just c_0 = ln(4)/2"},
+    {"id": "lpc_cepstrum.fewer_than_order", "op": "lpc_cepstrum", "args": {"coefficients": [1.0, -0.35, -0.1, 0.0125], "error": 1.0, "num_coefficients": 3}, "expected": [0.0, 0.35, 0.16125], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "order 3, two terms past c_0"},
+    {"id": "lpc_cepstrum.unit_filter", "op": "lpc_cepstrum", "args": {"coefficients": [1.0], "error": 1.0, "num_coefficients": 4}, "expected": [0.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "A = 1, error 1: ln 1 = 0, every c_n = 0"},
+    {"id": "lpc_cepstrum.a0_not_one", "op": "lpc_cepstrum", "args": {"coefficients": [2.0, 0.5], "error": 1.0, "num_coefficients": 3}, "error": "invalid_argument", "source": "coefficients[0] must be 1"},
+    {"id": "lpc_cepstrum.empty", "op": "lpc_cepstrum", "args": {"coefficients": [], "error": 1.0, "num_coefficients": 3}, "error": "invalid_argument", "source": "coefficients must not be empty"},
+    {"id": "lpc_cepstrum.zero_error", "op": "lpc_cepstrum", "args": {"coefficients": [1.0, 0.5], "error": 0.0, "num_coefficients": 3}, "error": "invalid_argument", "source": "error must be positive"},
+    {"id": "lpc_cepstrum.zero_count", "op": "lpc_cepstrum", "args": {"coefficients": [1.0, 0.5], "error": 1.0, "num_coefficients": 0}, "error": "invalid_argument", "source": "num_coefficients must be at least 1"},
+    {"id": "lpc_cepstrum.nan_coefficient", "op": "lpc_cepstrum", "args": {"coefficients": [1.0, "nan"], "error": 1.0, "num_coefficients": 3}, "error": "invalid_argument", "source": "coefficients must be finite"}
+  ]
+}

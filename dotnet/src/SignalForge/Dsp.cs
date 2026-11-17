@@ -296,6 +296,55 @@ public static partial class Dsp
         return new ArOrderSelection(errors, fpe, aic, fpeOrder, aicOrder);
     }
 
+    /// <summary>The cepstrum <c>c_0 … c_{num−1}</c> of the all-pole model <c>σ/A(z)</c> with real
+    /// coefficients: the series of <c>ln(σ/A)</c> (conventions: LPC cepstrum; ADR 0207).</summary>
+    /// <param name="coefficients">The prediction-error filter, finite, <c>a[0] = 1</c>.</param>
+    /// <param name="error">The prediction error <c>σ²</c>, positive and finite.</param>
+    /// <param name="numCoefficients">How many cepstral coefficients, at least 1.</param>
+    /// <returns><c>c_0 = ½ ln σ²</c> and the following coefficients.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LpcCepstrum(ReadOnlySpan<double> coefficients, double error, int numCoefficients)
+    {
+        Complex[] a = new Complex[coefficients.Length];
+        for (int i = 0; i < coefficients.Length; i++)
+            a[i] = coefficients[i];
+        return [.. LpcCepstrum((ReadOnlySpan<Complex>)a, error, numCoefficients).Select(v => v.Real)];
+    }
+
+    /// <summary>The cepstrum <c>c_0 … c_{num−1}</c> of the all-pole model <c>σ/A(z)</c> with complex
+    /// coefficients: the series of <c>ln(σ/A)</c> (conventions: LPC cepstrum; ADR 0207).</summary>
+    /// <param name="coefficients">The prediction-error filter, finite, <c>a[0] = 1</c>.</param>
+    /// <param name="error">The prediction error <c>σ²</c>, positive and finite.</param>
+    /// <param name="numCoefficients">How many cepstral coefficients, at least 1.</param>
+    /// <returns><c>c_0 = ½ ln σ²</c> and the following coefficients.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] LpcCepstrum(ReadOnlySpan<Complex> coefficients, double error, int numCoefficients)
+    {
+        if (coefficients.IsEmpty)
+            throw new ArgumentException("coefficients must not be empty", nameof(coefficients));
+        foreach (Complex v in coefficients)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("coefficients must be finite", nameof(coefficients));
+        }
+        if (coefficients[0] != Complex.One)
+            throw new ArgumentException("coefficients[0] must be 1", nameof(coefficients));
+        Check.PositiveFinite(error, nameof(error));
+        if (numCoefficients < 1)
+            throw new ArgumentOutOfRangeException(nameof(numCoefficients), "num_coefficients must be at least 1");
+        int p = coefficients.Length - 1;
+        var c = new Complex[numCoefficients];
+        c[0] = 0.5 * Math.Log(error);
+        for (int n = 1; n < numCoefficients; n++)
+        {
+            Complex acc = n <= p ? -coefficients[n] : Complex.Zero;
+            for (int k = Math.Max(1, n - p); k < n; k++)
+                acc -= k * c[k] * coefficients[n - k] / n;
+            c[n] = acc;
+        }
+        return c;
+    }
+
     private static int CorrelationLags(int length, int? maxLag, CorrelationScaling scaling)
     {
         int top = maxLag ?? length - 1;

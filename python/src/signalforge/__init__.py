@@ -65,6 +65,7 @@ from .dsp import (
     interpolate,
     kaiser_parameters,
     levinson,
+    lpc_cepstrum,
     pulse_shape,
     resample,
     resample_taps,
@@ -345,7 +346,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.4"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.5"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -549,6 +550,7 @@ __all__ = [
     "lomb_scargle_false_alarm_level_baluev",
     "lomb_scargle_frequencies",
     "lomb_scargle_multiterm",
+    "lpc_cepstrum",
     "mel_filterbank",
     "mel_to_hz",
     "mfcc",

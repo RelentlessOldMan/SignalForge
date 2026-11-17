@@ -1186,6 +1186,11 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `σ²_p = σ²_{p−1}(1 − |k_p|²)` for `p = 0 … P`; `FPE_p = σ²_p (N + p + 1)/(N − p − 1)`,
   `AIC_p = N ln σ²_p + 2p`; `fpe_order`/`aic_order` minimize each, lowest order on a tie.
   `1 ≤ max_order ≤ N − 2`; Burg's rules otherwise. **(implemented)**
+- **LPC cepstrum** (`lpc_cepstrum(coefficients, error, num_coefficients)`, C# `Dsp.LpcCepstrum`,
+  [ADR 0207](adr/0207-lpc-cepstrum.md)): the series `ln(σ/A(z)) = Σ c_n z^−n`, `c_0 = ½ ln error`,
+  `c_n = −a_n − (1/n) Σ_{k=1}^{n−1} k c_k a_{n−k}` (`a_j = 0` past the order); returns
+  `c_0 … c_{num−1}`, real for real coefficients. `a_0 = 1` exactly, coefficients finite,
+  `error > 0`, `num_coefficients ≥ 1`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

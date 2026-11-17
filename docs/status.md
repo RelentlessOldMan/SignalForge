@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **LPC cepstrum**: `lpc_cepstrum(coefficients, error, num_coefficients)` in `dsp` (C#
-   `Dsp.LpcCepstrum`), the cepstrum of the AR model `σ²/|A|²` as complex-cepstrum coefficients of
-   `σ/A`. Not built yet.
-   - `c_0 = ln σ`.
-   - `c_n = −a_n − Σ_{k=1}^{n−1} (k/n)·c_k·a_{n−k}`, with `a_j = 0` for `j > p`.
-   - Expected values: order 1 in closed form, `c_n = −(−a_1)^n/n`, and the series of `−ln A(z)`
-     for order 2, from its factored roots.
+1. **Line spectral frequencies**: `lsf(coefficients)` in `dsp` (C# `Dsp.LineSpectralFrequencies`),
+   for real prediction-error filters. Not built yet.
+   - `P(z) = A(z) + z^−(p+1)A(1/z)` and `Q(z) = A(z) − z^−(p+1)A(1/z)`.
+   - Their unit-circle roots, in `(0, π)`, are found by a sign-change scan on a fine grid of
+     `ω` refined by bisection, and returned sorted ascending as `p` angles.
+   - Expected values: order 1 and order 2 in closed form, from the roots of the quadratic in
+     `cos ω`.
 
 ## Built
 
@@ -1959,6 +1959,13 @@ Updated with every chunk of work. Dates are absolute.
     The rest come from a stdlib recursion.
   Python 5726 passed, 2 skipped; .NET 5020 passed; conformance 3289/3289 in both. Version
   2026.11.17.4.
+- 2026-11-17: LPC cepstrum (ADR 0207): `lpc_cepstrum(coefficients, error, num_coefficients)` in
+  `dsp` (C# `Dsp.LpcCepstrum`, real and complex).
+  - It returns the series of `ln(σ/A(z))` by the standard recursion, with `c_0 = ½ ln error`.
+  - The vectors choose the roots of `A`, so `c_n = (Σ rᵢⁿ)/n` exactly.
+  - The tests check that `2 Re Σ c_n e^−iωn` reproduces the model's log-spectrum.
+  Python 5740 passed, 2 skipped; .NET 5033 passed; conformance 3301/3301 in both. Version
+  2026.11.17.5.
 
 ## Not built
 

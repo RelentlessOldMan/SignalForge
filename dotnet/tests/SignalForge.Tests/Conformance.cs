@@ -499,6 +499,10 @@ public static class Conformance
                 : Bind((Reals(a.Get("r")), a.I("order")), t => Dsp.Levinson(t.Item1, t.Item2)),
             "burg" => a.Get("samples") is Complex[] bs ? Bind((bs, a.I("order")), t => Dsp.Burg(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.I("order")), t => Dsp.Burg(t.Item1, t.Item2)),
+            "lpc_cepstrum" => a.Get("coefficients") is Complex[] lpc
+                ? Bind((lpc, a.D("error"), a.I("num_coefficients")), t => Dsp.LpcCepstrum(t.Item1, t.Item2, t.Item3))
+                : Bind((Reals(a.Get("coefficients")), a.D("error"), a.I("num_coefficients")),
+                    t => Dsp.LpcCepstrum(t.Item1, t.Item2, t.Item3)),
             "ar_order_selection" => a.Get("samples") is Complex[] aos
                 ? Bind((aos, a.I("max_order")), t => Dsp.ArOrderSelection(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.I("max_order")), t => Dsp.ArOrderSelection(t.Item1, t.Item2)),
