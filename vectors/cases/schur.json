@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "schur",
+  "description": "Schur recursion (conventions: Schur recursion; ADR 0221).",
+  "cases": [
+    {"id": "schur.adr_0214", "op": "schur", "args": {"r": [1.0, -0.5, 0.475], "order": 2}, "expected": {"reflection": [0.5, -0.3], "error": 0.6825}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "ADR 0214 in reverse: k = [1/2, -3/10], E = (3/4)(91/100) = 273/400"},
+    {"id": "schur.first_order", "op": "schur", "args": {"r": [4.0, 2.0], "order": 1}, "expected": {"reflection": [-0.5], "error": 3.0}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = -2/4 = -1/2, E = 4 (3/4) = 3"},
+    {"id": "schur.ar1", "op": "schur", "args": {"r": [2.0, -1.0, 0.5, -0.25, 0.125], "order": 4}, "expected": {"reflection": [0.5, 0.0, 0.0, 0.0], "error": 1.5}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "AR(1) r[m] = 2 (-1/2)^m: k = [1/2, 0, 0, 0], E = 3/2"},
+    {"id": "schur.extra_lags", "op": "schur", "args": {"r": [3.0, 1.0, -0.5, 0.25, 0.125], "order": 2}, "expected": {"reflection": [-0.3333333333333333, 0.3125], "error": 2.40625}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "lags past the order ignored"},
+    {"id": "schur.order_four", "op": "schur", "args": {"r": [5.0, 2.0, -1.0, 0.5, 0.3333333333333333], "order": 4}, "expected": {"reflection": [-0.4, 0.42857142857142855, -0.5625, 0.8311111111111111], "error": 0.7248148148148148}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "order 4 in fractions"},
+    {"id": "schur.complex", "op": "schur", "args": {"r": {"re": [2.0, 0.5, 0.0, -0.1], "im": [0.0, 0.5, 0.25, 0.2]}, "order": 3}, "expected": {"reflection": {"re": [-0.25, -0.0, 0.021428571428571432], "im": [-0.25, 0.0, -0.07857142857142858]}, "error": 1.738392857142857}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex: conj in the recursion"},
+    {"id": "schur.not_positive_definite", "op": "schur", "args": {"r": [1.0, 1.0], "order": 1}, "error": "invalid_argument", "source": "r = [1, 1]: k = -1"},
+    {"id": "schur.zero_r0", "op": "schur", "args": {"r": [0.0, 0.0], "order": 1}, "error": "invalid_argument", "source": "r[0] must be positive"},
+    {"id": "schur.complex_r0", "op": "schur", "args": {"r": {"re": [1.0, 0.5], "im": [0.5, 0.0]}, "order": 1}, "error": "invalid_argument", "source": "r[0] must be real"},
+    {"id": "schur.order_zero", "op": "schur", "args": {"r": [1.0, 0.5], "order": 0}, "error": "invalid_argument", "source": "order must be at least 1"},
+    {"id": "schur.too_few_lags", "op": "schur", "args": {"r": [1.0, 0.5], "order": 2}, "error": "invalid_argument", "source": "r must have order + 1 lags"},
+    {"id": "schur.nan", "op": "schur", "args": {"r": [1.0, "nan"], "order": 1}, "error": "invalid_argument", "source": "r must be finite"}
+  ]
+}

@@ -219,6 +219,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "cepstral_distance": dsp.cepstral_distance,
     "bandwidth_expansion": dsp.bandwidth_expansion,
     "lpc_to_autocorrelation": dsp.lpc_to_autocorrelation,
+    "schur": dsp.schur,
     "reflection_to_lpc": dsp.reflection_to_lpc,
     "lpc_to_reflection": dsp.lpc_to_reflection,
     "upsample": dsp.upsample,

@@ -23,6 +23,7 @@ from .dsp import (
     IirFilter,
     Levinson,
     Resampler,
+    Schur,
     a_weighting_sos,
     allpass_first_order,
     allpass_second_order,
@@ -86,6 +87,7 @@ from .dsp import (
     resample,
     resample_taps,
     rrc_taps,
+    schur,
     sos_group_delay,
     sos_response,
     upsample,
@@ -362,7 +364,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.18"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.19"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -405,6 +407,7 @@ __all__ = [
     "QpskLinkConfig",
     "QpskLinkReport",
     "Resampler",
+    "Schur",
     "Sfdr",
     "Signal",
     "SpectralContrast",
@@ -665,6 +668,7 @@ __all__ = [
     "rrc_taps",
     "saleh_amplifier",
     "schroeder_decay",
+    "schur",
     "sfdr",
     "sos_group_delay",
     "sos_response",

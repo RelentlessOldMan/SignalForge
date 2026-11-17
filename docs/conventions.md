@@ -1256,6 +1256,10 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `k = lpc_to_reflection(a)`, `r = reflection_to_autocorrelation(k, σ²/Π(1 − |k|²), lags)`;
   order 0 gives `[σ², 0, …]`. Filter finite, `a[0] = 1`, minimum phase; error positive and
   finite; integer `lags ≥ 0`. **(implemented)**
+- **Schur recursion** (`schur(r, order)`, C# `Dsp.Schur`, [ADR 0221](adr/0221-schur.md)):
+  `u = v = r`, `E = r[0]`; per step `k = −u[m]/E`, `u'[i] = u[i] + k v[i−1]`,
+  `v'[i] = v[i−1] + conj(k) u[i]`, `E ← E(1 − |k|²)`. Returns `(reflection, error)`, equal to
+  `levinson`'s. Same rules as `levinson`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

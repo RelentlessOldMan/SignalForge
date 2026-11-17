@@ -553,6 +553,46 @@ def bandwidth_expansion(
     return a * g ** np.arange(a.size, dtype=np.float64)
 
 
+@dataclass(frozen=True, eq=False)
+class Schur:
+    """The reflection coefficients and the final prediction error from the Schur recursion
+    (conventions: Schur recursion; ADR 0221)."""
+
+    reflection: NDArray[np.complex128] | NDArray[np.float64]
+    error: float
+
+
+def schur(r: ArrayLike, order: int) -> Schur:
+    """The reflection coefficients and prediction error of the autocorrelation ``r`` by the Schur
+    recursion, without forming the filter (conventions: Schur recursion; ADR 0221)."""
+    lags = _vector(r, "r")
+    if not np.all(np.isfinite(lags)):
+        raise ValueError("r must be finite")
+    p = count(order, "order")
+    if p < 1:
+        raise ValueError("order must be at least 1")
+    if lags.size < p + 1:
+        raise ValueError("r must have at least order + 1 lags")
+    if np.iscomplexobj(lags) and lags[0].imag != 0:
+        raise ValueError("r[0] must be real")
+    error = float(lags[0].real)
+    if not error > 0:
+        raise ValueError("r[0] must be positive")
+    u = lags[: p + 1].copy()
+    v = lags[: p + 1].copy()
+    k = np.zeros(p, dtype=lags.dtype)
+    for m in range(1, p + 1):
+        km = -u[m] / error
+        if not abs(km) < 1:
+            raise ValueError("r is not positive definite: a reflection coefficient has |k| >= 1")
+        u_next = u[1:] + km * v[:-1]
+        v[1:] = v[:-1] + np.conj(km) * u[1:]
+        u[1:] = u_next
+        k[m - 1] = km
+        error *= 1 - abs(km) ** 2
+    return Schur(cast("NDArray[np.complex128] | NDArray[np.float64]", k), error)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

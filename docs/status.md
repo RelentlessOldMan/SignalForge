@@ -4,11 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Schur recursion**: `schur(r, order)` in `dsp` (C# `Dsp.Schur`, real and complex). It gets
-   the reflection coefficients and the error straight from the autocorrelation, without forming
-   `a`, and is the parallel-friendly alternative to Levinson. Not built yet.
-   - It returns `(reflection, error)` and must agree with `levinson`.
-   - Expected values: the ADR 0214 fractions in reverse, `r → k`.
+1. **Line spectral frequencies**: `lpc_to_lsf(coefficients)` and `lsf_to_lpc(frequencies)` in
+   `dsp` (C# `Dsp.LpcToLsf`, `Dsp.LsfToLpc`), real only. Not built yet.
+   - Form `P(z) = A(z) + z^{−(p+1)}A(z^{−1})` and `Q(z) = A(z) − z^{−(p+1)}A(z^{−1})`. Their
+     unit-circle roots interlace, and the LSFs are the root angles in `(0, π)`, sorted.
+   - This needs a convention for even and odd `p` (the trivial roots at `z = ±1`), and an ADR on
+     root finding (companion-matrix eigenvalues vs Chebyshev search). Both languages must find
+     the same roots without a dependency.
+   - Expected values: order 1 and order 2 in closed form, `cos ω` from a quadratic.
 
 ## Built
 
@@ -2063,6 +2066,14 @@ Updated with every chunk of work. Dates are absolute.
     equations.
   Python 5923 passed, 2 skipped; .NET 5202 passed; conformance 3457/3457 in both. Version
   2026.11.17.18.
+- 2026-11-17: Schur recursion (ADR 0221): `schur(r, order)` in `dsp` (C# `Dsp.Schur`, real and
+  complex).
+  - It returns the reflection coefficients and the error, equal to `levinson`'s, without forming
+    `a`.
+  - The vectors are exact fractions from an independent fraction Levinson, checked against the
+    normal equations.
+  Python 5937 passed, 2 skipped; .NET 5215 passed; conformance 3469/3469 in both. Version
+  2026.11.17.19.
 
 ## Not built
 

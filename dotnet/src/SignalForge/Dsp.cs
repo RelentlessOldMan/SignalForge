@@ -14,6 +14,16 @@ public sealed record Levinson(double[] Coefficients, double[] Reflection, double
 /// <param name="Error">The final prediction error, real.</param>
 public sealed record ComplexLevinson(Complex[] Coefficients, Complex[] Reflection, double Error);
 
+/// <summary>The Schur recursion on a real autocorrelation (conventions: Schur recursion; ADR 0221).</summary>
+/// <param name="Reflection">The reflection coefficients <c>k_1 … k_p</c>.</param>
+/// <param name="Error">The final prediction error.</param>
+public sealed record Schur(double[] Reflection, double Error);
+
+/// <summary>The Schur recursion on a complex autocorrelation (conventions: Schur recursion; ADR 0221).</summary>
+/// <param name="Reflection">The reflection coefficients <c>k_1 … k_p</c>.</param>
+/// <param name="Error">The final prediction error, real.</param>
+public sealed record ComplexSchur(Complex[] Reflection, double Error);
+
 /// <summary>Burg prediction errors and Akaike's criteria for orders <c>0 … max_order</c> (conventions: AR order selection; ADR 0206).</summary>
 /// <param name="Errors">The prediction error <c>σ²_p</c> at each order, <c>σ²_0 = mean |x|²</c>.</param>
 /// <param name="Fpe">The final prediction error <c>σ²_p·(N + p + 1)/(N − p − 1)</c>.</param>
@@ -980,6 +990,61 @@ public static partial class Dsp
         foreach (Complex v in k)
             product *= 1 - ((v.Real * v.Real) + (v.Imaginary * v.Imaginary));
         return ReflectionToAutocorrelation(k, error / product, lags);
+    }
+
+    /// <summary>The reflection coefficients and prediction error of a real autocorrelation by the
+    /// Schur recursion, without forming the filter (conventions: Schur recursion; ADR 0221).</summary>
+    /// <param name="r">Lags 0 and up, at least <c>order + 1</c>, finite, <c>r[0] &gt; 0</c>.</param>
+    /// <param name="order">The order, at least 1.</param>
+    /// <returns>The reflection coefficients and the final error.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or <paramref name="r"/> is not positive definite.</exception>
+    public static Schur Schur(ReadOnlySpan<double> r, int order)
+    {
+        var c = Schur((ReadOnlySpan<Complex>)ToComplexArray(r), order);
+        return new Schur([.. c.Reflection.Select(v => v.Real)], c.Error);
+    }
+
+    /// <summary>The reflection coefficients and prediction error of a complex autocorrelation,
+    /// <c>r[−k] = conj r[k]</c>, by the Schur recursion, without forming the filter (conventions:
+    /// Schur recursion; ADR 0221).</summary>
+    /// <param name="r">Lags 0 and up, at least <c>order + 1</c>, finite, <c>r[0]</c> real and positive.</param>
+    /// <param name="order">The order, at least 1.</param>
+    /// <returns>The reflection coefficients and the final error.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or <paramref name="r"/> is not positive definite.</exception>
+    public static ComplexSchur Schur(ReadOnlySpan<Complex> r, int order)
+    {
+        foreach (Complex x in r)
+        {
+            if (!(double.IsFinite(x.Real) && double.IsFinite(x.Imaginary)))
+                throw new ArgumentException("r must be finite", nameof(r));
+        }
+        if (order < 1)
+            throw new ArgumentOutOfRangeException(nameof(order), "order must be at least 1");
+        if (r.Length < order + 1)
+            throw new ArgumentException("r must have at least order + 1 lags", nameof(r));
+        if (r[0].Imaginary != 0)
+            throw new ArgumentException("r[0] must be real", nameof(r));
+        double error = r[0].Real;
+        if (!(error > 0))
+            throw new ArgumentException("r[0] must be positive", nameof(r));
+        Complex[] u = r[..(order + 1)].ToArray();
+        Complex[] v = r[..(order + 1)].ToArray();
+        var k = new Complex[order];
+        for (int m = 1; m <= order; m++)
+        {
+            Complex km = -u[m] / error;
+            if (!(Complex.Abs(km) < 1))
+                throw new ArgumentException("r is not positive definite: a reflection coefficient has |k| >= 1", nameof(r));
+            for (int i = order; i >= 1; i--)
+            {
+                Complex ui = u[i];
+                u[i] = ui + km * v[i - 1];
+                v[i] = v[i - 1] + Complex.Conjugate(km) * ui;
+            }
+            k[m - 1] = km;
+            error *= 1 - (km.Real * km.Real + km.Imaginary * km.Imaginary);
+        }
+        return new ComplexSchur(k, error);
     }
 
     private static void CheckModelFilter(ReadOnlySpan<Complex> a, string name)
