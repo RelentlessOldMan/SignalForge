@@ -4,15 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Coherence confidence interval**: `coherence_confidence_interval(coherence, num_segments,
-   confidence=0.95)` in `spectral` (C# `Spectral.CoherenceConfidenceInterval`). Not built yet.
-   - It uses the Fisher transform for `γ = √γ²`: `tanh(atanh γ ± z/√(2K − 2))`, squared, with
-     the lower limit clipped at 0.
-   - The normal quantile `z` comes from the ADR 0201 chi-squared quantile, as
-     `z_p = √q₁(2p − 1)`.
+1. **Yule-Walker AR PSD**: `yule_walker_psd(samples, sample_rate, order, *, nfft=None,
+   one_sided=None)` in `spectral` (C# `Spectral.YuleWalkerPsd`). Not built yet.
+   - It takes the biased `autocorrelation` (ADR 0148) and solves it with `levinson` (ADR 0149).
+   - The density is `P(f) = σ²/(fs·|Σ a_j e^(−j2πfj/fs)|²)`, doubled off DC and Nyquist when
+     one-sided, so that it integrates to the AR process power.
+   - It returns a `SpectralDensity`.
 
-   Needs an ADR stating that this is an approximation (it is poor for small `K` and `γ`).
-   Expected values come from stdlib `math.atanh`, `math.tanh` and `statistics.NormalDist`.
+   Needs an ADR covering the scaling, the bin grid, a mean that is not removed, and complex
+   input. Expected values: hand AR(1) cases from `r[0]` and `r[1]` (`a₁ = −r₁/r₀`,
+   `σ² = r₀(1 − a₁²)`), evaluated in closed form at each bin.
 
 ## Built
 
@@ -1918,6 +1919,15 @@ Updated with every chunk of work. Dates are absolute.
   relative error in the quantile.
   Python 5661 passed, 2 skipped; .NET 4960 passed; conformance 3234/3234 in both. Version
   2026.11.16.99.
+- 2026-11-17: Coherence confidence interval (ADR 0202): `coherence_confidence_interval(coherence,
+  num_segments, confidence=0.95)` in `spectral` (C# `Spectral.CoherenceConfidenceInterval`).
+  - It uses the Fisher transform `tanh(atanh γ ∓ z/√(2K − 2))²`, with the lower limit clipped at
+    0.
+  - `z = √q₁(c)` comes from the ADR 0201 chi-squared quantile, so no inverse-normal routine was
+    added.
+  - The vectors use stdlib `NormalDist`.
+  Python 5672 passed, 2 skipped; .NET 4971 passed; conformance 3244/3244 in both. Version
+  2026.11.17.0.
 
 ## Not built
 

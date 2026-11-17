@@ -512,6 +512,41 @@ def psd_confidence_interval(
     return PsdConfidenceInterval(nu * p / q_hi, nu * p / q_lo)
 
 
+@dataclass(frozen=True)
+class CoherenceConfidenceInterval:
+    """Lower and upper confidence limits of a coherence (conventions: Coherence confidence
+    interval; ADR 0202)."""
+
+    lower: NDArray[np.float64]
+    upper: NDArray[np.float64]
+
+
+def coherence_confidence_interval(
+    coherence: ArrayLike, num_segments: int, confidence: float = 0.95
+) -> CoherenceConfidenceInterval:
+    """``tanh(atanh(sqrt g2) -/+ z / sqrt(2K - 2))^2``, the lower limit clipped at 0; an
+    approximation, poor for small ``K`` (conventions: Coherence confidence interval; ADR 0202)."""
+    g2 = np.asarray(coherence)
+    if g2.ndim != 1 or np.iscomplexobj(g2):
+        raise ValueError("coherence must be a one-dimensional real array")
+    g2 = g2.astype(np.float64)
+    if not np.all(np.isfinite(g2)) or np.any(g2 < 0) or np.any(g2 > 1):
+        raise ValueError("coherence must be finite and in [0, 1]")
+    k = count(num_segments, "num_segments")
+    if k < 2:
+        raise ValueError("num_segments must be at least 2")
+    c = real(confidence, "confidence")
+    if not 0.0 < c < 1.0:
+        raise ValueError("confidence must be strictly between 0 and 1")
+    s = math.sqrt(_chi2_quantile(c, 1.0)) / math.sqrt(2.0 * k - 2.0)
+    one = g2 == 1.0
+    with np.errstate(divide="ignore"):
+        t = np.arctanh(np.sqrt(np.where(one, 0.0, g2)))
+    lower = np.where(one, 1.0, np.maximum(0.0, np.tanh(t - s)) ** 2)
+    upper = np.where(one, 1.0, np.tanh(t + s) ** 2)
+    return CoherenceConfidenceInterval(lower, upper)
+
+
 def coherence_threshold(num_segments: int, alpha: float = 0.05) -> float:
     """``1 - alpha^(1/(K-1))``: the coherence that independent Gaussian signals exceed with
     probability ``alpha`` over ``K`` independent segments; overlap is not corrected for

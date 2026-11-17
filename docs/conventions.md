@@ -372,6 +372,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Coherence confidence interval** ([ADR 0202](adr/0202-coherence-confidence-interval.md);
+  `coherence_confidence_interval(coherence, num_segments, confidence=0.95)`, C#
+  `Spectral.CoherenceConfidenceInterval`): Fisher transform of `γ = √γ²`, `s = z/√(2K − 2)`
+  with `z = √q₁(c)` the two-sided normal quantile; `lower = max(0, tanh(atanh γ − s))²`,
+  `upper = tanh(atanh γ + s)²`, `γ² = 1` gives `[1, 1]`. Coherence in [0, 1], `K ≥ 2`,
+  `0 < c < 1`. Approximate for small `K`. **(implemented)**
 - **PSD confidence interval** ([ADR 0201](adr/0201-psd-confidence-interval.md);
   `psd_confidence_interval(psd, dof, confidence=0.95)`, C# `Spectral.PsdConfidenceInterval`):
   `lower = ν·P/q_ν((1+c)/2)`, `upper = ν·P/q_ν((1−c)/2)`, `q_ν` the chi-squared quantile (private;

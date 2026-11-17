@@ -16,6 +16,12 @@ public sealed record Coherence(double[] Frequencies, double[] Values, int NumSeg
 /// <param name="NumSegments">How many segments were averaged.</param>
 public sealed record CoherentOutputPower(double[] Frequencies, double[] Coherent, double[] Noncoherent, int NumSegments);
 
+/// <summary>Lower and upper confidence limits of a coherence (conventions: Coherence confidence
+/// interval; ADR 0202).</summary>
+/// <param name="Lower"><c>max(0, tanh(atanh γ − s))²</c> per bin.</param>
+/// <param name="Upper"><c>tanh(atanh γ + s)²</c> per bin.</param>
+public sealed record CoherenceConfidenceInterval(double[] Lower, double[] Upper);
+
 /// <summary>Lower and upper confidence limits of a PSD (conventions: PSD confidence interval;
 /// ADR 0201).</summary>
 /// <param name="Lower"><c>ν·P / q((1 + c)/2)</c> per bin.</param>
@@ -361,6 +367,44 @@ public static partial class Spectral
             upper[k] = dof * psd[k] / qLo;
         }
         return new PsdConfidenceInterval(lower, upper);
+    }
+
+    /// <summary><c>tanh(atanh γ ∓ z/√(2K − 2))²</c> with <c>γ = √γ²</c>, the lower limit clipped at
+    /// 0; an approximation, poor for small <c>K</c> (conventions: Coherence confidence interval;
+    /// ADR 0202).</summary>
+    /// <param name="coherence">Magnitude-squared coherence values, finite and in [0, 1].</param>
+    /// <param name="numSegments">The number of independent segments <c>K</c>, at least 2.</param>
+    /// <param name="confidence">The confidence level <c>c</c>, strictly between 0 and 1.</param>
+    /// <returns>The lower and upper limits per bin.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static CoherenceConfidenceInterval CoherenceConfidenceInterval(ReadOnlySpan<double> coherence,
+        int numSegments, double confidence = 0.95)
+    {
+        foreach (double v in coherence)
+        {
+            if (!(v >= 0 && v <= 1))
+                throw new ArgumentException("coherence must be finite and in [0, 1]", nameof(coherence));
+        }
+        if (numSegments < 2)
+            throw new ArgumentOutOfRangeException(nameof(numSegments), "numSegments must be at least 2");
+        if (!(confidence > 0 && confidence < 1))
+            throw new ArgumentOutOfRangeException(nameof(confidence), "confidence must be strictly between 0 and 1");
+        double s = Math.Sqrt(SpecialFunctions.ChiSquaredQuantile(confidence, 1)) / Math.Sqrt(2.0 * numSegments - 2);
+        var lower = new double[coherence.Length];
+        var upper = new double[coherence.Length];
+        for (int k = 0; k < coherence.Length; k++)
+        {
+            if (coherence[k] == 1)
+            {
+                lower[k] = upper[k] = 1;
+                continue;
+            }
+            double t = Math.Atanh(Math.Sqrt(coherence[k]));
+            double lo = Math.Max(0, Math.Tanh(t - s)), hi = Math.Tanh(t + s);
+            lower[k] = lo * lo;
+            upper[k] = hi * hi;
+        }
+        return new CoherenceConfidenceInterval(lower, upper);
     }
 
     /// <summary><c>1 − alpha^(1/(K−1))</c>: the coherence that independent Gaussian signals exceed

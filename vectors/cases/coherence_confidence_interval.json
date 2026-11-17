@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "coherence_confidence_interval",
+  "description": "Coherence confidence interval (conventions: Coherence confidence interval; ADR 0202).",
+  "cases": [
+    {"id": "coherence_confidence_interval.mixed", "op": "coherence_confidence_interval", "args": {"coherence": [0.25, 0.81, 0.0, 1.0], "num_segments": 8, "confidence": 0.95}, "expected": {"lower": [0.0006491397248917573, 0.5462045326534852, 0.0, 1.0], "upper": [0.6251068633812833, 0.928808024159396, 0.23101939117077333, 1.0]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "K = 8, c = 0.95: s = z(0.975)/sqrt(14); coherence 0 clips the lower limit at 0, 1 gives [1, 1]"},
+    {"id": "coherence_confidence_interval.default_level", "op": "coherence_confidence_interval", "args": {"coherence": [0.5], "num_segments": 2}, "expected": {"lower": [0.0], "upper": [0.9579799955351573]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "confidence defaults to 0.95; K = 2: s = z(0.975)/sqrt(2)"},
+    {"id": "coherence_confidence_interval.many_segments", "op": "coherence_confidence_interval", "args": {"coherence": [0.5, 0.9, 0.04], "num_segments": 50, "confidence": 0.5}, "expected": {"lower": [0.4507425577813945, 0.8862548925093899, 0.017900249222008294], "upper": [0.5469488941638047, 0.9121658248954039, 0.06992362276548265]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "K = 50, c = 0.5: s = z(0.75)/sqrt(98)"},
+    {"id": "coherence_confidence_interval.wide", "op": "coherence_confidence_interval", "args": {"coherence": [0.64], "num_segments": 4, "confidence": 0.99}, "expected": {"lower": [0.0022089742408846116], "upper": [0.9471887220573919]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "K = 4, c = 0.99: s = z(0.995)/sqrt(6)"},
+    {"id": "coherence_confidence_interval.above_one", "op": "coherence_confidence_interval", "args": {"coherence": [0.5, 1.5], "num_segments": 4}, "error": "invalid_argument", "source": "coherence must be at most 1"},
+    {"id": "coherence_confidence_interval.negative", "op": "coherence_confidence_interval", "args": {"coherence": [-0.1], "num_segments": 4}, "error": "invalid_argument", "source": "coherence must be at least 0"},
+    {"id": "coherence_confidence_interval.nan", "op": "coherence_confidence_interval", "args": {"coherence": ["nan"], "num_segments": 4}, "error": "invalid_argument", "source": "coherence must be finite"},
+    {"id": "coherence_confidence_interval.one_segment", "op": "coherence_confidence_interval", "args": {"coherence": [0.5], "num_segments": 1}, "error": "invalid_argument", "source": "num_segments must be at least 2"},
+    {"id": "coherence_confidence_interval.confidence_zero", "op": "coherence_confidence_interval", "args": {"coherence": [0.5], "num_segments": 4, "confidence": 0.0}, "error": "invalid_argument", "source": "confidence must be above 0"},
+    {"id": "coherence_confidence_interval.confidence_one", "op": "coherence_confidence_interval", "args": {"coherence": [0.5], "num_segments": 4, "confidence": 1.0}, "error": "invalid_argument", "source": "confidence must be below 1"}
+  ]
+}
