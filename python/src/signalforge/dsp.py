@@ -2176,6 +2176,41 @@ def interpolate(
     return resample(x, factor, 1, taps)
 
 
+def cic_taps(factor: int, stages: int, *, delay: int = 1) -> NDArray[np.float64]:
+    """The ``stages``-fold convolution of ``factor * delay`` ones, the CIC response, unnormalized
+    (DC gain ``(factor * delay)**stages``; conventions: CIC decimator; ADR 0229)."""
+    r = count(factor, "factor")
+    n = count(stages, "stages")
+    m = count(delay, "delay")
+    if r < 1 or n < 1 or m < 1:
+        raise ValueError("factor, stages and delay must be at least 1")
+    if n > 64:
+        raise ValueError("stages must be at most 64")
+    gain = 1
+    for _ in range(n):
+        gain *= r * m
+        if gain > 2**53:
+            raise ValueError("(factor * delay)**stages must be at most 2**53")
+    box = np.ones(r * m)
+    h = np.ones(1)
+    for _ in range(n):
+        h = np.convolve(h, box)
+    return h
+
+
+def cic_decimate(
+    samples: ArrayLike, factor: int, stages: int, *, delay: int = 1
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """CIC decimation by ``factor``: ``y[k] = sum_m h[m] x[k*factor - m]`` with ``h`` from
+    ``cic_taps``, causal, unnormalized (conventions: CIC decimator; ADR 0229)."""
+    h = cic_taps(factor, stages, delay=delay)
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    r = int(factor)
+    return np.asarray(np.convolve(x, h)[0 : x.size : r], dtype=x.dtype)
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

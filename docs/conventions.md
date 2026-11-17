@@ -1793,6 +1793,14 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   and no taps returns a copy of `x`.
 - `interpolate(x, factor, taps=None)` is `resample(x, factor, 1, taps)`; `decimate(x, factor,
   taps=None)` is `resample(x, 1, factor, taps)`.
+- **CIC decimator** (`cic_taps(factor, stages, *, delay=1)`,
+  `cic_decimate(samples, factor, stages, *, delay=1)`, C# `Dsp.CicTaps`, `Dsp.CicDecimate`,
+  [ADR 0229](adr/0229-cic-decimator.md)): with `R = factor`, `N = stages`, `M = delay`, `h` is the
+  `N`-fold convolution of `R·M` ones (`N(RM − 1) + 1` taps, sum `(RM)^N`, unnormalized);
+  `y[k] = Σ_m h[m] x[kR − m]`, `k = 0 … ⌈L/R⌉ − 1`, `x` zero before 0, which equals `N`
+  integrators, every `R`th sample from 0, then `N` combs of delay `M`. Computed as that FIR.
+  Integers `≥ 1`, `stages ≤ 64`, `(RM)^N ≤ 2^53`; samples finite and non-empty.
+  **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

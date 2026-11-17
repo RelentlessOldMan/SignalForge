@@ -648,6 +648,13 @@ public static class Conformance
             "resample" => ResampleOp(a, a.I("up"), a.I("down")),
             "interpolate" => ResampleOp(a, a.I("factor"), 1),
             "decimate" => ResampleOp(a, 1, a.I("factor")),
+            "cic_taps" => Bind((a.I("factor"), a.I("stages"), a.Has("delay") ? a.I("delay") : 1),
+                t => Dsp.CicTaps(t.Item1, t.Item2, t.Item3)),
+            "cic_decimate" => a.Get("samples") is Complex[] cics
+                ? Bind((cics, a.I("factor"), a.I("stages"), a.Has("delay") ? a.I("delay") : 1),
+                    t => Dsp.CicDecimate(t.Item1, t.Item2, t.Item3, t.Item4))
+                : Bind((Reals(a.Get("samples")), a.I("factor"), a.I("stages"), a.Has("delay") ? a.I("delay") : 1),
+                    t => Dsp.CicDecimate(t.Item1, t.Item2, t.Item3, t.Item4)),
             "resample_taps" => Bind((a.I("up"), a.I("down")), t => Dsp.ResampleTaps(t.Item1, t.Item2)),
             "frequency_offset" => Bind((Complexes(a.Get("samples")), a.D("offset_hz"), a.D("sample_rate"), a.Opt("phase", 0)),
                 t => Channel.FrequencyOffset(t.Item1, t.Item2, t.Item3, t.Item4)),

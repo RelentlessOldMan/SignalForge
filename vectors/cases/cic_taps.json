@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "cic_taps",
+  "description": "CIC decimator (conventions: CIC decimator; ADR 0229).",
+  "cases": [
+    {"id": "cic_taps.one_stage", "op": "cic_taps", "args": {"factor": 4, "stages": 1}, "expected": [1.0, 1.0, 1.0, 1.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "one stage: 4 ones"},
+    {"id": "cic_taps.two_stages", "op": "cic_taps", "args": {"factor": 3, "stages": 2}, "expected": [1.0, 2.0, 3.0, 2.0, 1.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "R = 3, N = 2: the triangle 1 2 3 2 1"},
+    {"id": "cic_taps.delay_two", "op": "cic_taps", "args": {"factor": 2, "stages": 3, "delay": 2}, "expected": [1.0, 3.0, 6.0, 10.0, 12.0, 12.0, 10.0, 6.0, 3.0, 1.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "R = 2, M = 2, N = 3: (1 + z^-1 + z^-2 + z^-3)^3"},
+    {"id": "cic_taps.five_stages", "op": "cic_taps", "args": {"factor": 5, "stages": 5}, "expected": [1.0, 5.0, 15.0, 35.0, 70.0, 121.0, 185.0, 255.0, 320.0, 365.0, 381.0, 365.0, 320.0, 255.0, 185.0, 121.0, 70.0, 35.0, 15.0, 5.0, 1.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "R = 5, N = 5: sum 5^5 = 3125"},
+    {"id": "cic_taps.factor_one", "op": "cic_taps", "args": {"factor": 1, "stages": 7}, "expected": [1.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "R = M = 1: the single tap 1"},
+    {"id": "cic_taps.at_limit", "op": "cic_taps", "args": {"factor": 2, "stages": 53}, "expected": [1.0, 53.0, 1378.0, 23426.0, 292825.0, 2869685.0, 22957480.0, 154143080.0, 886322710.0, 4431613550.0, 19499099620.0, 76223753060.0, 266783135710.0, 841392966470.0, 2403979904200.0, 6250347750920.0, 14844575908435.0, 32308782859535.0, 64617565719070.0, 119032357903550.0, 202355008436035.0, 317986441828055.0, 462525733568080.0, 623404249591760.0, 779255311989700.0, 903936161908052.0, 973469712824056.0, 973469712824056.0, 903936161908052.0, 779255311989700.0, 623404249591760.0, 462525733568080.0, 317986441828055.0, 202355008436035.0, 119032357903550.0, 64617565719070.0, 32308782859535.0, 14844575908435.0, 6250347750920.0, 2403979904200.0, 841392966470.0, 266783135710.0, 76223753060.0, 19499099620.0, 4431613550.0, 886322710.0, 154143080.0, 22957480.0, 2869685.0, 292825.0, 23426.0, 1378.0, 53.0, 1.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "(RM)^N = 2^53 exactly: allowed"},
+    {"id": "cic_taps.factor_zero", "op": "cic_taps", "args": {"factor": 0, "stages": 2}, "error": "invalid_argument", "source": "factor must be at least 1"},
+    {"id": "cic_taps.stages_zero", "op": "cic_taps", "args": {"factor": 2, "stages": 0}, "error": "invalid_argument", "source": "stages must be at least 1"},
+    {"id": "cic_taps.delay_zero", "op": "cic_taps", "args": {"factor": 2, "stages": 2, "delay": 0}, "error": "invalid_argument", "source": "delay must be at least 1"},
+    {"id": "cic_taps.gain_too_big", "op": "cic_taps", "args": {"factor": 2, "stages": 54}, "error": "invalid_argument", "source": "(RM)^N = 2^54 is over 2^53"},
+    {"id": "cic_taps.too_many_stages", "op": "cic_taps", "args": {"factor": 1, "stages": 65}, "error": "invalid_argument", "source": "stages must be at most 64"}
+  ]
+}

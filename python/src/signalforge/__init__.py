@@ -54,6 +54,8 @@ from .dsp import (
     chebyshev2_bandstop,
     chebyshev2_highpass,
     chebyshev2_lowpass,
+    cic_decimate,
+    cic_taps,
     convolve,
     cross_correlation,
     decimate,
@@ -371,7 +373,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.26"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.27"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -487,6 +489,8 @@ __all__ = [
     "chebyshev2_highpass",
     "chebyshev2_lowpass",
     "chirp",
+    "cic_decimate",
+    "cic_taps",
     "clarity",
     "clock_drift",
     "clock_jitter",

@@ -243,6 +243,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "resample_taps": dsp.resample_taps,
     "interpolate": dsp.interpolate,
     "decimate": dsp.decimate,
+    "cic_taps": dsp.cic_taps,
+    "cic_decimate": dsp.cic_decimate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
     "butterworth_lowpass": dsp.butterworth_lowpass,
     "butterworth_bandpass": dsp.butterworth_bandpass,

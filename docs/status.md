@@ -8,8 +8,9 @@ Updated with every chunk of work. Dates are absolute.
    `docs/adr/` before picking. Candidates:
    - a sliding DFT (`sliding_dft(samples, bin, length)`, the recursive single-bin DFT over a
      moving window);
-   - a CIC decimator (`cic_decimate(samples, factor, stages, delay=1)`, integer arithmetic,
-     exact gain `(R M)^N`).
+   - a CIC interpolator (`cic_interpolate(samples, factor, stages, *, delay=1)`), the
+     counterpart of ADR 0229;
+   - a CIC droop-compensation FIR (an inverse-sinc^N FIR for the passband after ADR 0229).
 
 ## Built
 
@@ -2125,6 +2126,16 @@ Updated with every chunk of work. Dates are absolute.
     interpolation, and polynomial inputs that come out exact inside.
   Python 6036 passed, 2 skipped; .NET 5306 passed; conformance 3553/3553 in both. Version
   2026.11.17.26.
+- 2026-11-17: CIC decimator (ADR 0229): `cic_taps(factor, stages, *, delay=1)` and
+  `cic_decimate(samples, factor, stages, *, delay=1)` in `dsp` (C# `Dsp.CicTaps`,
+  `Dsp.CicDecimate`).
+  - The response is unnormalized, with gain `(RM)^N ≤ 2^53`. The output is causal and keeps every
+    `R`th sample from 0.
+  - It is computed as the equivalent FIR, because floating-point integrators grow without bound.
+  - The vectors run the integrator–comb structure in exact arithmetic, cross-checked against the
+    FIR form.
+  Python 6060 passed, 2 skipped; .NET 5330 passed; conformance 3575/3575 in both. Version
+  2026.11.17.27.
 
 ## Not built
 
