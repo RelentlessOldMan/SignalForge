@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "coherence_threshold",
+  "description": "Coherence significance threshold (conventions: Coherence threshold; ADR 0199).",
+  "cases": [
+    {"id": "coherence_threshold.two_segments", "op": "coherence_threshold", "args": {"num_segments": 2, "alpha": 0.05}, "expected": 0.95, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "K = 2: 1 - 0.05^1 = 0.95"},
+    {"id": "coherence_threshold.default_alpha", "op": "coherence_threshold", "args": {"num_segments": 2}, "expected": 0.95, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "alpha defaults to 0.05; K = 2: 0.95"},
+    {"id": "coherence_threshold.three_segments", "op": "coherence_threshold", "args": {"num_segments": 3, "alpha": 0.01}, "expected": 0.9, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "K = 3, alpha = 0.01: 1 - sqrt(0.01) = 0.9"},
+    {"id": "coherence_threshold.fourth_root", "op": "coherence_threshold", "args": {"num_segments": 5, "alpha": 0.5}, "expected": 0.1591035847462855, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "K = 5, alpha = 0.5: 1 - 0.5^(1/4) = 1 - 2^(-1/4)"},
+    {"id": "coherence_threshold.eleven", "op": "coherence_threshold", "args": {"num_segments": 11}, "expected": 0.2588655508930523, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "K = 11, alpha = 0.05: 1 - 0.05^(1/10) = 1 - e^(ln 0.05 / 10) = 0.25886..."},
+    {"id": "coherence_threshold.one_segment", "op": "coherence_threshold", "args": {"num_segments": 1}, "error": "invalid_argument", "source": "num_segments must be at least 2"},
+    {"id": "coherence_threshold.zero_segments", "op": "coherence_threshold", "args": {"num_segments": 0}, "error": "invalid_argument", "source": "num_segments must be at least 2"},
+    {"id": "coherence_threshold.alpha_zero", "op": "coherence_threshold", "args": {"num_segments": 4, "alpha": 0.0}, "error": "invalid_argument", "source": "alpha must be strictly between 0 and 1"},
+    {"id": "coherence_threshold.alpha_one", "op": "coherence_threshold", "args": {"num_segments": 4, "alpha": 1.0}, "error": "invalid_argument", "source": "alpha must be strictly between 0 and 1"},
+    {"id": "coherence_threshold.alpha_nan", "op": "coherence_threshold", "args": {"num_segments": 4, "alpha": "nan"}, "error": "invalid_argument", "source": "alpha must be finite"}
+  ]
+}

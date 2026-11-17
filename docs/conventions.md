@@ -372,6 +372,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Coherence threshold** ([ADR 0199](adr/0199-coherence-threshold.md);
+  `coherence_threshold(num_segments, alpha=0.05)`, C# `Spectral.CoherenceThreshold`):
+  `1 − alpha^(1/(K−1))`, the level independent Gaussian signals exceed with probability `alpha`
+  for `K` independent segments; `K ≥ 2` an integer, `0 < alpha < 1`. Overlap is not corrected
+  for. **(implemented)**
 - **Coherent output power** ([ADR 0198](adr/0198-coherent-output-power.md);
   `coherent_output_power(...)`, the `coherence` arguments, C# `Spectral.CoherentOutputPower`):
   `Pyy` as `welch_psd(y)` on the same bins; `coherent = γ²·Pyy`, `noncoherent = Pyy − coherent`,

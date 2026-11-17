@@ -229,6 +229,7 @@ from .spectral import (
     cepstral_lifter,
     channel_power,
     coherence,
+    coherence_threshold,
     coherent_output_power,
     cross_spectral_density,
     db_bandwidth,
@@ -336,7 +337,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.96"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.97"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -447,6 +448,7 @@ __all__ = [
     "clock_offset",
     "cma_equalizer",
     "coherence",
+    "coherence_threshold",
     "coherent_output_power",
     "convolve",
     "cross_correlation",

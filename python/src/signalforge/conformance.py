@@ -134,6 +134,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "window_stats": spectral.window_stats,
     "welch_psd": spectral.welch_psd,
     "coherence": spectral.coherence,
+    "coherence_threshold": spectral.coherence_threshold,
     "coherent_output_power": spectral.coherent_output_power,
     "cross_spectral_density": spectral.cross_spectral_density,
     "transfer_function": spectral.transfer_function,

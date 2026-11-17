@@ -288,6 +288,22 @@ public static partial class Spectral
         return new CoherentOutputPower(g.Frequencies(oneSided), coherent, noncoherent, g.Count);
     }
 
+    /// <summary><c>1 − alpha^(1/(K−1))</c>: the coherence that independent Gaussian signals exceed
+    /// with probability <paramref name="alpha"/> over <c>K</c> independent segments; overlap is
+    /// not corrected for (conventions: Coherence threshold; ADR 0199).</summary>
+    /// <param name="numSegments">The number of independent segments <c>K</c>, at least 2.</param>
+    /// <param name="alpha">The false-alarm probability, strictly between 0 and 1.</param>
+    /// <returns>The threshold, in (0, 1).</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double CoherenceThreshold(int numSegments, double alpha = 0.05)
+    {
+        if (numSegments < 2)
+            throw new ArgumentOutOfRangeException(nameof(numSegments), "numSegments must be at least 2");
+        if (!(alpha > 0 && alpha < 1))
+            throw new ArgumentOutOfRangeException(nameof(alpha), "alpha must be strictly between 0 and 1");
+        return 1 - Math.Pow(alpha, 1.0 / (numSegments - 1));
+    }
+
     /// <summary>Welch's segments of x and y: (segments, Σ conj X·Y, Σ|X|², Σ|Y|²) on the one-sided
     /// bins, or all bins in fftshift order when not one-sided (ADR 0192, ADR 0197).</summary>
     private static (Segments G, Complex[] Sxy, double[] Sxx, double[] Syy) CrossSegments(Complex[] x, Complex[] y,

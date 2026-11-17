@@ -380,6 +380,19 @@ def transfer_function_h2(
     return TransferFunction(g.frequencies(float(sample_rate)), response, g.count)
 
 
+def coherence_threshold(num_segments: int, alpha: float = 0.05) -> float:
+    """``1 - alpha^(1/(K-1))``: the coherence that independent Gaussian signals exceed with
+    probability ``alpha`` over ``K`` independent segments; overlap is not corrected for
+    (conventions: Coherence threshold; ADR 0199)."""
+    k = count(num_segments, "num_segments")
+    if k < 2:
+        raise ValueError("num_segments must be at least 2")
+    a = real(alpha, "alpha")
+    if not 0.0 < a < 1.0:
+        raise ValueError("alpha must be strictly between 0 and 1")
+    return 1.0 - math.pow(a, 1.0 / (k - 1))
+
+
 @dataclass(frozen=True)
 class CoherentOutputPower:
     """The output PSD split by the coherence (conventions: Coherent output power; ADR 0198)."""

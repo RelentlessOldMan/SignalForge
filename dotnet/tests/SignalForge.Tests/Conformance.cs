@@ -347,6 +347,8 @@ public static class Conformance
             "coherence" => CoherenceOp(a),
             "transfer_function" => TransferFunctionOp(a),
             "coherent_output_power" => CoherenceOp(a, cop: true),
+            "coherence_threshold" => Bind((a.I("num_segments"), a.Has("alpha") ? a.D("alpha") : 0.05),
+                t => Spectral.CoherenceThreshold(t.Item1, t.Item2)),
             "transfer_function_h2" => TransferFunctionOp(a, h2: true),
             "cross_spectral_density" => CsdOp(a),
             "dpss_tapers" => Bind((a.I("length"), a.D("half_bandwidth"), a.OptInt("num_tapers")), t => Spectral.DpssTapers(t.Item1, t.Item2, t.Item3)),

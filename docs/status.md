@@ -4,15 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Coherence significance threshold**: `coherence_threshold(num_segments, alpha)` in
-   `spectral` (C# `Spectral.CoherenceThreshold`). Not built yet.
-   - It is the level that the coherence of two independent Gaussian signals exceeds with
-     probability `alpha`, `1 − alpha^(1/(K−1))`, for `K` non-overlapping segments.
-   - `alpha` is in (0, 1) and `K ≥ 2`.
+1. **Welch equivalent degrees of freedom**: `welch_dof(nperseg, noverlap, num_segments, *,
+   window="hann", beta=None)` in `spectral` (C# `Spectral.WelchDof`). Not built yet.
+   - It computes Welch's `ν = 2K / (1 + 2 Σ_{l=1}^{K−1} (1 − l/K) ρ(l)²)`, where
+     `ρ(l) = Σ w[n]·w[n+lS] / Σ w²` and `S` is the step.
+   - It gives the effective segment count `ν/2` for the ADR 0199 threshold.
 
-   Needs an ADR covering the overlap caveat: overlapped segments are not independent, so the
-   threshold uses the given `K` as is. Expected values: closed-form cases, e.g. `K = 2`,
-   `alpha = 0.05` gives 0.95; `K = 11` gives `1 − 0.05^0.1`.
+   Needs an ADR covering the window definitions (those of `welch_psd`). Expected values:
+   rectangular with no overlap gives `2K`; rectangular at 50 % gives `ρ(1) = 1/2`, so
+   `ν = 2K/(1 + (K−1)/(2K))`; a hand Hann case.
 
 ## Built
 
@@ -1889,6 +1889,14 @@ Updated with every chunk of work. Dates are absolute.
 
   Python 5625 passed, 2 skipped; .NET 4924 passed; conformance 3202/3202 in both. Version
   2026.11.16.96.
+- 2026-11-16: coherence significance threshold (ADR 0199): `coherence_threshold(num_segments,
+  alpha=0.05)` in `spectral` (C# `Spectral.CoherenceThreshold`).
+  - It computes `1 − alpha^(1/(K−1))`.
+  - Overlap is not corrected for; the docs say so.
+  - A Python test checks the false-alarm rate on independent noise.
+
+  Python 5636 passed, 2 skipped; .NET 4935 passed; conformance 3212/3212 in both. Version
+  2026.11.16.97.
 
 ## Not built
 
