@@ -1214,6 +1214,11 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `f_m[n] = f_{m−1}[n] + k_m b_{m−1}[n−1]`, `b_m[n] = b_{m−1}[n−1] + conj k_m f_{m−1}[n]`; returns
   `f_p`, `N` samples, the same as `x` filtered by `reflection_to_lpc(k)`. Finite, non-empty; any
   finite `k`. **(implemented)**
+- **Lattice synthesis filter** (`lattice_synthesis(excitation, reflection)`, C#
+  `Dsp.LatticeSynthesis`, [ADR 0212](adr/0212-lattice-synthesis.md)): zero state; per sample
+  `f_p = e[n]`, for `m = p … 1` `f_{m−1} = f_m − k_m b_{m−1}[n−1]`,
+  `b_m[n] = b_{m−1}[n−1] + conj k_m f_{m−1}`; `y[n] = b_0[n] = f_0`. It is `1/A(z)` and inverts
+  the analysis lattice. Rules as the analysis lattice. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

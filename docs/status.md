@@ -4,13 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Lattice synthesis filter**: `lattice_synthesis(excitation, reflection)` in `dsp` (C#
-   `Dsp.LatticeSynthesis`, real and complex), the all-pole IIR lattice and the inverse of
-   ADR 0211. Not built yet.
-   - With `f_p = e`, for `m = p … 1`: `f_{m−1}[n] = f_m[n] − k_m·b_{m−1}[n−1]` and
-     `b_m[n] = b_{m−1}[n−1] + conj k_m·f_{m−1}[n]`, with `b_0 = f_0 = y`.
-   - Expected values: a stdlib recursion, cross-checked against `1/A(z)` filtering by direct
-     recursion.
+1. **Spectral flatness of an AR model**: `ar_spectral_flatness(reflection)` in `dsp` (C#
+   `Dsp.ArSpectralFlatness`), the closed form `Π (1 − |k_m|²)`. Not built yet.
+   - For a minimum-phase `A`, `exp(mean ln S)/mean S` of `σ²/|A|²` equals `σ²/r[0]`, which is
+     `Π(1 − |k|²)`.
+   - Expected values: exact fractions, plus a stdlib numerical integral of the model spectrum as a
+     cross-check.
 
 ## Built
 
@@ -1998,6 +1997,13 @@ Updated with every chunk of work. Dates are absolute.
     direct-form convolution.
   Python 5802 passed, 2 skipped; .NET 5090 passed; conformance 3354/3354 in both. Version
   2026.11.17.9.
+- 2026-11-17: Lattice synthesis filter (ADR 0212): `lattice_synthesis(excitation, reflection)` in
+  `dsp` (C# `Dsp.LatticeSynthesis`, real and complex).
+  - It is the all-pole lattice `1/A(z)` from zero state, and inverts `lattice_filter`.
+  - The vectors use a stdlib recursion, cross-checked in the generator against the direct
+    all-pole recursion and the analysis lattice.
+  Python 5815 passed, 2 skipped; .NET 5102 passed; conformance 3365/3365 in both. Version
+  2026.11.17.10.
 
 ## Not built
 

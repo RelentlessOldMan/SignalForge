@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "lattice_synthesis",
+  "description": "Lattice synthesis filter (conventions: Lattice synthesis filter; ADR 0212).",
+  "cases": [
+    {"id": "lattice_synthesis.impulse_order_one", "op": "lattice_synthesis", "args": {"excitation": [1.0, 0.0, 0.0, 0.0], "reflection": [0.5]}, "expected": [1.0, -0.5, 0.25, -0.125], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "1/(1 + 0.5 z^-1): an impulse gives (-0.5)^n = 1, -0.5, 0.25, -0.125"},
+    {"id": "lattice_synthesis.impulse_order_two", "op": "lattice_synthesis", "args": {"excitation": [1.0, 0.0, 0.0, 0.0, 0.0], "reflection": [0.5, -0.3]}, "expected": [1.0, -0.35, 0.4225, -0.25287499999999996, 0.21525624999999998], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "1/A with a = [1, 0.35, -0.3]: y[n] = e[n] - 0.35 y[n-1] + 0.3 y[n-2]"},
+    {"id": "lattice_synthesis.ramp_order_three", "op": "lattice_synthesis", "args": {"excitation": [1.0, 2.0, 3.0, 4.0, 5.0], "reflection": [0.5, -0.3333333333333333, 0.25]}, "expected": [1.0, 1.75, 2.8125, 3.484375, 4.39453125], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "the lattice on a ramp; equals the direct all-pole recursion"},
+    {"id": "lattice_synthesis.burg_inverse", "op": "lattice_synthesis", "args": {"excitation": [1.0, 0.3058823529411765, 0.5176470588235295], "reflection": [-0.8888888888888888, 0.9058823529411765]}, "expected": [1.0, 2.0, 3.0], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "ADR 0205's x = [1, 2, 3] residual through its Burg lattice gives x back"},
+    {"id": "lattice_synthesis.large_k", "op": "lattice_synthesis", "args": {"excitation": [1.0, 0.0, 0.0], "reflection": [1.5]}, "expected": [1.0, -1.5, 2.25], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "|k| > 1 is allowed (unstable): 1, -1.5, 2.25"},
+    {"id": "lattice_synthesis.complex", "op": "lattice_synthesis", "args": {"excitation": {"re": [1.0, -0.0, 2.0, 0.5], "im": [1.0, -0.5, 0.0, -0.5]}, "reflection": {"re": [0.3, -0.2], "im": [0.4, 0.1]}}, "expected": {"re": [1.0, 0.23, 1.5777, 0.15063300000000002], "im": [1.0, -1.29, 0.3439, -1.6819190000000002]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex excitation and k: conj(k) on the backward path"},
+    {"id": "lattice_synthesis.complex_k_real_excitation", "op": "lattice_synthesis", "args": {"excitation": [1.0, 0.0, -1.0], "reflection": {"re": [0.0], "im": [0.5]}}, "expected": {"re": [1.0, 0.0, -1.25], "im": [0.0, -0.5, 0.0]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "real excitation, complex k"},
+    {"id": "lattice_synthesis.empty_excitation", "op": "lattice_synthesis", "args": {"excitation": [], "reflection": [0.5]}, "error": "invalid_argument", "source": "excitation must not be empty"},
+    {"id": "lattice_synthesis.empty_reflection", "op": "lattice_synthesis", "args": {"excitation": [1.0], "reflection": []}, "error": "invalid_argument", "source": "reflection must not be empty"},
+    {"id": "lattice_synthesis.nan_excitation", "op": "lattice_synthesis", "args": {"excitation": [1.0, "nan"], "reflection": [0.5]}, "error": "invalid_argument", "source": "excitation must be finite"},
+    {"id": "lattice_synthesis.nan_k", "op": "lattice_synthesis", "args": {"excitation": [1.0, 2.0], "reflection": ["nan"]}, "error": "invalid_argument", "source": "reflection must be finite"}
+  ]
+}

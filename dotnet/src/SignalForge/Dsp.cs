@@ -603,6 +603,58 @@ public static partial class Dsp
         return f;
     }
 
+    /// <summary>The real all-pole lattice <c>1/A(z)</c> with reflection coefficients
+    /// <paramref name="reflection"/>, driven by <paramref name="excitation"/> from zero state
+    /// (conventions: Lattice synthesis filter; ADR 0212).</summary>
+    /// <param name="excitation">Finite samples, at least one.</param>
+    /// <param name="reflection">Finite reflection coefficients <c>k_1 … k_p</c>, at least one.</param>
+    /// <returns>The output <c>y</c>, as many samples as the excitation.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LatticeSynthesis(ReadOnlySpan<double> excitation, ReadOnlySpan<double> reflection) =>
+        [.. LatticeSynthesis((ReadOnlySpan<Complex>)ToComplexArray(excitation), (ReadOnlySpan<Complex>)ToComplexArray(reflection))
+            .Select(v => v.Real)];
+
+    /// <summary>The complex all-pole lattice <c>1/A(z)</c> with reflection coefficients
+    /// <paramref name="reflection"/>, driven by <paramref name="excitation"/> from zero state
+    /// (conventions: Lattice synthesis filter; ADR 0212).</summary>
+    /// <param name="excitation">Finite samples, at least one.</param>
+    /// <param name="reflection">Finite reflection coefficients <c>k_1 … k_p</c>, at least one.</param>
+    /// <returns>The output <c>y</c>, as many samples as the excitation.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] LatticeSynthesis(ReadOnlySpan<Complex> excitation, ReadOnlySpan<Complex> reflection)
+    {
+        if (excitation.IsEmpty)
+            throw new ArgumentException("excitation must not be empty", nameof(excitation));
+        if (reflection.IsEmpty)
+            throw new ArgumentException("reflection must not be empty", nameof(reflection));
+        foreach (Complex v in excitation)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("excitation must be finite", nameof(excitation));
+        }
+        foreach (Complex v in reflection)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("reflection must be finite", nameof(reflection));
+        }
+        int p = reflection.Length;
+        var state = new Complex[p];
+        var y = new Complex[excitation.Length];
+        for (int n = 0; n < excitation.Length; n++)
+        {
+            Complex f = excitation[n];
+            for (int m = p; m >= 1; m--)
+            {
+                f -= reflection[m - 1] * state[m - 1];
+                if (m < p)
+                    state[m] = state[m - 1] + (Complex.Conjugate(reflection[m - 1]) * f);
+            }
+            state[0] = f;
+            y[n] = f;
+        }
+        return y;
+    }
+
     private static Complex[] ToComplexArray(ReadOnlySpan<double> x)
     {
         var c = new Complex[x.Length];

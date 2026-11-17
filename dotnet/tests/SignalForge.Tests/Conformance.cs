@@ -507,6 +507,8 @@ public static class Conformance
                 : Bind(Reals(a.Get("coefficients")), t => Dsp.LpcToReflection(t)),
             "lattice_filter" => a.Get("samples") is Complex[] || a.Get("reflection") is Complex[]? Bind((Complexes(a.Get("samples")), Complexes(a.Get("reflection"))), t => Dsp.LatticeFilter(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), Reals(a.Get("reflection"))), t => Dsp.LatticeFilter(t.Item1, t.Item2)),
+            "lattice_synthesis" => a.Get("excitation") is Complex[] || a.Get("reflection") is Complex[]? Bind((Complexes(a.Get("excitation")), Complexes(a.Get("reflection"))), t => Dsp.LatticeSynthesis(t.Item1, t.Item2))
+                : Bind((Reals(a.Get("excitation")), Reals(a.Get("reflection"))), t => Dsp.LatticeSynthesis(t.Item1, t.Item2)),
             "lsf_to_lpc" => Bind(Reals(a.Get("frequencies")), t => Dsp.LsfToLpc(t)),
             "line_spectral_frequencies" => Bind(Reals(a.Get("coefficients")), t => Dsp.LineSpectralFrequencies(t)),
             "lpc_cepstrum" => a.Get("coefficients") is Complex[] lpc

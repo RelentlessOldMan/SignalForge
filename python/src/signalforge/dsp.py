@@ -347,6 +347,37 @@ def lattice_filter(
     return cast("NDArray[np.complex128] | NDArray[np.float64]", f)
 
 
+def lattice_synthesis(
+    excitation: ArrayLike, reflection: ArrayLike
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The all-pole lattice ``1/A(z)`` with reflection coefficients ``reflection``, driven by
+    ``excitation`` from zero state (conventions: Lattice synthesis filter; ADR 0212)."""
+    e = _vector(excitation, "excitation")
+    k = _vector(reflection, "reflection")
+    if not np.all(np.isfinite(e)):
+        raise ValueError("excitation must be finite")
+    if not np.all(np.isfinite(k)):
+        raise ValueError("reflection must be finite")
+    is_complex = np.iscomplexobj(e) or np.iscomplexobj(k)
+    ks = [complex(v) for v in k] if is_complex else [float(v.real) for v in k]
+    p = len(ks)
+    state: list[Any] = [0.0] * p
+    out: list[Any] = []
+    for v in e:
+        f: Any = complex(v) if is_complex else float(v.real)
+        for m in range(p, 0, -1):
+            f = f - ks[m - 1] * state[m - 1]
+            if m < p:
+                state[m] = state[m - 1] + ks[m - 1].conjugate() * f
+        if p > 0:
+            state[0] = f
+        out.append(f)
+    return cast(
+        "NDArray[np.complex128] | NDArray[np.float64]",
+        np.array(out, dtype=np.complex128 if is_complex else np.float64),
+    )
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")
