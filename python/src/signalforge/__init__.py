@@ -27,6 +27,7 @@ from .dsp import (
     Resampler,
     Schur,
     a_weighting_sos,
+    allpass_comb,
     allpass_first_order,
     allpass_second_order,
     ar_order_selection,
@@ -384,7 +385,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.38"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.39"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -455,6 +456,7 @@ __all__ = [
     "a_weighting_sos",
     "acpr",
     "acpr_rrc",
+    "allpass_comb",
     "allpass_first_order",
     "allpass_second_order",
     "am_am_pm",

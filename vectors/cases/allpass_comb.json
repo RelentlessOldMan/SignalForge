@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "allpass_comb",
+  "description": "Schroeder allpass section (conventions: Schroeder allpass section; ADR 0240).",
+  "cases": [
+    {"id": "allpass_comb.impulse", "op": "allpass_comb", "args": {"samples": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "delay": 3, "gain": 0.5}, "expected": [-0.5, 0.0, 0.0, 0.75, 0.0, 0.0, 0.375, 0.0, 0.0, 0.1875], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "impulse: -g at 0, (1 - g^2) g^(k-1) at kD"},
+    {"id": "allpass_comb.impulse_negative", "op": "allpass_comb", "args": {"samples": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "delay": 2, "gain": -0.75}, "expected": [0.75, 0.0, 0.4375, 0.0, -0.328125, 0.0, 0.24609375], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "impulse with g = -3/4"},
+    {"id": "allpass_comb.mixed", "op": "allpass_comb", "args": {"samples": [0.5, 1.5, -1.0, 2.25, 0.0, -0.75, 1.0, 3.0, -2.0, 0.25], "delay": 3, "gain": 0.625}, "expected": [-0.3125, -0.9375, 0.625, -1.1015625, 0.9140625, -0.140625, 0.9365234375, -1.3037109375, 0.412109375, 1.4290771484375], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "mixed, D = 3"},
+    {"id": "allpass_comb.delay_one", "op": "allpass_comb", "args": {"samples": [1.0, -2.0, 0.5, 0.0, 4.0, -1.0], "delay": 1, "gain": -0.375}, "expected": [0.375, 0.109375, -1.853515625, 1.195068359375, 1.051849365234375, 3.2305564880371094], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "D = 1: first-order allpass"},
+    {"id": "allpass_comb.gain_zero", "op": "allpass_comb", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0], "delay": 2, "gain": 0.0}, "expected": [0.0, 0.0, 1.0, 2.0, 3.0], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "g = 0: a pure delay of D"},
+    {"id": "allpass_comb.delay_longer", "op": "allpass_comb", "args": {"samples": [1.0, 2.0, 3.0], "delay": 5, "gain": 0.5}, "expected": [-0.5, -1.0, -1.5], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "delay longer than the input: -g x"},
+    {"id": "allpass_comb.complex", "op": "allpass_comb", "args": {"samples": {"re": [1.0, 0.0, -1.0, 2.0, 0.5, 0.25], "im": [0.0, 1.0, 1.0, -0.5, 0.25, 0.0]}, "delay": 2, "gain": 0.75}, "expected": {"re": [-0.75, 0.0, 1.1875, -1.5, -0.484375, 0.6875], "im": [0.0, -0.75, -0.75, 0.8125, 0.25, 0.109375]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex samples"},
+    {"id": "allpass_comb.delay_zero", "op": "allpass_comb", "args": {"samples": [1.0], "delay": 0, "gain": 0.5}, "error": "invalid_argument", "source": "delay must be at least 1"},
+    {"id": "allpass_comb.gain_one", "op": "allpass_comb", "args": {"samples": [1.0], "delay": 1, "gain": -1.0}, "error": "invalid_argument", "source": "gain needs |g| < 1"},
+    {"id": "allpass_comb.empty", "op": "allpass_comb", "args": {"samples": [], "delay": 1, "gain": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "allpass_comb.nan_sample", "op": "allpass_comb", "args": {"samples": [1.0, "nan"], "delay": 1, "gain": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

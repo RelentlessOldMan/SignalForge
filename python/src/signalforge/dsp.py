@@ -2462,6 +2462,29 @@ def comb_filter(
     return y
 
 
+def allpass_comb(
+    samples: ArrayLike, delay: int, gain: float
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Schroeder allpass ``y[n] = -gain x[n] + x[n - delay] + gain y[n - delay]``, zero before
+    the start (conventions: Schroeder allpass section; ADR 0240)."""
+    d = count(delay, "delay")
+    if d < 1:
+        raise ValueError("delay must be at least 1")
+    g = real(gain, "gain")
+    if not abs(g) < 1:
+        raise ValueError("gain must satisfy |gain| < 1")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y: NDArray[Any] = np.empty_like(x)
+    for n in range(x.size):
+        if n >= d:
+            y[n] = -g * x[n] + x[n - d] + g * y[n - d]
+        else:
+            y[n] = -g * x[n]
+    return y
+
+
 def envelope_follower(samples: ArrayLike, attack: float, release: float) -> NDArray[np.float64]:
     """Peak envelope of ``|x|`` with one-pole ``attack`` and ``release`` coefficients, from rest
     (conventions: Envelope follower; ADR 0238)."""

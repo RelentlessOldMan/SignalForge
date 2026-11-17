@@ -657,6 +657,9 @@ public static class Conformance
                 a.Has("delay") ? a.I("delay") : 1), t => Dsp.CicCompensator(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "savgol_coefficients" => Bind((a.I("length"), a.I("order"), a.Has("derivative") ? a.I("derivative") : 0,
                 a.Has("position") ? a.I("position") : 0), t => Dsp.SavgolCoefficients(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "allpass_comb" => a.Get("samples") is Complex[] apcs
+                ? Bind((apcs, a.I("delay"), a.D("gain")), t => Dsp.AllpassComb(t.Item1, t.Item2, t.Item3))
+                : Bind((Reals(a.Get("samples")), a.I("delay"), a.D("gain")), t => Dsp.AllpassComb(t.Item1, t.Item2, t.Item3)),
             "moving_rms" => a.Get("samples") is Complex[] mrs
                 ? Bind((mrs, a.I("length")), t => Dsp.MovingRms(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.I("length")), t => Dsp.MovingRms(t.Item1, t.Item2)),

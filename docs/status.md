@@ -6,7 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Schroeder allpass section (`allpass_comb(samples, delay, gain)`, after ADR 0237).
+   - a moving average (`moving_average(samples, length)`, the trailing boxcar from rest, after
+     ADR 0239);
+   - a slew-rate limiter (`slew_limiter(samples, rise, fall)`, per-sample step limits).
 
 ## Built
 
@@ -2202,6 +2204,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact rational means.
   Python 6188 passed, 2 skipped; .NET 5451 passed; conformance 3686/3686 in both. Version
   2026.11.17.38.
+- 2026-11-17: Schroeder allpass section (ADR 0240): `allpass_comb(samples, delay, gain)` in
+  `dsp` (C# `Dsp.AllpassComb`, real and complex).
+  - It computes `y[n] = −g x[n] + x[n−D] + g y[n−D]` and has a flat magnitude response.
+  - The vectors convolve the input with the closed-form impulse response, in exact rationals.
+  Python 6201 passed, 2 skipped; .NET 5464 passed; conformance 3697/3697 in both. Version
+  2026.11.17.39.
 
 ## Not built
 

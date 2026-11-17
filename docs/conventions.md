@@ -1860,6 +1860,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0239](adr/0239-moving-rms.md)): `y[n] = sqrt((1/N) Σ_{k=n−N+1}^{n} |x[k]|²)`, `x` zero
   before 0 (from rest: always divided by `N`); summed directly, oldest first. Integer
   `length ≥ 1`; samples finite, non-empty, real or complex; output real. **(implemented)**
+- **Schroeder allpass section** (`allpass_comb(samples, delay, gain)`, C# `Dsp.AllpassComb`,
+  [ADR 0240](adr/0240-allpass-comb.md)): `y[n] = −g x[n] + x[n−D] + g y[n−D]`, added left to
+  right, zero before 0; `H(z) = (−g + z^−D)/(1 − g z^−D)`, `h[0] = −g`,
+  `h[kD] = (1 − g²) g^(k−1)`. Integer `delay ≥ 1`, finite `|g| < 1`; samples finite, non-empty,
+  real or complex; output the same kind. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
