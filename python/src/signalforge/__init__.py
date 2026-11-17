@@ -73,6 +73,7 @@ from .dsp import (
     lpc_to_reflection,
     lsf_to_lpc,
     pulse_shape,
+    reflection_to_autocorrelation,
     reflection_to_lpc,
     resample,
     resample_taps,
@@ -353,7 +354,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.11"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.12"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -638,6 +639,7 @@ __all__ = [
     "read_wav_cues",
     "read_wav_info",
     "real_cepstrum",
+    "reflection_to_autocorrelation",
     "reflection_to_lpc",
     "resample",
     "resample_taps",

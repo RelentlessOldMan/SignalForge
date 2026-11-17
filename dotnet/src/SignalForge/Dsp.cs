@@ -684,6 +684,71 @@ public static partial class Dsp
         return product;
     }
 
+    /// <summary>The autocorrelation <c>r[0 … lags]</c> of the AR model with real reflection
+    /// coefficients and zero-lag power <paramref name="power"/>: Levinson solved for <c>r</c>
+    /// (conventions: Autocorrelation of an AR model; ADR 0214).</summary>
+    /// <param name="reflection">The coefficients <c>k_1 … k_p</c>, finite, each <c>|k| &lt; 1</c>, at least one.</param>
+    /// <param name="power">The zero-lag power <c>r[0]</c>, positive and finite.</param>
+    /// <param name="lags">The last lag, at least 0.</param>
+    /// <returns><c>lags + 1</c> values.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ReflectionToAutocorrelation(ReadOnlySpan<double> reflection, double power, int lags) =>
+        [.. ReflectionToAutocorrelation((ReadOnlySpan<Complex>)ToComplexArray(reflection), power, lags).Select(v => v.Real)];
+
+    /// <summary>The autocorrelation <c>r[0 … lags]</c> of the AR model with complex reflection
+    /// coefficients and zero-lag power <paramref name="power"/>: Levinson solved for <c>r</c>
+    /// (conventions: Autocorrelation of an AR model; ADR 0214).</summary>
+    /// <param name="reflection">The coefficients <c>k_1 … k_p</c>, finite, each <c>|k| &lt; 1</c>, at least one.</param>
+    /// <param name="power">The zero-lag power <c>r[0]</c>, positive and finite.</param>
+    /// <param name="lags">The last lag, at least 0.</param>
+    /// <returns><c>lags + 1</c> values.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] ReflectionToAutocorrelation(ReadOnlySpan<Complex> reflection, double power, int lags)
+    {
+        if (reflection.IsEmpty)
+            throw new ArgumentException("reflection must not be empty", nameof(reflection));
+        foreach (Complex v in reflection)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("reflection must be finite", nameof(reflection));
+            if (!(Complex.Abs(v) < 1))
+                throw new ArgumentException("every reflection coefficient must have |k| < 1", nameof(reflection));
+        }
+        Check.PositiveFinite(power, nameof(power));
+        if (lags < 0)
+            throw new ArgumentOutOfRangeException(nameof(lags), "lags must be at least 0");
+        int p = reflection.Length;
+        var r = new Complex[lags + 1];
+        r[0] = power;
+        var a = new Complex[p + 1];
+        var previous = new Complex[p + 1];
+        a[0] = 1;
+        int order = 0;
+        double error = power;
+        for (int m = 1; m <= lags; m++)
+        {
+            Complex s = Complex.Zero;
+            for (int j = 1; j <= order; j++)
+                s += a[j] * r[m - j];
+            if (m <= p)
+            {
+                Complex km = reflection[m - 1];
+                r[m] = (-km * error) - s;
+                Array.Copy(a, previous, m);
+                for (int j = 1; j < m; j++)
+                    a[j] = previous[j] + (km * Complex.Conjugate(previous[m - j]));
+                a[m] = km;
+                order = m;
+                error *= 1 - ((km.Real * km.Real) + (km.Imaginary * km.Imaginary));
+            }
+            else
+            {
+                r[m] = -s;
+            }
+        }
+        return r;
+    }
+
     private static Complex[] ToComplexArray(ReadOnlySpan<double> x)
     {
         var c = new Complex[x.Length];

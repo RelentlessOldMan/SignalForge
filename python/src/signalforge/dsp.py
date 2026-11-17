@@ -389,6 +389,39 @@ def ar_spectral_flatness(reflection: ArrayLike) -> float:
     return float(np.prod(1.0 - np.abs(k) ** 2))
 
 
+def reflection_to_autocorrelation(
+    reflection: ArrayLike, power: float, lags: int
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The autocorrelation ``r[0 ... lags]`` of the AR model with reflection coefficients
+    ``reflection`` and zero-lag power ``power``: Levinson solved for ``r`` (conventions:
+    Autocorrelation of an AR model; ADR 0214)."""
+    k = _vector(reflection, "reflection")
+    if not np.all(np.isfinite(k)):
+        raise ValueError("reflection must be finite")
+    if not np.all(np.abs(k) < 1):
+        raise ValueError("every reflection coefficient must have |k| < 1")
+    total = real(power, "power")
+    if not (total > 0 and np.isfinite(total)):
+        raise ValueError("power must be positive and finite")
+    n = count(lags, "lags")
+    p = k.size
+    r = np.zeros(n + 1, dtype=k.dtype)
+    r[0] = total
+    a = np.ones(1, dtype=k.dtype)
+    error = total
+    for m in range(1, n + 1):
+        s = np.sum(a[1:] * r[m - 1 : m - a.size : -1]) if a.size > 1 else 0.0
+        if m <= p:
+            km = k[m - 1]
+            r[m] = -km * error - s
+            a = np.append(a, 0.0)
+            a = a + km * np.conj(a[::-1])
+            error *= 1 - abs(km) ** 2
+        else:
+            r[m] = -s
+    return cast("NDArray[np.complex128] | NDArray[np.float64]", r)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

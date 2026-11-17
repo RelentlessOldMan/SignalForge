@@ -1223,6 +1223,12 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `Dsp.ArSpectralFlatness`, [ADR 0213](adr/0213-ar-spectral-flatness.md)): `Π (1 − |k_m|²)`, the
   geometric over the arithmetic mean of `σ²/|A|²`; in `(0, 1]`. Finite, non-empty, every
   `|k| < 1`. **(implemented)**
+- **Autocorrelation of an AR model** (`reflection_to_autocorrelation(reflection, power, lags)`, C#
+  `Dsp.ReflectionToAutocorrelation`, [ADR 0214](adr/0214-reflection-to-autocorrelation.md)):
+  `r[0] = power`, `E = power`, `a = [1]`; for `m = 1 … lags`, `s = Σ_{j≥1} a_j r[m−j]`;
+  `r[m] = −k_m E − s` then step up `a` and `E ← E(1 − |k_m|²)` while `m ≤ p`, else `r[m] = −s`.
+  Inverts `levinson`. Returns `lags + 1` values; finite non-empty `k`, every `|k| < 1`; positive
+  finite power; integer `lags ≥ 0`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

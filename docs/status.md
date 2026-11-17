@@ -4,13 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Autocorrelation of an AR model**: `reflection_to_autocorrelation(reflection, power, lags)`
-   in `dsp` (C# `Dsp.ReflectionToAutocorrelation`, real and complex). It is the inverse of the
-   Levinson recursion. Not built yet.
-   - Given `r[0] = power` and `k_1 … k_p`, it returns `r[0 … lags]`.
-   - It extends past `p` by `r[m] = −Σ_{j=1}^{p} a_j r[m−j]`.
-   - Expected values: hand Yule-Walker solutions in exact fractions, cross-checked against
-     `levinson` on the result in the generator (stdlib).
+1. **Log-area ratios**: `reflection_to_lar(reflection)` and `lar_to_reflection(lar)` in `dsp` (C#
+   `Dsp.ReflectionToLar` / `Dsp.LarToReflection`, real only). Not built yet.
+   - `g = ln((1 + k)/(1 − k))` and `k = tanh(g/2)`, the speech-coding quantization domain.
+   - `|k| < 1` is required; any finite `g` is allowed.
+   - Expected values: closed forms such as `k = 1/3 → ln 2` and `k = 3/5 → ln 4`.
 
 ## Built
 
@@ -2012,6 +2010,14 @@ Updated with every chunk of work. Dates are absolute.
     integrating the model spectrum.
   Python 5827 passed, 2 skipped; .NET 5113 passed; conformance 3375/3375 in both. Version
   2026.11.17.11.
+- 2026-11-17: Autocorrelation of an AR model (ADR 0214):
+  `reflection_to_autocorrelation(reflection, power, lags)` in `dsp` (C#
+  `Dsp.ReflectionToAutocorrelation`, real and complex).
+  - It is the Levinson recursion solved for `r`, with the AR extension past the order.
+  - The vectors are exact fractions, cross-checked in the generator by a stdlib Levinson that
+    recovers `k`.
+  Python 5843 passed, 2 skipped; .NET 5128 passed; conformance 3389/3389 in both. Version
+  2026.11.17.12.
 
 ## Not built
 
