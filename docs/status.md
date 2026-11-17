@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - an envelope follower (`envelope_follower(samples, attack, release)`, a peak detector with
-     separate one-pole attack and release).
+   - a moving RMS (`moving_rms(samples, length)`, the trailing window from rest);
+   - a Schroeder allpass section (`allpass_comb(samples, delay, gain)`, after ADR 0237).
 
 ## Built
 
@@ -2189,6 +2189,13 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact rationals. The feedback ones come from the impulse response.
   Python 6168 passed, 2 skipped; .NET 5432 passed; conformance 3669/3669 in both. Version
   2026.11.17.36.
+- 2026-11-17: Envelope follower (ADR 0238): `envelope_follower(samples, attack, release)` in
+  `dsp` (C# `Dsp.EnvelopeFollower`, real and complex).
+  - It is a peak detector on `|x|`, with one-pole attack and release coefficients per sample,
+    starting from rest.
+  - The vectors are exact rationals, checked against closed forms.
+  Python 6178 passed, 2 skipped; .NET 5442 passed; conformance 3678/3678 in both. Version
+  2026.11.17.37.
 
 ## Not built
 

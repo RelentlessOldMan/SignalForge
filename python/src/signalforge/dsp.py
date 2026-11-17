@@ -2462,6 +2462,29 @@ def comb_filter(
     return y
 
 
+def envelope_follower(samples: ArrayLike, attack: float, release: float) -> NDArray[np.float64]:
+    """Peak envelope of ``|x|`` with one-pole ``attack`` and ``release`` coefficients, from rest
+    (conventions: Envelope follower; ADR 0238)."""
+    a = real(attack, "attack")
+    if not 0 <= a < 1:
+        raise ValueError("attack must be in [0, 1)")
+    r_c = real(release, "release")
+    if not 0 <= r_c < 1:
+        raise ValueError("release must be in [0, 1)")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    mag = np.abs(x)
+    e = np.empty(x.size)
+    prev = 0.0
+    for n in range(x.size):
+        r = float(mag[n])
+        c = a if r > prev else r_c
+        prev = r + c * (prev - r)
+        e[n] = prev
+    return e
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

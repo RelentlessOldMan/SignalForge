@@ -67,6 +67,7 @@ from .dsp import (
     elliptic_bandstop,
     elliptic_highpass,
     elliptic_lowpass,
+    envelope_follower,
     fir_bandpass,
     fir_equiripple,
     fir_frequency_sampling,
@@ -382,7 +383,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.36"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.37"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -540,6 +541,7 @@ __all__ = [
     "encode_samples",
     "energy_separation",
     "energy_time_curve",
+    "envelope_follower",
     "erb_bandwidth",
     "erb_rate_to_hz",
     "erb_space",

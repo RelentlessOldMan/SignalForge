@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "envelope_follower",
+  "description": "Envelope follower (conventions: Envelope follower; ADR 0238).",
+  "cases": [
+    {"id": "envelope_follower.constant_rise", "op": "envelope_follower", "args": {"samples": [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0], "attack": 0.75, "release": 0.5}, "expected": [0.5, 0.875, 1.15625, 1.3671875, 1.525390625, 1.64404296875, 1.7330322265625, 1.799774169921875], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "constant 2 from rest: 2 (1 - 0.75^(n+1))"},
+    {"id": "envelope_follower.drop", "op": "envelope_follower", "args": {"samples": [4.0, 0.0, 0.0, 0.0, 0.0, 0.0], "attack": 0.0, "release": 0.875}, "expected": [4.0, 3.5, 3.0625, 2.6796875, 2.3447265625, 2.0516357421875], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "instant attack, then release^k"},
+    {"id": "envelope_follower.signed", "op": "envelope_follower", "args": {"samples": [1.0, -3.0, 2.0, -0.5, 0.25, 4.0, -1.0, 0.0, 0.5, -2.0], "attack": 0.5, "release": 0.9375}, "expected": [0.5, 1.75, 1.875, 1.7890625, 1.69287109375, 2.846435546875, 2.7310333251953125, 2.5603437423706055, 2.4315722584724426, 2.404598992317915], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "signed real samples: the magnitude is followed"},
+    {"id": "envelope_follower.passthrough", "op": "envelope_follower", "args": {"samples": [1.0, 3.0, 2.0, 0.5], "attack": 0.0, "release": 0.0}, "expected": [1.0, 3.0, 2.0, 0.5], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "both 0: |x| itself"},
+    {"id": "envelope_follower.complex", "op": "envelope_follower", "args": {"samples": {"re": [3.0, 5.0, 0.0, -6.0, 0.0], "im": [4.0, -12.0, 0.0, 8.0, -1.0]}, "attack": 0.25, "release": 0.75}, "expected": [3.75, 10.6875, 8.015625, 9.50390625, 7.3779296875], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex samples with exact magnitudes"},
+    {"id": "envelope_follower.attack_one", "op": "envelope_follower", "args": {"samples": [1.0], "attack": 1.0, "release": 0.5}, "error": "invalid_argument", "source": "attack must be below 1"},
+    {"id": "envelope_follower.release_negative", "op": "envelope_follower", "args": {"samples": [1.0], "attack": 0.5, "release": -0.1}, "error": "invalid_argument", "source": "release must be at least 0"},
+    {"id": "envelope_follower.empty", "op": "envelope_follower", "args": {"samples": [], "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "envelope_follower.nan_sample", "op": "envelope_follower", "args": {"samples": [1.0, "nan"], "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}
