@@ -60,6 +60,7 @@ from .dsp import (
     cic_taps,
     convolve,
     cross_correlation,
+    dc_blocker,
     decimate,
     elliptic_bandpass,
     elliptic_bandstop,
@@ -380,7 +381,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.34"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.35"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -517,6 +518,7 @@ __all__ = [
     "db_to_lin",
     "dbm_to_vrms",
     "dbm_to_w",
+    "dc_blocker",
     "dc_offset",
     "dct",
     "decay_curvature",

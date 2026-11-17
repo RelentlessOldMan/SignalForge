@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "dc_blocker",
+  "description": "DC blocker (conventions: DC blocker; ADR 0236).",
+  "cases": [
+    {"id": "dc_blocker.constant", "op": "dc_blocker", "args": {"samples": [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0], "pole": 0.75}, "expected": [2.0, 1.5, 1.125, 0.84375, 0.6328125, 0.474609375, 0.35595703125, 0.2669677734375, 0.200225830078125, 0.15016937255859375, 0.11262702941894531, 0.08447027206420898], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "a constant 2 from rest: 2 p^n"},
+    {"id": "dc_blocker.pole_zero", "op": "dc_blocker", "args": {"samples": [1.0, 3.0, -2.0, 0.5], "pole": 0.0}, "expected": [1.0, 2.0, -5.0, 2.5], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "p = 0: the first difference"},
+    {"id": "dc_blocker.mixed", "op": "dc_blocker", "args": {"samples": [0.5, 1.5, -1.0, 2.25, 0.0, -0.75, 1.0, 3.0, -2.0, 0.25], "pole": 0.9921875}, "expected": [0.5, 1.49609375, -1.015594482421875, 2.242339849472046, -0.02517843060195446, -0.7749817241128767, 0.9810728206067552, 2.973408189195765, -2.049821562282327, 0.21619266867300366], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "p = 127/128 on mixed data"},
+    {"id": "dc_blocker.offset_sine_like", "op": "dc_blocker", "args": {"samples": [1.0, 1.5, 1.0, 0.5, 1.0, 1.5, 1.0, 0.5, 1.0, 1.5, 1.0, 0.5], "pole": 0.875}, "expected": [1.0, 1.375, 0.703125, 0.115234375, 0.600830078125, 1.025726318359375, 0.3975105285644531, -0.15217828750610352, 0.3668439984321594, 0.8209884986281395, 0.21836493629962206, -0.3089306807378307], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "a period-4 wave on an offset of 1, p = 7/8"},
+    {"id": "dc_blocker.single_sample", "op": "dc_blocker", "args": {"samples": [3.0], "pole": 0.5}, "expected": [3.0], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "one sample: itself"},
+    {"id": "dc_blocker.complex", "op": "dc_blocker", "args": {"samples": {"re": [1.0, 0.0, -1.0, 2.0, 0.5], "im": [0.0, 1.0, 1.0, -0.5, 0.25]}, "pole": 0.625}, "expected": {"re": [1.0, -0.375, -1.234375, 2.228515625, -0.107177734375], "im": [0.0, 1.0, 0.625, -1.109375, 0.056640625]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex samples, p = 5/8"},
+    {"id": "dc_blocker.pole_one", "op": "dc_blocker", "args": {"samples": [1.0], "pole": 1.0}, "error": "invalid_argument", "source": "pole must be below 1"},
+    {"id": "dc_blocker.pole_negative", "op": "dc_blocker", "args": {"samples": [1.0], "pole": -0.5}, "error": "invalid_argument", "source": "pole must be at least 0"},
+    {"id": "dc_blocker.empty", "op": "dc_blocker", "args": {"samples": [], "pole": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "dc_blocker.nan_sample", "op": "dc_blocker", "args": {"samples": [1.0, "nan"], "pole": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

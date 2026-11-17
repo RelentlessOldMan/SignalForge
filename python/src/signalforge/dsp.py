@@ -2421,6 +2421,25 @@ def hampel_filter(samples: ArrayLike, length: int, threshold: float = 3.0) -> ND
     return np.asarray(y, dtype=np.float64)
 
 
+def dc_blocker(samples: ArrayLike, pole: float) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The one-pole, one-zero DC blocker ``y[n] = (x[n] - x[n-1]) + pole y[n-1]`` from rest
+    (conventions: DC blocker; ADR 0236)."""
+    p = real(pole, "pole")
+    if not 0 <= p < 1:
+        raise ValueError("pole must be in [0, 1)")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y: NDArray[Any] = np.empty_like(x)
+    xp = x.dtype.type(0)
+    yp = x.dtype.type(0)
+    for n in range(x.size):
+        yp = (x[n] - xp) + p * yp
+        xp = x[n]
+        y[n] = yp
+    return y
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

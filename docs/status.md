@@ -6,7 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a DC blocker (`dc_blocker(samples, pole)`, the one-pole, one-zero high-pass).
+   - a comb filter (`comb_filter(samples, delay, gain, *, feedback=False)`, feedforward or
+     feedback);
+   - an envelope follower (`envelope_follower(samples, attack, release)`, a peak detector with
+     separate one-pole attack and release).
 
 ## Built
 
@@ -2176,6 +2179,12 @@ Updated with every chunk of work. Dates are absolute.
   - It uses the windows of ADR 0234. The vectors are exact.
   Python 6143 passed, 2 skipped; .NET 5409 passed; conformance 3648/3648 in both. Version
   2026.11.17.34.
+- 2026-11-17: DC blocker (ADR 0236): `dc_blocker(samples, pole)` in `dsp` (C# `Dsp.DcBlocker`,
+  real and complex).
+  - It computes `y[n] = (x[n] − x[n−1]) + p·y[n−1]`, starting from rest.
+  - The vectors are the exact rational convolution with the impulse response.
+  Python 6155 passed, 2 skipped; .NET 5420 passed; conformance 3658/3658 in both. Version
+  2026.11.17.35.
 
 ## Not built
 

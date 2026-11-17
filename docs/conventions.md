@@ -1841,6 +1841,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `|x[n] − m_n| > (threshold·κ)·MAD_n` (strict), else `x[n]`, with `κ = 1/Φ⁻¹(3/4) =
   1.482602218505602`. Odd `length ≥ 1`, finite `threshold ≥ 0`; samples real, finite, non-empty.
   **(implemented)**
+- **DC blocker** (`dc_blocker(samples, pole)`, C# `Dsp.DcBlocker`,
+  [ADR 0236](adr/0236-dc-blocker.md)): `y[n] = (x[n] − x[n−1]) + p·y[n−1]`, `x[−1] = y[−1] = 0`
+  (from rest; `H(z) = (1 − z⁻¹)/(1 − p z⁻¹)`). Finite `0 ≤ pole < 1`; samples finite, non-empty,
+  real or complex. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
