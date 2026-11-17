@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "moving_average",
+  "description": "Moving average (conventions: Moving average; ADR 0241).",
+  "cases": [
+    {"id": "moving_average.constant", "op": "moving_average", "args": {"samples": [-3.0, -3.0, -3.0, -3.0, -3.0, -3.0, -3.0], "length": 4}, "expected": [-0.75, -1.5, -2.25, -3.0, -3.0, -3.0, -3.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "constant -3: -3 min(n + 1, 4) / 4"},
+    {"id": "moving_average.ramp", "op": "moving_average", "args": {"samples": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], "length": 5}, "expected": [0.0, 0.2, 0.6, 1.2, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "ramp n: n - 2 once the window is full"},
+    {"id": "moving_average.mixed", "op": "moving_average", "args": {"samples": [0.5, 1.5, -1.0, 2.25, 0.0, -0.75, 1.0, 3.0, -2.0, 0.25], "length": 3}, "expected": [0.16666666666666666, 0.6666666666666666, 0.3333333333333333, 0.9166666666666666, 0.4166666666666667, 0.5, 0.08333333333333333, 1.0833333333333333, 0.6666666666666666, 0.4166666666666667], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "mixed data, N = 3"},
+    {"id": "moving_average.length_one", "op": "moving_average", "args": {"samples": [1.5, -2.0, 0.0], "length": 1}, "expected": [1.5, -2.0, 0.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 1: x itself"},
+    {"id": "moving_average.long_window", "op": "moving_average", "args": {"samples": [1.0, 2.0, 3.0], "length": 8}, "expected": [0.125, 0.375, 0.75], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "window longer than the input"},
+    {"id": "moving_average.complex", "op": "moving_average", "args": {"samples": {"re": [3.0, 0.0, -1.0, 2.0], "im": [4.0, 1.0, 1.0, -2.0]}, "length": 2}, "expected": {"re": [1.5, 1.5, -0.5, 0.5], "im": [2.0, 2.5, 1.0, -0.5]}, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "complex samples"},
+    {"id": "moving_average.length_zero", "op": "moving_average", "args": {"samples": [1.0], "length": 0}, "error": "invalid_argument", "source": "length must be at least 1"},
+    {"id": "moving_average.empty", "op": "moving_average", "args": {"samples": [], "length": 2}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "moving_average.nan_sample", "op": "moving_average", "args": {"samples": [1.0, "nan"], "length": 2}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

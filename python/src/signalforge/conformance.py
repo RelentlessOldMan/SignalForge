@@ -256,6 +256,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "envelope_follower": dsp.envelope_follower,
     "moving_rms": dsp.moving_rms,
     "allpass_comb": dsp.allpass_comb,
+    "moving_average": dsp.moving_average,
     "cic_interpolate": dsp.cic_interpolate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
     "butterworth_lowpass": dsp.butterworth_lowpass,

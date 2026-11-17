@@ -1865,6 +1865,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   right, zero before 0; `H(z) = (−g + z^−D)/(1 − g z^−D)`, `h[0] = −g`,
   `h[kD] = (1 − g²) g^(k−1)`. Integer `delay ≥ 1`, finite `|g| < 1`; samples finite, non-empty,
   real or complex; output the same kind. **(implemented)**
+- **Moving average** (`moving_average(samples, length)`, C# `Dsp.MovingAverage`,
+  [ADR 0241](adr/0241-moving-average.md)): `y[n] = (1/N) Σ_{k=n−N+1}^{n} x[k]`, `x` zero before
+  0 (from rest: always divided by `N`); summed directly, oldest first, then divided. Integer
+  `length ≥ 1`; samples finite, non-empty, real or complex; output the same kind.
+  **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

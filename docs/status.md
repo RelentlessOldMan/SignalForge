@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a moving average (`moving_average(samples, length)`, the trailing boxcar from rest, after
-     ADR 0239);
    - a slew-rate limiter (`slew_limiter(samples, rise, fall)`, per-sample step limits).
 
 ## Built
@@ -2210,6 +2208,13 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors convolve the input with the closed-form impulse response, in exact rationals.
   Python 6201 passed, 2 skipped; .NET 5464 passed; conformance 3697/3697 in both. Version
   2026.11.17.39.
+- 2026-11-17: Moving average (ADR 0241): `moving_average(samples, length)` in `dsp` (C#
+  `Dsp.MovingAverage`, real and complex).
+  - It is the trailing boxcar mean, starting from rest and always divided by `N`.
+  - Each window is summed directly.
+  - The vectors are exact rational means.
+  Python 6212 passed, 2 skipped; .NET 5474 passed; conformance 3706/3706 in both. Version
+  2026.11.17.40.
 
 ## Not built
 

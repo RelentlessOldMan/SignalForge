@@ -2508,6 +2508,25 @@ def envelope_follower(samples: ArrayLike, attack: float, release: float) -> NDAr
     return e
 
 
+def moving_average(samples: ArrayLike, length: int) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Mean of the ``length`` samples ending at each sample, zeros before the start (conventions:
+    Moving average; ADR 0241)."""
+    m = count(length, "length")
+    if m < 1:
+        raise ValueError("length must be at least 1")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y: NDArray[Any] = np.empty_like(x)
+    for n in range(x.size):
+        start = max(0, n - m + 1)
+        acc = x[start]
+        for k in range(start + 1, n + 1):
+            acc = acc + x[k]
+        y[n] = acc / m
+    return y
+
+
 def moving_rms(samples: ArrayLike, length: int) -> NDArray[np.float64]:
     """RMS of the ``length`` samples ending at each sample, zeros before the start (conventions:
     Moving RMS; ADR 0239)."""
