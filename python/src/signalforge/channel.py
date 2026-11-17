@@ -140,6 +140,58 @@ def fractional_delay(
     return _read_at(np.asarray(x, dtype=np.complex128), np.arange(x.size, dtype=np.float64) - d, h)
 
 
+def farrow_delay(
+    samples: ArrayLike, delays: ArrayLike, *, order: int = 3
+) -> NDArray[np.complex128]:
+    """Delay each sample by its own ``delays[n]`` through the order-``order`` Lagrange interpolator
+    in Farrow form, as long as the input (conventions: Channel, Farrow variable delay; ADR 0226)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    d = np.asarray(delays)
+    if d.ndim != 1 or d.size != x.size:
+        raise ValueError("delays must be one-dimensional and as long as samples")
+    if np.iscomplexobj(d):
+        raise ValueError("delays must be real")
+    d = np.asarray(d, dtype=np.float64)
+    if not np.all(np.isfinite(d)):
+        raise ValueError("delays must be finite")
+    n = count(order, "order")
+    if n < 1:
+        raise ValueError("order must be at least 1")
+    xc = np.asarray(x, dtype=np.complex128)
+    half = (n - 1) / 2
+    c = np.zeros((n + 1, n + 1))
+    for j in range(n + 1):
+        poly = [1.0]
+        for m in range(n + 1):
+            if m == j:
+                continue
+            s = half - m
+            g = float(j - m)
+            nxt = [0.0] * (len(poly) + 1)
+            for k, pk in enumerate(poly):
+                nxt[k] += pk * s / g
+                nxt[k + 1] += pk / g
+            poly = nxt
+        c[j] = poly
+    q = np.arange(x.size, dtype=np.float64) - d - half
+    b = np.floor(q)
+    mu = q - b
+    v = np.zeros((n + 1, x.size), dtype=np.complex128)
+    for j in range(n + 1):
+        m = b + j
+        valid = (m >= 0) & (m < x.size)
+        xj = np.zeros(x.size, dtype=np.complex128)
+        xj[valid] = xc[m[valid].astype(np.int64)]
+        for k in range(n + 1):
+            v[k] += c[j, k] * xj
+    y = v[n].copy()
+    for k in range(n - 1, -1, -1):
+        y = y * mu + v[k]
+    return np.asarray(y, dtype=np.complex128)
+
+
 def _read_at(x: NDArray[np.complex128], pos: NDArray[np.float64], h: int) -> NDArray[np.complex128]:
     """``z(t)`` at each position through the fractional-delay kernel, the taps summed in order."""
     n = x.size

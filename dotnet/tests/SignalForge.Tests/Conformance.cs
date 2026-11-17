@@ -669,6 +669,8 @@ public static class Conformance
             "clock_drift" => Bind((Complexes(a.Get("samples")), a.D("ppm_start"), a.D("ppm_end"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.ClockDrift(t.Item1, t.Item2, t.Item3, t.Item4)),
             "clock_jitter" => Bind((Complexes(a.Get("samples")), a.D("rms"), a.I("seed"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.ClockJitter(t.Item1, t.Item2, t.Item3, t.Item4)),
             "clock_offset" => Bind((Complexes(a.Get("samples")), a.D("ppm"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.ClockOffset(t.Item1, t.Item2, t.Item3)),
+            "farrow_delay" => Bind((Complexes(a.Get("samples")), Reals(a.Get("delays")), a.Has("order") ? a.I("order") : 3),
+                t => Channel.FarrowDelay(t.Item1, t.Item2, t.Item3)),
             "fractional_delay" => Bind((Complexes(a.Get("samples")), a.D("delay"), a.Has("half_width") ? a.I("half_width") : 16), t => Channel.FractionalDelay(t.Item1, t.Item2, t.Item3)),
             "saleh_amplifier" => Bind((Complexes(a.Get("samples")), a.D("alpha_a"), a.D("beta_a"), a.D("alpha_phi"), a.D("beta_phi")),
                 t => Channel.SalehAmplifier(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),

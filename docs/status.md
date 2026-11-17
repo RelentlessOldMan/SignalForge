@@ -4,14 +4,11 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Farrow variable delay**: `farrow_delay(samples, delays, order)` in `dsp` (C#
-   `Dsp.FarrowDelay`). Each output sample gets its own fractional delay through the Lagrange
-   polynomials of ADR 0225, in Farrow form: fixed sub-filters combined by Horner's rule in the
-   fractional part `μ`. ADR 0040 named this as a follow-up. Not built yet.
-   - It needs a convention for splitting `D` into an integer part and `μ`, for the ends (zeros
-     outside, as ADR 0040), and for the per-sample `delays` length.
-   - Expected values: it must equal `lagrange_fir` evaluated afresh at each sample, and be exact
-     on polynomials.
+1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py` and `docs/adr/` before
+   picking. Candidates:
+   - a Thiran allpass fractional delay (`thiran_allpass(delay, order)`, maximally flat group
+     delay; closed-form coefficients);
+   - a polyphase Farrow resampler on top of ADR 0226 (`farrow_resample(samples, ratio, order)`).
 
 ## Built
 
@@ -2101,6 +2098,15 @@ Updated with every chunk of work. Dates are absolute.
   0. The vectors are exact fractions, each checked against the moment identity.
   Python 5992 passed, 2 skipped; .NET 5265 passed; conformance 3515/3515 in both. Version
   2026.11.17.23.
+- 2026-11-17: Farrow variable delay (ADR 0226): `farrow_delay(samples, delays, *, order=3)` in
+  `channel` (C# `Channel.FarrowDelay`).
+  - Each sample has its own delay, read through the order-`N` Lagrange interpolator. It is
+    computed in Farrow form, with polynomials in `μ ∈ [0, 1)` and Horner's rule.
+  - The vectors are exact rationals from the product form. Polynomial inputs come out exact
+    inside.
+  - The tests check it against `lagrange_fir` sample by sample in both languages.
+  Python 6006 passed, 2 skipped; .NET 5278 passed; conformance 3527/3527 in both. Version
+  2026.11.17.24.
 
 ## Not built
 

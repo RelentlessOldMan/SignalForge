@@ -1849,6 +1849,15 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   exact shift. `delay` is any finite real (negative advances), `half_width` an integer `≥ 1`.
   Output as long as the input, complex. A multipath channel with fractional delays is the sum of
   `gainᵢ·fractional_delay(x, delayᵢ)`. **(implemented)**
+- **Farrow variable delay** (`farrow_delay(samples, delays, *, order=3)`, C#
+  `Channel.FarrowDelay`, [ADR 0226](adr/0226-farrow-delay.md)): for `n = 0 … L−1`,
+  `p = n − delays[n]`, `q = p − (N−1)/2`, `b = ⌊q⌋`, `μ = q − b`,
+  `y[n] = Σ_{j=0}^{N} L_j(μ + (N−1)/2) x[b+j]` with `L_j(u) = Π_{m≠j} (u − m)/(j − m)`, `N = order`,
+  `x` zero outside `0 … L−1`. Computed in Farrow form: `L_j(μ + (N−1)/2) = Σ_k c[j][k] μ^k`, built
+  by multiplying by `(μ + (N−1)/2 − m)/(j − m)` over increasing `m ≠ j`;
+  `v_k = Σ_j c[j][k] x[b+j]` (increasing `j`); `y = v(μ)` by Horner from `v_N`. Output complex, as
+  long as the input. `delays` as long as `samples`, finite (negative advances); integer
+  `order ≥ 1`. Odd orders shift exactly at integer delays. **(implemented)**
 - **Block fading** (`rician_fading(samples, k_factor, block_length, *, seed)`,
   [ADR 0041](adr/0041-block-fading.md)): flat fading, one complex gain per block,
   `y[n] = g[⌊n/L⌋]·x[n]` with `L = block_length` (the last block may be short). Each gain is

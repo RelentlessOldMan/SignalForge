@@ -306,6 +306,67 @@ public static class Channel
         return y;
     }
 
+    /// <summary>Delay each sample by its own <c>delays[n]</c> through the order-<paramref name="order"/>
+    /// Lagrange interpolator in Farrow form, as long as the input (conventions: Channel, Farrow
+    /// variable delay; ADR 0226).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="delays">One delay per sample, in samples, finite; negative advances.</param>
+    /// <param name="order">The interpolation order, at least 1; odd orders shift exactly at integer
+    /// delays.</param>
+    /// <returns><c>y[n]</c>, the input read at <c>n − delays[n]</c>, zero outside the input.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] FarrowDelay(ReadOnlySpan<Complex> samples, ReadOnlySpan<double> delays, int order = 3)
+    {
+        if (delays.Length != samples.Length)
+            throw new ArgumentException("delays must be as long as samples", nameof(delays));
+        foreach (double d in delays)
+        {
+            if (!double.IsFinite(d))
+                throw new ArgumentOutOfRangeException(nameof(delays), d, "must be finite");
+        }
+        ArgumentOutOfRangeException.ThrowIfLessThan(order, 1);
+        int len = samples.Length;
+        double half = (order - 1) / 2.0;
+        var c = new double[order + 1][];
+        for (int j = 0; j <= order; j++)
+        {
+            double[] poly = [1.0];
+            for (int m = 0; m <= order; m++)
+            {
+                if (m == j)
+                    continue;
+                double s = half - m, g = j - m;
+                var next = new double[poly.Length + 1];
+                for (int k = 0; k < poly.Length; k++)
+                {
+                    next[k] += poly[k] * s / g;
+                    next[k + 1] += poly[k] / g;
+                }
+                poly = next;
+            }
+            c[j] = poly;
+        }
+        var y = new Complex[len];
+        var v = new Complex[order + 1];
+        for (int i = 0; i < len; i++)
+        {
+            double q = i - delays[i] - half, b = Math.Floor(q), mu = q - b;
+            Array.Clear(v);
+            for (int j = 0; j <= order; j++)
+            {
+                double m = b + j;
+                Complex xj = m >= 0 && m < len ? samples[(int)m] : Complex.Zero;
+                for (int k = 0; k <= order; k++)
+                    v[k] += c[j][k] * xj;
+            }
+            Complex acc = v[order];
+            for (int k = order - 1; k >= 0; k--)
+                acc = acc * mu + v[k];
+            y[i] = acc;
+        }
+        return y;
+    }
+
     /// <summary>The input read every 1 + ppm/1e6 samples through the fractional-delay kernel: a
     /// receiver whose sample clock is off by <paramref name="ppm"/> (conventions: Channel, Sample
     /// clock offset).</summary>
