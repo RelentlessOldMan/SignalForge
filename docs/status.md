@@ -4,17 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Burg AR PSD**: `burg_psd(samples, sample_rate, order, *, nfft=None, one_sided=None)` in
-   `spectral` (C# `Spectral.BurgPsd`), the same `SpectralDensity` shape as ADR 0203. Not built
-   yet.
-   - Each reflection coefficient is `k_m = −2 Σ f·b* / Σ(|f|² + |b|²)` over the forward and
-     backward errors.
-   - `σ²` starts at the mean `|x|²` and is multiplied by `(1 − |k_m|²)` at each order.
-   - The filter is updated by Levinson's step.
-
-   Needs an ADR. Expected values: order 1 in closed form; order 2 from a hand-written stdlib
-   error-update recursion, with the reflection coefficients checked against their closed forms
-   on a 3-sample input.
+1. **Burg AR fit**: `burg(samples, order)` in `dsp` (C# `Dsp.Burg`, real and complex), returning
+   the same result as `levinson`: the prediction-error filter, the reflection coefficients and
+   the final error, from the recursion of ADR 0204. Not built yet.
+   - `burg_psd` would then use it, so there is one copy of the recursion in each language.
+   - Expected values: the exact fractions of `x = [1, 2, 3]`, and a stdlib recursion for the
+     complex case.
 
 ## Built
 
@@ -1937,6 +1932,15 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors solve the normal equations by Cramer's rule and evaluate `|A|²` with `cmath`.
   Python 5687 passed, 2 skipped; .NET 4985 passed; conformance 3257/3257 in both. Version
   2026.11.17.1.
+- 2026-11-17: Burg AR PSD (ADR 0204): `burg_psd(samples, sample_rate, order, *, nfft=None,
+  one_sided=None)` in `spectral` (C# `Spectral.BurgPsd`, with real and complex overloads).
+  - The reflection coefficients come from the forward and backward prediction errors,
+    `k = −2 Σ F·B*/Σ(|F|² + |B|²)`, with Levinson's step on the filter and `σ²(1 − |k|²)`.
+  - `|k| ≥ 1` or a zero error energy is `invalid_argument`.
+  - The vectors use a stdlib error recursion, pinned to the exact fractions of `x = [1, 2, 3]`
+    and to the order-1 closed form.
+  Python 5702 passed, 2 skipped; .NET 4999 passed; conformance 3270/3270 in both. Version
+  2026.11.17.2.
 
 ## Not built
 

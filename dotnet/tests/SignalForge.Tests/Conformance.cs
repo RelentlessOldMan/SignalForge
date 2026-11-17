@@ -363,6 +363,7 @@ public static class Conformance
             "dpss_tapers" => Bind((a.I("length"), a.D("half_bandwidth"), a.OptInt("num_tapers")), t => Spectral.DpssTapers(t.Item1, t.Item2, t.Item3)),
             "multitaper_psd" => MultitaperOp(a),
             "yule_walker_psd" => YuleWalkerOp(a),
+            "burg_psd" => YuleWalkerOp(a, burg: true),
             "harmonic_f_test" => FTestOp(a),
             "multitaper_line_removal" => LineRemovalOp(a),
             "spectrogram" => SpectrogramOp(a),
@@ -914,7 +915,7 @@ public static class Conformance
         return () => Spectral.HarmonicFTest(x, fs, nw, k, nfft);
     }
 
-    private static Func<object?> YuleWalkerOp(Args a)
+    private static Func<object?> YuleWalkerOp(Args a, bool burg = false)
     {
         object? samples = a.Get("samples");
         var (fs, order, nfft) = (a.D("sample_rate"), a.I("order"), a.OptInt("nfft"));
@@ -922,11 +923,11 @@ public static class Conformance
         {
             if (a.Flag("one_sided"))
                 throw new InvalidDataException("one_sided=true with complex samples has no C# form");
-            return () => Spectral.YuleWalkerPsd(cs, fs, order, nfft);
+            return () => burg ? Spectral.BurgPsd(cs, fs, order, nfft) : Spectral.YuleWalkerPsd(cs, fs, order, nfft);
         }
         double[] x = Reals(samples);
         bool oneSided = a.Flag("one_sided", dflt: true);
-        return () => Spectral.YuleWalkerPsd(x, fs, order, nfft, oneSided);
+        return () => burg ? Spectral.BurgPsd(x, fs, order, nfft, oneSided) : Spectral.YuleWalkerPsd(x, fs, order, nfft, oneSided);
     }
 
     private static Func<object?> MultitaperOp(Args a)

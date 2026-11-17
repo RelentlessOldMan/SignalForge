@@ -372,6 +372,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Burg AR PSD** ([ADR 0204](adr/0204-burg-psd.md); `burg_psd(samples, sample_rate, order, *,
+  nfft=None, one_sided=None)`, C# `Spectral.BurgPsd`): `f = b = x`, `σ² = mean |x|²`; per order
+  `k = −2 Σ F·B*/Σ(|F|² + |B|²)` with `F = f[1:]`, `B = b[:-1]`, `f ← F + k·B`, `b ← B + k*·F`,
+  Levinson's step on `a`, `σ² ← σ²(1 − |k|²)`. Density and fields as Yule-Walker. `|k| ≥ 1` or a
+  zero error energy is `invalid_argument`. **(implemented)**
 - **Yule-Walker AR PSD** ([ADR 0203](adr/0203-yule-walker-psd.md); `yule_walker_psd(samples,
   sample_rate, order, *, nfft=None, one_sided=None)`, C# `Spectral.YuleWalkerPsd`): biased
   autocorrelation (no mean removal) to lag `p`, Levinson-Durbin for `a` and `σ²`, two-sided
