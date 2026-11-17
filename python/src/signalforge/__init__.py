@@ -7,6 +7,7 @@ from .channel import (
     clock_offset,
     dc_offset,
     farrow_delay,
+    farrow_resample,
     fractional_delay,
     frequency_offset,
     iq_image_rejection_db,
@@ -370,7 +371,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.25"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.26"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -528,6 +529,7 @@ __all__ = [
     "evm",
     "exceedance_levels",
     "farrow_delay",
+    "farrow_resample",
     "fft",
     "fft_frequencies",
     "find_tones",

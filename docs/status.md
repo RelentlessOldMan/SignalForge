@@ -4,9 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py` and `docs/adr/` before
-   picking. Candidates:
-   - a polyphase Farrow resampler on top of ADR 0226 (`farrow_resample(samples, ratio, order)`).
+1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
+   `docs/adr/` before picking. Candidates:
+   - a sliding DFT (`sliding_dft(samples, bin, length)`, the recursive single-bin DFT over a
+     moving window);
+   - a CIC decimator (`cic_decimate(samples, factor, stages, delay=1)`, integer arithmetic,
+     exact gain `(R M)^N`).
 
 ## Built
 
@@ -2113,6 +2116,15 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact fractions, each checked against the DC group-delay identity.
   Python 6019 passed, 2 skipped; .NET 5290 passed; conformance 3538/3538 in both. Version
   2026.11.17.25.
+- 2026-11-17: Farrow resampler (ADR 0228): `farrow_resample(samples, ratio, *, order=3)` in
+  `channel` (C# `Channel.FarrowResample`).
+  - It reads the input at `k / ratio` through ADR 0226's interpolator, which is now one shared
+    helper in each language.
+  - It does no anti-alias filtering, and the ratio must be within `[1e-6, 1e6]`.
+  - The vectors are exact rationals at the double positions. They include identity, decimation,
+    interpolation, and polynomial inputs that come out exact inside.
+  Python 6036 passed, 2 skipped; .NET 5306 passed; conformance 3553/3553 in both. Version
+  2026.11.17.26.
 
 ## Not built
 

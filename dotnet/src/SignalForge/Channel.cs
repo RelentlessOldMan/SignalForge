@@ -325,6 +325,40 @@ public static class Channel
                 throw new ArgumentOutOfRangeException(nameof(delays), d, "must be finite");
         }
         ArgumentOutOfRangeException.ThrowIfLessThan(order, 1);
+        var pos = new double[samples.Length];
+        for (int i = 0; i < pos.Length; i++)
+            pos[i] = i - delays[i];
+        return FarrowRead(samples, pos, order);
+    }
+
+    /// <summary>The input read at <c>k / ratio</c> for <c>k = 0, 1, …</c> through the Farrow
+    /// interpolator: resampling by <paramref name="ratio"/> = output rate / input rate, with no
+    /// anti-alias filtering (conventions: Channel, Farrow resampler; ADR 0228).</summary>
+    /// <param name="samples">Complex samples.</param>
+    /// <param name="ratio">Output rate over input rate, finite, within [1e-6, 1e6].</param>
+    /// <param name="order">The interpolation order, at least 1.</param>
+    /// <returns>The reads at <c>k / ratio</c> while that is at most the last sample's index.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] FarrowResample(ReadOnlySpan<Complex> samples, double ratio, int order = 3)
+    {
+        if (!(ratio >= 1e-6 && ratio <= 1e6))
+            throw new ArgumentOutOfRangeException(nameof(ratio), ratio, "must be finite and within [1e-6, 1e6]");
+        ArgumentOutOfRangeException.ThrowIfLessThan(order, 1);
+        var pos = new List<double>();
+        for (int k = 0; samples.Length > 0; k++)
+        {
+            double t = k / ratio;
+            if (!(t <= samples.Length - 1))
+                break;
+            pos.Add(t);
+        }
+        return FarrowRead(samples, [.. pos], order);
+    }
+
+    // The order-`order` Lagrange interpolator in Farrow form read at each position, the input
+    // zero outside (conventions: Channel, Farrow variable delay).
+    private static Complex[] FarrowRead(ReadOnlySpan<Complex> samples, double[] pos, int order)
+    {
         int len = samples.Length;
         double half = (order - 1) / 2.0;
         var c = new double[order + 1][];
@@ -346,11 +380,11 @@ public static class Channel
             }
             c[j] = poly;
         }
-        var y = new Complex[len];
+        var y = new Complex[pos.Length];
         var v = new Complex[order + 1];
-        for (int i = 0; i < len; i++)
+        for (int i = 0; i < pos.Length; i++)
         {
-            double q = i - delays[i] - half, b = Math.Floor(q), mu = q - b;
+            double q = pos[i] - half, b = Math.Floor(q), mu = q - b;
             Array.Clear(v);
             for (int j = 0; j <= order; j++)
             {

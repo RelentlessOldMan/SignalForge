@@ -1865,6 +1865,12 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   `v_k = Σ_j c[j][k] x[b+j]` (increasing `j`); `y = v(μ)` by Horner from `v_N`. Output complex, as
   long as the input. `delays` as long as `samples`, finite (negative advances); integer
   `order ≥ 1`. Odd orders shift exactly at integer delays. **(implemented)**
+- **Farrow resampler** (`farrow_resample(samples, ratio, *, order=3)`, C#
+  `Channel.FarrowResample`, [ADR 0228](adr/0228-farrow-resample.md)): output `k` is the Farrow
+  variable delay's interpolator read at `t_k = k / ratio` (one floating-point division) in place
+  of `n − delays[n]`, for `k = 0, 1, …` while `t_k ≤ L − 1`. `ratio` = output rate / input rate,
+  finite, within `[1e-6, 1e6]`; integer `order ≥ 1`. No anti-alias filtering. Output complex;
+  empty input gives empty output. **(implemented)**
 - **Block fading** (`rician_fading(samples, k_factor, block_length, *, seed)`,
   [ADR 0041](adr/0041-block-fading.md)): flat fading, one complex gain per block,
   `y[n] = g[⌊n/L⌋]·x[n]` with `L = block_length` (the last block may be short). Each gain is

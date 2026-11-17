@@ -286,6 +286,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "multipath": channel.multipath,
     "fractional_delay": channel.fractional_delay,
     "farrow_delay": channel.farrow_delay,
+    "farrow_resample": channel.farrow_resample,
     "rician_fading": channel.rician_fading,
     "clock_drift": channel.clock_drift,
     "clock_jitter": channel.clock_jitter,

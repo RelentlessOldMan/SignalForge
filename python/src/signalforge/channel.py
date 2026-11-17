@@ -159,7 +159,36 @@ def farrow_delay(
     n = count(order, "order")
     if n < 1:
         raise ValueError("order must be at least 1")
-    xc = np.asarray(x, dtype=np.complex128)
+    return _farrow_read(
+        np.asarray(x, dtype=np.complex128), np.arange(x.size, dtype=np.float64) - d, n
+    )
+
+
+def farrow_resample(samples: ArrayLike, ratio: float, *, order: int = 3) -> NDArray[np.complex128]:
+    """The input read at ``k / ratio`` for ``k = 0, 1, ...`` through the Farrow interpolator:
+    resampling by ``ratio`` = output rate / input rate, with no anti-alias filtering (conventions:
+    Channel, Farrow resampler; ADR 0228)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    r = real(ratio, "ratio")
+    if not (1e-6 <= r <= 1e6):
+        raise ValueError("ratio must be finite and within [1e-6, 1e6]")
+    n = count(order, "order")
+    if n < 1:
+        raise ValueError("order must be at least 1")
+    if x.size == 0:
+        return np.zeros(0, dtype=np.complex128)
+    pos = np.arange(int((x.size - 1) * r) + 2, dtype=np.float64) / r
+    pos = pos[pos <= x.size - 1]
+    return _farrow_read(np.asarray(x, dtype=np.complex128), pos, n)
+
+
+def _farrow_read(
+    xc: NDArray[np.complex128], pos: NDArray[np.float64], n: int
+) -> NDArray[np.complex128]:
+    """The order-``n`` Lagrange interpolator in Farrow form read at each position, ``xc`` zero
+    outside (conventions: Channel, Farrow variable delay)."""
     half = (n - 1) / 2
     c = np.zeros((n + 1, n + 1))
     for j in range(n + 1):
@@ -175,15 +204,15 @@ def farrow_delay(
                 nxt[k + 1] += pk / g
             poly = nxt
         c[j] = poly
-    q = np.arange(x.size, dtype=np.float64) - d - half
+    q = pos - half
     b = np.floor(q)
     mu = q - b
-    v = np.zeros((n + 1, x.size), dtype=np.complex128)
+    v = np.zeros((n + 1, pos.size), dtype=np.complex128)
     for j in range(n + 1):
-        m = b + j
-        valid = (m >= 0) & (m < x.size)
-        xj = np.zeros(x.size, dtype=np.complex128)
-        xj[valid] = xc[m[valid].astype(np.int64)]
+        idx = b + j
+        valid = (idx >= 0) & (idx < xc.size)
+        xj = np.zeros(pos.size, dtype=np.complex128)
+        xj[valid] = xc[idx[valid].astype(np.int64)]
         for k in range(n + 1):
             v[k] += c[j, k] * xj
     y = v[n].copy()
