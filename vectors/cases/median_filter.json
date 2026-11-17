@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "median_filter",
+  "description": "Running median filter (conventions: Running median filter; ADR 0234).",
+  "cases": [
+    {"id": "median_filter.spike", "op": "median_filter", "args": {"samples": [1.0, 1.0, 9.0, 1.0, 1.0, 1.0], "length": 3}, "expected": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "a lone spike is removed"},
+    {"id": "median_filter.step", "op": "median_filter", "args": {"samples": [0.0, 0.0, 0.0, 5.0, 5.0, 5.0], "length": 5}, "expected": [0.0, 0.0, 0.0, 5.0, 5.0, 5.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "a step edge is kept sharp"},
+    {"id": "median_filter.mixed", "op": "median_filter", "args": {"samples": [3.0, -1.0, 4.0, 1.0, -5.0, 9.0, 2.0, -6.0, 5.0, 3.0, -5.0, 8.0], "length": 5}, "expected": [3.0, 3.0, 1.0, 1.0, 2.0, 1.0, 2.0, 3.0, 2.0, 3.0, 3.0, 8.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "length 5 on mixed data: shrinking windows at the ends"},
+    {"id": "median_filter.long_window", "op": "median_filter", "args": {"samples": [2.0, 7.0, 1.0, 8.0], "length": 9}, "expected": [2.0, 2.0, 7.0, 8.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "window longer than the data"},
+    {"id": "median_filter.length_one", "op": "median_filter", "args": {"samples": [0.5, -0.25, 3.0], "length": 1}, "expected": [0.5, -0.25, 3.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "length 1: the samples themselves"},
+    {"id": "median_filter.single_sample", "op": "median_filter", "args": {"samples": [4.0], "length": 7}, "expected": [4.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "one sample"},
+    {"id": "median_filter.ties", "op": "median_filter", "args": {"samples": [1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 3.0], "length": 3}, "expected": [1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 3.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "repeated values"},
+    {"id": "median_filter.even_length", "op": "median_filter", "args": {"samples": [1.0, 2.0], "length": 4}, "error": "invalid_argument", "source": "length must be odd"},
+    {"id": "median_filter.zero_length", "op": "median_filter", "args": {"samples": [1.0], "length": 0}, "error": "invalid_argument", "source": "length must be at least 1"},
+    {"id": "median_filter.empty", "op": "median_filter", "args": {"samples": [], "length": 3}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "median_filter.nan_sample", "op": "median_filter", "args": {"samples": [1.0, "nan"], "length": 3}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

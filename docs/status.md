@@ -6,7 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a running median filter (`median_filter(samples, length)`).
+   - a Hampel outlier filter (`hampel_filter(samples, length, threshold=3)`, the running median
+     with a MAD test, after ADR 0234);
+   - a DC blocker (`dc_blocker(samples, pole)`, the one-pole, one-zero high-pass).
 
 ## Built
 
@@ -2163,6 +2165,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors use exact rational normal equations, checked against the classic tables.
   Python 6119 passed, 2 skipped; .NET 5386 passed; conformance 3627/3627 in both. Version
   2026.11.17.32.
+- 2026-11-17: Running median filter (ADR 0234): `median_filter(samples, length)` in `dsp` (C#
+  `Dsp.MedianFilter`).
+  - The window is symmetric and shrinks at the ends, so the end samples are kept.
+  - The vectors are the middle elements of the sorted windows, so they are exact.
+  Python 6131 passed, 2 skipped; .NET 5398 passed; conformance 3638/3638 in both. Version
+  2026.11.17.33.
 
 ## Not built
 

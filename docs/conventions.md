@@ -1830,6 +1830,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   the fit to the first or last `length` samples at their own offsets. Rules: odd `length ≥ 1`,
   `0 ≤ order < length`, `0 ≤ derivative ≤ order`, `|position| ≤ h`; samples real, finite, at least
   `length`. **(implemented)**
+- **Running median filter** (`median_filter(samples, length)`, C# `Dsp.MedianFilter`,
+  [ADR 0234](adr/0234-median-filter.md)): `h = (length−1)/2`; `y[n]` = median of
+  `x[n−w … n+w]`, `w = min(h, n, L−1−n)` (a symmetric window that shrinks at the ends; always an
+  odd count, so `y[0] = x[0]`, `y[L−1] = x[L−1]`). Odd `length ≥ 1`; samples real, finite,
+  non-empty, any length. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

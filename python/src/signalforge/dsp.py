@@ -2370,6 +2370,26 @@ def savgol_filter(
     return y
 
 
+def median_filter(samples: ArrayLike, length: int) -> NDArray[np.float64]:
+    """Running median over a symmetric window of ``length`` samples that shrinks at the ends to
+    stay inside the data (conventions: Running median filter; ADR 0234)."""
+    m = count(length, "length")
+    if m < 1 or m % 2 == 0:
+        raise ValueError("length must be odd and at least 1")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    h = (m - 1) // 2
+    n_x = x.size
+    y = np.empty(n_x)
+    for n in range(n_x):
+        w = min(h, n, n_x - 1 - n)
+        y[n] = np.sort(x[n - w : n + w + 1])[w]
+    return y
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

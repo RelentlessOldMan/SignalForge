@@ -87,6 +87,7 @@ from .dsp import (
     lpc_to_autocorrelation,
     lpc_to_reflection,
     lsf_to_lpc,
+    median_filter,
     pulse_shape,
     reflection_to_arcsine,
     reflection_to_autocorrelation,
@@ -378,7 +379,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.32"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.33"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -606,6 +607,7 @@ __all__ = [
     "lpc_to_autocorrelation",
     "lpc_to_reflection",
     "lsf_to_lpc",
+    "median_filter",
     "mel_filterbank",
     "mel_to_hz",
     "mfcc",
