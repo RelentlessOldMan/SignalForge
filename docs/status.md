@@ -8,8 +8,6 @@ Updated with every chunk of work. Dates are absolute.
    `docs/adr/` before picking. Candidates:
    - a sliding DFT (`sliding_dft(samples, bin, length)`, the recursive single-bin DFT over a
      moving window);
-   - a CIC interpolator (`cic_interpolate(samples, factor, stages, *, delay=1)`), the
-     counterpart of ADR 0229;
    - a CIC droop-compensation FIR (an inverse-sinc^N FIR for the passband after ADR 0229).
 
 ## Built
@@ -2136,6 +2134,14 @@ Updated with every chunk of work. Dates are absolute.
     FIR form.
   Python 6060 passed, 2 skipped; .NET 5330 passed; conformance 3575/3575 in both. Version
   2026.11.17.27.
+- 2026-11-17: CIC interpolator (ADR 0230): `cic_interpolate(samples, factor, stages, *,
+  delay=1)` in `dsp` (C# `Dsp.CicInterpolate`).
+  - It runs the zero-stuffed input through `cic_taps`. The output is causal, `L·R` samples long
+    and unnormalized.
+  - It is computed in polyphase FIR form.
+  - The vectors run the comb–zero-stuff–integrator structure in exact arithmetic.
+  Python 6073 passed, 2 skipped; .NET 5342 passed; conformance 3586/3586 in both. Version
+  2026.11.17.29.
 
 ## Not built
 

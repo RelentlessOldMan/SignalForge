@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "cic_interpolate",
+  "description": "CIC interpolator (conventions: CIC interpolator; ADR 0230).",
+  "cases": [
+    {"id": "cic_interpolate.dc", "op": "cic_interpolate", "args": {"samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "factor": 4, "stages": 3}, "expected": [1.0, 3.0, 6.0, 10.0, 13.0, 15.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "all ones: settles to (RM)^N / R = 16"},
+    {"id": "cic_interpolate.impulse", "op": "cic_interpolate", "args": {"samples": [1.0, 0.0, 0.0, 0.0, 0.0], "factor": 2, "stages": 3}, "expected": [1.0, 3.0, 3.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "impulse: the taps, then zeros"},
+    {"id": "cic_interpolate.integers", "op": "cic_interpolate", "args": {"samples": [3.0, -1.0, 4.0, 1.0, -5.0, 9.0, 2.0, -6.0], "factor": 3, "stages": 2, "delay": 2}, "expected": [3.0, 6.0, 9.0, 11.0, 13.0, 15.0, 15.0, 15.0, 15.0, 18.0, 21.0, 24.0, 17.0, 10.0, 3.0, 2.0, 1.0, 0.0, 15.0, 30.0, 45.0, 37.0, 29.0, 21.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "integer data, R = 3, N = 2, M = 2: exact"},
+    {"id": "cic_interpolate.fractions", "op": "cic_interpolate", "args": {"samples": [0.5, -0.75, 0.625, 0.0625], "factor": 2, "stages": 4}, "expected": [0.5, 2.0, 2.25, -1.0, -3.375, -0.5, 3.0625, 2.75], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "binary fractions, R = 2, N = 4"},
+    {"id": "cic_interpolate.factor_one", "op": "cic_interpolate", "args": {"samples": [2.0, -1.0, 3.0, 0.0, 1.0], "factor": 1, "stages": 2, "delay": 3}, "expected": [2.0, 3.0, 7.0, 7.0, 10.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "R = 1, M = 3: plain filtering"},
+    {"id": "cic_interpolate.single_sample", "op": "cic_interpolate", "args": {"samples": [5.0], "factor": 3, "stages": 2}, "expected": [5.0, 10.0, 15.0], "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "one sample: the first R taps"},
+    {"id": "cic_interpolate.complex", "op": "cic_interpolate", "args": {"samples": {"re": [1.0, -2.0, 3.0, 1.0], "im": [0.0, 1.0, -1.0, 2.0]}, "factor": 2, "stages": 2}, "expected": {"re": [1.0, 2.0, -1.0, -4.0, 1.0, 6.0, 4.0, 2.0], "im": [0.0, 0.0, 1.0, 2.0, 0.0, -2.0, 1.0, 4.0]}, "tol": {"abs": 1e-09, "rel": 1e-13}, "source": "complex samples"},
+    {"id": "cic_interpolate.empty", "op": "cic_interpolate", "args": {"samples": [], "factor": 2, "stages": 2}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "cic_interpolate.nan_sample", "op": "cic_interpolate", "args": {"samples": [1.0, "nan"], "factor": 2, "stages": 2}, "error": "invalid_argument", "source": "samples must be finite"},
+    {"id": "cic_interpolate.stages_zero", "op": "cic_interpolate", "args": {"samples": [1.0], "factor": 2, "stages": 0}, "error": "invalid_argument", "source": "stages must be at least 1"},
+    {"id": "cic_interpolate.gain_too_big", "op": "cic_interpolate", "args": {"samples": [1.0], "factor": 1000, "stages": 6}, "error": "invalid_argument", "source": "(RM)^N over 2^53"}
+  ]
+}

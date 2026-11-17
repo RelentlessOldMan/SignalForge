@@ -1801,6 +1801,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   integrators, every `R`th sample from 0, then `N` combs of delay `M`. Computed as that FIR.
   Integers `≥ 1`, `stages ≤ 64`, `(RM)^N ≤ 2^53`; samples finite and non-empty.
   **(implemented)**
+- **CIC interpolator** (`cic_interpolate(samples, factor, stages, *, delay=1)`, C#
+  `Dsp.CicInterpolate`, [ADR 0230](adr/0230-cic-interpolator.md)): `u[kR] = x[k]`, other samples
+  0; `y[n] = Σ_m h[m] u[n − m]` for `n = 0 … LR − 1` with `h = cic_taps(R, N, M)`, the sum over
+  `m ≡ n (mod R)`, `m ≤ n`, in increasing `m`. Equals `N` combs at the low rate, zero-stuffing,
+  then `N` integrators. Unnormalized (a constant settles to `(RM)^N/R`). Rules as the CIC
+  decimator; samples finite and non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

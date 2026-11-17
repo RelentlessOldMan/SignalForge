@@ -2211,6 +2211,23 @@ def cic_decimate(
     return np.asarray(np.convolve(x, h)[0 : x.size : r], dtype=x.dtype)
 
 
+def cic_interpolate(
+    samples: ArrayLike, factor: int, stages: int, *, delay: int = 1
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """CIC interpolation by ``factor``: the zero-stuffed input through ``cic_taps``, causal,
+    ``len * factor`` samples, unnormalized (conventions: CIC interpolator; ADR 0230)."""
+    h = cic_taps(factor, stages, delay=delay)
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    r = int(factor)
+    y: NDArray[Any] = np.zeros(x.size * r, dtype=x.dtype)
+    for p in range(r):
+        sub = h[p::r]
+        y[p::r] = np.convolve(x, sub)[: x.size]
+    return y
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

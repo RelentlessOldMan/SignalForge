@@ -83,4 +83,46 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>CIC interpolation of real samples by <paramref name="factor"/>: the zero-stuffed
+    /// input through <see cref="CicTaps"/>, causal, unnormalized (conventions: CIC interpolator;
+    /// ADR 0230).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="factor">The interpolation factor <c>R</c>, at least 1.</param>
+    /// <param name="stages">The number of stages <c>N</c>, 1 to 64.</param>
+    /// <param name="delay">The comb delay <c>M</c> at the low rate, at least 1.</param>
+    /// <returns><c>L·R</c> outputs at the high rate.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] CicInterpolate(ReadOnlySpan<double> samples, int factor, int stages, int delay = 1) =>
+        [.. CicInterpolate((ReadOnlySpan<Complex>)ToComplexArray(samples), factor, stages, delay).Select(v => v.Real)];
+
+    /// <summary>CIC interpolation of complex samples by <paramref name="factor"/>: the zero-stuffed
+    /// input through <see cref="CicTaps"/>, causal, unnormalized (conventions: CIC interpolator;
+    /// ADR 0230).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="factor">The interpolation factor <c>R</c>, at least 1.</param>
+    /// <param name="stages">The number of stages <c>N</c>, 1 to 64.</param>
+    /// <param name="delay">The comb delay <c>M</c> at the low rate, at least 1.</param>
+    /// <returns><c>L·R</c> outputs at the high rate.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] CicInterpolate(ReadOnlySpan<Complex> samples, int factor, int stages, int delay = 1)
+    {
+        double[] h = CicTaps(factor, stages, delay);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (Complex v in samples)
+        {
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        var y = new Complex[samples.Length * factor];
+        for (int n = 0; n < y.Length; n++)
+        {
+            Complex acc = Complex.Zero;
+            for (int m = n % factor; m < h.Length && m <= n; m += factor)
+                acc += h[m] * samples[(n - m) / factor];
+            y[n] = acc;
+        }
+        return y;
+    }
 }
