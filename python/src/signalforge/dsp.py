@@ -119,6 +119,42 @@ def levinson(r: ArrayLike, order: int) -> Levinson:
     )
 
 
+@dataclass(frozen=True, eq=False)
+class ArOrderSelection:
+    """Burg prediction errors for orders ``0 ... max_order``, Akaike's FPE and AIC, and the order
+    minimizing each (conventions: AR order selection; ADR 0206)."""
+
+    errors: NDArray[np.float64]
+    fpe: NDArray[np.float64]
+    aic: NDArray[np.float64]
+    fpe_order: int
+    aic_order: int
+
+
+def ar_order_selection(samples: ArrayLike, max_order: int) -> ArOrderSelection:
+    """Akaike's FPE ``s_p (N + p + 1)/(N - p - 1)`` and AIC ``N ln s_p + 2p`` from the Burg
+    errors ``s_p`` (conventions: AR order selection; ADR 0206)."""
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.size
+    top = count(max_order, "max_order")
+    if top < 1:
+        raise ValueError("max_order must be at least 1")
+    if top > n - 2:
+        raise ValueError("max_order must be at most the input length minus 2")
+    fit = burg(x, top)
+    c = x.astype(np.complex128)
+    errors = np.empty(top + 1)
+    errors[0] = float(np.sum(c.real**2 + c.imag**2)) / n
+    for p in range(1, top + 1):
+        errors[p] = errors[p - 1] * (1.0 - abs(fit.reflection[p - 1]) ** 2)
+    orders = np.arange(top + 1, dtype=np.float64)
+    fpe = errors * (n + orders + 1) / (n - orders - 1)
+    aic = n * np.log(errors) + 2 * orders
+    return ArOrderSelection(errors, fpe, aic, int(np.argmin(fpe)), int(np.argmin(aic)))
+
+
 def burg(samples: ArrayLike, order: int) -> Levinson:
     """Burg's method: the order-``order`` prediction-error filter fitted to the forward and
     backward prediction errors of ``samples`` (conventions: Burg AR fit; ADR 0205)."""

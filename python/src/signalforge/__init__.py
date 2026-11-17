@@ -18,6 +18,7 @@ from .channel import (
 )
 from .core import Signal
 from .dsp import (
+    ArOrderSelection,
     FirFilter,
     IirFilter,
     Levinson,
@@ -25,6 +26,7 @@ from .dsp import (
     a_weighting_sos,
     allpass_first_order,
     allpass_second_order,
+    ar_order_selection,
     autocorrelation,
     bessel_bandpass,
     bessel_bandstop,
@@ -343,11 +345,12 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.3"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.4"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
     "AmAmPm",
+    "ArOrderSelection",
     "AutocorrelationPitch",
     "BandEnergyRatio",
     "CarrierRecovery",
@@ -417,6 +420,7 @@ __all__ = [
     "am_am_pm",
     "amp_to_db",
     "analytic_signal",
+    "ar_order_selection",
     "autocorrelation",
     "autocorrelation_pitch",
     "awgn",

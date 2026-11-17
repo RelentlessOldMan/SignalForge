@@ -1181,6 +1181,11 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `Levinson(coefficients, reflection, error)`; real samples give real arrays. Samples finite,
   `1 ≤ order < N`, every `|k_m| < 1` and every error energy positive. `burg_psd` uses it.
   **(implemented)**
+- **AR order selection** (`ar_order_selection(samples, max_order)`, C# `Dsp.ArOrderSelection`,
+  [ADR 0206](adr/0206-ar-order-selection.md)): Burg errors `σ²_0 = mean |x|²`,
+  `σ²_p = σ²_{p−1}(1 − |k_p|²)` for `p = 0 … P`; `FPE_p = σ²_p (N + p + 1)/(N − p − 1)`,
+  `AIC_p = N ln σ²_p + 2p`; `fpe_order`/`aic_order` minimize each, lowest order on a tie.
+  `1 ≤ max_order ≤ N − 2`; Burg's rules otherwise. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

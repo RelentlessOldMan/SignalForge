@@ -203,6 +203,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "cross_correlation": dsp.cross_correlation,
     "levinson": dsp.levinson,
     "burg": dsp.burg,
+    "ar_order_selection": dsp.ar_order_selection,
     "upsample": dsp.upsample,
     "rrc_taps": dsp.rrc_taps,
     "pulse_shape": dsp.pulse_shape,

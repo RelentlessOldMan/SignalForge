@@ -4,14 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **AR order selection**: `ar_order_selection(samples, max_order)` in `dsp` (C#
-   `Dsp.ArOrderSelection`), from the Burg errors `σ²_0 … σ²_P` (`σ²_0 = mean |x|²`). Not built yet.
-   - FPE: `FPE_p = σ²_p (N + p + 1)/(N − p − 1)`.
-   - AIC: `AIC_p = N ln σ²_p + 2p`.
-   - It returns the three arrays and the order that minimizes each criterion, the lowest order
-     on a tie.
-   - It requires `1 ≤ max_order ≤ N − 2`.
-   - Expected values: the exact `x = [1, 2, 3]` errors of ADR 0205, plus a stdlib recursion.
+1. **LPC cepstrum**: `lpc_cepstrum(coefficients, error, num_coefficients)` in `dsp` (C#
+   `Dsp.LpcCepstrum`), the cepstrum of the AR model `σ²/|A|²` as complex-cepstrum coefficients of
+   `σ/A`. Not built yet.
+   - `c_0 = ln σ`.
+   - `c_n = −a_n − Σ_{k=1}^{n−1} (k/n)·c_k·a_{n−k}`, with `a_j = 0` for `j > p`.
+   - Expected values: order 1 in closed form, `c_n = −(−a_1)^n/n`, and the series of `−ln A(z)`
+     for order 2, from its factored roots.
 
 ## Built
 
@@ -1950,6 +1949,16 @@ Updated with every chunk of work. Dates are absolute.
     real and complex.
   Python 5715 passed, 2 skipped; .NET 5010 passed; conformance 3280/3280 in both. Version
   2026.11.17.3.
+- 2026-11-17: AR order selection (ADR 0206): `ar_order_selection(samples, max_order)` in `dsp`
+  (C# `Dsp.ArOrderSelection`, real and complex), returning
+  `ArOrderSelection(errors, fpe, aic, fpe_order, aic_order)`.
+  - It computes the Burg errors `σ²_0 … σ²_P`, Akaike's
+    `FPE_p = σ²_p (N + p + 1)/(N − p − 1)` and `AIC_p = N ln σ²_p + 2p`, and the order that
+    minimizes each, the lowest on a tie.
+  - The vectors are exact for `x = [1, 2, 3]` and for an impulse (every `k = 0`, so order 0 wins).
+    The rest come from a stdlib recursion.
+  Python 5726 passed, 2 skipped; .NET 5020 passed; conformance 3289/3289 in both. Version
+  2026.11.17.4.
 
 ## Not built
 

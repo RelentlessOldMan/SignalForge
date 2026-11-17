@@ -14,6 +14,14 @@ public sealed record Levinson(double[] Coefficients, double[] Reflection, double
 /// <param name="Error">The final prediction error, real.</param>
 public sealed record ComplexLevinson(Complex[] Coefficients, Complex[] Reflection, double Error);
 
+/// <summary>Burg prediction errors and Akaike's criteria for orders <c>0 … max_order</c> (conventions: AR order selection; ADR 0206).</summary>
+/// <param name="Errors">The prediction error <c>σ²_p</c> at each order, <c>σ²_0 = mean |x|²</c>.</param>
+/// <param name="Fpe">The final prediction error <c>σ²_p·(N + p + 1)/(N − p − 1)</c>.</param>
+/// <param name="Aic">The information criterion <c>N·ln σ²_p + 2p</c>.</param>
+/// <param name="FpeOrder">The order minimizing the FPE, the lowest on a tie.</param>
+/// <param name="AicOrder">The order minimizing the AIC, the lowest on a tie.</param>
+public sealed record ArOrderSelection(double[] Errors, double[] Fpe, double[] Aic, int FpeOrder, int AicOrder);
+
 /// <summary>How <see cref="Dsp.Autocorrelation(ReadOnlySpan{double}, int?, CorrelationScaling)"/> scales each lag (conventions: Pulse shaping, Autocorrelation; ADR 0148).</summary>
 public enum CorrelationScaling
 {
@@ -229,6 +237,63 @@ public static partial class Dsp
             error *= 1 - ((km.Real * km.Real) + (km.Imaginary * km.Imaginary));
         }
         return new ComplexLevinson(a, k, error);
+    }
+
+    /// <summary>Akaike's FPE and AIC from the Burg errors of real samples, orders
+    /// <c>0 … maxOrder</c> (conventions: AR order selection; ADR 0206).</summary>
+    /// <param name="samples">Finite samples, at least <c>maxOrder + 2</c>, not perfectly predictable.</param>
+    /// <param name="maxOrder">The highest order, at least 1 and at most the input length minus 2.</param>
+    /// <returns>The errors, both criteria and the order minimizing each.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static ArOrderSelection ArOrderSelection(ReadOnlySpan<double> samples, int maxOrder)
+    {
+        Complex[] x = new Complex[samples.Length];
+        for (int i = 0; i < samples.Length; i++)
+            x[i] = samples[i];
+        return ArOrderSelection((ReadOnlySpan<Complex>)x, maxOrder);
+    }
+
+    /// <summary>Akaike's FPE and AIC from the Burg errors of complex samples, orders
+    /// <c>0 … maxOrder</c> (conventions: AR order selection; ADR 0206).</summary>
+    /// <param name="samples">Finite samples, at least <c>maxOrder + 2</c>, not perfectly predictable.</param>
+    /// <param name="maxOrder">The highest order, at least 1 and at most the input length minus 2.</param>
+    /// <returns>The errors, both criteria and the order minimizing each.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static ArOrderSelection ArOrderSelection(ReadOnlySpan<Complex> samples, int maxOrder)
+    {
+        foreach (Complex v in samples)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        int n = samples.Length;
+        if (maxOrder < 1)
+            throw new ArgumentOutOfRangeException(nameof(maxOrder), "max_order must be at least 1");
+        if (maxOrder > n - 2)
+            throw new ArgumentException("max_order must be at most the input length minus 2", nameof(maxOrder));
+        ComplexLevinson fit = Burg(samples, maxOrder);
+        var errors = new double[maxOrder + 1];
+        foreach (Complex v in samples)
+            errors[0] += (v.Real * v.Real) + (v.Imaginary * v.Imaginary);
+        errors[0] /= n;
+        for (int p = 1; p <= maxOrder; p++)
+        {
+            Complex k = fit.Reflection[p - 1];
+            errors[p] = errors[p - 1] * (1 - ((k.Real * k.Real) + (k.Imaginary * k.Imaginary)));
+        }
+        var fpe = new double[maxOrder + 1];
+        var aic = new double[maxOrder + 1];
+        int fpeOrder = 0, aicOrder = 0;
+        for (int p = 0; p <= maxOrder; p++)
+        {
+            fpe[p] = errors[p] * (n + p + 1) / (n - p - 1);
+            aic[p] = (n * Math.Log(errors[p])) + (2 * p);
+            if (fpe[p] < fpe[fpeOrder])
+                fpeOrder = p;
+            if (aic[p] < aic[aicOrder])
+                aicOrder = p;
+        }
+        return new ArOrderSelection(errors, fpe, aic, fpeOrder, aicOrder);
     }
 
     private static int CorrelationLags(int length, int? maxLag, CorrelationScaling scaling)
