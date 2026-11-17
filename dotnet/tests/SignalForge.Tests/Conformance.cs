@@ -346,6 +346,7 @@ public static class Conformance
             "welch_psd" => Welch(a),
             "coherence" => CoherenceOp(a),
             "transfer_function" => TransferFunctionOp(a),
+            "cross_spectral_density" => CsdOp(a),
             "dpss_tapers" => Bind((a.I("length"), a.D("half_bandwidth"), a.OptInt("num_tapers")), t => Spectral.DpssTapers(t.Item1, t.Item2, t.Item3)),
             "multitaper_psd" => MultitaperOp(a),
             "harmonic_f_test" => FTestOp(a),
@@ -710,6 +711,17 @@ public static class Conformance
         var detrend = DetrendName(a);
         int? nfft = a.OptInt("nfft");
         return () => Spectral.TransferFunction(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
+    }
+
+    private static Func<object?> CsdOp(Args a)
+    {
+        double[] x = Reals(a.Get("x")), y = Reals(a.Get("y"));
+        var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.OptInt("nperseg"), a.OptInt("noverlap"));
+        var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
+        double? beta = a.OptD("beta");
+        var detrend = DetrendName(a);
+        int? nfft = a.OptInt("nfft");
+        return () => Spectral.CrossSpectralDensity(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
     }
 
     private static Func<object?> Welch(Args a)

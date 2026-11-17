@@ -4,15 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Cross-spectral density**: `cross_spectral_density(x, y, sample_rate, ...)` in `spectral` (C#
-   `Spectral.CrossSpectralDensity`). It is the Welch-averaged `Pxy`, scaled like `welch_psd` so
-   that `y = x` gives the PSD (as a complex number). It uses the same segments as `coherence` and
-   `transfer_function`. Not built yet. Needs an ADR covering:
-   - the conjugate order (`conj X·Y`, matching H1);
-   - the one-sided doubling;
-   - whether complex input is accepted as well (two-sided, shifted).
+1. **Transfer-function estimate (H2)**: `transfer_function_h2(x, y, sample_rate, ...)` in
+   `spectral` (C# `Spectral.TransferFunctionH2`). It is `H2 = Σ|Y_s|² / Σ conj Y_s·X_s`
+   (`Pyy/Pyx`), which is unbiased for noise on the input. It uses the segments of
+   `transfer_function` (ADR 0193). Not built yet. Needs an ADR covering:
+   - bins where `Pyx = 0`;
+   - the relation `|H1/H2| = coherence`.
 
-   Expected values: `y = x` equals `welch_psd`; hand DFTs of short rectangular segments.
+   Expected values: the H1 hand cases where they are noise-free, where H1 = H2.
 
 ## Built
 
@@ -1841,6 +1840,17 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are hand DFTs, each checked against a direct DFT.
   Python 5576 passed, 2 skipped; .NET 4878 passed; conformance 3161/3161 in both. Version
   2026.11.16.91.
+- 2026-11-16: cross-spectral density (ADR 0194): `cross_spectral_density(x, y, sample_rate, ...)`
+  in `spectral` (C# `Spectral.CrossSpectralDensity`), returning `CrossSpectralDensity(frequencies,
+  csd, num_segments)`.
+  - It computes `Pxy = d·Σ conj X·Y/(K·fs·Σw²)` over the `coherence` segments, with the
+    `welch_psd` doubling.
+  - For `y = x` it is `welch_psd`, and `Pxy/Pxx` is H1.
+  - Real input only.
+
+  The vectors are hand DFTs, each checked against a direct DFT.
+  Python 5585 passed, 2 skipped; .NET 4886 passed; conformance 3168/3168 in both. Version
+  2026.11.16.92.
 
 ## Not built
 

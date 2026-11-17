@@ -196,6 +196,7 @@ from .spectral import (
     Acpr,
     BandEnergyRatio,
     Coherence,
+    CrossSpectralDensity,
     DbBandwidth,
     HarmonicCentroid,
     HarmonicFTest,
@@ -228,6 +229,7 @@ from .spectral import (
     cepstral_lifter,
     channel_power,
     coherence,
+    cross_spectral_density,
     db_bandwidth,
     dct,
     delta,
@@ -332,7 +334,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.91"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.92"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -343,6 +345,7 @@ __all__ = [
     "CascadeNoiseFigure",
     "CepstrumPitch",
     "Coherence",
+    "CrossSpectralDensity",
     "DbBandwidth",
     "DfeEqualization",
     "DfeTaps",
@@ -444,6 +447,7 @@ __all__ = [
     "coherence",
     "convolve",
     "cross_correlation",
+    "cross_spectral_density",
     "db_bandwidth",
     "db_to_amp",
     "db_to_lin",

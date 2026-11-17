@@ -312,6 +312,39 @@ def transfer_function(
     return TransferFunction(g.frequencies(float(sample_rate)), response, g.count)
 
 
+@dataclass(frozen=True)
+class CrossSpectralDensity:
+    """Welch cross-spectral density per one-sided bin (conventions: Cross-spectral density;
+    ADR 0194)."""
+
+    frequencies: NDArray[np.float64]
+    csd: NDArray[np.complex128]
+    num_segments: int
+
+
+def cross_spectral_density(
+    x: ArrayLike,
+    y: ArrayLike,
+    sample_rate: float,
+    *,
+    nperseg: int | None = None,
+    noverlap: int | None = None,
+    window: str = "hann",
+    beta: float | None = None,
+    detrend: str = "none",
+    nfft: int | None = None,
+) -> CrossSpectralDensity:
+    """``Pxy = d sum conj(X) Y / (K fs sum w^2)`` over Welch's segments, one-sided, scaled like
+    ``welch_psd`` (conventions: Cross-spectral density; ADR 0194)."""
+    g, sxy, _, _ = _cross_segments(
+        x, y, sample_rate, nperseg, noverlap, window, beta, detrend, nfft
+    )
+    csd = sxy * (g.scale / g.count)
+    m = csd.size
+    csd[1 : m - 1 if g.nfft % 2 == 0 else m] *= 2.0
+    return CrossSpectralDensity(g.frequencies(float(sample_rate)), csd, g.count)
+
+
 def coherence(
     x: ArrayLike,
     y: ArrayLike,

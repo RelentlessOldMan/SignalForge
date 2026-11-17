@@ -8,6 +8,13 @@ namespace SignalForge;
 /// <param name="NumSegments">How many segments were averaged.</param>
 public sealed record Coherence(double[] Frequencies, double[] Values, int NumSegments);
 
+/// <summary>Welch cross-spectral density per one-sided bin (conventions: Cross-spectral density;
+/// ADR 0194).</summary>
+/// <param name="Frequencies">Bin frequencies <c>k·fs/M</c>, <c>k = 0 … ⌊M/2⌋</c>.</param>
+/// <param name="Csd">The cross-spectral density <c>Pxy</c>, units²/Hz.</param>
+/// <param name="NumSegments">How many segments were averaged.</param>
+public sealed record CrossSpectralDensity(double[] Frequencies, Complex[] Csd, int NumSegments);
+
 /// <summary>H1 frequency-response estimate per one-sided bin (conventions: Transfer function (H1);
 /// ADR 0193).</summary>
 /// <param name="Frequencies">Bin frequencies <c>k·fs/M</c>, <c>k = 0 … ⌊M/2⌋</c>.</param>
@@ -70,6 +77,33 @@ public static partial class Spectral
         for (int k = 0; k < response.Length; k++)
             response[k] = sxx[k] > 0 ? sxy[k] / sxx[k] : new Complex(double.NaN, double.NaN);
         return new TransferFunction(g.Frequencies(true), response, g.Count);
+    }
+
+    /// <summary><c>Pxy = d·Σ conj X·Y / (K·fs·Σw²)</c> over Welch's segments, one-sided, scaled
+    /// like <c>WelchPsd</c>
+    /// (conventions: Cross-spectral density; ADR 0194).</summary>
+    /// <param name="x">Real samples, finite.</param>
+    /// <param name="y">Real samples, finite, as many as <paramref name="x"/>.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="nperseg">Segment length; the whole input when null.</param>
+    /// <param name="noverlap">Overlap; half a segment when null.</param>
+    /// <param name="window">The window applied to each segment.</param>
+    /// <param name="beta">The Kaiser β, for the Kaiser window only.</param>
+    /// <param name="detrend">Detrending of each segment.</param>
+    /// <param name="nfft">Transform length, at least <paramref name="nperseg"/>; the segment length when null.</param>
+    /// <returns>The frequencies, the cross-spectral density and the segment count.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static CrossSpectralDensity CrossSpectralDensity(ReadOnlySpan<double> x, ReadOnlySpan<double> y, double sampleRate,
+        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
+        Detrend detrend = Detrend.None, int? nfft = null)
+    {
+        var (g, sxy, _, _) = CrossSegments(x, y, sampleRate, nperseg, noverlap, window, beta, detrend, nfft);
+        int m = sxy.Length, last = g.Nfft % 2 == 0 ? m - 1 : m;
+        double scale = g.Scale / g.Count;
+        var csd = new Complex[m];
+        for (int k = 0; k < m; k++)
+            csd[k] = sxy[k] * scale * (k >= 1 && k < last ? 2.0 : 1.0);
+        return new CrossSpectralDensity(g.Frequencies(true), csd, g.Count);
     }
 
     private static (Segments G, Complex[] Sxy, double[] Sxx, double[] Syy) CrossSegments(ReadOnlySpan<double> x,

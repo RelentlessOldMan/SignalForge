@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "suite": "cross_spectral_density",
+  "description": "Cross-spectral density (conventions: Cross-spectral density; ADR 0194).",
+  "cases": [
+    {"id": "cross_spectral_density.fir_impulse", "op": "cross_spectral_density", "args": {"x": [1.0, 0.0, 0.0, 0.0], "y": [0.5, 0.25, 0.0, 0.0], "sample_rate": 4.0, "nperseg": 4, "noverlap": 0, "window": "rectangular"}, "expected": {"frequencies": [0.0, 1.0, 2.0], "csd": {"re": [0.046875, 0.0625, 0.015625], "im": [0.0, -0.03125, 0.0]}, "num_segments": 1}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "x = delta, y = [0.5, 0.25]: conj X Y = Y = [0.75, 0.5 - 0.25j, 0.25]; scale 1/(1 * 4 * 4) = 1/16, bin 1 doubled: [0.046875, 0.0625 - 0.03125j, 0.015625]"},
+    {"id": "cross_spectral_density.same_signal", "op": "cross_spectral_density", "args": {"x": [1.0, 2.0, 0.0, -1.0], "y": [1.0, 2.0, 0.0, -1.0], "sample_rate": 1.0, "nperseg": 4, "noverlap": 0, "window": "rectangular"}, "expected": {"frequencies": [0.0, 0.25, 0.5], "csd": {"re": [1.0, 5.0, 0.0], "im": [0.0, 0.0, 0.0]}, "num_segments": 1}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "y = x: X = [2, 1 - 3j, 0], |X|^2 = [4, 10, 0]; scale 1/(1 * 1 * 4), bin 1 doubled: [1, 5, 0], the hand PSD"},
+    {"id": "cross_spectral_density.cancelling", "op": "cross_spectral_density", "args": {"x": [1.0, 0.0, 0.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0], "sample_rate": 2.0, "nperseg": 2, "noverlap": 0, "window": "rectangular"}, "expected": {"frequencies": [0.0, 1.0], "csd": {"re": [0.25, 0.0], "im": [0.0, 0.0]}, "num_segments": 2}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "X = [1, 1], [1, -1]; Y = [1, 1] twice: sum conj X Y = [2, 0]; scale 1/(2 * 2 * 2) = 1/8; bin 1 is Nyquist, not doubled: [0.25, 0]"},
+    {"id": "cross_spectral_density.lengths", "op": "cross_spectral_density", "args": {"x": [1.0, 2.0], "y": [1.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "x and y differ in length"},
+    {"id": "cross_spectral_density.nan", "op": "cross_spectral_density", "args": {"x": [1.0, "nan"], "y": [1.0, 2.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "not finite"},
+    {"id": "cross_spectral_density.zero_rate", "op": "cross_spectral_density", "args": {"x": [1.0, 2.0], "y": [1.0, 2.0], "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "cross_spectral_density.long_segment", "op": "cross_spectral_density", "args": {"x": [1.0, 2.0], "y": [1.0, 2.0], "sample_rate": 1.0, "nperseg": 3}, "error": "invalid_argument", "source": "fewer samples than nperseg"}
+  ]
+}
