@@ -372,6 +372,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Welch degrees of freedom** ([ADR 0200](adr/0200-welch-dof.md); `welch_dof(nperseg,
+  noverlap, num_segments, *, window="hann", beta=None)`, C# `Spectral.WelchDof`):
+  `ν = 2K / (1 + 2 Σ_{l=1}^{K−1} (1 − l/K)·ρ(l)²)`, `ρ(l) = Σ w[n]·w[n+l·S] / Σ w²` with step
+  `S = nperseg − noverlap` (0 once `l·S ≥ nperseg`), the `welch_psd` window. `K ≥ 1`;
+  `K = 1` gives 2. **(implemented)**
 - **Coherence threshold** ([ADR 0199](adr/0199-coherence-threshold.md);
   `coherence_threshold(num_segments, alpha=0.05)`, C# `Spectral.CoherenceThreshold`):
   `1 − alpha^(1/(K−1))`, the level independent Gaussian signals exceed with probability `alpha`

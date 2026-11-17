@@ -288,6 +288,43 @@ public static partial class Spectral
         return new CoherentOutputPower(g.Frequencies(oneSided), coherent, noncoherent, g.Count);
     }
 
+    /// <summary>Welch's equivalent degrees of freedom <c>2K / (1 + 2 Σ (1 − l/K)·ρ(l)²)</c> of
+    /// <c>K</c> overlapped segments (conventions: Welch degrees of freedom; ADR 0200).</summary>
+    /// <param name="nperseg">Segment length, at least 1.</param>
+    /// <param name="noverlap">Overlap, at least 0 and less than <paramref name="nperseg"/>.</param>
+    /// <param name="numSegments">The number of segments <c>K</c>, at least 1.</param>
+    /// <param name="window">The window applied to each segment.</param>
+    /// <param name="beta">The Kaiser β, for the Kaiser window only.</param>
+    /// <returns>The equivalent degrees of freedom, between 2 and <c>2K</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double WelchDof(int nperseg, int noverlap, int numSegments, WindowType window = WindowType.Hann,
+        double? beta = null)
+    {
+        if (nperseg < 1)
+            throw new ArgumentOutOfRangeException(nameof(nperseg), "nperseg must be at least 1");
+        if (noverlap < 0 || noverlap >= nperseg)
+            throw new ArgumentOutOfRangeException(nameof(noverlap), "noverlap must satisfy 0 <= noverlap < nperseg");
+        if (numSegments < 1)
+            throw new ArgumentOutOfRangeException(nameof(numSegments), "numSegments must be at least 1");
+        double[] w = Window(window, nperseg, beta: beta);
+        if (w.All(v => v == 0))
+            throw new ArgumentException($"{window} window of length {nperseg} is all zeros", nameof(window));
+        int step = nperseg - noverlap;
+        double energy = w.Sum(v => v * v), total = 0;
+        for (int lag = 1; lag < numSegments; lag++)
+        {
+            int shift = lag * step;
+            if (shift >= nperseg)
+                break;
+            double c = 0;
+            for (int i = 0; i + shift < nperseg; i++)
+                c += w[i] * w[i + shift];
+            double rho = c / energy;
+            total += (1.0 - (double)lag / numSegments) * rho * rho;
+        }
+        return 2.0 * numSegments / (1.0 + 2.0 * total);
+    }
+
     /// <summary><c>1 − alpha^(1/(K−1))</c>: the coherence that independent Gaussian signals exceed
     /// with probability <paramref name="alpha"/> over <c>K</c> independent segments; overlap is
     /// not corrected for (conventions: Coherence threshold; ADR 0199).</summary>

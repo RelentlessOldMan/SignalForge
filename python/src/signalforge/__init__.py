@@ -285,6 +285,7 @@ from .spectral import (
     transfer_function,
     transfer_function_h2,
     tristimulus,
+    welch_dof,
     welch_psd,
     window,
     window_stats,
@@ -337,7 +338,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.97"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.98"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -654,6 +655,7 @@ __all__ = [
     "upsample",
     "vrms_to_dbm",
     "w_to_dbm",
+    "welch_dof",
     "welch_psd",
     "window",
     "window_stats",

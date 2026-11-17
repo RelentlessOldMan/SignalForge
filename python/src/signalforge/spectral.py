@@ -380,6 +380,38 @@ def transfer_function_h2(
     return TransferFunction(g.frequencies(float(sample_rate)), response, g.count)
 
 
+def welch_dof(
+    nperseg: int,
+    noverlap: int,
+    num_segments: int,
+    *,
+    window: str = "hann",
+    beta: float | None = None,
+) -> float:
+    """Welch's equivalent degrees of freedom ``2K / (1 + 2 sum (1 - l/K) rho(l)^2)`` of ``K``
+    overlapped segments (conventions: Welch degrees of freedom; ADR 0200)."""
+    n = count(nperseg, "nperseg")
+    if n < 1:
+        raise ValueError("nperseg must be at least 1")
+    overlap = count(noverlap, "noverlap")
+    if not overlap < n:
+        raise ValueError("noverlap must satisfy 0 <= noverlap < nperseg")
+    k = count(num_segments, "num_segments")
+    if k < 1:
+        raise ValueError("num_segments must be at least 1")
+    w = _window_for_psd(window, n, beta)
+    step = n - overlap
+    energy = float(np.sum(w * w))
+    total = 0.0
+    for lag in range(1, k):
+        shift = lag * step
+        if shift >= n:
+            break
+        rho = float(np.sum(w[: n - shift] * w[shift:])) / energy
+        total += (1.0 - lag / k) * rho * rho
+    return 2.0 * k / (1.0 + 2.0 * total)
+
+
 def coherence_threshold(num_segments: int, alpha: float = 0.05) -> float:
     """``1 - alpha^(1/(K-1))``: the coherence that independent Gaussian signals exceed with
     probability ``alpha`` over ``K`` independent segments; overlap is not corrected for

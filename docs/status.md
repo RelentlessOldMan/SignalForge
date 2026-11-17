@@ -4,15 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Welch equivalent degrees of freedom**: `welch_dof(nperseg, noverlap, num_segments, *,
-   window="hann", beta=None)` in `spectral` (C# `Spectral.WelchDof`). Not built yet.
-   - It computes Welch's `ν = 2K / (1 + 2 Σ_{l=1}^{K−1} (1 − l/K) ρ(l)²)`, where
-     `ρ(l) = Σ w[n]·w[n+lS] / Σ w²` and `S` is the step.
-   - It gives the effective segment count `ν/2` for the ADR 0199 threshold.
+1. **PSD confidence interval**: `psd_confidence_interval(psd, dof, confidence=0.95)` in
+   `spectral` (C# `Spectral.PsdConfidenceInterval`). Not built yet.
+   - It returns `(lower, upper)`, `ν·P/χ²_ν((1+c)/2)` and `ν·P/χ²_ν((1−c)/2)`, with `ν` from
+     `welch_dof` (ADR 0200).
+   - It needs a chi-squared quantile for real `ν > 0`: the regularized lower incomplete gamma
+     (series and continued fraction), inverted with safeguarded Newton steps.
 
-   Needs an ADR covering the window definitions (those of `welch_psd`). Expected values:
-   rectangular with no overlap gives `2K`; rectangular at 50 % gives `ρ(1) = 1/2`, so
-   `ν = 2K/(1 + (K−1)/(2K))`; a hand Hann case.
+   Needs an ADR covering the quantile's accuracy target and whether it is public. Expected
+   values: `ν = 2` has the closed form `−2 ln(1−p)`; `ν = 4` is solved by stdlib bisection on
+   `1 − e^(−x/2)(1 + x/2)`.
 
 ## Built
 
@@ -1897,6 +1898,15 @@ Updated with every chunk of work. Dates are absolute.
 
   Python 5636 passed, 2 skipped; .NET 4935 passed; conformance 3212/3212 in both. Version
   2026.11.16.97.
+- 2026-11-16: Welch equivalent degrees of freedom (ADR 0200): `welch_dof(nperseg, noverlap,
+  num_segments, *, window="hann", beta=None)` in `spectral` (C# `Spectral.WelchDof`).
+  - It computes Welch's `2K / (1 + 2 Σ (1 − l/K)·ρ(l)²)` from the window's overlap
+    correlation.
+  - The hand vectors use exact fractions; periodic Hann at 50 % gives `ρ(1) = 1/6`.
+
+  Lesson: a length-1 window is `[1]` in both languages, not the formula's `[0]`.
+  Python 5647 passed, 2 skipped; .NET 4946 passed; conformance 3222/3222 in both. Version
+  2026.11.16.98.
 
 ## Not built
 

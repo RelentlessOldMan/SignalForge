@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "welch_dof",
+  "description": "Welch equivalent degrees of freedom (conventions: Welch degrees of freedom; ADR 0200).",
+  "cases": [
+    {"id": "welch_dof.no_overlap", "op": "welch_dof", "args": {"nperseg": 8, "noverlap": 0, "num_segments": 5, "window": "rectangular"}, "expected": 10.0, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "no overlap: rho = 0, nu = 2K = 10"},
+    {"id": "welch_dof.rect_half", "op": "welch_dof", "args": {"nperseg": 4, "noverlap": 2, "num_segments": 3, "window": "rectangular"}, "expected": 4.5, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "rectangular, step 2 of 4: rho(1) = 2/4, rho(2) = 0; nu = 6 / (1 + 2 (2/3) (1/4)) = 6 / (4/3)"},
+    {"id": "welch_dof.rect_three_quarters", "op": "welch_dof", "args": {"nperseg": 4, "noverlap": 3, "num_segments": 4, "window": "rectangular"}, "expected": 3.764705882352941, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "rectangular, step 1 of 4: rho = 3/4, 2/4, 1/4; sum (1 - l/4) rho^2 = 27/64 + 8/64 + 1/64 = 9/16; nu = 8 / (1 + 9/8) = 64/17"},
+    {"id": "welch_dof.hann_half", "op": "welch_dof", "args": {"nperseg": 4, "noverlap": 2, "num_segments": 3}, "expected": 5.785714285714286, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "periodic Hann N = 4: w = [0, 1/2, 1, 1/2], sum w^2 = 3/2; step 2: rho(1) = (0 + 1/4) / (3/2) = 1/6; nu = 6 / (1 + 2 (2/3) / 36) = 6 / (28/27) = 81/14"},
+    {"id": "welch_dof.one_segment", "op": "welch_dof", "args": {"nperseg": 16, "noverlap": 8, "num_segments": 1}, "expected": 2.0, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "K = 1: the sum is empty, nu = 2"},
+    {"id": "welch_dof.hann_no_overlap", "op": "welch_dof", "args": {"nperseg": 4, "noverlap": 0, "num_segments": 6}, "expected": 12.0, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "no overlap: rho = 0, nu = 2K = 12"},
+    {"id": "welch_dof.zero_length", "op": "welch_dof", "args": {"nperseg": 0, "noverlap": 0, "num_segments": 2}, "error": "invalid_argument", "source": "nperseg must be at least 1"},
+    {"id": "welch_dof.overlap_too_big", "op": "welch_dof", "args": {"nperseg": 4, "noverlap": 4, "num_segments": 2}, "error": "invalid_argument", "source": "noverlap must be below nperseg"},
+    {"id": "welch_dof.negative_overlap", "op": "welch_dof", "args": {"nperseg": 4, "noverlap": -1, "num_segments": 2}, "error": "invalid_argument", "source": "noverlap must be at least 0"},
+    {"id": "welch_dof.zero_segments", "op": "welch_dof", "args": {"nperseg": 4, "noverlap": 2, "num_segments": 0}, "error": "invalid_argument", "source": "num_segments must be at least 1"}
+  ]
+}
