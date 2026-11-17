@@ -834,6 +834,73 @@ public static partial class Dsp
         return k;
     }
 
+    /// <summary>The Itakura-Saito distance from one real AR model to another, in closed form
+    /// (conventions: Itakura-Saito distance between AR models; ADR 0217).</summary>
+    /// <param name="reference">The reference prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="referenceError">The reference prediction error <c>σ_r²</c>, positive and finite.</param>
+    /// <param name="test">The test prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="testError">The test prediction error <c>σ_t²</c>, positive and finite.</param>
+    /// <returns>The distance, at least 0.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double ItakuraSaito(ReadOnlySpan<double> reference, double referenceError, ReadOnlySpan<double> test, double testError) =>
+        ItakuraSaito((ReadOnlySpan<Complex>)ToComplexArray(reference), referenceError, (ReadOnlySpan<Complex>)ToComplexArray(test), testError);
+
+    /// <summary>The Itakura-Saito distance from one complex AR model to another, in closed form
+    /// (conventions: Itakura-Saito distance between AR models; ADR 0217).</summary>
+    /// <param name="reference">The reference prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="referenceError">The reference prediction error <c>σ_r²</c>, positive and finite.</param>
+    /// <param name="test">The test prediction-error filter, finite, <c>a[0] = 1</c>, minimum phase.</param>
+    /// <param name="testError">The test prediction error <c>σ_t²</c>, positive and finite.</param>
+    /// <returns>The distance, at least 0.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double ItakuraSaito(ReadOnlySpan<Complex> reference, double referenceError, ReadOnlySpan<Complex> test, double testError)
+    {
+        CheckModelFilter(reference, nameof(reference));
+        CheckModelFilter(test, nameof(test));
+        Check.PositiveFinite(referenceError, nameof(referenceError));
+        Check.PositiveFinite(testError, nameof(testError));
+        int lags = test.Length - 1;
+        if (test.Length > 1)
+            _ = LpcToReflection(test);
+        Complex[] r;
+        if (reference.Length > 1)
+        {
+            Complex[] k = LpcToReflection(reference);
+            double product = 1;
+            foreach (Complex v in k)
+                product *= 1 - ((v.Real * v.Real) + (v.Imaginary * v.Imaginary));
+            r = ReflectionToAutocorrelation(k, referenceError / product, lags);
+        }
+        else
+        {
+            r = new Complex[lags + 1];
+            r[0] = referenceError;
+        }
+        double q = 0;
+        for (int i = 0; i < test.Length; i++)
+        {
+            for (int j = 0; j < test.Length; j++)
+            {
+                Complex rij = j >= i ? r[j - i] : Complex.Conjugate(r[i - j]);
+                q += (test[i] * Complex.Conjugate(test[j]) * rij).Real;
+            }
+        }
+        return (q / testError) - Math.Log(referenceError / testError) - 1;
+    }
+
+    private static void CheckModelFilter(ReadOnlySpan<Complex> a, string name)
+    {
+        if (a.IsEmpty)
+            throw new ArgumentException($"{name} must not be empty", name);
+        foreach (Complex v in a)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException($"{name} must be finite", name);
+        }
+        if (a[0] != Complex.One)
+            throw new ArgumentException($"{name}[0] must be 1", name);
+    }
+
     private static Complex[] ToComplexArray(ReadOnlySpan<double> x)
     {
         var c = new Complex[x.Length];

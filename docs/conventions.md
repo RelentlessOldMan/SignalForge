@@ -1237,6 +1237,12 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `arcsine_to_reflection(arcsine)`, C# `Dsp.ReflectionToArcsine`, `Dsp.ArcsineToReflection`,
   [ADR 0216](adr/0216-arcsine-coefficients.md)): `θ = arcsin k` in radians, `k = sin θ`. Real,
   finite, non-empty; every `|k| < 1`, every `|θ| < π/2`. **(implemented)**
+- **Itakura-Saito distance between AR models** (`itakura_saito(reference, reference_error, test,
+  test_error)`, C# `Dsp.ItakuraSaito`, [ADR 0217](adr/0217-itakura-saito.md)):
+  `mean (S_r/S_t − ln(S_r/S_t) − 1)` with `S = σ²/|A|²`, in closed form
+  `q/σ_t² − ln(σ_r²/σ_t²) − 1`, `q = Σ_{i,j} a_t[i] conj a_t[j] r_r[j−i]`, `r_r` the reference
+  model autocorrelation, `r[−m] = conj r[m]`. Filters finite, `a[0] = 1`, order ≥ 0, minimum
+  phase; errors positive and finite. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

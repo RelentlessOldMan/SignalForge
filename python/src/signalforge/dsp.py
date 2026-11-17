@@ -472,6 +472,47 @@ def arcsine_to_reflection(arcsine: ArrayLike) -> NDArray[np.float64]:
     return np.sin(t)
 
 
+def _model_filter(coefficients: ArrayLike, name: str) -> NDArray[Any]:
+    a = _vector(coefficients, name)
+    if not np.all(np.isfinite(a)):
+        raise ValueError(f"{name} must be finite")
+    if a[0] != 1:
+        raise ValueError(f"{name}[0] must be 1")
+    return a
+
+
+def itakura_saito(
+    reference: ArrayLike, reference_error: float, test: ArrayLike, test_error: float
+) -> float:
+    """The Itakura-Saito distance from the AR model ``reference_error / |reference|^2`` to the
+    model ``test_error / |test|^2``, in closed form (conventions: Itakura-Saito distance between
+    AR models; ADR 0217)."""
+    ar = _model_filter(reference, "reference")
+    at = _model_filter(test, "test")
+    er = real(reference_error, "reference_error")
+    et = real(test_error, "test_error")
+    if not (er > 0 and np.isfinite(er)):
+        raise ValueError("reference_error must be positive and finite")
+    if not (et > 0 and np.isfinite(et)):
+        raise ValueError("test_error must be positive and finite")
+    lags = at.size - 1
+    if at.size > 1:
+        lpc_to_reflection(at)
+    if ar.size > 1:
+        k = lpc_to_reflection(ar)
+        power = er / float(np.prod(1.0 - np.abs(k) ** 2))
+        r = reflection_to_autocorrelation(k, power, lags)
+    else:
+        r = np.zeros(lags + 1)
+        r[0] = er
+    q = 0.0
+    for i in range(at.size):
+        for j in range(at.size):
+            rij = r[j - i] if j >= i else np.conj(r[i - j])
+            q += float((at[i] * np.conj(at[j]) * rij).real)
+    return q / et - math.log(er / et) - 1.0
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

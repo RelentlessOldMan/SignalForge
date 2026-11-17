@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Itakura-Saito distance between AR models**: `itakura_saito(a_ref, error_ref, a_test,
-   error_test)` in `dsp` (C# `Dsp.ItakuraSaito`, real and complex). Not built yet.
-   - It is the closed form `d = (σ_r²/σ_t²)·(a_tᴴ R_r a_t)/σ_r² − ln(σ_r²/σ_t²) − 1`, with `R_r`
-     the Toeplitz autocorrelation of the reference model (ADR 0214).
-   - Expected values: exact fractions for orders 1 and 2, cross-checked against a stdlib
-     numerical integral of `S_r/S_t − ln(S_r/S_t) − 1`.
+1. **Cepstral distance between AR models**: `cepstral_distance(reference, reference_error, test,
+   test_error, num_coefficients)` in `dsp` (C# `Dsp.CepstralDistance`, real and complex). Not
+   built yet.
+   - It is the truncated `d² = Σ_{n=1}^{L} |c_r[n] − c_t[n]|²`, with the LPC cepstra of ADR 0207.
+     `c_0` is left out, so the distance ignores gain.
+   - Expected values: order-1 cepstra in closed form, `c_n = (−a₁)ⁿ/n`.
 
 ## Built
 
@@ -2033,6 +2033,15 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are the closed forms `π/6`, `π/4` and `π/3`.
   Python 5864 passed, 2 skipped; .NET 5147 passed; conformance 3406/3406 in both. Version
   2026.11.17.14.
+- 2026-11-17: Itakura-Saito distance between AR models (ADR 0217):
+  `itakura_saito(reference, reference_error, test, test_error)` in `dsp` (C# `Dsp.ItakuraSaito`,
+  real and complex).
+  - It is the closed form `q/σ_t² − ln(σ_r²/σ_t²) − 1`, using the reference model's
+    autocorrelation.
+  - The vectors are exact fractions, cross-checked in the generator by numerically integrating
+    the spectra.
+  Python 5880 passed, 2 skipped; .NET 5162 passed; conformance 3420/3420 in both. Version
+  2026.11.17.15.
 
 ## Not built
 

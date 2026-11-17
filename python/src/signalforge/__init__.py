@@ -65,6 +65,7 @@ from .dsp import (
     fir_response,
     gammatone,
     interpolate,
+    itakura_saito,
     kaiser_parameters,
     lar_to_reflection,
     lattice_filter,
@@ -358,7 +359,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.14"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.15"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -550,6 +551,7 @@ __all__ = [
     "interpolate_peak",
     "iq_image_rejection_db",
     "iq_imbalance",
+    "itakura_saito",
     "kaiser_parameters",
     "kay_frequency",
     "lar_to_reflection",
