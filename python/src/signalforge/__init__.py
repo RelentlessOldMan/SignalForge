@@ -98,6 +98,7 @@ from .measurements import (
     CepstrumPitch,
     EnergySeparation,
     GainCompression,
+    GccPhat,
     IntegratedPhaseNoise,
     NoiseFigure,
     PhaseNoise,
@@ -125,6 +126,7 @@ from .measurements import (
     energy_time_curve,
     exceedance_levels,
     gain_compression,
+    gcc_phat,
     iacc,
     integrated_phase_noise,
     kay_frequency,
@@ -326,7 +328,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.88"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.89"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -345,6 +347,7 @@ __all__ = [
     "Evm",
     "FirFilter",
     "GainCompression",
+    "GccPhat",
     "HarmonicCentroid",
     "HarmonicFTest",
     "HarmonicSeries",
@@ -483,6 +486,7 @@ __all__ = [
     "gain_compression",
     "gammatone",
     "gardner_timing",
+    "gcc_phat",
     "generalized_lomb_scargle",
     "harmonic_centroid",
     "harmonic_deviation",

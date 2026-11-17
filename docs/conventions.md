@@ -94,6 +94,14 @@ rule for code not written yet.
   `spread = sqrt(Σ p (t − centroid)² / Σ p)`, both in seconds. Gives `TemporalCentroid(centroid,
   spread)`. Real or complex, finite, at least one sample, energy above 0; `sample_rate` finite
   and positive. **(implemented)**
+- **GCC-PHAT delay** ([ADR 0191](adr/0191-gcc-phat.md); `gcc_phat(x, y, sample_rate, *,
+  max_delay=None)`, C# `Measurements.GccPhat`): pad both to `L = N + M − 1`; `G = X·conj Y`,
+  `W = G/|G|` (0 where `|G| = 0`), `r = Re ifft(W)`; circular index `i` is lag `i` for `i < N`,
+  else `i − L` (the `cross_correlation` sign). Search lags `−(M−1) … N−1`, with `|k| ≤
+  ⌊max_delay·fs⌋` when given; `lag` the largest `r`, smallest lag on ties; parabolic `δ` when
+  both neighbours are searched and the curvature is negative, else 0. Result `GccPhat(delay =
+  (lag + δ)/fs, lag, peak = r[lag])`. Real, 1-D, finite, not empty, not all zero;
+  `sample_rate` finite and positive; `max_delay` finite, `≥ 0`. **(implemented)**
 - **Energy separation** ([ADR 0189](adr/0189-energy-separation.md); `energy_separation(samples,
   sample_rate)`, C# `Measurements.EnergySeparation`): DESA-2 with `y[n] = x[n+1] − x[n−1]`; where
   `ψ[x] > 0` and `ψ[y] > 0`, `c = 1 − ψ[y]/(2ψ[x])` clamped to `[−1, 1]`, frequency

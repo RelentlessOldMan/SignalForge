@@ -257,6 +257,7 @@ public static class Conformance
                 : Bind((Reals(a.Get("impulse_response")), a.D("sample_rate"), a.Opt("time", 0.05)), t => Measurements.Definition(t.Item1, t.Item2, t.Item3)),
             "schroeder_decay" => a.Get("impulse_response") is Complex[]? Bind(Complexes(a.Get("impulse_response")), h => Measurements.SchroederDecay(h))
                 : Bind(Reals(a.Get("impulse_response")), h => Measurements.SchroederDecay(h)),
+            "gcc_phat" => Bind((Reals(a.Get("x")), Reals(a.Get("y")), a.D("sample_rate"), a.OptD("max_delay")), t => Measurements.GccPhat(t.Item1, t.Item2, t.Item3, t.Item4)),
             "energy_separation" => Bind((Reals(a.Get("samples")), a.D("sample_rate")), t => Measurements.EnergySeparation(t.Item1, t.Item2)),
             "teager_energy" => a.Get("samples") is Complex[]? Bind(Complexes(a.Get("samples")), x => Measurements.TeagerEnergy(x))
                 : Bind(Reals(a.Get("samples")), x => Measurements.TeagerEnergy(x)),

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "gcc_phat",
+  "description": "GCC-PHAT delay (conventions: GCC-PHAT delay; ADR 0191).",
+  "cases": [
+    {"id": "gcc_phat.positive", "op": "gcc_phat", "args": {"x": [0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0], "sample_rate": 1000.0}, "expected": {"delay": 0.003, "lag": 3, "peak": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "x = 2 delta[n-3], y = delta[n]: W = e^{-3jw}, r = delta at lag 3; neighbours 0 so the parabola gives 0"},
+    {"id": "gcc_phat.negative", "op": "gcc_phat", "args": {"x": [1.0, 0.0, 0.0, 0.0], "y": [0.0, 0.0, 0.5, 0.0, 0.0], "sample_rate": 100.0}, "expected": {"delay": -0.02, "lag": -2, "peak": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "x = delta[n], y = 0.5 delta[n-2]: x is earlier, lag -2 (index L - 2 of L = 8)"},
+    {"id": "gcc_phat.zero", "op": "gcc_phat", "args": {"x": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "y": [0.0, 0.0, 0.0, 0.0, 3.0, 0.0], "sample_rate": 48000.0}, "expected": {"delay": 0.0, "lag": 0, "peak": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "both at n = 4: W = 1, r = delta at lag 0"},
+    {"id": "gcc_phat.edge", "op": "gcc_phat", "args": {"x": [0.0, 0.0, 0.0, 0.0, 1.0], "y": [1.0], "sample_rate": 10.0}, "expected": {"delay": 0.4, "lag": 4, "peak": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "x = delta[n-4], y = delta[n]: lag 4 is the last searched, so no parabola"},
+    {"id": "gcc_phat.windowed", "op": "gcc_phat", "args": {"x": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0], "y": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "sample_rate": 1.0, "max_delay": 5.0}, "expected": {"delay": 5.0, "lag": 5, "peak": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "lag 5, max_delay 5 s at 1 Hz: lags -5..5 still hold the peak, now at the edge"},
+    {"id": "gcc_phat.same_signal", "op": "gcc_phat", "args": {"x": [1.0, 2.0], "y": [1.0, 2.0], "sample_rate": 1.0}, "expected": {"delay": 0.0, "lag": 0, "peak": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "y = x = [1, 2], L = 3: X_k = 1 + 2 e^{-2 pi j k/3} != 0, so W = 1 and r = delta at lag 0"},
+    {"id": "gcc_phat.zero_bin_tie", "op": "gcc_phat", "args": {"x": [1.0, 1.0], "y": [1.0], "sample_rate": 1.0}, "expected": {"delay": 0.0, "lag": 0, "peak": 0.5}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "x = [1, 1], y = [1], L = 2: G = [2, 0], W = [1, 0], r = [1/2, 1/2] at lags 0 and 1: the tie goes to lag 0; lag -1 is not searched (M - 1 = 0), so no parabola"},
+    {"id": "gcc_phat.silent_x", "op": "gcc_phat", "args": {"x": [0.0, 0.0], "y": [1.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "x all zero"},
+    {"id": "gcc_phat.silent_y", "op": "gcc_phat", "args": {"x": [1.0], "y": [0.0, 0.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "y all zero"},
+    {"id": "gcc_phat.empty", "op": "gcc_phat", "args": {"x": [], "y": [1.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "x empty"},
+    {"id": "gcc_phat.zero_rate", "op": "gcc_phat", "args": {"x": [1.0], "y": [1.0], "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "gcc_phat.negative_window", "op": "gcc_phat", "args": {"x": [1.0, 0.0], "y": [1.0], "sample_rate": 1.0, "max_delay": -1.0}, "error": "invalid_argument", "source": "max_delay must be at least 0"},
+    {"id": "gcc_phat.nan", "op": "gcc_phat", "args": {"x": [1.0, "nan"], "y": [1.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "not finite"}
+  ]
+}

@@ -106,6 +106,15 @@ class EnergySeparation:
     frequency: NDArray[np.float64]
 
 
+@dataclass(frozen=True)
+class GccPhat:
+    """GCC-PHAT delay of ``x`` relative to ``y`` (conventions: GCC-PHAT delay; ADR 0191)."""
+
+    delay: float
+    lag: int
+    peak: float
+
+
 def _instantaneous_power(samples: ArrayLike) -> tuple[NDArray[np.float64], float]:
     x = np.asarray(samples)
     if x.ndim != 1 or x.shape[0] == 0:
@@ -1277,6 +1286,51 @@ def teager_energy(samples: ArrayLike) -> NDArray[np.float64]:
     mid = x[1:-1]
     cross = x[:-2] * np.conj(x[2:])
     return np.asarray(mid.real * mid.real + mid.imag * mid.imag - cross.real, dtype=np.float64)
+
+
+def gcc_phat(
+    x: ArrayLike, y: ArrayLike, sample_rate: float, *, max_delay: float | None = None
+) -> GccPhat:
+    """The delay of ``x`` relative to ``y`` from the phase-transform weighted cross-correlation
+    (conventions: GCC-PHAT delay; ADR 0191)."""
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    signals = []
+    for v, what in ((x, "x"), (y, "y")):
+        a = np.asarray(v)
+        if a.ndim != 1 or a.shape[0] == 0 or np.iscomplexobj(a):
+            raise ValueError(f"{what} must be a non-empty one-dimensional real array")
+        a = a.astype(np.float64)
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{what} must be finite")
+        if not np.any(a != 0):
+            raise ValueError(f"{what} must not be all zero")
+        signals.append(a)
+    n, m = signals[0].shape[0], signals[1].shape[0]
+    lo, hi = -(m - 1), n - 1
+    if max_delay is not None:
+        md = real(max_delay, "max_delay")
+        if md < 0:
+            raise ValueError("max_delay must be at least 0")
+        k = math.floor(md * fs)
+        lo, hi = max(lo, -k), min(hi, k)
+    size = n + m - 1
+    g = np.fft.fft(signals[0], size) * np.conj(np.fft.fft(signals[1], size))
+    mag = np.abs(g)
+    w = np.where(mag > 0, g / np.where(mag > 0, mag, 1.0), 0.0)
+    r = np.fft.ifft(w).real
+    lags = np.arange(lo, hi + 1)
+    vals = r[lags % size]
+    best = int(np.argmax(vals))
+    lag = int(lags[best])
+    frac = 0.0
+    if lo < lag < hi:
+        a_, b_, c_ = float(vals[best - 1]), float(vals[best]), float(vals[best + 1])
+        curve = a_ - 2 * b_ + c_
+        if curve < 0:
+            frac = (a_ - c_) / (2 * curve)
+    return GccPhat((lag + frac) / fs, lag, float(vals[best]))
 
 
 def energy_separation(samples: ArrayLike, sample_rate: float) -> EnergySeparation:

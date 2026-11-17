@@ -77,6 +77,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "energy_time_curve": measurements.energy_time_curve,
     "teager_energy": measurements.teager_energy,
     "energy_separation": measurements.energy_separation,
+    "gcc_phat": measurements.gcc_phat,
     "reverberation_time": measurements.reverberation_time,
     "clarity": measurements.clarity,
     "definition": measurements.definition,

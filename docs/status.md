@@ -4,18 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **GCC-PHAT delay**: `gcc_phat(x, y, sample_rate, *, max_delay=None)` in `measurements` (C#
-   `Measurements.GccPhat`). It estimates the delay of `x` relative to `y`, with the same sign
-   as `cross_correlation` (ADR 0190), from the PHAT-weighted cross-spectrum
-   `X·conj Y / |X·conj Y|`. Not built yet. Needs an ADR covering:
-   - the zero-padded length;
-   - bins where `|X·conj Y|` is 0;
-   - the lag search range and `max_delay`;
-   - peak interpolation (parabolic or none);
-   - ties.
+1. **Magnitude-squared coherence**: `coherence(x, y, sample_rate, ...)` in `spectral` (C#
+   `Spectral.Coherence`). It is `|Pxy|²/(Pxx·Pyy)` from Welch-averaged auto- and cross-spectra.
+   Not built yet. Needs an ADR covering:
+   - the segment, window and overlap arguments (shared with the existing Welch PSD);
+   - the cross-spectrum conjugate order;
+   - bins where `Pxx·Pyy` is 0;
+   - one-sided frequencies.
 
-   Expected values: integer-delayed impulses and sequences whose phase-only spectra can be
-   worked by hand.
+   Expected values: identical inputs give 1; a single segment gives 1 everywhere; scaled or
+   filtered copies give 1.
 
 ## Built
 
@@ -1811,6 +1809,18 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are hand sums, each checked against a direct loop.
   Python 5539 passed, 2 skipped; .NET 4844 passed; conformance 3130/3130 in both. Version
   2026.11.16.88.
+- 2026-11-16: GCC-PHAT delay (ADR 0191): `gcc_phat(x, y, sample_rate, *, max_delay=None)` in
+  `measurements` (C# `Measurements.GccPhat`, in a new `GccPhat.cs`), returning `GccPhat(delay,
+  lag, peak)`.
+  - Both inputs are zero-padded to `N + M − 1`, so the correlation does not wrap.
+  - The weighting is `W = G/|G|`, with 0 where `G = 0`.
+  - The lag sign matches `cross_correlation`.
+  - A tie goes to the smallest lag. The parabolic refinement is used only inside the searched
+    range.
+
+  The vectors are delayed impulses, which give an exact unit peak, plus a zero-bin tie.
+  Python 5555 passed, 2 skipped; .NET 4858 passed; conformance 3143/3143 in both. Version
+  2026.11.16.89.
 
 ## Not built
 
