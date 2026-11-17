@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Line spectral frequencies**: `lsf(coefficients)` in `dsp` (C# `Dsp.LineSpectralFrequencies`),
-   for real prediction-error filters. Not built yet.
-   - `P(z) = A(z) + z^−(p+1)A(1/z)` and `Q(z) = A(z) − z^−(p+1)A(1/z)`.
-   - Their unit-circle roots, in `(0, π)`, are found by a sign-change scan on a fine grid of
-     `ω` refined by bisection, and returned sorted ascending as `p` angles.
-   - Expected values: order 1 and order 2 in closed form, from the roots of the quadratic in
-     `cos ω`.
+1. **LSF to prediction filter**: `lsf_to_lpc(frequencies)` in `dsp` (C# `Dsp.LsfToLpc`), the
+   inverse of ADR 0208. Not built yet.
+   - `P` and `Q` are rebuilt as products of `1 − 2 cos ω z^−1 + z^−2`, alternating from the
+     lowest frequency, together with the trivial factors.
+   - The result is `a = (P + Q)/2` without the padded last tap.
+   - Frequencies must be strictly ascending in `(0, π)`.
+   - Expected values: the closed forms of ADR 0208, inverted.
 
 ## Built
 
@@ -1966,6 +1966,14 @@ Updated with every chunk of work. Dates are absolute.
   - The tests check that `2 Re Σ c_n e^−iωn` reproduces the model's log-spectrum.
   Python 5740 passed, 2 skipped; .NET 5033 passed; conformance 3301/3301 in both. Version
   2026.11.17.5.
+- 2026-11-17: Line spectral frequencies (ADR 0208): `line_spectral_frequencies(coefficients)` in
+  `dsp` (C# `Dsp.LineSpectralFrequencies`, real filters).
+  - It forms `P = a + reverse` and `Q = a − reverse`, evaluates both as real trigonometric sums on
+    a `256(p + 1)` grid, and bisects each sign change.
+  - It returns the `p` angles in ascending order. Any other count is `invalid_argument`.
+  - The vectors use the closed forms for orders 1 to 3, as quadratics in `cos ω`.
+  Python 5754 passed, 2 skipped; .NET 5045 passed; conformance 3312/3312 in both. Version
+  2026.11.17.6.
 
 ## Not built
 

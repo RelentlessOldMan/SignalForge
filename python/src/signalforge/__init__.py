@@ -65,6 +65,7 @@ from .dsp import (
     interpolate,
     kaiser_parameters,
     levinson,
+    line_spectral_frequencies,
     lpc_cepstrum,
     pulse_shape,
     resample,
@@ -346,7 +347,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.5"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.6"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -541,6 +542,7 @@ __all__ = [
     "lateral_fraction",
     "levinson",
     "lin_to_db",
+    "line_spectral_frequencies",
     "lms_equalizer",
     "lomb_scargle",
     "lomb_scargle_bootstrap",

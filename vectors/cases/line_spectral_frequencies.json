@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "line_spectral_frequencies",
+  "description": "Line spectral frequencies (conventions: Line spectral frequencies; ADR 0208).",
+  "cases": [
+    {"id": "line_spectral_frequencies.order_one", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0, 0.5]}, "expected": [2.0943951023931957], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "A = 1 + 0.5 z^-1: w = acos(-0.5) = 2 pi/3"},
+    {"id": "line_spectral_frequencies.order_one_negative", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0, -0.9]}, "expected": [0.45102681179626236], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "A = 1 - 0.9 z^-1: w = acos(0.9)"},
+    {"id": "line_spectral_frequencies.order_two_real", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0, -0.25, -0.125]}, "expected": [0.8127555613686607, 2.023612921539822], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "roots 0.5, -0.25: a = [1, -0.25, -0.125]; cos w = (1 - a1 - a2)/2, -(1 + a1 - a2)/2"},
+    {"id": "line_spectral_frequencies.order_two_resonant", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0, -1.3767159371120794, 0.8100000000000002]}, "expected": [0.6707463599217507, 0.9355721615359109], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "roots 0.9 e^(+-0.7i): the order-2 closed form"},
+    {"id": "line_spectral_frequencies.order_three", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0, 0.16583493847542785, 0.30708253076228614, -0.32]}, "expected": [0.8912898645187783, 1.8161686052922628, 2.154749892484076], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "roots 0.5, 0.8 e^(+-2i): 2x^2 + (a1 + a3)x + (a2 - 1) = 0 and cos w = (a3 - a1)/2"},
+    {"id": "line_spectral_frequencies.order_three_mixed", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0, -0.805273192803462, 0.02841804215896135, 0.10799999999999998]}, "expected": [0.46733185428120516, 1.0965853903491782, 2.1461563491569335], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "roots -0.3, 0.6 e^(+-0.4i): the order-3 closed form"},
+    {"id": "line_spectral_frequencies.order_three_flat", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0, 0.0, 0.0, 0.0]}, "expected": [0.7853981633974483, 1.5707963267948966, 2.356194490192345], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "A = 1: P = 1 + z^-4, Q = 1 - z^-4; 2x^2 - 1 = 0 and x = 0: w = pi/4, pi/2, 3 pi/4"},
+    {"id": "line_spectral_frequencies.a0_not_one", "op": "line_spectral_frequencies", "args": {"coefficients": [2.0, 0.5]}, "error": "invalid_argument", "source": "coefficients[0] must be 1"},
+    {"id": "line_spectral_frequencies.order_zero", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0]}, "error": "invalid_argument", "source": "the filter must have order at least 1"},
+    {"id": "line_spectral_frequencies.not_minimum_phase", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0, 2.0]}, "error": "invalid_argument", "source": "A = 1 + 2 z^-1: F_P = 2 cos w + 4 > 0 and F_Q = 2 sin w > 0 on (0, pi)"},
+    {"id": "line_spectral_frequencies.nan_coefficient", "op": "line_spectral_frequencies", "args": {"coefficients": [1.0, "nan"]}, "error": "invalid_argument", "source": "coefficients must be finite"}
+  ]
+}

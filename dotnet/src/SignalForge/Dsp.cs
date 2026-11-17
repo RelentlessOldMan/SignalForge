@@ -345,6 +345,80 @@ public static partial class Dsp
         return c;
     }
 
+    /// <summary>The <c>p</c> line spectral frequencies of a real minimum-phase prediction-error
+    /// filter, in radians per sample, ascending (conventions: Line spectral frequencies;
+    /// ADR 0208).</summary>
+    /// <param name="coefficients">The filter, finite, <c>a[0] = 1</c>, order at least 1.</param>
+    /// <returns>The angles in <c>(0, π)</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or the filter is not minimum phase.</exception>
+    public static double[] LineSpectralFrequencies(ReadOnlySpan<double> coefficients)
+    {
+        if (coefficients.IsEmpty)
+            throw new ArgumentException("coefficients must not be empty", nameof(coefficients));
+        foreach (double v in coefficients)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("coefficients must be finite", nameof(coefficients));
+        }
+        if (coefficients[0] != 1)
+            throw new ArgumentException("coefficients[0] must be 1", nameof(coefficients));
+        int p = coefficients.Length - 1;
+        if (p < 1)
+            throw new ArgumentException("the filter must have order at least 1", nameof(coefficients));
+        var ext = new double[p + 2];
+        coefficients.CopyTo(ext);
+        var sym = new double[p + 2];
+        var anti = new double[p + 2];
+        var shifts = new double[p + 2];
+        for (int j = 0; j < p + 2; j++)
+        {
+            sym[j] = ext[j] + ext[p + 1 - j];
+            anti[j] = ext[j] - ext[p + 1 - j];
+            shifts[j] = ((p + 1) / 2.0) - j;
+        }
+        int grid = 256 * (p + 1);
+        var roots = new List<double>();
+        foreach (bool cosine in new[] { true, false })
+        {
+            double[] poly = cosine ? sym : anti;
+            bool Above(double w)
+            {
+                double acc = 0;
+                for (int j = 0; j < poly.Length; j++)
+                    acc += poly[j] * (cosine ? Math.Cos(w * shifts[j]) : Math.Sin(w * shifts[j]));
+                return acc > 0;
+            }
+            double prevW = Math.PI / grid;
+            bool prev = Above(prevW);
+            for (int i = 2; i < grid; i++)
+            {
+                double w = Math.PI * i / grid;
+                bool now = Above(w);
+                if (now != prev)
+                {
+                    double lo = prevW, hi = w;
+                    for (int it = 0; it < 200; it++)
+                    {
+                        double mid = 0.5 * (lo + hi);
+                        if (mid == lo || mid == hi)
+                            break;
+                        if (Above(mid) == prev)
+                            lo = mid;
+                        else
+                            hi = mid;
+                    }
+                    roots.Add(0.5 * (lo + hi));
+                }
+                prevW = w;
+                prev = now;
+            }
+        }
+        if (roots.Count != p)
+            throw new ArgumentException("the filter is not minimum phase: found other than order roots", nameof(coefficients));
+        roots.Sort();
+        return [.. roots];
+    }
+
     private static int CorrelationLags(int length, int? maxLag, CorrelationScaling scaling)
     {
         int top = maxLag ?? length - 1;

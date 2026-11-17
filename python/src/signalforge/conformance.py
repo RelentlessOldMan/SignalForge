@@ -205,6 +205,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "burg": dsp.burg,
     "ar_order_selection": dsp.ar_order_selection,
     "lpc_cepstrum": dsp.lpc_cepstrum,
+    "line_spectral_frequencies": dsp.line_spectral_frequencies,
     "upsample": dsp.upsample,
     "rrc_taps": dsp.rrc_taps,
     "pulse_shape": dsp.pulse_shape,

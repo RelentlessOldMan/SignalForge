@@ -217,6 +217,52 @@ def lpc_cepstrum(
     return cast("NDArray[np.complex128] | NDArray[np.float64]", c)
 
 
+def line_spectral_frequencies(coefficients: ArrayLike) -> NDArray[np.float64]:
+    """The ``p`` line spectral frequencies of a real minimum-phase prediction-error filter, in
+    radians per sample, ascending (conventions: Line spectral frequencies; ADR 0208)."""
+    a = _vector(coefficients, "coefficients")
+    if np.iscomplexobj(a):
+        raise ValueError("coefficients must be real")
+    if not np.all(np.isfinite(a)):
+        raise ValueError("coefficients must be finite")
+    if a[0] != 1:
+        raise ValueError("coefficients[0] must be 1")
+    p = a.size - 1
+    if p < 1:
+        raise ValueError("the filter must have order at least 1")
+    ext = np.append(a, 0.0)
+    shifts = (p + 1) / 2 - np.arange(p + 2)
+    grid = 256 * (p + 1)
+    roots: list[float] = []
+    for poly, trig in ((ext + ext[::-1], math.cos), (ext - ext[::-1], math.sin)):
+
+        def above(
+            w: float, poly: NDArray[np.float64] = poly, trig: Callable[[float], float] = trig
+        ) -> bool:
+            return sum(float(c) * trig(w * float(s)) for c, s in zip(poly, shifts, strict=True)) > 0
+
+        prev_w = math.pi / grid
+        prev = above(prev_w)
+        for i in range(2, grid):
+            w = math.pi * i / grid
+            now = above(w)
+            if now != prev:
+                lo, hi = prev_w, w
+                for _ in range(200):
+                    mid = 0.5 * (lo + hi)
+                    if mid in (lo, hi):
+                        break
+                    if above(mid) == prev:
+                        lo = mid
+                    else:
+                        hi = mid
+                roots.append(0.5 * (lo + hi))
+            prev_w, prev = w, now
+    if len(roots) != p:
+        raise ValueError("the filter is not minimum phase: found other than order roots")
+    return np.array(sorted(roots), dtype=np.float64)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

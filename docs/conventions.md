@@ -1191,6 +1191,13 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `c_n = −a_n − (1/n) Σ_{k=1}^{n−1} k c_k a_{n−k}` (`a_j = 0` past the order); returns
   `c_0 … c_{num−1}`, real for real coefficients. `a_0 = 1` exactly, coefficients finite,
   `error > 0`, `num_coefficients ≥ 1`. **(implemented)**
+- **Line spectral frequencies** (`line_spectral_frequencies(coefficients)`, C#
+  `Dsp.LineSpectralFrequencies`, [ADR 0208](adr/0208-line-spectral-frequencies.md)): `a` padded
+  to `p + 2`, `P = a + reverse`, `Q = a − reverse`; `F_P = Σ P_j cos(ω s_j)`,
+  `F_Q = Σ Q_j sin(ω s_j)`, `s_j = (p + 1)/2 − j`. Sign changes of `F > 0` on `ω = πi/G`,
+  `i = 1 … G − 1`, `G = 256(p + 1)`, bisected on the same test until the midpoint meets an end
+  (at most 200 halvings), midpoint returned; `p` angles in `(0, π)`, ascending. Real, finite,
+  `a_0 = 1`, `p ≥ 1`; other than `p` roots is `invalid_argument`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at
