@@ -218,6 +218,7 @@ from .spectral import (
     Spectrogram,
     TaperSet,
     Tone,
+    TransferFunction,
     Tristimulus,
     WindowStats,
     acpr,
@@ -277,6 +278,7 @@ from .spectral import (
     spectral_slope,
     spectral_variation,
     spectrogram,
+    transfer_function,
     tristimulus,
     welch_psd,
     window,
@@ -330,7 +332,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.90"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.91"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -388,6 +390,7 @@ __all__ = [
     "TimingRecovery",
     "Tone",
     "ToneMetrics",
+    "TransferFunction",
     "Tristimulus",
     "TwoToneImd",
     "TwoToneIp2",
@@ -632,6 +635,7 @@ __all__ = [
     "timing_offset",
     "tone",
     "tone_metrics",
+    "transfer_function",
     "treble_ratio",
     "tristimulus",
     "two_tone_imd",

@@ -366,6 +366,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `Sxy = Σ X_s·conj Y_s`, `Sxx = Σ|X_s|²`, `Syy = Σ|Y_s|²`, `C = min(1, |Sxy|²/(Sxx·Syy))`, NaN
   where `Sxx·Syy = 0` (scale and doubling cancel). Result `Coherence(frequencies, values,
   num_segments)`. Real, 1-D, finite, the same length. **(implemented)**
+- **Transfer function (H1)** ([ADR 0193](adr/0193-transfer-function.md);
+  `transfer_function(x, y, sample_rate, *, nperseg=None, noverlap=None, window="hann",
+  beta=None, detrend="none", nfft=None)`, C# `Spectral.TransferFunction`): the `coherence`
+  segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
+  `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
+  rules. **(implemented)**
 - **Spectrogram** (`spectrogram(samples, sample_rate, nperseg, noverlap=None, window="hann",
   one_sided=None, beta=None, detrend="none", nfft=None)`): Welch's segments, each kept instead of
   averaged. `nperseg` is required (`1 ≤ nperseg ≤ L`); `noverlap`, the detrending, the window, the

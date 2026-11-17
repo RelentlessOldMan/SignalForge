@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "transfer_function",
+  "description": "Transfer function H1 (conventions: Transfer function (H1); ADR 0193).",
+  "cases": [
+    {"id": "transfer_function.fir_impulse", "op": "transfer_function", "args": {"x": [1.0, 0.0, 0.0, 0.0], "y": [0.5, 0.25, 0.0, 0.0], "sample_rate": 4.0, "nperseg": 4, "noverlap": 0, "window": "rectangular"}, "expected": {"frequencies": [0.0, 1.0, 2.0], "response": {"re": [0.75, 0.5, 0.25], "im": [0.0, -0.25, 0.0]}, "num_segments": 1}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "x = delta, y = h = [0.5, 0.25]: X = 1, so H = DFT(h) = 0.5 + 0.25 e^{-j pi k/2}: k = 0: 0.75; k = 1: 0.5 - 0.25j; k = 2: 0.25"},
+    {"id": "transfer_function.scaled", "op": "transfer_function", "args": {"x": [1.0, 2.0, 3.0, 4.0], "y": [-2.0, -4.0, -6.0, -8.0], "sample_rate": 2.0, "nperseg": 2, "noverlap": 0, "window": "rectangular"}, "expected": {"frequencies": [0.0, 1.0], "response": {"re": [-2.0, -2.0], "im": [0.0, 0.0]}, "num_segments": 2}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "y = -2x, two segments [1, 2], [3, 4]: X = [3, -1], [7, -1], all non-zero, so H = -2"},
+    {"id": "transfer_function.cancelling", "op": "transfer_function", "args": {"x": [1.0, 0.0, 0.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0], "sample_rate": 2.0, "nperseg": 2, "noverlap": 0, "window": "rectangular"}, "expected": {"frequencies": [0.0, 1.0], "response": {"re": [1.0, 0.0], "im": [0.0, 0.0]}, "num_segments": 2}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "X = [1, 1], [1, -1]; Y = [1, 1] twice. Bin 0: (1 + 1)/(1 + 1) = 1; bin 1: (1 - 1)/2 = 0"},
+    {"id": "transfer_function.zero_bin", "op": "transfer_function", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0], "sample_rate": 2.0, "nperseg": 2, "noverlap": 0, "window": "rectangular"}, "expected": {"frequencies": [0.0, 1.0], "response": {"re": [0.5, "nan"], "im": [0.0, "nan"]}, "num_segments": 1}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "X = [2, 0], Y = [1, 1]: bin 0: 2/4 = 0.5; bin 1: Sxx = 0, NaN"},
+    {"id": "transfer_function.lengths", "op": "transfer_function", "args": {"x": [1.0, 2.0], "y": [1.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "x and y differ in length"},
+    {"id": "transfer_function.nan", "op": "transfer_function", "args": {"x": [1.0, 2.0], "y": ["nan", 2.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "not finite"},
+    {"id": "transfer_function.zero_rate", "op": "transfer_function", "args": {"x": [1.0, 2.0], "y": [1.0, 2.0], "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "transfer_function.long_segment", "op": "transfer_function", "args": {"x": [1.0, 2.0], "y": [1.0, 2.0], "sample_rate": 1.0, "nperseg": 3}, "error": "invalid_argument", "source": "fewer samples than nperseg"}
+  ]
+}

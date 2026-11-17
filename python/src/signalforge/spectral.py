@@ -243,20 +243,19 @@ class Coherence:
     num_segments: int
 
 
-def coherence(
+def _cross_segments(
     x: ArrayLike,
     y: ArrayLike,
     sample_rate: float,
-    *,
-    nperseg: int | None = None,
-    noverlap: int | None = None,
-    window: str = "hann",
-    beta: float | None = None,
-    detrend: str = "none",
-    nfft: int | None = None,
-) -> Coherence:
-    """``min(1, |Sxy|^2/(Sxx Syy))`` over Welch's segments of ``x`` and ``y``, NaN where an
-    auto-spectrum is 0 (conventions: Coherence; ADR 0192)."""
+    nperseg: int | None,
+    noverlap: int | None,
+    window: str,
+    beta: float | None,
+    detrend: str,
+    nfft: int | None,
+) -> tuple[_Segments, NDArray[np.complex128], NDArray[np.float64], NDArray[np.float64]]:
+    """Welch's segments of real ``x`` and ``y``: ``(segments, sum conj X Y, sum |X|^2, sum |Y|^2)``
+    on the one-sided bins (ADR 0192)."""
     a, b = np.asarray(x), np.asarray(y)
     if a.shape != b.shape:
         raise ValueError("x and y must have the same shape")
@@ -274,9 +273,63 @@ def coherence(
     for s in range(gx.count):
         fx = gx.spectrum(s)[:m]
         fy = gy.spectrum(s)[:m]
-        sxy += fx * np.conj(fy)
+        sxy += np.conj(fx) * fy
         sxx += fx.real * fx.real + fx.imag * fx.imag
         syy += fy.real * fy.real + fy.imag * fy.imag
+    return gx, sxy, sxx, syy
+
+
+@dataclass(frozen=True)
+class TransferFunction:
+    """H1 frequency-response estimate per one-sided bin (conventions: Transfer function (H1);
+    ADR 0193)."""
+
+    frequencies: NDArray[np.float64]
+    response: NDArray[np.complex128]
+    num_segments: int
+
+
+def transfer_function(
+    x: ArrayLike,
+    y: ArrayLike,
+    sample_rate: float,
+    *,
+    nperseg: int | None = None,
+    noverlap: int | None = None,
+    window: str = "hann",
+    beta: float | None = None,
+    detrend: str = "none",
+    nfft: int | None = None,
+) -> TransferFunction:
+    """H1 = ``sum conj(X) Y / sum |X|^2`` over Welch's segments, from input ``x`` to output ``y``;
+    NaN where the input has no power (conventions: Transfer function (H1); ADR 0193)."""
+    g, sxy, sxx, _ = _cross_segments(
+        x, y, sample_rate, nperseg, noverlap, window, beta, detrend, nfft
+    )
+    response = np.full(sxx.size, complex(math.nan, math.nan))
+    pos = sxx > 0
+    response[pos] = sxy[pos] / sxx[pos]
+    return TransferFunction(g.frequencies(float(sample_rate)), response, g.count)
+
+
+def coherence(
+    x: ArrayLike,
+    y: ArrayLike,
+    sample_rate: float,
+    *,
+    nperseg: int | None = None,
+    noverlap: int | None = None,
+    window: str = "hann",
+    beta: float | None = None,
+    detrend: str = "none",
+    nfft: int | None = None,
+) -> Coherence:
+    """``min(1, |Sxy|^2/(Sxx Syy))`` over Welch's segments of ``x`` and ``y``, NaN where an
+    auto-spectrum is 0 (conventions: Coherence; ADR 0192)."""
+    gx, sxy, sxx, syy = _cross_segments(
+        x, y, sample_rate, nperseg, noverlap, window, beta, detrend, nfft
+    )
+    m = sxx.size
     d = sxx * syy
     num = sxy.real * sxy.real + sxy.imag * sxy.imag
     values = np.full(m, np.nan)

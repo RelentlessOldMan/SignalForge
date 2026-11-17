@@ -4,16 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Transfer-function estimate (H1)**: `transfer_function(x, y, sample_rate, ...)` in `spectral`
-   (C# `Spectral.TransferFunction`). It is `H1 = Σ conj X_s·Y_s / Σ|X_s|²` over the Welch segments
-   used by `coherence` (ADR 0192), giving the complex response from input `x` to output `y` on
-   one-sided bins. Not built yet. Needs an ADR covering:
-   - the H1 form (as opposed to H2 or Hv);
-   - bins where `Sxx = 0`;
-   - whether magnitude and phase are returned as well.
+1. **Cross-spectral density**: `cross_spectral_density(x, y, sample_rate, ...)` in `spectral` (C#
+   `Spectral.CrossSpectralDensity`). It is the Welch-averaged `Pxy`, scaled like `welch_psd` so
+   that `y = x` gives the PSD (as a complex number). It uses the same segments as `coherence` and
+   `transfer_function`. Not built yet. Needs an ADR covering:
+   - the conjugate order (`conj X·Y`, matching H1);
+   - the one-sided doubling;
+   - whether complex input is accepted as well (two-sided, shifted).
 
-   Expected values: `y` an FIR-filtered `x` with a single rectangular segment gives the filter's
-   DFT exactly at bins where `X ≠ 0`; a scaled copy gives the scale.
+   Expected values: `y = x` equals `welch_psd`; hand DFTs of short rectangular segments.
 
 ## Built
 
@@ -1832,6 +1831,16 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are hand-worked short segments, each checked against a direct DFT.
   Python 5567 passed, 2 skipped; .NET 4869 passed; conformance 3153/3153 in both. Version
   2026.11.16.90.
+- 2026-11-16: transfer-function estimate H1 (ADR 0193): `transfer_function(x, y, sample_rate,
+  ...)` in `spectral` (C# `Spectral.TransferFunction`), returning `TransferFunction(frequencies,
+  response, num_segments)`.
+  - It computes `H = Σ conj X·Y / Σ|X|²` over the `coherence` segments, giving a complex NaN
+    where the input has no power.
+  - `coherence` and `transfer_function` now share one cross-segment helper in each language.
+
+  The vectors are hand DFTs, each checked against a direct DFT.
+  Python 5576 passed, 2 skipped; .NET 4878 passed; conformance 3161/3161 in both. Version
+  2026.11.16.91.
 
 ## Not built
 
