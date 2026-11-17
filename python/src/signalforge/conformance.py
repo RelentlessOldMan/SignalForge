@@ -245,6 +245,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "interpolate": dsp.interpolate,
     "decimate": dsp.decimate,
     "cic_taps": dsp.cic_taps,
+    "cic_compensator": dsp.cic_compensator,
     "cic_decimate": dsp.cic_decimate,
     "cic_interpolate": dsp.cic_interpolate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),

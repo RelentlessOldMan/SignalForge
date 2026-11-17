@@ -2228,6 +2228,57 @@ def cic_interpolate(
     return y
 
 
+def cic_compensator(
+    factor: int,
+    stages: int,
+    num_taps: int,
+    cutoff: float,
+    sample_rate: float,
+    *,
+    delay: int = 1,
+) -> NDArray[np.float64]:
+    """Type-1 frequency-sampling FIR at the low rate whose gain is the inverse of the CIC droop up
+    to ``cutoff`` (conventions: CIC droop compensator; ADR 0232)."""
+    r = count(factor, "factor")
+    n_st = count(stages, "stages")
+    m = count(delay, "delay")
+    if r < 1:
+        raise ValueError("factor must be at least 1")
+    if not 1 <= n_st <= 64:
+        raise ValueError("stages must be in 1 ... 64")
+    if m < 1:
+        raise ValueError("delay must be at least 1")
+    t = count(num_taps, "num_taps")
+    if t < 1 or t % 2 == 0:
+        raise ValueError("num_taps must be odd and at least 1")
+    fs = _rate(sample_rate)
+    fc = real(cutoff, "cutoff")
+    if not 0 < fc <= fs / (2 * m):
+        raise ValueError("cutoff must be in (0, sample_rate / (2 * delay)]")
+    c = (t - 1) // 2
+    edge = fc / fs
+    d = np.zeros(c + 1)
+    for j in range(c + 1):
+        f = j / t
+        if f > edge:
+            continue
+        if j == 0:
+            d[j] = 1.0
+            continue
+        a = abs(math.sin(math.pi * m * f) / (r * m * math.sin(math.pi * f / r))) ** n_st
+        g = 1.0 / a if a > 0 else math.inf
+        if not math.isfinite(g):
+            raise ValueError("the compensation gain overflows")
+        d[j] = g
+    h = np.zeros(t)
+    for i in range(t):
+        acc = d[0]
+        for j in range(1, c + 1):
+            acc += 2.0 * d[j] * math.cos(2.0 * math.pi * j * (i - c) / t)
+        h[i] = acc / t
+    return h
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

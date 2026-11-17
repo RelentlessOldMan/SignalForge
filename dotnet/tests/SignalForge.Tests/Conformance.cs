@@ -653,6 +653,8 @@ public static class Conformance
             "decimate" => ResampleOp(a, 1, a.I("factor")),
             "cic_taps" => Bind((a.I("factor"), a.I("stages"), a.Has("delay") ? a.I("delay") : 1),
                 t => Dsp.CicTaps(t.Item1, t.Item2, t.Item3)),
+            "cic_compensator" => Bind((a.I("factor"), a.I("stages"), a.I("num_taps"), a.D("cutoff"), a.D("sample_rate"),
+                a.Has("delay") ? a.I("delay") : 1), t => Dsp.CicCompensator(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "cic_interpolate" => a.Get("samples") is Complex[] cici
                 ? Bind((cici, a.I("factor"), a.I("stages"), a.Has("delay") ? a.I("delay") : 1),
                     t => Dsp.CicInterpolate(t.Item1, t.Item2, t.Item3, t.Item4))

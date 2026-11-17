@@ -1813,6 +1813,13 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `m ≡ n (mod R)`, `m ≤ n`, in increasing `m`. Equals `N` combs at the low rate, zero-stuffing,
   then `N` integrators. Unnormalized (a constant settles to `(RM)^N/R`). Rules as the CIC
   decimator; samples finite and non-empty. **(implemented)**
+- **CIC droop compensator** (`cic_compensator(factor, stages, num_taps, cutoff, sample_rate, *,
+  delay=1)`, C# `Dsp.CicCompensator`, [ADR 0232](adr/0232-cic-compensator.md)): `sample_rate` is
+  the low rate; droop `A(f) = |sin(πMf)/(RM sin(πf/R))|^N`, `A(0) = 1`, `f` in cycles per low-rate
+  sample. Type-1 frequency sampling, no window: `T` odd, `c = (T−1)/2`, `D_j = 1/A(j/T)` where
+  `j/T ≤ cutoff/sample_rate`, else 0, `j = 0 … c`; `h[n] = (D_0 + 2 Σ_{j=1}^{c} D_j cos(2πj(n−c)/T))/T`.
+  Rules: integers `≥ 1`, `stages ≤ 64`, odd `num_taps`, `sample_rate` finite and positive,
+  `0 < cutoff ≤ sample_rate/(2M)`, every `D_j` finite. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

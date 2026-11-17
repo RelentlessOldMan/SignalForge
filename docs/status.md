@@ -6,7 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a CIC droop-compensation FIR (an inverse-sinc^N FIR for the passband after ADR 0229).
+   - Savitzky–Golay smoothing and derivative coefficients (`savgol_coefficients(length,
+     order, *, derivative=0)`) and the filter;
+   - a running median filter (`median_filter(samples, length)`).
 
 ## Built
 
@@ -2147,6 +2149,14 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are direct DFT sums over each window.
   Python 6085 passed, 2 skipped; .NET 5354 passed; conformance 3597/3597 in both. Version
   2026.11.17.30.
+- 2026-11-17: CIC droop compensator (ADR 0232): `cic_compensator(factor, stages, num_taps,
+  cutoff, sample_rate, *, delay=1)` in `dsp` (C# `Dsp.CicCompensator`).
+  - It is a type-1 frequency-sampling FIR at the low rate, with no window. Its gain is the
+    inverse of the CIC droop `|sin(πMf)/(RM sin(πf/R))|^N` up to the cutoff.
+  - The vectors are cross-checked against the DTFT of the integer CIC taps and the designed
+    response on the grid.
+  Python 6098 passed, 2 skipped; .NET 5366 passed; conformance 3608/3608 in both. Version
+  2026.11.17.31.
 
 ## Not built
 

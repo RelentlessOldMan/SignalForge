@@ -125,4 +125,58 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Type-1 frequency-sampling FIR at the low rate whose gain is the inverse of the
+    /// CIC droop up to <paramref name="cutoff"/> (conventions: CIC droop compensator; ADR
+    /// 0232).</summary>
+    /// <param name="factor">The CIC rate change <c>R</c>, at least 1.</param>
+    /// <param name="stages">The number of CIC stages <c>N</c>, 1 to 64.</param>
+    /// <param name="numTaps">The number of taps, odd and at least 1.</param>
+    /// <param name="cutoff">The passband edge in Hz, in <c>(0, sampleRate/(2M)]</c>.</param>
+    /// <param name="sampleRate">The low rate in Hz.</param>
+    /// <param name="delay">The CIC comb delay <c>M</c>, at least 1.</param>
+    /// <returns>The taps.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] CicCompensator(int factor, int stages, int numTaps, double cutoff, double sampleRate, int delay = 1)
+    {
+        if (factor < 1)
+            throw new ArgumentOutOfRangeException(nameof(factor), "factor must be at least 1");
+        if (stages < 1 || stages > 64)
+            throw new ArgumentOutOfRangeException(nameof(stages), "stages must be in 1 ... 64");
+        if (delay < 1)
+            throw new ArgumentOutOfRangeException(nameof(delay), "delay must be at least 1");
+        if (numTaps < 1 || numTaps % 2 == 0)
+            throw new ArgumentOutOfRangeException(nameof(numTaps), "numTaps must be odd and at least 1");
+        double fs = Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        if (!double.IsFinite(cutoff) || !(cutoff > 0) || !(cutoff <= fs / (2.0 * delay)))
+            throw new ArgumentOutOfRangeException(nameof(cutoff), "cutoff must be in (0, sampleRate / (2 * delay)]");
+        int c = (numTaps - 1) / 2;
+        double edge = cutoff / fs;
+        var d = new double[c + 1];
+        for (int j = 0; j <= c; j++)
+        {
+            double f = (double)j / numTaps;
+            if (f > edge)
+                continue;
+            if (j == 0)
+            {
+                d[j] = 1.0;
+                continue;
+            }
+            double a = Math.Pow(Math.Abs(Math.Sin(Math.PI * delay * f) / ((double)factor * delay * Math.Sin(Math.PI * f / factor))), stages);
+            double g = a > 0 ? 1.0 / a : double.PositiveInfinity;
+            if (!double.IsFinite(g))
+                throw new ArgumentException("the compensation gain overflows", nameof(stages));
+            d[j] = g;
+        }
+        var h = new double[numTaps];
+        for (int i = 0; i < numTaps; i++)
+        {
+            double acc = d[0];
+            for (int j = 1; j <= c; j++)
+                acc += 2.0 * d[j] * Math.Cos(2.0 * Math.PI * j * (i - c) / numTaps);
+            h[i] = acc / numTaps;
+        }
+        return h;
+    }
 }
