@@ -1176,6 +1176,11 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   Recursion: `k_m = −(r[m] + Σ_{j<m} a[j] r[m−j]) / E`, `a[j] += k_m conj a[m−j]`, `a[m] = k_m`,
   `E *= 1 − |k_m|²`, from `E = r[0]`. Gives `Levinson(coefficients, reflection, error)`. `r`
   finite with `r[0]` real and positive; `order ≥ 1`; every `|k_m| < 1`. **(implemented)**
+- **Burg AR fit** (`burg(samples, order)`, C# `Dsp.Burg`,
+  [ADR 0205](adr/0205-burg-fit.md)): the recursion of the Burg AR PSD (ADR 0204), giving
+  `Levinson(coefficients, reflection, error)`; real samples give real arrays. Samples finite,
+  `1 ≤ order < N`, every `|k_m| < 1` and every error energy positive. `burg_psd` uses it.
+  **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

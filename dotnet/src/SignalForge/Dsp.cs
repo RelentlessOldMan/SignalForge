@@ -154,6 +154,83 @@ public static partial class Dsp
         return new ComplexLevinson(a, k, error);
     }
 
+    /// <summary>Burg's method: the order-<paramref name="order"/> prediction-error filter fitted to
+    /// the forward and backward prediction errors of real samples (conventions: Burg AR fit;
+    /// ADR 0205).</summary>
+    /// <param name="samples">Finite samples, more than <paramref name="order"/>, not perfectly predictable.</param>
+    /// <param name="order">The filter order, at least 1 and below the input length.</param>
+    /// <returns>The filter, the reflection coefficients and the final error.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Levinson Burg(ReadOnlySpan<double> samples, int order)
+    {
+        Complex[] x = new Complex[samples.Length];
+        for (int i = 0; i < samples.Length; i++)
+            x[i] = samples[i];
+        var c = Burg((ReadOnlySpan<Complex>)x, order);
+        return new Levinson([.. c.Coefficients.Select(v => v.Real)], [.. c.Reflection.Select(v => v.Real)], c.Error);
+    }
+
+    /// <summary>Burg's method: the order-<paramref name="order"/> prediction-error filter fitted to
+    /// the forward and backward prediction errors of complex samples (conventions: Burg AR fit;
+    /// ADR 0205).</summary>
+    /// <param name="samples">Finite samples, more than <paramref name="order"/>, not perfectly predictable.</param>
+    /// <param name="order">The filter order, at least 1 and below the input length.</param>
+    /// <returns>The filter, the reflection coefficients and the final error.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static ComplexLevinson Burg(ReadOnlySpan<Complex> samples, int order)
+    {
+        foreach (Complex v in samples)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        int n = samples.Length;
+        if (order < 1)
+            throw new ArgumentOutOfRangeException(nameof(order), "order must be at least 1");
+        if (order >= n)
+            throw new ArgumentException("order must be below the input length", nameof(order));
+        var f = samples.ToArray();
+        var b = samples.ToArray();
+        var a = new Complex[order + 1];
+        var k = new Complex[order];
+        a[0] = 1;
+        double error = 0;
+        foreach (Complex v in samples)
+            error += (v.Real * v.Real) + (v.Imaginary * v.Imaginary);
+        error /= n;
+        var previous = new Complex[order + 1];
+        for (int stage = 1; stage <= order; stage++)
+        {
+            int len = n - stage;
+            Complex cross = Complex.Zero;
+            double energy = 0;
+            for (int i = 0; i < len; i++)
+            {
+                Complex fw = f[i + 1], bw = b[i];
+                cross += fw * Complex.Conjugate(bw);
+                energy += (fw.Real * fw.Real) + (fw.Imaginary * fw.Imaginary) + (bw.Real * bw.Real) + (bw.Imaginary * bw.Imaginary);
+            }
+            if (!(energy > 0))
+                throw new ArgumentException("the prediction errors vanish: the record is perfectly predictable", nameof(samples));
+            Complex km = -2.0 * cross / energy;
+            if (!(Complex.Abs(km) < 1))
+                throw new ArgumentException("a reflection coefficient has |k| >= 1: the record is predictable", nameof(samples));
+            for (int i = 0; i < len; i++)
+            {
+                Complex fw = f[i + 1], bw = b[i];
+                f[i] = fw + (km * bw);
+                b[i] = bw + (Complex.Conjugate(km) * fw);
+            }
+            Array.Copy(a, previous, stage);
+            for (int j = 1; j < stage; j++)
+                a[j] = previous[j] + (km * Complex.Conjugate(previous[stage - j]));
+            a[stage] = km;
+            k[stage - 1] = km;
+            error *= 1 - ((km.Real * km.Real) + (km.Imaginary * km.Imaginary));
+        }
+        return new ComplexLevinson(a, k, error);
+    }
+
     private static int CorrelationLags(int length, int? maxLag, CorrelationScaling scaling)
     {
         int top = maxLag ?? length - 1;

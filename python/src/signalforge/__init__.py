@@ -30,6 +30,7 @@ from .dsp import (
     bessel_bandstop,
     bessel_highpass,
     bessel_lowpass,
+    burg,
     butterworth_bandpass,
     butterworth_bandstop,
     butterworth_highpass,
@@ -342,7 +343,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.2"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.3"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -428,6 +429,7 @@ __all__ = [
     "bessel_lowpass",
     "bit_errors",
     "block_leq",
+    "burg",
     "burg_psd",
     "butterworth_bandpass",
     "butterworth_bandstop",

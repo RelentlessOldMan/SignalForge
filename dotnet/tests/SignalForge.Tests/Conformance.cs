@@ -497,6 +497,8 @@ public static class Conformance
                 : Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Dsp.CrossCorrelation(t.Item1, t.Item2)),
             "levinson" => a.Get("r") is Complex[]? Bind((Complexes(a.Get("r")), a.I("order")), t => Dsp.Levinson(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("r")), a.I("order")), t => Dsp.Levinson(t.Item1, t.Item2)),
+            "burg" => a.Get("samples") is Complex[] bs ? Bind((bs, a.I("order")), t => Dsp.Burg(t.Item1, t.Item2))
+                : Bind((Reals(a.Get("samples")), a.I("order")), t => Dsp.Burg(t.Item1, t.Item2)),
             "upsample" => a.Get("x") is Complex[] ux
                 ? Bind((ux, a.I("factor")), t => Dsp.Upsample(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("x")), a.I("factor")), t => Dsp.Upsample(t.Item1, t.Item2)),

@@ -119,6 +119,41 @@ def levinson(r: ArrayLike, order: int) -> Levinson:
     )
 
 
+def burg(samples: ArrayLike, order: int) -> Levinson:
+    """Burg's method: the order-``order`` prediction-error filter fitted to the forward and
+    backward prediction errors of ``samples`` (conventions: Burg AR fit; ADR 0205)."""
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.size
+    p = count(order, "order")
+    if p < 1:
+        raise ValueError("order must be at least 1")
+    if p >= n:
+        raise ValueError("order must be below the input length")
+    f = x.astype(np.complex128)
+    b = f.copy()
+    a = np.ones(1, dtype=np.complex128)
+    k = np.zeros(p, dtype=np.complex128)
+    error = float(np.sum(f.real**2 + f.imag**2)) / n
+    for m in range(p):
+        fw, bw = f[1:], b[:-1]
+        energy = float(np.sum(fw.real**2 + fw.imag**2 + bw.real**2 + bw.imag**2))
+        if not energy > 0:
+            raise ValueError("the prediction errors vanish: the record is perfectly predictable")
+        km = -2.0 * complex(np.sum(fw * np.conj(bw))) / energy
+        if not abs(km) < 1:
+            raise ValueError("a reflection coefficient has |k| >= 1: the record is predictable")
+        f, b = fw + km * bw, bw + np.conj(km) * fw
+        a = np.append(a, 0.0)
+        a = a + km * np.conj(a[::-1])
+        k[m] = km
+        error *= 1.0 - abs(km) ** 2
+    if np.iscomplexobj(x):
+        return Levinson(a, k, error)
+    return Levinson(a.real.copy(), k.real.copy(), error)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

@@ -4,12 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Burg AR fit**: `burg(samples, order)` in `dsp` (C# `Dsp.Burg`, real and complex), returning
-   the same result as `levinson`: the prediction-error filter, the reflection coefficients and
-   the final error, from the recursion of ADR 0204. Not built yet.
-   - `burg_psd` would then use it, so there is one copy of the recursion in each language.
-   - Expected values: the exact fractions of `x = [1, 2, 3]`, and a stdlib recursion for the
-     complex case.
+1. **AR order selection**: `ar_order_selection(samples, max_order)` in `dsp` (C#
+   `Dsp.ArOrderSelection`), from the Burg errors `σ²_0 … σ²_P` (`σ²_0 = mean |x|²`). Not built yet.
+   - FPE: `FPE_p = σ²_p (N + p + 1)/(N − p − 1)`.
+   - AIC: `AIC_p = N ln σ²_p + 2p`.
+   - It returns the three arrays and the order that minimizes each criterion, the lowest order
+     on a tie.
+   - It requires `1 ≤ max_order ≤ N − 2`.
+   - Expected values: the exact `x = [1, 2, 3]` errors of ADR 0205, plus a stdlib recursion.
 
 ## Built
 
@@ -1941,6 +1943,13 @@ Updated with every chunk of work. Dates are absolute.
     and to the order-1 closed form.
   Python 5702 passed, 2 skipped; .NET 4999 passed; conformance 3270/3270 in both. Version
   2026.11.17.2.
+- 2026-11-17: Burg AR fit (ADR 0205): `burg(samples, order)` in `dsp` (C# `Dsp.Burg`, real and
+  complex), returning `Levinson(coefficients, reflection, error)`.
+  - `burg_psd` now calls it, so the recursion has one copy in each language.
+  - The vectors are pinned to the exact fractions of `x = [1, 2, 3]` and to the order-1 closed form,
+    real and complex.
+  Python 5715 passed, 2 skipped; .NET 5010 passed; conformance 3280/3280 in both. Version
+  2026.11.17.3.
 
 ## Not built
 

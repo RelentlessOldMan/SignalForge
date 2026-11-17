@@ -202,6 +202,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "autocorrelation": dsp.autocorrelation,
     "cross_correlation": dsp.cross_correlation,
     "levinson": dsp.levinson,
+    "burg": dsp.burg,
     "upsample": dsp.upsample,
     "rrc_taps": dsp.rrc_taps,
     "pulse_shape": dsp.pulse_shape,

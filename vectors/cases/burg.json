@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "burg",
+  "description": "Burg AR fit (conventions: Burg AR fit; ADR 0205).",
+  "cases": [
+    {"id": "burg.three_samples", "op": "burg", "args": {"samples": [1.0, 2.0, 3.0], "order": 2}, "expected": {"coefficients": [1.0, -1.6941176470588235, 0.9058823529411765], "reflection": [-0.8888888888888888, 0.9058823529411765], "error": 0.17568627450980392}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "x = [1, 2, 3]: k1 = -2(2 + 6)/(4 + 1 + 9 + 4) = -8/9; f = [2 - 8/9, 3 - 16/9], b = [1 - 16/9, 2 - 24/9]: k2 = 77/85; a = [1, -8/9 (1 + 77/85), 77/85]; sigma^2 = (14/3)(1 - k1^2)(1 - k2^2)"},
+    {"id": "burg.order_one", "op": "burg", "args": {"samples": [0.5, -1.0, 2.0, 1.5], "order": 1}, "expected": {"coefficients": [1.0, -0.08], "reflection": [-0.08], "error": 1.863}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "closed form: k = -2 sum x[n] x[n-1] / sum (x[n]^2 + x[n-1]^2), sigma^2 = mean x^2 (1 - k^2)"},
+    {"id": "burg.complex_order_one", "op": "burg", "args": {"samples": {"re": [1.0, 0.0, -0.5], "im": [0.0, 1.0, 0.5]}, "order": 1}, "expected": {"coefficients": {"re": [1.0, -0.2857142857142857], "im": [0.0, -0.8571428571428571]}, "reflection": {"re": [-0.2857142857142857], "im": [-0.8571428571428571]}, "error": 0.153061224489796}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "closed form: k = -2 sum x[n] conj x[n-1] / sum (|x[n]|^2 + |x[n-1]|^2)"},
+    {"id": "burg.order_three", "op": "burg", "args": {"samples": [3.0, 1.0, -2.0, 0.0, 1.0, 2.5, -1.5], "order": 3}, "expected": {"coefficients": [1.0, 0.3545438240737348, 0.6775668727422195, 0.4973791362857404], "reflection": [0.013986013986013986, 0.6659777458568275, 0.4973791362857404], "error": 1.405729472283041}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "order 3 by the error recursion"},
+    {"id": "burg.complex_order_two", "op": "burg", "args": {"samples": {"re": [1.0, -0.5, 1.5, 0.0, -1.0], "im": [1.0, 2.0, -1.0, 0.25, 0.0]}, "order": 2}, "expected": {"coefficients": {"re": [1.0, 0.15586727894802832, 0.18086341355461574], "im": [0.0, 0.038514163326745995, 0.5739966477846672]}, "reflection": {"re": [0.16551724137931034, 0.18086341355461574], "im": [-0.06896551724137931, 0.5739966477846672]}, "error": 1.3040654266773746}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex order 2 by the error recursion, conj(k) in the backward update"},
+    {"id": "burg.order_zero", "op": "burg", "args": {"samples": [1.0, 2.0], "order": 0}, "error": "invalid_argument", "source": "order must be at least 1"},
+    {"id": "burg.order_too_big", "op": "burg", "args": {"samples": [1.0, 2.0], "order": 2}, "error": "invalid_argument", "source": "order must be below the input length"},
+    {"id": "burg.all_zero", "op": "burg", "args": {"samples": [0.0, 0.0, 0.0], "order": 1}, "error": "invalid_argument", "source": "the error energy is 0"},
+    {"id": "burg.predictable", "op": "burg", "args": {"samples": [1.0, -1.0], "order": 1}, "error": "invalid_argument", "source": "x = [1, -1]: k = -2(-1)/2 = 1"},
+    {"id": "burg.nan_sample", "op": "burg", "args": {"samples": [1.0, "nan", 2.0], "order": 1}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

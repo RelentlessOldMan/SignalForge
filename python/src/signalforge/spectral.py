@@ -944,24 +944,11 @@ def burg_psd(
     m = n if nfft is None else count(nfft, "nfft")
     if m < p + 1:
         raise ValueError("nfft must be at least order + 1")
-    f = x.astype(np.complex128)
-    b = f.copy()
-    a = np.ones(1, dtype=np.complex128)
-    error = float(np.sum(f.real**2 + f.imag**2)) / n
-    for _ in range(p):
-        fw, bw = f[1:], b[:-1]
-        energy = float(np.sum(fw.real**2 + fw.imag**2 + bw.real**2 + bw.imag**2))
-        if not energy > 0:
-            raise ValueError("the prediction errors vanish: the record is perfectly predictable")
-        k = -2.0 * complex(np.sum(fw * np.conj(bw))) / energy
-        if not abs(k) < 1:
-            raise ValueError("a reflection coefficient has |k| >= 1: the record is predictable")
-        f, b = fw + k * bw, bw + np.conj(k) * fw
-        a = np.append(a, 0.0)
-        a = a + k * np.conj(a[::-1])
-        error *= 1.0 - abs(k) ** 2
-    spectrum = np.fft.fft(a, m)
-    two = error / (sample_rate * (spectrum.real**2 + spectrum.imag**2))
+    from .dsp import burg
+
+    fit = burg(x, p)
+    spectrum = np.fft.fft(fit.coefficients, m)
+    two = fit.error / (sample_rate * (spectrum.real**2 + spectrum.imag**2))
     g = _Segments(x, n, n, 1, np.ones(n), 1.0, bool(one_sided), "none", m)
     return SpectralDensity(
         frequencies=g.frequencies(sample_rate),
