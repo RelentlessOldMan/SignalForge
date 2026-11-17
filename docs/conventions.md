@@ -372,6 +372,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Sliding DFT** ([ADR 0231](adr/0231-sliding-dft.md); `sliding_dft(samples, length, k)`, C#
+  `Spectral.SlidingDft`): `S_n = Σ_{m=0}^{N−1} x[n − N + 1 + m] e^(−2πi k m/N)`, `N = length`,
+  `n = 0 … L−1`, `x` zero before 0 (equal to `fft(x[n−N+1 … n])[k]` once the window is full);
+  `S_n = ((S_{n−1} + x[n]) − x[n−N])·w`, `S_{−1} = 0`, `w = cos θ + i sin θ`, `θ = 2πk/N`.
+  Finite, non-empty samples; integer `length ≥ 1`; integer `k` in `0 … length − 1`.
+  **(implemented)**
 - **Goertzel** ([ADR 0224](adr/0224-goertzel.md); `goertzel(samples, sample_rate, frequencies)`,
   C# `Spectral.Goertzel`): unscaled DTFT `X(f) = Σ x[n] e^(−2πi f n/fs)`, `n` from 0 (equal to FFT
   bin `k` at `f = k fs/N`); `s[n] = x[n] + 2cos ω s[n−1] − s[n−2]`,

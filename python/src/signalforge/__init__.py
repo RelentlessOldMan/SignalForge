@@ -303,6 +303,7 @@ from .spectral import (
     peak_widths,
     psd_confidence_interval,
     real_cepstrum,
+    sliding_dft,
     spectral_contrast,
     spectral_crest,
     spectral_decrease,
@@ -374,7 +375,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.29"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.30"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -689,6 +690,7 @@ __all__ = [
     "schroeder_decay",
     "schur",
     "sfdr",
+    "sliding_dft",
     "sos_group_delay",
     "sos_response",
     "sound_exposure",

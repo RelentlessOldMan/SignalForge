@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a sliding DFT (`sliding_dft(samples, bin, length)`, the recursive single-bin DFT over a
-     moving window);
    - a CIC droop-compensation FIR (an inverse-sinc^N FIR for the passband after ADR 0229).
 
 ## Built
@@ -2142,6 +2140,13 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors run the comb–zero-stuff–integrator structure in exact arithmetic.
   Python 6073 passed, 2 skipped; .NET 5342 passed; conformance 3586/3586 in both. Version
   2026.11.17.29.
+- 2026-11-17: Sliding DFT (ADR 0231): `sliding_dft(samples, length, k)` in `spectral` (C#
+  `Spectral.SlidingDft`).
+  - It returns DFT bin `k` of the `length` samples ending at each sample, with zeros before the
+    start, using the recursion `S_n = ((S_{n−1} + x[n]) − x[n−N])·w`.
+  - The vectors are direct DFT sums over each window.
+  Python 6085 passed, 2 skipped; .NET 5354 passed; conformance 3597/3597 in both. Version
+  2026.11.17.30.
 
 ## Not built
 

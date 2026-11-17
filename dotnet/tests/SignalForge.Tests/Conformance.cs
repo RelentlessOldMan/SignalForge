@@ -365,6 +365,9 @@ public static class Conformance
             "yule_walker_psd" => YuleWalkerOp(a),
             "burg_psd" => YuleWalkerOp(a, burg: true),
             "ar_psd" => ArPsdOp(a),
+            "sliding_dft" => a.Get("samples") is Complex[] sds
+                ? Bind((sds, a.I("length"), a.I("k")), t => Spectral.SlidingDft(t.Item1, t.Item2, t.Item3))
+                : Bind((Reals(a.Get("samples")), a.I("length"), a.I("k")), t => Spectral.SlidingDft(t.Item1, t.Item2, t.Item3)),
             "goertzel" => a.Get("samples") is Complex[] gzs
                 ? Bind((gzs, a.D("sample_rate"), Reals(a.Get("frequencies"))), t => Spectral.Goertzel(t.Item1, t.Item2, t.Item3))
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate"), Reals(a.Get("frequencies"))),

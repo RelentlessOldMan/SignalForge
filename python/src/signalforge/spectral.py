@@ -2503,6 +2503,32 @@ def goertzel(
     return np.asarray(phase * (s1 - turn * s2), dtype=np.complex128)
 
 
+def sliding_dft(samples: ArrayLike, length: int, k: int) -> NDArray[np.complex128]:
+    """DFT bin ``k`` of the ``length`` samples ending at each sample, zeros before the start, by
+    the sliding-DFT recursion (conventions: Sliding DFT; ADR 0231)."""
+    x = _vector(samples, "samples")
+    if x.size == 0:
+        raise ValueError("samples must not be empty")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = count(length, "length")
+    if n < 1:
+        raise ValueError("length must be at least 1")
+    b = count(k, "k")
+    if not 0 <= b < n:
+        raise ValueError("k must be in 0 ... length - 1")
+    theta = 2.0 * math.pi * b / n
+    w = complex(math.cos(theta), math.sin(theta))
+    xs = [complex(v) for v in x]
+    out = np.zeros(x.size, dtype=np.complex128)
+    s = 0j
+    for i, v in enumerate(xs):
+        old = xs[i - n] if i >= n else 0j
+        s = ((s + v) - old) * w
+        out[i] = s
+    return out
+
+
 def find_tones(
     frequencies: ArrayLike,
     psd: ArrayLike,
