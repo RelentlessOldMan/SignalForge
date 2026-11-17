@@ -63,6 +63,7 @@ from .dsp import (
     convolve,
     cross_correlation,
     dc_blocker,
+    dead_zone,
     decimate,
     elliptic_bandpass,
     elliptic_bandstop,
@@ -390,7 +391,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.44"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.45"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -532,6 +533,7 @@ __all__ = [
     "dc_blocker",
     "dc_offset",
     "dct",
+    "dead_zone",
     "decay_curvature",
     "decay_time",
     "decimate",

@@ -108,4 +108,27 @@ public static partial class Dsp
             y[n] = samples[offset + period * ((n - offset) / period)];
         return y;
     }
+
+    /// <summary>Soft threshold: 0 where <c>|x| ≤ width</c>, otherwise <c>x</c> moved
+    /// <paramref name="width"/> toward 0 (conventions: Dead zone; ADR 0246).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="width">The half-width of the zone, finite and at least 0.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] DeadZone(ReadOnlySpan<double> samples, double width)
+    {
+        if (!double.IsFinite(width) || !(width >= 0))
+            throw new ArgumentOutOfRangeException(nameof(width), "width must be at least 0");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double v = samples[n];
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            y[n] = v > width ? v - width : v < -width ? v + width : 0;
+        }
+        return y;
+    }
 }

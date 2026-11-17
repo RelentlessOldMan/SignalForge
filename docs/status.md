@@ -6,8 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a dead zone (`dead_zone(samples, width)`, zeroing `|x| ≤ width` and shifting the rest toward
-     0).
+   - a uniform quantizer (`quantize(samples, step, *, levels=None)`, mid-tread, round half to
+     even, optional symmetric saturation);
+   - μ-law companding (`mu_law_compress(samples, mu=255)` and `mu_law_expand`, the continuous
+     G.711-style curve on `[−1, 1]`).
 
 ## Built
 
@@ -2243,6 +2245,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact copies, compared with zero tolerance.
   Python 6257 passed, 2 skipped; .NET 5517 passed; conformance 3743/3743 in both. Version
   2026.11.17.44.
+- 2026-11-17: Dead zone (ADR 0246): `dead_zone(samples, width)` in `dsp` (C# `Dsp.DeadZone`,
+  real only).
+  - It is the soft threshold: 0 inside `±width`, shifted toward 0 outside.
+  - The vectors are exact, compared with zero tolerance, and include samples exactly on the edges.
+  Python 6267 passed, 2 skipped; .NET 5527 passed; conformance 3751/3751 in both. Version
+  2026.11.17.45.
 
 ## Not built
 

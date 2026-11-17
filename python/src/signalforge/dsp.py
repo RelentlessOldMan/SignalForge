@@ -2557,6 +2557,25 @@ def sample_and_hold(
     return y
 
 
+def dead_zone(samples: ArrayLike, width: float) -> NDArray[np.float64]:
+    """Soft threshold: 0 where ``|x| <= width``, otherwise ``x`` moved ``width`` toward 0
+    (conventions: Dead zone; ADR 0246)."""
+    w = real(width, "width")
+    if not w >= 0:
+        raise ValueError("width must be at least 0")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y = np.zeros(x.size)
+    up = x > w
+    down = x < -w
+    y[up] = x[up] - w
+    y[down] = x[down] + w
+    return y
+
+
 def schmitt_trigger(samples: ArrayLike, low: float, high: float) -> NDArray[np.uint8]:
     """Comparator with hysteresis: 1 after a sample above ``high``, 0 after one below ``low``,
     otherwise held, from 0 (conventions: Schmitt trigger; ADR 0244)."""

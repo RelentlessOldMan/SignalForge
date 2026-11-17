@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "dead_zone",
+  "description": "Dead zone (conventions: Dead zone; ADR 0246).",
+  "cases": [
+    {"id": "dead_zone.basic", "op": "dead_zone", "args": {"samples": [-3.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 3.0], "width": 1.0}, "expected": [-2.0, -0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 2.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "w = 1: zero inside [-1, 1], shifted by 1 outside"},
+    {"id": "dead_zone.width_zero", "op": "dead_zone", "args": {"samples": [1.5, -2.0, 0.0, 0.25], "width": 0.0}, "expected": [1.5, -2.0, 0.0, 0.25], "tol": {"abs": 0.0, "rel": 0.0}, "source": "w = 0: the input itself"},
+    {"id": "dead_zone.fraction", "op": "dead_zone", "args": {"samples": [0.125, -0.375, 0.625, -0.875, 2.25, -4.5], "width": 0.375}, "expected": [0.0, 0.0, 0.25, -0.5, 1.875, -4.125], "tol": {"abs": 0.0, "rel": 0.0}, "source": "w = 3/8, samples at -w"},
+    {"id": "dead_zone.all_inside", "op": "dead_zone", "args": {"samples": [0.5, -0.25, 0.0], "width": 2.0}, "expected": [0.0, 0.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "every sample inside the zone"},
+    {"id": "dead_zone.width_negative", "op": "dead_zone", "args": {"samples": [1.0], "width": -0.5}, "error": "invalid_argument", "source": "width must be at least 0"},
+    {"id": "dead_zone.width_nan", "op": "dead_zone", "args": {"samples": [1.0], "width": "nan"}, "error": "invalid_argument", "source": "width must be finite"},
+    {"id": "dead_zone.empty", "op": "dead_zone", "args": {"samples": [], "width": 1.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "dead_zone.nan_sample", "op": "dead_zone", "args": {"samples": [1.0, "nan"], "width": 1.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

@@ -1888,6 +1888,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `y[n] = x[offset + P⌊(n − offset)/P⌋]` for `n ≥ offset`, 0 before (from rest); exact copies.
   Integer `period ≥ 1`, integer `offset` in `[0, period)`; samples finite, non-empty, real or
   complex; output the same kind. **(implemented)**
+- **Dead zone** (`dead_zone(samples, width)`, C# `Dsp.DeadZone`,
+  [ADR 0246](adr/0246-dead-zone.md)): `y = 0` if `|x| ≤ width`, `x − width` above, `x + width`
+  below (the soft threshold; memoryless, continuous). Finite `width ≥ 0`; samples real, finite,
+  non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
