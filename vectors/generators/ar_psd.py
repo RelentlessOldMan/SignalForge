@@ -89,6 +89,8 @@ err("zero_error", "error must be positive", coefficients=[1.0, 0.5], error=0.0,
     sample_rate=1.0, nfft=8)
 err("zero_rate", "sample_rate must be positive", coefficients=[1.0, 0.5], error=1.0,
     sample_rate=0.0, nfft=8)
+err("empty", "coefficients must not be empty", coefficients=[], error=1.0, sample_rate=1.0,
+    nfft=8)
 err("nan", "coefficients must be finite", coefficients=[1.0, "nan"], error=1.0, sample_rate=1.0,
     nfft=8)
 

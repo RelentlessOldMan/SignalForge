@@ -4,12 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Next slice to choose**: the LPC toolbox (ADRs 0149, 0205–0223) is broad now. Before adding
-   to it, list the families in `docs/architecture.md`. Check for and pick a gap outside linear
-   prediction, and grep `docs/adr/` for it first (see Lessons). Candidates:
-   - a Goertzel bank;
-   - a fractional-delay Lagrange FIR;
-   - a Hilbert-transformer FIR design.
+1. **Lagrange fractional-delay FIR**: `lagrange_fir(delay, order)` in `dsp` (C# `Dsp.LagrangeFir`).
+   It gives the `order + 1` taps `h[k] = Π_{m≠k} (D − m)/(k − m)`, maximally flat at DC.
+   ADR 0040's `fractional_delay` is a windowed sinc, so this is new. Not built yet.
+   - It needs a convention for where `D` is measured from (tap 0) and the range in which `D` is
+     best, near `order/2`.
+   - Expected values: exact fractions (order 1 is linear interpolation, `[1 − D, D]`), and an
+     exact delay of polynomials up to the order.
 
 ## Built
 
@@ -2086,6 +2087,14 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors sum `|A_k|²` directly, with no FFT.
   Python 5966 passed, 2 skipped; .NET 5241 passed; conformance 3493/3493 in both. Version
   2026.11.17.21.
+- 2026-11-17: Goertzel (ADR 0224): `goertzel(samples, sample_rate, frequencies)` in `spectral`
+  (C# `Spectral.Goertzel`, real and complex samples).
+  - It gives the unscaled DTFT at any frequency, equal to the FFT on bins.
+  - The vectors are direct DTFT sums, checked against closed forms.
+  - It also fixes `ar_psd` raising IndexError, not ValueError, on empty coefficients.
+    `spectral._vector`, unlike `dsp._vector`, accepts empty arrays. A vector case was added.
+  Python 5980 passed, 2 skipped; .NET 5254 passed; conformance 3505/3505 in both. Version
+  2026.11.17.22.
 
 ## Not built
 

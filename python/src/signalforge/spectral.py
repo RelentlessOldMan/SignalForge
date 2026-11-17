@@ -974,6 +974,8 @@ def ar_psd(
     """The PSD ``sigma^2 / (fs |A|^2)`` of a given AR model on ``nfft`` bins, folded as Welch
     (conventions: AR model PSD; ADR 0223)."""
     a = _vector(coefficients, "coefficients")
+    if a.size == 0:
+        raise ValueError("coefficients must not be empty")
     if not np.all(np.isfinite(a)):
         raise ValueError("coefficients must be finite")
     if a[0] != 1:
@@ -2466,6 +2468,39 @@ def cepstral_lifter(coefficients: ArrayLike, length: int = 22) -> NDArray[np.flo
         raise ValueError("length must be at least 1")
     n = np.arange(c.shape[0])
     return np.asarray((1.0 + lift / 2 * np.sin(np.pi * n / lift)) * c, dtype=np.float64)
+
+
+def goertzel(
+    samples: ArrayLike, sample_rate: float, frequencies: ArrayLike
+) -> NDArray[np.complex128]:
+    """The unscaled DTFT ``sum x[n] exp(-2 pi i f n / fs)`` at each frequency, by the Goertzel
+    recursion (conventions: Goertzel; ADR 0224)."""
+    x = _vector(samples, "samples")
+    if x.size == 0:
+        raise ValueError("samples must not be empty")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    fs = real(sample_rate, "sample_rate")
+    if not (fs > 0 and math.isfinite(fs)):
+        raise ValueError("sample_rate must be positive and finite")
+    f = _vector(frequencies, "frequencies")
+    if f.size == 0:
+        raise ValueError("frequencies must not be empty")
+    if np.iscomplexobj(f):
+        raise ValueError("frequencies must be real")
+    if not np.all(np.isfinite(f)):
+        raise ValueError("frequencies must be finite")
+    w = 2.0 * math.pi * f / fs
+    c = 2.0 * np.cos(w)
+    s1 = np.zeros(f.size, dtype=x.dtype)
+    s2 = np.zeros(f.size, dtype=x.dtype)
+    for v in x:
+        s0 = v + c * s1 - s2
+        s2 = s1
+        s1 = s0
+    turn = np.cos(w) - 1j * np.sin(w)
+    phase = np.cos(w * (x.size - 1)) - 1j * np.sin(w * (x.size - 1))
+    return np.asarray(phase * (s1 - turn * s2), dtype=np.complex128)
 
 
 def find_tones(

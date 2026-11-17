@@ -372,6 +372,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Goertzel** ([ADR 0224](adr/0224-goertzel.md); `goertzel(samples, sample_rate, frequencies)`,
+  C# `Spectral.Goertzel`): unscaled DTFT `X(f) = Σ x[n] e^(−2πi f n/fs)`, `n` from 0 (equal to FFT
+  bin `k` at `f = k fs/N`); `s[n] = x[n] + 2cos ω s[n−1] − s[n−2]`,
+  `X = e^(−iω(N−1))(s[N−1] − e^(−iω) s[N−2])`. Any finite frequency. Finite, non-empty samples
+  and frequencies; sample rate positive and finite. **(implemented)**
 - **AR model PSD** ([ADR 0223](adr/0223-ar-psd.md); `ar_psd(coefficients, error, sample_rate,
   nfft, *, one_sided=None)`, C# `Spectral.ArPsd`): two-sided `σ²/(fs·|A_k|²)`,
   `A_k = Σ a_j e^(−2πi jk/M)`, `M = nfft`, folded as Welch. `nperseg = M`, `num_segments = 1`,
