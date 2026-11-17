@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "suite": "reflection_conversion",
+  "description": "Reflection coefficients and prediction filters (conventions: Reflection coefficients and prediction filters; ADR 0210).",
+  "cases": [
+    {"id": "reflection_to_lpc.order_one", "op": "reflection_to_lpc", "args": {"reflection": [-0.5]}, "expected": [1.0, -0.5], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = -1/2: a = [1, -1/2]"},
+    {"id": "lpc_to_reflection.order_one", "op": "lpc_to_reflection", "args": {"coefficients": [1.0, -0.5]}, "expected": [-0.5], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = -1/2: a = [1, -1/2]; the step-down recovers k"},
+    {"id": "reflection_to_lpc.order_two", "op": "reflection_to_lpc", "args": {"reflection": [0.5, -0.3]}, "expected": [1.0, 0.35, -0.3], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "a = [1, 1/2 + (-3/10)(1/2), -3/10] = [1, 7/20, -3/10]"},
+    {"id": "lpc_to_reflection.order_two", "op": "lpc_to_reflection", "args": {"coefficients": [1.0, 0.35, -0.3]}, "expected": [0.5, -0.3], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "a = [1, 1/2 + (-3/10)(1/2), -3/10] = [1, 7/20, -3/10]; the step-down recovers k"},
+    {"id": "reflection_to_lpc.burg_three_samples", "op": "reflection_to_lpc", "args": {"reflection": [-0.8888888888888888, 0.9058823529411765]}, "expected": [1.0, -1.6941176470588235, 0.9058823529411765], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "ADR 0205's x = [1, 2, 3]: k = -8/9, 77/85 and a = [1, -144/85, 77/85]"},
+    {"id": "lpc_to_reflection.burg_three_samples", "op": "lpc_to_reflection", "args": {"coefficients": [1.0, -1.6941176470588235, 0.9058823529411765]}, "expected": [-0.8888888888888888, 0.9058823529411765], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "ADR 0205's x = [1, 2, 3]: k = -8/9, 77/85 and a = [1, -144/85, 77/85]; the step-down recovers k"},
+    {"id": "reflection_to_lpc.order_three", "op": "reflection_to_lpc", "args": {"reflection": [0.5, -0.3333333333333333, 0.25]}, "expected": [1.0, 0.25, -0.25, 0.25], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "order 3 by the hand expansion in exact fractions"},
+    {"id": "lpc_to_reflection.order_three", "op": "lpc_to_reflection", "args": {"coefficients": [1.0, 0.25, -0.25, 0.25]}, "expected": [0.5, -0.3333333333333333, 0.25], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "order 3 by the hand expansion in exact fractions; the step-down recovers k"},
+    {"id": "reflection_to_lpc.complex_order_two", "op": "reflection_to_lpc", "args": {"reflection": {"re": [0.3, -0.2], "im": [0.4, 0.1]}}, "expected": {"re": [1.0, 0.28, -0.2], "im": [0.0, 0.51, 0.1]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex: a1 = k1 + k2 conj k1"},
+    {"id": "lpc_to_reflection.complex_order_two", "op": "lpc_to_reflection", "args": {"coefficients": {"re": [1.0, 0.28, -0.2], "im": [0.0, 0.51, 0.1]}}, "expected": {"re": [0.3, -0.2], "im": [0.4, 0.1]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex: a1 = k1 + k2 conj k1; the step-down recovers k"},
+    {"id": "reflection_to_lpc.complex_order_three", "op": "reflection_to_lpc", "args": {"reflection": {"re": [0.0, 0.1, -0.3], "im": [0.5, -0.6, 0.2]}}, "expected": {"re": [1.0, -0.44999999999999996, 0.28, -0.3], "im": [0.0, 0.29000000000000004, -0.5249999999999999, 0.2]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex order 3: a1 + k3 conj a2, a2 + k3 conj a1"},
+    {"id": "lpc_to_reflection.complex_order_three", "op": "lpc_to_reflection", "args": {"coefficients": {"re": [1.0, -0.44999999999999996, 0.28, -0.3], "im": [0.0, 0.29000000000000004, -0.5249999999999999, 0.2]}}, "expected": {"re": [0.0, 0.1, -0.3], "im": [0.5, -0.6, 0.2]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex order 3: a1 + k3 conj a2, a2 + k3 conj a1; the step-down recovers k"},
+    {"id": "reflection_to_lpc.unit_k", "op": "reflection_to_lpc", "args": {"reflection": [0.5, 1.0]}, "error": "invalid_argument", "source": "every |k| < 1"},
+    {"id": "reflection_to_lpc.empty", "op": "reflection_to_lpc", "args": {"reflection": []}, "error": "invalid_argument", "source": "reflection must not be empty"},
+    {"id": "reflection_to_lpc.nan", "op": "reflection_to_lpc", "args": {"reflection": [0.5, "nan"]}, "error": "invalid_argument", "source": "reflection must be finite"},
+    {"id": "lpc_to_reflection.a0_not_one", "op": "lpc_to_reflection", "args": {"coefficients": [2.0, 0.5]}, "error": "invalid_argument", "source": "coefficients[0] must be 1"},
+    {"id": "lpc_to_reflection.order_zero", "op": "lpc_to_reflection", "args": {"coefficients": [1.0]}, "error": "invalid_argument", "source": "the filter must have order at least 1"},
+    {"id": "lpc_to_reflection.not_minimum_phase", "op": "lpc_to_reflection", "args": {"coefficients": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "a = [1, 0, 1]: k2 = 1"},
+    {"id": "lpc_to_reflection.nan", "op": "lpc_to_reflection", "args": {"coefficients": [1.0, "nan"]}, "error": "invalid_argument", "source": "coefficients must be finite"}
+  ]
+}

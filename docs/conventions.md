@@ -1203,6 +1203,12 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `1 − 2 cos ω z^−1 + z^−2`, multiplied in ascending order onto the trivial factors (even `p`:
   `1 + z^−1` in `P`, `1 − z^−1` in `Q`; odd `p`: `1 − z^−2` in `Q`); `a = (P + Q)/2` without its
   last tap. Real, finite, non-empty, strictly ascending in `(0, π)`. **(implemented)**
+- **Reflection coefficients and prediction filters** (`reflection_to_lpc(reflection)`,
+  `lpc_to_reflection(coefficients)`, C# `Dsp.ReflectionToLpc`, `Dsp.LpcToReflection`,
+  [ADR 0210](adr/0210-reflection-conversion.md)): step-up from `a = [1]`,
+  `a ← pad(a) + k_m conj reverse(pad(a))`; step-down from `m = p`, `k_m = a_m[m]`,
+  `a_{m−1}[j] = (a_m[j] − k_m conj a_m[m−j])/(1 − |k_m|²)`. Every `|k| < 1`; finite, non-empty;
+  `a_0 = 1`, order ≥ 1; real in, real out. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

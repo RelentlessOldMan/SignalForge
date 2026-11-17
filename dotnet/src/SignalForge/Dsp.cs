@@ -469,6 +469,97 @@ public static partial class Dsp
         return z;
     }
 
+    /// <summary>The prediction-error filter of real reflection coefficients, by the step-up
+    /// recursion (conventions: Reflection coefficients and prediction filters; ADR 0210).</summary>
+    /// <param name="reflection">The coefficients <c>k_1 … k_p</c>, finite, each <c>|k| &lt; 1</c>, at least one.</param>
+    /// <returns>The filter, <c>a[0] = 1</c>, <c>p + 1</c> taps.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ReflectionToLpc(ReadOnlySpan<double> reflection) =>
+        [.. ReflectionToLpc((ReadOnlySpan<Complex>)ToComplexArray(reflection)).Select(v => v.Real)];
+
+    /// <summary>The prediction-error filter of complex reflection coefficients, by the step-up
+    /// recursion (conventions: Reflection coefficients and prediction filters; ADR 0210).</summary>
+    /// <param name="reflection">The coefficients <c>k_1 … k_p</c>, finite, each <c>|k| &lt; 1</c>, at least one.</param>
+    /// <returns>The filter, <c>a[0] = 1</c>, <c>p + 1</c> taps.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] ReflectionToLpc(ReadOnlySpan<Complex> reflection)
+    {
+        if (reflection.IsEmpty)
+            throw new ArgumentException("reflection must not be empty", nameof(reflection));
+        foreach (Complex v in reflection)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("reflection must be finite", nameof(reflection));
+            if (!(Complex.Abs(v) < 1))
+                throw new ArgumentException("every reflection coefficient must have |k| < 1", nameof(reflection));
+        }
+        int p = reflection.Length;
+        var a = new Complex[p + 1];
+        var previous = new Complex[p + 1];
+        a[0] = 1;
+        for (int m = 1; m <= p; m++)
+        {
+            Complex km = reflection[m - 1];
+            Array.Copy(a, previous, m);
+            for (int j = 1; j < m; j++)
+                a[j] = previous[j] + (km * Complex.Conjugate(previous[m - j]));
+            a[m] = km;
+        }
+        return a;
+    }
+
+    /// <summary>The reflection coefficients of a real prediction-error filter, by the step-down
+    /// recursion (conventions: Reflection coefficients and prediction filters; ADR 0210).</summary>
+    /// <param name="coefficients">The filter, finite, <c>a[0] = 1</c>, order at least 1, minimum phase.</param>
+    /// <returns>The coefficients <c>k_1 … k_p</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a recovered <c>|k| ≥ 1</c>.</exception>
+    public static double[] LpcToReflection(ReadOnlySpan<double> coefficients) =>
+        [.. LpcToReflection((ReadOnlySpan<Complex>)ToComplexArray(coefficients)).Select(v => v.Real)];
+
+    /// <summary>The reflection coefficients of a complex prediction-error filter, by the step-down
+    /// recursion (conventions: Reflection coefficients and prediction filters; ADR 0210).</summary>
+    /// <param name="coefficients">The filter, finite, <c>a[0] = 1</c>, order at least 1, minimum phase.</param>
+    /// <returns>The coefficients <c>k_1 … k_p</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a recovered <c>|k| ≥ 1</c>.</exception>
+    public static Complex[] LpcToReflection(ReadOnlySpan<Complex> coefficients)
+    {
+        if (coefficients.IsEmpty)
+            throw new ArgumentException("coefficients must not be empty", nameof(coefficients));
+        foreach (Complex v in coefficients)
+        {
+            if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
+                throw new ArgumentException("coefficients must be finite", nameof(coefficients));
+        }
+        if (coefficients[0] != Complex.One)
+            throw new ArgumentException("coefficients[0] must be 1", nameof(coefficients));
+        int p = coefficients.Length - 1;
+        if (p < 1)
+            throw new ArgumentException("the filter must have order at least 1", nameof(coefficients));
+        var k = new Complex[p];
+        var cur = coefficients.ToArray();
+        var next = new Complex[p + 1];
+        for (int m = p; m >= 1; m--)
+        {
+            Complex km = cur[m];
+            if (!(Complex.Abs(km) < 1))
+                throw new ArgumentException("a reflection coefficient has |k| >= 1: the filter is not minimum phase", nameof(coefficients));
+            k[m - 1] = km;
+            double scale = 1 - ((km.Real * km.Real) + (km.Imaginary * km.Imaginary));
+            for (int j = 0; j < m; j++)
+                next[j] = (cur[j] - (km * Complex.Conjugate(cur[m - j]))) / scale;
+            Array.Copy(next, cur, m);
+        }
+        return k;
+    }
+
+    private static Complex[] ToComplexArray(ReadOnlySpan<double> x)
+    {
+        var c = new Complex[x.Length];
+        for (int i = 0; i < x.Length; i++)
+            c[i] = x[i];
+        return c;
+    }
+
     private static int CorrelationLags(int length, int? maxLag, CorrelationScaling scaling)
     {
         int top = maxLag ?? length - 1;

@@ -288,6 +288,45 @@ def lsf_to_lpc(frequencies: ArrayLike) -> NDArray[np.float64]:
     return np.asarray(a[: p + 1], dtype=np.float64)
 
 
+def reflection_to_lpc(reflection: ArrayLike) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The prediction-error filter of the reflection coefficients ``k_1 ... k_p``, by the
+    step-up recursion (conventions: Reflection coefficients and prediction filters; ADR 0210)."""
+    k = _vector(reflection, "reflection")
+    if not np.all(np.isfinite(k)):
+        raise ValueError("reflection must be finite")
+    if not np.all(np.abs(k) < 1):
+        raise ValueError("every reflection coefficient must have |k| < 1")
+    a = np.ones(1, dtype=k.dtype)
+    for km in k:
+        a = np.append(a, 0.0)
+        a = a + km * np.conj(a[::-1])
+    return cast("NDArray[np.complex128] | NDArray[np.float64]", a)
+
+
+def lpc_to_reflection(coefficients: ArrayLike) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The reflection coefficients of a prediction-error filter, by the step-down recursion
+    (conventions: Reflection coefficients and prediction filters; ADR 0210)."""
+    a = _vector(coefficients, "coefficients")
+    if not np.all(np.isfinite(a)):
+        raise ValueError("coefficients must be finite")
+    if a[0] != 1:
+        raise ValueError("coefficients[0] must be 1")
+    p = a.size - 1
+    if p < 1:
+        raise ValueError("the filter must have order at least 1")
+    k = np.zeros(p, dtype=a.dtype)
+    cur = a.copy()
+    for m in range(p, 0, -1):
+        km = cur[m]
+        if not abs(km) < 1:
+            raise ValueError(
+                "a reflection coefficient has |k| >= 1: the filter is not minimum phase"
+            )
+        k[m - 1] = km
+        cur = (cur[:m] - km * np.conj(cur[m:0:-1])) / (1.0 - abs(km) ** 2)
+    return cast("NDArray[np.complex128] | NDArray[np.float64]", k)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Reflection to prediction filter**: `reflection_to_lpc(reflection)` and
-   `lpc_to_reflection(coefficients)` in `dsp` (C# `Dsp.ReflectionToLpc` and
-   `Dsp.LpcToReflection`, real and complex). Not built yet.
-   - The forward direction is the step-up recursion `a ← a + k·conj(reverse(a))`.
-   - The reverse is the step-down `a_{m−1}[j] = (a_m[j] − k_m·conj a_m[m−j])/(1 − |k_m|²)`, with
-     `k_m = a_m[m]`. A coefficient with `|k| ≥ 1` is `invalid_argument`.
-   - Expected values: order-2 hand expansions, and the `x = [1, 2, 3]` fractions of ADR 0205.
+1. **Lattice analysis filter**: `lattice_filter(samples, reflection)` in `dsp` (C#
+   `Dsp.LatticeFilter`, real and complex), the FIR lattice. Not built yet.
+   - It starts with `f_0[n] = b_0[n] = x[n]`.
+   - Then `f_m[n] = f_{m−1}[n] + k_m·b_{m−1}[n−1]` and `b_m[n] = b_{m−1}[n−1] + conj k_m·f_{m−1}[n]`,
+     from zero state.
+   - It returns the forward error `f_p`, which equals `x` filtered by `reflection_to_lpc(k)`.
+   - Expected values: stdlib hand recursions, and the direct-form convolution as a cross-check.
 
 ## Built
 
@@ -1982,6 +1982,14 @@ Updated with every chunk of work. Dates are absolute.
   - The tests round-trip Burg fits up to order 12.
   Python 5768 passed, 2 skipped; .NET 5058 passed; conformance 3324/3324 in both. Version
   2026.11.17.7.
+- 2026-11-17: Reflection coefficients and prediction filters (ADR 0210):
+  `reflection_to_lpc(reflection)` and `lpc_to_reflection(coefficients)` in `dsp` (C#
+  `Dsp.ReflectionToLpc` and `Dsp.LpcToReflection`, real and complex).
+  - They use the step-up and step-down recursions. Every `|k|` must be below 1.
+  - The vectors are hand expansions for orders 2 and 3, in exact fractions and complex, used in
+    both directions.
+  Python 5789 passed, 2 skipped; .NET 5078 passed; conformance 3343/3343 in both. Version
+  2026.11.17.8.
 
 ## Not built
 

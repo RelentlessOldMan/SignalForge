@@ -67,8 +67,10 @@ from .dsp import (
     levinson,
     line_spectral_frequencies,
     lpc_cepstrum,
+    lpc_to_reflection,
     lsf_to_lpc,
     pulse_shape,
+    reflection_to_lpc,
     resample,
     resample_taps,
     rrc_taps,
@@ -348,7 +350,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.7"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.8"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -554,6 +556,7 @@ __all__ = [
     "lomb_scargle_frequencies",
     "lomb_scargle_multiterm",
     "lpc_cepstrum",
+    "lpc_to_reflection",
     "lsf_to_lpc",
     "mel_filterbank",
     "mel_to_hz",
@@ -629,6 +632,7 @@ __all__ = [
     "read_wav_cues",
     "read_wav_info",
     "real_cepstrum",
+    "reflection_to_lpc",
     "resample",
     "resample_taps",
     "reverberation_time",

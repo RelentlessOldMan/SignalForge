@@ -499,6 +499,12 @@ public static class Conformance
                 : Bind((Reals(a.Get("r")), a.I("order")), t => Dsp.Levinson(t.Item1, t.Item2)),
             "burg" => a.Get("samples") is Complex[] bs ? Bind((bs, a.I("order")), t => Dsp.Burg(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.I("order")), t => Dsp.Burg(t.Item1, t.Item2)),
+            "reflection_to_lpc" => a.Get("reflection") is Complex[] rk
+                ? Bind(rk, t => Dsp.ReflectionToLpc(t))
+                : Bind(Reals(a.Get("reflection")), t => Dsp.ReflectionToLpc(t)),
+            "lpc_to_reflection" => a.Get("coefficients") is Complex[] lk
+                ? Bind(lk, t => Dsp.LpcToReflection(t))
+                : Bind(Reals(a.Get("coefficients")), t => Dsp.LpcToReflection(t)),
             "lsf_to_lpc" => Bind(Reals(a.Get("frequencies")), t => Dsp.LsfToLpc(t)),
             "line_spectral_frequencies" => Bind(Reals(a.Get("coefficients")), t => Dsp.LineSpectralFrequencies(t)),
             "lpc_cepstrum" => a.Get("coefficients") is Complex[] lpc
