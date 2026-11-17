@@ -419,6 +419,56 @@ public static partial class Dsp
         return [.. roots];
     }
 
+    /// <summary>The prediction-error filter whose line spectral frequencies are
+    /// <paramref name="frequencies"/>, the inverse of <see cref="LineSpectralFrequencies"/>
+    /// (conventions: LSF to prediction filter; ADR 0209).</summary>
+    /// <param name="frequencies">Finite angles in <c>(0, π)</c>, strictly ascending, at least one.</param>
+    /// <returns>The filter, <c>a[0] = 1</c>, one tap more than there are frequencies.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LsfToLpc(ReadOnlySpan<double> frequencies)
+    {
+        if (frequencies.IsEmpty)
+            throw new ArgumentException("frequencies must not be empty", nameof(frequencies));
+        foreach (double v in frequencies)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("frequencies must be finite", nameof(frequencies));
+        }
+        if (!(frequencies[0] > 0 && frequencies[^1] < Math.PI))
+            throw new ArgumentException("frequencies must lie in (0, pi)", nameof(frequencies));
+        for (int i = 1; i < frequencies.Length; i++)
+        {
+            if (!(frequencies[i] > frequencies[i - 1]))
+                throw new ArgumentException("frequencies must be strictly ascending", nameof(frequencies));
+        }
+        int p = frequencies.Length;
+        double[] polyP = p % 2 == 0 ? [1.0, 1.0] : [1.0];
+        double[] polyQ = p % 2 == 0 ? [1.0, -1.0] : [1.0, 0.0, -1.0];
+        for (int i = 0; i < p; i++)
+        {
+            double[] factor = [1.0, -2.0 * Math.Cos(frequencies[i]), 1.0];
+            if (i % 2 == 0)
+                polyP = PolyMultiply(polyP, factor);
+            else
+                polyQ = PolyMultiply(polyQ, factor);
+        }
+        var a = new double[p + 1];
+        for (int j = 0; j <= p; j++)
+            a[j] = 0.5 * (polyP[j] + polyQ[j]);
+        return a;
+    }
+
+    private static double[] PolyMultiply(double[] x, double[] y)
+    {
+        var z = new double[x.Length + y.Length - 1];
+        for (int i = 0; i < x.Length; i++)
+        {
+            for (int j = 0; j < y.Length; j++)
+                z[i + j] += x[i] * y[j];
+        }
+        return z;
+    }
+
     private static int CorrelationLags(int length, int? maxLag, CorrelationScaling scaling)
     {
         int top = maxLag ?? length - 1;

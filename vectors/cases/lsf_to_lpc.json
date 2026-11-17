@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "lsf_to_lpc",
+  "description": "LSF to prediction filter (conventions: LSF to prediction filter; ADR 0209).",
+  "cases": [
+    {"id": "lsf_to_lpc.order_one", "op": "lsf_to_lpc", "args": {"frequencies": [2.0943951023931957]}, "expected": [1.0, 0.5], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "w = acos(-0.5) = 2 pi/3 inverts to A = 1 + 0.5 z^-1"},
+    {"id": "lsf_to_lpc.order_two_real", "op": "lsf_to_lpc", "args": {"frequencies": [0.8127555613686607, 2.023612921539822]}, "expected": [1.0, -0.25, -0.125], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "roots 0.5, -0.25: LSFs by the order-2 closed form"},
+    {"id": "lsf_to_lpc.order_two_resonant", "op": "lsf_to_lpc", "args": {"frequencies": [0.6707463599217507, 0.9355721615359109]}, "expected": [1.0, -1.3767159371120794, 0.8100000000000002], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "roots 0.9 e^(+-0.7i): LSFs by the order-2 closed form"},
+    {"id": "lsf_to_lpc.order_three", "op": "lsf_to_lpc", "args": {"frequencies": [0.8912898645187783, 1.8161686052922628, 2.154749892484076]}, "expected": [1.0, 0.16583493847542785, 0.30708253076228614, -0.32], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "roots 0.5, 0.8 e^(+-2i): LSFs by the order-3 closed form"},
+    {"id": "lsf_to_lpc.order_three_flat", "op": "lsf_to_lpc", "args": {"frequencies": [0.7853981633974483, 1.5707963267948966, 2.356194490192345]}, "expected": [1.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "w = pi/4, pi/2, 3 pi/4 are the LSFs of A = 1"},
+    {"id": "lsf_to_lpc.order_four", "op": "lsf_to_lpc", "args": {"frequencies": [0.3, 0.9, 1.5, 2.2]}, "expected": [1.0, -1.0591825418086276, 0.41055449835690416, -0.19239056037634888, 0.007035160222009673], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "w = 0.3, 0.9, 1.5, 2.2: P = (1 + z^-1)(w0)(w2), Q = (1 - z^-1)(w1)(w3), a = (P + Q)/2"},
+    {"id": "lsf_to_lpc.empty", "op": "lsf_to_lpc", "args": {"frequencies": []}, "error": "invalid_argument", "source": "frequencies must not be empty"},
+    {"id": "lsf_to_lpc.not_ascending", "op": "lsf_to_lpc", "args": {"frequencies": [1.0, 0.5]}, "error": "invalid_argument", "source": "frequencies must be strictly ascending"},
+    {"id": "lsf_to_lpc.repeated", "op": "lsf_to_lpc", "args": {"frequencies": [1.0, 1.0]}, "error": "invalid_argument", "source": "frequencies must be strictly ascending"},
+    {"id": "lsf_to_lpc.zero", "op": "lsf_to_lpc", "args": {"frequencies": [0.0, 1.0]}, "error": "invalid_argument", "source": "frequencies must lie in (0, pi)"},
+    {"id": "lsf_to_lpc.above_pi", "op": "lsf_to_lpc", "args": {"frequencies": [1.0, 3.2]}, "error": "invalid_argument", "source": "frequencies must lie in (0, pi)"},
+    {"id": "lsf_to_lpc.nan", "op": "lsf_to_lpc", "args": {"frequencies": [0.5, "nan"]}, "error": "invalid_argument", "source": "frequencies must be finite"}
+  ]
+}

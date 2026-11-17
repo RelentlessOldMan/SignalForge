@@ -1198,6 +1198,11 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `i = 1 … G − 1`, `G = 256(p + 1)`, bisected on the same test until the midpoint meets an end
   (at most 200 halvings), midpoint returned; `p` angles in `(0, π)`, ascending. Real, finite,
   `a_0 = 1`, `p ≥ 1`; other than `p` roots is `invalid_argument`. **(implemented)**
+- **LSF to prediction filter** (`lsf_to_lpc(frequencies)`, C# `Dsp.LsfToLpc`,
+  [ADR 0209](adr/0209-lsf-to-lpc.md)): `ω_0, ω_2, …` to `P`, `ω_1, ω_3, …` to `Q`, each as
+  `1 − 2 cos ω z^−1 + z^−2`, multiplied in ascending order onto the trivial factors (even `p`:
+  `1 + z^−1` in `P`, `1 − z^−1` in `Q`; odd `p`: `1 − z^−2` in `Q`); `a = (P + Q)/2` without its
+  last tap. Real, finite, non-empty, strictly ascending in `(0, π)`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

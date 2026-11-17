@@ -4,13 +4,13 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **LSF to prediction filter**: `lsf_to_lpc(frequencies)` in `dsp` (C# `Dsp.LsfToLpc`), the
-   inverse of ADR 0208. Not built yet.
-   - `P` and `Q` are rebuilt as products of `1 − 2 cos ω z^−1 + z^−2`, alternating from the
-     lowest frequency, together with the trivial factors.
-   - The result is `a = (P + Q)/2` without the padded last tap.
-   - Frequencies must be strictly ascending in `(0, π)`.
-   - Expected values: the closed forms of ADR 0208, inverted.
+1. **Reflection to prediction filter**: `reflection_to_lpc(reflection)` and
+   `lpc_to_reflection(coefficients)` in `dsp` (C# `Dsp.ReflectionToLpc` and
+   `Dsp.LpcToReflection`, real and complex). Not built yet.
+   - The forward direction is the step-up recursion `a ← a + k·conj(reverse(a))`.
+   - The reverse is the step-down `a_{m−1}[j] = (a_m[j] − k_m·conj a_m[m−j])/(1 − |k_m|²)`, with
+     `k_m = a_m[m]`. A coefficient with `|k| ≥ 1` is `invalid_argument`.
+   - Expected values: order-2 hand expansions, and the `x = [1, 2, 3]` fractions of ADR 0205.
 
 ## Built
 
@@ -1974,6 +1974,14 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors use the closed forms for orders 1 to 3, as quadratics in `cos ω`.
   Python 5754 passed, 2 skipped; .NET 5045 passed; conformance 3312/3312 in both. Version
   2026.11.17.6.
+- 2026-11-17: LSF to prediction filter (ADR 0209): `lsf_to_lpc(frequencies)` in `dsp` (C#
+  `Dsp.LsfToLpc`), the inverse of ADR 0208.
+  - The frequencies alternate between `P` and `Q` as `1 − 2 cos ω z^−1 + z^−2` factors on top of
+    the trivial factors, and `a = (P + Q)/2`.
+  - The vectors invert the order 1 to 3 closed forms, plus a stdlib order-4 product.
+  - The tests round-trip Burg fits up to order 12.
+  Python 5768 passed, 2 skipped; .NET 5058 passed; conformance 3324/3324 in both. Version
+  2026.11.17.7.
 
 ## Not built
 

@@ -263,6 +263,31 @@ def line_spectral_frequencies(coefficients: ArrayLike) -> NDArray[np.float64]:
     return np.array(sorted(roots), dtype=np.float64)
 
 
+def lsf_to_lpc(frequencies: ArrayLike) -> NDArray[np.float64]:
+    """The prediction-error filter whose line spectral frequencies are ``frequencies``, the
+    inverse of ``line_spectral_frequencies`` (conventions: LSF to prediction filter; ADR 0209)."""
+    w = _vector(frequencies, "frequencies")
+    if np.iscomplexobj(w):
+        raise ValueError("frequencies must be real")
+    if not np.all(np.isfinite(w)):
+        raise ValueError("frequencies must be finite")
+    if not (w[0] > 0 and w[-1] < math.pi):
+        raise ValueError("frequencies must lie in (0, pi)")
+    if np.any(np.diff(w) <= 0):
+        raise ValueError("frequencies must be strictly ascending")
+    p = w.size
+    poly_p = np.array([1.0, 1.0]) if p % 2 == 0 else np.array([1.0])
+    poly_q = np.array([1.0, -1.0]) if p % 2 == 0 else np.array([1.0, 0.0, -1.0])
+    for i, wi in enumerate(w):
+        factor = np.array([1.0, -2.0 * math.cos(float(wi)), 1.0])
+        if i % 2 == 0:
+            poly_p = np.convolve(poly_p, factor)
+        else:
+            poly_q = np.convolve(poly_q, factor)
+    a = 0.5 * (poly_p + poly_q)
+    return np.asarray(a[: p + 1], dtype=np.float64)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")
