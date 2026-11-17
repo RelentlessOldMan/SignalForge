@@ -133,6 +133,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "window": spectral.window,
     "window_stats": spectral.window_stats,
     "welch_psd": spectral.welch_psd,
+    "coherence": spectral.coherence,
     "dpss_tapers": spectral.dpss_tapers,
     "harmonic_f_test": spectral.harmonic_f_test,
     "generalized_lomb_scargle": spectral.generalized_lomb_scargle,

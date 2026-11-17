@@ -344,6 +344,7 @@ public static class Conformance
                 t => Spectral.Window(t.Item1, t.Item2, t.Item3, t.Item4)),
             "window_stats" => Bind(Reals(a.Get("w")), w => Spectral.WindowStats(w)),
             "welch_psd" => Welch(a),
+            "coherence" => CoherenceOp(a),
             "dpss_tapers" => Bind((a.I("length"), a.D("half_bandwidth"), a.OptInt("num_tapers")), t => Spectral.DpssTapers(t.Item1, t.Item2, t.Item3)),
             "multitaper_psd" => MultitaperOp(a),
             "harmonic_f_test" => FTestOp(a),
@@ -686,6 +687,17 @@ public static class Conformance
         var (order, n, invert) = (a.I("order"), a.I("num_bits"), a.Flag("invert"));
         uint? seed = a.Has("seed") ? (a.I("seed") is var v and >= 0 ? (uint)v : throw new InvalidDataException("seed < 0")) : null;
         return () => Waveforms.Prbs(order, n, seed, invert);
+    }
+
+    private static Func<object?> CoherenceOp(Args a)
+    {
+        double[] x = Reals(a.Get("x")), y = Reals(a.Get("y"));
+        var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.OptInt("nperseg"), a.OptInt("noverlap"));
+        var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
+        double? beta = a.OptD("beta");
+        var detrend = DetrendName(a);
+        int? nfft = a.OptInt("nfft");
+        return () => Spectral.Coherence(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
     }
 
     private static Func<object?> Welch(Args a)

@@ -4,16 +4,16 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Magnitude-squared coherence**: `coherence(x, y, sample_rate, ...)` in `spectral` (C#
-   `Spectral.Coherence`). It is `|Pxy|²/(Pxx·Pyy)` from Welch-averaged auto- and cross-spectra.
-   Not built yet. Needs an ADR covering:
-   - the segment, window and overlap arguments (shared with the existing Welch PSD);
-   - the cross-spectrum conjugate order;
-   - bins where `Pxx·Pyy` is 0;
-   - one-sided frequencies.
+1. **Transfer-function estimate (H1)**: `transfer_function(x, y, sample_rate, ...)` in `spectral`
+   (C# `Spectral.TransferFunction`). It is `H1 = Σ conj X_s·Y_s / Σ|X_s|²` over the Welch segments
+   used by `coherence` (ADR 0192), giving the complex response from input `x` to output `y` on
+   one-sided bins. Not built yet. Needs an ADR covering:
+   - the H1 form (as opposed to H2 or Hv);
+   - bins where `Sxx = 0`;
+   - whether magnitude and phase are returned as well.
 
-   Expected values: identical inputs give 1; a single segment gives 1 everywhere; scaled or
-   filtered copies give 1.
+   Expected values: `y` an FIR-filtered `x` with a single rectangular segment gives the filter's
+   DFT exactly at bins where `X ≠ 0`; a scaled copy gives the scale.
 
 ## Built
 
@@ -1821,6 +1821,17 @@ Updated with every chunk of work. Dates are absolute.
   The vectors are delayed impulses, which give an exact unit peak, plus a zero-bin tie.
   Python 5555 passed, 2 skipped; .NET 4858 passed; conformance 3143/3143 in both. Version
   2026.11.16.89.
+- 2026-11-16: magnitude-squared coherence (ADR 0192): `coherence(x, y, sample_rate, ...)` in
+  `spectral` (C# `Spectral.Coherence`, in a new `Coherence.cs`), returning `Coherence(frequencies,
+  values, num_segments)`.
+  - It uses the `welch_psd` segments and arguments: `min(1, |Σ X·conj Y|²/(Σ|X|²·Σ|Y|²))` on
+    one-sided bins.
+  - It is NaN where an auto-spectrum is 0.
+  - The Welch segment helper now also returns each segment's complex spectrum, in both languages.
+
+  The vectors are hand-worked short segments, each checked against a direct DFT.
+  Python 5567 passed, 2 skipped; .NET 4869 passed; conformance 3153/3153 in both. Version
+  2026.11.16.90.
 
 ## Not built
 

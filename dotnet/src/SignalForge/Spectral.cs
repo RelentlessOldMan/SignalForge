@@ -1557,8 +1557,8 @@ public static partial class Spectral
     private sealed record Segments(int N, int Step, int Count, double[] W, double SampleRate, double Scale,
         Detrend Detrend, int Nfft)
     {
-        /// <summary>Adds |FFT(w·detrended segment s)|², unscaled and in FFT order, to <paramref name="acc"/>.</summary>
-        public void AddPower(ReadOnlySpan<Complex> x, int s, Complex[] buf, double[] acc)
+        /// <summary>Fills <paramref name="buf"/> with FFT(w·detrended segment s) at length Nfft, in FFT order.</summary>
+        public void Spectrum(ReadOnlySpan<Complex> x, int s, Complex[] buf)
         {
             var seg = x.Slice(s * Step, N);
             Complex mean = Complex.Zero, slope = Complex.Zero;
@@ -1583,6 +1583,12 @@ public static partial class Spectral
                 buf[i] = (seg[i] - mean - slope * (i - c)) * W[i];
             Array.Clear(buf, N, Nfft - N);
             Transform(buf);
+        }
+
+        /// <summary>Adds |FFT(w·detrended segment s)|², unscaled and in FFT order, to <paramref name="acc"/>.</summary>
+        public void AddPower(ReadOnlySpan<Complex> x, int s, Complex[] buf, double[] acc)
+        {
+            Spectrum(x, s, buf);
             for (int i = 0; i < Nfft; i++)
                 acc[i] += buf[i].Real * buf[i].Real + buf[i].Imaginary * buf[i].Imaginary;
         }

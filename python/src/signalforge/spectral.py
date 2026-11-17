@@ -169,13 +169,17 @@ class _Segments:
 
     def power(self, s: int) -> NDArray[np.float64]:
         """``|FFT(w*detrended segment s)|^2``, unscaled, in FFT order."""
+        return np.abs(self.spectrum(s)) ** 2
+
+    def spectrum(self, s: int) -> NDArray[np.complex128]:
+        """``FFT(w*detrended segment s)`` at length ``nfft``, in FFT order."""
         seg = self.x[s * self.step : s * self.step + self.n]
         if self.detrend != "none":
             seg = seg - np.mean(seg)
             if self.detrend == "linear" and self.n > 1:
                 t = np.arange(self.n) - (self.n - 1) / 2
                 seg = seg - t * (np.sum(t * seg) / np.sum(t * t))
-        return np.abs(np.fft.fft(seg * self.w, self.nfft)) ** 2
+        return np.asarray(np.fft.fft(seg * self.w, self.nfft), dtype=np.complex128)
 
     def fold(self, p: NDArray[np.float64]) -> NDArray[np.float64]:
         """FFT-order power to the PSD's bins: one-sided (doubled) or shifted."""
@@ -228,6 +232,57 @@ def _segments(
     w = _window_for_psd(window, n, beta)
     scale = 1.0 / (sample_rate * float(np.sum(w * w)))
     return _Segments(x, n, step, (x.size - n) // step + 1, w, scale, bool(one_sided), detrend, m)
+
+
+@dataclass(frozen=True)
+class Coherence:
+    """Magnitude-squared coherence per one-sided bin (conventions: Coherence; ADR 0192)."""
+
+    frequencies: NDArray[np.float64]
+    values: NDArray[np.float64]
+    num_segments: int
+
+
+def coherence(
+    x: ArrayLike,
+    y: ArrayLike,
+    sample_rate: float,
+    *,
+    nperseg: int | None = None,
+    noverlap: int | None = None,
+    window: str = "hann",
+    beta: float | None = None,
+    detrend: str = "none",
+    nfft: int | None = None,
+) -> Coherence:
+    """``min(1, |Sxy|^2/(Sxx Syy))`` over Welch's segments of ``x`` and ``y``, NaN where an
+    auto-spectrum is 0 (conventions: Coherence; ADR 0192)."""
+    a, b = np.asarray(x), np.asarray(y)
+    if a.shape != b.shape:
+        raise ValueError("x and y must have the same shape")
+    for v, what in ((a, "x"), (b, "y")):
+        if np.iscomplexobj(v):
+            raise ValueError(f"{what} must be real")
+        if not np.all(np.isfinite(v)):
+            raise ValueError(f"{what} must be finite")
+    gx = _segments(a, sample_rate, nperseg, noverlap, window, True, beta, detrend, nfft)
+    gy = _segments(b, sample_rate, nperseg, noverlap, window, True, beta, detrend, nfft)
+    m = gx.nfft // 2 + 1
+    sxy = np.zeros(m, dtype=np.complex128)
+    sxx = np.zeros(m)
+    syy = np.zeros(m)
+    for s in range(gx.count):
+        fx = gx.spectrum(s)[:m]
+        fy = gy.spectrum(s)[:m]
+        sxy += fx * np.conj(fy)
+        sxx += fx.real * fx.real + fx.imag * fx.imag
+        syy += fy.real * fy.real + fy.imag * fy.imag
+    d = sxx * syy
+    num = sxy.real * sxy.real + sxy.imag * sxy.imag
+    values = np.full(m, np.nan)
+    pos = d > 0
+    values[pos] = np.minimum(1.0, num[pos] / d[pos])
+    return Coherence(gx.frequencies(float(sample_rate)), values, gx.count)
 
 
 def welch_psd(

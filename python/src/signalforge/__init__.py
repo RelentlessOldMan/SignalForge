@@ -195,6 +195,7 @@ from .modulation import (
 from .spectral import (
     Acpr,
     BandEnergyRatio,
+    Coherence,
     DbBandwidth,
     HarmonicCentroid,
     HarmonicFTest,
@@ -225,6 +226,7 @@ from .spectral import (
     band_energy_ratio,
     cepstral_lifter,
     channel_power,
+    coherence,
     db_bandwidth,
     dct,
     delta,
@@ -328,7 +330,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.89"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.90"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -338,6 +340,7 @@ __all__ = [
     "CarrierRecovery",
     "CascadeNoiseFigure",
     "CepstrumPitch",
+    "Coherence",
     "DbBandwidth",
     "DfeEqualization",
     "DfeTaps",
@@ -435,6 +438,7 @@ __all__ = [
     "clock_jitter",
     "clock_offset",
     "cma_equalizer",
+    "coherence",
     "convolve",
     "cross_correlation",
     "db_bandwidth",

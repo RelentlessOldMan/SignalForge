@@ -359,6 +359,13 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
     bandwidth, set by the window and `nperseg` alone), and `span`: `(0, fs/2)` when one-sided, else
     none (see Bins as rectangles).
   **(implemented)**
+- **Coherence** ([ADR 0192](adr/0192-coherence.md); `coherence(x, y, sample_rate, *,
+  nperseg=None, noverlap=None, window="hann", beta=None, detrend="none", nfft=None)`, C#
+  `Spectral.Coherence`): the `welch_psd` segments of `x` and `y` alike; with `X_s`, `Y_s` the
+  length-`M` transforms of windowed segment `s`, for bins `k = 0 … ⌊M/2⌋` at `k·fs/M`:
+  `Sxy = Σ X_s·conj Y_s`, `Sxx = Σ|X_s|²`, `Syy = Σ|Y_s|²`, `C = min(1, |Sxy|²/(Sxx·Syy))`, NaN
+  where `Sxx·Syy = 0` (scale and doubling cancel). Result `Coherence(frequencies, values,
+  num_segments)`. Real, 1-D, finite, the same length. **(implemented)**
 - **Spectrogram** (`spectrogram(samples, sample_rate, nperseg, noverlap=None, window="hann",
   one_sided=None, beta=None, detrend="none", nfft=None)`): Welch's segments, each kept instead of
   averaged. `nperseg` is required (`1 ≤ nperseg ≤ L`); `noverlap`, the detrending, the window, the
