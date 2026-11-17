@@ -58,6 +58,62 @@ public static partial class Spectral
             n, 1, oneSided, sampleRate / m, sampleRate / n, m);
     }
 
+    /// <summary>The PSD <c>σ²/(fs·|A|²)</c> of a given real AR model on <paramref name="nfft"/>
+    /// bins: one-sided unless <paramref name="oneSided"/> is false (conventions: AR model PSD;
+    /// ADR 0223).</summary>
+    /// <param name="coefficients">The prediction-error filter, finite, <c>a[0] = 1</c>, not zero on any bin.</param>
+    /// <param name="error">The prediction error <c>σ²</c>, positive and finite.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="nfft">Number of frequency bins, at least <c>order + 1</c>.</param>
+    /// <param name="oneSided">Fold to bins 0 … ⌊nfft/2⌋, as Welch.</param>
+    /// <returns>The density, with <c>Nperseg = nfft</c>, <c>NumSegments = 1</c> and <c>EnbwHz = fs/nfft</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static SpectralDensity ArPsd(ReadOnlySpan<double> coefficients, double error, double sampleRate, int nfft,
+        bool oneSided = true) =>
+        ArModel(ToComplex(coefficients), error, sampleRate, nfft, oneSided);
+
+    /// <summary>The two-sided, shifted PSD <c>σ²/(fs·|A|²)</c> of a given complex AR model on
+    /// <paramref name="nfft"/> bins (conventions: AR model PSD; ADR 0223).</summary>
+    /// <param name="coefficients">The prediction-error filter, finite, <c>a[0] = 1</c>, not zero on any bin.</param>
+    /// <param name="error">The prediction error <c>σ²</c>, positive and finite.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="nfft">Number of frequency bins, at least <c>order + 1</c>.</param>
+    /// <returns>The density, with <c>Nperseg = nfft</c>, <c>NumSegments = 1</c> and <c>EnbwHz = fs/nfft</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static SpectralDensity ArPsd(ReadOnlySpan<Complex> coefficients, double error, double sampleRate, int nfft) =>
+        ArModel(coefficients.ToArray(), error, sampleRate, nfft, oneSided: false);
+
+    private static SpectralDensity ArModel(Complex[] a, double error, double sampleRate, int nfft, bool oneSided)
+    {
+        if (a.Length == 0)
+            throw new ArgumentException("coefficients must not be empty", nameof(a));
+        foreach (Complex v in a)
+        {
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("coefficients must be finite", nameof(a));
+        }
+        if (a[0] != Complex.One)
+            throw new ArgumentException("coefficients[0] must be 1", nameof(a));
+        Check.PositiveFinite(error, nameof(error));
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        if (nfft < a.Length)
+            throw new ArgumentException("nfft must be at least order + 1", nameof(nfft));
+        var buf = new Complex[nfft];
+        Array.Copy(a, buf, a.Length);
+        Transform(buf);
+        var two = new double[nfft];
+        for (int k = 0; k < nfft; k++)
+        {
+            double den = (buf[k].Real * buf[k].Real) + (buf[k].Imaginary * buf[k].Imaginary);
+            if (den == 0)
+                throw new ArgumentException("the filter must not vanish on a frequency bin", nameof(a));
+            two[k] = error / (sampleRate * den);
+        }
+        var g = new Segments(nfft, nfft, 1, [], sampleRate, 1.0, Detrend.None, nfft);
+        return new SpectralDensity(g.Frequencies(oneSided), g.Fold(two, 1.0, oneSided), sampleRate,
+            nfft, 1, oneSided, sampleRate / nfft, sampleRate / nfft, nfft);
+    }
+
     /// <summary>Burg's AR PSD <c>σ²/(fs·|A|²)</c> of real samples, the reflection coefficients fitted
     /// to the forward and backward errors: one-sided unless <paramref name="oneSided"/> is false
     /// (conventions: Burg AR PSD; ADR 0204).</summary>

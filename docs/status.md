@@ -4,14 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **AR model PSD**: `ar_psd(coefficients, error, sample_rate, nfft, one_sided)` in `spectral`
-   (C# `Spectral.ArPsd`, real and complex). It gives the PSD `σ²/(fs|A|²)` of a given model,
-   folded as `yule_walker_psd` and `burg_psd` (ADR 0203, ADR 0204) fold theirs. Those two fit
-   samples, and this one takes the model, for example from `cepstrum_to_lpc` or `lsf_to_lpc`.
-   Not built yet.
-   - The ADR decides the return type, because `SpectralDensity` carries segment fields that a
-     model has no value for.
-   - Expected values: order 1 in closed form, `σ²/(fs(1 + a² + 2a cos ω))`.
+1. **Next slice to choose**: the LPC toolbox (ADRs 0149, 0205–0223) is broad now. Before adding
+   to it, list the families in `docs/architecture.md`. Check for and pick a gap outside linear
+   prediction, and grep `docs/adr/` for it first (see Lessons). Candidates:
+   - a Goertzel bank;
+   - a fractional-delay Lagrange FIR;
+   - a Hilbert-transformer FIR design.
 
 ## Built
 
@@ -2081,6 +2079,13 @@ Updated with every chunk of work. Dates are absolute.
   - The stale Next item (LSFs, already built as ADR 0208/0209) was replaced.
   Python 5950 passed, 2 skipped; .NET 5227 passed; conformance 3480/3480 in both. Version
   2026.11.17.20.
+- 2026-11-17: AR model PSD (ADR 0223): `ar_psd(coefficients, error, sample_rate, nfft, *,
+  one_sided=None)` in `spectral` (C# `Spectral.ArPsd`, real and complex).
+  - It gives `σ²/(fs|A|²)` of a given model, folded as Yule-Walker and Burg fold theirs, as a
+    `SpectralDensity` with `nperseg = nfft`.
+  - The vectors sum `|A_k|²` directly, with no FFT.
+  Python 5966 passed, 2 skipped; .NET 5241 passed; conformance 3493/3493 in both. Version
+  2026.11.17.21.
 
 ## Not built
 

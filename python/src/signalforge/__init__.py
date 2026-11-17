@@ -248,6 +248,7 @@ from .spectral import (
     acpr,
     acpr_rrc,
     analytic_signal,
+    ar_psd,
     band_energy_ratio,
     burg_psd,
     cepstral_lifter,
@@ -365,7 +366,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.20"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.21"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -442,6 +443,7 @@ __all__ = [
     "amp_to_db",
     "analytic_signal",
     "ar_order_selection",
+    "ar_psd",
     "ar_spectral_flatness",
     "arcsine_to_reflection",
     "autocorrelation",

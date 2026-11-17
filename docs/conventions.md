@@ -372,6 +372,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **AR model PSD** ([ADR 0223](adr/0223-ar-psd.md); `ar_psd(coefficients, error, sample_rate,
+  nfft, *, one_sided=None)`, C# `Spectral.ArPsd`): two-sided `σ²/(fs·|A_k|²)`,
+  `A_k = Σ a_j e^(−2πi jk/M)`, `M = nfft`, folded as Welch. `nperseg = M`, `num_segments = 1`,
+  `bin_width = enbw_hz = fs/M`. Filter finite with `a[0] = 1`; error and sample rate positive and
+  finite; `nfft ≥ order + 1`; `A_k ≠ 0` on every bin; one-sided needs real coefficients.
+  **(implemented)**
 - **Burg AR PSD** ([ADR 0204](adr/0204-burg-psd.md); `burg_psd(samples, sample_rate, order, *,
   nfft=None, one_sided=None)`, C# `Spectral.BurgPsd`): `f = b = x`, `σ² = mean |x|²`; per order
   `k = −2 Σ F·B*/Σ(|F|² + |B|²)` with `F = f[1:]`, `B = b[:-1]`, `f ← F + k·B`, `b ← B + k*·F`,

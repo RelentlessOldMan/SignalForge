@@ -963,6 +963,53 @@ def burg_psd(
     )
 
 
+def ar_psd(
+    coefficients: ArrayLike,
+    error: float,
+    sample_rate: float,
+    nfft: int,
+    *,
+    one_sided: bool | None = None,
+) -> SpectralDensity:
+    """The PSD ``sigma^2 / (fs |A|^2)`` of a given AR model on ``nfft`` bins, folded as Welch
+    (conventions: AR model PSD; ADR 0223)."""
+    a = _vector(coefficients, "coefficients")
+    if not np.all(np.isfinite(a)):
+        raise ValueError("coefficients must be finite")
+    if a[0] != 1:
+        raise ValueError("coefficients[0] must be 1")
+    e = real(error, "error")
+    if not (e > 0 and math.isfinite(e)):
+        raise ValueError("error must be positive and finite")
+    if not real(sample_rate, "sample_rate") > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    is_complex = np.iscomplexobj(a)
+    if one_sided is None:
+        one_sided = not is_complex
+    elif one_sided and is_complex:
+        raise ValueError("a one-sided PSD needs real coefficients")
+    m = count(nfft, "nfft")
+    if m < a.size:
+        raise ValueError("nfft must be at least order + 1")
+    spectrum = np.fft.fft(a, m)
+    den = spectrum.real**2 + spectrum.imag**2
+    if np.any(den == 0):
+        raise ValueError("the filter must not vanish on a frequency bin")
+    two = e / (sample_rate * den)
+    g = _Segments(np.zeros(m), m, m, 1, np.ones(m), 1.0, bool(one_sided), "none", m)
+    return SpectralDensity(
+        frequencies=g.frequencies(sample_rate),
+        psd=np.asarray(g.fold(two), dtype=np.float64),
+        sample_rate=float(sample_rate),
+        nperseg=m,
+        num_segments=1,
+        one_sided=bool(one_sided),
+        bin_width=sample_rate / m,
+        enbw_hz=sample_rate / m,
+        nfft=m,
+    )
+
+
 def harmonic_f_test(
     samples: ArrayLike,
     sample_rate: float,

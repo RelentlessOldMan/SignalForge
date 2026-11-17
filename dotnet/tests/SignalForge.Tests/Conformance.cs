@@ -364,6 +364,7 @@ public static class Conformance
             "multitaper_psd" => MultitaperOp(a),
             "yule_walker_psd" => YuleWalkerOp(a),
             "burg_psd" => YuleWalkerOp(a, burg: true),
+            "ar_psd" => ArPsdOp(a),
             "harmonic_f_test" => FTestOp(a),
             "multitaper_line_removal" => LineRemovalOp(a),
             "spectrogram" => SpectrogramOp(a),
@@ -966,6 +967,21 @@ public static class Conformance
             return () => Spectral.HarmonicFTest(cs, fs, nw, k, nfft);
         double[] x = Reals(samples);
         return () => Spectral.HarmonicFTest(x, fs, nw, k, nfft);
+    }
+
+    private static Func<object?> ArPsdOp(Args a)
+    {
+        object? coefficients = a.Get("coefficients");
+        var (error, fs, nfft) = (a.D("error"), a.D("sample_rate"), a.I("nfft"));
+        if (coefficients is Complex[] cs)
+        {
+            if (a.Flag("one_sided"))
+                throw new InvalidDataException("one_sided=true with complex coefficients has no C# form");
+            return () => Spectral.ArPsd(cs, error, fs, nfft);
+        }
+        double[] x = Reals(coefficients);
+        bool oneSided = a.Flag("one_sided", dflt: true);
+        return () => Spectral.ArPsd(x, error, fs, nfft, oneSided);
     }
 
     private static Func<object?> YuleWalkerOp(Args a, bool burg = false)
