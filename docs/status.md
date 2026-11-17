@@ -6,7 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a slew-rate limiter (`slew_limiter(samples, rise, fall)`, per-sample step limits).
+   - a peak hold (`peak_hold(samples, hold, release)`, holding each peak for `hold` samples and
+     then decaying, for meters);
+   - a Schmitt trigger (`schmitt_trigger(samples, low, high)`, a comparator with hysteresis).
 
 ## Built
 
@@ -2215,6 +2217,13 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact rational means.
   Python 6212 passed, 2 skipped; .NET 5474 passed; conformance 3706/3706 in both. Version
   2026.11.17.40.
+- 2026-11-17: Slew-rate limiter (ADR 0242): `slew_limiter(samples, rise, fall)` in `dsp` (C#
+  `Dsp.SlewLimiter`, real only).
+  - Each step from the previous output is clamped to `[-fall, rise]`, starting from rest.
+  - Within the limits the output is `x[n]` exactly.
+  - The vectors are exact rationals, checked against the closed form for a step.
+  Python 6223 passed, 2 skipped; .NET 5484 passed; conformance 3715/3715 in both. Version
+  2026.11.17.41.
 
 ## Not built
 

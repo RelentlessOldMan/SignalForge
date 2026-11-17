@@ -2508,6 +2508,35 @@ def envelope_follower(samples: ArrayLike, attack: float, release: float) -> NDAr
     return e
 
 
+def slew_limiter(samples: ArrayLike, rise: float, fall: float) -> NDArray[np.float64]:
+    """Limit each step to at most ``rise`` up and ``fall`` down, from rest (conventions:
+    Slew-rate limiter; ADR 0242)."""
+    up = real(rise, "rise")
+    if not up > 0:
+        raise ValueError("rise must be positive")
+    down = real(fall, "fall")
+    if not down > 0:
+        raise ValueError("fall must be positive")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y = np.empty(x.size)
+    prev = 0.0
+    for n in range(x.size):
+        v = float(x[n])
+        d = v - prev
+        if d > up:
+            prev = prev + up
+        elif d < -down:
+            prev = prev - down
+        else:
+            prev = v
+        y[n] = prev
+    return y
+
+
 def moving_average(samples: ArrayLike, length: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Mean of the ``length`` samples ending at each sample, zeros before the start (conventions:
     Moving average; ADR 0241)."""

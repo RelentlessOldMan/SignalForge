@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "slew_limiter",
+  "description": "Slew-rate limiter (conventions: Slew-rate limiter; ADR 0242).",
+  "cases": [
+    {"id": "slew_limiter.step_up", "op": "slew_limiter", "args": {"samples": [3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0], "rise": 0.5, "fall": 1.0}, "expected": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.0, 3.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "step to 3 from rest: min(3, (n + 1) / 2)"},
+    {"id": "slew_limiter.step_down", "op": "slew_limiter", "args": {"samples": [-2.0, -2.0, -2.0, -2.0, -2.0, -2.0], "rise": 1.0, "fall": 0.375}, "expected": [-0.375, -0.75, -1.125, -1.5, -1.875, -2.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "step to -2: falls 3/8 per sample"},
+    {"id": "slew_limiter.within", "op": "slew_limiter", "args": {"samples": [0.25, 0.5, 0.375, 0.125, -0.25], "rise": 0.5, "fall": 0.5}, "expected": [0.25, 0.5, 0.375, 0.125, -0.25], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "small steps pass unchanged"},
+    {"id": "slew_limiter.square", "op": "slew_limiter", "args": {"samples": [2.0, 2.0, 2.0, 2.0, -2.0, -2.0, -2.0, -2.0, -2.0, 2.0, 2.0], "rise": 0.75, "fall": 1.25}, "expected": [0.75, 1.5, 2.0, 2.0, 0.75, -0.5, -1.75, -2.0, -2.0, -1.25, -0.5], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "square wave: asymmetric ramps"},
+    {"id": "slew_limiter.mixed", "op": "slew_limiter", "args": {"samples": [0.5, 1.5, -1.0, 2.25, 0.0, -0.75, 1.0, 3.0, -2.0, 0.25], "rise": 0.625, "fall": 0.875}, "expected": [0.5, 1.125, 0.25, 0.875, 0.0, -0.75, -0.125, 0.5, -0.375, 0.25], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "mixed"},
+    {"id": "slew_limiter.rise_zero", "op": "slew_limiter", "args": {"samples": [1.0], "rise": 0.0, "fall": 1.0}, "error": "invalid_argument", "source": "rise must be positive"},
+    {"id": "slew_limiter.fall_negative", "op": "slew_limiter", "args": {"samples": [1.0], "rise": 1.0, "fall": -0.5}, "error": "invalid_argument", "source": "fall must be positive"},
+    {"id": "slew_limiter.empty", "op": "slew_limiter", "args": {"samples": [], "rise": 1.0, "fall": 1.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "slew_limiter.nan_sample", "op": "slew_limiter", "args": {"samples": [1.0, "nan"], "rise": 1.0, "fall": 1.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

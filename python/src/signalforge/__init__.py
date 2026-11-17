@@ -106,6 +106,7 @@ from .dsp import (
     savgol_coefficients,
     savgol_filter,
     schur,
+    slew_limiter,
     sos_group_delay,
     sos_response,
     thiran_allpass,
@@ -386,7 +387,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.40"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.41"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -712,6 +713,7 @@ __all__ = [
     "schroeder_decay",
     "schur",
     "sfdr",
+    "slew_limiter",
     "sliding_dft",
     "sos_group_delay",
     "sos_response",

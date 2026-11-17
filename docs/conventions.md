@@ -1870,6 +1870,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   0 (from rest: always divided by `N`); summed directly, oldest first, then divided. Integer
   `length ≥ 1`; samples finite, non-empty, real or complex; output the same kind.
   **(implemented)**
+- **Slew-rate limiter** (`slew_limiter(samples, rise, fall)`, C# `Dsp.SlewLimiter`,
+  [ADR 0242](adr/0242-slew-limiter.md)): `y[−1] = 0`, `d = x[n] − y[n−1]`;
+  `y[n] = y[n−1] + rise` if `d > rise`, `y[n−1] − fall` if `d < −fall`, else `x[n]` exactly.
+  Finite `rise, fall > 0`; samples real, finite, non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
