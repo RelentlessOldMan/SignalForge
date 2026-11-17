@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Savitzky–Golay smoothing and derivative coefficients (`savgol_coefficients(length,
-     order, *, derivative=0)`) and the filter;
    - a running median filter (`median_filter(samples, length)`).
 
 ## Built
@@ -2157,6 +2155,14 @@ Updated with every chunk of work. Dates are absolute.
     response on the grid.
   Python 6098 passed, 2 skipped; .NET 5366 passed; conformance 3608/3608 in both. Version
   2026.11.17.31.
+- 2026-11-17: Savitzky–Golay (ADR 0233): `savgol_coefficients(length, order, *, derivative=0,
+  position=0)` and `savgol_filter(samples, length, order, *, derivative=0)` in `dsp` (C#
+  `Dsp.SavgolCoefficients`, `Dsp.SavgolFilter`).
+  - The least-squares fit uses modified Gram–Schmidt on scaled offsets. The filter's edge
+    outputs come from the fit to the first or the last window.
+  - The vectors use exact rational normal equations, checked against the classic tables.
+  Python 6119 passed, 2 skipped; .NET 5386 passed; conformance 3627/3627 in both. Version
+  2026.11.17.32.
 
 ## Not built
 

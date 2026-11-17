@@ -1820,6 +1820,16 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `j/T ≤ cutoff/sample_rate`, else 0, `j = 0 … c`; `h[n] = (D_0 + 2 Σ_{j=1}^{c} D_j cos(2πj(n−c)/T))/T`.
   Rules: integers `≥ 1`, `stages ≤ 64`, odd `num_taps`, `sample_rate` finite and positive,
   `0 < cutoff ≤ sample_rate/(2M)`, every `D_j` finite. **(implemented)**
+- **Savitzky–Golay** (`savgol_coefficients(length, order, *, derivative=0, position=0)`,
+  `savgol_filter(samples, length, order, *, derivative=0)`, C# `Dsp.SavgolCoefficients`,
+  `Dsp.SavgolFilter`, [ADR 0233](adr/0233-savitzky-golay.md)): `h = (length−1)/2`; `c[k+h]`,
+  `k = −h … h`, gives the `derivative`-th derivative (per sample) at offset `position` of the
+  degree-`order` least-squares polynomial through `(k, x[k])`; applied as a correlation,
+  `Σ_k c[k+h] x[n+k]`. Computed with `t = k/s`, `s = max(h, 1)`, modified Gram–Schmidt `A = QR`,
+  `Rᵀz = v`, `c = Qz`. Filter: centre coefficients inside; the first and last `h` outputs evaluate
+  the fit to the first or last `length` samples at their own offsets. Rules: odd `length ≥ 1`,
+  `0 ≤ order < length`, `0 ≤ derivative ≤ order`, `|position| ≤ h`; samples real, finite, at least
+  `length`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

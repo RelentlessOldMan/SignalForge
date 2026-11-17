@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "suite": "savgol_filter",
+  "description": "Savitzky-Golay (conventions: Savitzky-Golay; ADR 0233).",
+  "cases": [
+    {"id": "savgol_filter.quadratic_exact", "op": "savgol_filter", "args": {"samples": [3.0, 2.25, 2.0, 2.25, 3.0, 4.25, 6.0, 8.25, 11.0, 14.25], "length": 5, "order": 2}, "expected": [3.0, 2.25, 2.0, 2.25, 3.0, 4.25, 6.0, 8.25, 11.0, 14.25], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "a quadratic is reproduced exactly, edges included"},
+    {"id": "savgol_filter.quadratic_slope", "op": "savgol_filter", "args": {"samples": [3.0, 2.25, 2.0, 2.25, 3.0, 4.25, 6.0, 8.25, 11.0, 14.25], "length": 5, "order": 2, "derivative": 1}, "expected": [-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "its derivative -1 + k/2, edges included"},
+    {"id": "savgol_filter.noisy", "op": "savgol_filter", "args": {"samples": [0.5, 1.25, -0.75, 2.0, 1.5, 0.25, -1.0, 0.75, 1.75, -0.5, 0.0, 1.0], "length": 7, "order": 3}, "expected": [0.6904761904761905, 0.38095238095238093, 0.6845238095238095, 1.1428571428571428, 0.7023809523809523, 0.5238095238095238, 0.27380952380952384, 0.2857142857142857, 0.39285714285714285, 0.31547619047619047, 0.36904761904761907, 0.7202380952380952], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "length 7, order 3 on mixed data"},
+    {"id": "savgol_filter.short", "op": "savgol_filter", "args": {"samples": [1.0, 4.0, 2.0], "length": 3, "order": 1}, "expected": [1.8333333333333333, 2.3333333333333335, 2.8333333333333335], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "samples exactly one window long: all from the one fit"},
+    {"id": "savgol_filter.too_short", "op": "savgol_filter", "args": {"samples": [1.0, 2.0], "length": 3, "order": 1}, "error": "invalid_argument", "source": "samples shorter than length"},
+    {"id": "savgol_filter.nan_sample", "op": "savgol_filter", "args": {"samples": [1.0, "nan", 2.0], "length": 3, "order": 1}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

@@ -247,6 +247,8 @@ OPS: dict[str, Callable[..., Any]] = {
     "cic_taps": dsp.cic_taps,
     "cic_compensator": dsp.cic_compensator,
     "cic_decimate": dsp.cic_decimate,
+    "savgol_coefficients": dsp.savgol_coefficients,
+    "savgol_filter": dsp.savgol_filter,
     "cic_interpolate": dsp.cic_interpolate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
     "butterworth_lowpass": dsp.butterworth_lowpass,

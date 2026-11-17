@@ -2279,6 +2279,97 @@ def cic_compensator(
     return h
 
 
+def savgol_coefficients(
+    length: int, order: int, *, derivative: int = 0, position: int = 0
+) -> NDArray[np.float64]:
+    """Savitzky-Golay weights ``c[k + h]``, ``k = -h ... h``: the ``derivative``-th derivative at
+    offset ``position`` of the least-squares polynomial of degree ``order``, applied as
+    ``sum c[k + h] x[k]`` (conventions: Savitzky-Golay; ADR 0233)."""
+    m = count(length, "length")
+    if m < 1 or m % 2 == 0:
+        raise ValueError("length must be odd and at least 1")
+    p = count(order, "order")
+    if not 0 <= p < m:
+        raise ValueError("order must be in 0 ... length - 1")
+    d = count(derivative, "derivative")
+    if not 0 <= d <= p:
+        raise ValueError("derivative must be in 0 ... order")
+    h = (m - 1) // 2
+    if isinstance(position, bool | np.bool_):
+        raise ValueError("position must be an integer")
+    pos = count(abs(position), "position") * (1 if position >= 0 else -1)
+    if abs(pos) > h:
+        raise ValueError("position must be in -h ... h")
+    return _savgol(m, p, d, pos)
+
+
+def _savgol(m: int, p: int, d: int, pos: int) -> NDArray[np.float64]:
+    h = (m - 1) // 2
+    s = float(max(h, 1))
+    t = [(k - h) / s for k in range(m)]
+    q = [[t[k] ** i for k in range(m)] for i in range(p + 1)]
+    r = [[0.0] * (p + 1) for _ in range(p + 1)]
+    for j in range(p + 1):
+        v = q[j]
+        for i in range(j):
+            dot = 0.0
+            for k in range(m):
+                dot += q[i][k] * v[k]
+            r[i][j] = dot
+            v = [v[k] - dot * q[i][k] for k in range(m)]
+        nrm = math.sqrt(sum(vk * vk for vk in v))
+        r[j][j] = nrm
+        q[j] = [vk / nrm for vk in v]
+    rhs = [0.0] * (p + 1)
+    for i in range(d, p + 1):
+        rhs[i] = math.prod(range(i - d + 1, i + 1)) * (pos / s) ** (i - d) / s**d
+    z = [0.0] * (p + 1)
+    for i in range(p + 1):
+        acc = rhs[i]
+        for j in range(i):
+            acc -= r[j][i] * z[j]
+        z[i] = acc / r[i][i]
+    c = np.zeros(m)
+    for k in range(m):
+        acc = 0.0
+        for i in range(p + 1):
+            acc += q[i][k] * z[i]
+        c[k] = acc
+    return c
+
+
+def savgol_filter(
+    samples: ArrayLike, length: int, order: int, *, derivative: int = 0
+) -> NDArray[np.float64]:
+    """Savitzky-Golay smoothing (``derivative=0``) or derivative of real samples, with the edge
+    outputs taken from the fit to the first or last window (conventions: Savitzky-Golay; ADR
+    0233)."""
+    c0 = savgol_coefficients(length, order, derivative=derivative)
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    m = c0.size
+    if x.size < m:
+        raise ValueError("samples must be at least length long")
+    h = (m - 1) // 2
+    n_x = x.size
+    y = np.zeros(n_x)
+    for n in range(n_x):
+        if n < h:
+            c, start = _savgol(m, order, derivative, n - h), 0
+        elif n >= n_x - h:
+            c, start = _savgol(m, order, derivative, n - (n_x - 1 - h)), n_x - m
+        else:
+            c, start = c0, n - h
+        acc = 0.0
+        for j in range(m):
+            acc += float(c[j]) * float(x[start + j])
+        y[n] = acc
+    return y
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

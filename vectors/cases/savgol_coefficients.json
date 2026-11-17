@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "savgol_coefficients",
+  "description": "Savitzky-Golay (conventions: Savitzky-Golay; ADR 0233).",
+  "cases": [
+    {"id": "savgol_coefficients.table_5_2", "op": "savgol_coefficients", "args": {"length": 5, "order": 2}, "expected": [-0.08571428571428572, 0.34285714285714286, 0.4857142857142857, 0.34285714285714286, -0.08571428571428572], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "Savitzky-Golay table: (-3, 12, 17, 12, -3)/35"},
+    {"id": "savgol_coefficients.table_7_2", "op": "savgol_coefficients", "args": {"length": 7, "order": 2}, "expected": [-0.09523809523809523, 0.14285714285714285, 0.2857142857142857, 0.3333333333333333, 0.2857142857142857, 0.14285714285714285, -0.09523809523809523], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "Savitzky-Golay table: (-2, 3, 6, 7, 6, 3, -2)/21"},
+    {"id": "savgol_coefficients.deriv_5_2", "op": "savgol_coefficients", "args": {"length": 5, "order": 2, "derivative": 1}, "expected": [-0.2, -0.1, 0.0, 0.1, 0.2], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "first derivative table: (-2, -1, 0, 1, 2)/10"},
+    {"id": "savgol_coefficients.quartic_11", "op": "savgol_coefficients", "args": {"length": 11, "order": 4}, "expected": [0.04195804195804196, -0.1048951048951049, -0.023310023310023312, 0.13986013986013987, 0.27972027972027974, 0.3333333333333333, 0.27972027972027974, 0.13986013986013987, -0.023310023310023312, -0.1048951048951049, 0.04195804195804196], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "length 11, order 4, exact normal equations"},
+    {"id": "savgol_coefficients.second_deriv", "op": "savgol_coefficients", "args": {"length": 9, "order": 3, "derivative": 2}, "expected": [0.06060606060606061, 0.015151515151515152, -0.017316017316017316, -0.0367965367965368, -0.04329004329004329, -0.0367965367965368, -0.017316017316017316, 0.015151515151515152, 0.06060606060606061], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "length 9, order 3, second derivative"},
+    {"id": "savgol_coefficients.edge_position", "op": "savgol_coefficients", "args": {"length": 7, "order": 3, "position": -3}, "expected": [0.9285714285714286, 0.19047619047619047, -0.09523809523809523, -0.09523809523809523, 0.023809523809523808, 0.09523809523809523, -0.047619047619047616], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "length 7, order 3, evaluated at offset -3"},
+    {"id": "savgol_coefficients.edge_deriv", "op": "savgol_coefficients", "args": {"length": 5, "order": 2, "derivative": 1, "position": 2}, "expected": [0.37142857142857144, -0.38571428571428573, -0.5714285714285714, -0.18571428571428572, 0.7714285714285715], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "length 5, order 2, first derivative at offset 2"},
+    {"id": "savgol_coefficients.length_one", "op": "savgol_coefficients", "args": {"length": 1, "order": 0}, "expected": [1.0], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "length 1: the single weight 1"},
+    {"id": "savgol_coefficients.moving_average", "op": "savgol_coefficients", "args": {"length": 5, "order": 0}, "expected": [0.2, 0.2, 0.2, 0.2, 0.2], "tol": {"abs": 1e-12, "rel": 1e-10}, "source": "order 0: the moving average 1/5"},
+    {"id": "savgol_coefficients.even_length", "op": "savgol_coefficients", "args": {"length": 4, "order": 2}, "error": "invalid_argument", "source": "length must be odd"},
+    {"id": "savgol_coefficients.order_too_big", "op": "savgol_coefficients", "args": {"length": 5, "order": 5}, "error": "invalid_argument", "source": "order must be below length"},
+    {"id": "savgol_coefficients.derivative_too_big", "op": "savgol_coefficients", "args": {"length": 5, "order": 2, "derivative": 3}, "error": "invalid_argument", "source": "derivative over order"},
+    {"id": "savgol_coefficients.position_out", "op": "savgol_coefficients", "args": {"length": 5, "order": 2, "position": 3}, "error": "invalid_argument", "source": "position beyond h"}
+  ]
+}
