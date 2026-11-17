@@ -104,6 +104,7 @@ from .dsp import (
     resample,
     resample_taps,
     rrc_taps,
+    sample_and_hold,
     savgol_coefficients,
     savgol_filter,
     schmitt_trigger,
@@ -389,7 +390,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.43"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.44"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -711,6 +712,7 @@ __all__ = [
     "rls_equalizer",
     "rrc_taps",
     "saleh_amplifier",
+    "sample_and_hold",
     "savgol_coefficients",
     "savgol_filter",
     "schmitt_trigger",

@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a sample-and-hold (`sample_and_hold(samples, period, *, offset=0)`, holding every
-     `period`-th sample, a zero-order hold at the same rate);
    - a dead zone (`dead_zone(samples, width)`, zeroing `|x| ≤ width` and shifting the rest toward
      0).
 
@@ -2238,6 +2236,13 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors include samples exactly on each threshold.
   Python 6245 passed, 2 skipped; .NET 5505 passed; conformance 3733/3733 in both. Version
   2026.11.17.43.
+- 2026-11-17: Sample-and-hold (ADR 0245): `sample_and_hold(samples, period, *, offset=0)` in
+  `dsp` (C# `Dsp.SampleAndHold`, real and complex).
+  - It holds every `period`-th sample, starting at `offset`, at the same rate, with zeros before
+    the first.
+  - The vectors are exact copies, compared with zero tolerance.
+  Python 6257 passed, 2 skipped; .NET 5517 passed; conformance 3743/3743 in both. Version
+  2026.11.17.44.
 
 ## Not built
 

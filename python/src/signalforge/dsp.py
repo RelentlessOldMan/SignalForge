@@ -2537,6 +2537,26 @@ def peak_hold(samples: ArrayLike, hold: int, release: float) -> NDArray[np.float
     return y
 
 
+def sample_and_hold(
+    samples: ArrayLike, period: int, *, offset: int = 0
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Hold every ``period``-th sample, from ``offset``, at the same rate; zeros before the first
+    (conventions: Sample-and-hold; ADR 0245)."""
+    p = count(period, "period")
+    if p < 1:
+        raise ValueError("period must be at least 1")
+    o = count(offset, "offset")
+    if o >= p:
+        raise ValueError("offset must be below period")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y: NDArray[Any] = np.zeros_like(x)
+    for n in range(o, x.size):
+        y[n] = x[o + p * ((n - o) // p)]
+    return y
+
+
 def schmitt_trigger(samples: ArrayLike, low: float, high: float) -> NDArray[np.uint8]:
     """Comparator with hysteresis: 1 after a sample above ``high``, 0 after one below ``low``,
     otherwise held, from 0 (conventions: Schmitt trigger; ADR 0244)."""

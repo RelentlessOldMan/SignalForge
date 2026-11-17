@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace SignalForge;
 
 public static partial class Dsp
@@ -66,6 +68,44 @@ public static partial class Dsp
                 state = 0;
             y[n] = state;
         }
+        return y;
+    }
+
+    /// <summary>Hold every <paramref name="period"/>-th real sample, from
+    /// <paramref name="offset"/>, at the same rate; zeros before the first (conventions:
+    /// Sample-and-hold; ADR 0245).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="period">The hold period <c>P</c>, at least 1.</param>
+    /// <param name="offset">The index of the first sample taken, in <c>[0, P)</c>.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] SampleAndHold(ReadOnlySpan<double> samples, int period, int offset = 0) =>
+        [.. SampleAndHold((ReadOnlySpan<Complex>)ToComplexArray(samples), period, offset).Select(v => v.Real)];
+
+    /// <summary>Hold every <paramref name="period"/>-th complex sample, from
+    /// <paramref name="offset"/>, at the same rate; zeros before the first (conventions:
+    /// Sample-and-hold; ADR 0245).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="period">The hold period <c>P</c>, at least 1.</param>
+    /// <param name="offset">The index of the first sample taken, in <c>[0, P)</c>.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] SampleAndHold(ReadOnlySpan<Complex> samples, int period, int offset = 0)
+    {
+        if (period < 1)
+            throw new ArgumentOutOfRangeException(nameof(period), "period must be at least 1");
+        if (offset < 0 || offset >= period)
+            throw new ArgumentOutOfRangeException(nameof(offset), "offset must be in [0, period)");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (Complex v in samples)
+        {
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        var y = new Complex[samples.Length];
+        for (int n = offset; n < y.Length; n++)
+            y[n] = samples[offset + period * ((n - offset) / period)];
         return y;
     }
 }

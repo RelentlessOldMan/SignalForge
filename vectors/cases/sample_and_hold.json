@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "sample_and_hold",
+  "description": "Sample-and-hold (conventions: Sample-and-hold; ADR 0245).",
+  "cases": [
+    {"id": "sample_and_hold.period_three", "op": "sample_and_hold", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0], "period": 3}, "expected": [1.0, 1.0, 1.0, 4.0, 4.0, 4.0, 7.0, 7.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "P = 3: x[0], x[3], x[6] each held 3 samples"},
+    {"id": "sample_and_hold.offset", "op": "sample_and_hold", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0], "period": 3, "offset": 2}, "expected": [0.0, 0.0, 3.0, 3.0, 3.0, 6.0, 6.0, 6.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "P = 3, offset 2: zeros, then x[2], x[5]"},
+    {"id": "sample_and_hold.period_one", "op": "sample_and_hold", "args": {"samples": [1.5, -2.0, 0.25], "period": 1}, "expected": [1.5, -2.0, 0.25], "tol": {"abs": 0.0, "rel": 0.0}, "source": "P = 1: the input itself"},
+    {"id": "sample_and_hold.long_period", "op": "sample_and_hold", "args": {"samples": [-1.0, 2.0, 3.0, 4.0], "period": 10}, "expected": [-1.0, -1.0, -1.0, -1.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "period longer than the input: x[0] throughout"},
+    {"id": "sample_and_hold.complex", "op": "sample_and_hold", "args": {"samples": {"re": [1.0, 2.0, 3.0, 4.0, 5.0], "im": [-1.0, -2.0, -3.0, -4.0, -5.0]}, "period": 2, "offset": 1}, "expected": {"re": [0.0, 2.0, 2.0, 4.0, 4.0], "im": [0.0, -2.0, -2.0, -4.0, -4.0]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "complex, P = 2, offset 1"},
+    {"id": "sample_and_hold.period_zero", "op": "sample_and_hold", "args": {"samples": [1.0], "period": 0}, "error": "invalid_argument", "source": "period must be at least 1"},
+    {"id": "sample_and_hold.offset_too_large", "op": "sample_and_hold", "args": {"samples": [1.0], "period": 2, "offset": 2}, "error": "invalid_argument", "source": "offset must be below period"},
+    {"id": "sample_and_hold.offset_negative", "op": "sample_and_hold", "args": {"samples": [1.0], "period": 2, "offset": -1}, "error": "invalid_argument", "source": "offset must be at least 0"},
+    {"id": "sample_and_hold.empty", "op": "sample_and_hold", "args": {"samples": [], "period": 2}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "sample_and_hold.nan_sample", "op": "sample_and_hold", "args": {"samples": [1.0, "nan"], "period": 2}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}
