@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 import signalforge as sf
 
@@ -23,3 +24,17 @@ def test_h1_is_csd_over_psd() -> None:
     w = sf.welch_psd(x, 1.0, nperseg=128)
     t = sf.transfer_function(x, y, 1.0, nperseg=128)
     assert np.allclose(p.csd / w.psd, t.response)
+
+
+def test_complex_same_signal_is_the_complex_welch_psd() -> None:
+    rng = np.random.default_rng(44)
+    x = rng.standard_normal(600) + 1j * rng.standard_normal(600)
+    p = sf.cross_spectral_density(x, x, 10.0, nperseg=64)
+    w = sf.welch_psd(x, 10.0, nperseg=64)
+    assert np.allclose(p.csd.real, w.psd)
+    assert np.allclose(p.frequencies, w.frequencies)
+
+
+def test_one_sided_complex_is_rejected() -> None:
+    with pytest.raises(ValueError):
+        sf.cross_spectral_density(np.ones(4, dtype=np.complex128), np.ones(4), 1.0, one_sided=True)

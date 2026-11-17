@@ -91,19 +91,75 @@ public static partial class Spectral
     /// <param name="beta">The Kaiser β, for the Kaiser window only.</param>
     /// <param name="detrend">Detrending of each segment.</param>
     /// <param name="nfft">Transform length, at least <paramref name="nperseg"/>; the segment length when null.</param>
+    /// <param name="oneSided">One-sided (doubled) bins when true; two-sided shifted bins when false
+    /// (ADR 0196).</param>
     /// <returns>The frequencies, the cross-spectral density and the segment count.</returns>
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static CrossSpectralDensity CrossSpectralDensity(ReadOnlySpan<double> x, ReadOnlySpan<double> y, double sampleRate,
         int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
-        Detrend detrend = Detrend.None, int? nfft = null)
+        Detrend detrend = Detrend.None, int? nfft = null, bool oneSided = true) =>
+        Csd(ToComplex(x), ToComplex(y), sampleRate, nperseg, noverlap, window, beta, detrend, nfft, oneSided);
+
+    /// <summary><c>Pxy = Σ conj X·Y / (K·fs·Σw²)</c> over Welch's segments of complex samples,
+    /// two-sided in shifted order (conventions: Cross-spectral density; ADR 0196).</summary>
+    /// <param name="x">Complex samples, finite.</param>
+    /// <param name="y">Complex samples, finite, as many as <paramref name="x"/>.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <param name="nperseg">Segment length; the whole input when null.</param>
+    /// <param name="noverlap">Overlap; half a segment when null.</param>
+    /// <param name="window">The window applied to each segment.</param>
+    /// <param name="beta">The Kaiser β, for the Kaiser window only.</param>
+    /// <param name="detrend">Detrending of each segment.</param>
+    /// <param name="nfft">Transform length, at least <paramref name="nperseg"/>; the segment length when null.</param>
+    /// <returns>The frequencies, the cross-spectral density and the segment count.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static CrossSpectralDensity CrossSpectralDensity(ReadOnlySpan<Complex> x, ReadOnlySpan<Complex> y, double sampleRate,
+        int? nperseg = null, int? noverlap = null, WindowType window = WindowType.Hann, double? beta = null,
+        Detrend detrend = Detrend.None, int? nfft = null) =>
+        Csd(x.ToArray(), y.ToArray(), sampleRate, nperseg, noverlap, window, beta, detrend, nfft, oneSided: false);
+
+    private static CrossSpectralDensity Csd(Complex[] x, Complex[] y, double sampleRate, int? nperseg, int? noverlap,
+        WindowType window, double? beta, Detrend detrend, int? nfft, bool oneSided)
     {
-        var (g, sxy, _, _) = CrossSegments(x, y, sampleRate, nperseg, noverlap, window, beta, detrend, nfft);
-        int m = sxy.Length, last = g.Nfft % 2 == 0 ? m - 1 : m;
+        if (x.Length != y.Length)
+            throw new ArgumentException("x and y must have the same length", nameof(y));
+        foreach (Complex v in x)
+        {
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("x must be finite", nameof(x));
+        }
+        foreach (Complex v in y)
+        {
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("y must be finite", nameof(y));
+        }
+        var g = Prepare(x, sampleRate, nperseg, noverlap, window, beta, detrend, nfft);
+        var sxy = new Complex[g.Nfft];
+        var bx = new Complex[g.Nfft];
+        var by = new Complex[g.Nfft];
+        for (int s = 0; s < g.Count; s++)
+        {
+            g.Spectrum(x, s, bx);
+            g.Spectrum(y, s, by);
+            for (int i = 0; i < g.Nfft; i++)
+                sxy[i] += Complex.Conjugate(bx[i]) * by[i];
+        }
         double scale = g.Scale / g.Count;
-        var csd = new Complex[m];
-        for (int k = 0; k < m; k++)
-            csd[k] = sxy[k] * scale * (k >= 1 && k < last ? 2.0 : 1.0);
-        return new CrossSpectralDensity(g.Frequencies(true), csd, g.Count);
+        Complex[] csd;
+        if (oneSided)
+        {
+            int m = g.Nfft / 2 + 1, last = g.Nfft % 2 == 0 ? m - 1 : m;
+            csd = new Complex[m];
+            for (int k = 0; k < m; k++)
+                csd[k] = sxy[k] * scale * (k >= 1 && k < last ? 2.0 : 1.0);
+        }
+        else
+        {
+            csd = new Complex[g.Nfft];
+            for (int i = 0; i < g.Nfft; i++)
+                csd[i] = sxy[(i + (g.Nfft + 1) / 2) % g.Nfft] * scale; // fftshift
+        }
+        return new CrossSpectralDensity(g.Frequencies(oneSided), csd, g.Count);
     }
 
     /// <summary>H2 = <c>Σ|Y|² / Σ conj Y·X</c> over Welch's segments, from input

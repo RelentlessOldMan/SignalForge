@@ -4,16 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Two-sided cross-spectral density for complex input**: extend `cross_spectral_density` (ADR
-   0194) so that complex `x` or `y` gives the two-sided, shifted `Pxy`, as `welch_psd` does for
-   complex samples. C# gets a `Complex` overload of `Spectral.CrossSpectralDensity`. Not built yet.
-   Needs an ADR covering:
-   - the `one_sided` argument (real only, as for `welch_psd`);
-   - mixed real and complex pairs;
-   - the frequency order (`fft_frequencies(shifted=True)`).
+1. **Complex input for coherence and the transfer functions**: extend `coherence`,
+   `transfer_function` and `transfer_function_h2` (ADRs 0192, 0193, 0195), as ADR 0196 did for the
+   cross-spectral density. Not built yet. Needs an ADR covering:
+   - complex `x` or `y` gives all `M` bins in `fftshift` order;
+   - C# `Complex` overloads;
+   - the same NaN rules.
 
-   Expected values: `y = x` complex equals the complex `welch_psd`; hand DFTs of length-2 and
-   length-4 complex segments.
+   Expected values: hand DFTs of length-2 complex segments; `y = a·x` gives `H = a` and
+   coherence 1.
 
 ## Built
 
@@ -1863,6 +1862,16 @@ Updated with every chunk of work. Dates are absolute.
   The vectors include a case where segments disagree: H1 = 1/3 and H2 = 3.
   Python 5594 passed, 2 skipped; .NET 4895 passed; conformance 3176/3176 in both. Version
   2026.11.16.93.
+- 2026-11-16: two-sided cross-spectral density for complex input (ADR 0196).
+  - `cross_spectral_density` takes `one_sided`, as `welch_psd` does. Complex `x` or `y` (or
+    `one_sided=False`) gives the undoubled `Σ conj X·Y/(K·fs·Σw²)` over all bins, in
+    `fftshift` order.
+  - C# has a `Complex` overload, and the real overload gains `oneSided`.
+  - For `y = x` complex, the result equals the complex `welch_psd`.
+
+  There are 4 new hand-DFT vectors and 1 error vector.
+  Python 5601 passed, 2 skipped; .NET 4901 passed; conformance 3181/3181 in both. Version
+  2026.11.16.94.
 
 ## Not built
 

@@ -20,4 +20,20 @@ public class CrossSpectralDensityTests
             Assert.Equal(0, p.Csd[k].Imaginary, 1e-12);
         }
     }
+
+    [Fact]
+    public void ComplexSameSignalIsTheComplexWelchPsd()
+    {
+        var rng = new Random(44);
+        var x = new System.Numerics.Complex[600];
+        for (int n = 0; n < x.Length; n++)
+            x[n] = new System.Numerics.Complex(rng.NextDouble() - 0.5, rng.NextDouble() - 0.5);
+        var p = Spectral.CrossSpectralDensity(x, x, 10, nperseg: 64);
+        var w = Spectral.WelchPsd(x, 10, nperseg: 64);
+        for (int k = 0; k < w.Psd.Length; k++)
+        {
+            Assert.Equal(w.Psd[k], p.Csd[k].Real, 1e-12);
+            Assert.Equal(w.Frequencies[k], p.Frequencies[k]);
+        }
+    }
 }

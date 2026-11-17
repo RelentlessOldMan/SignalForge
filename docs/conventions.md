@@ -382,7 +382,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   beta=None, detrend="none", nfft=None)`, C# `Spectral.CrossSpectralDensity`): the `coherence`
   segments; `Pxy[k] = d_k·Σ conj X_s·Y_s / (K·fs·Σw²)` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, with the
   `welch_psd` doubling `d_k`; `y = x` gives `welch_psd`. Result `CrossSpectralDensity(frequencies,
-  csd, num_segments)`. Real only; the `coherence` rules. **(implemented)**
+  csd, num_segments)`. `one_sided` as for `welch_psd` ([ADR
+  0196](adr/0196-complex-cross-spectral-density.md)): complex `x` or `y` (or `one_sided=False`)
+  gives the two-sided `Σ conj X_s·Y_s / (K·fs·Σw²)` over all `M` bins, undoubled, in `fftshift`
+  order with `fft_frequencies(M, fs, shifted=True)`; C# a `Complex` overload, and `oneSided` on the
+  real one. 1-D, finite, the same length. **(implemented)**
 - **Spectrogram** (`spectrogram(samples, sample_rate, nperseg, noverlap=None, window="hann",
   one_sided=None, beta=None, detrend="none", nfft=None)`): Welch's segments, each kept instead of
   averaged. `nperseg` is required (`1 ≤ nperseg ≤ L`); `noverlap`, the detrending, the window, the

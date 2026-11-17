@@ -3,7 +3,8 @@
 Cross-spectral density (conventions: Cross-spectral density; ADR 0194): over Welch's segments,
 Pxy[k] = d_k sum conj X_s Y_s / (K fs sum w^2), d_k = 2 except DC and (even M) Nyquist. Expected
 values are hand DFTs worked in each source, each checked here against a direct DFT with the
-rectangular window (sum w^2 = nperseg).
+rectangular window (sum w^2 = nperseg). Complex input, or one_sided false, gives the two-sided
+sum conj X_s Y_s / (K fs sum w^2) over all bins, undoubled, in fftshift order (ADR 0196).
 
 Run from the repo root: python vectors/generators/cross_spectral_density.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write.
@@ -61,6 +62,61 @@ add("cancelling", [1.0, 0.0, 0.0, 1.0], [1.0, 0.0, 1.0, 0.0], 2.0, 2, 0, [0.25 +
     "is Nyquist, not doubled: [0.25, 0]")
 
 
+def direct_two(x, y, fs, n, noverlap):
+    step = n - noverlap
+    count = (len(x) - n) // step + 1
+    sxy = [0j] * n
+    for s in range(count):
+        def spec(v):
+            seg = v[s * step : s * step + n]
+            return [sum(complex(seg[i]) * cmath.exp(-2j * math.pi * k * i / n) for i in range(n))
+                    for k in range(n)]
+        fx, fy = spec(x), spec(y)
+        for k in range(n):
+            sxy[k] += fx[k].conjugate() * fy[k]
+    two = [v / (count * fs * n) for v in sxy]
+    return [two[(i + (n + 1) // 2) % n] for i in range(n)]
+
+
+def enc(v):
+    if all(isinstance(c, (int, float)) for c in v):
+        return v
+    v = [complex(c) for c in v]
+    return {"re": [c.real for c in v], "im": [c.imag for c in v]}
+
+
+def add_two(cid, x, y, fs, nperseg, noverlap, csd, segs, why, one_sided=None):
+    got = direct_two(x, y, fs, nperseg, noverlap)
+    assert all(abs(g - h) < 1e-12 for g, h in zip(got, csd)), (cid, got)
+    args = {"x": enc(x), "y": enc(y), "sample_rate": fs, "nperseg": nperseg,
+            "noverlap": noverlap, "window": "rectangular"}
+    if one_sided is not None:
+        args["one_sided"] = one_sided
+    cases.append({"id": f"cross_spectral_density.{cid}", "op": "cross_spectral_density",
+                  "args": args,
+                  "expected": {"frequencies": [(i - nperseg // 2) * fs / nperseg
+                                               for i in range(nperseg)],
+                               "csd": {"re": [h.real for h in csd], "im": [h.imag for h in csd]},
+                               "num_segments": segs},
+                  "tol": TOL, "source": why})
+
+
+add_two("complex_pair", [1, 1j], [1.0, 0.0], 2.0, 2, 0, [0.25 + 0.25j, 0.25 - 0.25j], 1,
+        "X = [1 + j, 1 - j], Y = [1, 1]: conj X Y = [1 - j, 1 + j], / (1 * 2 * 2) = [0.25 - 0.25j, "
+        "0.25 + 0.25j] in FFT order; shifted (bin 1 = -1 Hz first): [0.25 + 0.25j, 0.25 - 0.25j]")
+add_two("mixed", [1.0, 0.0, 0.0, 0.0], [0, 1j, 0, 0], 4.0, 4, 0,
+        [-0.0625j, -0.0625 + 0j, 0.0625j, 0.0625 + 0j], 1,
+        "real x = delta, complex y = j delta[n-1]: conj X Y = Y = j e^{-j pi k/2} = [j, 1, -j, -1], "
+        "/ (1 * 4 * 4) = /16; shifted [bins 2, 3, 0, 1] at -2, -1, 0, 1 Hz: [-j, -1, j, 1]/16")
+add_two("real_two_sided", [1.0, 2.0, 0.0, -1.0], [1.0, 2.0, 0.0, -1.0], 1.0, 4, 0,
+        [0j, 2.5 + 0j, 1 + 0j, 2.5 + 0j], 1,
+        "one_sided false, y = x: |X|^2 = [4, 10, 0, 10], / 4 = [1, 2.5, 0, 2.5]; shifted [0, 2.5, 1, "
+        "2.5] at -0.5, -0.25, 0, 0.25 Hz", one_sided=False)
+add_two("complex_segments", [1j, 0, 1j, 0], [1.0, 0.0, 0.0, 1.0], 2.0, 2, 0, [0j, -0.25j], 2,
+        "X = [j, j] twice; Y = [1, 1], [1, -1]: conj X Y = [-j, -j] + [-j, j] = [-2j, 0], / (2 * 2 * "
+        "2) = [-0.25j, 0]; shifted [0, -0.25j]")
+
+
 def err(cid, x, y, why, **extra):
     args = {"x": x, "y": y, "sample_rate": 1.0}
     args.update(extra)
@@ -69,6 +125,7 @@ def err(cid, x, y, why, **extra):
 
 
 err("lengths", [1.0, 2.0], [1.0], "x and y differ in length")
+err("complex_lengths", {"re": [1.0, 2.0], "im": [0.0, 1.0]}, [1.0], "x and y differ in length")
 err("nan", [1.0, "nan"], [1.0, 2.0], "not finite")
 err("zero_rate", [1.0, 2.0], [1.0, 2.0], "sample_rate must be positive", sample_rate=0.0)
 err("long_segment", [1.0, 2.0], [1.0, 2.0], "fewer samples than nperseg", nperseg=3)

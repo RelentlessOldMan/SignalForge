@@ -330,19 +330,38 @@ def cross_spectral_density(
     nperseg: int | None = None,
     noverlap: int | None = None,
     window: str = "hann",
+    one_sided: bool | None = None,
     beta: float | None = None,
     detrend: str = "none",
     nfft: int | None = None,
 ) -> CrossSpectralDensity:
-    """``Pxy = d sum conj(X) Y / (K fs sum w^2)`` over Welch's segments, one-sided, scaled like
-    ``welch_psd`` (conventions: Cross-spectral density; ADR 0194)."""
-    g, sxy, _, _ = _cross_segments(
-        x, y, sample_rate, nperseg, noverlap, window, beta, detrend, nfft
-    )
-    csd = sxy * (g.scale / g.count)
-    m = csd.size
-    csd[1 : m - 1 if g.nfft % 2 == 0 else m] *= 2.0
-    return CrossSpectralDensity(g.frequencies(float(sample_rate)), csd, g.count)
+    """``Pxy = sum conj(X) Y / (K fs sum w^2)`` over Welch's segments, scaled like ``welch_psd``:
+    one-sided (doubled) for real input, two-sided and shifted for complex (conventions:
+    Cross-spectral density; ADR 0194, ADR 0196)."""
+    a, b = np.asarray(x), np.asarray(y)
+    if a.shape != b.shape:
+        raise ValueError("x and y must have the same shape")
+    for v, what in ((a, "x"), (b, "y")):
+        if not np.all(np.isfinite(v)):
+            raise ValueError(f"{what} must be finite")
+    is_complex = np.iscomplexobj(a) or np.iscomplexobj(b)
+    if one_sided is None:
+        one_sided = not is_complex
+    elif one_sided and is_complex:
+        raise ValueError("a one-sided cross-spectral density needs real samples")
+    gx = _segments(a, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend, nfft)
+    gy = _segments(b, sample_rate, nperseg, noverlap, window, one_sided, beta, detrend, nfft)
+    sxy = np.zeros(gx.nfft, dtype=np.complex128)
+    for s in range(gx.count):
+        sxy += np.conj(gx.spectrum(s)) * gy.spectrum(s)
+    two = sxy * (gx.scale / gx.count)
+    if one_sided:
+        m = gx.nfft // 2 + 1
+        csd = two[:m].copy()
+        csd[1 : m - 1 if gx.nfft % 2 == 0 else m] *= 2.0
+    else:
+        csd = np.fft.fftshift(two)
+    return CrossSpectralDensity(gx.frequencies(float(sample_rate)), csd, gx.count)
 
 
 def transfer_function_h2(

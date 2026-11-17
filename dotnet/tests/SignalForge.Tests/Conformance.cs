@@ -718,13 +718,23 @@ public static class Conformance
 
     private static Func<object?> CsdOp(Args a)
     {
-        double[] x = Reals(a.Get("x")), y = Reals(a.Get("y"));
+        object? xs = a.Get("x"), ys = a.Get("y");
         var (fs, nperseg, noverlap) = (a.D("sample_rate"), a.OptInt("nperseg"), a.OptInt("noverlap"));
         var window = a.Has("window") ? WindowName(a.Get("window")) : WindowType.Hann;
         double? beta = a.OptD("beta");
         var detrend = DetrendName(a);
         int? nfft = a.OptInt("nfft");
-        return () => Spectral.CrossSpectralDensity(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft);
+        if (xs is Complex[] || ys is Complex[])
+        {
+            // C# has no one-sided option for complex samples (Python raises for one_sided=True).
+            if (a.Flag("one_sided"))
+                throw new InvalidDataException("one_sided=true with complex samples has no C# form");
+            Complex[] xc = Complexes(xs), yc = Complexes(ys);
+            return () => Spectral.CrossSpectralDensity(xc, yc, fs, nperseg, noverlap, window, beta, detrend, nfft);
+        }
+        double[] x = Reals(xs), y = Reals(ys);
+        bool oneSided = a.Flag("one_sided", true);
+        return () => Spectral.CrossSpectralDensity(x, y, fs, nperseg, noverlap, window, beta, detrend, nfft, oneSided);
     }
 
     private static Func<object?> Welch(Args a)
