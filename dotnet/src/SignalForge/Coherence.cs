@@ -16,6 +16,12 @@ public sealed record Coherence(double[] Frequencies, double[] Values, int NumSeg
 /// <param name="NumSegments">How many segments were averaged.</param>
 public sealed record CoherentOutputPower(double[] Frequencies, double[] Coherent, double[] Noncoherent, int NumSegments);
 
+/// <summary>Lower and upper confidence limits of a PSD (conventions: PSD confidence interval;
+/// ADR 0201).</summary>
+/// <param name="Lower"><c>ν·P / q((1 + c)/2)</c> per bin.</param>
+/// <param name="Upper"><c>ν·P / q((1 − c)/2)</c> per bin.</param>
+public sealed record PsdConfidenceInterval(double[] Lower, double[] Upper);
+
 /// <summary>Welch cross-spectral density per bin, one-sided for real input, (conventions: Cross-spectral density;
 /// ADR 0194).</summary>
 /// <param name="Frequencies">Bin frequencies <c>k·fs/M</c>, <c>k = 0 … ⌊M/2⌋</c>; for complex
@@ -323,6 +329,38 @@ public static partial class Spectral
             total += (1.0 - (double)lag / numSegments) * rho * rho;
         }
         return 2.0 * numSegments / (1.0 + 2.0 * total);
+    }
+
+    /// <summary><c>ν·P / q((1 + c)/2)</c> and <c>ν·P / q((1 − c)/2)</c> with chi-squared quantiles
+    /// <c>q</c> of <paramref name="dof"/> degrees of freedom (conventions: PSD confidence interval;
+    /// ADR 0201).</summary>
+    /// <param name="psd">PSD values, finite and non-negative.</param>
+    /// <param name="dof">Equivalent degrees of freedom <c>ν</c>, positive and finite.</param>
+    /// <param name="confidence">The confidence level <c>c</c>, strictly between 0 and 1.</param>
+    /// <returns>The lower and upper limits per bin.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static PsdConfidenceInterval PsdConfidenceInterval(ReadOnlySpan<double> psd, double dof,
+        double confidence = 0.95)
+    {
+        foreach (double v in psd)
+        {
+            if (!double.IsFinite(v) || v < 0)
+                throw new ArgumentException("psd must be finite and non-negative", nameof(psd));
+        }
+        if (!(dof > 0) || !double.IsFinite(dof))
+            throw new ArgumentOutOfRangeException(nameof(dof), "dof must be positive and finite");
+        if (!(confidence > 0 && confidence < 1))
+            throw new ArgumentOutOfRangeException(nameof(confidence), "confidence must be strictly between 0 and 1");
+        double qHi = SpecialFunctions.ChiSquaredQuantile(0.5 * (1 + confidence), dof);
+        double qLo = SpecialFunctions.ChiSquaredQuantile(0.5 * (1 - confidence), dof);
+        var lower = new double[psd.Length];
+        var upper = new double[psd.Length];
+        for (int k = 0; k < psd.Length; k++)
+        {
+            lower[k] = dof * psd[k] / qHi;
+            upper[k] = dof * psd[k] / qLo;
+        }
+        return new PsdConfidenceInterval(lower, upper);
     }
 
     /// <summary><c>1 − alpha^(1/(K−1))</c>: the coherence that independent Gaussian signals exceed

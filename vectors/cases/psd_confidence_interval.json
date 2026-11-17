@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "psd_confidence_interval",
+  "description": "PSD confidence interval (conventions: PSD confidence interval; ADR 0201).",
+  "cases": [
+    {"id": "psd_confidence_interval.two_dof", "op": "psd_confidence_interval", "args": {"psd": [1.0, 2.0, 0.0], "dof": 2.0, "confidence": 0.9}, "expected": {"lower": [0.3338082006953343, 0.6676164013906686, 0.0], "upper": [19.495725746223698, 38.991451492447396, 0.0]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "nu = 2: CDF 1 - e^{-x/2}, q(p) = -2 ln(1 - p); q(0.95) = 2 ln 20, q(0.05) = -2 ln 0.95; a zero bin gives [0, 0]"},
+    {"id": "psd_confidence_interval.default_level", "op": "psd_confidence_interval", "args": {"psd": [0.5], "dof": 2.0}, "expected": {"lower": [0.1355425153409085], "upper": [19.74894510260359]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "confidence defaults to 0.95; nu = 2: q = -2 ln(1 - p)"},
+    {"id": "psd_confidence_interval.one_dof", "op": "psd_confidence_interval", "args": {"psd": [1.0, 3.0], "dof": 1.0, "confidence": 0.95}, "expected": {"lower": [0.19904909520541303, 0.5971472856162391], "upper": [1018.2582697196682, 3054.7748091590047]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "nu = 1: CDF erf(sqrt(x/2)), quantiles by bisection"},
+    {"id": "psd_confidence_interval.three_dof", "op": "psd_confidence_interval", "args": {"psd": [1.0], "dof": 3.0, "confidence": 0.8}, "expected": {"lower": [0.4798933768157635], "upper": [5.133695337577104]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "nu = 3: CDF erf(sqrt(x/2)) - sqrt(2x/pi) e^{-x/2}, quantiles by bisection"},
+    {"id": "psd_confidence_interval.four_dof", "op": "psd_confidence_interval", "args": {"psd": [2.0], "dof": 4.0, "confidence": 0.99}, "expected": {"lower": [0.5383486249935756], "upper": [38.64937937006608]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "nu = 4: CDF 1 - e^{-x/2}(1 + x/2), quantiles by bisection"},
+    {"id": "psd_confidence_interval.fractional_dof", "op": "psd_confidence_interval", "args": {"psd": [1.0, 0.25], "dof": 7.5, "confidence": 0.95}, "expected": {"lower": [0.4470063240742957, 0.11175158101857392], "upper": [3.8848255500575637, 0.9712063875143909]}, "tol": {"abs": 1e-13, "rel": 1e-11}, "source": "nu = 7.5: CDF sum_n y^(a+n) e^-y / Gamma(a+n+1), y = x/2, a = 3.75 (math.lgamma), by bisection"},
+    {"id": "psd_confidence_interval.negative_psd", "op": "psd_confidence_interval", "args": {"psd": [1.0, -0.5], "dof": 2.0}, "error": "invalid_argument", "source": "psd must be non-negative"},
+    {"id": "psd_confidence_interval.nan_psd", "op": "psd_confidence_interval", "args": {"psd": [1.0, "nan"], "dof": 2.0}, "error": "invalid_argument", "source": "psd must be finite"},
+    {"id": "psd_confidence_interval.zero_dof", "op": "psd_confidence_interval", "args": {"psd": [1.0], "dof": 0.0}, "error": "invalid_argument", "source": "dof must be positive"},
+    {"id": "psd_confidence_interval.nan_dof", "op": "psd_confidence_interval", "args": {"psd": [1.0], "dof": "nan"}, "error": "invalid_argument", "source": "dof must be finite"},
+    {"id": "psd_confidence_interval.confidence_one", "op": "psd_confidence_interval", "args": {"psd": [1.0], "dof": 2.0, "confidence": 1.0}, "error": "invalid_argument", "source": "confidence must be below 1"},
+    {"id": "psd_confidence_interval.confidence_zero", "op": "psd_confidence_interval", "args": {"psd": [1.0], "dof": 2.0, "confidence": 0.0}, "error": "invalid_argument", "source": "confidence must be above 0"}
+  ]
+}

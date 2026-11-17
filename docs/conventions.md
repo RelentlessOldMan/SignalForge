@@ -372,6 +372,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **PSD confidence interval** ([ADR 0201](adr/0201-psd-confidence-interval.md);
+  `psd_confidence_interval(psd, dof, confidence=0.95)`, C# `Spectral.PsdConfidenceInterval`):
+  `lower = ν·P/q_ν((1+c)/2)`, `upper = ν·P/q_ν((1−c)/2)`, `q_ν` the chi-squared quantile (private;
+  regularized incomplete gamma by series or Lentz continued fraction, inverted by safeguarded
+  Newton; C# log-gamma by Stirling's series after shifting to ≥ 15). `psd` finite and
+  non-negative, `dof > 0`, `0 < c < 1`. Result `(lower, upper)`. **(implemented)**
 - **Welch degrees of freedom** ([ADR 0200](adr/0200-welch-dof.md); `welch_dof(nperseg,
   noverlap, num_segments, *, window="hann", beta=None)`, C# `Spectral.WelchDof`):
   `ν = 2K / (1 + 2 Σ_{l=1}^{K−1} (1 − l/K)·ρ(l)²)`, `ρ(l) = Σ w[n]·w[n+l·S] / Σ w²` with step

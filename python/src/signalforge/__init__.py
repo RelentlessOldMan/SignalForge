@@ -267,6 +267,7 @@ from .spectral import (
     occupied_bandwidth,
     odd_even_ratio,
     peak_widths,
+    psd_confidence_interval,
     real_cepstrum,
     spectral_contrast,
     spectral_crest,
@@ -338,7 +339,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.16.98"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.16.99"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -567,6 +568,7 @@ __all__ = [
     "power_frequency_offset",
     "power_stats",
     "prbs",
+    "psd_confidence_interval",
     "psk8_ber_theory",
     "psk8_block_phases",
     "psk8_carrier_tracking",

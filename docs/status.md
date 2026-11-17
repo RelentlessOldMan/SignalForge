@@ -4,16 +4,15 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **PSD confidence interval**: `psd_confidence_interval(psd, dof, confidence=0.95)` in
-   `spectral` (C# `Spectral.PsdConfidenceInterval`). Not built yet.
-   - It returns `(lower, upper)`, `ν·P/χ²_ν((1+c)/2)` and `ν·P/χ²_ν((1−c)/2)`, with `ν` from
-     `welch_dof` (ADR 0200).
-   - It needs a chi-squared quantile for real `ν > 0`: the regularized lower incomplete gamma
-     (series and continued fraction), inverted with safeguarded Newton steps.
+1. **Coherence confidence interval**: `coherence_confidence_interval(coherence, num_segments,
+   confidence=0.95)` in `spectral` (C# `Spectral.CoherenceConfidenceInterval`). Not built yet.
+   - It uses the Fisher transform for `γ = √γ²`: `tanh(atanh γ ± z/√(2K − 2))`, squared, with
+     the lower limit clipped at 0.
+   - The normal quantile `z` comes from the ADR 0201 chi-squared quantile, as
+     `z_p = √q₁(2p − 1)`.
 
-   Needs an ADR covering the quantile's accuracy target and whether it is public. Expected
-   values: `ν = 2` has the closed form `−2 ln(1−p)`; `ν = 4` is solved by stdlib bisection on
-   `1 − e^(−x/2)(1 + x/2)`.
+   Needs an ADR stating that this is an approximation (it is poor for small `K` and `γ`).
+   Expected values come from stdlib `math.atanh`, `math.tanh` and `statistics.NormalDist`.
 
 ## Built
 
@@ -1907,6 +1906,18 @@ Updated with every chunk of work. Dates are absolute.
   Lesson: a length-1 window is `[1]` in both languages, not the formula's `[0]`.
   Python 5647 passed, 2 skipped; .NET 4946 passed; conformance 3222/3222 in both. Version
   2026.11.16.98.
+- 2026-11-16: PSD confidence interval (ADR 0201): `psd_confidence_interval(psd, dof,
+  confidence=0.95)` in `spectral` (C# `Spectral.PsdConfidenceInterval`).
+  - The limits are `ν·P/q_ν((1±c)/2)`.
+  - The chi-squared quantile is private. It uses the regularized incomplete gamma (a series, or
+    a Lentz continued fraction), inverted by safeguarded Newton steps.
+  - C# gets a Stirling log-gamma.
+  - The vectors' quantiles come from bisection on closed-form CDFs.
+
+  Lesson: at large `ν` the CDF is steep, so a round-trip test must turn the CDF residual into a
+  relative error in the quantile.
+  Python 5661 passed, 2 skipped; .NET 4960 passed; conformance 3234/3234 in both. Version
+  2026.11.16.99.
 
 ## Not built
 

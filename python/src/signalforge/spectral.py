@@ -412,6 +412,106 @@ def welch_dof(
     return 2.0 * k / (1.0 + 2.0 * total)
 
 
+def _gamma_pq(a: float, x: float) -> tuple[float, float]:
+    """The regularized incomplete gammas ``(P(a, x), Q(a, x))``, ``a > 0``, ``x >= 0``: the
+    power series below ``a + 1``, else Lentz's continued fraction for ``Q`` (ADR 0201)."""
+    if x <= 0.0:
+        return 0.0, 1.0
+    log_pre = a * math.log(x) - x - math.lgamma(a)
+    if x < a + 1.0:
+        term = total = 1.0 / a
+        n = 0
+        while abs(term) > abs(total) * 1e-17 and n < 100000:
+            n += 1
+            term *= x / (a + n)
+            total += term
+        p = total * math.exp(log_pre)
+        return p, 1.0 - p
+    tiny = 1e-300
+    b = x + 1.0 - a
+    c = 1.0 / tiny
+    d = 1.0 / b
+    h = d
+    for i in range(1, 100000):
+        an = -i * (i - a)
+        b += 2.0
+        d = an * d + b
+        d = tiny if abs(d) < tiny else d
+        c = b + an / c
+        c = tiny if abs(c) < tiny else c
+        d = 1.0 / d
+        delta = d * c
+        h *= delta
+        if abs(delta - 1.0) < 1e-16:
+            break
+    q = math.exp(log_pre) * h
+    return 1.0 - q, q
+
+
+def _chi2_quantile(p: float, dof: float) -> float:
+    """The chi-squared quantile ``2y`` with ``P(dof/2, y) = p``, safeguarded Newton (ADR 0201)."""
+    a = dof / 2.0
+    upper = p > 0.5
+
+    def g(y: float) -> float:
+        lo_tail, hi_tail = _gamma_pq(a, y)
+        return (1.0 - p) - hi_tail if upper else lo_tail - p
+
+    lo, hi = 0.0, max(a, 1.0)
+    while g(hi) < 0.0:
+        lo, hi = hi, hi * 2.0
+    y = 0.5 * (lo + hi)
+    lg = math.lgamma(a)
+    for _ in range(400):
+        v = g(y)
+        if v == 0.0:
+            break
+        if v < 0.0:
+            lo = y
+        else:
+            hi = y
+        dens = math.exp((a - 1.0) * math.log(y) - y - lg)
+        yn = y - v / dens if dens > 0.0 else 0.5 * (lo + hi)
+        if not lo < yn < hi:
+            yn = 0.5 * (lo + hi)
+        if abs(yn - y) <= 1e-15 * yn or hi - lo <= 1e-15 * hi:
+            y = yn
+            break
+        y = yn
+    return 2.0 * y
+
+
+@dataclass(frozen=True)
+class PsdConfidenceInterval:
+    """Lower and upper confidence limits of a PSD (conventions: PSD confidence interval;
+    ADR 0201)."""
+
+    lower: NDArray[np.float64]
+    upper: NDArray[np.float64]
+
+
+def psd_confidence_interval(
+    psd: ArrayLike, dof: float, confidence: float = 0.95
+) -> PsdConfidenceInterval:
+    """``nu P / q((1 + c)/2)`` and ``nu P / q((1 - c)/2)`` with chi-squared quantiles ``q`` of
+    ``dof`` degrees of freedom (conventions: PSD confidence interval; ADR 0201)."""
+    p = np.asarray(psd)
+    if p.ndim != 1 or np.iscomplexobj(p):
+        raise ValueError("psd must be a one-dimensional real array")
+    p = p.astype(np.float64)
+    if not np.all(np.isfinite(p)) or np.any(p < 0):
+        raise ValueError("psd must be finite and non-negative")
+    nu = real(dof, "dof")
+    if not nu > 0:
+        raise ValueError("dof must be positive")
+    c = real(confidence, "confidence")
+    if not 0.0 < c < 1.0:
+        raise ValueError("confidence must be strictly between 0 and 1")
+    q_hi = _chi2_quantile(0.5 * (1.0 + c), nu)
+    q_lo = _chi2_quantile(0.5 * (1.0 - c), nu)
+    return PsdConfidenceInterval(nu * p / q_hi, nu * p / q_lo)
+
+
 def coherence_threshold(num_segments: int, alpha: float = 0.05) -> float:
     """``1 - alpha^(1/(K-1))``: the coherence that independent Gaussian signals exceed with
     probability ``alpha`` over ``K`` independent segments; overlap is not corrected for
