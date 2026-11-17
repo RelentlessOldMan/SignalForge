@@ -616,6 +616,25 @@ def cepstrum_to_lpc(
     return cast("NDArray[np.complex128] | NDArray[np.float64]", a)
 
 
+def lagrange_fir(delay: float, order: int) -> NDArray[np.float64]:
+    """The ``order + 1`` taps of the Lagrange interpolator that delays by ``delay`` samples from
+    tap 0 (conventions: Lagrange fractional-delay FIR; ADR 0225)."""
+    d = real(delay, "delay")
+    if not math.isfinite(d):
+        raise ValueError("delay must be finite")
+    n = count(order, "order")
+    if n < 1:
+        raise ValueError("order must be at least 1")
+    h = np.ones(n + 1)
+    for k in range(n + 1):
+        v = 1.0
+        for m in range(n + 1):
+            if m != k:
+                v *= (d - m) / (k - m)
+        h[k] = v
+    return h
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

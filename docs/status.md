@@ -4,13 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Lagrange fractional-delay FIR**: `lagrange_fir(delay, order)` in `dsp` (C# `Dsp.LagrangeFir`).
-   It gives the `order + 1` taps `h[k] = Π_{m≠k} (D − m)/(k − m)`, maximally flat at DC.
-   ADR 0040's `fractional_delay` is a windowed sinc, so this is new. Not built yet.
-   - It needs a convention for where `D` is measured from (tap 0) and the range in which `D` is
-     best, near `order/2`.
-   - Expected values: exact fractions (order 1 is linear interpolation, `[1 − D, D]`), and an
-     exact delay of polynomials up to the order.
+1. **Farrow variable delay**: `farrow_delay(samples, delays, order)` in `dsp` (C#
+   `Dsp.FarrowDelay`). Each output sample gets its own fractional delay through the Lagrange
+   polynomials of ADR 0225, in Farrow form: fixed sub-filters combined by Horner's rule in the
+   fractional part `μ`. ADR 0040 named this as a follow-up. Not built yet.
+   - It needs a convention for splitting `D` into an integer part and `μ`, for the ends (zeros
+     outside, as ADR 0040), and for the per-sample `delays` length.
+   - Expected values: it must equal `lagrange_fir` evaluated afresh at each sample, and be exact
+     on polynomials.
 
 ## Built
 
@@ -2095,6 +2096,11 @@ Updated with every chunk of work. Dates are absolute.
     `spectral._vector`, unlike `dsp._vector`, accepts empty arrays. A vector case was added.
   Python 5980 passed, 2 skipped; .NET 5254 passed; conformance 3505/3505 in both. Version
   2026.11.17.22.
+- 2026-11-17: Lagrange fractional-delay FIR (ADR 0225): `lagrange_fir(delay, order)` in `dsp`
+  (C# `Dsp.LagrangeFir`). It gives the `order + 1` Lagrange taps with the delay measured from tap
+  0. The vectors are exact fractions, each checked against the moment identity.
+  Python 5992 passed, 2 skipped; .NET 5265 passed; conformance 3515/3515 in both. Version
+  2026.11.17.23.
 
 ## Not built
 

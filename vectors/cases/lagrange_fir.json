@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "lagrange_fir",
+  "description": "Lagrange fractional-delay FIR (conventions: Lagrange fractional-delay FIR; ADR 0225).",
+  "cases": [
+    {"id": "lagrange_fir.linear", "op": "lagrange_fir", "args": {"delay": 0.3, "order": 1}, "expected": [0.7, 0.3], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 1: [1 - D, D] = [7/10, 3/10]"},
+    {"id": "lagrange_fir.quadratic_half", "op": "lagrange_fir", "args": {"delay": 0.5, "order": 2}, "expected": [0.375, 0.75, -0.125], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 2, D = 1/2: [3/8, 3/4, -1/8]"},
+    {"id": "lagrange_fir.cubic_center", "op": "lagrange_fir", "args": {"delay": 1.5, "order": 3}, "expected": [-0.0625, 0.5625, 0.5625, -0.0625], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 3, D = 3/2: [-1/16, 9/16, 9/16, -1/16]"},
+    {"id": "lagrange_fir.integer_delay", "op": "lagrange_fir", "args": {"delay": 2.0, "order": 4}, "expected": [0.0, 0.0, 1.0, 0.0, 0.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "D = 2 of order 4: the impulse at 2"},
+    {"id": "lagrange_fir.order_five", "op": "lagrange_fir", "args": {"delay": 2.3125, "order": 5}, "expected": [0.010656952857971191, -0.09388267993927002, 0.7886145114898682, 0.3584611415863037, -0.07301986217498779, 0.009169936180114746], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 5, D = 37/16"},
+    {"id": "lagrange_fir.extrapolate", "op": "lagrange_fir", "args": {"delay": -0.5, "order": 2}, "expected": [1.875, -1.25, 0.375], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "D = -1/2, outside 0 ... N: allowed"},
+    {"id": "lagrange_fir.order_eight", "op": "lagrange_fir", "args": {"delay": 4.1, "order": 8}, "expected": [0.000343488234375, -0.003634327125, 0.0187773568125, -0.071695362375, 0.98581123265625, 0.087627665125, -0.0207539206875, 0.003884970375, -0.000361103015625], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "order 8, D = 4.1"},
+    {"id": "lagrange_fir.order_zero", "op": "lagrange_fir", "args": {"delay": 0.5, "order": 0}, "error": "invalid_argument", "source": "order must be at least 1"},
+    {"id": "lagrange_fir.nan_delay", "op": "lagrange_fir", "args": {"delay": "nan", "order": 3}, "error": "invalid_argument", "source": "delay must be finite"},
+    {"id": "lagrange_fir.inf_delay", "op": "lagrange_fir", "args": {"delay": "inf", "order": 3}, "error": "invalid_argument", "source": "delay must be finite"}
+  ]
+}

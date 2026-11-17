@@ -1276,6 +1276,10 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `a_n = −c_n − (1/n) Σ_{k=1}^{n−1} k c_k a_{n−k}`; `c_0` unused (the error is `exp(2c_0)`).
   Finite cepstrum, at least `order + 1` values; integer `order ≥ 1`; output dtype follows
   input. **(implemented)**
+- **Lagrange fractional-delay FIR** (`lagrange_fir(delay, order)`, C# `Dsp.LagrangeFir`,
+  [ADR 0225](adr/0225-lagrange-fir.md)): `h[k] = Π_{m≠k} (D − m)/(k − m)`, `k, m = 0 … N`, product
+  in increasing `m`; `D` from tap 0, `y[n] = Σ h[k] x[n−k] ≈ x[n − D]`; exact for polynomials of
+  degree `≤ N`. Finite `D` (best near `N/2`), integer `order ≥ 1`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

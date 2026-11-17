@@ -1087,6 +1087,33 @@ public static partial class Dsp
         return a;
     }
 
+    /// <summary>The <c>order + 1</c> taps of the Lagrange interpolator that delays by
+    /// <paramref name="delay"/> samples from tap 0: <c>h[k] = Π_{m≠k} (D − m)/(k − m)</c>
+    /// (conventions: Lagrange fractional-delay FIR; ADR 0225).</summary>
+    /// <param name="delay">The delay <c>D</c> in samples, finite; most accurate near <c>order/2</c>.</param>
+    /// <param name="order">The interpolation order, at least 1.</param>
+    /// <returns>The taps, exact for polynomials of degree up to the order.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] LagrangeFir(double delay, int order)
+    {
+        if (!double.IsFinite(delay))
+            throw new ArgumentException("delay must be finite", nameof(delay));
+        if (order < 1)
+            throw new ArgumentOutOfRangeException(nameof(order), "order must be at least 1");
+        var h = new double[order + 1];
+        for (int k = 0; k <= order; k++)
+        {
+            double v = 1.0;
+            for (int m = 0; m <= order; m++)
+            {
+                if (m != k)
+                    v *= (delay - m) / (k - m);
+            }
+            h[k] = v;
+        }
+        return h;
+    }
+
     private static void CheckModelFilter(ReadOnlySpan<Complex> a, string name)
     {
         if (a.IsEmpty)

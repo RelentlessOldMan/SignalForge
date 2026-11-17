@@ -223,6 +223,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "lpc_to_autocorrelation": dsp.lpc_to_autocorrelation,
     "schur": dsp.schur,
     "cepstrum_to_lpc": dsp.cepstrum_to_lpc,
+    "lagrange_fir": dsp.lagrange_fir,
     "reflection_to_lpc": dsp.reflection_to_lpc,
     "lpc_to_reflection": dsp.lpc_to_reflection,
     "upsample": dsp.upsample,
