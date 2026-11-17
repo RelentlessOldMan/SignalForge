@@ -867,6 +867,54 @@ class HarmonicFTest:
     num_tapers: int
 
 
+def yule_walker_psd(
+    samples: ArrayLike,
+    sample_rate: float,
+    order: int,
+    *,
+    nfft: int | None = None,
+    one_sided: bool | None = None,
+) -> SpectralDensity:
+    """The Yule-Walker AR PSD ``sigma^2 / (fs |A|^2)`` from the biased autocorrelation and
+    Levinson-Durbin, folded as Welch (conventions: Yule-Walker AR PSD; ADR 0203)."""
+    from .dsp import autocorrelation, levinson
+
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if not real(sample_rate, "sample_rate") > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    is_complex = np.iscomplexobj(x)
+    if one_sided is None:
+        one_sided = not is_complex
+    elif one_sided and is_complex:
+        raise ValueError("a one-sided PSD needs real samples")
+    n = x.size
+    p = count(order, "order")
+    if p < 1:
+        raise ValueError("order must be at least 1")
+    if p >= n:
+        raise ValueError("order must be below the input length")
+    m = n if nfft is None else count(nfft, "nfft")
+    if m < p + 1:
+        raise ValueError("nfft must be at least order + 1")
+    fit = levinson(autocorrelation(x, p), p)
+    spectrum = np.fft.fft(fit.coefficients, m)
+    two = fit.error / (sample_rate * (spectrum.real**2 + spectrum.imag**2))
+    g = _Segments(x, n, n, 1, np.ones(n), 1.0, bool(one_sided), "none", m)
+    return SpectralDensity(
+        frequencies=g.frequencies(sample_rate),
+        psd=np.asarray(g.fold(two), dtype=np.float64),
+        sample_rate=float(sample_rate),
+        nperseg=n,
+        num_segments=1,
+        one_sided=bool(one_sided),
+        bin_width=sample_rate / m,
+        enbw_hz=sample_rate / n,
+        nfft=m,
+    )
+
+
 def harmonic_f_test(
     samples: ArrayLike,
     sample_rate: float,

@@ -291,6 +291,7 @@ from .spectral import (
     welch_psd,
     window,
     window_stats,
+    yule_walker_psd,
 )
 from .sync import (
     CarrierRecovery,
@@ -340,7 +341,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.0"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.1"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -669,6 +670,7 @@ __all__ = [
     "write_sigmf_captures",
     "write_sigmf_channels",
     "write_wav",
+    "yule_walker_psd",
     "zero_crossing_rate",
     "zero_phase_filter",
 ]

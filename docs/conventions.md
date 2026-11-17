@@ -372,6 +372,12 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   segments; `H[k] = Σ conj X_s·Y_s / Σ|X_s|²` for `k = 0 … ⌊M/2⌋` at `k·fs/M`, complex NaN where
   `Σ|X_s|² = 0`. Result `TransferFunction(frequencies, response, num_segments)`. The `coherence`
   rules. **(implemented)**
+- **Yule-Walker AR PSD** ([ADR 0203](adr/0203-yule-walker-psd.md); `yule_walker_psd(samples,
+  sample_rate, order, *, nfft=None, one_sided=None)`, C# `Spectral.YuleWalkerPsd`): biased
+  autocorrelation (no mean removal) to lag `p`, Levinson-Durbin for `a` and `σ²`, two-sided
+  `σ²/(fs·|A_k|²)` with `A_k = Σ a_j e^(−2πi jk/M)`, folded as Welch (one-sided interior doubled,
+  else shifted). `nperseg = N`, `num_segments = 1`, `bin_width = fs/M`, `enbw_hz = fs/N`.
+  `1 ≤ order < N`, `nfft ≥ order + 1` (default `N`). **(implemented)**
 - **Coherence confidence interval** ([ADR 0202](adr/0202-coherence-confidence-interval.md);
   `coherence_confidence_interval(coherence, num_segments, confidence=0.95)`, C#
   `Spectral.CoherenceConfidenceInterval`): Fisher transform of `γ = √γ²`, `s = z/√(2K − 2)`

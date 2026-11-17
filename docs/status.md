@@ -4,16 +4,17 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Yule-Walker AR PSD**: `yule_walker_psd(samples, sample_rate, order, *, nfft=None,
-   one_sided=None)` in `spectral` (C# `Spectral.YuleWalkerPsd`). Not built yet.
-   - It takes the biased `autocorrelation` (ADR 0148) and solves it with `levinson` (ADR 0149).
-   - The density is `P(f) = σ²/(fs·|Σ a_j e^(−j2πfj/fs)|²)`, doubled off DC and Nyquist when
-     one-sided, so that it integrates to the AR process power.
-   - It returns a `SpectralDensity`.
+1. **Burg AR PSD**: `burg_psd(samples, sample_rate, order, *, nfft=None, one_sided=None)` in
+   `spectral` (C# `Spectral.BurgPsd`), the same `SpectralDensity` shape as ADR 0203. Not built
+   yet.
+   - Each reflection coefficient is `k_m = −2 Σ f·b* / Σ(|f|² + |b|²)` over the forward and
+     backward errors.
+   - `σ²` starts at the mean `|x|²` and is multiplied by `(1 − |k_m|²)` at each order.
+   - The filter is updated by Levinson's step.
 
-   Needs an ADR covering the scaling, the bin grid, a mean that is not removed, and complex
-   input. Expected values: hand AR(1) cases from `r[0]` and `r[1]` (`a₁ = −r₁/r₀`,
-   `σ² = r₀(1 − a₁²)`), evaluated in closed form at each bin.
+   Needs an ADR. Expected values: order 1 in closed form; order 2 from a hand-written stdlib
+   error-update recursion, with the reflection coefficients checked against their closed forms
+   on a 3-sample input.
 
 ## Built
 
@@ -1928,6 +1929,14 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors use stdlib `NormalDist`.
   Python 5672 passed, 2 skipped; .NET 4971 passed; conformance 3244/3244 in both. Version
   2026.11.17.0.
+- 2026-11-17: Yule-Walker AR PSD (ADR 0203): `yule_walker_psd(samples, sample_rate, order, *,
+  nfft=None, one_sided=None)` in `spectral` (C# `Spectral.YuleWalkerPsd`, with real and complex
+  overloads).
+  - The biased autocorrelation is solved by Levinson-Durbin, giving `σ²/(fs·|A_k|²)` folded as
+    Welch, so the area under the density equals the record's mean power.
+  - The vectors solve the normal equations by Cramer's rule and evaluate `|A|²` with `cmath`.
+  Python 5687 passed, 2 skipped; .NET 4985 passed; conformance 3257/3257 in both. Version
+  2026.11.17.1.
 
 ## Not built
 
