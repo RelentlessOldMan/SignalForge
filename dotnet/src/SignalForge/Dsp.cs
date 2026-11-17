@@ -1047,6 +1047,46 @@ public static partial class Dsp
         return new ComplexSchur(k, error);
     }
 
+    /// <summary>The order-<paramref name="order"/> prediction-error filter of a real cepstrum
+    /// <c>c_0, c_1, …</c>, the inverse of <c>LpcCepstrum</c> (conventions: Cepstrum to prediction
+    /// filter; ADR 0222).</summary>
+    /// <param name="cepstrum">The cepstrum, finite, at least <c>order + 1</c> values; <c>c_0</c> is not used.</param>
+    /// <param name="order">The filter order, at least 1.</param>
+    /// <returns>The filter, <c>a[0] = 1</c>, <c>order + 1</c> taps.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] CepstrumToLpc(ReadOnlySpan<double> cepstrum, int order) =>
+        [.. CepstrumToLpc((ReadOnlySpan<Complex>)ToComplexArray(cepstrum), order).Select(v => v.Real)];
+
+    /// <summary>The order-<paramref name="order"/> prediction-error filter of a complex cepstrum
+    /// <c>c_0, c_1, …</c>, the inverse of <c>LpcCepstrum</c> (conventions: Cepstrum to prediction
+    /// filter; ADR 0222).</summary>
+    /// <param name="cepstrum">The cepstrum, finite, at least <c>order + 1</c> values; <c>c_0</c> is not used.</param>
+    /// <param name="order">The filter order, at least 1.</param>
+    /// <returns>The filter, <c>a[0] = 1</c>, <c>order + 1</c> taps.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] CepstrumToLpc(ReadOnlySpan<Complex> cepstrum, int order)
+    {
+        foreach (Complex x in cepstrum)
+        {
+            if (!(double.IsFinite(x.Real) && double.IsFinite(x.Imaginary)))
+                throw new ArgumentException("cepstrum must be finite", nameof(cepstrum));
+        }
+        if (order < 1)
+            throw new ArgumentOutOfRangeException(nameof(order), "order must be at least 1");
+        if (cepstrum.Length < order + 1)
+            throw new ArgumentException("cepstrum must have at least order + 1 values", nameof(cepstrum));
+        var a = new Complex[order + 1];
+        a[0] = 1;
+        for (int n = 1; n <= order; n++)
+        {
+            Complex acc = -cepstrum[n];
+            for (int k = 1; k < n; k++)
+                acc -= k * cepstrum[k] * a[n - k] / n;
+            a[n] = acc;
+        }
+        return a;
+    }
+
     private static void CheckModelFilter(ReadOnlySpan<Complex> a, string name)
     {
         if (a.IsEmpty)

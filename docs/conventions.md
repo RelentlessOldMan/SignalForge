@@ -1260,6 +1260,11 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `u = v = r`, `E = r[0]`; per step `k = −u[m]/E`, `u'[i] = u[i] + k v[i−1]`,
   `v'[i] = v[i−1] + conj(k) u[i]`, `E ← E(1 − |k|²)`. Returns `(reflection, error)`, equal to
   `levinson`'s. Same rules as `levinson`. **(implemented)**
+- **Cepstrum to prediction filter** (`cepstrum_to_lpc(cepstrum, order)`, C#
+  `Dsp.CepstrumToLpc`, [ADR 0222](adr/0222-cepstrum-to-lpc.md)): `a_0 = 1`,
+  `a_n = −c_n − (1/n) Σ_{k=1}^{n−1} k c_k a_{n−k}`; `c_0` unused (the error is `exp(2c_0)`).
+  Finite cepstrum, at least `order + 1` values; integer `order ≥ 1`; output dtype follows
+  input. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at

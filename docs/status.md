@@ -4,14 +4,14 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Line spectral frequencies**: `lpc_to_lsf(coefficients)` and `lsf_to_lpc(frequencies)` in
-   `dsp` (C# `Dsp.LpcToLsf`, `Dsp.LsfToLpc`), real only. Not built yet.
-   - Form `P(z) = A(z) + z^{−(p+1)}A(z^{−1})` and `Q(z) = A(z) − z^{−(p+1)}A(z^{−1})`. Their
-     unit-circle roots interlace, and the LSFs are the root angles in `(0, π)`, sorted.
-   - This needs a convention for even and odd `p` (the trivial roots at `z = ±1`), and an ADR on
-     root finding (companion-matrix eigenvalues vs Chebyshev search). Both languages must find
-     the same roots without a dependency.
-   - Expected values: order 1 and order 2 in closed form, `cos ω` from a quadratic.
+1. **AR model PSD**: `ar_psd(coefficients, error, sample_rate, nfft, one_sided)` in `spectral`
+   (C# `Spectral.ArPsd`, real and complex). It gives the PSD `σ²/(fs|A|²)` of a given model,
+   folded as `yule_walker_psd` and `burg_psd` (ADR 0203, ADR 0204) fold theirs. Those two fit
+   samples, and this one takes the model, for example from `cepstrum_to_lpc` or `lsf_to_lpc`.
+   Not built yet.
+   - The ADR decides the return type, because `SpectralDensity` carries segment fields that a
+     model has no value for.
+   - Expected values: order 1 in closed form, `σ²/(fs(1 + a² + 2a cos ω))`.
 
 ## Built
 
@@ -2074,6 +2074,13 @@ Updated with every chunk of work. Dates are absolute.
     normal equations.
   Python 5937 passed, 2 skipped; .NET 5215 passed; conformance 3469/3469 in both. Version
   2026.11.17.19.
+- 2026-11-17: Cepstrum to prediction filter (ADR 0222): `cepstrum_to_lpc(cepstrum, order)` in
+  `dsp` (C# `Dsp.CepstrumToLpc`, real and complex).
+  - It inverts ADR 0207's recursion. `c_0` is not used, and the error is `exp(2c_0)`.
+  - The vectors are exact fractions from chosen roots.
+  - The stale Next item (LSFs, already built as ADR 0208/0209) was replaced.
+  Python 5950 passed, 2 skipped; .NET 5227 passed; conformance 3480/3480 in both. Version
+  2026.11.17.20.
 
 ## Not built
 
@@ -2091,6 +2098,9 @@ packaging and publishing.
   is computed from `re² + im²` directly.
 - 2026-11-13: Before putting a feature in Next, grep for it: "mixing" was planned while
   `frequency_offset` already multiplied by `e^(j(2π f n/fs + φ))` in both languages.
+  It happened again on 2026-11-17: ADR 0221's commit queued line spectral frequencies, which
+  ADRs 0208 and 0209 had already built. Grep `dsp.py` and `docs/adr/` for the name before
+  writing the item.
 - 2026-11-12: The test for any dependency is whether it could ever force our code under the GPL or
   limit commercial shipping. A GPL label on a compiler runtime with the GCC exception does not.
 - 2026-11-12: Check build tools' licenses too: hatchling and mypy both pull in pathspec (MPL-2.0).

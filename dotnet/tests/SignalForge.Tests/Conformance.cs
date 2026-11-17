@@ -510,6 +510,9 @@ public static class Conformance
             "reflection_to_arcsine" => Bind(Reals(a.Get("reflection")), t => Dsp.ReflectionToArcsine(t)),
             "arcsine_to_reflection" => Bind(Reals(a.Get("arcsine")), t => Dsp.ArcsineToReflection(t)),
             "lar_to_reflection" => Bind(Reals(a.Get("lar")), t => Dsp.LarToReflection(t)),
+            "cepstrum_to_lpc" => a.Get("cepstrum") is Complex[] cep
+                ? Bind((cep, a.I("order")), t => Dsp.CepstrumToLpc(t.Item1, t.Item2))
+                : Bind((Reals(a.Get("cepstrum")), a.I("order")), t => Dsp.CepstrumToLpc(t.Item1, t.Item2)),
             "schur" => a.Get("r") is Complex[] scr
                 ? Bind((scr, a.I("order")), t => Dsp.Schur(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("r")), a.I("order")), t => Dsp.Schur(t.Item1, t.Item2)),

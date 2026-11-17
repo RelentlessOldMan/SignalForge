@@ -43,6 +43,7 @@ from .dsp import (
     butterworth_lowpass,
     c_weighting_sos,
     cepstral_distance,
+    cepstrum_to_lpc,
     chebyshev1_bandpass,
     chebyshev1_bandstop,
     chebyshev1_highpass,
@@ -364,7 +365,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.19"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.20"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -468,6 +469,7 @@ __all__ = [
     "cepstral_distance",
     "cepstral_lifter",
     "cepstrum_pitch",
+    "cepstrum_to_lpc",
     "channel_power",
     "chebyshev1_bandpass",
     "chebyshev1_bandstop",

@@ -593,6 +593,29 @@ def schur(r: ArrayLike, order: int) -> Schur:
     return Schur(cast("NDArray[np.complex128] | NDArray[np.float64]", k), error)
 
 
+def cepstrum_to_lpc(
+    cepstrum: ArrayLike, order: int
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The order-``order`` prediction-error filter of the cepstrum ``c_0, c_1, ...``, the
+    inverse of ``lpc_cepstrum`` (conventions: Cepstrum to prediction filter; ADR 0222)."""
+    c = _vector(cepstrum, "cepstrum")
+    if not np.all(np.isfinite(c)):
+        raise ValueError("cepstrum must be finite")
+    p = count(order, "order")
+    if p < 1:
+        raise ValueError("order must be at least 1")
+    if c.size < p + 1:
+        raise ValueError("cepstrum must have at least order + 1 values")
+    a = np.zeros(p + 1, dtype=c.dtype)
+    a[0] = 1
+    for n in range(1, p + 1):
+        acc = -c[n]
+        for k in range(1, n):
+            acc -= k * c[k] * a[n - k] / n
+        a[n] = acc
+    return cast("NDArray[np.complex128] | NDArray[np.float64]", a)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

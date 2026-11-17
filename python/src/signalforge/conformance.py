@@ -220,6 +220,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "bandwidth_expansion": dsp.bandwidth_expansion,
     "lpc_to_autocorrelation": dsp.lpc_to_autocorrelation,
     "schur": dsp.schur,
+    "cepstrum_to_lpc": dsp.cepstrum_to_lpc,
     "reflection_to_lpc": dsp.reflection_to_lpc,
     "lpc_to_reflection": dsp.lpc_to_reflection,
     "upsample": dsp.upsample,
