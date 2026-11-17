@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "moving_rms",
+  "description": "Moving RMS (conventions: Moving RMS; ADR 0239).",
+  "cases": [
+    {"id": "moving_rms.constant", "op": "moving_rms", "args": {"samples": [-3.0, -3.0, -3.0, -3.0, -3.0, -3.0, -3.0], "length": 4}, "expected": [1.5, 2.1213203435596424, 2.598076211353316, 3.0, 3.0, 3.0, 3.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "constant -3: 3 sqrt(min(n + 1, 4) / 4)"},
+    {"id": "moving_rms.mixed", "op": "moving_rms", "args": {"samples": [0.5, 1.5, -1.0, 2.25, 0.0, -0.75, 1.0, 3.0, -2.0, 0.25], "length": 3}, "expected": [0.28867513459481287, 0.9128709291752769, 1.0801234497346435, 1.6645820296198484, 1.4215601757693317, 1.3693063937629153, 0.7216878364870323, 1.8763883748662837, 2.160246899469287, 2.0866640042581523], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "mixed data, N = 3"},
+    {"id": "moving_rms.length_one", "op": "moving_rms", "args": {"samples": [1.5, -2.0, 0.0], "length": 1}, "expected": [1.5, 2.0, 0.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 1: |x|"},
+    {"id": "moving_rms.long_window", "op": "moving_rms", "args": {"samples": [1.0, 2.0, 3.0], "length": 8}, "expected": [0.3535533905932738, 0.7905694150420949, 1.3228756555322954], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "window longer than the input"},
+    {"id": "moving_rms.complex", "op": "moving_rms", "args": {"samples": {"re": [3.0, 0.0, -1.0, 2.0], "im": [4.0, 1.0, 1.0, -2.0]}, "length": 2}, "expected": [3.5355339059327378, 3.605551275463989, 1.224744871391589, 2.23606797749979], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "complex samples"},
+    {"id": "moving_rms.length_zero", "op": "moving_rms", "args": {"samples": [1.0], "length": 0}, "error": "invalid_argument", "source": "length must be at least 1"},
+    {"id": "moving_rms.empty", "op": "moving_rms", "args": {"samples": [], "length": 2}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "moving_rms.nan_sample", "op": "moving_rms", "args": {"samples": [1.0, "nan"], "length": 2}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

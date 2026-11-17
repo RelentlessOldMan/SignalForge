@@ -6,7 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a moving RMS (`moving_rms(samples, length)`, the trailing window from rest);
    - a Schroeder allpass section (`allpass_comb(samples, delay, gain)`, after ADR 0237).
 
 ## Built
@@ -2196,6 +2195,13 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact rationals, checked against closed forms.
   Python 6178 passed, 2 skipped; .NET 5442 passed; conformance 3678/3678 in both. Version
   2026.11.17.37.
+- 2026-11-17: Moving RMS (ADR 0239): `moving_rms(samples, length)` in `dsp` (C#
+  `Dsp.MovingRms`, real and complex).
+  - It is the RMS of each trailing window, starting from rest and always divided by `N`.
+  - Each window is summed directly, so there is no running-sum drift.
+  - The vectors are exact rational means.
+  Python 6188 passed, 2 skipped; .NET 5451 passed; conformance 3686/3686 in both. Version
+  2026.11.17.38.
 
 ## Not built
 

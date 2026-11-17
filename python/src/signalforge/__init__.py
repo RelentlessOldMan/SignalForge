@@ -92,6 +92,7 @@ from .dsp import (
     lpc_to_reflection,
     lsf_to_lpc,
     median_filter,
+    moving_rms,
     pulse_shape,
     reflection_to_arcsine,
     reflection_to_autocorrelation,
@@ -383,7 +384,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.37"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.38"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -621,6 +622,7 @@ __all__ = [
     "mfcc",
     "minimum_phase",
     "modulation_transfer",
+    "moving_rms",
     "multipath",
     "multitaper_line_removal",
     "multitaper_psd",

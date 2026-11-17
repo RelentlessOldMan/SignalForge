@@ -2485,6 +2485,25 @@ def envelope_follower(samples: ArrayLike, attack: float, release: float) -> NDAr
     return e
 
 
+def moving_rms(samples: ArrayLike, length: int) -> NDArray[np.float64]:
+    """RMS of the ``length`` samples ending at each sample, zeros before the start (conventions:
+    Moving RMS; ADR 0239)."""
+    m = count(length, "length")
+    if m < 1:
+        raise ValueError("length must be at least 1")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    sq = [float(v) for v in np.abs(x) ** 2]
+    y = np.empty(x.size)
+    for n in range(x.size):
+        acc = 0.0
+        for k in range(max(0, n - m + 1), n + 1):
+            acc += sq[k]
+        y[n] = math.sqrt(acc / m)
+    return y
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:
