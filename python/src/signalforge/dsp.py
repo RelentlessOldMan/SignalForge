@@ -2557,6 +2557,35 @@ def sample_and_hold(
     return y
 
 
+def quantize(
+    samples: ArrayLike, step: float, *, levels: int | None = None
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Mid-tread uniform quantizer ``step round(x / step)``, ties to even, optionally saturating at
+    ``levels`` levels; complex parts separately (conventions: Uniform quantizer; ADR 0247)."""
+    q = real(step, "step")
+    if not q > 0:
+        raise ValueError("step must be positive")
+    top: int | None = None
+    if levels is not None:
+        n_l = count(levels, "levels")
+        if n_l < 1 or n_l % 2 == 0:
+            raise ValueError("levels must be an odd integer of at least 1")
+        top = (n_l - 1) // 2
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+
+    def part(v: NDArray[np.float64]) -> NDArray[np.float64]:
+        k = np.rint(v / q)
+        if top is not None:
+            k = np.clip(k, -top, top)
+        return q * k
+
+    if np.iscomplexobj(x):
+        return part(x.real) + 1j * part(x.imag)
+    return part(np.asarray(x, dtype=np.float64))
+
+
 def dead_zone(samples: ArrayLike, width: float) -> NDArray[np.float64]:
     """Soft threshold: 0 where ``|x| <= width``, otherwise ``x`` moved ``width`` toward 0
     (conventions: Dead zone; ADR 0246)."""

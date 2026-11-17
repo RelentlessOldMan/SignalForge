@@ -131,4 +131,63 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Mid-tread uniform quantizer <c>step·round(x/step)</c> of real samples, ties to
+    /// even, optionally saturating at <paramref name="levels"/> levels (conventions: Uniform
+    /// quantizer; ADR 0247).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="step">The step, finite and positive.</param>
+    /// <param name="levels">An odd number of levels to saturate at, or null for none.</param>
+    /// <returns>One quantized value per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Quantize(ReadOnlySpan<double> samples, double step, int? levels = null)
+    {
+        double top = QuantizeTop(step, levels);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            if (!double.IsFinite(samples[n]))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            y[n] = QuantizeOne(samples[n], step, top);
+        }
+        return y;
+    }
+
+    /// <summary>Mid-tread uniform quantizer <c>step·round(x/step)</c> of complex samples, each
+    /// part separately, ties to even, optionally saturating at <paramref name="levels"/> levels
+    /// (conventions: Uniform quantizer; ADR 0247).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="step">The step, finite and positive.</param>
+    /// <param name="levels">An odd number of levels to saturate at, or null for none.</param>
+    /// <returns>One quantized value per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Quantize(ReadOnlySpan<Complex> samples, double step, int? levels = null)
+    {
+        double top = QuantizeTop(step, levels);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            Complex v = samples[n];
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            y[n] = new Complex(QuantizeOne(v.Real, step, top), QuantizeOne(v.Imaginary, step, top));
+        }
+        return y;
+    }
+
+    private static double QuantizeTop(double step, int? levels)
+    {
+        if (!double.IsFinite(step) || !(step > 0))
+            throw new ArgumentOutOfRangeException(nameof(step), "step must be positive");
+        if (levels is int l && (l < 1 || l % 2 == 0))
+            throw new ArgumentOutOfRangeException(nameof(levels), "levels must be an odd integer of at least 1");
+        return levels is int m ? (m - 1) / 2 : double.PositiveInfinity;
+    }
+
+    private static double QuantizeOne(double v, double step, double top) =>
+        step * Math.Clamp(Math.Round(v / step, MidpointRounding.ToEven), -top, top);
 }

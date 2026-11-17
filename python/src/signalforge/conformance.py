@@ -262,6 +262,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "schmitt_trigger": dsp.schmitt_trigger,
     "sample_and_hold": dsp.sample_and_hold,
     "dead_zone": dsp.dead_zone,
+    "quantize": dsp.quantize,
     "cic_interpolate": dsp.cic_interpolate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
     "butterworth_lowpass": dsp.butterworth_lowpass,

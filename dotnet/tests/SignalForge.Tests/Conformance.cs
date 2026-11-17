@@ -657,6 +657,11 @@ public static class Conformance
                 a.Has("delay") ? a.I("delay") : 1), t => Dsp.CicCompensator(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "savgol_coefficients" => Bind((a.I("length"), a.I("order"), a.Has("derivative") ? a.I("derivative") : 0,
                 a.Has("position") ? a.I("position") : 0), t => Dsp.SavgolCoefficients(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "quantize" => a.Get("samples") is Complex[] qzs
+                ? Bind((qzs, a.D("step"), a.Has("levels") ? a.I("levels") : (int?)null),
+                    t => Dsp.Quantize(t.Item1, t.Item2, t.Item3))
+                : Bind((Reals(a.Get("samples")), a.D("step"), a.Has("levels") ? a.I("levels") : (int?)null),
+                    t => Dsp.Quantize(t.Item1, t.Item2, t.Item3)),
             "dead_zone" => Bind((Reals(a.Get("samples")), a.D("width")), t => Dsp.DeadZone(t.Item1, t.Item2)),
             "sample_and_hold" => a.Get("samples") is Complex[] shs
                 ? Bind((shs, a.I("period"), a.Has("offset") ? a.I("offset") : 0), t => Dsp.SampleAndHold(t.Item1, t.Item2, t.Item3))

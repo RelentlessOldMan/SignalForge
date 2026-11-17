@@ -1892,6 +1892,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0246](adr/0246-dead-zone.md)): `y = 0` if `|x| ≤ width`, `x − width` above, `x + width`
   below (the soft threshold; memoryless, continuous). Finite `width ≥ 0`; samples real, finite,
   non-empty. **(implemented)**
+- **Uniform quantizer** (`quantize(samples, step, *, levels=None)`, C# `Dsp.Quantize`,
+  [ADR 0247](adr/0247-quantize.md)): mid-tread `k = round(x/step)` with round half to even
+  (`np.rint`, `MidpointRounding.ToEven`), `y = step·k`; with odd `levels = L`, `k` clamped to
+  `±(L − 1)/2` first. Complex: each part separately. Finite `step > 0`; `levels` odd `≥ 1` or
+  none; samples finite, non-empty; output the same kind. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

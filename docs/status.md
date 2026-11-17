@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a uniform quantizer (`quantize(samples, step, *, levels=None)`, mid-tread, round half to
-     even, optional symmetric saturation);
    - μ-law companding (`mu_law_compress(samples, mu=255)` and `mu_law_expand`, the continuous
      G.711-style curve on `[−1, 1]`).
 
@@ -2251,6 +2249,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact, compared with zero tolerance, and include samples exactly on the edges.
   Python 6267 passed, 2 skipped; .NET 5527 passed; conformance 3751/3751 in both. Version
   2026.11.17.45.
+- 2026-11-17: Uniform quantizer (ADR 0247): `quantize(samples, step, *, levels=None)` in `dsp`
+  (C# `Dsp.Quantize`, real and complex part by part).
+  - It is mid-tread, rounds half to even, and can saturate at an odd number of levels.
+  - The vectors are exact, including ties.
+  Python 6279 passed, 2 skipped; .NET 5539 passed; conformance 3761/3761 in both. Version
+  2026.11.17.46.
 
 ## Not built
 
