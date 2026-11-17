@@ -446,6 +446,32 @@ def lar_to_reflection(lar: ArrayLike) -> NDArray[np.float64]:
     return cast("NDArray[np.float64]", np.tanh(g / 2.0))
 
 
+def reflection_to_arcsine(reflection: ArrayLike) -> NDArray[np.float64]:
+    """The inverse sine coefficients ``arcsin k`` of real reflection coefficients, in radians
+    (conventions: Inverse sine coefficients; ADR 0216)."""
+    k = _vector(reflection, "reflection")
+    if np.iscomplexobj(k):
+        raise ValueError("reflection must be real")
+    if not np.all(np.isfinite(k)):
+        raise ValueError("reflection must be finite")
+    if not np.all(np.abs(k) < 1):
+        raise ValueError("every reflection coefficient must have |k| < 1")
+    return np.arcsin(k)
+
+
+def arcsine_to_reflection(arcsine: ArrayLike) -> NDArray[np.float64]:
+    """The reflection coefficients ``sin theta`` of inverse sine coefficients (conventions:
+    Inverse sine coefficients; ADR 0216)."""
+    t = _vector(arcsine, "arcsine")
+    if np.iscomplexobj(t):
+        raise ValueError("arcsine must be real")
+    if not np.all(np.isfinite(t)):
+        raise ValueError("arcsine must be finite")
+    if not np.all(np.abs(t) < math.pi / 2):
+        raise ValueError("every arcsine coefficient must have |theta| < pi/2")
+    return np.sin(t)
+
+
 def upsample(x: ArrayLike, factor: int) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Each sample followed by ``factor - 1`` zeros."""
     a = _vector(x, "x")

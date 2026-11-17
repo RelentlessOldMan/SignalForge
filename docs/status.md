@@ -4,12 +4,12 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Inverse sine coefficients**: `reflection_to_arcsine(reflection)` and
-   `arcsine_to_reflection(arcsine)` in `dsp` (C# `Dsp.ReflectionToArcsine` /
-   `Dsp.ArcsineToReflection`, real only). Not built yet.
-   - `θ = arcsin k` and `k = sin θ`, the other quantization domain of speech coders.
-   - `|k| < 1` is required; `|θ| < π/2` is required.
-   - Expected values: `k = 1/2 → π/6`, `√2/2 → π/4`, `√3/2 → π/3`.
+1. **Itakura-Saito distance between AR models**: `itakura_saito(a_ref, error_ref, a_test,
+   error_test)` in `dsp` (C# `Dsp.ItakuraSaito`, real and complex). Not built yet.
+   - It is the closed form `d = (σ_r²/σ_t²)·(a_tᴴ R_r a_t)/σ_r² − ln(σ_r²/σ_t²) − 1`, with `R_r`
+     the Toeplitz autocorrelation of the reference model (ADR 0214).
+   - Expected values: exact fractions for orders 1 and 2, cross-checked against a stdlib
+     numerical integral of `S_r/S_t − ln(S_r/S_t) − 1`.
 
 ## Built
 
@@ -2026,6 +2026,13 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are closed forms such as `ln 2`, `ln 4`, `ln 9` and `ln 19`.
   Python 5854 passed, 2 skipped; .NET 5138 passed; conformance 3398/3398 in both. Version
   2026.11.17.13.
+- 2026-11-17: Inverse sine coefficients (ADR 0216): `reflection_to_arcsine(reflection)` and
+  `arcsine_to_reflection(arcsine)` in `dsp` (C# `Dsp.ReflectionToArcsine` and
+  `Dsp.ArcsineToReflection`, real only).
+  - The forward map is `arcsin k` and the inverse is `sin θ`, with `|θ| < π/2`.
+  - The vectors are the closed forms `π/6`, `π/4` and `π/3`.
+  Python 5864 passed, 2 skipped; .NET 5147 passed; conformance 3406/3406 in both. Version
+  2026.11.17.14.
 
 ## Not built
 

@@ -790,6 +790,50 @@ public static partial class Dsp
         return k;
     }
 
+    /// <summary>The inverse sine coefficients <c>arcsin k</c> of real reflection coefficients, in
+    /// radians (conventions: Inverse sine coefficients; ADR 0216).</summary>
+    /// <param name="reflection">The coefficients, finite, each <c>|k| &lt; 1</c>, at least one.</param>
+    /// <returns>One angle per coefficient.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ReflectionToArcsine(ReadOnlySpan<double> reflection)
+    {
+        if (reflection.IsEmpty)
+            throw new ArgumentException("reflection must not be empty", nameof(reflection));
+        var t = new double[reflection.Length];
+        for (int i = 0; i < t.Length; i++)
+        {
+            double k = reflection[i];
+            if (!double.IsFinite(k))
+                throw new ArgumentException("reflection must be finite", nameof(reflection));
+            if (!(Math.Abs(k) < 1))
+                throw new ArgumentException("every reflection coefficient must have |k| < 1", nameof(reflection));
+            t[i] = Math.Asin(k);
+        }
+        return t;
+    }
+
+    /// <summary>The reflection coefficients <c>sin θ</c> of inverse sine coefficients
+    /// (conventions: Inverse sine coefficients; ADR 0216).</summary>
+    /// <param name="arcsine">The angles in radians, finite, each <c>|θ| &lt; π/2</c>, at least one.</param>
+    /// <returns>One reflection coefficient per angle.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ArcsineToReflection(ReadOnlySpan<double> arcsine)
+    {
+        if (arcsine.IsEmpty)
+            throw new ArgumentException("arcsine must not be empty", nameof(arcsine));
+        var k = new double[arcsine.Length];
+        for (int i = 0; i < k.Length; i++)
+        {
+            double t = arcsine[i];
+            if (!double.IsFinite(t))
+                throw new ArgumentException("arcsine must be finite", nameof(arcsine));
+            if (!(Math.Abs(t) < Math.PI / 2))
+                throw new ArgumentException("every arcsine coefficient must have |theta| < pi/2", nameof(arcsine));
+            k[i] = Math.Sin(t);
+        }
+        return k;
+    }
+
     private static Complex[] ToComplexArray(ReadOnlySpan<double> x)
     {
         var c = new Complex[x.Length];

@@ -507,6 +507,8 @@ public static class Conformance
                 : Bind((Reals(a.Get("reflection")), a.D("power"), a.I("lags")),
                     t => Dsp.ReflectionToAutocorrelation(t.Item1, t.Item2, t.Item3)),
             "reflection_to_lar" => Bind(Reals(a.Get("reflection")), t => Dsp.ReflectionToLar(t)),
+            "reflection_to_arcsine" => Bind(Reals(a.Get("reflection")), t => Dsp.ReflectionToArcsine(t)),
+            "arcsine_to_reflection" => Bind(Reals(a.Get("arcsine")), t => Dsp.ArcsineToReflection(t)),
             "lar_to_reflection" => Bind(Reals(a.Get("lar")), t => Dsp.LarToReflection(t)),
             "reflection_to_lpc" => a.Get("reflection") is Complex[] rk
                 ? Bind(rk, t => Dsp.ReflectionToLpc(t))

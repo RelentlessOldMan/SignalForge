@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "arcsine_coefficients",
+  "description": "Inverse sine coefficients (conventions: Inverse sine coefficients; ADR 0216).",
+  "cases": [
+    {"id": "reflection_to_arcsine.closed_forms", "op": "reflection_to_arcsine", "args": {"reflection": [0.0, 0.5, 0.7071067811865476, -0.8660254037844386, -0.5]}, "expected": [0.0, 0.5235987755982988, 0.7853981633974483, -1.0471975511965976, -0.5235987755982988], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "arcsin: 0 -> 0, 1/2 -> pi/6, sqrt(2)/2 -> pi/4, -sqrt(3)/2 -> -pi/3, -1/2 -> -pi/6"},
+    {"id": "arcsine_to_reflection.closed_forms", "op": "arcsine_to_reflection", "args": {"arcsine": [0.0, 0.5235987755982988, 0.7853981633974483, -1.0471975511965976, -0.5235987755982988]}, "expected": [0.0, 0.5, 0.7071067811865476, -0.8660254037844386, -0.5], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "the inverse: arcsin: 0 -> 0, 1/2 -> pi/6, sqrt(2)/2 -> pi/4, -sqrt(3)/2 -> -pi/3, -1/2 -> -pi/6"},
+    {"id": "reflection_to_arcsine.unit_k", "op": "reflection_to_arcsine", "args": {"reflection": [0.5, 1.0]}, "error": "invalid_argument", "source": "every |k| < 1"},
+    {"id": "reflection_to_arcsine.empty", "op": "reflection_to_arcsine", "args": {"reflection": []}, "error": "invalid_argument", "source": "reflection must not be empty"},
+    {"id": "reflection_to_arcsine.nan", "op": "reflection_to_arcsine", "args": {"reflection": ["nan"]}, "error": "invalid_argument", "source": "reflection must be finite"},
+    {"id": "arcsine_to_reflection.half_pi", "op": "arcsine_to_reflection", "args": {"arcsine": [0.1, -2.0]}, "error": "invalid_argument", "source": "every |theta| < pi/2"},
+    {"id": "arcsine_to_reflection.empty", "op": "arcsine_to_reflection", "args": {"arcsine": []}, "error": "invalid_argument", "source": "arcsine must not be empty"},
+    {"id": "arcsine_to_reflection.inf", "op": "arcsine_to_reflection", "args": {"arcsine": ["inf"]}, "error": "invalid_argument", "source": "arcsine must be finite"}
+  ]
+}

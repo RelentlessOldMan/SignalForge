@@ -1233,6 +1233,10 @@ Decided in [ADR 0007](adr/0007-pulse-shaping-channel-evm.md). Python: `signalfor
   `Dsp.ReflectionToLar`, `Dsp.LarToReflection`, [ADR 0215](adr/0215-log-area-ratios.md)):
   `g = ln((1 + k)/(1 − k)) = 2 atanh k`, `k = tanh(g/2)`. Real, finite, non-empty; every
   `|k| < 1`; any finite `g`. **(implemented)**
+- **Inverse sine coefficients** (`reflection_to_arcsine(reflection)`,
+  `arcsine_to_reflection(arcsine)`, C# `Dsp.ReflectionToArcsine`, `Dsp.ArcsineToReflection`,
+  [ADR 0216](adr/0216-arcsine-coefficients.md)): `θ = arcsin k` in radians, `k = sin θ`. Real,
+  finite, non-empty; every `|k| < 1`, every `|θ| < π/2`. **(implemented)**
 - **Upsampling** (`upsample(x, factor)`): each sample followed by `factor − 1` zeros, so the output
   has `len(x)·factor` samples and `y[i·factor] = x[i]`. `factor ≥ 1`. **(implemented)**
 - **RRC taps** (`rrc_taps(beta, samples_per_symbol, span_symbols)`): `N = span·sps + 1` taps at
