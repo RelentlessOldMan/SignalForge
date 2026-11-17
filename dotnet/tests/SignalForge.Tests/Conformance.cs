@@ -657,6 +657,11 @@ public static class Conformance
                 a.Has("delay") ? a.I("delay") : 1), t => Dsp.CicCompensator(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "savgol_coefficients" => Bind((a.I("length"), a.I("order"), a.Has("derivative") ? a.I("derivative") : 0,
                 a.Has("position") ? a.I("position") : 0), t => Dsp.SavgolCoefficients(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "comb_filter" => a.Get("samples") is Complex[] cmbs
+                ? Bind((cmbs, a.I("delay"), a.D("gain"), a.Flag("feedback", false)),
+                    t => Dsp.CombFilter(t.Item1, t.Item2, t.Item3, t.Item4))
+                : Bind((Reals(a.Get("samples")), a.I("delay"), a.D("gain"), a.Flag("feedback", false)),
+                    t => Dsp.CombFilter(t.Item1, t.Item2, t.Item3, t.Item4)),
             "dc_blocker" => a.Get("samples") is Complex[] dcbs
                 ? Bind((dcbs, a.D("pole")), t => Dsp.DcBlocker(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.D("pole")), t => Dsp.DcBlocker(t.Item1, t.Item2)),

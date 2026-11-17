@@ -1845,6 +1845,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0236](adr/0236-dc-blocker.md)): `y[n] = (x[n] − x[n−1]) + p·y[n−1]`, `x[−1] = y[−1] = 0`
   (from rest; `H(z) = (1 − z⁻¹)/(1 − p z⁻¹)`). Finite `0 ≤ pole < 1`; samples finite, non-empty,
   real or complex. **(implemented)**
+- **Comb filter** (`comb_filter(samples, delay, gain, *, feedback=False)`, C# `Dsp.CombFilter`,
+  [ADR 0237](adr/0237-comb-filter.md)): `x`, `y` zero before 0; feedforward
+  `y[n] = x[n] + g·x[n−D]`; feedback `y[n] = x[n] + g·y[n−D]`; output the input's length. Integer
+  `delay ≥ 1`, finite `gain` (`|gain| < 1` for feedback); samples finite, non-empty, real or
+  complex. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

@@ -2440,6 +2440,28 @@ def dc_blocker(samples: ArrayLike, pole: float) -> NDArray[np.complex128] | NDAr
     return y
 
 
+def comb_filter(
+    samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Feedforward ``y[n] = x[n] + gain x[n - delay]`` or feedback
+    ``y[n] = x[n] + gain y[n - delay]`` comb, zero before the start (conventions: Comb filter;
+    ADR 0237)."""
+    d = count(delay, "delay")
+    if d < 1:
+        raise ValueError("delay must be at least 1")
+    g = real(gain, "gain")
+    if feedback and not abs(g) < 1:
+        raise ValueError("a feedback comb needs |gain| < 1")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y: NDArray[Any] = x.copy()
+    src = y if feedback else x
+    for n in range(d, x.size):
+        y[n] = x[n] + g * src[n - d]
+    return y
+
+
 def decimate(
     x: ArrayLike, factor: int, taps: ArrayLike | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

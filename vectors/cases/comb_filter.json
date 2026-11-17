@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "comb_filter",
+  "description": "Comb filter (conventions: Comb filter; ADR 0237).",
+  "cases": [
+    {"id": "comb_filter.ff_impulse", "op": "comb_filter", "args": {"samples": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0], "delay": 3, "gain": -0.5}, "expected": [1.0, 0.0, 0.0, -0.5, 0.0, 0.0], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "feedforward impulse: 1 at 0, g at D"},
+    {"id": "comb_filter.fb_impulse", "op": "comb_filter", "args": {"samples": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "delay": 3, "gain": 0.5, "feedback": true}, "expected": [1.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.25, 0.0, 0.0, 0.125], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "feedback impulse: g^k at kD"},
+    {"id": "comb_filter.ff_mixed", "op": "comb_filter", "args": {"samples": [0.5, 1.5, -1.0, 2.25, 0.0, -0.75, 1.0, 3.0], "delay": 2, "gain": 0.75}, "expected": [0.5, 1.5, -0.625, 3.375, -0.75, 0.9375, 1.0, 2.4375], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "feedforward, D = 2"},
+    {"id": "comb_filter.fb_mixed", "op": "comb_filter", "args": {"samples": [0.5, 1.5, -1.0, 2.25, 0.0, -0.75, 1.0, 3.0, -2.0, 0.25], "delay": 3, "gain": -0.875, "feedback": true}, "expected": [0.5, 1.5, -1.0, 1.8125, -1.3125, 0.125, -0.5859375, 4.1484375, -2.109375, 0.7626953125], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "feedback, D = 3, g = -7/8"},
+    {"id": "comb_filter.ff_large_gain", "op": "comb_filter", "args": {"samples": [1.0, 2.0, 3.0, 4.0], "delay": 1, "gain": 2.5}, "expected": [1.0, 4.5, 8.0, 11.5], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "feedforward accepts any finite gain"},
+    {"id": "comb_filter.delay_longer", "op": "comb_filter", "args": {"samples": [1.0, 2.0, 3.0], "delay": 5, "gain": 0.5, "feedback": true}, "expected": [1.0, 2.0, 3.0], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "delay longer than the input: unchanged"},
+    {"id": "comb_filter.complex_fb", "op": "comb_filter", "args": {"samples": {"re": [1.0, 0.0, -1.0, 2.0, 0.5, 0.25], "im": [0.0, 1.0, 1.0, -0.5, 0.25, 0.0]}, "delay": 2, "gain": 0.625, "feedback": true}, "expected": {"re": [1.0, 0.0, -0.375, 2.0, 0.265625, 1.5], "im": [0.0, 1.0, 1.0, 0.125, 0.875, 0.078125]}, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "complex samples, feedback"},
+    {"id": "comb_filter.delay_zero", "op": "comb_filter", "args": {"samples": [1.0], "delay": 0, "gain": 0.5}, "error": "invalid_argument", "source": "delay must be at least 1"},
+    {"id": "comb_filter.fb_unstable", "op": "comb_filter", "args": {"samples": [1.0], "delay": 1, "gain": 1.0, "feedback": true}, "error": "invalid_argument", "source": "feedback needs |gain| < 1"},
+    {"id": "comb_filter.empty", "op": "comb_filter", "args": {"samples": [], "delay": 1, "gain": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "comb_filter.nan_sample", "op": "comb_filter", "args": {"samples": [1.0, "nan"], "delay": 1, "gain": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

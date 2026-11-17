@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a comb filter (`comb_filter(samples, delay, gain, *, feedback=False)`, feedforward or
-     feedback);
    - an envelope follower (`envelope_follower(samples, attack, release)`, a peak detector with
      separate one-pole attack and release).
 
@@ -2185,6 +2183,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are the exact rational convolution with the impulse response.
   Python 6155 passed, 2 skipped; .NET 5420 passed; conformance 3658/3658 in both. Version
   2026.11.17.35.
+- 2026-11-17: Comb filter (ADR 0237): `comb_filter(samples, delay, gain, *, feedback=False)` in
+  `dsp` (C# `Dsp.CombFilter`, real and complex).
+  - It is feedforward `x[n] + g·x[n−D]` or feedback `x[n] + g·y[n−D]`.
+  - The vectors are exact rationals. The feedback ones come from the impulse response.
+  Python 6168 passed, 2 skipped; .NET 5432 passed; conformance 3669/3669 in both. Version
+  2026.11.17.36.
 
 ## Not built
 
