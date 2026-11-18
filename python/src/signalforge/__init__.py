@@ -468,9 +468,10 @@ from .waveforms import (
     square,
     tone,
     triangle,
+    wavetable,
 )
 
-__version__ = "2026.11.17.106"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.107"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -911,6 +912,7 @@ __all__ = [
     "vrms_to_dbm",
     "w_to_dbm",
     "wavefold",
+    "wavetable",
     "welch_dof",
     "welch_psd",
     "window",

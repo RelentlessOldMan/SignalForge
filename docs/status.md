@@ -6,12 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a wavetable oscillator in `waveforms` (`wavetable(table, sample_rate, num_samples,
-     frequency, phase=0)`: one cycle of `L` samples read at `u·L`, `u` the oscillators' phase
-     in cycles, with linear interpolation that wraps from the last entry to the first).
    - a band-limited square in `waveforms` (`bandlimited_square(sample_rate, num_samples,
      frequency, amplitude=1, phase=0)`: `(4A/π)·Σ_{k odd} sin((2π·k)·u)/k` over the odd
      harmonics `k·|f| < fs/2`, the series of the naive square at duty 1/2).
+   - a band-limited triangle in `waveforms` (`bandlimited_triangle(sample_rate, num_samples,
+     frequency, amplitude=1, phase=0)`: `(8A/π²)·Σ_{k odd} cos((2π·k)·u)/k²` over the odd
+     harmonics `k·|f| < fs/2`, the series of the naive triangle).
 
 ## Built
 
@@ -2575,6 +2575,11 @@ Updated with every chunk of work. Dates are absolute.
   frequency, so nothing aliases.
   Python 7008 passed, 2 skipped; .NET 6224 passed; conformance 4323/4323 in both. Version
   2026.11.17.106.
+- 2026-11-17: Wavetable oscillator (ADR 0308): `wavetable(table, sample_rate, num_samples,
+  frequency, phase=0)` in `waveforms` (C# `Waveforms.Wavetable`): one cycle played at any
+  pitch with linear interpolation that wraps from the last entry to the first.
+  Python 7017 passed, 2 skipped; .NET 6233 passed; conformance 4330/4330 in both. Version
+  2026.11.17.107.
 
 ## Not built
 

@@ -72,6 +72,11 @@ rule for code not written yet.
   `k ≥ 0` with `k·|f| < fs/2` in floating point; `S = Σ_{k=1..K} sin((2π·k)·u)/k` from `k = 1`
   up; `y = ((−2·A)/π)·S`. Positive finite `sample_rate`; finite, non-zero `frequency`; finite
   `amplitude`, `phase`. **(implemented)**
+- **Wavetable oscillator** (`wavetable(table, sample_rate, num_samples, frequency, phase=0)`,
+  C# `Waveforms.Wavetable`, [ADR 0308](adr/0308-wavetable.md)): `u` as for the oscillators;
+  `p = u·L`, `i = floor(p)` (taken as `i − L` if it reaches `L`), `r = p − i`;
+  `y = T[i]·(1 − r) + T[(i + 1) mod L]·r`. Real, finite table of at least one entry; positive
+  finite `sample_rate`; finite `frequency`, `phase`. **(implemented)**
 - **Oscillators** (`sawtooth(sample_rate, num_samples, frequency, amplitude=1, phase=0)`,
   `square(…, frequency, duty=0.5, amplitude=1, phase=0)`, `triangle(…)`, C#
   `Waveforms.Sawtooth`, `Square`, `Triangle`, [ADR 0305](adr/0305-oscillators.md)): real;

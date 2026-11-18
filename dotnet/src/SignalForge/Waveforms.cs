@@ -419,4 +419,39 @@ public static class Waveforms
         }
         return u;
     }
+
+    /// <summary>One cycle of <paramref name="table"/> played at <paramref name="frequency"/>
+    /// with linear interpolation that wraps, the phase in cycles (conventions: Wavetable
+    /// oscillator; ADR 0308).</summary>
+    /// <param name="table">One cycle, real and finite, at least one entry.</param>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Wavetable(ReadOnlySpan<double> table, double sampleRate, int numSamples,
+        double frequency, double phase = 0.0)
+    {
+        if (table.IsEmpty)
+            throw new ArgumentException("table must hold at least one entry", nameof(table));
+        foreach (double v in table)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("table must be finite", nameof(table));
+        }
+        double[] u = Cycle(sampleRate, numSamples, frequency, 1.0, phase);
+        int size = table.Length;
+        for (int n = 0; n < u.Length; n++)
+        {
+            double p = u[n] * size;
+            double fi = Math.Floor(p);
+            double r = p - fi;
+            int i = (int)fi;
+            if (i >= size)
+                i -= size;
+            u[n] = (table[i] * (1 - r)) + (table[(i + 1) % size] * r);
+        }
+        return u;
+    }
 }

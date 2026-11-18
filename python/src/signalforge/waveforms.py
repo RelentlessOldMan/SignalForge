@@ -245,6 +245,28 @@ def bandlimited_sawtooth(
     return y
 
 
+def wavetable(
+    table: ArrayLike,
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """One cycle of ``table`` played at ``frequency`` with linear interpolation that wraps,
+    ``phase`` in cycles (conventions: Wavetable oscillator; ADR 0308)."""
+    t = _finite_vector(table, "table")
+    if t.size < 1:
+        raise ValueError("table must hold at least one entry")
+    u, _ = _cycle(sample_rate, num_samples, frequency, 1.0, phase)
+    size = t.size
+    p = u * size
+    i = np.floor(p).astype(np.int64)
+    r = p - i
+    i[i >= size] -= size
+    y: NDArray[np.float64] = t[i] * (1 - r) + t[(i + 1) % size] * r
+    return y
+
+
 def adsr(
     num_samples: int, attack: int, decay: int, sustain: float, release: int, gate: int
 ) -> NDArray[np.float64]:
