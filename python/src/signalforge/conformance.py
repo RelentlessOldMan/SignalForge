@@ -303,6 +303,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "schroeder_reverb": dsp.schroeder_reverb,
     "tape_stop": dsp.tape_stop,
     "lowpass_feedback_comb": dsp.lowpass_feedback_comb,
+    "reverse_delay": dsp.reverse_delay,
     "transient_shaper": dsp.transient_shaper,
     "fade": dsp.fade,
     "crossfade": dsp.crossfade,

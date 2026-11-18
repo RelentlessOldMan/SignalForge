@@ -76,4 +76,33 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Plays each <paramref name="block"/>-sample stretch backwards one block late,
+    /// blended with the dry signal (conventions: Reverse delay; ADR 0298).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="block">The block length in samples, at least 1.</param>
+    /// <param name="mix">The wet fraction, in [0, 1].</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ReverseDelay(ReadOnlySpan<double> samples, int block, double mix)
+    {
+        if (block < 1)
+            throw new ArgumentOutOfRangeException(nameof(block), "block must be at least 1");
+        CheckMix(mix);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        double[] y = new double[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+        {
+            int q = n / block, r = n % block;
+            double wet = q >= 1 ? samples[((q - 1) * block) + (block - 1 - r)] : 0.0;
+            y[n] = samples[n] * (1 - mix) + wet * mix;
+        }
+        return y;
+    }
 }

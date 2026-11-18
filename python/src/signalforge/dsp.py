@@ -2869,6 +2869,25 @@ def lowpass_feedback_comb(
     return y
 
 
+def reverse_delay(samples: ArrayLike, block: int, mix: float) -> NDArray[np.float64]:
+    """Play each ``block``-sample stretch backwards one block late, blended with the dry signal
+    (conventions: Reverse delay; ADR 0298)."""
+    b = count(block, "block")
+    if b < 1:
+        raise ValueError("block must be at least 1")
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    x = _mono(samples)
+    n = np.arange(x.size)
+    q, r = np.divmod(n, b)
+    wet = np.zeros(x.size)
+    late = q >= 1
+    wet[late] = x[(q[late] - 1) * b + (b - 1 - r[late])]
+    y: NDArray[np.float64] = _dry_wet(x, wet, m)
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

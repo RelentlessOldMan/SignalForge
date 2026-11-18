@@ -711,6 +711,7 @@ public static class Conformance
             "schroeder_reverb" => Bind((Reals(a.Get("samples")), Ints(a.Get("combs")), Reals(a.Get("comb_gains")), Ints(a.Get("allpasses")), a.D("allpass_gain"), a.D("mix")), t => Dsp.SchroederReverb(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "tape_stop" => Bind((Reals(a.Get("samples")), a.I("start"), a.I("length")), t => Dsp.TapeStop(t.Item1, t.Item2, t.Item3)),
             "lowpass_feedback_comb" => Bind((Reals(a.Get("samples")), a.I("delay"), a.D("feedback"), a.D("damping")), t => Dsp.LowpassFeedbackComb(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "reverse_delay" => Bind((Reals(a.Get("samples")), a.I("block"), a.D("mix")), t => Dsp.ReverseDelay(t.Item1, t.Item2, t.Item3)),
             "slicer" => Bind((Reals(a.Get("samples")), a.D("rate"), a.D("duty"), a.D("sample_rate")), t => Dsp.Slicer(t.Item1, t.Item2, t.Item3, t.Item4)),
             "tremolo" => a.Get("samples") is Complex[] trs
                 ? Bind((trs, a.D("rate"), a.D("depth"), a.D("sample_rate")), t => Dsp.Tremolo(t.Item1, t.Item2, t.Item3, t.Item4))

@@ -148,6 +148,7 @@ from .dsp import (
     reflection_to_lpc,
     resample,
     resample_taps,
+    reverse_delay,
     ring_modulate,
     rotary,
     rrc_taps,
@@ -451,7 +452,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.96"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.97"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -814,6 +815,7 @@ __all__ = [
     "resample",
     "resample_taps",
     "reverberation_time",
+    "reverse_delay",
     "rician_fading",
     "ring_modulate",
     "rls_equalizer",

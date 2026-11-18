@@ -6,12 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a reverse delay (`reverse_delay(samples, block, mix)`: each `block`-sample chunk played
-     backwards one block late, `wet[n] = x[(q − 1)·B + (B − 1 − r)]` with `n = q·B + r`, zero
-     for the first block; dry/wet mix).
    - a stutter (`stutter(samples, start, length, repeats)`: for
      `start ≤ n < start + repeats·length` the output is `x[start + (n − start) mod length]`, the
      input elsewhere).
+   - a multi-tap delay (`multitap_delay(samples, delays, gains)`:
+     `y[n] = x[n] + Σ_k g_k·x[n − d_k]`, zero before the start, taps summed in list order).
 
 ## Built
 
@@ -2524,6 +2523,11 @@ Updated with every chunk of work. Dates are absolute.
   one-pole low-pass in the loop, `f[n] = (1 − d)·y[n − D] + d·f[n − 1]`, `y[n] = x[n] + g·f[n]`.
   Python 6898 passed, 2 skipped; .NET 6117 passed; conformance 4236/4236 in both. Version
   2026.11.17.96.
+- 2026-11-17: Reverse delay (ADR 0298): `reverse_delay(samples, block, mix)` in `dsp` (C#
+  `Dsp.ReverseDelay`, real): each `block`-sample stretch played backwards one block late,
+  silent in the first block, dry/wet blend.
+  Python 6908 passed, 2 skipped; .NET 6127 passed; conformance 4244/4244 in both. Version
+  2026.11.17.97.
 
 ## Not built
 

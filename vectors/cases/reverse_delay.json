@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "reverse_delay",
+  "description": "Reverse delay (conventions: Reverse delay; ADR 0298).",
+  "cases": [
+    {"id": "reverse_delay.ramp_wet", "op": "reverse_delay", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0], "block": 4, "mix": 1.0}, "expected": [0.0, 0.0, 0.0, 0.0, 4.0, 3.0, 2.0, 1.0, 8.0, 7.0, 6.0, 5.0, 12.0, 11.0], "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "blocks of 4, fully wet; the last block is cut short"},
+    {"id": "reverse_delay.blend", "op": "reverse_delay", "args": {"samples": [0.3, -0.7, 1.1, 0.4, -0.9, 0.2, 0.8, -0.6, 0.5, 1.3, -0.1, 0.05, 0.9, -0.4, 0.6, -1.0], "block": 5, "mix": 0.35}, "expected": [0.195, -0.45499999999999996, 0.7150000000000001, 0.26, -0.5850000000000001, -0.185, 0.66, -0.0050000000000000044, 0.08000000000000004, 0.9500000000000001, 0.38999999999999996, 0.2075, 0.3750000000000001, 0.019999999999999962, 0.46, -0.44000000000000006], "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "blocks of 5, 35% wet"},
+    {"id": "reverse_delay.block_one", "op": "reverse_delay", "args": {"samples": [0.3, -0.7, 1.1, 0.4, -0.9, 0.2, 0.8, -0.6, 0.5, 1.3, -0.1, 0.05, 0.9, -0.4, 0.6, -1.0], "block": 1, "mix": 1.0}, "expected": [0.0, 0.3, -0.7, 1.1, 0.4, -0.9, 0.2, 0.8, -0.6, 0.5, 1.3, -0.1, 0.05, 0.9, -0.4, 0.6], "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "block 1: a one-sample delay"},
+    {"id": "reverse_delay.block_long", "op": "reverse_delay", "args": {"samples": [0.3, -0.7, 1.1, 0.4, -0.9, 0.2, 0.8, -0.6, 0.5, 1.3, -0.1, 0.05, 0.9, -0.4, 0.6, -1.0], "block": 20, "mix": 0.5}, "expected": [0.15, -0.35, 0.55, 0.2, -0.45, 0.1, 0.4, -0.3, 0.25, 0.65, -0.05, 0.025, 0.45, -0.2, 0.3, -0.5], "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a block longer than the signal: the wet signal is silent"},
+    {"id": "reverse_delay.dry", "op": "reverse_delay", "args": {"samples": [0.3, -0.7, 1.1, 0.4, -0.9, 0.2, 0.8, -0.6, 0.5, 1.3, -0.1, 0.05, 0.9, -0.4, 0.6, -1.0], "block": 3, "mix": 0.0}, "expected": [0.3, -0.7, 1.1, 0.4, -0.9, 0.2, 0.8, -0.6, 0.5, 1.3, -0.1, 0.05, 0.9, -0.4, 0.6, -1.0], "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "mix 0: the input"},
+    {"id": "reverse_delay.block_zero", "op": "reverse_delay", "args": {"samples": [1.0, 2.0], "block": 0, "mix": 0.5}, "error": "invalid_argument", "source": "block must be at least 1"},
+    {"id": "reverse_delay.mix_negative", "op": "reverse_delay", "args": {"samples": [1.0, 2.0], "block": 2, "mix": -0.1}, "error": "invalid_argument", "source": "mix must be at least 0"},
+    {"id": "reverse_delay.empty", "op": "reverse_delay", "args": {"samples": [], "block": 2, "mix": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"}
+  ]
+}

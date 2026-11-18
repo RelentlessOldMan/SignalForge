@@ -2132,6 +2132,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `f[n] = (1 − d)·y[n − D] + d·f[n − 1]`, `y[n] = x[n] + g·f[n]`, with `y[k < 0] = 0` and
   `f[−1] = 0`. Real, finite, non-empty samples; integer `delay ≥ 1`; `|feedback| < 1`;
   `damping` in [0, 1). **(implemented)**
+- **Reverse delay** (`reverse_delay(samples, block, mix)`, C# `Dsp.ReverseDelay`,
+  [ADR 0298](adr/0298-reverse-delay.md)): with `n = q·B + r`, `0 ≤ r < B`,
+  `wet[n] = x[(q − 1)·B + (B − 1 − r)]` for `q ≥ 1` and 0 for `q = 0`;
+  `y = (1 − mix)·x + mix·wet`. Real, finite, non-empty samples; integer `block ≥ 1`; `mix` in
+  [0, 1]. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
