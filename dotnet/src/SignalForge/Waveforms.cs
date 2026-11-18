@@ -387,4 +387,36 @@ public static class Waveforms
         }
         return y;
     }
+
+    /// <summary>Sawtooth from its Fourier series up to the Nyquist frequency, with the phase in
+    /// cycles (conventions: Band-limited sawtooth; ADR 0307).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite and not 0.</param>
+    /// <param name="amplitude">The peak amplitude of the full series, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] BandlimitedSawtooth(double sampleRate, int numSamples, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        if (frequency == 0)
+            throw new ArgumentOutOfRangeException(nameof(frequency), "frequency must not be 0");
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        double half = 0.5 * sampleRate, af = Math.Abs(frequency);
+        long top = (long)Math.Min(half / af, int.MaxValue);
+        while ((top + 1) * af < half)
+            top++;
+        while (top > 0 && top * af >= half)
+            top--;
+        double c = (-2 * amplitude) / Math.PI;
+        for (int n = 0; n < u.Length; n++)
+        {
+            double acc = 0;
+            for (long k = 1; k <= top; k++)
+                acc += Math.Sin((2 * Math.PI * k) * u[n]) / k;
+            u[n] = c * acc;
+        }
+        return u;
+    }
 }

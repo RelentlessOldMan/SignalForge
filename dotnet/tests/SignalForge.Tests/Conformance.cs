@@ -239,6 +239,7 @@ public static class Conformance
             "square" => Bind((a.D("sample_rate"), a.I("num_samples"), a.D("frequency"), a.Opt("duty", 0.5), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.Square(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "triangle" => Bind((a.D("sample_rate"), a.I("num_samples"), a.D("frequency"), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.Triangle(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "fm_tone" => Bind((a.D("sample_rate"), a.I("num_samples"), a.D("carrier"), a.D("modulator"), a.D("index"), a.Opt("amplitude", 1)), t => Waveforms.FmTone(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
+            "bandlimited_sawtooth" => Bind((a.D("sample_rate"), a.I("num_samples"), a.D("frequency"), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.BandlimitedSawtooth(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "pulse_train" => Bind((a.I("num_samples"), a.I("period"), a.I("width"), a.Opt("amplitude", 1), a.Has("delay") ? a.I("delay") : 0),
                 t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "temporal_centroid" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2))

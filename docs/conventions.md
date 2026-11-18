@@ -66,6 +66,12 @@ rule for code not written yet.
   C# `Waveforms.FmTone`, [ADR 0306](adr/0306-fm-tone.md)): real,
   `A·cos(2π·fc·(n/fs) + I·sin(2π·fm·(n/fs)))`, `2π·f` formed first as in `tone`. Positive
   finite `sample_rate`; `carrier`, `modulator`, `index`, `amplitude` finite. **(implemented)**
+- **Band-limited sawtooth** (`bandlimited_sawtooth(sample_rate, num_samples, frequency,
+  amplitude=1, phase=0)`, C# `Waveforms.BandlimitedSawtooth`,
+  [ADR 0307](adr/0307-bandlimited-sawtooth.md)): `u` as for the oscillators; `K` the largest
+  `k ≥ 0` with `k·|f| < fs/2` in floating point; `S = Σ_{k=1..K} sin((2π·k)·u)/k` from `k = 1`
+  up; `y = ((−2·A)/π)·S`. Positive finite `sample_rate`; finite, non-zero `frequency`; finite
+  `amplitude`, `phase`. **(implemented)**
 - **Oscillators** (`sawtooth(sample_rate, num_samples, frequency, amplitude=1, phase=0)`,
   `square(…, frequency, duty=0.5, amplitude=1, phase=0)`, `triangle(…)`, C#
   `Waveforms.Sawtooth`, `Square`, `Triangle`, [ADR 0305](adr/0305-oscillators.md)): real;

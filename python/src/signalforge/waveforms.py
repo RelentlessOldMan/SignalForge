@@ -218,6 +218,33 @@ def fm_tone(
     return y
 
 
+def bandlimited_sawtooth(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Sawtooth from its Fourier series up to the Nyquist frequency, ``phase`` in cycles
+    (conventions: Band-limited sawtooth; ADR 0307)."""
+    f = real(frequency, "frequency")
+    if f == 0:
+        raise ValueError("frequency must not be 0")
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    half = 0.5 * float(sample_rate)
+    af = abs(f)
+    top = int(half / af)
+    while (top + 1) * af < half:
+        top += 1
+    while top > 0 and top * af >= half:
+        top -= 1
+    acc = np.zeros(u.size)
+    for k in range(1, top + 1):
+        acc += np.sin((2 * np.pi * k) * u) / k
+    y: NDArray[np.float64] = ((-2 * amp) / np.pi) * acc
+    return y
+
+
 def adsr(
     num_samples: int, attack: int, decay: int, sustain: float, release: int, gate: int
 ) -> NDArray[np.float64]:

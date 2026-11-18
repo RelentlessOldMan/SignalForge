@@ -457,6 +457,7 @@ from .units import (
 )
 from .waveforms import (
     adsr,
+    bandlimited_sawtooth,
     chirp,
     fm_tone,
     multitone,
@@ -469,7 +470,7 @@ from .waveforms import (
     triangle,
 )
 
-__version__ = "2026.11.17.105"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.106"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -564,6 +565,7 @@ __all__ = [
     "awgn",
     "balance",
     "band_energy_ratio",
+    "bandlimited_sawtooth",
     "bandwidth_expansion",
     "bark_to_hz",
     "bass_enhancer",

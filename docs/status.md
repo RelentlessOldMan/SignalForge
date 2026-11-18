@@ -6,15 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a sidechain ducker in `dsp` (`duck(samples, key, depth, attack, release)`: the key's
-     envelope `e` from `envelope_follower`, `y = x·(1 − depth·min(e, 1))`, same-length real
-     signals).
-   - a band-limited sawtooth in `waveforms` (`bandlimited_sawtooth(sample_rate, num_samples,
-     frequency, amplitude=1, phase=0)`: the Fourier series `−(2A/π)·Σ_k sin(2πk·u)/k` summed
-     over the harmonics `k·|f| < fs/2`, so nothing aliases).
    - a wavetable oscillator in `waveforms` (`wavetable(table, sample_rate, num_samples,
      frequency, phase=0)`: one cycle of `L` samples read at `u·L`, `u` the oscillators' phase
      in cycles, with linear interpolation that wraps from the last entry to the first).
+   - a band-limited square in `waveforms` (`bandlimited_square(sample_rate, num_samples,
+     frequency, amplitude=1, phase=0)`: `(4A/π)·Σ_{k odd} sin((2π·k)·u)/k` over the odd
+     harmonics `k·|f| < fs/2`, the series of the naive square at duty 1/2).
 
 ## Built
 
@@ -2572,6 +2569,12 @@ Updated with every chunk of work. Dates are absolute.
   `A·cos(2π·fc·n/fs + I·sin(2π·fm·n/fs))`; the tests check the sidebands against `J_k(I)`.
   Python 6998 passed, 2 skipped; .NET 6215 passed; conformance 4316/4316 in both. Version
   2026.11.17.105.
+- 2026-11-17: Band-limited sawtooth (ADR 0307): `bandlimited_sawtooth(sample_rate,
+  num_samples, frequency, amplitude=1, phase=0)` in `waveforms` (C#
+  `Waveforms.BandlimitedSawtooth`): the sawtooth's Fourier series summed up to the Nyquist
+  frequency, so nothing aliases.
+  Python 7008 passed, 2 skipped; .NET 6224 passed; conformance 4323/4323 in both. Version
+  2026.11.17.106.
 
 ## Not built
 
