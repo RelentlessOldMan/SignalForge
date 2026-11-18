@@ -1,0 +1,19 @@
+using Xunit;
+
+namespace SignalForge.Tests;
+
+/// <summary>Stereo balance (ADR 0277).</summary>
+public class BalanceTests
+{
+    [Fact]
+    public void LeftQuarterScalesRight()
+    {
+        LeftRight y = Dsp.Balance([1.0, 2.0], [4.0, -8.0], -0.25);
+        Assert.Equal([1.0, 2.0], y.Left);
+        Assert.Equal([3.0, -6.0], y.Right);
+    }
+
+    [Fact]
+    public void RejectsMismatchedLengths() =>
+        Assert.ThrowsAny<ArgumentException>(() => Dsp.Balance([1.0, 2.0], [1.0], 0.0));
+}

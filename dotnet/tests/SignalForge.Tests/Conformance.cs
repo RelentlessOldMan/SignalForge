@@ -707,6 +707,7 @@ public static class Conformance
             "auto_pan" => Bind((Reals(a.Get("samples")), a.D("rate"), a.D("depth"), a.D("sample_rate"), Pan(a)), t => Dsp.AutoPan(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "pan" => Bind((Reals(a.Get("samples")), a.D("position"), Pan(a)), t => Dsp.Pan(t.Item1, t.Item2, t.Item3)),
             "bitcrush" => Bind((Reals(a.Get("samples")), a.I("bits"), a.Has("hold") ? a.I("hold") : 1), t => Dsp.Bitcrush(t.Item1, t.Item2, t.Item3)),
+            "balance" => Bind((Reals(a.Get("left")), Reals(a.Get("right")), a.D("position")), t => Dsp.Balance(t.Item1, t.Item2, t.Item3)),
             "stereo_width" => Bind((Reals(a.Get("left")), Reals(a.Get("right")), a.D("width")), t => Dsp.StereoWidth(t.Item1, t.Item2, t.Item3)),
             "normalize_peak" => a.Get("samples") is Complex[] nps
                 ? Bind((nps, a.Has("peak") ? a.D("peak") : 1.0), t => Dsp.NormalizePeak(t.Item1, t.Item2))

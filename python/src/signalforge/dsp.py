@@ -2862,6 +2862,18 @@ def stereo_width(left: ArrayLike, right: ArrayLike, width: float) -> LeftRight:
     return LeftRight(m + s, m - s)
 
 
+def balance(left: ArrayLike, right: ArrayLike, position: float) -> LeftRight:
+    """Turn down the side away from ``position`` (-1 left, 1 right) by ``1 - |position|``; the
+    near side is unchanged (conventions: Stereo balance; ADR 0277)."""
+    p = real(position, "position")
+    if not -1 <= p <= 1:
+        raise ValueError("position must be from -1 to 1")
+    a, b = _stereo(left, right, ("left", "right"))
+    gl = 1 - p if p > 0 else 1.0
+    gr = 1 + p if p < 0 else 1.0
+    return LeftRight(a * gl, b * gr)
+
+
 def pan(samples: ArrayLike, position: float, *, law: str = "constant_power") -> LeftRight:
     """Pan a mono signal to left and right, ``position`` from -1 (left) to 1 (right)
     (conventions: Panner; ADR 0265)."""

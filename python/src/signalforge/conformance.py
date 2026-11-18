@@ -287,6 +287,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "phaser": dsp.phaser,
     "ping_pong_delay": dsp.ping_pong_delay,
     "haas": dsp.haas,
+    "balance": dsp.balance,
     "fade": dsp.fade,
     "crossfade": dsp.crossfade,
     "compressor_gain": dsp.compressor_gain,

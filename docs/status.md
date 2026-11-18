@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a stereo balance (`balance(left, right, position)`, a `LeftRight` with the side away from
-     `position` in `[-1, 1]` scaled by `1 − |position|` and the near side unchanged);
    - a sidechain compressor (`duck(samples, key, threshold_db, ratio, attack, release, *,
      knee_db=0, makeup_db=0)`, the compressor's gain computed from `key` and applied to
      `samples`).
@@ -2412,6 +2410,11 @@ Updated with every chunk of work. Dates are absolute.
   number of samples late.
   Python 6648 passed, 2 skipped; .NET 5887 passed; conformance 4050/4050 in both. Version
   2026.11.17.75.
+- 2026-11-17: Stereo balance (ADR 0277): `balance(left, right, position)` in `dsp` (C#
+  `Dsp.Balance`), a linear balance that scales the far side by `1 − |position|` and leaves the
+  near side unchanged.
+  Python 6660 passed, 2 skipped; .NET 5898 passed; conformance 4059/4059 in both. Version
+  2026.11.17.76.
 
 ## Not built
 

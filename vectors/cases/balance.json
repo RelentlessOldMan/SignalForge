@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "balance",
+  "description": "Stereo balance (conventions: Stereo balance; ADR 0277).",
+  "cases": [
+    {"id": "balance.centre", "op": "balance", "args": {"left": [1.0, -0.5, 0.25, 2.0], "right": [0.5, 1.5, -2.0, -0.75], "position": 0.0}, "expected": {"left": [1.0, -0.5, 0.25, 2.0], "right": [0.5, 1.5, -2.0, -0.75]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "centred: both sides unchanged"},
+    {"id": "balance.right_half", "op": "balance", "args": {"left": [1.0, -0.5, 0.25, 2.0], "right": [0.5, 1.5, -2.0, -0.75], "position": 0.5}, "expected": {"left": [0.5, -0.25, 0.125, 1.0], "right": [0.5, 1.5, -2.0, -0.75]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "position 1/2: left halved, right unchanged"},
+    {"id": "balance.left_quarter", "op": "balance", "args": {"left": [1.0, -0.5, 0.25, 2.0], "right": [0.5, 1.5, -2.0, -0.75], "position": -0.25}, "expected": {"left": [1.0, -0.5, 0.25, 2.0], "right": [0.375, 1.125, -1.5, -0.5625]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "position -1/4: right scaled by 3/4, left unchanged"},
+    {"id": "balance.hard_left", "op": "balance", "args": {"left": [1.0, -0.5, 0.25, 2.0], "right": [0.5, 1.5, -2.0, -0.75], "position": -1.0}, "expected": {"left": [1.0, -0.5, 0.25, 2.0], "right": [0.0, 0.0, -0.0, -0.0]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "position -1: right muted"},
+    {"id": "balance.hard_right", "op": "balance", "args": {"left": [1.0, -0.5, 0.25, 2.0], "right": [0.5, 1.5, -2.0, -0.75], "position": 1.0}, "expected": {"left": [0.0, -0.0, 0.0, 0.0], "right": [0.5, 1.5, -2.0, -0.75]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "position 1: left muted"},
+    {"id": "balance.position_high", "op": "balance", "args": {"left": [1.0, 2.0], "right": [3.0, 4.0], "position": 1.5}, "error": "invalid_argument", "source": "position must be at most 1"},
+    {"id": "balance.position_low", "op": "balance", "args": {"left": [1.0, 2.0], "right": [3.0, 4.0], "position": -2.0}, "error": "invalid_argument", "source": "position must be at least -1"},
+    {"id": "balance.length", "op": "balance", "args": {"left": [1.0, 2.0], "right": [1.0], "position": 0.0}, "error": "invalid_argument", "source": "left and right must have the same length"},
+    {"id": "balance.empty", "op": "balance", "args": {"left": [], "right": [], "position": 0.0}, "error": "invalid_argument", "source": "left must not be empty"}
+  ]
+}

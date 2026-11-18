@@ -262,4 +262,36 @@ public static partial class Dsp
             late[n] = samples[n - delay];
         return side == StereoSide.Left ? new LeftRight(late, dry) : new LeftRight(dry, late);
     }
+
+    /// <summary>Turns down the side away from <paramref name="position"/> by
+    /// <c>1 − |position|</c>; the near side is unchanged (conventions: Stereo balance;
+    /// ADR 0277).</summary>
+    /// <param name="left">Real, finite left samples, at least one.</param>
+    /// <param name="right">Real, finite right samples, as many as <paramref name="left"/>.</param>
+    /// <param name="position">From −1 (left only) through 0 (unchanged) to 1 (right only).</param>
+    /// <returns>The balanced left and right channels.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static LeftRight Balance(ReadOnlySpan<double> left, ReadOnlySpan<double> right, double position)
+    {
+        if (!double.IsFinite(position) || position < -1 || position > 1)
+            throw new ArgumentOutOfRangeException(nameof(position), "position must be from -1 to 1");
+        if (left.IsEmpty)
+            throw new ArgumentException("left must not be empty", nameof(left));
+        if (right.Length != left.Length)
+            throw new ArgumentException("left and right must have the same length", nameof(right));
+        double gl = position > 0 ? 1 - position : 1.0;
+        double gr = position < 0 ? 1 + position : 1.0;
+        var outLeft = new double[left.Length];
+        var outRight = new double[left.Length];
+        for (int n = 0; n < left.Length; n++)
+        {
+            if (!double.IsFinite(left[n]))
+                throw new ArgumentException("left must be finite", nameof(left));
+            if (!double.IsFinite(right[n]))
+                throw new ArgumentException("right must be finite", nameof(right));
+            outLeft[n] = left[n] * gl;
+            outRight[n] = right[n] * gr;
+        }
+        return new LeftRight(outLeft, outRight);
+    }
 }

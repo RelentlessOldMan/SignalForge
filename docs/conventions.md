@@ -2026,6 +2026,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `StereoSide`, [ADR 0276](adr/0276-haas.md)): a `LeftRight` from real mono samples; the named
   side is `x[n − delay]` (0 before time 0), the other side is `x`. Integer `delay ≥ 0`; `side`
   `"left"` or `"right"`. **(implemented)**
+- **Stereo balance** (`balance(left, right, position)`, C# `Dsp.Balance`,
+  [ADR 0277](adr/0277-balance.md)): `left·gL`, `right·gR` with `gL = 1 − p` for `p > 0` else 1
+  and `gR = 1 + p` for `p < 0` else 1. Finite `position` in `[−1, 1]`; real, finite,
+  non-empty channels of equal length. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
