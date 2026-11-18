@@ -389,6 +389,33 @@ def pwm(
     return np.where(u < d, amp, -amp).astype(np.float64)
 
 
+def polyblep_triangle(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Naive triangle with the PolyBLAMP residual at both corners, ``phase`` in cycles
+    (conventions: PolyBLEP triangle; ADR 0314)."""
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    f = real(frequency, "frequency")
+    if not abs(f) <= 0.5 * sample_rate:
+        raise ValueError("|frequency| must be at most sample_rate/2")
+    dt = abs(f) / sample_rate
+    c = np.zeros(u.size)
+    d = np.minimum(u, 1 - u)
+    near = d < dt
+    w = 1 - d[near] / dt
+    c[near] -= w * w * w / 6
+    d = np.abs(u - 0.5)
+    near = d < dt
+    w = 1 - d[near] / dt
+    c[near] += w * w * w / 6
+    y: NDArray[np.float64] = amp * ((4 * np.abs(u - 0.5) - 1) + 8 * dt * c)
+    return y
+
+
 def wavetable(
     table: ArrayLike,
     sample_rate: float,

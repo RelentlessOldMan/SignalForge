@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a PolyBLEP triangle in `waveforms` (`polyblep_triangle(sample_rate, num_samples,
-     frequency, amplitude=1, phase=0)`: the PolyBLAMP residual, the integral of the PolyBLEP
-     one, at the two corners of the naive triangle).
+   - a supersaw in `waveforms` (`supersaw(sample_rate, num_samples, frequency, detune,
+     voices=7, amplitude=1)`: the mean of `voices` PolyBLEP sawtooths spread evenly over
+     `±detune` cents, voice `k` starting at phase `k/voices`).
    - a hard-synced sawtooth in `waveforms` (`hard_sync_sawtooth(sample_rate, num_samples,
      frequency, sync_frequency, amplitude=1)`: the slave phase reset to 0 each time the
      master phase wraps).
@@ -2608,6 +2608,12 @@ Updated with every chunk of work. Dates are absolute.
   square's rule with a per-sample duty; the two share one edge helper.
   Python 7090 passed, 2 skipped; .NET 6302 passed; conformance 4381/4381 in both. Version
   2026.11.18.2.
+- 2026-11-18: PolyBLEP triangle (ADR 0314): `polyblep_triangle(sample_rate, num_samples,
+  frequency, amplitude=1, phase=0)` in `waveforms` (C# `Waveforms.PolyblepTriangle`): the naive
+  triangle with the PolyBLAMP residual `(1 − |x|)³/6` at both corners, derived in the ADR as
+  the integral of the PolyBLEP residual and checked exactly by Simpson's rule in the generator.
+  Python 7104 passed, 2 skipped; .NET 6313 passed; conformance 4390/4390 in both. Version
+  2026.11.18.3.
 
 ## Not built
 

@@ -641,4 +641,41 @@ public static class Waveforms
             u[n] = u[n] < duty[n] ? amplitude : -amplitude;
         return u;
     }
+
+    /// <summary>Naive triangle with the PolyBLAMP residual at both corners, with the phase in
+    /// cycles (conventions: PolyBLEP triangle; ADR 0314).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite, with magnitude at most half the sample
+    /// rate.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] PolyblepTriangle(double sampleRate, int numSamples, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        if (!(Math.Abs(frequency) <= 0.5 * sampleRate))
+            throw new ArgumentOutOfRangeException(nameof(frequency), "|frequency| must be at most sampleRate/2");
+        double dt = Math.Abs(frequency) / sampleRate;
+        for (int n = 0; n < u.Length; n++)
+        {
+            double v = u[n], c = 0;
+            double d = Math.Min(v, 1 - v);
+            if (d < dt)
+            {
+                double w = 1 - (d / dt);
+                c -= w * w * w / 6;
+            }
+            d = Math.Abs(v - 0.5);
+            if (d < dt)
+            {
+                double w = 1 - (d / dt);
+                c += w * w * w / 6;
+            }
+            u[n] = amplitude * (((4 * Math.Abs(v - 0.5)) - 1) + (8 * dt * c));
+        }
+        return u;
+    }
 }

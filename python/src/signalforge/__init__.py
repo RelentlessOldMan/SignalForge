@@ -467,6 +467,7 @@ from .waveforms import (
     polyblep_pwm,
     polyblep_sawtooth,
     polyblep_square,
+    polyblep_triangle,
     prbs,
     pulse_train,
     pwm,
@@ -477,7 +478,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.2"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.3"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -794,6 +795,7 @@ __all__ = [
     "polyblep_pwm",
     "polyblep_sawtooth",
     "polyblep_square",
+    "polyblep_triangle",
     "power_ccdf",
     "power_ccdf_level",
     "power_frequency_offset",
