@@ -585,4 +585,28 @@ public static class Waveforms
         }
         return u;
     }
+
+    /// <summary>Square whose duty changes every sample: <paramref name="amplitude"/> while the
+    /// phase is below <c>duty[n]</c>, its negative after, the phase in cycles (conventions:
+    /// Pulse-width modulation; ADR 0312).</summary>
+    /// <param name="duty">One duty per output sample, each in [0, 1]; may be empty.</param>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="frequency">The frequency, finite.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns>One sample per entry of <paramref name="duty"/>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Pwm(ReadOnlySpan<double> duty, double sampleRate, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        foreach (double d in duty)
+        {
+            if (!(d >= 0 && d <= 1))
+                throw new ArgumentOutOfRangeException(nameof(duty), "duty must be in [0, 1]");
+        }
+        double[] u = Cycle(sampleRate, duty.Length, frequency, amplitude, phase);
+        for (int n = 0; n < u.Length; n++)
+            u[n] = u[n] < duty[n] ? amplitude : -amplitude;
+        return u;
+    }
 }

@@ -66,6 +66,11 @@ rule for code not written yet.
   C# `Waveforms.FmTone`, [ADR 0306](adr/0306-fm-tone.md)): real,
   `A·cos(2π·fc·(n/fs) + I·sin(2π·fm·(n/fs)))`, `2π·f` formed first as in `tone`. Positive
   finite `sample_rate`; `carrier`, `modulator`, `index`, `amplitude` finite. **(implemented)**
+- **Pulse-width modulation** (`pwm(duty, sample_rate, frequency, amplitude=1, phase=0)`, C#
+  `Waveforms.Pwm`, [ADR 0312](adr/0312-pwm.md)): one sample per `duty` value; `u[n]` as for the
+  oscillators; `y[n] = A` for `u[n] < duty[n]`, else `−A`. `duty` a 1-D real array (may be
+  empty), every value in [0, 1]; positive finite `sample_rate`; finite `frequency`,
+  `amplitude`, `phase`. **(implemented)**
 - **PolyBLEP square** (`polyblep_square(sample_rate, num_samples, frequency, duty=0.5,
   amplitude=1, phase=0)`, C# `Waveforms.PolyblepSquare`,
   [ADR 0311](adr/0311-polyblep-square.md)): `u` and `dt` as for the PolyBLEP sawtooth, `r(·)`

@@ -348,6 +348,22 @@ def polyblep_square(
     return y
 
 
+def pwm(
+    duty: ArrayLike,
+    sample_rate: float,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Square whose duty changes every sample, ``A`` while ``u < duty[n]`` and ``-A`` after,
+    ``phase`` in cycles (conventions: Pulse-width modulation; ADR 0312)."""
+    d = _finite_vector(duty, "duty")
+    if not np.all((d >= 0) & (d <= 1)):
+        raise ValueError("duty must be in [0, 1]")
+    u, amp = _cycle(sample_rate, d.size, frequency, amplitude, phase)
+    return np.where(u < d, amp, -amp).astype(np.float64)
+
+
 def wavetable(
     table: ArrayLike,
     sample_rate: float,

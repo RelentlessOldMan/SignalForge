@@ -468,6 +468,7 @@ from .waveforms import (
     polyblep_square,
     prbs,
     pulse_train,
+    pwm,
     sawtooth,
     square,
     tone,
@@ -475,7 +476,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.0"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.1"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -807,6 +808,7 @@ __all__ = [
     "psk8_ser_theory",
     "pulse_shape",
     "pulse_train",
+    "pwm",
     "qam16_ber_theory",
     "qam16_carrier_tracking",
     "qam16_demap_hard",

@@ -6,12 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a pulse-width-modulated square in `waveforms` (`pwm(sample_rate, frequency, duty)`: `duty`
-     a per-sample array in [0, 1], `A` for `u < duty[n]` and `−A` after, the oscillators'
-     phase).
-   - a ring modulator in `waveforms` or `dsp` (`ring_modulate(samples, carrier_frequency,
-     sample_rate, mix=1)`: `(1 − mix)·x + mix·x·cos(2π·f·n/fs)`; grep `dsp.py` first for an
-     existing mixer).
+   - a PolyBLEP PWM in `waveforms` (`polyblep_pwm(duty, sample_rate, frequency, amplitude=1,
+     phase=0)`: the PWM of ADR 0312 with the residual of ADR 0311 at the rise and at the
+     moving fall `v = u − duty[n]`).
+   - a hard-synced sawtooth in `waveforms` (`hard_sync_sawtooth(sample_rate, num_samples,
+     frequency, sync_frequency, amplitude=1)`: the slave phase reset to 0 each time the
+     master phase wraps).
 
 ## Built
 
@@ -2598,6 +2598,11 @@ Updated with every chunk of work. Dates are absolute.
   duty; the residual is now one helper shared with the PolyBLEP sawtooth.
   Python 7063 passed, 2 skipped; .NET 6276 passed; conformance 4363/4363 in both. Version
   2026.11.18.0.
+- 2026-11-18: Pulse-width modulation (ADR 0312): `pwm(duty, sample_rate, frequency,
+  amplitude=1, phase=0)` in `waveforms` (C# `Waveforms.Pwm`): a naive square whose duty is a
+  per-sample array, one output sample per duty value.
+  Python 7079 passed, 2 skipped; .NET 6291 passed; conformance 4373/4373 in both. Version
+  2026.11.18.1.
 
 ## Not built
 
