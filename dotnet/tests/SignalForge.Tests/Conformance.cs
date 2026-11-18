@@ -773,6 +773,7 @@ public static class Conformance
             "transient_shaper" => a.Get("samples") is Complex[] tss
                 ? Bind((tss, a.D("fast"), a.D("slow"), a.D("amount")), t => Dsp.TransientShaper(t.Item1, t.Item2, t.Item3, t.Item4))
                 : Bind((Reals(a.Get("samples")), a.D("fast"), a.D("slow"), a.D("amount")), t => Dsp.TransientShaper(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "vocoder" => Bind((Reals(a.Get("carrier")), Reals(a.Get("modulator")), a.I("bands"), a.D("low"), a.D("high"), a.D("q"), a.D("attack"), a.D("release"), a.D("sample_rate")), t => Dsp.Vocoder(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8, t.Item9)),
             "svf" => a.Get("samples") is Complex[] svs
                 ? Bind((svs, a.D("cutoff"), a.D("q"), a.D("sample_rate"), SvfOut(a)), t => Dsp.Svf(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5))
                 : Bind((Reals(a.Get("samples")), a.D("cutoff"), a.D("q"), a.D("sample_rate"), SvfOut(a)), t => Dsp.Svf(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),

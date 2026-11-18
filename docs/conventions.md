@@ -2107,6 +2107,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   crossover_split(samples, order, cutoff, fs)`, `tremolo(vibrato(b.high, delay, depth,
   horn_rate, fs), horn_rate, tremolo_depth, fs) + tremolo(b.low, drum_rate, tremolo_depth, fs)`.
   Real samples; the splitter's, vibrato's and tremolo's rules. **(implemented)**
+- **Channel vocoder** (`vocoder(carrier, modulator, bands, low, high, q, attack, release,
+  sample_rate)`, C# `Dsp.Vocoder`, [ADR 0293](adr/0293-vocoder.md)): band `k` is centred at
+  `f_k = low·(high/low)^((k + 1/2)/bands)` and is `(1/q)·svf(·, f_k, q, fs, "bandpass")`; `y =
+  Σ_k C_k·envelope_follower(M_k, attack, release)`. Real, finite, non-empty signals of one
+  length; `bands` from 1 to 1000; `0 < low < high < fs/2`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

@@ -2778,6 +2778,41 @@ def rotary(
     return y
 
 
+def vocoder(
+    carrier: ArrayLike,
+    modulator: ArrayLike,
+    bands: int,
+    low: float,
+    high: float,
+    q: float,
+    attack: float,
+    release: float,
+    sample_rate: float,
+) -> NDArray[np.float64]:
+    """Channel vocoder: each band of ``carrier`` scaled by the envelope of the matching band of
+    ``modulator``, summed (conventions: Channel vocoder; ADR 0293)."""
+    nb = count(bands, "bands")
+    if not 1 <= nb <= 1000:
+        raise ValueError("bands must be from 1 to 1000")
+    fs = _rate(sample_rate)
+    lo = real(low, "low")
+    hi = real(high, "high")
+    if not 0 < lo < hi < fs / 2:
+        raise ValueError("low and high must satisfy 0 < low < high < sample_rate / 2")
+    qq = real(q, "q")
+    c = _mono(carrier)
+    m = _mono(modulator)
+    if c.size != m.size:
+        raise ValueError("carrier and modulator must have the same length")
+    y = np.zeros(c.size)
+    for k in range(nb):
+        f = lo * (hi / lo) ** ((k + 0.5) / nb)
+        cb = np.asarray(svf(c, f, qq, fs, output="bandpass"), dtype=np.float64) * (1 / qq)
+        mb = np.asarray(svf(m, f, qq, fs, output="bandpass"), dtype=np.float64) * (1 / qq)
+        y += cb * envelope_follower(mb, attack, release)
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

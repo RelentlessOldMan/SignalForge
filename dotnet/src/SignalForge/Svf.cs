@@ -221,4 +221,46 @@ public static partial class Dsp
             key[n] = k * key[n];
         return Duck(samples, key, thresholdDb, ratio, attack, release);
     }
+
+    /// <summary>Channel vocoder: each band of <paramref name="carrier"/> scaled by the envelope
+    /// of the matching band of <paramref name="modulator"/>, summed (conventions: Channel
+    /// vocoder; ADR 0293).</summary>
+    /// <param name="carrier">The real, finite signal that is heard, at least one sample.</param>
+    /// <param name="modulator">The real, finite signal whose band envelopes are imposed, as
+    /// long as the carrier.</param>
+    /// <param name="bands">The number of bands, from 1 to 1000.</param>
+    /// <param name="low">The bottom of the band range, Hz, above 0.</param>
+    /// <param name="high">The top of the band range, Hz, above low and below half the sample
+    /// rate.</param>
+    /// <param name="q">The bands' quality factor, finite and positive.</param>
+    /// <param name="attack">The envelope followers' attack coefficient, in [0, 1).</param>
+    /// <param name="release">The envelope followers' release coefficient, in [0, 1).</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Vocoder(ReadOnlySpan<double> carrier, ReadOnlySpan<double> modulator, int bands, double low, double high, double q, double attack, double release, double sampleRate)
+    {
+        if (bands < 1 || bands > 1000)
+            throw new ArgumentOutOfRangeException(nameof(bands), "bands must be from 1 to 1000");
+        if (!(sampleRate > 0 && double.IsFinite(sampleRate)))
+            throw new ArgumentOutOfRangeException(nameof(sampleRate), "sampleRate must be finite and positive");
+        if (!(low > 0 && low < high && high < sampleRate / 2))
+            throw new ArgumentOutOfRangeException(nameof(low), "low and high must satisfy 0 < low < high < sampleRate / 2");
+        if (carrier.Length != modulator.Length)
+            throw new ArgumentException("carrier and modulator must have the same length", nameof(modulator));
+        double[] y = new double[carrier.Length];
+        double k = 1 / q;
+        for (int b = 0; b < bands; b++)
+        {
+            double f = low * Math.Pow(high / low, (b + 0.5) / bands);
+            double[] cb = Svf(carrier, f, q, sampleRate, SvfOutput.Bandpass);
+            double[] mb = Svf(modulator, f, q, sampleRate, SvfOutput.Bandpass);
+            for (int n = 0; n < mb.Length; n++)
+                mb[n] *= k;
+            double[] e = EnvelopeFollower(mb, attack, release);
+            for (int n = 0; n < y.Length; n++)
+                y[n] += cb[n] * k * e[n];
+        }
+        return y;
+    }
 }

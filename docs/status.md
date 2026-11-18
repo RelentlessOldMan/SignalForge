@@ -6,11 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a channel vocoder (`vocoder(carrier, modulator, bands, low, high, q, attack, release,
-     sample_rate)`: log-spaced state-variable band-passes on both signals, each carrier band
-     scaled by the envelope of the matching modulator band, summed).
    - a slicer (`slicer(samples, rate, duty, sample_rate)`: the trance gate, gain 1 for the first
      `duty` of each `1/rate` second cycle and 0 for the rest, cycle position `rate·n/fs mod 1`).
+   - a Schroeder reverberator (`schroeder_reverb(samples, combs, comb_gains, allpasses,
+     allpass_gain, mix)`: the mean of parallel feedback `comb_filter`s, through series
+     `allpass_comb`s, dry/wet mix).
 
 ## Built
 
@@ -2497,6 +2497,12 @@ Updated with every chunk of work. Dates are absolute.
   through `tremolo` at the drum rate.
   Python 6838 passed, 2 skipped; .NET 6060 passed; conformance 4189/4189 in both. Version
   2026.11.17.91.
+- 2026-11-17: Channel vocoder (ADR 0293): `vocoder(carrier, modulator, bands, low, high, q,
+  attack, release, sample_rate)` in `dsp` (C# `Dsp.Vocoder`, real): log-spaced unity-peak
+  state-variable band-passes on both signals, each carrier band times the envelope of the
+  matching modulator band, summed.
+  Python 6850 passed, 2 skipped; .NET 6071 passed; conformance 4198/4198 in both. Version
+  2026.11.17.92.
 
 ## Not built
 
