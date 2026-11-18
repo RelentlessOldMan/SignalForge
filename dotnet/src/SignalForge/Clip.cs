@@ -100,4 +100,25 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Full-wave <c>|x|</c> or half-wave <c>max(x, 0)</c> rectifier (conventions:
+    /// Rectifier; ADR 0253).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="full">True for full wave, false for half wave.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Rectify(ReadOnlySpan<double> samples, bool full = true)
+    {
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double v = samples[n];
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            y[n] = full ? Math.Abs(v) : v > 0 ? v : 0.0;
+        }
+        return y;
+    }
 }

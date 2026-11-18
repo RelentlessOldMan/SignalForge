@@ -270,6 +270,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "soft_clip": dsp.soft_clip,
     "hard_clip": dsp.hard_clip,
     "wavefold": dsp.wavefold,
+    "rectify": dsp.rectify,
     "cic_interpolate": dsp.cic_interpolate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
     "butterworth_lowpass": dsp.butterworth_lowpass,

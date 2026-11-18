@@ -1920,6 +1920,9 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0252](adr/0252-wavefold.md)): reflect about `±L` until inside; computed as `u = x + L`,
   `t = u − 4L·⌊u/(4L)⌋`, `y = L − |t − 2L|`, in that order, no library modulo. Finite
   `limit > 0`; samples real, finite, non-empty. **(implemented)**
+- **Rectifier** (`rectify(samples, *, full=True)`, C# `Dsp.Rectify`,
+  [ADR 0253](adr/0253-rectify.md)): full wave `|x|`; half wave `x` if `x > 0`, else `0` (`−0`
+  gives `+0`). Samples real, finite, non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

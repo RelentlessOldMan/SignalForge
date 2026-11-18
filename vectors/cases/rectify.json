@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "suite": "rectify",
+  "description": "Rectifier (conventions: Rectifier; ADR 0253).",
+  "cases": [
+    {"id": "rectify.default_full", "op": "rectify", "args": {"samples": [-2.5, -1.0, -0.125, 0.0, 0.375, 1.0, 3.25]}, "expected": [2.5, 1.0, 0.125, 0.0, 0.375, 1.0, 3.25], "tol": {"abs": 0.0, "rel": 0.0}, "source": "default: full wave |x|"},
+    {"id": "rectify.full", "op": "rectify", "args": {"samples": [-2.5, -1.0, -0.125, 0.0, 0.375, 1.0, 3.25], "full": true}, "expected": [2.5, 1.0, 0.125, 0.0, 0.375, 1.0, 3.25], "tol": {"abs": 0.0, "rel": 0.0}, "source": "full wave |x|"},
+    {"id": "rectify.half", "op": "rectify", "args": {"samples": [-2.5, -1.0, -0.125, 0.0, 0.375, 1.0, 3.25], "full": false}, "expected": [0.0, 0.0, 0.0, 0.0, 0.375, 1.0, 3.25], "tol": {"abs": 0.0, "rel": 0.0}, "source": "half wave: x if x > 0 else 0"},
+    {"id": "rectify.empty", "op": "rectify", "args": {"samples": []}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "rectify.nan_sample", "op": "rectify", "args": {"samples": [1.0, "nan"]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

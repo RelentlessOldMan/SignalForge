@@ -6,7 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a rectifier (`rectify(samples, *, full=True)`, `|x|` or `max(x, 0)`).
+   - a compressor gain computer (`compressor_gain(level_db, threshold_db, ratio, *, knee_db=0.0)`,
+     the static curve of a dynamic-range compressor, hard or quadratic soft knee; levels in dB);
+   - a noise gate (`noise_gate(samples, threshold, *, hold=0)`, passing samples while the
+     magnitude is above the threshold and for `hold` samples after, zero otherwise).
 
 ## Built
 
@@ -2286,6 +2289,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors come from repeated reflection in exact rationals.
   Python 6335 passed, 2 skipped; .NET 5591 passed; conformance 3803/3803 in both. Version
   2026.11.17.51.
+- 2026-11-17: Rectifier (ADR 0253): `rectify(samples, *, full=True)` in `dsp` (C# `Dsp.Rectify`, real
+  only).
+  - Full wave gives `|x|`. Half wave gives `x` if `x > 0`, else `0`.
+  - `−0` gives `+0`.
+  Python 6343 passed, 2 skipped; .NET 5598 passed; conformance 3808/3808 in both. Version
+  2026.11.17.52.
 
 ## Not built
 

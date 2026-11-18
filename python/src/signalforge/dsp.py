@@ -2557,6 +2557,19 @@ def sample_and_hold(
     return y
 
 
+def rectify(samples: ArrayLike, *, full: bool = True) -> NDArray[np.float64]:
+    """Full-wave ``|x|`` or half-wave ``max(x, 0)`` rectifier (conventions: Rectifier;
+    ADR 0253)."""
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    r = np.asarray(x, dtype=np.float64)
+    y: NDArray[np.float64] = np.abs(r) if full else np.where(r > 0, r, 0.0)
+    return y
+
+
 def wavefold(samples: ArrayLike, limit: float) -> NDArray[np.float64]:
     """Fold samples back into ``[-limit, limit]`` by reflecting about each limit, the triangle
     wave of period ``4 limit`` (conventions: Wavefolder; ADR 0252)."""

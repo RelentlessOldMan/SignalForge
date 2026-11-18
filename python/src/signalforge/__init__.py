@@ -104,6 +104,7 @@ from .dsp import (
     peak_hold,
     pulse_shape,
     quantize,
+    rectify,
     reflection_to_arcsine,
     reflection_to_autocorrelation,
     reflection_to_lar,
@@ -399,7 +400,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.51"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.52"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -717,6 +718,7 @@ __all__ = [
     "read_wav_cues",
     "read_wav_info",
     "real_cepstrum",
+    "rectify",
     "reflection_to_arcsine",
     "reflection_to_autocorrelation",
     "reflection_to_lar",
