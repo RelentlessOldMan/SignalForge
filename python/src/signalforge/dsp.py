@@ -2557,6 +2557,37 @@ def sample_and_hold(
     return y
 
 
+def _fade_ramp(length: int, shape: str) -> NDArray[np.float64]:
+    t = np.arange(length) / length
+    if shape == "linear":
+        return t
+    r: NDArray[np.float64] = (1 - np.cos(np.pi * t)) / 2
+    return r
+
+
+def fade(
+    samples: ArrayLike, fade_in: int, fade_out: int, *, shape: str = "linear"
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Ramp the gain up over the first ``fade_in`` samples and down over the last ``fade_out``
+    (conventions: Fades; ADR 0262)."""
+    li = count(fade_in, "fade_in")
+    lo = count(fade_out, "fade_out")
+    if shape not in ("linear", "cosine"):
+        raise ValueError('shape must be "linear" or "cosine"')
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if li > x.size or lo > x.size:
+        raise ValueError("fade_in and fade_out must be at most the number of samples")
+    g = np.ones(x.size)
+    if li:
+        g[:li] *= _fade_ramp(li, shape)
+    if lo:
+        g[x.size - lo :] *= _fade_ramp(lo, shape)[::-1]
+    y: NDArray[Any] = x * g
+    return y
+
+
 def tremolo(
     samples: ArrayLike, rate: float, depth: float, sample_rate: float
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "fade",
+  "description": "Fades (conventions: Fades; ADR 0262).",
+  "cases": [
+    {"id": "fade.linear", "op": "fade", "args": {"samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "fade_in": 4, "fade_out": 2}, "expected": [0.0, 0.25, 0.5, 0.75, 1.0, 1.0, 1.0, 1.0, 0.5, 0.0], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "linear, in 4, out 2: 0, 1/4, 1/2, 3/4, 1, ..., 1, 1/2, 0"},
+    {"id": "fade.cosine", "op": "fade", "args": {"samples": [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0], "fade_in": 4, "fade_out": 4, "shape": "cosine"}, "expected": [0.0, 0.2928932188134524, 0.9999999999999999, 1.7071067811865475, 1.7071067811865475, 0.9999999999999999, 0.2928932188134524, 0.0], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "cosine, in 4, out 4"},
+    {"id": "fade.overlap", "op": "fade", "args": {"samples": [1.0, -2.0, 3.0, -4.0], "fade_in": 4, "fade_out": 4}, "expected": [0.0, -0.25, 0.375, -0.0], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "ramps overlap and multiply"},
+    {"id": "fade.none", "op": "fade", "args": {"samples": [0.5, -0.25, 1.5], "fade_in": 0, "fade_out": 0, "shape": "linear"}, "expected": [0.5, -0.25, 1.5], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "no fades: unchanged"},
+    {"id": "fade.signal", "op": "fade", "args": {"samples": [0.25, -1.0, 1.5, 2.0, -0.5, 0.75, 1.0, -1.25, 0.5], "fade_in": 3, "fade_out": 5, "shape": "cosine"}, "expected": [0.0, -0.24999999999999994, 1.1249999999999998, 2.0, -0.45225424859373686, 0.4908813728906053, 0.3454915028125263, -0.11936437851565784, 0.0], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "cosine on a signal"},
+    {"id": "fade.complex", "op": "fade", "args": {"samples": {"re": [1.0, 2.0, -3.0, 0.5], "im": [0.5, -1.0, 4.0, 0.0]}, "fade_in": 2, "fade_out": 0}, "expected": {"re": [0.0, 1.0, -3.0, 0.5], "im": [0.0, -0.5, 4.0, 0.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "complex scaled part by part, gains 0, 1/2, 1, 1"},
+    {"id": "fade.fade_in_negative", "op": "fade", "args": {"samples": [1.0, 2.0], "fade_in": -1, "fade_out": 1}, "error": "invalid_argument", "source": "fade_in must be at least 0"},
+    {"id": "fade.fade_out_too_long", "op": "fade", "args": {"samples": [1.0, 2.0], "fade_in": 1, "fade_out": 3}, "error": "invalid_argument", "source": "fade_out must be at most the number of samples"},
+    {"id": "fade.bad_shape", "op": "fade", "args": {"samples": [1.0, 2.0], "fade_in": 1, "fade_out": 1, "shape": "square"}, "error": "invalid_argument", "source": "shape must be linear or cosine"},
+    {"id": "fade.empty", "op": "fade", "args": {"samples": [], "fade_in": 0, "fade_out": 0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "fade.nan_sample", "op": "fade", "args": {"samples": [1.0, "nan"], "fade_in": 1, "fade_out": 1}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

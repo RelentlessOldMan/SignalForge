@@ -674,6 +674,9 @@ public static class Conformance
                 : Bind((Reals(a.Get("samples")), a.D("threshold"), a.Has("hold") ? a.I("hold") : 0), t => Dsp.NoiseGate(t.Item1, t.Item2, t.Item3)),
             "compressor_gain" => Bind((Reals(a.Get("level_db")), a.D("threshold_db"), a.D("ratio"), a.Has("knee_db") ? a.D("knee_db") : 0.0),
                 t => Dsp.CompressorGain(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "fade" => a.Get("samples") is Complex[] fds
+                ? Bind((fds, a.I("fade_in"), a.I("fade_out"), Fade(a)), t => Dsp.Fade(t.Item1, t.Item2, t.Item3, t.Item4))
+                : Bind((Reals(a.Get("samples")), a.I("fade_in"), a.I("fade_out"), Fade(a)), t => Dsp.Fade(t.Item1, t.Item2, t.Item3, t.Item4)),
             "tremolo" => a.Get("samples") is Complex[] trs
                 ? Bind((trs, a.D("rate"), a.D("depth"), a.D("sample_rate")), t => Dsp.Tremolo(t.Item1, t.Item2, t.Item3, t.Item4))
                 : Bind((Reals(a.Get("samples")), a.D("rate"), a.D("depth"), a.D("sample_rate")), t => Dsp.Tremolo(t.Item1, t.Item2, t.Item3, t.Item4)),
@@ -1153,6 +1156,13 @@ public static class Conformance
         bool oneSided = a.Flag("one_sided", dflt: true);
         return () => Spectral.Spectrogram(x, fs, nperseg, noverlap, window, oneSided, beta, detrend, nfft);
     }
+
+    private static FadeShape Fade(Args a) => a.Has("shape") ? Str(a, "shape") switch
+    {
+        "linear" => FadeShape.Linear,
+        "cosine" => FadeShape.Cosine,
+        _ => (FadeShape)(-1), // the library rejects it, as Python does
+    } : FadeShape.Linear;
 
     /// <summary>Real only when both inputs are real, as in NumPy.</summary>
     private static MelScale Mel(Args a) => a.Has("scale") ? Str(a, "scale") switch

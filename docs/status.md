@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - fades (`fade(samples, fade_in, fade_out, *, shape="linear")`, linear or raised-cosine
-     ramps over the first and last samples);
    - a crossfade (`crossfade(a, b, overlap, *, shape="linear")`, joining two signals with
      complementary ramps).
 
@@ -2338,6 +2336,11 @@ Updated with every chunk of work. Dates are absolute.
   `Dsp.Tremolo`, real and complex), gain `1 − depth·(1 − cos)/2` on the ring modulator's carrier.
   Python 6447 passed, 2 skipped; .NET 5701 passed; conformance 3894/3894 in both. Version
   2026.11.17.60.
+- 2026-11-17: Fades (ADR 0262): `fade(samples, fade_in, fade_out, *, shape="linear")` in `dsp`
+  (C# `Dsp.Fade` with the new `FadeShape` enum, real and complex), linear or raised-cosine ramps
+  that start and end at 0 and multiply where they overlap.
+  Python 6461 passed, 2 skipped; .NET 5714 passed; conformance 3905/3905 in both. Version
+  2026.11.17.61.
 
 ## Not built
 
