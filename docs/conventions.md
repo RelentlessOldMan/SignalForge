@@ -2035,6 +2035,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   compressor with its envelope taken from the real `key`; the factor
   `10^((g + makeup_db)/20)` multiplies `samples` (complex: part by part). The compressor's
   rules; `samples` finite and as long as `key`. **(implemented)**
+- **State-variable filter** (`svf(samples, cutoff, q, sample_rate, *, output="lowpass")`, C#
+  `Dsp.Svf` with `SvfOutput`, [ADR 0279](adr/0279-svf.md)): the TPT form. `g = tan((π·cutoff)/fs)`,
+  `k = 1/q`, `a1 = 1/(1 + g·(g + k))`, `a2 = g·a1`, `a3 = g·a2`; from rest, `v3 = x − ic2`,
+  `v1 = a1·ic1 + a2·v3`, `v2 = ic2 + a2·ic1 + a3·v3`, `ic1 = 2·v1 − ic1`, `ic2 = 2·v2 − ic2`.
+  Low `v2`, band `v1` (peak gain `q`), high `x − k·v1 − v2`, notch `x − k·v1`; complex part by
+  part. `0 < cutoff < fs/2`, finite `q > 0`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

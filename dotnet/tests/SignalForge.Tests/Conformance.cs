@@ -756,6 +756,9 @@ public static class Conformance
             "envelope_follower" => a.Get("samples") is Complex[] envs
                 ? Bind((envs, a.D("attack"), a.D("release")), t => Dsp.EnvelopeFollower(t.Item1, t.Item2, t.Item3))
                 : Bind((Reals(a.Get("samples")), a.D("attack"), a.D("release")), t => Dsp.EnvelopeFollower(t.Item1, t.Item2, t.Item3)),
+            "svf" => a.Get("samples") is Complex[] svs
+                ? Bind((svs, a.D("cutoff"), a.D("q"), a.D("sample_rate"), SvfOut(a)), t => Dsp.Svf(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5))
+                : Bind((Reals(a.Get("samples")), a.D("cutoff"), a.D("q"), a.D("sample_rate"), SvfOut(a)), t => Dsp.Svf(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "comb_filter" => a.Get("samples") is Complex[] cmbs
                 ? Bind((cmbs, a.I("delay"), a.D("gain"), a.Flag("feedback", false)),
                     t => Dsp.CombFilter(t.Item1, t.Item2, t.Item3, t.Item4))
@@ -1204,6 +1207,15 @@ public static class Conformance
         "right" => StereoSide.Right,
         _ => (StereoSide)(-1), // the library rejects it, as Python does
     } : StereoSide.Right;
+
+    private static SvfOutput SvfOut(Args a) => a.Has("output") ? Str(a, "output") switch
+    {
+        "lowpass" => SvfOutput.Lowpass,
+        "bandpass" => SvfOutput.Bandpass,
+        "highpass" => SvfOutput.Highpass,
+        "notch" => SvfOutput.Notch,
+        _ => (SvfOutput)(-1), // the library rejects it, as Python does
+    } : SvfOutput.Lowpass;
 
     private static FadeShape Fade(Args a) => a.Has("shape") ? Str(a, "shape") switch
     {

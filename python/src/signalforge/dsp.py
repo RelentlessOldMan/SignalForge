@@ -2440,6 +2440,61 @@ def dc_blocker(samples: ArrayLike, pole: float) -> NDArray[np.complex128] | NDAr
     return y
 
 
+_SVF_OUTPUTS = ("lowpass", "bandpass", "highpass", "notch")
+
+
+def _svf_run(v: list[float], g: float, k: float, output: str) -> NDArray[np.float64]:
+    a1 = 1 / (1 + g * (g + k))
+    a2 = g * a1
+    a3 = g * a2
+    ic1 = ic2 = 0.0
+    out = []
+    for x in v:
+        v3 = x - ic2
+        v1 = a1 * ic1 + a2 * v3
+        v2 = ic2 + a2 * ic1 + a3 * v3
+        ic1 = 2 * v1 - ic1
+        ic2 = 2 * v2 - ic2
+        if output == "lowpass":
+            out.append(v2)
+        elif output == "bandpass":
+            out.append(v1)
+        elif output == "highpass":
+            out.append(x - k * v1 - v2)
+        else:
+            out.append(x - k * v1)
+    return np.array(out, dtype=np.float64)
+
+
+def svf(
+    samples: ArrayLike, cutoff: float, q: float, sample_rate: float, *, output: str = "lowpass"
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Trapezoidal state-variable filter with low-pass, band-pass, high-pass or notch output
+    (conventions: State-variable filter; ADR 0279)."""
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive")
+    fc = real(cutoff, "cutoff")
+    if not 0 < fc < fs / 2:
+        raise ValueError("cutoff must be in (0, sample_rate / 2)")
+    qq = real(q, "q")
+    if not qq > 0:
+        raise ValueError("q must be positive")
+    if output not in _SVF_OUTPUTS:
+        raise ValueError('output must be "lowpass", "bandpass", "highpass" or "notch"')
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    g = math.tan(math.pi * fc / fs)
+    k = 1 / qq
+    if np.iscomplexobj(x):
+        yc: NDArray[Any] = _svf_run(x.real.tolist(), g, k, output) + 1j * _svf_run(
+            x.imag.tolist(), g, k, output
+        )
+        return yc
+    return _svf_run(np.asarray(x, dtype=np.float64).tolist(), g, k, output)
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:
