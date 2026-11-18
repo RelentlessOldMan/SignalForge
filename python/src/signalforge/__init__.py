@@ -464,6 +464,7 @@ from .waveforms import (
     fm_tone,
     multitone,
     newman_phases,
+    polyblep_sawtooth,
     prbs,
     pulse_train,
     sawtooth,
@@ -473,7 +474,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.17.108"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.109"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -787,6 +788,7 @@ __all__ = [
     "pi_loop_gains",
     "ping_pong_delay",
     "pitch_shift",
+    "polyblep_sawtooth",
     "power_ccdf",
     "power_ccdf_level",
     "power_frequency_offset",

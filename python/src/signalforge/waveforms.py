@@ -293,6 +293,31 @@ def bandlimited_triangle(
     return y
 
 
+def polyblep_sawtooth(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Naive sawtooth with the PolyBLEP residual taken off at the jump, ``phase`` in cycles
+    (conventions: PolyBLEP sawtooth; ADR 0310)."""
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    f = real(frequency, "frequency")
+    if not abs(f) <= 0.5 * sample_rate:
+        raise ValueError("|frequency| must be at most sample_rate/2")
+    dt = abs(f) / sample_rate
+    r = np.zeros(u.size)
+    after = u < dt
+    t = u[after] / dt
+    r[after] = t + t - t * t - 1
+    before = ~after & (u > 1 - dt)
+    t = (u[before] - 1) / dt
+    r[before] = t * t + t + t + 1
+    y: NDArray[np.float64] = amp * ((2 * u - 1) - r)
+    return y
+
+
 def wavetable(
     table: ArrayLike,
     sample_rate: float,

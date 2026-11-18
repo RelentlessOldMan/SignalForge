@@ -6,13 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a PolyBLEP sawtooth in `waveforms` (`polyblep_sawtooth(sample_rate, num_samples, frequency,
-     amplitude=1, phase=0)`: the naive `2u − 1` minus the two-sample polynomial residual
-     `t + t − t·t − 1` for `t = u/dt < 1` and `t·t + t + t + 1` for `t = (u − 1)/dt > −1`,
-     `dt = |f|/fs`; a cheap near-alias-free saw).
    - a pulse-width-modulated square in `waveforms` (`pwm(sample_rate, frequency, duty)`: `duty`
      a per-sample array in [0, 1], `A` for `u < duty[n]` and `−A` after, the oscillators'
      phase).
+   - a PolyBLEP square in `waveforms` (`polyblep_square(sample_rate, num_samples, frequency,
+     duty=0.5, amplitude=1, phase=0)`: the naive square plus the PolyBLEP residual `r(u)` at
+     the rising edge and minus `r(frac(u + 1 − duty))` at the falling one, the residual of
+     ADR 0310).
 
 ## Built
 
@@ -2587,6 +2587,12 @@ Updated with every chunk of work. Dates are absolute.
   sawtooth's harmonic count moved into a shared helper.
   Python 7033 passed, 2 skipped; .NET 6248 passed; conformance 4343/4343 in both. Version
   2026.11.17.108.
+- 2026-11-17: PolyBLEP sawtooth (ADR 0310): `polyblep_sawtooth(sample_rate, num_samples,
+  frequency, amplitude=1, phase=0)` in `waveforms` (C# `Waveforms.PolyblepSawtooth`): the
+  naive sawtooth with a two-sample polynomial residual taken off at the jump; aliasing more
+  than ten times lower than the naive form.
+  Python 7044 passed, 2 skipped; .NET 6258 passed; conformance 4351/4351 in both. Version
+  2026.11.17.109.
 
 ## Not built
 

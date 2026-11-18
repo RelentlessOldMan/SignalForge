@@ -515,4 +515,39 @@ public static class Waveforms
             top--;
         return top;
     }
+
+    /// <summary>Naive sawtooth with the PolyBLEP residual taken off at the jump, with the phase
+    /// in cycles (conventions: PolyBLEP sawtooth; ADR 0310).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite, with magnitude at most half the sample
+    /// rate.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] PolyblepSawtooth(double sampleRate, int numSamples, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        if (!(Math.Abs(frequency) <= 0.5 * sampleRate))
+            throw new ArgumentOutOfRangeException(nameof(frequency), "|frequency| must be at most sampleRate/2");
+        double dt = Math.Abs(frequency) / sampleRate;
+        for (int n = 0; n < u.Length; n++)
+        {
+            double v = u[n], r = 0;
+            if (v < dt)
+            {
+                double t = v / dt;
+                r = t + t - (t * t) - 1;
+            }
+            else if (v > 1 - dt)
+            {
+                double t = (v - 1) / dt;
+                r = (t * t) + t + t + 1;
+            }
+            u[n] = amplitude * (((2 * v) - 1) - r);
+        }
+        return u;
+    }
 }

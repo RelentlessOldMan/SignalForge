@@ -66,6 +66,13 @@ rule for code not written yet.
   C# `Waveforms.FmTone`, [ADR 0306](adr/0306-fm-tone.md)): real,
   `A·cos(2π·fc·(n/fs) + I·sin(2π·fm·(n/fs)))`, `2π·f` formed first as in `tone`. Positive
   finite `sample_rate`; `carrier`, `modulator`, `index`, `amplitude` finite. **(implemented)**
+- **PolyBLEP sawtooth** (`polyblep_sawtooth(sample_rate, num_samples, frequency,
+  amplitude=1, phase=0)`, C# `Waveforms.PolyblepSawtooth`,
+  [ADR 0310](adr/0310-polyblep-sawtooth.md)): `u` as for the oscillators, `dt = |f|/fs`; for
+  `u < dt`, `t = u/dt`, `r = t + t − t·t − 1`; else for `u > 1 − dt`, `t = (u − 1)/dt`,
+  `r = t·t + t + t + 1`; else `r = 0`; `y = A·((2·u − 1) − r)`. Positive finite
+  `sample_rate`; finite `frequency` with `|f| ≤ fs/2`; finite `amplitude`, `phase`.
+  **(implemented)**
 - **Band-limited square and triangle** (`bandlimited_square(...)`,
   `bandlimited_triangle(...)`, same arguments as `bandlimited_sawtooth`, C#
   `Waveforms.BandlimitedSquare`, `BandlimitedTriangle`,
