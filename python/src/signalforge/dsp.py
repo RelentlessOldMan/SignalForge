@@ -2601,6 +2601,28 @@ def envelope_follower(samples: ArrayLike, attack: float, release: float) -> NDAr
     return e
 
 
+def transient_shaper(
+    samples: ArrayLike, fast: float, slow: float, amount: float
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Scale each sample by the fast envelope over the slow one, to the power ``amount``
+    (conventions: Transient shaper; ADR 0281)."""
+    f = real(fast, "fast")
+    if not 0 <= f < 1:
+        raise ValueError("fast must be in [0, 1)")
+    s = real(slow, "slow")
+    if not 0 <= s < 1:
+        raise ValueError("slow must be in [0, 1)")
+    amt = real(amount, "amount")
+    x = _vector(samples, "samples")
+    ef = envelope_follower(x, f, f)
+    es = envelope_follower(x, s, s)
+    g = np.ones(x.size)
+    live = (ef > 0) & (es > 0)
+    g[live] = (ef[live] / es[live]) ** amt
+    y: NDArray[Any] = x * g
+    return y
+
+
 def peak_hold(samples: ArrayLike, hold: int, release: float) -> NDArray[np.float64]:
     """Peak of ``|x|`` held for ``hold`` samples, then decaying by ``release`` per sample, from
     rest (conventions: Peak hold; ADR 0243)."""

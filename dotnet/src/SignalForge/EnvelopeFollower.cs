@@ -103,4 +103,59 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Scales each real sample by the fast envelope over the slow one, to the power
+    /// <paramref name="amount"/> (conventions: Transient shaper; ADR 0281).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="fast">The fast envelope's coefficient, rising and falling, in <c>[0, 1)</c>.</param>
+    /// <param name="slow">The slow envelope's coefficient, rising and falling, in <c>[0, 1)</c>.</param>
+    /// <param name="amount">The power on the ratio, finite; 0 returns the input.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] TransientShaper(ReadOnlySpan<double> samples, double fast, double slow, double amount)
+    {
+        CheckTransientShaper(fast, slow, amount);
+        double[] g = TransientGains(EnvelopeFollower(samples, fast, fast), EnvelopeFollower(samples, slow, slow), amount);
+        var y = new double[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = samples[n] * g[n];
+        return y;
+    }
+
+    /// <summary>Scales each complex sample, part by part, by the fast envelope over the slow
+    /// one, to the power <paramref name="amount"/> (conventions: Transient shaper;
+    /// ADR 0281).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="fast">The fast envelope's coefficient, rising and falling, in <c>[0, 1)</c>.</param>
+    /// <param name="slow">The slow envelope's coefficient, rising and falling, in <c>[0, 1)</c>.</param>
+    /// <param name="amount">The power on the ratio, finite; 0 returns the input.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] TransientShaper(ReadOnlySpan<Complex> samples, double fast, double slow, double amount)
+    {
+        CheckTransientShaper(fast, slow, amount);
+        double[] g = TransientGains(EnvelopeFollower(samples, fast, fast), EnvelopeFollower(samples, slow, slow), amount);
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = new Complex(samples[n].Real * g[n], samples[n].Imaginary * g[n]);
+        return y;
+    }
+
+    private static void CheckTransientShaper(double fast, double slow, double amount)
+    {
+        if (!double.IsFinite(fast) || fast < 0 || fast >= 1)
+            throw new ArgumentOutOfRangeException(nameof(fast), "fast must be in [0, 1)");
+        if (!double.IsFinite(slow) || slow < 0 || slow >= 1)
+            throw new ArgumentOutOfRangeException(nameof(slow), "slow must be in [0, 1)");
+        if (!double.IsFinite(amount))
+            throw new ArgumentOutOfRangeException(nameof(amount), "amount must be finite");
+    }
+
+    private static double[] TransientGains(double[] ef, double[] es, double amount)
+    {
+        var g = new double[ef.Length];
+        for (int n = 0; n < g.Length; n++)
+            g[n] = ef[n] > 0 && es[n] > 0 ? Math.Pow(ef[n] / es[n], amount) : 1.0;
+        return g;
+    }
 }

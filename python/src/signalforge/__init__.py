@@ -150,6 +150,7 @@ from .dsp import (
     stereo_width,
     svf,
     thiran_allpass,
+    transient_shaper,
     tremolo,
     upsample,
     vibrato,
@@ -430,7 +431,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.79"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.80"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -827,6 +828,7 @@ __all__ = [
     "tone_metrics",
     "transfer_function",
     "transfer_function_h2",
+    "transient_shaper",
     "treble_ratio",
     "tremolo",
     "tristimulus",

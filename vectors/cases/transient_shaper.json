@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "transient_shaper",
+  "description": "Transient shaper (conventions: Transient shaper; ADR 0281).",
+  "cases": [
+    {"id": "transient_shaper.sharpen", "op": "transient_shaper", "args": {"samples": [0.0, 0.0, 1.0, 0.9, -0.8, 0.85, -0.9, 0.8, 0.0, 0.0, 0.5, -0.5], "fast": 0.25, "slow": 0.875, "amount": 1.0}, "expected": [0.0, 0.0, 6.0, 3.4985915492957753, -2.218326693227092, 1.9668591379078821, -1.8501778602910959, 1.3779785247656398, 0.0, 0.0, 0.5077109287541702, -0.5948551361574725], "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "fast 1/4, slow 7/8, amount 1: onsets raised"},
+    {"id": "transient_shaper.soften", "op": "transient_shaper", "args": {"samples": [0.0, 0.0, 1.0, 0.9, -0.8, 0.85, -0.9, 0.8, 0.0, 0.0, 0.5, -0.5], "fast": 0.25, "slow": 0.875, "amount": -0.5}, "expected": [0.0, 0.0, 0.408248290463863, 0.4564751529025334, -0.4804212710748239, 0.5587811661080112, -0.6277070758436581, 0.6095562039947003, 0.0, 0.0, 0.4961885639676668, -0.4584050555395137], "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "amount -1/2: onsets lowered"},
+    {"id": "transient_shaper.square", "op": "transient_shaper", "args": {"samples": [0.0, 0.0, 1.0, 0.9, -0.8, 0.85, -0.9, 0.8, 0.0, 0.0, 0.5, -0.5], "fast": 0.5, "slow": 0.75, "amount": 2.0}, "expected": [0.0, 0.0, 4.0, 2.591735537190083, -1.7343520644359967, 1.5390386465004726, -1.4446638317347116, 1.1012159369203356, 0.0, 0.0, 0.35068704322407057, -0.46729202178475127], "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "amount 2"},
+    {"id": "transient_shaper.zero_amount", "op": "transient_shaper", "args": {"samples": [0.0, 0.0, 1.0, 0.9, -0.8, 0.85, -0.9, 0.8, 0.0, 0.0, 0.5, -0.5], "fast": 0.25, "slow": 0.875, "amount": 0.0}, "expected": [0.0, 0.0, 1.0, 0.9, -0.8, 0.85, -0.9, 0.8, 0.0, 0.0, 0.5, -0.5], "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "amount 0: the input, gain 1 everywhere"},
+    {"id": "transient_shaper.instant_fast", "op": "transient_shaper", "args": {"samples": [0.5, 1.0, -0.25, 0.0, 2.0], "fast": 0.0, "slow": 0.5, "amount": 1.0}, "expected": [1.0, 1.6, -0.14285714285714285, 0.0, 3.6056338028169015], "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "fast 0 follows |x| exactly; a zero sample keeps gain 1"},
+    {"id": "transient_shaper.complex", "op": "transient_shaper", "args": {"samples": {"re": [0.0, 1.0, 0.5, -0.75, 0.25], "im": [0.0, -1.0, 0.25, 0.5, 0.0]}, "fast": 0.25, "slow": 0.75, "amount": 1.5}, "expected": {"re": [0.0, 5.196152422706632, 1.0987749585450155, -1.5197483926239603, 0.20265400533223357], "im": [0.0, -5.196152422706632, 0.5493874792725078, 1.0131655950826401, 0.0]}, "tol": {"abs": 1e-14, "rel": 1e-12}, "source": "complex: envelopes of |x|, real gain on both parts"},
+    {"id": "transient_shaper.fast_one", "op": "transient_shaper", "args": {"samples": [1.0, 2.0], "fast": 1.0, "slow": 0.75, "amount": 1.0}, "error": "invalid_argument", "source": "fast must be below 1"},
+    {"id": "transient_shaper.slow_negative", "op": "transient_shaper", "args": {"samples": [1.0, 2.0], "fast": 0.25, "slow": -0.5, "amount": 1.0}, "error": "invalid_argument", "source": "slow must be at least 0"},
+    {"id": "transient_shaper.empty", "op": "transient_shaper", "args": {"samples": [], "fast": 0.25, "slow": 0.75, "amount": 1.0}, "error": "invalid_argument", "source": "samples must not be empty"}
+  ]
+}

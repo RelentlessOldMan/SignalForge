@@ -6,10 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
+   - shelving and peaking EQ sections (`low_shelf`, `high_shelf`, `peaking_eq` designs returning
+     second-order sections from `frequency`, `gain_db`, `q`, `sample_rate`, by the bilinear
+     transform of the analogue prototypes).
    - a de-esser (`de_esser(samples, cutoff, q, threshold_db, ratio, attack, release, sample_rate)`,
      the sidechain compressor keyed on the state-variable band-pass of the input).
-   - a transient shaper (`transient_shaper(samples, fast, slow, amount)`, the gain
-     `(e_fast/e_slow)^amount` from two envelope followers, 1 where `e_slow = 0`).
 
 ## Built
 
@@ -2433,6 +2434,11 @@ Updated with every chunk of work. Dates are absolute.
   signal. The SVF's internal reader now takes a coefficient per sample.
   Python 6701 passed, 2 skipped; .NET 5936 passed; conformance 4091/4091 in both. Version
   2026.11.17.79.
+- 2026-11-17: Transient shaper (ADR 0281): `transient_shaper(samples, fast, slow, amount)` in
+  `dsp` (C# `Dsp.TransientShaper`, real and complex), the gain `(e_fast/e_slow)^amount` from two
+  envelope followers, 1 where either is 0.
+  Python 6713 passed, 2 skipped; .NET 5947 passed; conformance 4100/4100 in both. Version
+  2026.11.17.80.
 
 ## Not built
 

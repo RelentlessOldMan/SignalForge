@@ -2047,6 +2047,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   recursion with `a1`, `a2`, `a3` recomputed each sample and the state carried; wet `k·v1`;
   `y = x·(1 − mix) + wet·mix` (complex: part by part, one envelope). `0 < low ≤ high < fs/2`;
   finite `q > 0`; finite `mix` in `[0, 1]`. **(implemented)**
+- **Transient shaper** (`transient_shaper(samples, fast, slow, amount)`, C#
+  `Dsp.TransientShaper`, [ADR 0281](adr/0281-transient-shaper.md)): `ef` and `es` are the
+  envelope follower with `(fast, fast)` and `(slow, slow)`; `g = (ef/es)^amount`, 1 where either
+  is 0; `y = x·g` (complex part by part). Finite `fast`, `slow` in `[0, 1)`; finite `amount`.
+  **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
