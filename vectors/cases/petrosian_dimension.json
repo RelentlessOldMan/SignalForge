@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "suite": "petrosian_dimension",
+  "description": "Petrosian fractal dimension (conventions: Petrosian fractal dimension; ADR 0335).",
+  "cases": [
+    {"id": "petrosian_dimension.monotonic", "op": "petrosian_dimension", "args": {"samples": [0.0, 1.0, 1.0, 2.5, 3.0, 7.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "never turns (a flat step is no change): N_delta = 0, D = 1"},
+    {"id": "petrosian_dimension.alternating", "op": "petrosian_dimension", "args": {"samples": [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0]}, "expected": 1.1371052502129921, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "+-1 alternating, n = 10: N_delta = 8"},
+    {"id": "petrosian_dimension.flat_between", "op": "petrosian_dimension", "args": {"samples": [0.0, 1.0, 1.0, 0.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "a flat step between a rise and a fall is no change: N_delta = 0"},
+    {"id": "petrosian_dimension.mixed", "op": "petrosian_dimension", "args": {"samples": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5, -1.25, 0.75, 0.0, 1.5, -0.75, 2.0]}, "expected": 1.0960397267282767, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "sixteen arbitrary samples"},
+    {"id": "petrosian_dimension.tiny", "op": "petrosian_dimension", "args": {"samples": [0.0, 1e-300, 0.0]}, "expected": 1.128576971385792, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "steps of 1e-300: the signs change once though the product of the steps underflows"},
+    {"id": "petrosian_dimension.two", "op": "petrosian_dimension", "args": {"samples": [0.0, 1.0]}, "error": "invalid_argument", "source": "at least 3 samples"},
+    {"id": "petrosian_dimension.nan", "op": "petrosian_dimension", "args": {"samples": [0.0, "nan", 1.0]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "suite": "katz_dimension",
+  "description": "Katz fractal dimension (conventions: Katz fractal dimension; ADR 0334).",
+  "cases": [
+    {"id": "katz_dimension.line", "op": "katz_dimension", "args": {"samples": [-1.0, -0.25, 0.5, 1.25, 2.0, 2.75, 3.5, 4.25, 5.0, 5.75, 6.5, 7.25]}, "expected": 1.0, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "a straight line: d = L, so D = 1"},
+    {"id": "katz_dimension.mixed", "op": "katz_dimension", "args": {"samples": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5, -1.25, 0.75, 0.0, 1.5, -0.75, 2.0]}, "expected": 1.487441756793878, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "sixteen arbitrary samples"},
+    {"id": "katz_dimension.sawtooth", "op": "katz_dimension", "args": {"samples": [0.0, 1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0, 0.0]}, "expected": 1.285546909588835, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "a sawtooth of period 4"},
+    {"id": "katz_dimension.three", "op": "katz_dimension", "args": {"samples": [0.0, 1.0, 0.5]}, "expected": 1.4218421100744028, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "the shortest record"},
+    {"id": "katz_dimension.two", "op": "katz_dimension", "args": {"samples": [0.0, 1.0]}, "error": "invalid_argument", "source": "at least 3 samples"},
+    {"id": "katz_dimension.zero_denominator", "op": "katz_dimension", "args": {"samples": [0.0, 3.0, 0.0]}, "error": "invalid_argument", "source": "0, 3, 0: L = 2 sqrt 10 = 2 d, so log10 2 + log10(1/2) = 0"},
+    {"id": "katz_dimension.inf", "op": "katz_dimension", "args": {"samples": [0.0, "inf", 1.0]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

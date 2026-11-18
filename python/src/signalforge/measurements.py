@@ -382,6 +382,42 @@ def approximate_entropy(samples: ArrayLike, m: int, r: float) -> float:
     return phi(k) - phi(k + 1)
 
 
+def _at_least_three_real(samples: ArrayLike) -> NDArray[np.float64]:
+    x = np.asarray(samples)
+    if x.ndim != 1 or x.shape[0] < 3:
+        raise ValueError("samples must be a one-dimensional array of at least 3")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    return x
+
+
+def katz_dimension(samples: ArrayLike) -> float:
+    """Katz's fractal dimension ``log10 n / (log10 n + log10(d / L))`` of the points
+    ``(i, x[i])`` (conventions: Katz fractal dimension; ADR 0334)."""
+    x = _at_least_three_real(samples)
+    n = x.shape[0] - 1
+    length = float(np.sum(np.hypot(1.0, np.diff(x))))
+    extent = float(np.max(np.hypot(np.arange(n + 1, dtype=np.float64), x - x[0])))
+    denominator = math.log10(n) + math.log10(extent / length)
+    if not denominator > 0:
+        raise ValueError("n d must exceed L for the Katz dimension to be defined")
+    return math.log10(n) / denominator
+
+
+def petrosian_dimension(samples: ArrayLike) -> float:
+    """Petrosian's fractal dimension ``log10 n / (log10 n + log10(n / (n + 0.4 N_delta)))``
+    with ``N_delta`` the sign changes of the first difference (conventions: Petrosian fractal
+    dimension; ADR 0335)."""
+    x = _at_least_three_real(samples)
+    n = x.shape[0]
+    s = np.sign(np.diff(x))
+    changes = int(np.count_nonzero(s[:-1] * s[1:] < 0))
+    return math.log10(n) / (math.log10(n) + math.log10(n / (n + 0.4 * changes)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

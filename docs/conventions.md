@@ -221,6 +221,15 @@ rule for code not written yet.
   `Φ_m − Φ_{m+1}`, `Φ_k = (1/n_k) Σ_i ln C_i^k`, `n_k = N − k + 1` templates, `C_i^k` the share
   of templates (self included) within `r` by the Chebyshev distance. Real, finite, at least
   `m + 2` samples; integer `m ≥ 1`; finite `r ≥ 0` in sample units. **(implemented)**
+- **Katz fractal dimension** ([ADR 0334](adr/0334-katz-dimension.md); `katz_dimension(samples)`,
+  C# `Measurements.KatzDimension`): points `(i, x[i])`; `n = N − 1` steps,
+  `L = Σ sqrt(1 + Δx²)`, `d = max_i sqrt(i² + (x[i] − x[0])²)`,
+  `D = log10 n / (log10 n + log10(d/L))`. Real, finite, at least 3 samples; the denominator must
+  be above 0. **(implemented)**
+- **Petrosian fractal dimension** ([ADR 0335](adr/0335-petrosian-dimension.md);
+  `petrosian_dimension(samples)`, C# `Measurements.PetrosianDimension`): `n = N`, `N_Δ` the `i`
+  with `sign(Δ[i])·sign(Δ[i+1]) < 0`, `D = log10 n / (log10 n + log10(n/(n + 0.4 N_Δ)))`. Real,
+  finite, at least 3 samples. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

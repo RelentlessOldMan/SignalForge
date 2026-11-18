@@ -6,12 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Katz fractal dimension in `measurements` (`katz_dimension(samples)`:
-     `log10(n)/(log10(n) + log10(d/L))` with `n` steps, `L` the summed step lengths and `d` the
-     largest distance from the first point, in sample index and value).
-   - Petrosian fractal dimension in `measurements` (`petrosian_dimension(samples)`:
-     `log10 n / (log10 n + log10(n/(n + 0.4·N_Δ)))`, `N_Δ` the sign changes of the first
-     difference).
    - Lempel-Ziv complexity in `measurements` (`lempel_ziv_complexity(bits)`: the LZ76 phrase
      count of a 0/1 sequence, Kaspar-Schuster scan).
    - MTIE in `measurements` (`mtie(time_error, sample_interval, window_sizes)`: the largest
@@ -2718,6 +2712,13 @@ Updated with every chunk of work. Dates are absolute.
   self-matches, Chebyshev distance, `r` in sample units; at least `m + 2` samples.
   Python 7350 passed, 2 skipped; .NET 6539 passed; conformance 4557/4557 in both. Version
   2026.11.18.22.
+- 2026-11-18: Katz and Petrosian fractal dimensions (ADRs 0334, 0335): `katz_dimension(samples)`
+  and `petrosian_dimension(samples)` in `measurements` (C# `Measurements.KatzDimension`,
+  `Measurements.PetrosianDimension`, in FractalDimension.cs): Katz on the points `(i, x[i])`,
+  rejected when `n·d ≤ L`; Petrosian from the sign changes of the first difference, multiplying
+  signs, not steps. At least 3 samples.
+  Python 7369 passed, 2 skipped; .NET 6557 passed; conformance 4571/4571 in both. Version
+  2026.11.18.23.
 
 ## Not built
 

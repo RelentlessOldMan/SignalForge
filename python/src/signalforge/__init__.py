@@ -251,6 +251,7 @@ from .measurements import (
     hjorth_parameters,
     iacc,
     integrated_phase_noise,
+    katz_dimension,
     kay_frequency,
     lateral_fraction,
     modified_allan_deviation,
@@ -260,6 +261,7 @@ from .measurements import (
     noise_figure_y_factor,
     octave_band_levels,
     permutation_entropy,
+    petrosian_dimension,
     phase_noise_spurs,
     phase_noise_ssb,
     power_ccdf,
@@ -499,7 +501,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.22"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.23"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -758,6 +760,7 @@ __all__ = [
     "itakura_saito",
     "kaiser_parameters",
     "karplus_strong",
+    "katz_dimension",
     "kay_frequency",
     "lagrange_fir",
     "lar_to_reflection",
@@ -822,6 +825,7 @@ __all__ = [
     "peak_widths",
     "peaking_eq",
     "permutation_entropy",
+    "petrosian_dimension",
     "phase_distortion",
     "phase_noise",
     "phase_noise_spurs",
