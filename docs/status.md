@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - approximate entropy in `measurements` (`approximate_entropy(samples, m, r)`: Pincus's
-     `Φ_m(r) − Φ_{m+1}(r)`, self-matches counted, Chebyshev distance, `r` in sample units).
    - Katz fractal dimension in `measurements` (`katz_dimension(samples)`:
      `log10(n)/(log10(n) + log10(d/L))` with `n` steps, `L` the summed step lengths and `d` the
      largest distance from the first point, in sample index and value).
@@ -2715,6 +2713,11 @@ Updated with every chunk of work. Dates are absolute.
   dimensions, Lempel-Ziv complexity, MTIE).
   Python 7338 passed, 2 skipped; .NET 6527 passed; conformance 4548/4548 in both. Version
   2026.11.18.21.
+- 2026-11-18: Approximate entropy (ADR 0333): `approximate_entropy(samples, m, r)` in
+  `measurements` (C# `Measurements.ApproximateEntropy`): Pincus's `Φ_m − Φ_{m+1}` with
+  self-matches, Chebyshev distance, `r` in sample units; at least `m + 2` samples.
+  Python 7350 passed, 2 skipped; .NET 6539 passed; conformance 4557/4557 in both. Version
+  2026.11.18.22.
 
 ## Not built
 

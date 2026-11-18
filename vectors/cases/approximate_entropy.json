@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "approximate_entropy",
+  "description": "Approximate entropy (conventions: Approximate entropy; ADR 0333).",
+  "cases": [
+    {"id": "approximate_entropy.alternating", "op": "approximate_entropy", "args": {"samples": [1.0, -1.0, 1.0, -1.0, 1.0, -1.0], "m": 1, "r": 0.5}, "expected": -0.020135513550688877, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "+-1 alternating, N = 6: Phi_1 = ln(1/2); Phi_2 = (3 ln(3/5) + 2 ln(2/5))/5"},
+    {"id": "approximate_entropy.constant", "op": "approximate_entropy", "args": {"samples": [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5], "m": 2, "r": 0.0}, "expected": 0.0, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "a constant: every template matches, 0"},
+    {"id": "approximate_entropy.mixed", "op": "approximate_entropy", "args": {"samples": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5, -1.25, 0.75, 0.0, 1.5, -0.75, 2.0, 0.5, -1.0, 1.25, 0.625], "m": 2, "r": 1.25}, "expected": 0.48462955602904634, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "twenty arbitrary dyadic samples, m = 2, r = 1.25"},
+    {"id": "approximate_entropy.ties", "op": "approximate_entropy", "args": {"samples": [0.0, 1.0, 2.0, 1.0, 0.0, 1.0, 2.0, 3.0, 2.0, 1.0, 0.0, 1.0], "m": 1, "r": 1.0}, "expected": 0.2283624541915767, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "distances exactly at r = 1 count as matches"},
+    {"id": "approximate_entropy.tight", "op": "approximate_entropy", "args": {"samples": [0.0, 0.5, 0.25], "m": 1, "r": 0.25}, "expected": 0.4228371084878357, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "the shortest record, N = m + 2"},
+    {"id": "approximate_entropy.m_zero", "op": "approximate_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 0, "r": 0.5}, "error": "invalid_argument", "source": "m must be at least 1"},
+    {"id": "approximate_entropy.r_negative", "op": "approximate_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 1, "r": -0.25}, "error": "invalid_argument", "source": "r must be at least 0"},
+    {"id": "approximate_entropy.too_short", "op": "approximate_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 4, "r": 0.5}, "error": "invalid_argument", "source": "samples must be at least m + 2 long"},
+    {"id": "approximate_entropy.nan", "op": "approximate_entropy", "args": {"samples": [0.0, "nan", 1.0, 2.0], "m": 1, "r": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

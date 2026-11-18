@@ -229,6 +229,7 @@ from .measurements import (
     TwoToneIp5,
     allan_deviation,
     am_am_pm,
+    approximate_entropy,
     autocorrelation_pitch,
     bass_ratio,
     block_leq,
@@ -498,7 +499,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.21"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.22"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -585,6 +586,7 @@ __all__ = [
     "am_am_pm",
     "amp_to_db",
     "analytic_signal",
+    "approximate_entropy",
     "ar_order_selection",
     "ar_psd",
     "ar_spectral_flatness",

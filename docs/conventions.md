@@ -216,6 +216,11 @@ rule for code not written yet.
   least-squares slope of `ln F` against `ln s`. Result `(scales, fluctuations, alpha)`. Real,
   finite; at least two strictly increasing integer scales, `4 ≤ s ≤ N`; every `F(s) > 0`.
   **(implemented)**
+- **Approximate entropy** ([ADR 0333](adr/0333-approximate-entropy.md);
+  `approximate_entropy(samples, m, r)`, C# `Measurements.ApproximateEntropy`): Pincus's
+  `Φ_m − Φ_{m+1}`, `Φ_k = (1/n_k) Σ_i ln C_i^k`, `n_k = N − k + 1` templates, `C_i^k` the share
+  of templates (self included) within `r` by the Chebyshev distance. Real, finite, at least
+  `m + 2` samples; integer `m ≥ 1`; finite `r ≥ 0` in sample units. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

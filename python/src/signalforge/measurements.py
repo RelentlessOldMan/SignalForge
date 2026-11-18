@@ -351,6 +351,37 @@ def detrended_fluctuation(samples: ArrayLike, scales: Sequence[int]) -> Detrende
     return DetrendedFluctuation(np.array(sizes, dtype=np.int64), fluctuations, alpha)
 
 
+def approximate_entropy(samples: ArrayLike, m: int, r: float) -> float:
+    """Pincus's approximate entropy ``Phi_m - Phi_{m+1}``, self-matches counted, Chebyshev
+    distance (conventions: Approximate entropy; ADR 0333)."""
+    k = count(m, "m")
+    if k < 1:
+        raise ValueError("m must be at least 1")
+    tol = real(r, "r")
+    if tol < 0:
+        raise ValueError("r must be at least 0")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if x.shape[0] < k + 2:
+        raise ValueError("samples must be at least m + 2 long")
+
+    def phi(length: int) -> float:
+        t = np.lib.stride_tricks.sliding_window_view(x, length)
+        n = t.shape[0]
+        counts = np.array(
+            [np.count_nonzero(np.max(np.abs(t - t[i]), axis=1) <= tol) for i in range(n)]
+        )
+        return float(np.mean(np.log(counts / n)))
+
+    return phi(k) - phi(k + 1)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
