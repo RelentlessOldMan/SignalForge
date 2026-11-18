@@ -2557,6 +2557,21 @@ def sample_and_hold(
     return y
 
 
+def saturate(samples: ArrayLike, drive: float) -> NDArray[np.float64]:
+    """Tanh saturator ``tanh(drive x) / tanh(drive)``, unity at ``x = +-1`` (conventions: Tanh
+    saturator; ADR 0259)."""
+    d = real(drive, "drive")
+    if not d > 0:
+        raise ValueError("drive must be positive")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y: NDArray[np.float64] = np.tanh(d * np.asarray(x, dtype=np.float64)) / np.tanh(d)
+    return y
+
+
 def expand(
     samples: ArrayLike,
     threshold_db: float,

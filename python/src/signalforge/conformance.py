@@ -271,6 +271,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "hard_clip": dsp.hard_clip,
     "wavefold": dsp.wavefold,
     "rectify": dsp.rectify,
+    "saturate": dsp.saturate,
     "compressor_gain": dsp.compressor_gain,
     "noise_gate": dsp.noise_gate,
     "expander_gain": dsp.expander_gain,

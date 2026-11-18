@@ -121,4 +121,28 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Tanh saturator <c>tanh(drive·x) / tanh(drive)</c>, unity at <c>x = ±1</c>
+    /// (conventions: Tanh saturator; ADR 0259).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="drive">How hard the samples are pushed, finite and positive.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Saturate(ReadOnlySpan<double> samples, double drive)
+    {
+        if (!double.IsFinite(drive) || !(drive > 0))
+            throw new ArgumentOutOfRangeException(nameof(drive), "drive must be positive");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        double norm = Math.Tanh(drive);
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double v = samples[n];
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            y[n] = Math.Tanh(drive * v) / norm;
+        }
+        return y;
+    }
 }

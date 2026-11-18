@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "saturate",
+  "description": "Tanh saturator (conventions: Tanh saturator; ADR 0259).",
+  "cases": [
+    {"id": "saturate.drive_0_5", "op": "saturate", "args": {"samples": [-3.0, -1.0, -0.5, -0.125, 0.0, 0.25, 0.75, 1.0, 2.5], "drive": 0.5}, "expected": [-1.9586986534143886, -1.0, -0.529992575596811, -0.13507126010556814, 0.0, 0.2690941026922944, 0.7754687154996855, 1.0, 1.8356462785047103], "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "drive 0.5: tanh(d x)/tanh(d)"},
+    {"id": "saturate.drive_2", "op": "saturate", "args": {"samples": [-3.0, -1.0, -0.5, -0.125, 0.0, 0.25, 0.75, 1.0, 2.5], "drive": 2.0}, "expected": [-1.0373019738420248, -1.0, -0.7900128291929869, -0.25405773389226816, 0.0, 0.4793609299265754, 0.9389236079466524, 1.0, 1.0372205369725587], "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "drive 2: tanh(d x)/tanh(d)"},
+    {"id": "saturate.drive_8", "op": "saturate", "args": {"samples": [-3.0, -1.0, -0.5, -0.125, 0.0, 0.25, 0.75, 1.0, 2.5], "drive": 8.0}, "expected": [-1.0000002250703748, -1.0, -0.9993295246584871, -0.761594327368047, 0.0, 0.9640277970498656, 0.9999879367184047, 1.0, 1.0000002250703748], "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "drive 8: tanh(d x)/tanh(d)"},
+    {"id": "saturate.gentle", "op": "saturate", "args": {"samples": [-0.5, 0.25, 1.0], "drive": 1e-06}, "expected": [-0.5000000000001249, 0.25000000000007816, 1.0], "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "drive 1e-6: y close to x"},
+    {"id": "saturate.hard", "op": "saturate", "args": {"samples": [-1.0, -0.5, 0.5, 4.0], "drive": 40.0}, "expected": [-1.0, -1.0, 1.0, 1.0], "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "drive 40: tanh(d) = 1 to double precision"},
+    {"id": "saturate.drive_zero", "op": "saturate", "args": {"samples": [1.0], "drive": 0.0}, "error": "invalid_argument", "source": "drive must be positive"},
+    {"id": "saturate.drive_inf", "op": "saturate", "args": {"samples": [1.0], "drive": "inf"}, "error": "invalid_argument", "source": "drive must be finite"},
+    {"id": "saturate.empty", "op": "saturate", "args": {"samples": [], "drive": 1.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "saturate.nan_sample", "op": "saturate", "args": {"samples": [1.0, "nan"], "drive": 1.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

@@ -6,7 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a tanh saturator (`saturate(samples, drive)`, `tanh(drive·x)/tanh(drive)`, unity at ±1);
    - a ring modulator (`ring_modulate(samples, frequency, sample_rate, *, phase=0.0)`,
      `x[n]·cos(2π f n/fs + φ)`).
 
@@ -2324,6 +2323,10 @@ Updated with every chunk of work. Dates are absolute.
   chain with the ADR 0256 gain; C# compressor and expander share `DynamicsFactors`.
   Python 6409 passed, 2 skipped; .NET 5664 passed; conformance 3863/3863 in both. Version
   2026.11.17.57.
+- 2026-11-17: Tanh saturator (ADR 0259): `saturate(samples, drive)` in `dsp` (C# `Dsp.Saturate`),
+  `tanh(drive·x)/tanh(drive)`, unity at ±1.
+  Python 6421 passed, 2 skipped; .NET 5675 passed; conformance 3872/3872 in both. Version
+  2026.11.17.58.
 
 ## Not built
 
