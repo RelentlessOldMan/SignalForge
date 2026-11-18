@@ -99,6 +99,7 @@ from .dsp import (
     haas,
     hampel_filter,
     hard_clip,
+    high_shelf,
     interpolate,
     itakura_saito,
     kaiser_parameters,
@@ -109,6 +110,7 @@ from .dsp import (
     levinson,
     limit,
     line_spectral_frequencies,
+    low_shelf,
     lpc_cepstrum,
     lpc_to_autocorrelation,
     lpc_to_reflection,
@@ -124,6 +126,7 @@ from .dsp import (
     normalize_peak,
     pan,
     peak_hold,
+    peaking_eq,
     phaser,
     ping_pong_delay,
     pulse_shape,
@@ -431,7 +434,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.80"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.81"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -647,6 +650,7 @@ __all__ = [
     "harmonic_f_test",
     "harmonic_series",
     "harmonic_to_noise",
+    "high_shelf",
     "hz_to_bark",
     "hz_to_erb_rate",
     "hz_to_mel",
@@ -681,6 +685,7 @@ __all__ = [
     "lomb_scargle_false_alarm_level_baluev",
     "lomb_scargle_frequencies",
     "lomb_scargle_multiterm",
+    "low_shelf",
     "lpc_cepstrum",
     "lpc_to_autocorrelation",
     "lpc_to_reflection",
@@ -717,6 +722,7 @@ __all__ = [
     "pan",
     "peak_hold",
     "peak_widths",
+    "peaking_eq",
     "phase_noise",
     "phase_noise_spurs",
     "phase_noise_ssb",

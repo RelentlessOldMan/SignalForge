@@ -2052,6 +2052,13 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   envelope follower with `(fast, fast)` and `(slow, slow)`; `g = (ef/es)^amount`, 1 where either
   is 0; `y = x·g` (complex part by part). Finite `fast`, `slow` in `[0, 1)`; finite `amount`.
   **(implemented)**
+- **Shelving and peaking EQ** (`low_shelf`, `high_shelf`, `peaking_eq`, each
+  `(frequency, gain_db, q, sample_rate)`, C# `Dsp.LowShelf`, `Dsp.HighShelf`, `Dsp.PeakingEq`,
+  [ADR 0282](adr/0282-eq-sections.md)): one section with `a0 = 1`, from `A = 10^(gain_db/40)`,
+  `w0 = (2π·frequency)/fs`, `c = cos w0`, `α = sin(w0)/(2q)`. Peaking
+  `b = [1 + αA, −2c, 1 − αA]`, `a = [1 + α/A, −2c, 1 − α/A]`; the shelf forms are in the ADR.
+  Gain `A²` at DC (low shelf), fs/2 (high shelf) or `w0` (peaking), 1 at the other end(s).
+  `0 < frequency < fs/2`, finite `q > 0`, finite `gain_db`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

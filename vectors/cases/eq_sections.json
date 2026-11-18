@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "suite": "eq_sections",
+  "description": "Shelving and peaking EQ sections (conventions: Shelving and peaking EQ; ADR 0282).",
+  "cases": [
+    {"id": "peaking_eq.boost", "op": "peaking_eq", "args": {"frequency": 1000.0, "gain_db": 6.0, "q": 1.0, "sample_rate": 48000.0}, "expected": [[1.043953086990335, -1.8953207239365961, 0.8677222847598565, 1.0, -1.8953207239365961, 0.9116753717501915]], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "+6 dB at 1 kHz, q 1, fs 48 kHz"},
+    {"id": "peaking_eq.cut", "op": "peaking_eq", "args": {"frequency": 0.1, "gain_db": -12.0, "q": 4.0, "sample_rate": 1.0}, "expected": [[0.9042607860575916, -1.411160387277203, 0.8400293797719603, 1.0, -1.411160387277203, 0.744290165829552]], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "-12 dB at 0.1 fs, q 4"},
+    {"id": "peaking_eq.flat", "op": "peaking_eq", "args": {"frequency": 2000.0, "gain_db": 0.0, "q": 2.0, "sample_rate": 8000.0}, "expected": [[1.0, -1.7763568394002506e-16, 0.6, 1.0, -1.7763568394002506e-16, 0.6]], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "0 dB: b equals a"},
+    {"id": "low_shelf.boost", "op": "low_shelf", "args": {"frequency": 200.0, "gain_db": 6.0, "q": 0.7071067811865476, "sample_rate": 48000.0}, "expected": [[1.0064455778511419, -1.968612352320032, 0.9631200582728409, 1.0, -1.9688501073857254, 0.9693278810582894]], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "+6 dB below 200 Hz, q 1/sqrt(2)"},
+    {"id": "low_shelf.cut", "op": "low_shelf", "args": {"frequency": 0.05, "gain_db": -9.0, "q": 1.0, "sample_rate": 1.0}, "expected": [[0.9116928952606481, -1.579465045794713, 0.7156906807065401, 1.0, -1.535897927116258, 0.6709506946456432]], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "-9 dB below 0.05 fs, q 1"},
+    {"id": "low_shelf.steep", "op": "low_shelf", "args": {"frequency": 0.2, "gain_db": 3.0, "q": 2.0, "sample_rate": 1.0}, "expected": [[1.1384287659905126, -0.4193094689982211, 0.6927878138558042, 1.0, -0.6254861808888205, 0.6250398679557174]], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "+3 dB, q 2: overshoot near the corner"},
+    {"id": "high_shelf.boost", "op": "high_shelf", "args": {"frequency": 8000.0, "gain_db": 4.5, "q": 0.7071067811865476, "sample_rate": 48000.0}, "expected": [[1.4038523827935845, -1.056120670857822, 0.3838919030923645, 1.0, -0.4811795405064523, 0.21280315553457915]], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "+4.5 dB above 8 kHz, q 1/sqrt(2)"},
+    {"id": "high_shelf.cut", "op": "high_shelf", "args": {"frequency": 0.4, "gain_db": -6.0, "q": 0.5, "sample_rate": 1.0}, "expected": [[0.8438950517025197, 0.9630797775846562, 0.2747742909859693, 1.0, 0.8856535622095354, 0.19609555806360984]], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "-6 dB above 0.4 fs, q 1/2"},
+    {"id": "high_shelf.flat", "op": "high_shelf", "args": {"frequency": 0.25, "gain_db": 0.0, "q": 1.0, "sample_rate": 1.0}, "expected": [[1.0, -1.4802973661668756e-16, 0.3333333333333333, 1.0, -1.4802973661668756e-16, 0.3333333333333333]], "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "0 dB: unity everywhere"},
+    {"id": "peaking_eq.frequency_zero", "op": "peaking_eq", "args": {"frequency": 0.0, "gain_db": 3.0, "q": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "frequency must be positive"},
+    {"id": "peaking_eq.frequency_nyquist", "op": "peaking_eq", "args": {"frequency": 4.0, "gain_db": 3.0, "q": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "frequency must be below fs/2"},
+    {"id": "peaking_eq.q_zero", "op": "peaking_eq", "args": {"frequency": 1.0, "gain_db": 3.0, "q": 0.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "q must be positive"},
+    {"id": "low_shelf.frequency_zero", "op": "low_shelf", "args": {"frequency": 0.0, "gain_db": 3.0, "q": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "frequency must be positive"},
+    {"id": "low_shelf.frequency_nyquist", "op": "low_shelf", "args": {"frequency": 4.0, "gain_db": 3.0, "q": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "frequency must be below fs/2"},
+    {"id": "low_shelf.q_zero", "op": "low_shelf", "args": {"frequency": 1.0, "gain_db": 3.0, "q": 0.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "q must be positive"},
+    {"id": "high_shelf.frequency_zero", "op": "high_shelf", "args": {"frequency": 0.0, "gain_db": 3.0, "q": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "frequency must be positive"},
+    {"id": "high_shelf.frequency_nyquist", "op": "high_shelf", "args": {"frequency": 4.0, "gain_db": 3.0, "q": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "frequency must be below fs/2"},
+    {"id": "high_shelf.q_zero", "op": "high_shelf", "args": {"frequency": 1.0, "gain_db": 3.0, "q": 0.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "q must be positive"}
+  ]
+}

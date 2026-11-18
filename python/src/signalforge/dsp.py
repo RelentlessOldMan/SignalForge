@@ -1621,6 +1621,67 @@ def butterworth_highpass(order: int, cutoff: float, sample_rate: float) -> NDArr
     return _butterworth(order, cutoff, sample_rate, high=True)
 
 
+def _eq_terms(
+    frequency: float, gain_db: float, q: float, sample_rate: float
+) -> tuple[float, float, float, float]:
+    fs = _rate(sample_rate)
+    f = real(frequency, "frequency")
+    if not 0 < f < fs / 2:
+        raise ValueError("frequency must be in (0, sample_rate / 2)")
+    gd = real(gain_db, "gain_db")
+    qq = real(q, "q")
+    if not qq > 0:
+        raise ValueError("q must be positive")
+    a = 10 ** (gd / 40)
+    w0 = 2 * math.pi * f / fs
+    return a, math.cos(w0), math.sin(w0) / (2 * qq), math.sqrt(a)
+
+
+def _eq_section(b0: float, b1: float, b2: float, a0: float, a1: float, a2: float) -> NDArray[Any]:
+    return _usable([[b0 / a0, b1 / a0, b2 / a0, 1.0, a1 / a0, a2 / a0]])
+
+
+def peaking_eq(
+    frequency: float, gain_db: float, q: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Peaking EQ section: gain ``gain_db`` at ``frequency``, unity at DC and fs/2
+    (conventions: Shelving and peaking EQ; ADR 0282)."""
+    a, c, al, _ = _eq_terms(frequency, gain_db, q, sample_rate)
+    return _eq_section(1 + al * a, -2 * c, 1 - al * a, 1 + al / a, -2 * c, 1 - al / a)
+
+
+def low_shelf(
+    frequency: float, gain_db: float, q: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """Low-shelf EQ section: gain ``gain_db`` at DC, unity at fs/2 (conventions: Shelving and
+    peaking EQ; ADR 0282)."""
+    a, c, al, sa = _eq_terms(frequency, gain_db, q, sample_rate)
+    return _eq_section(
+        a * ((a + 1) - (a - 1) * c + 2 * sa * al),
+        2 * a * ((a - 1) - (a + 1) * c),
+        a * ((a + 1) - (a - 1) * c - 2 * sa * al),
+        (a + 1) + (a - 1) * c + 2 * sa * al,
+        -2 * ((a - 1) + (a + 1) * c),
+        (a + 1) + (a - 1) * c - 2 * sa * al,
+    )
+
+
+def high_shelf(
+    frequency: float, gain_db: float, q: float, sample_rate: float
+) -> NDArray[np.float64]:
+    """High-shelf EQ section: unity at DC, gain ``gain_db`` at fs/2 (conventions: Shelving and
+    peaking EQ; ADR 0282)."""
+    a, c, al, sa = _eq_terms(frequency, gain_db, q, sample_rate)
+    return _eq_section(
+        a * ((a + 1) + (a - 1) * c + 2 * sa * al),
+        -2 * a * ((a - 1) + (a + 1) * c),
+        a * ((a + 1) + (a - 1) * c - 2 * sa * al),
+        (a + 1) - (a - 1) * c + 2 * sa * al,
+        2 * ((a - 1) - (a + 1) * c),
+        (a + 1) - (a - 1) * c - 2 * sa * al,
+    )
+
+
 def bessel_lowpass(order: int, cutoff: float, sample_rate: float) -> NDArray[np.float64]:
     """Bessel (maximally flat delay) low-pass by the bilinear transform, as second-order sections,
     -3 dB at ``cutoff`` (conventions: IIR filters)."""

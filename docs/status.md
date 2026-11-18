@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - shelving and peaking EQ sections (`low_shelf`, `high_shelf`, `peaking_eq` designs returning
-     second-order sections from `frequency`, `gain_db`, `q`, `sample_rate`, by the bilinear
-     transform of the analogue prototypes).
+   - a tilt EQ (`tilt_eq(frequency, gain_db, sample_rate)`, one first-order section pivoting at
+     `frequency`: `−gain_db/2` at DC and `+gain_db/2` at fs/2, by the bilinear transform).
    - a de-esser (`de_esser(samples, cutoff, q, threshold_db, ratio, attack, release, sample_rate)`,
      the sidechain compressor keyed on the state-variable band-pass of the input).
 
@@ -2439,6 +2438,12 @@ Updated with every chunk of work. Dates are absolute.
   envelope followers, 1 where either is 0.
   Python 6713 passed, 2 skipped; .NET 5947 passed; conformance 4100/4100 in both. Version
   2026.11.17.80.
+- 2026-11-17: Shelving and peaking EQ sections (ADR 0282): `low_shelf`, `high_shelf` and
+  `peaking_eq`, each `(frequency, gain_db, q, sample_rate)`, in `dsp` (C# `Dsp.LowShelf`,
+  `Dsp.HighShelf`, `Dsp.PeakingEq`), one second-order section each by the bilinear transform of
+  the analogue prototypes; vectors take the tan route in exact rationals.
+  Python 6735 passed, 2 skipped; .NET 5968 passed; conformance 4118/4118 in both. Version
+  2026.11.17.81.
 
 ## Not built
 
