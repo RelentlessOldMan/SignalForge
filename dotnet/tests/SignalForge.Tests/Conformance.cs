@@ -657,6 +657,8 @@ public static class Conformance
                 a.Has("delay") ? a.I("delay") : 1), t => Dsp.CicCompensator(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "savgol_coefficients" => Bind((a.I("length"), a.I("order"), a.Has("derivative") ? a.I("derivative") : 0,
                 a.Has("position") ? a.I("position") : 0), t => Dsp.SavgolCoefficients(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "expander_gain" => Bind((Reals(a.Get("level_db")), a.D("threshold_db"), a.D("ratio"), a.Has("knee_db") ? a.D("knee_db") : 0.0),
+                t => Dsp.ExpanderGain(t.Item1, t.Item2, t.Item3, t.Item4)),
             "noise_gate" => a.Get("samples") is Complex[] ngs
                 ? Bind((ngs, a.D("threshold"), a.Has("hold") ? a.I("hold") : 0), t => Dsp.NoiseGate(t.Item1, t.Item2, t.Item3))
                 : Bind((Reals(a.Get("samples")), a.D("threshold"), a.Has("hold") ? a.I("hold") : 0), t => Dsp.NoiseGate(t.Item1, t.Item2, t.Item3)),

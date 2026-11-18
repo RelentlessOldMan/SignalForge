@@ -1934,6 +1934,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `c = 0`, otherwise `c` rises by 1 (capped at `hold + 1`); `y[n] = x[n]` if `c ≤ hold`, else 0.
   Strict comparison; complex by magnitude. Finite `threshold ≥ 0`; integer `hold ≥ 0`; samples
   finite, non-empty; output the same kind. **(implemented)**
+- **Downward-expander gain computer** (`expander_gain(level_db, threshold_db, ratio, *,
+  knee_db=0.0)`, C# `Dsp.ExpanderGain`, [ADR 0256](adr/0256-expander-gain.md)): with
+  `d = x − T`, `s = ratio − 1`, `W = knee_db`: `0` if `2d > W`; `s·d` if `2d < −W`; else
+  `q = d − W/2`, `−(s·q·q/(2W))` (edges in the knee; `W = 0` gives 0 at `d = 0`). Gain in dB,
+  `≤ 0`. Rules as the compressor gain computer. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

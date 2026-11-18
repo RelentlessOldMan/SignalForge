@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a downward-expander gain computer (`expander_gain(level_db, threshold_db, ratio, *,
-     knee_db=0.0)`, the mirror of ADR 0254 below the threshold);
    - a feed-forward compressor (`compress(samples, threshold_db, ratio, attack, release, *,
      knee_db=0.0)`, peak detector per ADR 0238 in dB, gain per ADR 0254, applied per sample).
 
@@ -2309,6 +2307,11 @@ Updated with every chunk of work. Dates are absolute.
     guaranteed to round `|0.6 + 0.8i|` to exactly 1.
   Python 6366 passed, 2 skipped; .NET 5622 passed; conformance 3827/3827 in both. Version
   2026.11.17.54.
+- 2026-11-17: Downward-expander gain computer (ADR 0256): `expander_gain(level_db, threshold_db,
+  ratio, *, knee_db=0.0)` in `dsp` (C# `Dsp.ExpanderGain`), the mirror of ADR 0254 below the
+  threshold, with a quadratic knee.
+  Python 6376 passed, 2 skipped; .NET 5632 passed; conformance 3835/3835 in both. Version
+  2026.11.17.55.
 
 ## Not built
 

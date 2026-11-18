@@ -73,6 +73,7 @@ from .dsp import (
     elliptic_highpass,
     elliptic_lowpass,
     envelope_follower,
+    expander_gain,
     fir_bandpass,
     fir_equiripple,
     fir_frequency_sampling,
@@ -402,7 +403,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.54"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.55"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -571,6 +572,7 @@ __all__ = [
     "erb_space",
     "evm",
     "exceedance_levels",
+    "expander_gain",
     "farrow_delay",
     "farrow_resample",
     "fft",

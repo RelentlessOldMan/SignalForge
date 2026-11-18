@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "expander_gain",
+  "description": "Downward-expander gain computer (conventions: Downward-expander gain computer; ADR 0256).",
+  "cases": [
+    {"id": "expander_gain.hard_knee", "op": "expander_gain", "args": {"level_db": [0.0, -40.0, -41.0, -50.0, -60.0], "threshold_db": -40.0, "ratio": 2.0}, "expected": [0.0, 0.0, -1.0, -10.0, -20.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "T = -40, R = 2, hard knee: 0 at and above T, -1 dB per dB below"},
+    {"id": "expander_gain.soft_knee", "op": "expander_gain", "args": {"level_db": [-30.0, -36.0, -38.0, -40.0, -42.0, -44.0, -50.0], "threshold_db": -40.0, "ratio": 3.0, "knee_db": 8.0}, "expected": [0.0, 0.0, -0.5, -2.0, -4.5, -8.0, -20.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "T = -40, R = 3, 8 dB knee: edges at -36 and -44 are in the knee"},
+    {"id": "expander_gain.fraction", "op": "expander_gain", "args": {"level_db": [-10.5, -12.25, -13.0, -20.0], "threshold_db": -12.0, "ratio": 4.0, "knee_db": 2.0}, "expected": [0.0, -1.171875, -3.0, -24.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "R = 4, 2 dB knee"},
+    {"id": "expander_gain.ratio_one", "op": "expander_gain", "args": {"level_db": [-80.0, -40.0, 0.0], "threshold_db": -40.0, "ratio": 1.0, "knee_db": 4.0}, "expected": [0.0, 0.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "R = 1: 0 dB everywhere"},
+    {"id": "expander_gain.ratio_below_one", "op": "expander_gain", "args": {"level_db": [0.0], "threshold_db": -10.0, "ratio": 0.5}, "error": "invalid_argument", "source": "ratio must be at least 1"},
+    {"id": "expander_gain.knee_negative", "op": "expander_gain", "args": {"level_db": [0.0], "threshold_db": -10.0, "ratio": 2.0, "knee_db": -1.0}, "error": "invalid_argument", "source": "knee_db must be at least 0"},
+    {"id": "expander_gain.empty", "op": "expander_gain", "args": {"level_db": [], "threshold_db": -10.0, "ratio": 2.0}, "error": "invalid_argument", "source": "level_db must not be empty"},
+    {"id": "expander_gain.nan_level", "op": "expander_gain", "args": {"level_db": ["nan"], "threshold_db": -10.0, "ratio": 2.0}, "error": "invalid_argument", "source": "level_db must be finite"}
+  ]
+}
