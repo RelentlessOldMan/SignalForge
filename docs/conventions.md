@@ -1908,6 +1908,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `|y| = 1/L`, else `exp(|y|·L − 1)/A`; the knee goes to the log branch; sign last
   (`sign(0) = 0`). Finite `a ≥ 1`; samples real, finite, non-empty, in `[−1, 1]`.
   **(implemented)**
+- **Cubic soft clipper** (`soft_clip(samples)`, C# `Dsp.SoftClip`,
+  [ADR 0250](adr/0250-soft-clip.md)): `x − x·x·x/3` for `|x| < 1`; `±2/3` (the nearest double)
+  for `|x| ≥ 1` (odd; value and slope continuous at `±1`). Samples real, finite, non-empty.
+  **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

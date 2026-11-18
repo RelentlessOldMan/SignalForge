@@ -6,9 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a cubic soft clipper (`soft_clip(samples)`, `x − x³/3` on `[−1, 1]`, saturating at `±2/3`);
    - a hard clipper (`hard_clip(samples, limit)`, clamping to `[−limit, limit]`; complex by
-     magnitude, keeping the phase).
+     magnitude, keeping the phase);
+   - a wavefolder (`wavefold(samples, limit)`, reflecting at `±limit` repeatedly instead of
+     clamping);
+   - a rectifier (`rectify(samples, *, full=True)`, `|x|` or `max(x, 0)`).
 
 ## Built
 
@@ -2268,6 +2270,14 @@ Updated with every chunk of work. Dates are absolute.
   - `A = 1` is the identity.
   Python 6306 passed, 2 skipped; .NET 5564 passed; conformance 3782/3782 in both. Version
   2026.11.17.48.
+- 2026-11-17: Cubic soft clipper (ADR 0250): `soft_clip(samples)` in `dsp` (C# `Dsp.SoftClip`,
+  real only).
+  - It is `x − x³/3` inside `(−1, 1)` and `±2/3` from `±1` on.
+  - Lesson: evaluated at `±1`, the cubic rounds one ulp past the double nearest `2/3`, so the
+    curve steps backwards by one ulp entering the held region. `±1` is in the held branch, so
+    `±1` gives the clamp value exactly.
+  Python 6315 passed, 2 skipped; .NET 5572 passed; conformance 3788/3788 in both. Version
+  2026.11.17.49.
 
 ## Not built
 

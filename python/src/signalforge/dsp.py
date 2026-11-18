@@ -2557,6 +2557,19 @@ def sample_and_hold(
     return y
 
 
+def soft_clip(samples: ArrayLike) -> NDArray[np.float64]:
+    """Cubic soft clipper ``x - x^3/3`` on [-1, 1], held at ``+-2/3`` beyond
+    (conventions: Cubic soft clipper; ADR 0250)."""
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    r = np.asarray(x, dtype=np.float64)
+    y: NDArray[np.float64] = np.where(np.abs(r) < 1, r - r * r * r / 3, np.sign(r) * (2.0 / 3.0))
+    return y
+
+
 def _a_law_args(samples: ArrayLike, a: float) -> tuple[NDArray[np.float64], float]:
     av = real(a, "a")
     if not av >= 1:

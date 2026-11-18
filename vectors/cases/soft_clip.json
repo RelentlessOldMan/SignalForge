@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "suite": "soft_clip",
+  "description": "Cubic soft clipper (conventions: Cubic soft clipper; ADR 0250).",
+  "cases": [
+    {"id": "soft_clip.edges", "op": "soft_clip", "args": {"samples": [-3.0, -1.0, 0.0, 1.0, 1.5, 100.0]}, "expected": [-0.6666666666666666, -0.6666666666666666, 0.0, 0.6666666666666666, 0.6666666666666666, 0.6666666666666666], "tol": {"abs": 4e-16, "rel": 4e-16}, "source": "+-1 give +-2/3; beyond is held there"},
+    {"id": "soft_clip.cubic", "op": "soft_clip", "args": {"samples": [0.5, -0.5, 0.25, -0.75, 0.125, 0.875]}, "expected": [0.4583333333333333, -0.4583333333333333, 0.24479166666666666, -0.609375, 0.12434895833333333, 0.6516927083333334], "tol": {"abs": 4e-16, "rel": 4e-16}, "source": "x - x^3/3 inside [-1, 1]"},
+    {"id": "soft_clip.small", "op": "soft_clip", "args": {"samples": [9.5367431640625e-07, -9.313225746154785e-10, 0.0009765625]}, "expected": [9.536743164059608e-07, -9.313225746154785e-10, 0.0009765621895591418], "tol": {"abs": 4e-16, "rel": 4e-16}, "source": "near 0 the slope is 1"},
+    {"id": "soft_clip.empty", "op": "soft_clip", "args": {"samples": []}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "soft_clip.nan_sample", "op": "soft_clip", "args": {"samples": [0.5, "nan"]}, "error": "invalid_argument", "source": "samples must be finite"},
+    {"id": "soft_clip.inf_sample", "op": "soft_clip", "args": {"samples": ["inf"]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}
