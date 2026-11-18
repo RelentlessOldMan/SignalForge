@@ -252,6 +252,7 @@ from .measurements import (
     noise_figure_cascade,
     noise_figure_y_factor,
     octave_band_levels,
+    permutation_entropy,
     phase_noise_spurs,
     phase_noise_ssb,
     power_ccdf,
@@ -489,7 +490,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.13"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.14"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -804,6 +805,7 @@ __all__ = [
     "peak_hold",
     "peak_widths",
     "peaking_eq",
+    "permutation_entropy",
     "phase_distortion",
     "phase_noise",
     "phase_noise_spurs",

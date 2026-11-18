@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - permutation entropy in `measurements` (`permutation_entropy(samples, order, delay=1)`:
-     Shannon entropy of the ordinal patterns, normalized by `log(order!)`; ties by index).
    - sample entropy in `measurements` (`sample_entropy(samples, m, r)`: `−ln(A/B)` with the
      Chebyshev distance, self-matches excluded, both counts over the same `N − m` templates).
    - Allan deviation in `measurements` (`allan_deviation(fractional_frequency, sample_interval,
@@ -2667,6 +2665,11 @@ Updated with every chunk of work. Dates are absolute.
   dropped: it would only re-derive `bandlimited_sawtooth` with a leaky integrator.
   Python 7236 passed, 2 skipped; .NET 6430 passed; conformance 4474/4474 in both. Version
   2026.11.18.13.
+- 2026-11-18: Permutation entropy (ADR 0325): `permutation_entropy(samples, order, delay=1)` in
+  `measurements` (C# `Measurements.PermutationEntropy`): Bandt-Pompe ordinal patterns, ties by
+  index, normalized by `ln(order!)`; `2 ≤ order ≤ 8`.
+  Python 7252 passed, 2 skipped; .NET 6446 passed; conformance 4486/4486 in both. Version
+  2026.11.18.14.
 
 ## Not built
 

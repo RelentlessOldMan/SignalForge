@@ -154,6 +154,33 @@ def zero_crossing_rate(samples: ArrayLike) -> float:
     return int(np.count_nonzero(positive[1:] != positive[:-1])) / int(x.shape[0] - 1)
 
 
+def permutation_entropy(samples: ArrayLike, order: int, delay: int = 1) -> float:
+    """The Shannon entropy of the ordinal patterns of ``order`` samples ``delay`` apart, over
+    ``ln(order!)`` (conventions: Permutation entropy; ADR 0325)."""
+    m = count(order, "order")
+    tau = count(delay, "delay")
+    if not 2 <= m <= 8:
+        raise ValueError("order must be from 2 to 8")
+    if tau < 1:
+        raise ValueError("delay must be at least 1")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    windows = x.shape[0] - (m - 1) * tau
+    if windows < 1:
+        raise ValueError("samples are too short for one window")
+    idx = np.arange(windows)[:, None] + tau * np.arange(m)[None, :]
+    patterns = np.argsort(x[idx], axis=1, kind="stable")
+    _, counts = np.unique(patterns, axis=0, return_counts=True)
+    p = counts / windows
+    return float(-np.sum(p * np.log(p)) / math.log(math.factorial(m)))
+
+
 def hjorth_parameters(samples: ArrayLike) -> HjorthParameters:
     """Activity ``var(x)``, mobility ``sqrt(var(d)/var(x))`` and complexity
     ``sqrt(var(dd)/var(d)) / mobility``, ``d`` and ``dd`` the first and second differences

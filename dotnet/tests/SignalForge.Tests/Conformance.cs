@@ -256,6 +256,7 @@ public static class Conformance
             "polyblep_sawtooth" => Bind((a.D("sample_rate"), a.I("num_samples"), a.D("frequency"), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.PolyblepSawtooth(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "pulse_train" => Bind((a.I("num_samples"), a.I("period"), a.I("width"), a.Opt("amplitude", 1), a.Has("delay") ? a.I("delay") : 0),
                 t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
             "temporal_centroid" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2)),

@@ -181,6 +181,12 @@ rule for code not written yet.
   `x ≥ 0` (so 0 and −0.0 are positive), negative otherwise; `rate = #{n : sign x[n] ≠ sign
   x[n+1]} / (N − 1)`, per adjacent pair, from 0 to 1. Real, finite, at least two samples.
   **(implemented)**
+- **Permutation entropy** ([ADR 0325](adr/0325-permutation-entropy.md);
+  `permutation_entropy(samples, order, delay=1)`, C# `Measurements.PermutationEntropy`): windows
+  `v_j = x[i + j·delay]`, `j < order`, `i < L = N − (order−1)·delay`; each window's pattern is
+  its stable ascending sort order (ties by index); `H = −Σ p ln p / ln(order!)` over the
+  patterns' shares. Real, finite samples; integer `2 ≤ order ≤ 8`, integer `delay ≥ 1`,
+  `L ≥ 1`. **(implemented)**
 - **Hjorth parameters** ([ADR 0324](adr/0324-hjorth-parameters.md);
   `hjorth_parameters(samples)`, C# `Measurements.HjorthParameters`): `var` the population
   variance; `d[n] = x[n+1] − x[n]`, `dd[n] = d[n+1] − d[n]`; `activity = var(x)`,

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "permutation_entropy",
+  "description": "Permutation entropy (conventions: Permutation entropy; ADR 0325).",
+  "cases": [
+    {"id": "permutation_entropy.rising", "op": "permutation_entropy", "args": {"samples": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], "order": 3}, "expected": -0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "a rising ramp: one pattern, H = 0"},
+    {"id": "permutation_entropy.zigzag", "op": "permutation_entropy", "args": {"samples": [0.0, 1.0, 0.0, 1.0, 0.0], "order": 2}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "order 2 on 0,1,0,1,0: two rises, two falls, so H = ln 2 / ln 2 = 1"},
+    {"id": "permutation_entropy.ties", "op": "permutation_entropy", "args": {"samples": [1.0, 1.0, 1.0, 2.0, 1.0], "order": 2}, "expected": 0.8112781244591328, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "equal neighbours count as rising: 3 rises and 1 fall, H = -(3/4 ln 3/4 + 1/4 ln 1/4) / ln 2"},
+    {"id": "permutation_entropy.order3", "op": "permutation_entropy", "args": {"samples": [4.0, 7.0, 9.0, 10.0, 6.0, 11.0, 3.0], "order": 3}, "expected": 0.588762155916294, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "the Bandt-Pompe example series, order 3: 5 windows, patterns 012, 012, 201, 102, 201"},
+    {"id": "permutation_entropy.delay", "op": "permutation_entropy", "args": {"samples": [0.3, -1.2, 2.0, 0.7, -0.4, 1.1, 0.0, -2.5, 0.9, 1.6, -0.8, 0.2], "order": 3, "delay": 2}, "expected": 0.8339150226079424, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "twelve arbitrary samples, order 3, delay 2"},
+    {"id": "permutation_entropy.order4", "op": "permutation_entropy", "args": {"samples": [0.0, 1.0916648104524687, -0.05554110202683121, -0.6258146823277324, 0.8941133511386081, 1.2984871126234903, -0.09987468759354223, 0.0818628877629668, 1.6591618148564957, 1.2967405731306136, 0.03860250812044319, 0.9510009741858013, 2.1997929001426693, 1.1913634045759238, 0.4282015542561368, 1.8590583540221683, 2.4792730616507246, 1.1143626600257026, 1.0716392321684043, 2.6733278895662207, 2.5290826861200237, 1.1903333281664747, 1.9053283984997424, 3.285600298790633, 2.4406932573498654, 1.503913496880406, 2.815987266188217, 3.640428962947006, 2.3416745455082344, 2.077676459866509], "order": 4}, "expected": 0.7520377355049354, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "30 samples of sin(1.7 n) + n/10, order 4"},
+    {"id": "permutation_entropy.one_window", "op": "permutation_entropy", "args": {"samples": [3.0, 1.0, 2.0], "order": 3}, "expected": -0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "exactly one window: H = 0"},
+    {"id": "permutation_entropy.order_one", "op": "permutation_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0], "order": 1}, "error": "invalid_argument", "source": "order must be at least 2"},
+    {"id": "permutation_entropy.order_nine", "op": "permutation_entropy", "args": {"samples": [0.0, 1.0, 2.0, 3.0, 4.0, 0.0, 1.0, 2.0, 3.0, 4.0, 0.0, 1.0, 2.0, 3.0, 4.0, 0.0, 1.0, 2.0, 3.0, 4.0], "order": 9}, "error": "invalid_argument", "source": "order must be at most 8"},
+    {"id": "permutation_entropy.delay_zero", "op": "permutation_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0], "order": 2, "delay": 0}, "error": "invalid_argument", "source": "delay must be at least 1"},
+    {"id": "permutation_entropy.too_short", "op": "permutation_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0], "order": 3, "delay": 2}, "error": "invalid_argument", "source": "4 samples hold no window of order 3, delay 2"},
+    {"id": "permutation_entropy.inf", "op": "permutation_entropy", "args": {"samples": [0.0, "inf", 1.0], "order": 2}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}
