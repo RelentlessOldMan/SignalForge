@@ -23,7 +23,9 @@ from .dsp import (
     ArOrderSelection,
     FirFilter,
     IirFilter,
+    LeftRight,
     Levinson,
+    MidSide,
     Resampler,
     Schur,
     a_law_compress,
@@ -103,6 +105,8 @@ from .dsp import (
     lpc_to_reflection,
     lsf_to_lpc,
     median_filter,
+    mid_side_decode,
+    mid_side_encode,
     moving_average,
     moving_rms,
     mu_law_compress,
@@ -410,7 +414,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.62"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.63"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -439,8 +443,10 @@ __all__ = [
     "HarmonicToNoise",
     "IirFilter",
     "IntegratedPhaseNoise",
+    "LeftRight",
     "Levinson",
     "LineRemoval",
+    "MidSide",
     "NoiseFigure",
     "NoisePowerRatio",
     "OccupiedBandwidth",
@@ -657,6 +663,8 @@ __all__ = [
     "mel_filterbank",
     "mel_to_hz",
     "mfcc",
+    "mid_side_decode",
+    "mid_side_encode",
     "minimum_phase",
     "modulation_transfer",
     "moving_average",

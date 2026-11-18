@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - mid/side coding (`mid_side_encode(left, right)` and `mid_side_decode(mid, side)`,
-     `M = (L + R)/2`, `S = (L − R)/2`, exact inverse `L = M + S`, `R = M − S`);
    - a panner (`pan(samples, position, *, law="constant_power")`, mono to left and right with
      constant-power `cos/sin` or linear gains, `position` in `[−1, 1]`);
    - a bitcrusher (`bitcrush(samples, bits, hold)`, sample-and-hold by `hold` then a mid-tread
@@ -2350,6 +2348,11 @@ Updated with every chunk of work. Dates are absolute.
   `t = (k+1)/(L+1)`.
   Python 6476 passed, 2 skipped; .NET 5728 passed; conformance 3917/3917 in both. Version
   2026.11.17.62.
+- 2026-11-17: Mid/side coding (ADR 0264): `mid_side_encode(left, right)` → `MidSide(mid, side)`
+  and `mid_side_decode(mid, side)` → `LeftRight(left, right)` in `dsp` (C# `Dsp.MidSideEncode`,
+  `Dsp.MidSideDecode`), halves of sum and difference, plain sum and difference back.
+  Python 6489 passed, 2 skipped; .NET 5740 passed; conformance 3927/3927 in both. Version
+  2026.11.17.63.
 
 ## Not built
 

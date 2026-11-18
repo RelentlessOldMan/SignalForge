@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "mid_side",
+  "description": "Mid/side coding (conventions: Mid/side coding; ADR 0264).",
+  "cases": [
+    {"id": "mid_side.encode", "op": "mid_side_encode", "args": {"left": [1.0, -0.5, 0.25, 3.0, 0.0], "right": [1.0, 0.5, -0.75, 1.0, -2.0]}, "expected": {"mid": [1.0, 0.0, -0.25, 2.0, -1.0], "side": [0.0, -0.5, 0.5, 1.0, 1.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "mid = (l + r)/2, side = (l - r)/2"},
+    {"id": "mid_side.round_trip", "op": "mid_side_decode", "args": {"mid": [1.0, 0.0, -0.25, 2.0, -1.0], "side": [0.0, -0.5, 0.5, 1.0, 1.0]}, "expected": {"left": [1.0, -0.5, 0.25, 3.0, 0.0], "right": [1.0, 0.5, -0.75, 1.0, -2.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "decoding the encode case gives back left and right"},
+    {"id": "mid_side.mono", "op": "mid_side_encode", "args": {"left": [0.5, -1.5], "right": [0.5, -1.5]}, "expected": {"mid": [0.5, -1.5], "side": [0.0, 0.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "identical channels: side is zero"},
+    {"id": "mid_side.opposite", "op": "mid_side_encode", "args": {"left": [2.0, -0.25], "right": [-2.0, 0.25]}, "expected": {"mid": [0.0, 0.0], "side": [2.0, -0.25]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "opposite channels: mid is zero"},
+    {"id": "mid_side.decode", "op": "mid_side_decode", "args": {"mid": [1.0, 0.0, -0.5], "side": [0.25, -1.0, -0.5]}, "expected": {"left": [1.25, -1.0, -1.0], "right": [0.75, 1.0, 0.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "left = m + s, right = m - s"},
+    {"id": "mid_side.encode_lengths", "op": "mid_side_encode", "args": {"left": [1.0, 2.0], "right": [1.0]}, "error": "invalid_argument", "source": "left and right must have the same length"},
+    {"id": "mid_side.encode_empty", "op": "mid_side_encode", "args": {"left": [], "right": []}, "error": "invalid_argument", "source": "left must not be empty"},
+    {"id": "mid_side.encode_nan", "op": "mid_side_encode", "args": {"left": [1.0], "right": ["nan"]}, "error": "invalid_argument", "source": "right must be finite"},
+    {"id": "mid_side.decode_lengths", "op": "mid_side_decode", "args": {"mid": [1.0], "side": [1.0, 2.0]}, "error": "invalid_argument", "source": "mid and side must have the same length"},
+    {"id": "mid_side.decode_inf", "op": "mid_side_decode", "args": {"mid": ["inf"], "side": [1.0]}, "error": "invalid_argument", "source": "mid must be finite"}
+  ]
+}

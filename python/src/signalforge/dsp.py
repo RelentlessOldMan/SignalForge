@@ -2651,6 +2651,51 @@ def ring_modulate(
     return y
 
 
+@dataclass(frozen=True, eq=False)
+class MidSide:
+    """The mid and side channels of a stereo pair (conventions: Mid/side coding; ADR 0264)."""
+
+    mid: NDArray[np.float64]
+    side: NDArray[np.float64]
+
+
+@dataclass(frozen=True, eq=False)
+class LeftRight:
+    """The left and right channels of a stereo pair (conventions: Mid/side coding; ADR 0264)."""
+
+    left: NDArray[np.float64]
+    right: NDArray[np.float64]
+
+
+def _stereo(
+    p: ArrayLike, q: ArrayLike, names: tuple[str, str]
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    out = []
+    for v, name in zip((p, q), names, strict=True):
+        x = _vector(v, name)
+        if np.iscomplexobj(x):
+            raise ValueError(f"{name} must be real")
+        if not np.all(np.isfinite(x)):
+            raise ValueError(f"{name} must be finite")
+        out.append(np.asarray(x, dtype=np.float64))
+    if out[0].size != out[1].size:
+        raise ValueError(f"{names[0]} and {names[1]} must have the same length")
+    return out[0], out[1]
+
+
+def mid_side_encode(left: ArrayLike, right: ArrayLike) -> MidSide:
+    """``mid = (left + right)/2``, ``side = (left - right)/2`` (conventions: Mid/side coding;
+    ADR 0264)."""
+    a, b = _stereo(left, right, ("left", "right"))
+    return MidSide((a + b) / 2, (a - b) / 2)
+
+
+def mid_side_decode(mid: ArrayLike, side: ArrayLike) -> LeftRight:
+    """``left = mid + side``, ``right = mid - side`` (conventions: Mid/side coding; ADR 0264)."""
+    m, s = _stereo(mid, side, ("mid", "side"))
+    return LeftRight(m + s, m - s)
+
+
 def saturate(samples: ArrayLike, drive: float) -> NDArray[np.float64]:
     """Tanh saturator ``tanh(drive x) / tanh(drive)``, unity at ``x = +-1`` (conventions: Tanh
     saturator; ADR 0259)."""
