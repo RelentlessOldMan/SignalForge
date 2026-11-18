@@ -273,6 +273,7 @@ from .measurements import (
     stage_support,
     teager_energy,
     temporal_centroid,
+    time_deviation,
     time_weighting,
     tone_metrics,
     treble_ratio,
@@ -496,7 +497,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.19"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.20"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -941,6 +942,7 @@ __all__ = [
     "temporal_centroid",
     "thiran_allpass",
     "tilt_eq",
+    "time_deviation",
     "time_weighting",
     "timing_offset",
     "tone",

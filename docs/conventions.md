@@ -205,6 +205,10 @@ rule for code not written yet.
   starts `m < k`, `n_m = floor((N−1−m)/k)`, `L_m(k) = Σ_{i=1}^{n_m} |x[m+ik] − x[m+(i−1)k]| ·
   (N−1)/(n_m k) / k`, `L(k)` their mean; the least-squares slope of `ln L(k)` against `−ln k`.
   Real, finite; integer `k_max ≥ 2` with `2·k_max ≤ N`; every `L(k) > 0`. **(implemented)**
+- **Time deviation** ([ADR 0331](adr/0331-time-deviation.md);
+  `time_deviation(fractional_frequency, sample_interval, averaging_factors)`, C#
+  `Measurements.TimeDeviation`): `TDEV = (τ/√3)·MDEV(τ)` in seconds, MDEV as the modified Allan
+  deviation; the same rules and result type. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

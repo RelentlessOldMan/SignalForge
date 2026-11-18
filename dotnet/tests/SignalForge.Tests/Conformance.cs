@@ -260,6 +260,7 @@ public static class Conformance
             "modified_allan_deviation" => Bind((Reals(a.Get("fractional_frequency")), a.D("sample_interval"), Ints(a.Get("averaging_factors"))), t => Measurements.ModifiedAllanDeviation(t.Item1, t.Item2, t.Item3)),
             "hadamard_deviation" => Bind((Reals(a.Get("fractional_frequency")), a.D("sample_interval"), Ints(a.Get("averaging_factors"))), t => Measurements.HadamardDeviation(t.Item1, t.Item2, t.Item3)),
             "higuchi_dimension" => Bind((Reals(a.Get("samples")), a.I("k_max")), t => Measurements.HiguchiDimension(t.Item1, t.Item2)),
+            "time_deviation" => Bind((Reals(a.Get("fractional_frequency")), a.D("sample_interval"), Ints(a.Get("averaging_factors"))), t => Measurements.TimeDeviation(t.Item1, t.Item2, t.Item3)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

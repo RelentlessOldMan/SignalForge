@@ -292,6 +292,16 @@ def higuchi_dimension(samples: ArrayLike, k_max: int) -> float:
     return float(np.sum(dx * (ly - ly.mean())) / np.sum(dx * dx))
 
 
+def time_deviation(
+    fractional_frequency: ArrayLike, sample_interval: float, averaging_factors: Sequence[int]
+) -> AllanDeviation:
+    """The time deviation ``(tau / sqrt 3) MDEV(tau)`` in seconds for each averaging factor
+    (conventions: Time deviation; ADR 0331)."""
+    mod = modified_allan_deviation(fractional_frequency, sample_interval, averaging_factors)
+    deviations: NDArray[np.float64] = mod.taus / math.sqrt(3) * mod.deviations
+    return AllanDeviation(mod.taus, deviations)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

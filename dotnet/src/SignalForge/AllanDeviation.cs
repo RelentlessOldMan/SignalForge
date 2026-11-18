@@ -179,4 +179,23 @@ public static partial class Measurements
         }
         return new AllanDeviation(taus, deviations);
     }
+
+    /// <summary>The time deviation <c>(τ/√3)·MDEV(τ)</c> in seconds for each averaging factor
+    /// (conventions: Time deviation; ADR 0331).</summary>
+    /// <param name="fractionalFrequency">Fractional-frequency samples, finite, at least 2.</param>
+    /// <param name="sampleInterval">The interval each sample averages over, in seconds, finite
+    /// and positive.</param>
+    /// <param name="averagingFactors">The factors <c>m</c>, at least one, each with
+    /// <c>1 ≤ m</c> and <c>3m ≤ N + 1</c>.</param>
+    /// <returns>The averaging times and the time deviations in seconds.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static AllanDeviation TimeDeviation(ReadOnlySpan<double> fractionalFrequency, double sampleInterval,
+        ReadOnlySpan<int> averagingFactors)
+    {
+        AllanDeviation mod = ModifiedAllanDeviation(fractionalFrequency, sampleInterval, averagingFactors);
+        var deviations = new double[mod.Taus.Length];
+        for (int f = 0; f < deviations.Length; f++)
+            deviations[f] = mod.Taus[f] / Math.Sqrt(3) * mod.Deviations[f];
+        return new AllanDeviation(mod.Taus, deviations);
+    }
 }

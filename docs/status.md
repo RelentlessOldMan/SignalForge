@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - time deviation in `measurements` (`time_deviation(...)`: `τ·MDEV/√3`, the same arguments
-     as ADR 0328, in seconds).
    - detrended fluctuation analysis in `measurements` (`detrended_fluctuation(samples,
      scales)`: the RMS of the linearly detrended profile in non-overlapping boxes per scale,
      and the log-log slope `α`).
@@ -2696,6 +2694,11 @@ Updated with every chunk of work. Dates are absolute.
   `−ln k`; `2 ≤ k_max ≤ N/2`, every `L(k) > 0`.
   Python 7316 passed, 2 skipped; .NET 6508 passed; conformance 4533/4533 in both. Version
   2026.11.18.19.
+- 2026-11-18: Time deviation (ADR 0331): `time_deviation(fractional_frequency, sample_interval,
+  averaging_factors)` in `measurements` (C# `Measurements.TimeDeviation`): `(τ/√3)·MDEV(τ)` in
+  seconds, the `AllanDeviation` result and rules of ADR 0328.
+  Python 7325 passed, 2 skipped; .NET 6516 passed; conformance 4539/4539 in both. Version
+  2026.11.18.20.
 
 ## Not built
 

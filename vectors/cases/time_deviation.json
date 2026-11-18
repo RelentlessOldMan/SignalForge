@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "suite": "time_deviation",
+  "description": "Time deviation (conventions: Time deviation; ADR 0331).",
+  "cases": [
+    {"id": "time_deviation.alternating", "op": "time_deviation", "args": {"fractional_frequency": [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0], "sample_interval": 1.0, "averaging_factors": [1, 2]}, "expected": {"taus": [1.0, 2.0], "deviations": [0.816496580927726, 0.0]}, "tol": {"abs": 1e-18, "rel": 1e-12}, "source": "y = +-1, tau0 = 1: m = 1 MDEV sqrt 2, so TDEV sqrt(2/3); m = 2 gives 0"},
+    {"id": "time_deviation.ppb", "op": "time_deviation", "args": {"fractional_frequency": [2.7939677238464355e-09, -9.313225746154785e-10, 3.725290298461914e-09, 9.313225746154785e-10, -4.6566128730773926e-09, 8.381903171539307e-09, 1.862645149230957e-09, -5.587935447692871e-09, 4.6566128730773926e-09, 2.7939677238464355e-09, -4.6566128730773926e-09, 7.450580596923828e-09, 0.0, -1.862645149230957e-09], "sample_interval": 0.125, "averaging_factors": [1, 2, 4]}, "expected": {"taus": [0.125, 0.25, 0.5], "deviations": [3.776890729621813e-10, 2.2941007052016525e-10, 9.761721496032797e-11]}, "tol": {"abs": 1e-18, "rel": 1e-12}, "source": "parts-per-billion wander, tau0 = 1/8 s"},
+    {"id": "time_deviation.mixed", "op": "time_deviation", "args": {"fractional_frequency": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5, -1.25, 0.75, 0.0], "sample_interval": 0.01, "averaging_factors": [4, 3]}, "expected": {"taus": [0.04, 0.03], "deviations": [0.01188344911409235, 0.011224894827520163]}, "tol": {"abs": 1e-18, "rel": 1e-12}, "source": "thirteen arbitrary dyadic samples"},
+    {"id": "time_deviation.factor_too_big", "op": "time_deviation", "args": {"fractional_frequency": [0.0, 1.0, 0.5, 2.0, 1.5], "sample_interval": 1.0, "averaging_factors": [3]}, "error": "invalid_argument", "source": "3 m must be at most the length + 1"},
+    {"id": "time_deviation.no_factors", "op": "time_deviation", "args": {"fractional_frequency": [0.0, 1.0, 0.5, 2.0, 1.5], "sample_interval": 1.0, "averaging_factors": []}, "error": "invalid_argument", "source": "averaging_factors must not be empty"},
+    {"id": "time_deviation.interval_zero", "op": "time_deviation", "args": {"fractional_frequency": [0.0, 1.0, 0.5, 2.0, 1.5], "sample_interval": 0.0, "averaging_factors": [1]}, "error": "invalid_argument", "source": "sample_interval must be positive"}
+  ]
+}
