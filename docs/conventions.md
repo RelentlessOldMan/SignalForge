@@ -2030,6 +2030,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0277](adr/0277-balance.md)): `left·gL`, `right·gR` with `gL = 1 − p` for `p > 0` else 1
   and `gR = 1 + p` for `p < 0` else 1. Finite `position` in `[−1, 1]`; real, finite,
   non-empty channels of equal length. **(implemented)**
+- **Sidechain compressor** (`duck(samples, key, threshold_db, ratio, attack, release, *,
+  knee_db=0, makeup_db=0)`, C# `Dsp.Duck`, [ADR 0278](adr/0278-duck.md)): the feed-forward
+  compressor with its envelope taken from the real `key`; the factor
+  `10^((g + makeup_db)/20)` multiplies `samples` (complex: part by part). The compressor's
+  rules; `samples` finite and as long as `key`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

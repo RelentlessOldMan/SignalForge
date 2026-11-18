@@ -6,9 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a sidechain compressor (`duck(samples, key, threshold_db, ratio, attack, release, *,
-     knee_db=0, makeup_db=0)`, the compressor's gain computed from `key` and applied to
-     `samples`).
+   - a state-variable filter (`svf(samples, cutoff, q, sample_rate, *, output="lowpass")`, the
+     trapezoidal (TPT) form with low-pass, band-pass, high-pass and notch outputs, the base for an
+     auto-wah);
+   - a transient shaper (`transient_shaper(samples, fast, slow, amount)`, the gain
+     `(e_fast/e_slow)^amount` from two envelope followers, 1 where `e_slow = 0`).
 
 ## Built
 
@@ -2415,6 +2417,12 @@ Updated with every chunk of work. Dates are absolute.
   near side unchanged.
   Python 6660 passed, 2 skipped; .NET 5898 passed; conformance 4059/4059 in both. Version
   2026.11.17.76.
+- 2026-11-17: Sidechain compressor (ADR 0278): `duck(samples, key, threshold_db, ratio, attack,
+  release, *, knee_db=0, makeup_db=0)` in `dsp` (C# `Dsp.Duck`, real and complex samples, real
+  key), the feed-forward compressor with its envelope taken from `key`. The compressor's factor
+  is now a private helper the two share.
+  Python 6671 passed, 2 skipped; .NET 5908 passed; conformance 4067/4067 in both. Version
+  2026.11.17.77.
 
 ## Not built
 

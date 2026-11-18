@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "duck",
+  "description": "Sidechain compressor (conventions: Sidechain compressor; ADR 0278).",
+  "cases": [
+    {"id": "duck.instant", "op": "duck", "args": {"samples": [0.5, -0.25, 0.75, -0.5, 0.25, 0.5], "key": [0.0, 4.0, 16.0, 0.5, 0.0, 100.0], "threshold_db": 0.0, "ratio": 2.0, "attack": 0.0, "release": 0.0}, "expected": [0.5, -0.125, 0.1875, -0.5, 0.25, 0.05], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "attack = release = 0, T = 0 dB, R = 2: gain 1/sqrt|key| above 1, 1 at and below"},
+    {"id": "duck.smoothed", "op": "duck", "args": {"samples": [0.3, -0.7, 1.1, 0.4, -0.9, 0.2, 0.8, -0.6], "key": [0.1, 2.0, 3.0, 2.5, 0.2, 0.1, 0.05, 1.5], "threshold_db": -6.0, "ratio": 4.0, "attack": 0.25, "release": 0.75, "knee_db": 6.0, "makeup_db": 2.0}, "expected": [0.3776776235382502, -0.3836925102821749, 0.3994519804206239, 0.14661307940487012, -0.4016096828637257, 0.10937203544485055, 0.5384263482511548, -0.347029370475396], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "T -6 dB, R 4, attack 1/4, release 3/4, knee 6 dB, makeup 2 dB"},
+    {"id": "duck.silent_key", "op": "duck", "args": {"samples": [0.5, -1.0, 2.0], "key": [0.0, 0.0, 0.0], "threshold_db": -20.0, "ratio": 8.0, "attack": 0.5, "release": 0.5, "makeup_db": -6.0}, "expected": [0.2505936168136361, -0.5011872336272722, 1.0023744672545445], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "silent key: gain 0 dB, only the makeup"},
+    {"id": "duck.complex", "op": "duck", "args": {"samples": {"re": [1.0, 0.0, -0.5, 0.25], "im": [0.0, 1.0, 0.5, -2.0]}, "key": [0.5, 3.0, 8.0, 0.25], "threshold_db": 0.0, "ratio": 3.0, "attack": 0.0, "release": 0.5}, "expected": {"re": [1.0, 0.0, -0.125, 0.09719800999987352], "im": [0.0, 0.4807498567691361, 0.125, -0.7775840799989882]}, "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "complex samples, part by part, R 3"},
+    {"id": "duck.length", "op": "duck", "args": {"samples": [1.0, 2.0], "key": [1.0], "threshold_db": 0.0, "ratio": 2.0, "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "samples and key must have the same length"},
+    {"id": "duck.ratio_low", "op": "duck", "args": {"samples": [1.0, 2.0], "key": [1.0, 2.0], "threshold_db": 0.0, "ratio": 0.5, "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "ratio must be at least 1"},
+    {"id": "duck.attack_one", "op": "duck", "args": {"samples": [1.0, 2.0], "key": [1.0, 2.0], "threshold_db": 0.0, "ratio": 2.0, "attack": 1.0, "release": 0.5}, "error": "invalid_argument", "source": "attack must be below 1"},
+    {"id": "duck.empty_key", "op": "duck", "args": {"samples": [], "key": [], "threshold_db": 0.0, "ratio": 2.0, "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "key must not be empty"}
+  ]
+}

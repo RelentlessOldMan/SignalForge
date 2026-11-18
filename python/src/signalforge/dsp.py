@@ -3036,12 +3036,52 @@ def compress(
         raise ValueError("knee_db must be at least 0")
     mk = real(makeup_db, "makeup_db")
     x = _vector(samples, "samples")
-    e = envelope_follower(x, attack, release)
-    g = np.zeros(x.size)
+    y: NDArray[Any] = x * _compress_factors(x, attack, release, t, r, w, mk)
+    return y
+
+
+def _compress_factors(
+    key: NDArray[Any], attack: float, release: float, t: float, r: float, w: float, mk: float
+) -> NDArray[np.float64]:
+    e = envelope_follower(key, attack, release)
+    g = np.zeros(key.size)
     pos = e > 0
     if np.any(pos):
         g[pos] = compressor_gain(20 * np.log10(e[pos]), t, r, knee_db=w)
-    y: NDArray[Any] = x * np.power(10.0, (g + mk) / 20)
+    f: NDArray[np.float64] = np.power(10.0, (g + mk) / 20)
+    return f
+
+
+def duck(
+    samples: ArrayLike,
+    key: ArrayLike,
+    threshold_db: float,
+    ratio: float,
+    attack: float,
+    release: float,
+    *,
+    knee_db: float = 0.0,
+    makeup_db: float = 0.0,
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Sidechain compressor: the compressor's gain from the envelope of ``key``, applied to
+    ``samples`` (conventions: Sidechain compressor; ADR 0278)."""
+    t = real(threshold_db, "threshold_db")
+    r = real(ratio, "ratio")
+    if not r >= 1:
+        raise ValueError("ratio must be at least 1")
+    w = real(knee_db, "knee_db")
+    if not w >= 0:
+        raise ValueError("knee_db must be at least 0")
+    mk = real(makeup_db, "makeup_db")
+    k = _vector(key, "key")
+    if np.iscomplexobj(k):
+        raise ValueError("key must be real")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if x.size != k.size:
+        raise ValueError("samples and key must have the same length")
+    y: NDArray[Any] = x * _compress_factors(k, attack, release, t, r, w, mk)
     return y
 
 

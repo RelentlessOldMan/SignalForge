@@ -346,4 +346,67 @@ public static partial class Dsp
         }
         return g;
     }
+
+    /// <summary>Sidechain compressor on real samples: the compressor's gain from the envelope
+    /// of <paramref name="key"/>, applied to <paramref name="samples"/> (conventions: Sidechain
+    /// compressor; ADR 0278).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="key">Real, finite samples that drive the detector, as many as
+    /// <paramref name="samples"/>.</param>
+    /// <param name="thresholdDb">The threshold in dB, finite.</param>
+    /// <param name="ratio">The compression ratio, finite and at least 1.</param>
+    /// <param name="attack">The detector's attack coefficient, in [0, 1).</param>
+    /// <param name="release">The detector's release coefficient, in [0, 1).</param>
+    /// <param name="kneeDb">The knee width in dB, finite and at least 0.</param>
+    /// <param name="makeupDb">The makeup gain in dB, finite.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Duck(ReadOnlySpan<double> samples, ReadOnlySpan<double> key, double thresholdDb, double ratio, double attack, double release, double kneeDb = 0, double makeupDb = 0)
+    {
+        double[] f = DuckFactors(samples.Length, key, thresholdDb, ratio, attack, release, kneeDb, makeupDb);
+        for (int n = 0; n < f.Length; n++)
+        {
+            if (!double.IsFinite(samples[n]))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            f[n] = samples[n] * f[n];
+        }
+        return f;
+    }
+
+    /// <summary>Sidechain compressor on complex samples: the compressor's gain from the
+    /// envelope of <paramref name="key"/>, applied part by part (conventions: Sidechain
+    /// compressor; ADR 0278).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="key">Real, finite samples that drive the detector, as many as
+    /// <paramref name="samples"/>.</param>
+    /// <param name="thresholdDb">The threshold in dB, finite.</param>
+    /// <param name="ratio">The compression ratio, finite and at least 1.</param>
+    /// <param name="attack">The detector's attack coefficient, in [0, 1).</param>
+    /// <param name="release">The detector's release coefficient, in [0, 1).</param>
+    /// <param name="kneeDb">The knee width in dB, finite and at least 0.</param>
+    /// <param name="makeupDb">The makeup gain in dB, finite.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Duck(ReadOnlySpan<Complex> samples, ReadOnlySpan<double> key, double thresholdDb, double ratio, double attack, double release, double kneeDb = 0, double makeupDb = 0)
+    {
+        double[] f = DuckFactors(samples.Length, key, thresholdDb, ratio, attack, release, kneeDb, makeupDb);
+        var y = new Complex[f.Length];
+        for (int n = 0; n < f.Length; n++)
+        {
+            Complex x = samples[n];
+            if (!double.IsFinite(x.Real) || !double.IsFinite(x.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            y[n] = new Complex(x.Real * f[n], x.Imaginary * f[n]);
+        }
+        return y;
+    }
+
+    private static double[] DuckFactors(int length, ReadOnlySpan<double> key, double thresholdDb, double ratio, double attack, double release, double kneeDb, double makeupDb)
+    {
+        CheckCompress(thresholdDb, ratio, kneeDb, makeupDb);
+        double[] env = EnvelopeFollower(key, attack, release);
+        if (length != key.Length)
+            throw new ArgumentException("samples and key must have the same length", nameof(length));
+        return DynamicsFactors(env, l => CompressorGain(l, thresholdDb, ratio, kneeDb), makeupDb);
+    }
 }
