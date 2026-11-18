@@ -6,11 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a bass enhancer (`bass_enhancer(samples, order, cutoff, sample_rate, drive, mix)`, the
-     exciter's mirror: harmonics of the `crossover_split` low band, high-passed at `cutoff` so
-     only the new harmonics are added).
    - an octave-down effect (`octave_down(samples, mix)`, the flip-flop divider: a sign that
      toggles at each rising zero crossing multiplies `|x|`, halving the frequency; dry/wet mix).
+   - a rotary-speaker effect (`rotary(...)`: the `crossover_split` high band through `vibrato`
+     and `tremolo` at the horn rate, the low band through `tremolo` at the drum rate, summed).
 
 ## Built
 
@@ -2481,6 +2480,11 @@ Updated with every chunk of work. Dates are absolute.
   `Dsp.OctaveUp`, real): `dc_blocker(|x|, pole)` blended with the dry signal.
   Python 6808 passed, 2 skipped; .NET 6032 passed; conformance 4167/4167 in both. Version
   2026.11.17.88.
+- 2026-11-17: Bass enhancer (ADR 0290): `bass_enhancer(samples, order, cutoff, sample_rate,
+  drive, mix)` in `dsp` (C# `Dsp.BassEnhancer`, real): the soft-clipped `crossover_split` low
+  band, high-passed by the same crossover, added to the input at `mix`.
+  Python 6819 passed, 2 skipped; .NET 6042 passed; conformance 4175/4175 in both. Version
+  2026.11.17.89.
 
 ## Not built
 

@@ -2721,6 +2721,29 @@ def octave_up(samples: ArrayLike, pole: float, mix: float) -> NDArray[np.float64
     return y
 
 
+def bass_enhancer(
+    samples: ArrayLike,
+    order: int,
+    cutoff: float,
+    sample_rate: float,
+    drive: float,
+    mix: float,
+) -> NDArray[np.float64]:
+    """Add the harmonics that soft clipping the band below ``cutoff`` makes above it (conventions:
+    Bass enhancer; ADR 0290)."""
+    dr = real(drive, "drive")
+    if not 0 < dr < math.inf:
+        raise ValueError("drive must be finite and positive")
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    b = crossover_split(samples, order, cutoff, sample_rate)
+    c = soft_clip(dr * b.low) / dr
+    h = crossover_split(c, order, cutoff, sample_rate).high
+    y: NDArray[np.float64] = np.asarray(_mono(samples), dtype=np.float64) + m * h
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

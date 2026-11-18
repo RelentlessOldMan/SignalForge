@@ -109,4 +109,33 @@ public static partial class Dsp
             y[n] = samples[n] + mix * (c[n] / drive);
         return y;
     }
+
+    /// <summary>Adds the harmonics that soft clipping the band below <paramref name="cutoff"/>
+    /// makes above it (conventions: Bass enhancer; ADR 0290).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="order">The crossover order, even, from 2 to 2000.</param>
+    /// <param name="cutoff">The crossover frequency, Hz, between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">The sample rate, Hz.</param>
+    /// <param name="drive">The gain into the clipper, finite and positive.</param>
+    /// <param name="mix">The amount of the harmonics added, in [0, 1].</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] BassEnhancer(ReadOnlySpan<double> samples, int order, double cutoff, double sampleRate, double drive, double mix)
+    {
+        if (!(drive > 0 && double.IsFinite(drive)))
+            throw new ArgumentOutOfRangeException(nameof(drive), "drive must be finite and positive");
+        CheckMix(mix);
+        Bands b = CrossoverSplit(samples, order, cutoff, sampleRate);
+        double[] u = new double[b.Low.Length];
+        for (int n = 0; n < u.Length; n++)
+            u[n] = drive * b.Low[n];
+        double[] c = SoftClip(u);
+        for (int n = 0; n < c.Length; n++)
+            c[n] /= drive;
+        double[] h = CrossoverSplit(c, order, cutoff, sampleRate).High;
+        double[] y = new double[h.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = samples[n] + mix * h[n];
+        return y;
+    }
 }

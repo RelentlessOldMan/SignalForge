@@ -2093,6 +2093,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0289](adr/0289-octave-up.md)): `wet = dc_blocker(|x|, pole)`, `y = (1 − mix)·x +
   mix·wet`. Real, finite, non-empty samples; `pole` in [0, 1); `mix` in [0, 1].
   **(implemented)**
+- **Bass enhancer** (`bass_enhancer(samples, order, cutoff, sample_rate, drive, mix)`, C#
+  `Dsp.BassEnhancer`, [ADR 0290](adr/0290-bass-enhancer.md)): with `l = crossover_split(samples,
+  order, cutoff, fs).low` and `h = crossover_split(soft_clip(drive·l)/drive, order, cutoff,
+  fs).high`, `y = x + mix·h`. Real samples; the splitter's rules; `drive` finite and positive;
+  `mix` in [0, 1]. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
