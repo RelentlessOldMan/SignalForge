@@ -2918,6 +2918,21 @@ def ping_pong_delay(samples: ArrayLike, delay: int, feedback: float, mix: float)
     return LeftRight(dry + np.array(a) * m, dry + np.array(b) * m)
 
 
+def haas(samples: ArrayLike, delay: int, *, side: str = "right") -> LeftRight:
+    """A mono signal on both sides, one side ``delay`` samples late (conventions: Haas
+    widener; ADR 0276)."""
+    d = count(delay, "delay")
+    if d < 0:
+        raise ValueError("delay must be at least 0")
+    if side not in ("left", "right"):
+        raise ValueError('side must be "left" or "right"')
+    x = _mono(samples)
+    late = np.zeros_like(x)
+    if d < x.size:
+        late[d:] = x[: x.size - d]
+    return LeftRight(late, x.copy()) if side == "left" else LeftRight(x.copy(), late)
+
+
 def auto_pan(
     samples: ArrayLike,
     rate: float,

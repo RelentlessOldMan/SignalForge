@@ -12,6 +12,17 @@ public sealed record MidSide(double[] Mid, double[] Side);
 /// <param name="Right">The right channel.</param>
 public sealed record LeftRight(double[] Left, double[] Right);
 
+/// <summary>Which channel <see cref="Dsp.Haas"/> delays (conventions: Haas widener;
+/// ADR 0276).</summary>
+public enum StereoSide
+{
+    /// <summary>The left channel.</summary>
+    Left,
+
+    /// <summary>The right channel.</summary>
+    Right,
+}
+
 /// <summary>How <see cref="Dsp.Pan"/> splits a mono signal (conventions: Panner;
 /// ADR 0265).</summary>
 public enum PanLaw
@@ -223,5 +234,32 @@ public static partial class Dsp
             right[n] = dry + b[n] * mix;
         }
         return new LeftRight(left, right);
+    }
+
+    /// <summary>A mono signal on both sides, one side <paramref name="delay"/> samples late
+    /// (conventions: Haas widener; ADR 0276).</summary>
+    /// <param name="samples">Real, finite mono samples, at least one.</param>
+    /// <param name="delay">The delay of the late side, samples, at least 0.</param>
+    /// <param name="side">The side to delay.</param>
+    /// <returns>The left and right channels, each as long as the input.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static LeftRight Haas(ReadOnlySpan<double> samples, int delay, StereoSide side = StereoSide.Right)
+    {
+        if (delay < 0)
+            throw new ArgumentOutOfRangeException(nameof(delay), "delay must be at least 0");
+        if (side is not (StereoSide.Left or StereoSide.Right))
+            throw new ArgumentOutOfRangeException(nameof(side), "side must be Left or Right");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        double[] dry = samples.ToArray();
+        var late = new double[samples.Length];
+        for (int n = delay; n < samples.Length; n++)
+            late[n] = samples[n - delay];
+        return side == StereoSide.Left ? new LeftRight(late, dry) : new LeftRight(dry, late);
     }
 }

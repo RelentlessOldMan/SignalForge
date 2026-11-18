@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "suite": "haas",
+  "description": "Haas widener (conventions: Haas widener; ADR 0276).",
+  "cases": [
+    {"id": "haas.default_right", "op": "haas", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75], "delay": 2}, "expected": {"left": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75], "right": [0.0, 0.0, 1.0, -0.5, 0.25, 2.0]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "default side: right is x[n-2], left is x"},
+    {"id": "haas.left", "op": "haas", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75], "delay": 3, "side": "left"}, "expected": {"left": [0.0, 0.0, 0.0, 1.0, -0.5, 0.25], "right": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "left is x[n-3], right is x"},
+    {"id": "haas.zero", "op": "haas", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75], "delay": 0, "side": "right"}, "expected": {"left": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75], "right": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "delay 0: two copies of x"},
+    {"id": "haas.past_end", "op": "haas", "args": {"samples": [0.5, -1.0], "delay": 4, "side": "right"}, "expected": {"left": [0.5, -1.0], "right": [0.0, 0.0]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "delay past the end: the late side is all zero"},
+    {"id": "haas.delay_negative", "op": "haas", "args": {"samples": [1.0, 2.0], "delay": -1}, "error": "invalid_argument", "source": "delay must be at least 0"},
+    {"id": "haas.side_unknown", "op": "haas", "args": {"samples": [1.0, 2.0], "delay": 1, "side": "centre"}, "error": "invalid_argument", "source": "side must be \"left\" or \"right\""},
+    {"id": "haas.empty", "op": "haas", "args": {"samples": [], "delay": 1}, "error": "invalid_argument", "source": "samples must not be empty"}
+  ]
+}

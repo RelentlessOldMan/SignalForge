@@ -6,8 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Haas widener (`haas(samples, delay, *, side="right")`, mono in, a `LeftRight` out with
-     one side delayed by an integer `delay` samples).
+   - a stereo balance (`balance(left, right, position)`, a `LeftRight` with the side away from
+     `position` in `[-1, 1]` scaled by `1 − |position|` and the near side unchanged);
+   - a sidechain compressor (`duck(samples, key, threshold_db, ratio, attack, release, *,
+     knee_db=0, makeup_db=0)`, the compressor's gain computed from `key` and applied to
+     `samples`).
 
 ## Built
 
@@ -2404,6 +2407,11 @@ Updated with every chunk of work. Dates are absolute.
   every `delay` samples, each bounce scaled by `feedback`.
   Python 6638 passed, 2 skipped; .NET 5878 passed; conformance 4043/4043 in both. Version
   2026.11.17.74.
+- 2026-11-17: Haas widener (ADR 0276): `haas(samples, delay, *, side="right")` in `dsp` (C#
+  `Dsp.Haas` with a new `StereoSide` enum), a `LeftRight` from mono samples with one side a whole
+  number of samples late.
+  Python 6648 passed, 2 skipped; .NET 5887 passed; conformance 4050/4050 in both. Version
+  2026.11.17.75.
 
 ## Not built
 

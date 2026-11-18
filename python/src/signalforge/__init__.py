@@ -93,6 +93,7 @@ from .dsp import (
     fir_response,
     flanger,
     gammatone,
+    haas,
     hampel_filter,
     hard_clip,
     interpolate,
@@ -425,7 +426,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.74"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.75"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -630,6 +631,7 @@ __all__ = [
     "gcc_phat",
     "generalized_lomb_scargle",
     "goertzel",
+    "haas",
     "hampel_filter",
     "hard_clip",
     "harmonic_centroid",
