@@ -256,6 +256,11 @@ rule for code not written yet.
   value is the mean `R/S`; `hurst` the least-squares slope of `ln` value against `ln s`. No
   small-sample correction. Result `(scales, values, hurst)`. At least two strictly increasing
   integer scales, `4 ≤ s ≤ N`; every box `S > 0`. **(implemented)**
+- **Dispersion entropy** ([ADR 0341](adr/0341-dispersion-entropy.md);
+  `dispersion_entropy(samples, m, classes, delay=1)`, C# `Measurements.DispersionEntropy`):
+  `y = Φ((x − μ)/σ)`, `σ` the population standard deviation; class `min(c, floor(c·y) + 1)`;
+  Shannon entropy of the `N − (m − 1)·delay` class patterns over `ln cᵐ`. Real, finite, not
+  constant; `1 ≤ m ≤ 10`, `2 ≤ c ≤ 64`, `delay ≥ 1`; at least one pattern. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

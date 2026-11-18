@@ -243,6 +243,7 @@ from .measurements import (
     decay_time,
     definition,
     detrended_fluctuation,
+    dispersion_entropy,
     early_decay_time,
     energy_separation,
     energy_time_curve,
@@ -509,7 +510,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.28"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.29"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -692,6 +693,7 @@ __all__ = [
     "detrended_fluctuation",
     "dfe_equalizer",
     "dfe_least_squares",
+    "dispersion_entropy",
     "dpss_tapers",
     "dpw_sawtooth",
     "duck",

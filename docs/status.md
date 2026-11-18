@@ -6,9 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - dispersion entropy in `measurements` (`dispersion_entropy(samples, m, classes, delay=1)`:
-     Rostaghi and Azami's normal-CDF mapping to `c` classes and the Shannon entropy of the
-     patterns over `ln cᵐ`).
+   - SVD entropy in `measurements` (`svd_entropy(samples, order, delay=1)`: the Shannon
+     entropy of the normalized singular values of the delay-embedding matrix, over
+     `ln(order)`).
+   - weighted permutation entropy in `measurements` (Fadlallah et al.: each ordinal pattern
+     weighted by the population variance of its window).
+   - increment entropy in `measurements` (Liu et al.: sign and quantized size of the
+     increments, `R` levels, Shannon entropy of the words).
 
 ## Built
 
@@ -2747,6 +2751,12 @@ Updated with every chunk of work. Dates are absolute.
   over non-overlapping boxes and the Hurst exponent as the log-log slope, no small-sample
   correction. Python 7431 passed, 2 skipped; .NET 6616 passed; conformance 4616/4616 in both. Version
   2026.11.18.28.
+- 2026-11-18: Dispersion entropy (ADR 0341): `dispersion_entropy(samples, m, classes,
+  delay=1)` in `measurements` (C# `Measurements.DispersionEntropy`): normal-CDF classes by
+  `min(c, floor(c·y) + 1)` (the paper's `round(c·y + 0.5)` without its tie), normalized by
+  `ln cᵐ`. Next restocked with SVD, weighted permutation and increment entropy.
+  Python 7447 passed, 2 skipped; .NET 6632 passed; conformance 4629/4629 in both. Version
+  2026.11.18.29.
 
 ## Not built
 

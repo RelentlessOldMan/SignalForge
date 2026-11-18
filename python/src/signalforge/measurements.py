@@ -598,6 +598,42 @@ def rescaled_range(samples: ArrayLike, scales: Sequence[int]) -> RescaledRange:
     return RescaledRange(np.array(sizes, dtype=np.int64), values, hurst)
 
 
+def dispersion_entropy(samples: ArrayLike, m: int, classes: int, delay: int = 1) -> float:
+    """Rostaghi and Azami's dispersion entropy: normal-CDF classes, then the Shannon entropy of
+    the class patterns over ``ln(classes**m)`` (conventions: Dispersion entropy; ADR 0341)."""
+    k = count(m, "m")
+    c = count(classes, "classes")
+    tau = count(delay, "delay")
+    if not 1 <= k <= 10:
+        raise ValueError("m must be from 1 to 10")
+    if not 2 <= c <= 64:
+        raise ValueError("classes must be from 2 to 64")
+    if tau < 1:
+        raise ValueError("delay must be at least 1")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    windows = x.shape[0] - (k - 1) * tau
+    if windows < 1:
+        raise ValueError("samples are too short for one pattern")
+    sigma = float(np.std(x))
+    if not sigma > 0:
+        raise ValueError("samples must not be constant")
+    mu = float(np.mean(x))
+    scale = sigma * math.sqrt(2)
+    y = np.array([0.5 * math.erfc(-(v - mu) / scale) for v in x.tolist()])
+    z = np.minimum(c, np.floor(c * y).astype(np.int64) + 1)
+    idx = np.arange(windows)[:, None] + tau * np.arange(k)[None, :]
+    _, counts = np.unique(z[idx], axis=0, return_counts=True)
+    p = counts / windows
+    return float(-np.sum(p * np.log(p)) / (k * math.log(c)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
