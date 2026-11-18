@@ -2019,6 +2019,9 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `b_k = w_k + (2·x·b_{k+1} − b_{k+2})` for `k = K … 1` from `b_{K+1} = b_{K+2} = 0`, then
   `y = w_0 + (x·b_1 − b_2)`. Real, non-empty, finite samples in `[−1, 1]`; real, non-empty,
   finite weights. **(implemented)**
+- **Sine wavefolder** (`sine_fold(samples, drive)`, C# `Dsp.SineFold`,
+  [ADR 0323](adr/0323-sine-fold.md)): `k = (π/2)·drive`, `y = sin(k·x)`. Real, non-empty, finite
+  samples; finite positive `drive`. **(implemented)**
 - **Wavefolder** (`wavefold(samples, limit)`, C# `Dsp.Wavefold`,
   [ADR 0252](adr/0252-wavefold.md)): reflect about `±L` until inside; computed as `u = x + L`,
   `t = u − 4L·⌊u/(4L)⌋`, `y = L − |t − 2L|`, in that order, no library modulo. Finite

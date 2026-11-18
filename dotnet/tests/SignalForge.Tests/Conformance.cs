@@ -759,6 +759,7 @@ public static class Conformance
             "saturate" => Bind((Reals(a.Get("samples")), a.D("drive")), t => Dsp.Saturate(t.Item1, t.Item2)),
             "rectify" => Bind((Reals(a.Get("samples")), a.Flag("full", true)), t => Dsp.Rectify(t.Item1, t.Item2)),
             "chebyshev_shaper" => Bind((Reals(a.Get("samples")), Reals(a.Get("weights"))), t => Dsp.ChebyshevShaper(t.Item1, t.Item2)),
+            "sine_fold" => Bind((Reals(a.Get("samples")), a.D("drive")), t => Dsp.SineFold(t.Item1, t.Item2)),
             "wavefold" => Bind((Reals(a.Get("samples")), a.D("limit")), t => Dsp.Wavefold(t.Item1, t.Item2)),
             "hard_clip" => a.Get("samples") is Complex[] hcs
                 ? Bind((hcs, a.D("limit")), t => Dsp.HardClip(t.Item1, t.Item2))

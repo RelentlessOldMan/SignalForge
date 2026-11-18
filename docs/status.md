@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a sine wavefolder in `dsp` (`sine_fold(samples, drive)`: `y = sin((π/2)·drive·x)`; smooth
-     folds where the triangle wavefolder of ADR 0252 has corners; `drive > 0`).
    - a BLIT sawtooth in `waveforms` (`blit_sawtooth(...)`: the leaky running sum of the
      bandlimited impulse train less its mean; state the leak and the start-up rule in the ADR).
 
@@ -2655,6 +2653,10 @@ Updated with every chunk of work. Dates are absolute.
   `s[n] = sin(2π·u[n] + feedback·s[n−1])`, `0 ≤ feedback ≤ 1.5`, from a sine towards a saw.
   Python 7214 passed, 2 skipped; .NET 6409 passed; conformance 4459/4459 in both. Version
   2026.11.18.11.
+- 2026-11-18: Sine wavefolder (ADR 0323): `sine_fold(samples, drive)` in `dsp` (C#
+  `Dsp.SineFold`): `sin((π/2)·drive·x)`, smooth folds beside the triangle folder of ADR 0252.
+  Python 7224 passed, 2 skipped; .NET 6419 passed; conformance 4466/4466 in both. Version
+  2026.11.18.12.
 
 ## Not built
 

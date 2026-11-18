@@ -3836,6 +3836,22 @@ def chebyshev_shaper(samples: ArrayLike, weights: ArrayLike) -> NDArray[np.float
     return y
 
 
+def sine_fold(samples: ArrayLike, drive: float) -> NDArray[np.float64]:
+    """Fold samples smoothly through a sine, ``sin((pi/2) drive x)`` (conventions: Sine
+    wavefolder; ADR 0323)."""
+    g = real(drive, "drive")
+    if not g > 0:
+        raise ValueError("drive must be positive")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    k = (math.pi / 2) * g
+    y: NDArray[np.float64] = np.sin(k * x)
+    return y
+
+
 def wavefold(samples: ArrayLike, limit: float) -> NDArray[np.float64]:
     """Fold samples back into ``[-limit, limit]`` by reflecting about each limit, the triangle
     wave of period ``4 limit`` (conventions: Wavefolder; ADR 0252)."""

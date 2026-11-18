@@ -164,6 +164,7 @@ from .dsp import (
     schmitt_trigger,
     schroeder_reverb,
     schur,
+    sine_fold,
     slew_limiter,
     slicer,
     soft_clip,
@@ -486,7 +487,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.11"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.12"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -887,6 +888,7 @@ __all__ = [
     "schroeder_reverb",
     "schur",
     "sfdr",
+    "sine_fold",
     "slew_limiter",
     "slicer",
     "sliding_dft",

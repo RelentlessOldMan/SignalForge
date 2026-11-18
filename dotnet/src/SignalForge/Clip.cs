@@ -112,6 +112,29 @@ public static partial class Dsp
         return y;
     }
 
+    /// <summary>Folds samples smoothly through a sine, <c>sin((π/2)·drive·x)</c> (conventions:
+    /// Sine wavefolder; ADR 0323).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="drive">The gain into the sine, finite and positive; 1 maps ±1 to ±1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] SineFold(ReadOnlySpan<double> samples, double drive)
+    {
+        if (!double.IsFinite(drive) || !(drive > 0))
+            throw new ArgumentOutOfRangeException(nameof(drive), "drive must be positive");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        double k = (Math.PI / 2) * drive;
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            if (!double.IsFinite(samples[n]))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            y[n] = Math.Sin(k * samples[n]);
+        }
+        return y;
+    }
+
     /// <summary>Folds samples back into <c>[−limit, limit]</c> by reflecting about each limit,
     /// the triangle wave of period <c>4·limit</c> (conventions: Wavefolder; ADR 0252).</summary>
     /// <param name="samples">Finite samples, at least one.</param>

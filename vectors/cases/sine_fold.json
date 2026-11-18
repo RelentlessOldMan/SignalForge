@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "suite": "sine_fold",
+  "description": "Sine wavefolder (conventions: Sine wavefolder; ADR 0323).",
+  "cases": [
+    {"id": "sine_fold.unit", "op": "sine_fold", "args": {"samples": [-1.0, -0.5, 0.0, 0.5, 1.0], "drive": 1.0}, "expected": [-1.0, -0.7071067811865476, 0.0, 0.7071067811865476, 1.0], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "drive 1: +-1 to +-1, +-1/2 to +-sqrt(2)/2"},
+    {"id": "sine_fold.one_fold", "op": "sine_fold", "args": {"samples": [0.25, 0.5, 0.75, 1.0], "drive": 2.0}, "expected": [0.7071067811865476, 1.0, 0.7071067811865476, 1.2246467991473532e-16], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "drive 2: the peak at 1/2, folded back to 0 at 1"},
+    {"id": "sine_fold.hot", "op": "sine_fold", "args": {"samples": [-0.9, -0.3, 0.1, 0.45, 0.8], "drive": 5.5}, "expected": [-0.996917333733128, -0.5224985647159494, 0.7604059656000309, -0.6788007455329415, 0.5877852522924729], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "drive 5.5: several folds"},
+    {"id": "sine_fold.gentle", "op": "sine_fold", "args": {"samples": [-2.0, 0.3, 1.7], "drive": 0.25}, "expected": [-0.7071067811865476, 0.11753739745783764, 0.619093949309834], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "drive 1/4: inputs beyond 1, still unfolded"},
+    {"id": "sine_fold.drive_zero", "op": "sine_fold", "args": {"samples": [0.5, -0.5], "drive": 0.0}, "error": "invalid_argument", "source": "drive must be positive"},
+    {"id": "sine_fold.no_samples", "op": "sine_fold", "args": {"samples": [], "drive": 1.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "sine_fold.sample_inf", "op": "sine_fold", "args": {"samples": [0.5, "inf"], "drive": 1.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}
