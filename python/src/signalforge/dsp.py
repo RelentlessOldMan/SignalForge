@@ -2557,6 +2557,36 @@ def sample_and_hold(
     return y
 
 
+def _mu_law_args(samples: ArrayLike, mu: float) -> tuple[NDArray[np.float64], float]:
+    m = real(mu, "mu")
+    if not m > 0:
+        raise ValueError("mu must be positive")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if np.any(np.abs(x) > 1):
+        raise ValueError("samples must be within [-1, 1]")
+    return np.asarray(x, dtype=np.float64), m
+
+
+def mu_law_compress(samples: ArrayLike, mu: float = 255.0) -> NDArray[np.float64]:
+    """Continuous mu-law compression ``sign(x) ln(1 + mu |x|) / ln(1 + mu)`` on [-1, 1]
+    (conventions: mu-law companding; ADR 0248)."""
+    x, m = _mu_law_args(samples, mu)
+    y: NDArray[np.float64] = np.sign(x) * (np.log1p(m * np.abs(x)) / math.log1p(m))
+    return y
+
+
+def mu_law_expand(samples: ArrayLike, mu: float = 255.0) -> NDArray[np.float64]:
+    """Continuous mu-law expansion ``sign(y) ((1 + mu)^|y| - 1) / mu`` on [-1, 1], the inverse of
+    :func:`mu_law_compress` (conventions: mu-law companding; ADR 0248)."""
+    y, m = _mu_law_args(samples, mu)
+    x: NDArray[np.float64] = np.sign(y) * (np.expm1(np.abs(y) * math.log1p(m)) / m)
+    return x
+
+
 def quantize(
     samples: ArrayLike, step: float, *, levels: int | None = None
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

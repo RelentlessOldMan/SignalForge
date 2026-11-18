@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "mu_law",
+  "description": "mu-law companding (conventions: mu-law companding; ADR 0248).",
+  "cases": [
+    {"id": "mu_law.compress_anchors", "op": "mu_law_compress", "args": {"samples": [0.0, 0.00392156862745098, 0.011764705882352941, 0.058823529411764705, 1.0, -0.00392156862745098, -0.058823529411764705, -1.0]}, "expected": [0.0, 0.125, 0.25, 0.5, 1.0, -0.125, -0.5, -1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "mu = 255: 1 + mu x = 2, 4, 16, 256 gives 1/8, 1/4, 1/2, 1 exactly (default mu)"},
+    {"id": "mu_law.expand_anchors", "op": "mu_law_expand", "args": {"samples": [0.0, 0.125, 0.25, 0.5, 1.0, -0.125, -0.5, -1.0]}, "expected": [0.0, 0.00392156862745098, 0.011764705882352941, 0.058823529411764705, 1.0, -0.00392156862745098, -0.058823529411764705, -1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "mu = 255: the inverse of the anchors (default mu)"},
+    {"id": "mu_law.compress_curve", "op": "mu_law_compress", "args": {"samples": [0.001, -0.01, 0.1, -0.3, 0.5, 0.9, -0.999], "mu": 255.0}, "expected": [0.04096092052200591, -0.228477378077165, 0.5909900568204, -0.7845155506592797, 0.8757030686492349, 0.9810778675536673, -0.9998202780359968], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "closed-form curve, mu = 255, via log1p"},
+    {"id": "mu_law.expand_curve", "op": "mu_law_expand", "args": {"samples": [0.05, -0.2, 0.4, -0.6, 0.75, 0.95], "mu": 255.0}, "expected": [0.0012529721991093891, -0.007966404443218807, 0.03211602682343639, -0.10532399225676851, 0.2470588235294117, 0.7569087078954153], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "closed-form inverse, mu = 255, via expm1"},
+    {"id": "mu_law.compress_mu_100", "op": "mu_law_compress", "args": {"samples": [0.25, -0.5, 0.75], "mu": 100.0}, "expected": [0.7059613126314263, -0.8519443031609923, 0.9383792523906672], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "closed-form curve, mu = 100"},
+    {"id": "mu_law.mu_zero", "op": "mu_law_compress", "args": {"samples": [0.5], "mu": 0.0}, "error": "invalid_argument", "source": "mu must be positive"},
+    {"id": "mu_law.out_of_range", "op": "mu_law_compress", "args": {"samples": [1.5]}, "error": "invalid_argument", "source": "samples must be within [-1, 1]"},
+    {"id": "mu_law.out_of_range_expand", "op": "mu_law_expand", "args": {"samples": [-1.25]}, "error": "invalid_argument", "source": "samples must be within [-1, 1]"},
+    {"id": "mu_law.empty", "op": "mu_law_expand", "args": {"samples": []}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "mu_law.nan_sample", "op": "mu_law_compress", "args": {"samples": [0.5, "nan"]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

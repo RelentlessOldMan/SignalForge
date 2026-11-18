@@ -1897,6 +1897,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   (`np.rint`, `MidpointRounding.ToEven`), `y = step·k`; with odd `levels = L`, `k` clamped to
   `±(L − 1)/2` first. Complex: each part separately. Finite `step > 0`; `levels` odd `≥ 1` or
   none; samples finite, non-empty; output the same kind. **(implemented)**
+- **μ-law companding** (`mu_law_compress(samples, mu=255.0)`, `mu_law_expand`, C#
+  `Dsp.MuLawCompress`, `Dsp.MuLawExpand`, [ADR 0248](adr/0248-mu-law.md)): compress
+  `sign(x)·log1p(μ|x|)/log1p(μ)`, expand `sign(y)·expm1(|y|·log1p(μ))/μ` (`sign(0) = 0`; the
+  continuous curve, not G.711 segments). Finite `μ > 0`; samples real, finite, non-empty, in
+  `[−1, 1]`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

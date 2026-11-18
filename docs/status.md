@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - μ-law companding (`mu_law_compress(samples, mu=255)` and `mu_law_expand`, the continuous
-     G.711-style curve on `[−1, 1]`).
+   - A-law companding (`a_law_compress(samples, a=87.6)` and `a_law_expand`, the continuous
+     curve with its linear segment below `1/A`, after ADR 0248);
+   - a cubic soft clipper (`soft_clip(samples)`, `x − x³/3` on `[−1, 1]`, saturating at `±2/3`).
 
 ## Built
 
@@ -2255,6 +2256,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors are exact, including ties.
   Python 6279 passed, 2 skipped; .NET 5539 passed; conformance 3761/3761 in both. Version
   2026.11.17.46.
+- 2026-11-17: μ-law companding (ADR 0248): `mu_law_compress(samples, mu=255.0)` and
+  `mu_law_expand` in `dsp` (C# `Dsp.MuLawCompress`, `Dsp.MuLawExpand`, real on `[−1, 1]`).
+  - It is the continuous curve, computed with `log1p` and `expm1`.
+  - The vectors have exact anchors at `1 + μx = 2, 4, 16, 256`.
+  Python 6292 passed, 2 skipped; .NET 5551 passed; conformance 3771/3771 in both. Version
+  2026.11.17.47.
 
 ## Not built
 
