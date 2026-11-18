@@ -6,14 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a delay-line pitch shifter (`pitch_shift(samples, ratio, window)`: two taps whose delays
-     ramp as `W·φ` and `W·frac(φ + 1/2)`, `φ = frac(n·(1 − ratio)/W)`, read with linear
-     interpolation and crossfaded by `sin²(πφ)` and `cos²(πφ)`).
    - an ADSR envelope (`adsr(attack, decay, sustain, release, gate, length)`, integer sample
      counts: linear rise to 1 over `attack`, fall to `sustain` over `decay`, hold until `gate`,
      linear fall from the level at `gate` to 0 over `release`, zero to `length`).
    - a Karplus–Strong pluck (`karplus_strong(excitation, delay, length, decay)`:
      `y[n] = e[n] + decay·(y[n − D] + y[n − D − 1])/2`, the excitation zero-padded to `length`).
+   - classic oscillator waveforms in `waveforms` (`sawtooth`, `square` with a duty cycle,
+     `triangle`): naive, from the phase `frac(f·n/fs + φ₀)`, signatures shaped like `tone`.
 
 ## Built
 
@@ -2546,6 +2545,11 @@ Updated with every chunk of work. Dates are absolute.
   `Re z·cos θ − Im z·sin θ` with `z` the analytic signal and `θ = (2π·shift)·(n/fs)`.
   Python 6940 passed, 2 skipped; .NET 6159 passed; conformance 4270/4270 in both. Version
   2026.11.17.100.
+- 2026-11-17: Delay-line pitch shifter (ADR 0302): `pitch_shift(samples, ratio, window)` in
+  `dsp` (C# `Dsp.PitchShift`, real): two taps half a window apart whose delays ramp by
+  `1 − ratio` samples per sample, wrapping every window, crossfaded by `sin²(πφ)` and `cos²(πφ)`.
+  Python 6950 passed, 2 skipped; .NET 6169 passed; conformance 4278/4278 in both. Version
+  2026.11.17.101.
 
 ## Not built
 

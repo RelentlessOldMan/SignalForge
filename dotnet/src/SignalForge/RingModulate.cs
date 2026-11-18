@@ -492,4 +492,49 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Shifts the pitch by <paramref name="ratio"/> with two crossfaded taps whose
+    /// delays ramp through a <paramref name="window"/>-sample line (conventions: Delay-line
+    /// pitch shifter; ADR 0302).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="ratio">The pitch ratio, finite and positive.</param>
+    /// <param name="window">The window in samples, finite and at least 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] PitchShift(ReadOnlySpan<double> samples, double ratio, double window)
+    {
+        if (!(ratio > 0 && double.IsFinite(ratio)))
+            throw new ArgumentOutOfRangeException(nameof(ratio), "ratio must be finite and positive");
+        if (!(window >= 1 && double.IsFinite(window)))
+            throw new ArgumentOutOfRangeException(nameof(window), "window must be finite and at least 1");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        double[] y = new double[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+        {
+            double t = (1 - ratio) * (n / window);
+            double phi = t - Math.Floor(t);
+            double phiB = (phi + 0.5) - Math.Floor(phi + 0.5);
+            double a = ReadLinear(samples, n - (window * phi));
+            double b = ReadLinear(samples, n - (window * phiB));
+            double sa = Math.Sin(Math.PI * phi), cb = Math.Cos(Math.PI * phi);
+            y[n] = (sa * sa * a) + (cb * cb * b);
+        }
+        return y;
+    }
+
+    private static double ReadLinear(ReadOnlySpan<double> x, double p)
+    {
+        double fi = Math.Floor(p);
+        double f = p - fi;
+        long i = (long)fi;
+        double lo = i >= 0 && i < x.Length ? x[(int)i] : 0.0;
+        double hi = i + 1 >= 0 && i + 1 < x.Length ? x[(int)(i + 1)] : 0.0;
+        return (lo * (1 - f)) + (hi * f);
+    }
 }

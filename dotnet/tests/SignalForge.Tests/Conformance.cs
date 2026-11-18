@@ -715,6 +715,7 @@ public static class Conformance
             "reverse_delay" => Bind((Reals(a.Get("samples")), a.I("block"), a.D("mix")), t => Dsp.ReverseDelay(t.Item1, t.Item2, t.Item3)),
             "stutter" => Bind((Reals(a.Get("samples")), a.I("start"), a.I("length"), a.I("repeats")), t => Dsp.Stutter(t.Item1, t.Item2, t.Item3, t.Item4)),
             "multitap_delay" => Bind((Reals(a.Get("samples")), Ints(a.Get("delays")), Reals(a.Get("gains"))), t => Dsp.MultitapDelay(t.Item1, t.Item2, t.Item3)),
+            "pitch_shift" => Bind((Reals(a.Get("samples")), a.D("ratio"), a.D("window")), t => Dsp.PitchShift(t.Item1, t.Item2, t.Item3)),
             "slicer" => Bind((Reals(a.Get("samples")), a.D("rate"), a.D("duty"), a.D("sample_rate")), t => Dsp.Slicer(t.Item1, t.Item2, t.Item3, t.Item4)),
             "tremolo" => a.Get("samples") is Complex[] trs
                 ? Bind((trs, a.D("rate"), a.D("depth"), a.D("sample_rate")), t => Dsp.Tremolo(t.Item1, t.Item2, t.Item3, t.Item4))

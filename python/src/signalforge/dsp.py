@@ -3332,6 +3332,37 @@ def tape_stop(samples: ArrayLike, start: int, length: int) -> NDArray[np.float64
     return y
 
 
+def _read_linear(x: NDArray[np.float64], p: NDArray[np.float64]) -> NDArray[np.float64]:
+    """``x`` at positions ``p`` with linear interpolation, ``x[k] = 0`` outside the signal."""
+    i = np.floor(p).astype(np.int64)
+    f = p - i
+    pad = np.concatenate([[0.0], x, [0.0]])
+    lo = pad[np.clip(i, -1, x.size) + 1]
+    hi = pad[np.clip(i + 1, -1, x.size) + 1]
+    y: NDArray[np.float64] = lo * (1 - f) + hi * f
+    return y
+
+
+def pitch_shift(samples: ArrayLike, ratio: float, window: float) -> NDArray[np.float64]:
+    """Shift the pitch by ``ratio`` with two crossfaded taps whose delays ramp through a
+    ``window``-sample line (conventions: Delay-line pitch shifter; ADR 0302)."""
+    r = real(ratio, "ratio")
+    if not r > 0:
+        raise ValueError("ratio must be positive")
+    w = real(window, "window")
+    if not w >= 1:
+        raise ValueError("window must be at least 1")
+    x = _mono(samples)
+    n = np.arange(x.size)
+    t = (1 - r) * (n / w)
+    phi = t - np.floor(t)
+    phi_b = (phi + 0.5) - np.floor(phi + 0.5)
+    a = _read_linear(x, n - w * phi)
+    b = _read_linear(x, n - w * phi_b)
+    y: NDArray[np.float64] = np.sin(np.pi * phi) ** 2 * a + np.cos(np.pi * phi) ** 2 * b
+    return y
+
+
 def ring_modulate(
     samples: ArrayLike, frequency: float, sample_rate: float, *, phase: float = 0.0
 ) -> NDArray[np.complex128] | NDArray[np.float64]:
