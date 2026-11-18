@@ -140,7 +140,11 @@ public static partial class Dsp
             if (!double.IsFinite(v))
                 throw new ArgumentException("samples must be finite", nameof(samples));
         }
-        double[] c = RingCarrier(samples.Length, rate, sampleRate, 0);
+        return VibratoRead(samples, delay, depth, RingCarrier(samples.Length, rate, sampleRate, 0));
+    }
+
+    private static double[] VibratoRead(ReadOnlySpan<double> samples, double delay, double depth, double[] c)
+    {
         var y = new double[samples.Length];
         for (int n = 0; n < samples.Length; n++)
         {
@@ -174,7 +178,11 @@ public static partial class Dsp
             if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
                 throw new ArgumentException("samples must be finite", nameof(samples));
         }
-        double[] c = RingCarrier(samples.Length, rate, sampleRate, 0);
+        return VibratoRead(samples, delay, depth, RingCarrier(samples.Length, rate, sampleRate, 0));
+    }
+
+    private static Complex[] VibratoRead(ReadOnlySpan<Complex> samples, double delay, double depth, double[] c)
+    {
         var y = new Complex[samples.Length];
         for (int n = 0; n < samples.Length; n++)
         {
@@ -244,5 +252,72 @@ public static partial class Dsp
     {
         if (!double.IsFinite(mix) || mix < 0 || mix > 1)
             throw new ArgumentOutOfRangeException(nameof(mix), "mix must be in [0, 1]");
+    }
+
+    /// <summary>The mean of <paramref name="voices"/> vibratos on real samples with LFO phases
+    /// <c>2πk/voices</c>, mixed with the dry signal (conventions: Chorus; ADR 0273).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="delay">The centre delay, samples, finite and at least 0.</param>
+    /// <param name="depth">The delay swing, samples, from 0 to <paramref name="delay"/>.</param>
+    /// <param name="rate">The LFO frequency, Hz, finite.</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <param name="voices">The number of delayed copies, at least 1.</param>
+    /// <param name="mix">The wet share, 0 to 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Chorus(ReadOnlySpan<double> samples, double delay, double depth, double rate, double sampleRate, int voices, double mix)
+    {
+        CheckChorus(voices, mix);
+        double[] wet = Vibrato(samples, delay, depth, rate, sampleRate);
+        for (int k = 1; k < voices; k++)
+        {
+            double[] v = VibratoRead(samples, delay, depth, RingCarrier(samples.Length, rate, sampleRate, 2.0 * Math.PI * k / voices));
+            for (int n = 0; n < wet.Length; n++)
+                wet[n] += v[n];
+        }
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+            y[n] = samples[n] * (1 - mix) + wet[n] / voices * mix;
+        return y;
+    }
+
+    /// <summary>The mean of <paramref name="voices"/> vibratos on complex samples with LFO
+    /// phases <c>2πk/voices</c>, mixed with the dry signal part by part (conventions: Chorus;
+    /// ADR 0273).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="delay">The centre delay, samples, finite and at least 0.</param>
+    /// <param name="depth">The delay swing, samples, from 0 to <paramref name="delay"/>.</param>
+    /// <param name="rate">The LFO frequency, Hz, finite.</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <param name="voices">The number of delayed copies, at least 1.</param>
+    /// <param name="mix">The wet share, 0 to 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Chorus(ReadOnlySpan<Complex> samples, double delay, double depth, double rate, double sampleRate, int voices, double mix)
+    {
+        CheckChorus(voices, mix);
+        Complex[] wet = Vibrato(samples, delay, depth, rate, sampleRate);
+        for (int k = 1; k < voices; k++)
+        {
+            Complex[] v = VibratoRead(samples, delay, depth, RingCarrier(samples.Length, rate, sampleRate, 2.0 * Math.PI * k / voices));
+            for (int n = 0; n < wet.Length; n++)
+                wet[n] = new Complex(wet[n].Real + v[n].Real, wet[n].Imaginary + v[n].Imaginary);
+        }
+        double u = 1 - mix;
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            Complex x = samples[n];
+            double wr = wet[n].Real / voices, wi = wet[n].Imaginary / voices;
+            y[n] = new Complex(x.Real * u + wr * mix, x.Imaginary * u + wi * mix);
+        }
+        return y;
+    }
+
+    private static void CheckChorus(int voices, double mix)
+    {
+        if (voices < 1)
+            throw new ArgumentOutOfRangeException(nameof(voices), "voices must be at least 1");
+        CheckMix(mix);
     }
 }

@@ -2613,11 +2613,9 @@ def fade(
     return y
 
 
-def vibrato(
+def _vibrato_args(
     samples: ArrayLike, delay: float, depth: float, rate: float, sample_rate: float
-) -> NDArray[np.complex128] | NDArray[np.float64]:
-    """Read through a delay ``delay + depth cos(2 pi rate n / fs)`` samples, linearly
-    interpolated, from rest (conventions: Vibrato; ADR 0271)."""
+) -> tuple[NDArray[Any], float, float, float, float]:
     dl = real(delay, "delay")
     if not dl >= 0:
         raise ValueError("delay must be at least 0")
@@ -2631,8 +2629,14 @@ def vibrato(
     x = _vector(samples, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
+    return x, dl, dp, f, fs
+
+
+def _vibrato_read(
+    x: NDArray[Any], dl: float, dp: float, f: float, fs: float, phase: float
+) -> NDArray[Any]:
     n = np.arange(x.size)
-    d = dl + dp * np.cos(2.0 * np.pi * f * (n / fs))
+    d = dl + dp * np.cos(2.0 * np.pi * f * (n / fs) + phase)
     p = n - d
     i = np.floor(p).astype(np.int64)
     frac = p - i
@@ -2645,8 +2649,50 @@ def vibrato(
         im = lo.imag * (1 - frac) + hi.imag * frac
         yc: NDArray[Any] = re + 1j * im
         return yc
-    y: NDArray[np.float64] = lo * (1 - frac) + hi * frac
+    y: NDArray[Any] = lo * (1 - frac) + hi * frac
     return y
+
+
+def vibrato(
+    samples: ArrayLike, delay: float, depth: float, rate: float, sample_rate: float
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Read through a delay ``delay + depth cos(2 pi rate n / fs)`` samples, linearly
+    interpolated, from rest (conventions: Vibrato; ADR 0271)."""
+    x, dl, dp, f, fs = _vibrato_args(samples, delay, depth, rate, sample_rate)
+    return _vibrato_read(x, dl, dp, f, fs, 0.0)
+
+
+def _dry_wet(x: NDArray[Any], v: NDArray[Any], m: float) -> NDArray[Any]:
+    if np.iscomplexobj(x) or np.iscomplexobj(v):
+        x, v = x.astype(np.complex128), v.astype(np.complex128)
+        yc: NDArray[Any] = (x.real * (1 - m) + v.real * m) + 1j * (x.imag * (1 - m) + v.imag * m)
+        return yc
+    y: NDArray[Any] = np.asarray(x, dtype=np.float64) * (1 - m) + v * m
+    return y
+
+
+def chorus(
+    samples: ArrayLike,
+    delay: float,
+    depth: float,
+    rate: float,
+    sample_rate: float,
+    voices: int,
+    mix: float,
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The mean of ``voices`` vibratos with LFO phases ``2 pi k / voices``, mixed with the dry
+    signal (conventions: Chorus; ADR 0273)."""
+    nv = count(voices, "voices")
+    if nv < 1:
+        raise ValueError("voices must be at least 1")
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    x, dl, dp, f, fs = _vibrato_args(samples, delay, depth, rate, sample_rate)
+    total = _vibrato_read(x, dl, dp, f, fs, 0.0)
+    for k in range(1, nv):
+        total = total + _vibrato_read(x, dl, dp, f, fs, 2.0 * np.pi * k / nv)
+    return _dry_wet(x, total / nv, m)
 
 
 def flanger(
@@ -2662,13 +2708,8 @@ def flanger(
     m = real(mix, "mix")
     if not 0 <= m <= 1:
         raise ValueError("mix must be in [0, 1]")
-    v = vibrato(samples, delay, depth, rate, sample_rate)
-    x = _vector(samples, "samples")
-    if np.iscomplexobj(x):
-        yc: NDArray[Any] = (x.real * (1 - m) + v.real * m) + 1j * (x.imag * (1 - m) + v.imag * m)
-        return yc
-    y: NDArray[np.float64] = np.asarray(x, dtype=np.float64) * (1 - m) + np.real(v) * m
-    return y
+    x, dl, dp, f, fs = _vibrato_args(samples, delay, depth, rate, sample_rate)
+    return _dry_wet(x, _vibrato_read(x, dl, dp, f, fs, 0.0), m)
 
 
 def tremolo(

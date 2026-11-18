@@ -682,6 +682,9 @@ public static class Conformance
             "fade" => a.Get("samples") is Complex[] fds
                 ? Bind((fds, a.I("fade_in"), a.I("fade_out"), Fade(a)), t => Dsp.Fade(t.Item1, t.Item2, t.Item3, t.Item4))
                 : Bind((Reals(a.Get("samples")), a.I("fade_in"), a.I("fade_out"), Fade(a)), t => Dsp.Fade(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "chorus" => a.Get("samples") is Complex[] chs
+                ? Bind((chs, a.D("delay"), a.D("depth"), a.D("rate"), a.D("sample_rate"), a.I("voices"), a.D("mix")), t => Dsp.Chorus(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7))
+                : Bind((Reals(a.Get("samples")), a.D("delay"), a.D("depth"), a.D("rate"), a.D("sample_rate"), a.I("voices"), a.D("mix")), t => Dsp.Chorus(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
             "flanger" => a.Get("samples") is Complex[] fls
                 ? Bind((fls, a.D("delay"), a.D("depth"), a.D("rate"), a.D("sample_rate"), a.D("mix")), t => Dsp.Flanger(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6))
                 : Bind((Reals(a.Get("samples")), a.D("delay"), a.D("depth"), a.D("rate"), a.D("sample_rate"), a.D("mix")), t => Dsp.Flanger(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),

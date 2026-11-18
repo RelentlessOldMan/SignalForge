@@ -61,6 +61,7 @@ from .dsp import (
     chebyshev2_bandstop,
     chebyshev2_highpass,
     chebyshev2_lowpass,
+    chorus,
     cic_compensator,
     cic_decimate,
     cic_interpolate,
@@ -422,7 +423,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.71"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.72"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -545,6 +546,7 @@ __all__ = [
     "chebyshev2_highpass",
     "chebyshev2_lowpass",
     "chirp",
+    "chorus",
     "cic_compensator",
     "cic_decimate",
     "cic_interpolate",

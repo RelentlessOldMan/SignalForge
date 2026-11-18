@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a chorus (`chorus(samples, delay, depth, rate, sample_rate, voices, mix)`, the mean of
-     `voices` vibratos with LFO phases `2πk/voices`, mixed with the dry signal);
    - a phaser (`phaser(samples, stages, low, high, rate, sample_rate, mix)`, a cascade of
      first-order allpasses whose break frequency sweeps between `low` and `high` under a cosine
      LFO, mixed with the dry signal).
@@ -2391,6 +2389,12 @@ Updated with every chunk of work. Dates are absolute.
   `dsp` (C# `Dsp.Flanger`, real and complex), `x·(1 − mix) + v·mix` with `v` the vibrato.
   Python 6598 passed, 2 skipped; .NET 5841 passed; conformance 4012/4012 in both. Version
   2026.11.17.71.
+- 2026-11-17: Chorus (ADR 0273): `chorus(samples, delay, depth, rate, sample_rate, voices, mix)`
+  in `dsp` (C# `Dsp.Chorus`, real and complex), the mean of `voices` vibratos with LFO phases
+  `2πk/voices`, mixed with the dry signal. The vibrato's reader is now a private helper shared
+  by the vibrato, flanger and chorus.
+  Python 6611 passed, 2 skipped; .NET 5853 passed; conformance 4022/4022 in both. Version
+  2026.11.17.72.
 
 ## Not built
 
