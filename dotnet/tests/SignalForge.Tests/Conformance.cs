@@ -657,6 +657,9 @@ public static class Conformance
                 a.Has("delay") ? a.I("delay") : 1), t => Dsp.CicCompensator(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "savgol_coefficients" => Bind((a.I("length"), a.I("order"), a.Has("derivative") ? a.I("derivative") : 0,
                 a.Has("position") ? a.I("position") : 0), t => Dsp.SavgolCoefficients(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "hard_clip" => a.Get("samples") is Complex[] hcs
+                ? Bind((hcs, a.D("limit")), t => Dsp.HardClip(t.Item1, t.Item2))
+                : Bind((Reals(a.Get("samples")), a.D("limit")), t => Dsp.HardClip(t.Item1, t.Item2)),
             "soft_clip" => Bind(Reals(a.Get("samples")), t => Dsp.SoftClip(t)),
             "a_law_compress" => Bind((Reals(a.Get("samples")), a.Has("a") ? a.D("a") : 87.6), t => Dsp.ALawCompress(t.Item1, t.Item2)),
             "a_law_expand" => Bind((Reals(a.Get("samples")), a.Has("a") ? a.D("a") : 87.6), t => Dsp.ALawExpand(t.Item1, t.Item2)),

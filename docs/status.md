@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a hard clipper (`hard_clip(samples, limit)`, clamping to `[−limit, limit]`; complex by
-     magnitude, keeping the phase);
    - a wavefolder (`wavefold(samples, limit)`, reflecting at `±limit` repeatedly instead of
      clamping);
    - a rectifier (`rectify(samples, *, full=True)`, `|x|` or `max(x, 0)`).
@@ -2278,6 +2276,12 @@ Updated with every chunk of work. Dates are absolute.
     `±1` gives the clamp value exactly.
   Python 6315 passed, 2 skipped; .NET 5572 passed; conformance 3788/3788 in both. Version
   2026.11.17.49.
+- 2026-11-17: Hard clipper (ADR 0251): `hard_clip(samples, limit)` in `dsp` (C# `Dsp.HardClip`).
+  - Real samples are clamped.
+  - Complex samples are scaled back onto the `limit` circle, keeping the phase.
+  - The vectors use exact 3-4-5 triangles.
+  Python 6325 passed, 2 skipped; .NET 5582 passed; conformance 3796/3796 in both. Version
+  2026.11.17.50.
 
 ## Not built
 

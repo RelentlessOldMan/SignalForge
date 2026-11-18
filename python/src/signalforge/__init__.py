@@ -82,6 +82,7 @@ from .dsp import (
     fir_response,
     gammatone,
     hampel_filter,
+    hard_clip,
     interpolate,
     itakura_saito,
     kaiser_parameters,
@@ -397,7 +398,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.49"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.50"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -591,6 +592,7 @@ __all__ = [
     "generalized_lomb_scargle",
     "goertzel",
     "hampel_filter",
+    "hard_clip",
     "harmonic_centroid",
     "harmonic_deviation",
     "harmonic_f_test",

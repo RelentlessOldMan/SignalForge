@@ -1912,6 +1912,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0250](adr/0250-soft-clip.md)): `x − x·x·x/3` for `|x| < 1`; `±2/3` (the nearest double)
   for `|x| ≥ 1` (odd; value and slope continuous at `±1`). Samples real, finite, non-empty.
   **(implemented)**
+- **Hard clipper** (`hard_clip(samples, limit)`, C# `Dsp.HardClip`,
+  [ADR 0251](adr/0251-hard-clip.md)): real `min(max(x, −limit), limit)`; complex `x` if
+  `|x| ≤ limit`, else `x·(limit/|x|)` (the phase kept). Finite `limit ≥ 0`; samples finite,
+  non-empty; output the same kind. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "hard_clip",
+  "description": "Hard clipper (conventions: Hard clipper; ADR 0251).",
+  "cases": [
+    {"id": "hard_clip.basic", "op": "hard_clip", "args": {"samples": [-3.0, -1.0, -0.5, 0.0, 0.75, 1.0, 2.5], "limit": 1.0}, "expected": [-1.0, -1.0, -0.5, 0.0, 0.75, 1.0, 1.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "clamp to [-1, 1]; +-1 pass"},
+    {"id": "hard_clip.fraction", "op": "hard_clip", "args": {"samples": [0.375, -0.625, 0.1875, -0.0625], "limit": 0.25}, "expected": [0.25, -0.25, 0.1875, -0.0625], "tol": {"abs": 0.0, "rel": 0.0}, "source": "limit 1/4"},
+    {"id": "hard_clip.limit_zero", "op": "hard_clip", "args": {"samples": [1.5, -2.0, 0.0], "limit": 0.0}, "expected": [0.0, 0.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "limit 0: all zero"},
+    {"id": "hard_clip.complex", "op": "hard_clip", "args": {"samples": {"re": [3.0, -6.0, 0.375, 0.0, -1.5], "im": [4.0, 8.0, -0.5, -0.5, 2.0]}, "limit": 2.0}, "expected": {"re": [1.2, -1.2, 0.375, 0.0, -1.2], "im": [1.6, 1.6, -0.5, -0.5, 1.6]}, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "3-4-5 triangles: |x| = 5, 10, 5/8, 1/2, 5/2 against limit 2"},
+    {"id": "hard_clip.limit_negative", "op": "hard_clip", "args": {"samples": [1.0], "limit": -1.0}, "error": "invalid_argument", "source": "limit must be at least 0"},
+    {"id": "hard_clip.limit_inf", "op": "hard_clip", "args": {"samples": [1.0], "limit": "inf"}, "error": "invalid_argument", "source": "limit must be finite"},
+    {"id": "hard_clip.empty", "op": "hard_clip", "args": {"samples": [], "limit": 1.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "hard_clip.nan_sample", "op": "hard_clip", "args": {"samples": [1.0, "nan"], "limit": 1.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

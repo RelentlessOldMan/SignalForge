@@ -268,6 +268,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "a_law_compress": dsp.a_law_compress,
     "a_law_expand": dsp.a_law_expand,
     "soft_clip": dsp.soft_clip,
+    "hard_clip": dsp.hard_clip,
     "cic_interpolate": dsp.cic_interpolate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
     "butterworth_lowpass": dsp.butterworth_lowpass,

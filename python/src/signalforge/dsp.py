@@ -2557,6 +2557,26 @@ def sample_and_hold(
     return y
 
 
+def hard_clip(samples: ArrayLike, limit: float) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Clamp real samples to ``[-limit, limit]``; scale complex samples above ``limit`` in
+    magnitude back to it, keeping the phase (conventions: Hard clipper; ADR 0251)."""
+    lim = real(limit, "limit")
+    if not lim >= 0:
+        raise ValueError("limit must be at least 0")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    y: NDArray[Any]
+    if np.iscomplexobj(x):
+        m = np.abs(x)
+        over = m > lim
+        y = x.copy()
+        y[over] = x[over] * (lim / m[over])
+        return y
+    y = np.clip(np.asarray(x, dtype=np.float64), -lim, lim)
+    return y
+
+
 def soft_clip(samples: ArrayLike) -> NDArray[np.float64]:
     """Cubic soft clipper ``x - x^3/3`` on [-1, 1], held at ``+-2/3`` beyond
     (conventions: Cubic soft clipper; ADR 0250)."""
