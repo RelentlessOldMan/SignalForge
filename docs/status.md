@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a wavefolder (`wavefold(samples, limit)`, reflecting at `±limit` repeatedly instead of
-     clamping);
    - a rectifier (`rectify(samples, *, full=True)`, `|x|` or `max(x, 0)`).
 
 ## Built
@@ -2282,6 +2280,12 @@ Updated with every chunk of work. Dates are absolute.
   - The vectors use exact 3-4-5 triangles.
   Python 6325 passed, 2 skipped; .NET 5582 passed; conformance 3796/3796 in both. Version
   2026.11.17.50.
+- 2026-11-17: Wavefolder (ADR 0252): `wavefold(samples, limit)` in `dsp` (C# `Dsp.Wavefold`, real
+  only).
+  - It is the closed-form triangle of period `4L`.
+  - The vectors come from repeated reflection in exact rationals.
+  Python 6335 passed, 2 skipped; .NET 5591 passed; conformance 3803/3803 in both. Version
+  2026.11.17.51.
 
 ## Not built
 

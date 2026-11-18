@@ -2557,6 +2557,24 @@ def sample_and_hold(
     return y
 
 
+def wavefold(samples: ArrayLike, limit: float) -> NDArray[np.float64]:
+    """Fold samples back into ``[-limit, limit]`` by reflecting about each limit, the triangle
+    wave of period ``4 limit`` (conventions: Wavefolder; ADR 0252)."""
+    lim = real(limit, "limit")
+    if not lim > 0:
+        raise ValueError("limit must be positive")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    period = 4 * lim
+    u = np.asarray(x, dtype=np.float64) + lim
+    t = u - period * np.floor(u / period)
+    y: NDArray[np.float64] = lim - np.abs(t - 2 * lim)
+    return y
+
+
 def hard_clip(samples: ArrayLike, limit: float) -> NDArray[np.complex128] | NDArray[np.float64]:
     """Clamp real samples to ``[-limit, limit]``; scale complex samples above ``limit`` in
     magnitude back to it, keeping the phase (conventions: Hard clipper; ADR 0251)."""

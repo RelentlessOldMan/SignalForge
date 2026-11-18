@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "suite": "wavefold",
+  "description": "Wavefolder (conventions: Wavefolder; ADR 0252).",
+  "cases": [
+    {"id": "wavefold.one_fold", "op": "wavefold", "args": {"samples": [0.0, 0.5, 1.0, 1.25, 1.5, 2.0, -1.0, -1.75], "limit": 1.0}, "expected": [0.0, 0.5, 1.0, 0.75, 0.5, 0.0, -1.0, -0.25], "tol": {"abs": 0.0, "rel": 0.0}, "source": "L = 1: inside unchanged, 1 + d -> 1 - d"},
+    {"id": "wavefold.many_folds", "op": "wavefold", "args": {"samples": [3.0, 4.0, 5.5, -6.25, 9.0, -13.0], "limit": 1.0}, "expected": [-1.0, 0.0, 0.5, 0.25, 1.0, -1.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "several reflections"},
+    {"id": "wavefold.limit_fraction", "op": "wavefold", "args": {"samples": [0.375, 0.875, -1.125, 2.0, -3.5], "limit": 0.75}, "expected": [0.375, 0.625, -0.375, -0.5, -0.5], "tol": {"abs": 0.0, "rel": 0.0}, "source": "L = 3/4"},
+    {"id": "wavefold.limit_zero", "op": "wavefold", "args": {"samples": [1.0], "limit": 0.0}, "error": "invalid_argument", "source": "limit must be positive"},
+    {"id": "wavefold.limit_inf", "op": "wavefold", "args": {"samples": [1.0], "limit": "inf"}, "error": "invalid_argument", "source": "limit must be finite"},
+    {"id": "wavefold.empty", "op": "wavefold", "args": {"samples": [], "limit": 1.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "wavefold.nan_sample", "op": "wavefold", "args": {"samples": [1.0, "nan"], "limit": 1.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

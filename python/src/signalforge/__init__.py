@@ -122,6 +122,7 @@ from .dsp import (
     sos_response,
     thiran_allpass,
     upsample,
+    wavefold,
     zero_phase_filter,
 )
 from .files import (
@@ -398,7 +399,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.50"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.51"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -774,6 +775,7 @@ __all__ = [
     "upsample",
     "vrms_to_dbm",
     "w_to_dbm",
+    "wavefold",
     "welch_dof",
     "welch_psd",
     "window",

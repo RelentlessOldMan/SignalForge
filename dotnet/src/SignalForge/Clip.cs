@@ -74,4 +74,30 @@ public static partial class Dsp
         if (!double.IsFinite(limit) || !(limit >= 0))
             throw new ArgumentOutOfRangeException(nameof(limit), "limit must be at least 0");
     }
+
+    /// <summary>Folds samples back into <c>[−limit, limit]</c> by reflecting about each limit,
+    /// the triangle wave of period <c>4·limit</c> (conventions: Wavefolder; ADR 0252).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="limit">The folding level, finite and positive.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Wavefold(ReadOnlySpan<double> samples, double limit)
+    {
+        if (!double.IsFinite(limit) || !(limit > 0))
+            throw new ArgumentOutOfRangeException(nameof(limit), "limit must be positive");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        double period = 4 * limit;
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double v = samples[n];
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            double u = v + limit;
+            double t = u - period * Math.Floor(u / period);
+            y[n] = limit - Math.Abs(t - 2 * limit);
+        }
+        return y;
+    }
 }
