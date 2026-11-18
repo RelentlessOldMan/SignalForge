@@ -705,4 +705,38 @@ public static class Waveforms
         }
         return m;
     }
+
+    /// <summary>The mean of <paramref name="voices"/> PolyBLEP sawtooths spread evenly over
+    /// ±<paramref name="detune"/> cents, voice <c>k</c> starting at phase <c>k/voices</c>
+    /// (conventions: Supersaw; ADR 0316).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The centre frequency, finite.</param>
+    /// <param name="detune">The spread each side in cents, finite and at least 0.</param>
+    /// <param name="voices">The number of sawtooths, at least 1.</param>
+    /// <param name="amplitude">The scale of the mean, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range, or a voice is above
+    /// half the sample rate.</exception>
+    public static double[] Supersaw(double sampleRate, int numSamples, double frequency,
+        double detune, int voices = 7, double amplitude = 1.0)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(voices, 1);
+        if (!(detune >= 0 && double.IsFinite(detune)))
+            throw new ArgumentOutOfRangeException(nameof(detune), "detune must be finite and at least 0");
+        CheckTone(frequency, amplitude, 0.0);
+        ArgumentOutOfRangeException.ThrowIfNegative(numSamples);
+        var acc = new double[numSamples];
+        for (int k = 0; k < voices; k++)
+        {
+            double cents = voices == 1 ? 0.0 : detune * ((2.0 * k / (voices - 1)) - 1);
+            double[] saw = PolyblepSawtooth(sampleRate, numSamples,
+                frequency * Math.Pow(2, cents / 1200), 1.0, (double)k / voices);
+            for (int n = 0; n < numSamples; n++)
+                acc[n] += saw[n];
+        }
+        for (int n = 0; n < numSamples; n++)
+            acc[n] = amplitude * (acc[n] / voices);
+        return acc;
+    }
 }

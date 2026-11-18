@@ -71,6 +71,12 @@ rule for code not written yet.
   oscillators; `y[n] = A` for `u[n] < duty[n]`, else `−A`. `duty` a 1-D real array (may be
   empty), every value in [0, 1]; positive finite `sample_rate`; finite `frequency`,
   `amplitude`, `phase`. **(implemented)**
+- **Supersaw** (`supersaw(sample_rate, num_samples, frequency, detune, voices=7,
+  amplitude=1)`, C# `Waveforms.Supersaw`, [ADR 0316](adr/0316-supersaw.md)): voice `k` of `V`
+  at `c_k = detune·(2·k/(V − 1) − 1)` cents (0 when `V = 1`), `f_k = f·2^(c_k/1200)`, the
+  PolyBLEP sawtooth at `f_k`, amplitude 1, phase `k/V`; `y = A·(Σ_k voice_k)/V`, summed in order
+  of `k`. Finite `frequency`, `amplitude`; finite `detune ≥ 0`; integer `voices ≥ 1`; every
+  `|f_k| ≤ fs/2`. **(implemented)**
 - **Hard-synced sawtooth** (`hard_sync_sawtooth(sample_rate, num_samples, frequency,
   sync_frequency, amplitude=1)`, C# `Waveforms.HardSyncSawtooth`,
   [ADR 0315](adr/0315-hard-sync-sawtooth.md)): `m = frac(sync_frequency·(n/fs))`;

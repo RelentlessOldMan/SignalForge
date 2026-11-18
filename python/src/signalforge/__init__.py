@@ -474,12 +474,13 @@ from .waveforms import (
     pwm,
     sawtooth,
     square,
+    supersaw,
     tone,
     triangle,
     wavetable,
 )
 
-__version__ = "2026.11.18.4"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.5"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -901,6 +902,7 @@ __all__ = [
     "stage_support",
     "stereo_width",
     "stutter",
+    "supersaw",
     "svf",
     "tape_stop",
     "teager_energy",

@@ -433,6 +433,32 @@ def polyblep_triangle(
     return y
 
 
+def supersaw(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    detune: float,
+    voices: int = 7,
+    amplitude: float = 1.0,
+) -> NDArray[np.float64]:
+    """The mean of ``voices`` PolyBLEP sawtooths spread evenly over ``+-detune`` cents, voice
+    ``k`` starting at phase ``k/voices`` (conventions: Supersaw; ADR 0316)."""
+    v = _integer(voices, "voices")
+    if v < 1:
+        raise ValueError("voices must be at least 1")
+    c = real(detune, "detune")
+    if not c >= 0:
+        raise ValueError("detune must be at least 0")
+    f = real(frequency, "frequency")
+    amp = real(amplitude, "amplitude")
+    acc = np.zeros(_count(num_samples, "num_samples"))
+    for k in range(v):
+        cents = 0.0 if v == 1 else c * (2 * k / (v - 1) - 1)
+        acc += polyblep_sawtooth(sample_rate, num_samples, f * 2 ** (cents / 1200), 1.0, k / v)
+    y: NDArray[np.float64] = amp * (acc / v)
+    return y
+
+
 def wavetable(
     table: ArrayLike,
     sample_rate: float,

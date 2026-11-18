@@ -6,12 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a supersaw in `waveforms` (`supersaw(sample_rate, num_samples, frequency, detune,
-     voices=7, amplitude=1)`: the mean of `voices` PolyBLEP sawtooths spread evenly over
-     `±detune` cents, voice `k` starting at phase `k/voices`).
    - a DPW sawtooth in `waveforms` (`dpw_sawtooth(sample_rate, num_samples, frequency,
      amplitude=1, phase=0)`: the differentiated parabolic waveform, the first difference of
      `(2u − 1)²` scaled by `fs/(4·f)`; another cheap alias-reduced saw).
+   - colored noise in `channel` or `waveforms` (`color_noise(white, exponent)`: the real FFT of
+     the given samples, bin `k ≥ 1` scaled by `k^(−exponent/2)`, bin 0 set to 0, inverse FFT;
+     `exponent` 1 pink, 2 brown, −1 blue. Deterministic given the samples, so vectors work
+     across languages; grep `spectral.py` for an existing FFT-domain shaper first).
 
 ## Built
 
@@ -2620,6 +2621,11 @@ Updated with every chunk of work. Dates are absolute.
   `u = frac((f / f_sync)·m)`.
   Python 7118 passed, 2 skipped; .NET 6327 passed; conformance 4399/4399 in both. Version
   2026.11.18.4.
+- 2026-11-18: Supersaw (ADR 0316): `supersaw(sample_rate, num_samples, frequency, detune,
+  voices=7, amplitude=1)` in `waveforms` (C# `Waveforms.Supersaw`): the mean of `voices`
+  PolyBLEP sawtooths spread evenly over `±detune` cents, voice `k` at phase `k/voices`.
+  Python 7133 passed, 2 skipped; .NET 6339 passed; conformance 4408/4408 in both. Version
+  2026.11.18.5.
 
 ## Not built
 
