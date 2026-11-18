@@ -130,6 +130,7 @@ from .dsp import (
     moving_rms,
     mu_law_compress,
     mu_law_expand,
+    multitap_delay,
     noise_gate,
     normalize_peak,
     octave_down,
@@ -453,7 +454,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.98"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.99"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -730,6 +731,7 @@ __all__ = [
     "mu_law_compress",
     "mu_law_expand",
     "multipath",
+    "multitap_delay",
     "multitaper_line_removal",
     "multitaper_psd",
     "multitone",

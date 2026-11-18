@@ -2141,6 +2141,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0299](adr/0299-stutter.md)): `y[n] = x[start + (n − start) mod length]` for
   `start ≤ n < start + repeats·length`, `x[n]` elsewhere. Real, finite, non-empty samples;
   integers `start ≥ 0`, `length ≥ 1`, `repeats ≥ 0`. **(implemented)**
+- **Multi-tap delay** (`multitap_delay(samples, delays, gains)`, C# `Dsp.MultitapDelay`,
+  [ADR 0300](adr/0300-multitap-delay.md)): `y[n] = x[n] + Σ_k g_k·x[n − d_k]`, `x[m < 0] = 0`,
+  summed from `x[n]` with the taps in list order. Real, finite, non-empty samples; 1 to 64
+  taps, integer delays at least 1, one finite gain each. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

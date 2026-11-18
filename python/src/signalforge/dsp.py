@@ -2904,6 +2904,29 @@ def stutter(samples: ArrayLike, start: int, length: int, repeats: int) -> NDArra
     return y
 
 
+def multitap_delay(
+    samples: ArrayLike, delays: Sequence[int], gains: ArrayLike
+) -> NDArray[np.float64]:
+    """The input plus echoes ``gains[k] x[n - delays[k]]``, added in list order (conventions:
+    Multi-tap delay; ADR 0300)."""
+    ds = [count(d, "delays") for d in delays]
+    if not 1 <= len(ds) <= 64:
+        raise ValueError("delays must hold 1 to 64 taps")
+    if min(ds) < 1:
+        raise ValueError("delays must be at least 1")
+    g = np.asarray(gains, dtype=np.float64)
+    if g.ndim != 1 or g.size != len(ds):
+        raise ValueError("gains must hold one gain per delay")
+    if not np.all(np.isfinite(g)):
+        raise ValueError("gains must be finite")
+    x = _mono(samples)
+    y = x.copy()
+    for d, gk in zip(ds, g, strict=True):
+        if d < x.size:
+            y[d:] += gk * x[: x.size - d]
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

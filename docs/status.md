@@ -6,10 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a multi-tap delay (`multitap_delay(samples, delays, gains)`:
-     `y[n] = x[n] + Σ_k g_k·x[n − d_k]`, zero before the start, taps summed in list order).
    - a frequency shifter (`frequency_shift(samples, shift, sample_rate)`: the Bode shifter,
      `Re(analytic_signal(x)·e^{j2π·shift·n/fs})`, every component moved by `shift` Hz).
+   - a delay-line pitch shifter (`pitch_shift(samples, ratio, window)`: two taps whose delays
+     ramp as `W·φ` and `W·frac(φ + 1/2)`, `φ = frac(n·(1 − ratio)/W)`, read with linear
+     interpolation and crossfaded by `sin²(πφ)` and `cos²(πφ)`).
 
 ## Built
 
@@ -2532,6 +2533,11 @@ Updated with every chunk of work. Dates are absolute.
   input, which then resumes at its own time.
   Python 6920 passed, 2 skipped; .NET 6139 passed; conformance 4254/4254 in both. Version
   2026.11.17.98.
+- 2026-11-17: Multi-tap delay (ADR 0300): `multitap_delay(samples, delays, gains)` in `dsp`
+  (C# `Dsp.MultitapDelay`, real): the input plus `gains[k]·x[n − delays[k]]`, added in list
+  order.
+  Python 6930 passed, 2 skipped; .NET 6149 passed; conformance 4262/4262 in both. Version
+  2026.11.17.99.
 
 ## Not built
 

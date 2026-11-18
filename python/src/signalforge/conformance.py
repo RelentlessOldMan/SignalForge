@@ -305,6 +305,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "lowpass_feedback_comb": dsp.lowpass_feedback_comb,
     "reverse_delay": dsp.reverse_delay,
     "stutter": dsp.stutter,
+    "multitap_delay": dsp.multitap_delay,
     "transient_shaper": dsp.transient_shaper,
     "fade": dsp.fade,
     "crossfade": dsp.crossfade,

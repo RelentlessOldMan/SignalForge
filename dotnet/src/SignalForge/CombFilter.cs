@@ -136,4 +136,40 @@ public static partial class Dsp
             y[n] = samples[start + ((n - start) % length)];
         return y;
     }
+
+    /// <summary>The input plus echoes <c>gains[k]·x[n − delays[k]]</c>, added in list order
+    /// (conventions: Multi-tap delay; ADR 0300).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="delays">The tap delays in samples: 1 to 64, each at least 1.</param>
+    /// <param name="gains">One finite gain per delay.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] MultitapDelay(ReadOnlySpan<double> samples, ReadOnlySpan<int> delays, ReadOnlySpan<double> gains)
+    {
+        if (delays.Length < 1 || delays.Length > 64)
+            throw new ArgumentException("delays must hold 1 to 64 taps", nameof(delays));
+        if (gains.Length != delays.Length)
+            throw new ArgumentException("gains must hold one gain per delay", nameof(gains));
+        for (int k = 0; k < delays.Length; k++)
+        {
+            if (delays[k] < 1)
+                throw new ArgumentOutOfRangeException(nameof(delays), "delays must be at least 1");
+            if (!double.IsFinite(gains[k]))
+                throw new ArgumentException("gains must be finite", nameof(gains));
+        }
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        double[] y = samples.ToArray();
+        for (int k = 0; k < delays.Length; k++)
+        {
+            for (int n = delays[k]; n < y.Length; n++)
+                y[n] += gains[k] * samples[n - delays[k]];
+        }
+        return y;
+    }
 }

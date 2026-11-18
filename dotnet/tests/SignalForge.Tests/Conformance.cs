@@ -713,6 +713,7 @@ public static class Conformance
             "lowpass_feedback_comb" => Bind((Reals(a.Get("samples")), a.I("delay"), a.D("feedback"), a.D("damping")), t => Dsp.LowpassFeedbackComb(t.Item1, t.Item2, t.Item3, t.Item4)),
             "reverse_delay" => Bind((Reals(a.Get("samples")), a.I("block"), a.D("mix")), t => Dsp.ReverseDelay(t.Item1, t.Item2, t.Item3)),
             "stutter" => Bind((Reals(a.Get("samples")), a.I("start"), a.I("length"), a.I("repeats")), t => Dsp.Stutter(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "multitap_delay" => Bind((Reals(a.Get("samples")), Ints(a.Get("delays")), Reals(a.Get("gains"))), t => Dsp.MultitapDelay(t.Item1, t.Item2, t.Item3)),
             "slicer" => Bind((Reals(a.Get("samples")), a.D("rate"), a.D("duty"), a.D("sample_rate")), t => Dsp.Slicer(t.Item1, t.Item2, t.Item3, t.Item4)),
             "tremolo" => a.Get("samples") is Complex[] trs
                 ? Bind((trs, a.D("rate"), a.D("depth"), a.D("sample_rate")), t => Dsp.Tremolo(t.Item1, t.Item2, t.Item3, t.Item4))
