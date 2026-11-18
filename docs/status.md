@@ -9,9 +9,9 @@ Updated with every chunk of work. Dates are absolute.
    - a supersaw in `waveforms` (`supersaw(sample_rate, num_samples, frequency, detune,
      voices=7, amplitude=1)`: the mean of `voices` PolyBLEP sawtooths spread evenly over
      `±detune` cents, voice `k` starting at phase `k/voices`).
-   - a hard-synced sawtooth in `waveforms` (`hard_sync_sawtooth(sample_rate, num_samples,
-     frequency, sync_frequency, amplitude=1)`: the slave phase reset to 0 each time the
-     master phase wraps).
+   - a DPW sawtooth in `waveforms` (`dpw_sawtooth(sample_rate, num_samples, frequency,
+     amplitude=1, phase=0)`: the differentiated parabolic waveform, the first difference of
+     `(2u − 1)²` scaled by `fs/(4·f)`; another cheap alias-reduced saw).
 
 ## Built
 
@@ -2614,6 +2614,12 @@ Updated with every chunk of work. Dates are absolute.
   the integral of the PolyBLEP residual and checked exactly by Simpson's rule in the generator.
   Python 7104 passed, 2 skipped; .NET 6313 passed; conformance 4390/4390 in both. Version
   2026.11.18.3.
+- 2026-11-18: Hard-synced sawtooth (ADR 0315): `hard_sync_sawtooth(sample_rate, num_samples,
+  frequency, sync_frequency, amplitude=1)` in `waveforms` (C# `Waveforms.HardSyncSawtooth`):
+  a naive slave sawtooth restarted at the exact moment the master wraps,
+  `u = frac((f / f_sync)·m)`.
+  Python 7118 passed, 2 skipped; .NET 6327 passed; conformance 4399/4399 in both. Version
+  2026.11.18.4.
 
 ## Not built
 

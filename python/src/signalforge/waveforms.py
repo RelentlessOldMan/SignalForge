@@ -293,6 +293,23 @@ def bandlimited_triangle(
     return y
 
 
+def hard_sync_sawtooth(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    sync_frequency: float,
+    amplitude: float = 1.0,
+) -> NDArray[np.float64]:
+    """Naive sawtooth at ``frequency`` restarted each time a master at ``sync_frequency``
+    starts a cycle (conventions: Hard-synced sawtooth; ADR 0315)."""
+    m, amp = _cycle(sample_rate, num_samples, sync_frequency, amplitude, 0.0)
+    if not real(sync_frequency, "sync_frequency") > 0:
+        raise ValueError("sync_frequency must be positive")
+    s = (real(frequency, "frequency") / sync_frequency) * m
+    y: NDArray[np.float64] = amp * (2 * (s - np.floor(s)) - 1)
+    return y
+
+
 def polyblep_sawtooth(
     sample_rate: float,
     num_samples: int,

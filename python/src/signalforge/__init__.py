@@ -462,6 +462,7 @@ from .waveforms import (
     bandlimited_triangle,
     chirp,
     fm_tone,
+    hard_sync_sawtooth,
     multitone,
     newman_phases,
     polyblep_pwm,
@@ -478,7 +479,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.3"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.4"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -701,6 +702,7 @@ __all__ = [
     "haas",
     "hampel_filter",
     "hard_clip",
+    "hard_sync_sawtooth",
     "harmonic_centroid",
     "harmonic_deviation",
     "harmonic_f_test",

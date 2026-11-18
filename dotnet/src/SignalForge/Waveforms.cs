@@ -678,4 +678,31 @@ public static class Waveforms
         }
         return u;
     }
+
+    /// <summary>Naive sawtooth at <paramref name="frequency"/> restarted each time a master at
+    /// <paramref name="syncFrequency"/> starts a cycle (conventions: Hard-synced sawtooth;
+    /// ADR 0315).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The slave frequency, finite.</param>
+    /// <param name="syncFrequency">The master frequency, positive and finite.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] HardSyncSawtooth(double sampleRate, int numSamples, double frequency,
+        double syncFrequency, double amplitude = 1.0)
+    {
+        double[] m = Cycle(sampleRate, numSamples, syncFrequency, amplitude, 0.0);
+        if (!(syncFrequency > 0))
+            throw new ArgumentOutOfRangeException(nameof(syncFrequency), "syncFrequency must be positive");
+        if (!double.IsFinite(frequency))
+            throw new ArgumentOutOfRangeException(nameof(frequency), "frequency must be finite");
+        double ratio = frequency / syncFrequency;
+        for (int n = 0; n < m.Length; n++)
+        {
+            double s = ratio * m[n];
+            m[n] = amplitude * ((2 * (s - Math.Floor(s))) - 1);
+        }
+        return m;
+    }
 }

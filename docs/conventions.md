@@ -71,6 +71,11 @@ rule for code not written yet.
   oscillators; `y[n] = A` for `u[n] < duty[n]`, else `−A`. `duty` a 1-D real array (may be
   empty), every value in [0, 1]; positive finite `sample_rate`; finite `frequency`,
   `amplitude`, `phase`. **(implemented)**
+- **Hard-synced sawtooth** (`hard_sync_sawtooth(sample_rate, num_samples, frequency,
+  sync_frequency, amplitude=1)`, C# `Waveforms.HardSyncSawtooth`,
+  [ADR 0315](adr/0315-hard-sync-sawtooth.md)): `m = frac(sync_frequency·(n/fs))`;
+  `u = frac((frequency / sync_frequency)·m)`; `y = A·(2·u − 1)`. Positive finite
+  `sample_rate` and `sync_frequency`; finite `frequency`, `amplitude`. **(implemented)**
 - **PolyBLEP triangle** (`polyblep_triangle(sample_rate, num_samples, frequency,
   amplitude=1, phase=0)`, C# `Waveforms.PolyblepTriangle`,
   [ADR 0314](adr/0314-polyblep-triangle.md)): `u`, `dt` as for the PolyBLEP sawtooth;
