@@ -71,6 +71,10 @@ rule for code not written yet.
   oscillators; `y[n] = A` for `u[n] < duty[n]`, else `−A`. `duty` a 1-D real array (may be
   empty), every value in [0, 1]; positive finite `sample_rate`; finite `frequency`,
   `amplitude`, `phase`. **(implemented)**
+- **PolyBLEP pulse-width modulation** (`polyblep_pwm(duty, sample_rate, frequency,
+  amplitude=1, phase=0)`, C# `Waveforms.PolyblepPwm`, [ADR 0313](adr/0313-polyblep-pwm.md)):
+  the PolyBLEP square's rule with `duty = duty[n]` at sample `n`; one sample per `duty` value.
+  Rules of `pwm`, and `|f| ≤ fs/2`. **(implemented)**
 - **PolyBLEP square** (`polyblep_square(sample_rate, num_samples, frequency, duty=0.5,
   amplitude=1, phase=0)`, C# `Waveforms.PolyblepSquare`,
   [ADR 0311](adr/0311-polyblep-square.md)): `u` and `dt` as for the PolyBLEP sawtooth, `r(·)`

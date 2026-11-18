@@ -339,13 +339,38 @@ def polyblep_square(
     f = real(frequency, "frequency")
     if not abs(f) <= 0.5 * sample_rate:
         raise ValueError("|frequency| must be at most sample_rate/2")
-    dt = abs(f) / sample_rate
+    return _blep_square(u, d, amp, abs(f) / sample_rate)
+
+
+def _blep_square(
+    u: NDArray[np.float64], d: float | NDArray[np.float64], amp: float, dt: float
+) -> NDArray[np.float64]:
+    """The square with duty ``d`` and the PolyBLEP residual at both edges (ADR 0311)."""
     low = u < d
     v = u - d
     v[low] += 1
     naive = np.where(low, amp, -amp)
     y: NDArray[np.float64] = naive + amp * _blep(u, dt) - amp * _blep(v, dt)
     return y
+
+
+def polyblep_pwm(
+    duty: ArrayLike,
+    sample_rate: float,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Pulse-width modulation with the PolyBLEP residual at both edges, ``phase`` in cycles
+    (conventions: PolyBLEP pulse-width modulation; ADR 0313)."""
+    d = _finite_vector(duty, "duty")
+    if not np.all((d >= 0) & (d <= 1)):
+        raise ValueError("duty must be in [0, 1]")
+    u, amp = _cycle(sample_rate, d.size, frequency, amplitude, phase)
+    f = real(frequency, "frequency")
+    if not abs(f) <= 0.5 * sample_rate:
+        raise ValueError("|frequency| must be at most sample_rate/2")
+    return _blep_square(u, d, amp, abs(f) / sample_rate)
 
 
 def pwm(

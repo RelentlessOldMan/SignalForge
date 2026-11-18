@@ -575,14 +575,46 @@ public static class Waveforms
             throw new ArgumentOutOfRangeException(nameof(frequency), "|frequency| must be at most sampleRate/2");
         double dt = Math.Abs(frequency) / sampleRate;
         for (int n = 0; n < u.Length; n++)
+            u[n] = BlepSquare(u[n], duty, amplitude, dt);
+        return u;
+    }
+
+    /// <summary>One sample of the square with duty <paramref name="d"/> and the PolyBLEP
+    /// residual at both edges (ADR 0311).</summary>
+    private static double BlepSquare(double u, double d, double amplitude, double dt)
+    {
+        bool low = u < d;
+        double v = u - d;
+        if (low)
+            v += 1;
+        double naive = low ? amplitude : -amplitude;
+        return naive + (amplitude * Blep(u, dt)) - (amplitude * Blep(v, dt));
+    }
+
+    /// <summary>Pulse-width modulation with the PolyBLEP residual at both edges, the phase in
+    /// cycles (conventions: PolyBLEP pulse-width modulation; ADR 0313).</summary>
+    /// <param name="duty">One duty per output sample, each in [0, 1]; may be empty.</param>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="frequency">The frequency, finite, with magnitude at most half the sample
+    /// rate.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns>One sample per entry of <paramref name="duty"/>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] PolyblepPwm(ReadOnlySpan<double> duty, double sampleRate,
+        double frequency, double amplitude = 1.0, double phase = 0.0)
+    {
+        foreach (double d in duty)
         {
-            bool low = u[n] < duty;
-            double v = u[n] - duty;
-            if (low)
-                v += 1;
-            double naive = low ? amplitude : -amplitude;
-            u[n] = naive + (amplitude * Blep(u[n], dt)) - (amplitude * Blep(v, dt));
+            if (!(d >= 0 && d <= 1))
+                throw new ArgumentOutOfRangeException(nameof(duty), "duty must be in [0, 1]");
         }
+        double[] u = Cycle(sampleRate, duty.Length, frequency, amplitude, phase);
+        if (!(Math.Abs(frequency) <= 0.5 * sampleRate))
+            throw new ArgumentOutOfRangeException(nameof(frequency), "|frequency| must be at most sampleRate/2");
+        double dt = Math.Abs(frequency) / sampleRate;
+        for (int n = 0; n < u.Length; n++)
+            u[n] = BlepSquare(u[n], duty[n], amplitude, dt);
         return u;
     }
 

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a PolyBLEP PWM in `waveforms` (`polyblep_pwm(duty, sample_rate, frequency, amplitude=1,
-     phase=0)`: the PWM of ADR 0312 with the residual of ADR 0311 at the rise and at the
-     moving fall `v = u − duty[n]`).
+   - a PolyBLEP triangle in `waveforms` (`polyblep_triangle(sample_rate, num_samples,
+     frequency, amplitude=1, phase=0)`: the PolyBLAMP residual, the integral of the PolyBLEP
+     one, at the two corners of the naive triangle).
    - a hard-synced sawtooth in `waveforms` (`hard_sync_sawtooth(sample_rate, num_samples,
      frequency, sync_frequency, amplitude=1)`: the slave phase reset to 0 each time the
      master phase wraps).
@@ -2603,6 +2603,11 @@ Updated with every chunk of work. Dates are absolute.
   per-sample array, one output sample per duty value.
   Python 7079 passed, 2 skipped; .NET 6291 passed; conformance 4373/4373 in both. Version
   2026.11.18.1.
+- 2026-11-18: PolyBLEP pulse-width modulation (ADR 0313): `polyblep_pwm(duty, sample_rate,
+  frequency, amplitude=1, phase=0)` in `waveforms` (C# `Waveforms.PolyblepPwm`): the PolyBLEP
+  square's rule with a per-sample duty; the two share one edge helper.
+  Python 7090 passed, 2 skipped; .NET 6302 passed; conformance 4381/4381 in both. Version
+  2026.11.18.2.
 
 ## Not built
 

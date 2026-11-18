@@ -74,6 +74,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "bandlimited_square": waveforms.bandlimited_square,
     "bandlimited_triangle": waveforms.bandlimited_triangle,
     "polyblep_sawtooth": waveforms.polyblep_sawtooth,
+    "polyblep_pwm": waveforms.polyblep_pwm,
     "polyblep_square": waveforms.polyblep_square,
     "pwm": waveforms.pwm,
     "power_stats": measurements.power_stats,

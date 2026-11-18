@@ -244,6 +244,7 @@ public static class Conformance
             "bandlimited_square" => Bind((a.D("sample_rate"), a.I("num_samples"), a.D("frequency"), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.BandlimitedSquare(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "bandlimited_triangle" => Bind((a.D("sample_rate"), a.I("num_samples"), a.D("frequency"), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.BandlimitedTriangle(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "pwm" => Bind((Reals(a.Get("duty")), a.D("sample_rate"), a.D("frequency"), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.Pwm(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
+            "polyblep_pwm" => Bind((Reals(a.Get("duty")), a.D("sample_rate"), a.D("frequency"), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.PolyblepPwm(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "polyblep_square" => Bind((a.D("sample_rate"), a.I("num_samples"), a.D("frequency"), a.Opt("duty", 0.5), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.PolyblepSquare(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "polyblep_sawtooth" => Bind((a.D("sample_rate"), a.I("num_samples"), a.D("frequency"), a.Opt("amplitude", 1), a.Opt("phase", 0)), t => Waveforms.PolyblepSawtooth(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "pulse_train" => Bind((a.I("num_samples"), a.I("period"), a.I("width"), a.Opt("amplitude", 1), a.Has("delay") ? a.I("delay") : 0),
