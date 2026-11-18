@@ -6,8 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Allan deviation in `measurements` (`allan_deviation(fractional_frequency, sample_interval,
-     averaging_factors)`: the overlapping estimator from fractional-frequency samples).
+   - modified Allan deviation in `measurements` (`modified_allan_deviation(fractional_frequency,
+     sample_interval, averaging_factors)`: the extra average over `m` starts that separates
+     white from flicker phase noise; `3m ≤ M`).
+   - Hadamard deviation in `measurements` (`hadamard_deviation(...)`: overlapping, from second
+     differences of the means, so a linear drift gives 0; `3m ≤ M`).
+   - Higuchi fractal dimension in `measurements` (`higuchi_dimension(samples, k_max)`: the
+     least-squares slope of `ln L(k)` against `ln(1/k)`, `k = 1 … k_max`).
 
 ## Built
 
@@ -2673,6 +2678,11 @@ Updated with every chunk of work. Dates are absolute.
   excluded, `N − m` starts for both lengths, `+∞` when `A = 0`; `r` in sample units.
   Python 7265 passed, 2 skipped; .NET 6459 passed; conformance 4496/4496 in both. Version
   2026.11.18.15.
+- 2026-11-18: Allan deviation (ADR 0327): `allan_deviation(fractional_frequency,
+  sample_interval, averaging_factors)` in `measurements` (C# `Measurements.AllanDeviation`): the
+  overlapping estimator, `AllanDeviation(taus, deviations)`.
+  Python 7278 passed, 2 skipped; .NET 6472 passed; conformance 4506/4506 in both. Version
+  2026.11.18.16.
 
 ## Not built
 

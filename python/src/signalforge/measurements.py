@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -76,6 +76,15 @@ class CepstrumPitch:
     frequency: float
     quefrency: float
     strength: float
+
+
+@dataclass(frozen=True, eq=False)
+class AllanDeviation:
+    """Overlapping Allan deviations at averaging times ``taus`` in seconds (conventions: Allan
+    deviation; ADR 0327)."""
+
+    taus: NDArray[np.float64]
+    deviations: NDArray[np.float64]
 
 
 @dataclass(frozen=True)
@@ -152,6 +161,37 @@ def zero_crossing_rate(samples: ArrayLike) -> float:
         raise ValueError("samples must be finite")
     positive = x >= 0
     return int(np.count_nonzero(positive[1:] != positive[:-1])) / int(x.shape[0] - 1)
+
+
+def allan_deviation(
+    fractional_frequency: ArrayLike, sample_interval: float, averaging_factors: Sequence[int]
+) -> AllanDeviation:
+    """The overlapping Allan deviation of fractional-frequency samples at ``tau = m *
+    sample_interval`` for each averaging factor ``m`` (conventions: Allan deviation; ADR 0327)."""
+    tau0 = real(sample_interval, "sample_interval")
+    if not tau0 > 0:
+        raise ValueError("sample_interval must be positive")
+    y = np.asarray(fractional_frequency)
+    if y.ndim != 1 or y.shape[0] < 2:
+        raise ValueError("fractional_frequency must be a one-dimensional array of at least 2")
+    if np.iscomplexobj(y):
+        raise ValueError("fractional_frequency must be real")
+    y = y.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(y)):
+        raise ValueError("fractional_frequency must be finite")
+    factors = [count(m, "averaging_factors") for m in averaging_factors]
+    if not factors:
+        raise ValueError("averaging_factors must not be empty")
+    size = y.shape[0]
+    if any(m < 1 or 2 * m > size for m in factors):
+        raise ValueError("each averaging factor m must be at least 1 with 2 m <= len")
+    deviations = np.empty(len(factors))
+    for i, m in enumerate(factors):
+        means = np.lib.stride_tricks.sliding_window_view(y, m).mean(axis=1)
+        d = means[m:] - means[: size - 2 * m + 1]
+        deviations[i] = math.sqrt(float(np.sum(d * d)) / (2 * (size - 2 * m + 1)))
+    taus = np.array(factors, dtype=np.float64) * tau0
+    return AllanDeviation(taus, deviations)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

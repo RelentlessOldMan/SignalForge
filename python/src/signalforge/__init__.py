@@ -206,6 +206,7 @@ from .files import (
 )
 from .link import QpskLinkConfig, QpskLinkReport, qpsk_link
 from .measurements import (
+    AllanDeviation,
     AmAmPm,
     AutocorrelationPitch,
     CascadeNoiseFigure,
@@ -226,6 +227,7 @@ from .measurements import (
     TwoToneImd,
     TwoToneIp2,
     TwoToneIp5,
+    allan_deviation,
     am_am_pm,
     autocorrelation_pitch,
     bass_ratio,
@@ -491,10 +493,11 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.15"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.16"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
+    "AllanDeviation",
     "AmAmPm",
     "ArOrderSelection",
     "AutocorrelationPitch",
@@ -570,6 +573,7 @@ __all__ = [
     "acpr",
     "acpr_rrc",
     "adsr",
+    "allan_deviation",
     "allpass_comb",
     "allpass_first_order",
     "allpass_second_order",
