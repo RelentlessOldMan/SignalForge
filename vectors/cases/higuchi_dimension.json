@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "higuchi_dimension",
+  "description": "Higuchi fractal dimension (conventions: Higuchi fractal dimension; ADR 0330).",
+  "cases": [
+    {"id": "higuchi_dimension.line", "op": "higuchi_dimension", "args": {"samples": [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5], "k_max": 6}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "a straight line: L(k) = (N-1)/k, dimension 1"},
+    {"id": "higuchi_dimension.zigzag_three", "op": "higuchi_dimension", "args": {"samples": [1.0, -1.0, 0.5, -0.5, 1.0, -1.0, 0.5, -0.5, 1.0, -1.0, 0.5, -0.5, 1.0, -1.0, 0.5, -0.5, 1.0, -1.0, 0.5, -0.5], "k_max": 3}, "expected": 2.170671989155941, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "a period-4 zigzag, k = 1, 2, 3"},
+    {"id": "higuchi_dimension.mixed", "op": "higuchi_dimension", "args": {"samples": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5, -1.25, 0.75, 0.0, 1.5, -0.75, 2.0, 0.5, -1.0, 1.25, 0.625], "k_max": 5}, "expected": 2.1070658000769606, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "twenty arbitrary dyadic samples"},
+    {"id": "higuchi_dimension.tight", "op": "higuchi_dimension", "args": {"samples": [0.0, 1.0, 3.0, 2.0, 5.0, 4.0], "k_max": 3}, "expected": 1.6588871453795453, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "six samples, k_max 3: 2 k_max = N, the last start has one step"},
+    {"id": "higuchi_dimension.k_one", "op": "higuchi_dimension", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0], "k_max": 1}, "error": "invalid_argument", "source": "k_max must be at least 2"},
+    {"id": "higuchi_dimension.k_too_big", "op": "higuchi_dimension", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0], "k_max": 4}, "error": "invalid_argument", "source": "2 k_max must be at most N"},
+    {"id": "higuchi_dimension.constant", "op": "higuchi_dimension", "args": {"samples": [2.0, 2.0, 2.0, 2.0, 2.0, 2.0], "k_max": 2}, "error": "invalid_argument", "source": "a constant has no curve length"},
+    {"id": "higuchi_dimension.flat_at_two", "op": "higuchi_dimension", "args": {"samples": [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0], "k_max": 2}, "error": "invalid_argument", "source": "+-1 alternating: at k = 2 both starts are flat, so L(2) = 0"},
+    {"id": "higuchi_dimension.inf", "op": "higuchi_dimension", "args": {"samples": [0.0, 1.0, "-inf", 2.0], "k_max": 2}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

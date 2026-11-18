@@ -261,6 +261,37 @@ def hadamard_deviation(
     return AllanDeviation(taus, deviations)
 
 
+def higuchi_dimension(samples: ArrayLike, k_max: int) -> float:
+    """Higuchi's fractal dimension: the least-squares slope of ``ln L(k)`` against ``ln(1/k)``
+    for ``k = 1 .. k_max`` (conventions: Higuchi fractal dimension; ADR 0330)."""
+    kmax = count(k_max, "k_max")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    size = x.shape[0]
+    if kmax < 2 or 2 * kmax > size:
+        raise ValueError("k_max must be at least 2 with 2 k_max <= len(samples)")
+    lengths = np.empty(kmax)
+    for k in range(1, kmax + 1):
+        total = 0.0
+        for m in range(k):
+            sub = x[m::k]
+            steps = sub.shape[0] - 1
+            total += float(np.sum(np.abs(np.diff(sub)))) * (size - 1) / (steps * k) / k
+        lengths[k - 1] = total / k
+    if not np.all(lengths > 0):
+        raise ValueError("the curve must have a length at every k")
+    lx = -np.log(np.arange(1, kmax + 1, dtype=np.float64))
+    ly = np.log(lengths)
+    dx = lx - lx.mean()
+    return float(np.sum(dx * (ly - ly.mean())) / np.sum(dx * dx))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

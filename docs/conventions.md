@@ -200,6 +200,11 @@ rule for code not written yet.
   `σ² = Σ_{j=0}^{M−3m} ((ȳ_{j+2m} − ȳ_{j+m}) − (ȳ_{j+m} − ȳ_j))² / (6(M − 3m + 1))`,
   `τ = m·τ₀`. Gives `AllanDeviation(taus, deviations)`. Rules as the Allan deviation but
   `3m ≤ M`. **(implemented)**
+- **Higuchi fractal dimension** ([ADR 0330](adr/0330-higuchi-dimension.md);
+  `higuchi_dimension(samples, k_max)`, C# `Measurements.HiguchiDimension`): for `k = 1 … k_max`,
+  starts `m < k`, `n_m = floor((N−1−m)/k)`, `L_m(k) = Σ_{i=1}^{n_m} |x[m+ik] − x[m+(i−1)k]| ·
+  (N−1)/(n_m k) / k`, `L(k)` their mean; the least-squares slope of `ln L(k)` against `−ln k`.
+  Real, finite; integer `k_max ≥ 2` with `2·k_max ≤ N`; every `L(k) > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

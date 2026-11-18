@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Higuchi fractal dimension in `measurements` (`higuchi_dimension(samples, k_max)`: the
-     least-squares slope of `ln L(k)` against `ln(1/k)`, `k = 1 … k_max`).
    - time deviation in `measurements` (`time_deviation(...)`: `τ·MDEV/√3`, the same arguments
      as ADR 0328, in seconds).
    - detrended fluctuation analysis in `measurements` (`detrended_fluctuation(samples,
@@ -2693,6 +2691,11 @@ Updated with every chunk of work. Dates are absolute.
   linear drift cancels; `3m ≤ M`. Same result type as the Allan deviation.
   Python 7303 passed, 2 skipped; .NET 6496 passed; conformance 4524/4524 in both. Version
   2026.11.18.18.
+- 2026-11-18: Higuchi fractal dimension (ADR 0330): `higuchi_dimension(samples, k_max)` in
+  `measurements` (C# `Measurements.HiguchiDimension`): least-squares slope of `ln L(k)` against
+  `−ln k`; `2 ≤ k_max ≤ N/2`, every `L(k) > 0`.
+  Python 7316 passed, 2 skipped; .NET 6508 passed; conformance 4533/4533 in both. Version
+  2026.11.18.19.
 
 ## Not built
 
