@@ -2649,6 +2649,28 @@ def vibrato(
     return y
 
 
+def flanger(
+    samples: ArrayLike,
+    delay: float,
+    depth: float,
+    rate: float,
+    sample_rate: float,
+    mix: float,
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The vibrato mixed with the dry signal, ``x (1 - mix) + v mix`` (conventions: Flanger;
+    ADR 0272)."""
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    v = vibrato(samples, delay, depth, rate, sample_rate)
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        yc: NDArray[Any] = (x.real * (1 - m) + v.real * m) + 1j * (x.imag * (1 - m) + v.imag * m)
+        return yc
+    y: NDArray[np.float64] = np.asarray(x, dtype=np.float64) * (1 - m) + np.real(v) * m
+    return y
+
+
 def tremolo(
     samples: ArrayLike, rate: float, depth: float, sample_rate: float
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

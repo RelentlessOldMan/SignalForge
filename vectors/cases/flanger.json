@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "flanger",
+  "description": "Flanger (conventions: Flanger; ADR 0272).",
+  "cases": [
+    {"id": "flanger.comb", "op": "flanger", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75, 0.5, -0.25], "delay": 2.0, "depth": 0.0, "rate": 1.0, "sample_rate": 8.0, "mix": 0.5}, "expected": [0.5, -0.25, 0.625, 0.75, -0.375, 1.375, -0.25, 0.25], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "depth 0, delay 2, mix 1/2: (x[n] + x[n-2])/2"},
+    {"id": "flanger.dry", "op": "flanger", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75, 0.5, -0.25], "delay": 3.0, "depth": 1.0, "rate": 1.0, "sample_rate": 8.0, "mix": 0.0}, "expected": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75, 0.5, -0.25], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mix 0: the dry signal"},
+    {"id": "flanger.wet", "op": "flanger", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75, 0.5, -0.25], "delay": 2.0, "depth": 1.0, "rate": 2.0, "sample_rate": 8.0, "mix": 1.0}, "expected": [0.0, 0.0, -0.5, -0.49999999999999983, -0.5, 1.9999999999999991, 0.75, 0.75], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mix 1: the vibrato alone"},
+    {"id": "flanger.modulated", "op": "flanger", "args": {"samples": [0.3, -0.7, 1.1, 0.4, -0.9, 0.2, 0.8, -0.6, 0.5, 1.3, -0.1, 0.05], "delay": 3.25, "depth": 1.5, "rate": 0.7, "sample_rate": 10.0, "mix": 0.3}, "expected": [0.21, -0.48999999999999994, 0.77, 0.31392686523274455, -0.8232211351855632, 0.337347645527871, 0.31127180662171217, -0.31553278332436663, 0.5292408138904016, 0.8237353232649259, -0.17953658778440085, 0.04046004938566953], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "delay 3.25, depth 1.5, rate 0.7 Hz at 10 Hz, mix 0.3"},
+    {"id": "flanger.complex", "op": "flanger", "args": {"samples": {"re": [1.0, 0.0, -2.0, 0.5], "im": [0.0, 1.0, 0.5, -1.0]}, "delay": 1.0, "depth": 0.0, "rate": 1.0, "sample_rate": 4.0, "mix": 0.5}, "expected": {"re": [0.5, 0.5, -1.0, -0.75], "im": [0.0, 0.5, 0.75, -0.25]}, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "complex, delay 1, mix 1/2: (x[n] + x[n-1])/2"},
+    {"id": "flanger.mix_high", "op": "flanger", "args": {"samples": [1.0, 2.0], "delay": 2.0, "depth": 1.0, "rate": 1.0, "sample_rate": 8.0, "mix": 1.5}, "error": "invalid_argument", "source": "mix must be at most 1"},
+    {"id": "flanger.mix_negative", "op": "flanger", "args": {"samples": [1.0, 2.0], "delay": 2.0, "depth": 1.0, "rate": 1.0, "sample_rate": 8.0, "mix": -0.25}, "error": "invalid_argument", "source": "mix must be at least 0"},
+    {"id": "flanger.depth_above_delay", "op": "flanger", "args": {"samples": [1.0, 2.0], "delay": 2.0, "depth": 3.0, "rate": 1.0, "sample_rate": 8.0, "mix": 0.5}, "error": "invalid_argument", "source": "depth must be at most delay"},
+    {"id": "flanger.empty", "op": "flanger", "args": {"samples": [], "delay": 2.0, "depth": 1.0, "rate": 1.0, "sample_rate": 8.0, "mix": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"}
+  ]
+}

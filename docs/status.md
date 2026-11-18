@@ -6,8 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a flanger (`flanger(samples, delay, depth, rate, sample_rate, mix)`, the vibrato mixed with
-     the dry signal).
+   - a chorus (`chorus(samples, delay, depth, rate, sample_rate, voices, mix)`, the mean of
+     `voices` vibratos with LFO phases `2πk/voices`, mixed with the dry signal);
+   - a phaser (`phaser(samples, stages, low, high, rate, sample_rate, mix)`, a cascade of
+     first-order allpasses whose break frequency sweeps between `low` and `high` under a cosine
+     LFO, mixed with the dry signal).
 
 ## Built
 
@@ -2384,6 +2387,10 @@ Updated with every chunk of work. Dates are absolute.
   read with linear interpolation from rest.
   Python 6586 passed, 2 skipped; .NET 5830 passed; conformance 4003/4003 in both. Version
   2026.11.17.70.
+- 2026-11-17: Flanger (ADR 0272): `flanger(samples, delay, depth, rate, sample_rate, mix)` in
+  `dsp` (C# `Dsp.Flanger`, real and complex), `x·(1 − mix) + v·mix` with `v` the vibrato.
+  Python 6598 passed, 2 skipped; .NET 5841 passed; conformance 4012/4012 in both. Version
+  2026.11.17.71.
 
 ## Not built
 

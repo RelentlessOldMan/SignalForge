@@ -90,6 +90,7 @@ from .dsp import (
     fir_least_squares,
     fir_lowpass,
     fir_response,
+    flanger,
     gammatone,
     hampel_filter,
     hard_clip,
@@ -421,7 +422,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.70"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.71"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -612,6 +613,7 @@ __all__ = [
     "fir_least_squares",
     "fir_lowpass",
     "fir_response",
+    "flanger",
     "fractional_delay",
     "frequency_offset",
     "fsk_ber_theory",

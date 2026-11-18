@@ -195,4 +195,54 @@ public static partial class Dsp
         if (!double.IsFinite(depth) || depth < 0 || depth > delay)
             throw new ArgumentOutOfRangeException(nameof(depth), "depth must be from 0 to delay");
     }
+
+    /// <summary>The vibrato on real samples mixed with the dry signal,
+    /// <c>x·(1 − mix) + v·mix</c> (conventions: Flanger; ADR 0272).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="delay">The centre delay, samples, finite and at least 0.</param>
+    /// <param name="depth">The delay swing, samples, from 0 to <paramref name="delay"/>.</param>
+    /// <param name="rate">The LFO frequency, Hz, finite.</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <param name="mix">The wet share, 0 to 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Flanger(ReadOnlySpan<double> samples, double delay, double depth, double rate, double sampleRate, double mix)
+    {
+        CheckMix(mix);
+        double[] v = Vibrato(samples, delay, depth, rate, sampleRate);
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+            y[n] = samples[n] * (1 - mix) + v[n] * mix;
+        return y;
+    }
+
+    /// <summary>The vibrato on complex samples mixed with the dry signal part by part,
+    /// <c>x·(1 − mix) + v·mix</c> (conventions: Flanger; ADR 0272).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="delay">The centre delay, samples, finite and at least 0.</param>
+    /// <param name="depth">The delay swing, samples, from 0 to <paramref name="delay"/>.</param>
+    /// <param name="rate">The LFO frequency, Hz, finite.</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <param name="mix">The wet share, 0 to 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Flanger(ReadOnlySpan<Complex> samples, double delay, double depth, double rate, double sampleRate, double mix)
+    {
+        CheckMix(mix);
+        Complex[] v = Vibrato(samples, delay, depth, rate, sampleRate);
+        double u = 1 - mix;
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            Complex x = samples[n];
+            y[n] = new Complex(x.Real * u + v[n].Real * mix, x.Imaginary * u + v[n].Imaginary * mix);
+        }
+        return y;
+    }
+
+    private static void CheckMix(double mix)
+    {
+        if (!double.IsFinite(mix) || mix < 0 || mix > 1)
+            throw new ArgumentOutOfRangeException(nameof(mix), "mix must be in [0, 1]");
+    }
 }

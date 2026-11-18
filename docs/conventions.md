@@ -2003,6 +2003,9 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `p = n − d`, `i = ⌊p⌋`, `f = p − i`, `y = x[i]·(1 − f) + x[i+1]·f` with `x[k < 0] = 0`
   (complex: part by part). Finite `delay ≥ 0`, `depth` in `[0, delay]`, finite `rate`, finite
   `sample_rate > 0`; samples finite, non-empty. **(implemented)**
+- **Flanger** (`flanger(samples, delay, depth, rate, sample_rate, mix)`, C# `Dsp.Flanger`,
+  [ADR 0272](adr/0272-flanger.md)): `y = x·(1 − mix) + v·mix` with `v` the vibrato (complex:
+  part by part). The vibrato's rules; finite `mix` in `[0, 1]`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
