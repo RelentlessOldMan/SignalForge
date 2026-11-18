@@ -1944,6 +1944,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   envelope follower (ADR 0238); `g = compressor_gain(20·log10 e)` (ADR 0254), `g = 0` where
   `e = 0`; `y = x·10^((g + makeup_db)/20)`. Rules of both parts, plus finite `makeup_db`; real or
   complex, the same kind out. **(implemented)**
+- **Downward expander** (`expand(samples, threshold_db, ratio, attack, release, *, knee_db=0.0,
+  makeup_db=0.0)`, C# `Dsp.Expand`, [ADR 0258](adr/0258-expand.md)): the feed-forward
+  compressor's chain with `g = expander_gain(20·log10 e)` (ADR 0256), `g = 0` where `e = 0`.
+  Same rules; real or complex, the same kind out. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

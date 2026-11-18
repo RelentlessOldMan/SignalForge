@@ -156,7 +156,7 @@ public static partial class Dsp
     public static double[] Compress(ReadOnlySpan<double> samples, double thresholdDb, double ratio, double attack, double release, double kneeDb = 0, double makeupDb = 0)
     {
         CheckCompress(thresholdDb, ratio, kneeDb, makeupDb);
-        double[] f = CompressFactors(EnvelopeFollower(samples, attack, release), thresholdDb, ratio, kneeDb, makeupDb);
+        double[] f = DynamicsFactors(EnvelopeFollower(samples, attack, release), l => CompressorGain(l, thresholdDb, ratio, kneeDb), makeupDb);
         for (int n = 0; n < f.Length; n++)
             f[n] = samples[n] * f[n];
         return f;
@@ -176,7 +176,7 @@ public static partial class Dsp
     public static Complex[] Compress(ReadOnlySpan<Complex> samples, double thresholdDb, double ratio, double attack, double release, double kneeDb = 0, double makeupDb = 0)
     {
         CheckCompress(thresholdDb, ratio, kneeDb, makeupDb);
-        double[] f = CompressFactors(EnvelopeFollower(samples, attack, release), thresholdDb, ratio, kneeDb, makeupDb);
+        double[] f = DynamicsFactors(EnvelopeFollower(samples, attack, release), l => CompressorGain(l, thresholdDb, ratio, kneeDb), makeupDb);
         var y = new Complex[f.Length];
         for (int n = 0; n < f.Length; n++)
             y[n] = new Complex(samples[n].Real * f[n], samples[n].Imaginary * f[n]);
@@ -195,7 +195,7 @@ public static partial class Dsp
             throw new ArgumentOutOfRangeException(nameof(makeupDb), "makeup_db must be finite");
     }
 
-    private static double[] CompressFactors(double[] env, double thresholdDb, double ratio, double kneeDb, double makeupDb)
+    private static double[] DynamicsFactors(double[] env, Func<double[], double[]> gain, double makeupDb)
     {
         int m = 0;
         foreach (double e in env)
@@ -210,7 +210,7 @@ public static partial class Dsp
             if (e > 0)
                 levels[k++] = 20 * Math.Log10(e);
         }
-        double[] gp = m > 0 ? CompressorGain(levels, thresholdDb, ratio, kneeDb) : [];
+        double[] gp = m > 0 ? gain(levels) : [];
         var f = new double[env.Length];
         k = 0;
         for (int n = 0; n < env.Length; n++)
@@ -219,5 +219,46 @@ public static partial class Dsp
             f[n] = Math.Pow(10, (g + makeupDb) / 20);
         }
         return f;
+    }
+
+    /// <summary>Downward expander on real samples: envelope follower, expander gain in dB,
+    /// makeup, applied per sample (conventions: Downward expander; ADR 0258).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="thresholdDb">The threshold in dB, finite.</param>
+    /// <param name="ratio">The expansion ratio, finite and at least 1.</param>
+    /// <param name="attack">The detector's attack coefficient, in [0, 1).</param>
+    /// <param name="release">The detector's release coefficient, in [0, 1).</param>
+    /// <param name="kneeDb">The knee width in dB, finite and at least 0.</param>
+    /// <param name="makeupDb">The makeup gain in dB, finite.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Expand(ReadOnlySpan<double> samples, double thresholdDb, double ratio, double attack, double release, double kneeDb = 0, double makeupDb = 0)
+    {
+        CheckCompress(thresholdDb, ratio, kneeDb, makeupDb);
+        double[] f = DynamicsFactors(EnvelopeFollower(samples, attack, release), l => ExpanderGain(l, thresholdDb, ratio, kneeDb), makeupDb);
+        for (int n = 0; n < f.Length; n++)
+            f[n] = samples[n] * f[n];
+        return f;
+    }
+
+    /// <summary>Downward expander on complex samples: envelope follower, expander gain in dB,
+    /// makeup, applied per sample (conventions: Downward expander; ADR 0258).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="thresholdDb">The threshold in dB, finite.</param>
+    /// <param name="ratio">The expansion ratio, finite and at least 1.</param>
+    /// <param name="attack">The detector's attack coefficient, in [0, 1).</param>
+    /// <param name="release">The detector's release coefficient, in [0, 1).</param>
+    /// <param name="kneeDb">The knee width in dB, finite and at least 0.</param>
+    /// <param name="makeupDb">The makeup gain in dB, finite.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Expand(ReadOnlySpan<Complex> samples, double thresholdDb, double ratio, double attack, double release, double kneeDb = 0, double makeupDb = 0)
+    {
+        CheckCompress(thresholdDb, ratio, kneeDb, makeupDb);
+        double[] f = DynamicsFactors(EnvelopeFollower(samples, attack, release), l => ExpanderGain(l, thresholdDb, ratio, kneeDb), makeupDb);
+        var y = new Complex[f.Length];
+        for (int n = 0; n < f.Length; n++)
+            y[n] = new Complex(samples[n].Real * f[n], samples[n].Imaginary * f[n]);
+        return y;
     }
 }

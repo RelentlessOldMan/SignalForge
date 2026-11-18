@@ -2557,6 +2557,36 @@ def sample_and_hold(
     return y
 
 
+def expand(
+    samples: ArrayLike,
+    threshold_db: float,
+    ratio: float,
+    attack: float,
+    release: float,
+    *,
+    knee_db: float = 0.0,
+    makeup_db: float = 0.0,
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Downward expander: envelope follower, expander gain in dB, makeup, applied per sample
+    (conventions: Downward expander; ADR 0258)."""
+    t = real(threshold_db, "threshold_db")
+    r = real(ratio, "ratio")
+    if not r >= 1:
+        raise ValueError("ratio must be at least 1")
+    w = real(knee_db, "knee_db")
+    if not w >= 0:
+        raise ValueError("knee_db must be at least 0")
+    mk = real(makeup_db, "makeup_db")
+    x = _vector(samples, "samples")
+    e = envelope_follower(x, attack, release)
+    g = np.zeros(x.size)
+    pos = e > 0
+    if np.any(pos):
+        g[pos] = expander_gain(20 * np.log10(e[pos]), t, r, knee_db=w)
+    y: NDArray[Any] = x * np.power(10.0, (g + mk) / 20)
+    return y
+
+
 def compress(
     samples: ArrayLike,
     threshold_db: float,

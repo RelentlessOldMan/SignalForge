@@ -657,6 +657,11 @@ public static class Conformance
                 a.Has("delay") ? a.I("delay") : 1), t => Dsp.CicCompensator(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "savgol_coefficients" => Bind((a.I("length"), a.I("order"), a.Has("derivative") ? a.I("derivative") : 0,
                 a.Has("position") ? a.I("position") : 0), t => Dsp.SavgolCoefficients(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "expand" => a.Get("samples") is Complex[] eps
+                ? Bind((eps, a.D("threshold_db"), a.D("ratio"), a.D("attack"), a.D("release"), a.Has("knee_db") ? a.D("knee_db") : 0.0, a.Has("makeup_db") ? a.D("makeup_db") : 0.0),
+                    t => Dsp.Expand(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7))
+                : Bind((Reals(a.Get("samples")), a.D("threshold_db"), a.D("ratio"), a.D("attack"), a.D("release"), a.Has("knee_db") ? a.D("knee_db") : 0.0, a.Has("makeup_db") ? a.D("makeup_db") : 0.0),
+                    t => Dsp.Expand(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
             "compress" => a.Get("samples") is Complex[] cps
                 ? Bind((cps, a.D("threshold_db"), a.D("ratio"), a.D("attack"), a.D("release"), a.Has("knee_db") ? a.D("knee_db") : 0.0, a.Has("makeup_db") ? a.D("makeup_db") : 0.0),
                     t => Dsp.Compress(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7))

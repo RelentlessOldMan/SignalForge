@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "expand",
+  "description": "Downward expander (conventions: Downward expander; ADR 0258).",
+  "cases": [
+    {"id": "expand.instant", "op": "expand", "args": {"samples": [2.0, 1.0, 0.5, -0.25, 0.0, 0.125, -4.0], "threshold_db": 0.0, "ratio": 2.0, "attack": 0.0, "release": 0.0}, "expected": [2.0, 1.0, 0.25, -0.0625, 0.0, 0.015625, -4.0], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "attack = release = 0, T = 0 dB, R = 2: |y| = |x|^2 below 1, unchanged at and above"},
+    {"id": "expand.instant_threshold", "op": "expand", "args": {"samples": [1.0, 0.25, 0.125, -0.0625, 2.0], "threshold_db": -6.0, "ratio": 3.0, "attack": 0.0, "release": 0.0}, "expected": [1.0, 0.06220424539898394, 0.007775530674872993, -0.0009719413343591238, 2.0], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "instant, T = -6 dB, R = 3"},
+    {"id": "expand.soft_knee", "op": "expand", "args": {"samples": [0.25, 0.5, 0.75, 1.0, 1.5, 2.0], "threshold_db": 0.0, "ratio": 3.0, "attack": 0.0, "release": 0.0, "knee_db": 6.0}, "expected": [0.015625, 0.125, 0.41984620676384565, 0.8413951416451951, 1.5, 2.0], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "instant, R = 3, 6 dB knee"},
+    {"id": "expand.smoothed", "op": "expand", "args": {"samples": [0.0, 1.0, 1.0, 1.0, 0.25, 0.25, 0.25, 0.25, 0.0, 0.0625], "threshold_db": -6.0, "ratio": 2.0, "attack": 0.5, "release": 0.75}, "expected": [0.0, 0.9976311574844398, 1.0, 1.0, 0.25, 0.25, 0.25, 0.22334662388018345, 0.0, 0.03335661733761259], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "attack 1/2, release 3/4: step up then down, T = -6 dB, R = 2"},
+    {"id": "expand.makeup", "op": "expand", "args": {"samples": [0.25, 1.0, 4.0], "threshold_db": 0.0, "ratio": 2.0, "attack": 0.0, "release": 0.0, "makeup_db": 6.0}, "expected": [0.12470389468555497, 1.9952623149688795, 7.981049259875518], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "instant, R = 2, 6 dB makeup"},
+    {"id": "expand.ratio_one", "op": "expand", "args": {"samples": [0.5, -3.0, 0.001], "threshold_db": -20.0, "ratio": 1.0, "attack": 0.25, "release": 0.5}, "expected": [0.5, -3.0, 0.001], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "R = 1: unchanged"},
+    {"id": "expand.complex", "op": "expand", "args": {"samples": {"re": [0.375, 0.0, 3.0, -0.15], "im": [0.5, 0.25, 4.0, 0.2]}, "threshold_db": 0.0, "ratio": 2.0, "attack": 0.0, "release": 0.0}, "expected": {"re": [0.234375, 0.0, 3.0, -0.0375], "im": [0.3125, 0.0625, 4.0, 0.05]}, "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "complex by magnitude, instant, T = 0 dB, R = 2: |x| = 5/8, 1/4, 5, 1/4; phase kept"},
+    {"id": "expand.ratio_below_one", "op": "expand", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 0.5, "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "ratio must be at least 1"},
+    {"id": "expand.attack_one", "op": "expand", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 2.0, "attack": 1.0, "release": 0.5}, "error": "invalid_argument", "source": "attack must be in [0, 1)"},
+    {"id": "expand.release_negative", "op": "expand", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": -0.25}, "error": "invalid_argument", "source": "release must be in [0, 1)"},
+    {"id": "expand.knee_negative", "op": "expand", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": 0.5, "knee_db": -1.0}, "error": "invalid_argument", "source": "knee_db must be at least 0"},
+    {"id": "expand.makeup_inf", "op": "expand", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": 0.5, "makeup_db": "inf"}, "error": "invalid_argument", "source": "makeup_db must be finite"},
+    {"id": "expand.empty", "op": "expand", "args": {"samples": [], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "expand.nan_sample", "op": "expand", "args": {"samples": [1.0, "nan"], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

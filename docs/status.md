@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a downward expander (`expand(samples, threshold_db, ratio, attack, release, *,
-     knee_db=0.0)`, the ADR 0257 chain with the ADR 0256 gain);
    - a tanh saturator (`saturate(samples, drive)`, `tanh(drive·x)/tanh(drive)`, unity at ±1);
    - a ring modulator (`ring_modulate(samples, frequency, sample_rate, *, phase=0.0)`,
      `x[n]·cos(2π f n/fs + φ)`).
@@ -2321,6 +2319,11 @@ Updated with every chunk of work. Dates are absolute.
   envelope gives 0 dB.
   Python 6393 passed, 2 skipped; .NET 5648 passed; conformance 3849/3849 in both. Version
   2026.11.17.56.
+- 2026-11-17: Downward expander (ADR 0258): `expand(samples, threshold_db, ratio, attack, release,
+  *, knee_db=0.0, makeup_db=0.0)` in `dsp` (C# `Dsp.Expand`, real and complex), the ADR 0257
+  chain with the ADR 0256 gain; C# compressor and expander share `DynamicsFactors`.
+  Python 6409 passed, 2 skipped; .NET 5664 passed; conformance 3863/3863 in both. Version
+  2026.11.17.57.
 
 ## Not built
 
