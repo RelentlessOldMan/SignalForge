@@ -2443,13 +2443,13 @@ def dc_blocker(samples: ArrayLike, pole: float) -> NDArray[np.complex128] | NDAr
 _SVF_OUTPUTS = ("lowpass", "bandpass", "highpass", "notch")
 
 
-def _svf_run(v: list[float], g: float, k: float, output: str) -> NDArray[np.float64]:
-    a1 = 1 / (1 + g * (g + k))
-    a2 = g * a1
-    a3 = g * a2
+def _svf_run(v: list[float], gs: list[float], k: float, output: str) -> NDArray[np.float64]:
     ic1 = ic2 = 0.0
     out = []
-    for x in v:
+    for x, g in zip(v, gs, strict=True):
+        a1 = 1 / (1 + g * (g + k))
+        a2 = g * a1
+        a3 = g * a2
         v3 = x - ic2
         v1 = a1 * ic1 + a2 * v3
         v2 = ic2 + a2 * ic1 + a3 * v3
@@ -2488,11 +2488,49 @@ def svf(
     g = math.tan(math.pi * fc / fs)
     k = 1 / qq
     if np.iscomplexobj(x):
-        yc: NDArray[Any] = _svf_run(x.real.tolist(), g, k, output) + 1j * _svf_run(
-            x.imag.tolist(), g, k, output
+        yc: NDArray[Any] = _svf_run(x.real.tolist(), [g] * x.size, k, output) + 1j * _svf_run(
+            x.imag.tolist(), [g] * x.size, k, output
         )
         return yc
-    return _svf_run(np.asarray(x, dtype=np.float64).tolist(), g, k, output)
+    return _svf_run(np.asarray(x, dtype=np.float64).tolist(), [g] * x.size, k, output)
+
+
+def auto_wah(
+    samples: ArrayLike,
+    low: float,
+    high: float,
+    q: float,
+    attack: float,
+    release: float,
+    sample_rate: float,
+    mix: float,
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """The state-variable band-pass, unity peak, with its cutoff moved from ``low`` to ``high``
+    by the envelope, mixed with the dry signal (conventions: Auto-wah; ADR 0280)."""
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive")
+    lo = real(low, "low")
+    hi = real(high, "high")
+    if not 0 < lo <= hi < fs / 2:
+        raise ValueError("need 0 < low <= high < sample_rate / 2")
+    qq = real(q, "q")
+    if not qq > 0:
+        raise ValueError("q must be positive")
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    x = _vector(samples, "samples")
+    e = envelope_follower(x, attack, release)
+    k = 1 / qq
+    gs = [math.tan(math.pi * (lo + (hi - lo) * min(v, 1.0)) / fs) for v in e.tolist()]
+    if np.iscomplexobj(x):
+        wet: NDArray[Any] = k * _svf_run(x.real.tolist(), gs, k, "bandpass") + 1j * (
+            k * _svf_run(x.imag.tolist(), gs, k, "bandpass")
+        )
+    else:
+        wet = k * _svf_run(np.asarray(x, dtype=np.float64).tolist(), gs, k, "bandpass")
+    return _dry_wet(x, wet, m)
 
 
 def comb_filter(

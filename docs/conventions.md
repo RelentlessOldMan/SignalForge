@@ -2041,6 +2041,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `v1 = a1·ic1 + a2·v3`, `v2 = ic2 + a2·ic1 + a3·v3`, `ic1 = 2·v1 − ic1`, `ic2 = 2·v2 − ic2`.
   Low `v2`, band `v1` (peak gain `q`), high `x − k·v1 − v2`, notch `x − k·v1`; complex part by
   part. `0 < cutoff < fs/2`, finite `q > 0`. **(implemented)**
+- **Auto-wah** (`auto_wah(samples, low, high, q, attack, release, sample_rate, mix)`, C#
+  `Dsp.AutoWah`, [ADR 0280](adr/0280-auto-wah.md)): `e = envelope_follower(samples, attack,
+  release)`, `fc = low + (high − low)·min(e, 1)`, `g = tan((π·fc)/fs)` per sample; the SVF
+  recursion with `a1`, `a2`, `a3` recomputed each sample and the state carried; wet `k·v1`;
+  `y = x·(1 − mix) + wet·mix` (complex: part by part, one envelope). `0 < low ≤ high < fs/2`;
+  finite `q > 0`; finite `mix` in `[0, 1]`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

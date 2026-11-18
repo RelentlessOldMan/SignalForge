@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - an auto-wah (`auto_wah(samples, low, high, q, attack, release, sample_rate, mix)`, the
-     state-variable band-pass with its cutoff moved per sample from `low` to `high` by the
-     envelope follower, clipped at 1, mixed with the dry signal).
+   - a de-esser (`de_esser(samples, cutoff, q, threshold_db, ratio, attack, release, sample_rate)`,
+     the sidechain compressor keyed on the state-variable band-pass of the input).
    - a transient shaper (`transient_shaper(samples, fast, slow, amount)`, the gain
      `(e_fast/e_slow)^amount` from two envelope followers, 1 where `e_slow = 0`).
 
@@ -2428,6 +2427,12 @@ Updated with every chunk of work. Dates are absolute.
   trapezoidal (TPT) form with low-pass, band-pass, high-pass and notch outputs.
   Python 6687 passed, 2 skipped; .NET 5923 passed; conformance 4080/4080 in both. Version
   2026.11.17.78.
+- 2026-11-17: Auto-wah (ADR 0280): `auto_wah(samples, low, high, q, attack, release,
+  sample_rate, mix)` in `dsp` (C# `Dsp.AutoWah`, real and complex), the state-variable band-pass
+  at unity peak with its cutoff moved per sample by the envelope follower, mixed with the dry
+  signal. The SVF's internal reader now takes a coefficient per sample.
+  Python 6701 passed, 2 skipped; .NET 5936 passed; conformance 4091/4091 in both. Version
+  2026.11.17.79.
 
 ## Not built
 

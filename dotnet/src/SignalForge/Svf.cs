@@ -40,7 +40,7 @@ public static partial class Dsp
                 throw new ArgumentException("samples must be finite", nameof(samples));
             v[n] = samples[n];
         }
-        return SvfRun(v, g, k, output);
+        return SvfRun(v, SvfConstant(g, v.Length), k, output);
     }
 
     /// <summary>Trapezoidal state-variable filter on complex samples, part by part
@@ -64,7 +64,8 @@ public static partial class Dsp
             re[n] = samples[n].Real;
             im[n] = samples[n].Imaginary;
         }
-        double[] yr = SvfRun(re, g, k, output), yi = SvfRun(im, g, k, output);
+        double[] gs = SvfConstant(g, re.Length);
+        double[] yr = SvfRun(re, gs, k, output), yi = SvfRun(im, gs, k, output);
         var y = new Complex[re.Length];
         for (int n = 0; n < y.Length; n++)
             y[n] = new Complex(yr[n], yi[n]);
@@ -86,15 +87,15 @@ public static partial class Dsp
         return (Math.Tan(Math.PI * cutoff / sampleRate), 1 / q);
     }
 
-    private static double[] SvfRun(double[] v, double g, double k, SvfOutput output)
+    private static double[] SvfRun(double[] v, double[] g, double k, SvfOutput output)
     {
-        double a1 = 1 / (1 + g * (g + k));
-        double a2 = g * a1;
-        double a3 = g * a2;
         double ic1 = 0, ic2 = 0;
         var y = new double[v.Length];
         for (int n = 0; n < v.Length; n++)
         {
+            double a1 = 1 / (1 + g[n] * (g[n] + k));
+            double a2 = g[n] * a1;
+            double a3 = g[n] * a2;
             double x = v[n];
             double v3 = x - ic2;
             double v1 = a1 * ic1 + a2 * v3;
@@ -110,5 +111,91 @@ public static partial class Dsp
             };
         }
         return y;
+    }
+
+    private static double[] SvfConstant(double g, int length)
+    {
+        var a = new double[length];
+        Array.Fill(a, g);
+        return a;
+    }
+
+    /// <summary>The state-variable band-pass on real samples, unity peak, with its cutoff moved
+    /// from <paramref name="low"/> to <paramref name="high"/> by the envelope, mixed with the dry
+    /// signal (conventions: Auto-wah; ADR 0280).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="low">The cutoff at silence, Hz, positive.</param>
+    /// <param name="high">The cutoff at an envelope of 1 or more, Hz, from
+    /// <paramref name="low"/> to below half the sample rate.</param>
+    /// <param name="q">The quality factor, finite and positive.</param>
+    /// <param name="attack">The envelope follower's attack coefficient, in [0, 1).</param>
+    /// <param name="release">The envelope follower's release coefficient, in [0, 1).</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <param name="mix">The wet share, 0 to 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] AutoWah(ReadOnlySpan<double> samples, double low, double high, double q, double attack, double release, double sampleRate, double mix)
+    {
+        CheckAutoWah(low, high, q, sampleRate, mix);
+        double[] g = AutoWahCoefficients(EnvelopeFollower(samples, attack, release), low, high, sampleRate);
+        double k = 1 / q;
+        double[] wet = SvfRun(samples.ToArray(), g, k, SvfOutput.Bandpass);
+        var y = new double[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = samples[n] * (1 - mix) + k * wet[n] * mix;
+        return y;
+    }
+
+    /// <summary>The state-variable band-pass on complex samples, part by part, unity peak, with
+    /// its cutoff moved from <paramref name="low"/> to <paramref name="high"/> by the envelope,
+    /// mixed with the dry signal (conventions: Auto-wah; ADR 0280).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="low">The cutoff at silence, Hz, positive.</param>
+    /// <param name="high">The cutoff at an envelope of 1 or more, Hz, from
+    /// <paramref name="low"/> to below half the sample rate.</param>
+    /// <param name="q">The quality factor, finite and positive.</param>
+    /// <param name="attack">The envelope follower's attack coefficient, in [0, 1).</param>
+    /// <param name="release">The envelope follower's release coefficient, in [0, 1).</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <param name="mix">The wet share, 0 to 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] AutoWah(ReadOnlySpan<Complex> samples, double low, double high, double q, double attack, double release, double sampleRate, double mix)
+    {
+        CheckAutoWah(low, high, q, sampleRate, mix);
+        double[] g = AutoWahCoefficients(EnvelopeFollower(samples, attack, release), low, high, sampleRate);
+        double k = 1 / q;
+        var re = new double[samples.Length];
+        var im = new double[samples.Length];
+        for (int n = 0; n < re.Length; n++)
+        {
+            re[n] = samples[n].Real;
+            im[n] = samples[n].Imaginary;
+        }
+        double[] wr = SvfRun(re, g, k, SvfOutput.Bandpass), wi = SvfRun(im, g, k, SvfOutput.Bandpass);
+        double u = 1 - mix;
+        var y = new Complex[re.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = new Complex(re[n] * u + k * wr[n] * mix, im[n] * u + k * wi[n] * mix);
+        return y;
+    }
+
+    private static void CheckAutoWah(double low, double high, double q, double sampleRate, double mix)
+    {
+        if (!double.IsFinite(sampleRate) || sampleRate <= 0)
+            throw new ArgumentOutOfRangeException(nameof(sampleRate), "sampleRate must be positive");
+        if (!double.IsFinite(low) || !double.IsFinite(high) || !(low > 0 && low <= high && high < sampleRate / 2))
+            throw new ArgumentOutOfRangeException(nameof(high), "need 0 < low <= high < sampleRate / 2");
+        if (!double.IsFinite(q) || !(q > 0))
+            throw new ArgumentOutOfRangeException(nameof(q), "q must be positive");
+        CheckMix(mix);
+    }
+
+    private static double[] AutoWahCoefficients(double[] env, double low, double high, double sampleRate)
+    {
+        var g = new double[env.Length];
+        for (int n = 0; n < g.Length; n++)
+            g[n] = Math.Tan(Math.PI * (low + (high - low) * Math.Min(env[n], 1.0)) / sampleRate);
+        return g;
     }
 }

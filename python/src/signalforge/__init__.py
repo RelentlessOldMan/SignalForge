@@ -38,6 +38,7 @@ from .dsp import (
     ar_spectral_flatness,
     arcsine_to_reflection,
     auto_pan,
+    auto_wah,
     autocorrelation,
     balance,
     bandwidth_expansion,
@@ -429,7 +430,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.78"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.79"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -515,6 +516,7 @@ __all__ = [
     "ar_spectral_flatness",
     "arcsine_to_reflection",
     "auto_pan",
+    "auto_wah",
     "autocorrelation",
     "autocorrelation_pitch",
     "awgn",

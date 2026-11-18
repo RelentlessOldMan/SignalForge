@@ -756,6 +756,9 @@ public static class Conformance
             "envelope_follower" => a.Get("samples") is Complex[] envs
                 ? Bind((envs, a.D("attack"), a.D("release")), t => Dsp.EnvelopeFollower(t.Item1, t.Item2, t.Item3))
                 : Bind((Reals(a.Get("samples")), a.D("attack"), a.D("release")), t => Dsp.EnvelopeFollower(t.Item1, t.Item2, t.Item3)),
+            "auto_wah" => a.Get("samples") is Complex[] aws
+                ? Bind((aws, a.D("low"), a.D("high"), a.D("q"), a.D("attack"), a.D("release"), a.D("sample_rate"), a.D("mix")), t => Dsp.AutoWah(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8))
+                : Bind((Reals(a.Get("samples")), a.D("low"), a.D("high"), a.D("q"), a.D("attack"), a.D("release"), a.D("sample_rate"), a.D("mix")), t => Dsp.AutoWah(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8)),
             "svf" => a.Get("samples") is Complex[] svs
                 ? Bind((svs, a.D("cutoff"), a.D("q"), a.D("sample_rate"), SvfOut(a)), t => Dsp.Svf(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5))
                 : Bind((Reals(a.Get("samples")), a.D("cutoff"), a.D("q"), a.D("sample_rate"), SvfOut(a)), t => Dsp.Svf(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
