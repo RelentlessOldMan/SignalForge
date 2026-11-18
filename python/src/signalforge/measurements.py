@@ -513,6 +513,45 @@ def multiscale_entropy(
     return out
 
 
+def fuzzy_entropy(samples: ArrayLike, m: int, r: float, n: float = 2) -> float:
+    """Chen's fuzzy entropy ``ln phi_m - ln phi_{m+1}``: baseline-removed templates, Chebyshev
+    distance and the membership ``exp(-d**n / r)`` (conventions: Fuzzy entropy; ADR 0339)."""
+    k = count(m, "m")
+    if k < 1:
+        raise ValueError("m must be at least 1")
+    width = real(r, "r")
+    if not width > 0:
+        raise ValueError("r must be positive")
+    power = real(n, "n")
+    if not power >= 1:
+        raise ValueError("n must be at least 1")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    starts = x.shape[0] - k
+    if starts < 2:
+        raise ValueError("samples must be at least m + 2 long")
+
+    def phi(length: int) -> float:
+        t = np.lib.stride_tricks.sliding_window_view(x, length)[:starts]
+        t = t - t.mean(axis=1, keepdims=True)
+        total = 0.0
+        for i in range(starts):
+            d = np.max(np.abs(t - t[i]), axis=1)
+            total += float(np.sum(np.exp(-(d**power) / width))) - 1.0
+        return float(total / (starts * (starts - 1)))
+
+    a, b = phi(k), phi(k + 1)
+    if not (a > 0 and b > 0):
+        raise ValueError("the memberships underflowed to 0")
+    return math.log(a) - math.log(b)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

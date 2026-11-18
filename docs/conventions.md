@@ -245,6 +245,11 @@ rule for code not written yet.
   `τ`, the sample entropy of `y[j] = (Σ_{i=jτ}^{jτ+τ−1} x[i]) / τ`, `j < floor(N/τ)`, with the
   same `r` at every scale. Scales not empty, each `≥ 1`, `floor(N/τ) ≥ m + 2`; otherwise as sample
   entropy. **(implemented)**
+- **Fuzzy entropy** ([ADR 0339](adr/0339-fuzzy-entropy.md); `fuzzy_entropy(samples, m, r,
+  n=2)`, C# `Measurements.FuzzyEntropy`): Chen's `ln φ_m − ln φ_{m+1}`; `M = N − m` templates of
+  `k` samples minus their own mean, `d` the Chebyshev distance, `D = exp(−dⁿ/r)`,
+  `φ_k = Σ_{i≠j} D / (M(M − 1))`. Real, finite, at least `m + 2` samples; integer `m ≥ 1`;
+  finite `r > 0`, `n ≥ 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

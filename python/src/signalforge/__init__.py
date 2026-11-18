@@ -246,6 +246,7 @@ from .measurements import (
     energy_separation,
     energy_time_curve,
     exceedance_levels,
+    fuzzy_entropy,
     gain_compression,
     gcc_phat,
     hadamard_deviation,
@@ -506,7 +507,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.26"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.27"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -732,6 +733,7 @@ __all__ = [
     "fsk_demod_noncoherent",
     "fsk_modulate",
     "fsk_ser_theory",
+    "fuzzy_entropy",
     "gain_compression",
     "gammatone",
     "gardner_timing",

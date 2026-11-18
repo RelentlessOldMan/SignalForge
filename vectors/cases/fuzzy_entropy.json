@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "fuzzy_entropy",
+  "description": "Fuzzy entropy (conventions: Fuzzy entropy; ADR 0339).",
+  "cases": [
+    {"id": "fuzzy_entropy.line", "op": "fuzzy_entropy", "args": {"samples": [-3.0, -2.25, -1.5, -0.75, 0.0, 0.75, 1.5, 2.25, 3.0, 3.75, 4.5, 5.25], "m": 2, "r": 0.5}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "a straight line: every baseline-removed template is the same, so 0"},
+    {"id": "fuzzy_entropy.alternating", "op": "fuzzy_entropy", "args": {"samples": [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0], "m": 1, "r": 0.5}, "expected": 0.8105109758249859, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "+-1 alternating, m = 1"},
+    {"id": "fuzzy_entropy.mixed", "op": "fuzzy_entropy", "args": {"samples": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5, -1.25, 0.75, 0.0, 1.5, -0.75, 2.0, 0.5, -1.0], "m": 2, "r": 0.75}, "expected": 1.582551612626613, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "eighteen arbitrary dyadic samples"},
+    {"id": "fuzzy_entropy.power_three", "op": "fuzzy_entropy", "args": {"samples": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5], "m": 1, "r": 2.0, "n": 3}, "expected": 0.9897929699932152, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "n = 3, r = 2"},
+    {"id": "fuzzy_entropy.power_one", "op": "fuzzy_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0, 2.5], "m": 2, "r": 0.25, "n": 1}, "expected": 0.12558976734162952, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "n = 1, r = 0.25"},
+    {"id": "fuzzy_entropy.m_zero", "op": "fuzzy_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 0, "r": 0.5}, "error": "invalid_argument", "source": "m must be at least 1"},
+    {"id": "fuzzy_entropy.r_zero", "op": "fuzzy_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 1, "r": 0.0}, "error": "invalid_argument", "source": "r must be positive"},
+    {"id": "fuzzy_entropy.n_half", "op": "fuzzy_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 1, "r": 0.5, "n": 0.5}, "error": "invalid_argument", "source": "n must be at least 1: smaller powers are ill-conditioned at d = 0"},
+    {"id": "fuzzy_entropy.too_short", "op": "fuzzy_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 4, "r": 0.5}, "error": "invalid_argument", "source": "samples must be at least m + 2 long"},
+    {"id": "fuzzy_entropy.inf", "op": "fuzzy_entropy", "args": {"samples": [0.0, "inf", 1.0, 2.0], "m": 1, "r": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

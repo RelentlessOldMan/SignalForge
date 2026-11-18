@@ -6,9 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - fuzzy entropy in `measurements` (`fuzzy_entropy(samples, m, r, n=2)`: Chen's
-     `ln φ_m − ln φ_{m+1}` with baseline-removed templates and the membership
-     `exp(−dⁿ/r)`).
    - Hurst exponent by rescaled range in `measurements` (`hurst_exponent(samples, scales)`: the
      least-squares slope of `ln(R/S)` against `ln s`, `R/S` averaged over non-overlapping boxes).
    - dispersion entropy in `measurements` (`dispersion_entropy(samples, m, classes, delay=1)`:
@@ -2741,6 +2738,12 @@ Updated with every chunk of work. Dates are absolute.
   flip under rounding.
   Python 7404 passed, 2 skipped; .NET 6591 passed; conformance 4597/4597 in both. Version
   2026.11.18.26.
+- 2026-11-18: Fuzzy entropy (ADR 0339): `fuzzy_entropy(samples, m, r, n=2)` in `measurements`
+  (C# `Measurements.FuzzyEntropy`): Chen's baseline-removed templates and `exp(−dⁿ/r)`,
+  `M = N − m` templates for both lengths. `n ≥ 1`: a vector at `n = 0.5` showed the two
+  languages 1e-7 apart, as `dⁿ` amplifies the rounding of zero distances.
+  Python 7418 passed, 2 skipped; .NET 6604 passed; conformance 4607/4607 in both. Version
+  2026.11.18.27.
 
 ## Not built
 
