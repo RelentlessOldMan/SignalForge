@@ -244,6 +244,7 @@ from .measurements import (
     exceedance_levels,
     gain_compression,
     gcc_phat,
+    hadamard_deviation,
     hjorth_parameters,
     iacc,
     integrated_phase_noise,
@@ -494,7 +495,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.17"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.18"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -723,6 +724,7 @@ __all__ = [
     "generalized_lomb_scargle",
     "goertzel",
     "haas",
+    "hadamard_deviation",
     "hampel_filter",
     "hard_clip",
     "hard_sync_sawtooth",

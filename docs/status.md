@@ -6,10 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hadamard deviation in `measurements` (`hadamard_deviation(...)`: overlapping, from second
-     differences of the means, so a linear drift gives 0; `3m ≤ M`).
    - Higuchi fractal dimension in `measurements` (`higuchi_dimension(samples, k_max)`: the
      least-squares slope of `ln L(k)` against `ln(1/k)`, `k = 1 … k_max`).
+   - time deviation in `measurements` (`time_deviation(...)`: `τ·MDEV/√3`, the same arguments
+     as ADR 0328, in seconds).
+   - detrended fluctuation analysis in `measurements` (`detrended_fluctuation(samples,
+     scales)`: the RMS of the linearly detrended profile in non-overlapping boxes per scale,
+     and the log-log slope `α`).
 
 ## Built
 
@@ -2685,6 +2688,11 @@ Updated with every chunk of work. Dates are absolute.
   the Allan deviation; `3m ≤ M + 1`. Vectors from the literature's triple sum.
   Python 7291 passed, 2 skipped; .NET 6484 passed; conformance 4515/4515 in both. Version
   2026.11.18.17.
+- 2026-11-18: Hadamard deviation (ADR 0329): `hadamard_deviation(...)` in `measurements` (C#
+  `Measurements.HadamardDeviation`): overlapping, from second differences of the means, so a
+  linear drift cancels; `3m ≤ M`. Same result type as the Allan deviation.
+  Python 7303 passed, 2 skipped; .NET 6496 passed; conformance 4524/4524 in both. Version
+  2026.11.18.18.
 
 ## Not built
 

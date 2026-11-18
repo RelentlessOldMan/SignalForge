@@ -228,6 +228,39 @@ def modified_allan_deviation(
     return AllanDeviation(taus, deviations)
 
 
+def hadamard_deviation(
+    fractional_frequency: ArrayLike, sample_interval: float, averaging_factors: Sequence[int]
+) -> AllanDeviation:
+    """The overlapping Hadamard deviation of fractional-frequency samples at ``tau = m *
+    sample_interval`` for each averaging factor ``m`` (conventions: Hadamard deviation;
+    ADR 0329)."""
+    tau0 = real(sample_interval, "sample_interval")
+    if not tau0 > 0:
+        raise ValueError("sample_interval must be positive")
+    y = np.asarray(fractional_frequency)
+    if y.ndim != 1 or y.shape[0] < 3:
+        raise ValueError("fractional_frequency must be a one-dimensional array of at least 3")
+    if np.iscomplexobj(y):
+        raise ValueError("fractional_frequency must be real")
+    y = y.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(y)):
+        raise ValueError("fractional_frequency must be finite")
+    factors = [count(m, "averaging_factors") for m in averaging_factors]
+    if not factors:
+        raise ValueError("averaging_factors must not be empty")
+    size = y.shape[0]
+    if any(m < 1 or 3 * m > size for m in factors):
+        raise ValueError("each averaging factor m must be at least 1 with 3 m <= len")
+    deviations = np.empty(len(factors))
+    for i, m in enumerate(factors):
+        means = np.lib.stride_tricks.sliding_window_view(y, m).mean(axis=1)
+        terms = size - 3 * m + 1
+        d = (means[2 * m :] - means[m : m + terms]) - (means[m : m + terms] - means[:terms])
+        deviations[i] = math.sqrt(float(np.sum(d * d)) / (6 * terms))
+    taus = np.array(factors, dtype=np.float64) * tau0
+    return AllanDeviation(taus, deviations)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -194,6 +194,12 @@ rule for code not written yet.
   ȳ_i`, `S_j = Σ_{i=j}^{j+m−1} d_i` for `j = 0 … M−3m+1`, `σ² = Σ S_j² / (2m²(M − 3m + 2))`,
   `τ = m·τ₀`. Gives `AllanDeviation(taus, deviations)`. Rules as the Allan deviation but
   `3m ≤ M + 1`. **(implemented)**
+- **Hadamard deviation** ([ADR 0329](adr/0329-hadamard-deviation.md);
+  `hadamard_deviation(fractional_frequency, sample_interval, averaging_factors)`, C#
+  `Measurements.HadamardDeviation`): overlapping; `ȳ_k` as for the Allan deviation,
+  `σ² = Σ_{j=0}^{M−3m} ((ȳ_{j+2m} − ȳ_{j+m}) − (ȳ_{j+m} − ȳ_j))² / (6(M − 3m + 1))`,
+  `τ = m·τ₀`. Gives `AllanDeviation(taus, deviations)`. Rules as the Allan deviation but
+  `3m ≤ M`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
