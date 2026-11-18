@@ -266,6 +266,11 @@ rule for code not written yet.
   matrix (rows `x_i, x_{i+delay}, …`, mean not removed), `p = σ/Σσ`, `−Σ p ln p / ln(order)`.
   Real, finite, not all 0; `2 ≤ order ≤ 32`, `delay ≥ 1`, `K = N − (order − 1)·delay ≥ order`.
   **(implemented)**
+- **Weighted permutation entropy** ([ADR 0343](adr/0343-weighted-permutation-entropy.md);
+  `weighted_permutation_entropy(samples, order, delay=1)`, C#
+  `Measurements.WeightedPermutationEntropy`): the windows and patterns of permutation entropy,
+  each window weighted by its population variance; `p(π) = Σ w (pattern π) / Σ w`;
+  `−Σ p ln p / ln(order!)`. Its rules, plus at least one window that varies. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

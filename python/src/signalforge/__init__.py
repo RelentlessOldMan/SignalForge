@@ -294,6 +294,7 @@ from .measurements import (
     two_tone_imd,
     two_tone_ip2,
     two_tone_ip5,
+    weighted_permutation_entropy,
     zero_crossing_rate,
 )
 from .metrics import (
@@ -511,7 +512,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.30"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.31"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -993,6 +994,7 @@ __all__ = [
     "w_to_dbm",
     "wavefold",
     "wavetable",
+    "weighted_permutation_entropy",
     "welch_dof",
     "welch_psd",
     "window",

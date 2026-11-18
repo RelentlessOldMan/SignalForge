@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "weighted_permutation_entropy",
+  "description": "Weighted permutation entropy (conventions: Weighted permutation entropy; ADR 0343).",
+  "cases": [
+    {"id": "weighted_permutation_entropy.ramp", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], "order": 3}, "expected": -0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "a ramp: one pattern, so 0"},
+    {"id": "weighted_permutation_entropy.two_patterns", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0, 0.0, 3.0, 0.0], "order": 2}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "windows (0,1), (1,0), (0,3), (3,0): weights 1/4, 1/4, 9/4, 9/4, so p = 1/2 each and the value is 1"},
+    {"id": "weighted_permutation_entropy.weights_matter", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0, 0.0, 5.0], "order": 2}, "expected": 0.22853814395352803, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "rising windows weigh 1/4 + 25/4, the falling one 1/4: p = 26/27 and 1/27"},
+    {"id": "weighted_permutation_entropy.ties", "op": "weighted_permutation_entropy", "args": {"samples": [1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 0.5, 3.0, 1.0], "order": 3}, "expected": 0.5533667744055781, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "ties broken by index"},
+    {"id": "weighted_permutation_entropy.noise", "op": "weighted_permutation_entropy", "args": {"samples": [-2.0, 2.875, -2.5, 2.25, 4.125, -3.625, 3.25, 0.0, 1.5, -4.625, -1.0, -0.25, -2.375, -2.25, -3.0, -1.875, 0.375, -3.625, -0.625, -0.5, 3.625, 2.625, 2.625, 3.5, 1.5, 2.625, 2.125, 0.25, 3.625, -4.375, 3.375, 2.625, -2.875, 0.5, 2.25, -4.125, -3.125, -3.0, -0.75, -1.25, -3.875, -4.0, 1.0, 0.625, -1.125, -3.625, -4.625, 2.875, -1.875, -4.75, -3.625, 4.25, -3.75, -2.125, 0.25, -3.0, 4.625, 4.125, 3.375, 4.625, -0.125, -1.375, -4.0, -4.625, 0.625, -4.375, -1.0, 2.25, -0.5, 0.375, 4.0, -1.75, 4.5, 1.75, 0.125, -2.5, 5.0, 1.875, -2.125, -2.75, -1.25, 3.25, 3.75, 1.5, -3.75, 3.0, 3.375, 0.125, -5.0, -2.25, 4.625, -4.0, 0.875, 0.875, 4.125, -0.25, 3.25, -3.875, 0.5, -4.625, -3.0, -2.5, -3.25, 2.625, -2.5, -5.0, -1.625, -3.5, 0.25, 2.375, -4.375, -2.875, -0.75, -1.375, -4.625, -3.75, 2.625, -4.0, -2.875, 2.625], "order": 4, "delay": 2}, "expected": 0.9606681915033576, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "120 random eighths from random.Random(343), order 4, delay 2"},
+    {"id": "weighted_permutation_entropy.order_one", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "order": 1}, "error": "invalid_argument", "source": "order must be at least 2"},
+    {"id": "weighted_permutation_entropy.order_nine", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "order": 9}, "error": "invalid_argument", "source": "order must be at most 8"},
+    {"id": "weighted_permutation_entropy.delay_zero", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "order": 2, "delay": 0}, "error": "invalid_argument", "source": "delay must be at least 1"},
+    {"id": "weighted_permutation_entropy.too_short", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "order": 3, "delay": 3}, "error": "invalid_argument", "source": "no window fits"},
+    {"id": "weighted_permutation_entropy.constant", "op": "weighted_permutation_entropy", "args": {"samples": [2.0, 2.0, 2.0, 2.0], "order": 2}, "error": "invalid_argument", "source": "no window varies"},
+    {"id": "weighted_permutation_entropy.nan", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, "nan", 1.0], "order": 2}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

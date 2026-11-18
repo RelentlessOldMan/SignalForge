@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - weighted permutation entropy in `measurements` (Fadlallah et al.: each ordinal pattern
-     weighted by the population variance of its window).
    - increment entropy in `measurements` (Liu et al.: sign and quantized size of the
      increments, `R` levels, Shannon entropy of the words).
 
@@ -2759,6 +2757,11 @@ Updated with every chunk of work. Dates are absolute.
   removed. C# takes them by Hestenes' one-sided Jacobi; the generator by eigenvalues of the
   exact Gram matrix. Python 7462 passed, 2 skipped; .NET 6647 passed; conformance 4640/4640 in both. Version
   2026.11.18.30.
+- 2026-11-18: Weighted permutation entropy (ADR 0343): `weighted_permutation_entropy(samples,
+  order, delay=1)` in `measurements` (C# `Measurements.WeightedPermutationEntropy`): the
+  patterns of ADR 0325, each window weighted by its population variance.
+  Python 7477 passed, 2 skipped; .NET 6661 passed; conformance 4651/4651 in both. Version
+  2026.11.18.31.
 
 ## Not built
 

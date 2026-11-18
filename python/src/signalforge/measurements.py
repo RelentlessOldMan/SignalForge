@@ -663,6 +663,39 @@ def svd_entropy(samples: ArrayLike, order: int, delay: int = 1) -> float:
     return float(-np.sum(p * np.log(p)) / math.log(m))
 
 
+def weighted_permutation_entropy(samples: ArrayLike, order: int, delay: int = 1) -> float:
+    """Permutation entropy with each window weighted by its population variance, over
+    ``ln(order!)`` (conventions: Weighted permutation entropy; ADR 0343)."""
+    m = count(order, "order")
+    tau = count(delay, "delay")
+    if not 2 <= m <= 8:
+        raise ValueError("order must be from 2 to 8")
+    if tau < 1:
+        raise ValueError("delay must be at least 1")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    windows = x.shape[0] - (m - 1) * tau
+    if windows < 1:
+        raise ValueError("samples are too short for one window")
+    idx = np.arange(windows)[:, None] + tau * np.arange(m)[None, :]
+    w = x[idx]
+    weights = np.var(w, axis=1)
+    total = float(np.sum(weights))
+    if not total > 0:
+        raise ValueError("at least one window must vary")
+    patterns = np.argsort(w, axis=1, kind="stable")
+    _, inverse = np.unique(patterns, axis=0, return_inverse=True)
+    p = np.bincount(inverse.reshape(-1), weights=weights) / total
+    p = p[p > 0]
+    return float(-np.sum(p * np.log(p)) / math.log(math.factorial(m)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
