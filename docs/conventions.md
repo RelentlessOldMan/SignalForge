@@ -2074,6 +2074,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `Bands(low, high)`, C# `Dsp.CrossoverSplit`, [ADR 0285](adr/0285-crossover-split.md)): the
   `linkwitz_riley` bands, each run from rest over the real, finite, non-empty samples by
   `IirFilter`; `low + high` is the crossover's all-pass of the input. **(implemented)**
+- **De-esser** (`de_esser(samples, cutoff, q, threshold_db, ratio, attack, release,
+  sample_rate)`, C# `Dsp.DeEsser`, [ADR 0286](adr/0286-de-esser.md)): `duck(samples, key,
+  threshold_db, ratio, attack, release)` with `key = (1/q)·svf(samples, cutoff, q, fs,
+  output="bandpass")`; hard knee, no make-up. Real samples; the SVF's and the sidechain
+  compressor's rules. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

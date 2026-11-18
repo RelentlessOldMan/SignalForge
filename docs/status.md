@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a de-esser (`de_esser(samples, cutoff, q, threshold_db, ratio, attack, release, sample_rate)`,
-     the sidechain compressor keyed on the state-variable band-pass of the input).
    - a two-band compressor (`multiband_compress(samples, order, cutoff, sample_rate, low, high)`,
      each `crossover_split` band through its own `compress` settings, then summed).
+   - a harmonic exciter (`exciter(samples, order, cutoff, sample_rate, drive, mix)`, the
+     `crossover_split` high band through `soft_clip(drive·high)/drive`, added to the input at `mix`).
 
 ## Built
 
@@ -2460,6 +2460,11 @@ Updated with every chunk of work. Dates are absolute.
   Linkwitz-Riley bands run from rest, summing to the crossover's all-pass of the input.
   Python 6767 passed, 2 skipped; .NET 5995 passed; conformance 4138/4138 in both. Version
   2026.11.17.84.
+- 2026-11-17: De-esser (ADR 0286): `de_esser(samples, cutoff, q, threshold_db, ratio, attack,
+  release, sample_rate)` in `dsp` (C# `Dsp.DeEsser`, real): `duck` keyed on the unity-peak
+  state-variable band-pass of the input, hard knee, no make-up.
+  Python 6777 passed, 2 skipped; .NET 6004 passed; conformance 4145/4145 in both. Version
+  2026.11.17.85.
 
 ## Not built
 

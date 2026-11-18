@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "suite": "de_esser",
+  "description": "De-esser (conventions: De-esser; ADR 0286).",
+  "cases": [
+    {"id": "de_esser.burst", "op": "de_esser", "args": {"samples": [0.5, 0.45, 0.4, 1.0, 0.3, -1.0, 0.2, 1.0, 0.1, -1.0, 0.0, -0.05, -0.1, -0.15], "cutoff": 0.25, "q": 2.0, "threshold_db": -12.0, "ratio": 4.0, "attack": 0.0, "release": 0.5, "sample_rate": 1.0}, "expected": [0.5, 0.45, 0.4, 1.0, 0.3, -0.6640228813700387, 0.2, 0.48446576771287186, 0.08128509917676921, -0.4209940119484178, 0.0, -0.02401898531357178, -0.08013803303708644, -0.1019045371267783], "tol": {"abs": 1e-14, "rel": 1e-11}, "source": "key at fs/4, q 2, -12 dB, ratio 4"},
+    {"id": "de_esser.smoothed", "op": "de_esser", "args": {"samples": [0.5, 0.45, 0.4, 1.0, 0.3, -1.0, 0.2, 1.0, 0.1, -1.0, 0.0, -0.05, -0.1, -0.15], "cutoff": 0.25, "q": 1.0, "threshold_db": -20.0, "ratio": 2.0, "attack": 0.5, "release": 0.875, "sample_rate": 1.0}, "expected": [0.5, 0.41661904489764817, 0.3759650159942196, 0.9007039500489619, 0.2882499249494053, -0.4940365429731168, 0.10504326848564963, 0.3974303099425062, 0.04237900670037943, -0.3621785811525715, 0.0, -0.01936868176766801, -0.04130261724535132, -0.06432805046019884], "tol": {"abs": 1e-14, "rel": 1e-11}, "source": "attack 1/2, release 7/8, ratio 2"},
+    {"id": "de_esser.quiet", "op": "de_esser", "args": {"samples": [0.01, -0.02, 0.015, -0.01, 0.02], "cutoff": 6000.0, "q": 3.0, "threshold_db": 0.0, "ratio": 10.0, "attack": 0.0, "release": 0.0, "sample_rate": 48000.0}, "expected": [0.01, -0.02, 0.015, -0.01, 0.02], "tol": {"abs": 1e-14, "rel": 1e-11}, "source": "key below threshold everywhere: the input"},
+    {"id": "de_esser.cutoff_nyquist", "op": "de_esser", "args": {"samples": [1.0, 2.0], "cutoff": 4.0, "q": 1.0, "threshold_db": 0.0, "ratio": 2.0, "attack": 0.5, "release": 0.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "cutoff must be below fs/2"},
+    {"id": "de_esser.q_zero", "op": "de_esser", "args": {"samples": [1.0, 2.0], "cutoff": 1.0, "q": 0.0, "threshold_db": 0.0, "ratio": 2.0, "attack": 0.5, "release": 0.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "q must be positive"},
+    {"id": "de_esser.ratio_low", "op": "de_esser", "args": {"samples": [1.0, 2.0], "cutoff": 1.0, "q": 1.0, "threshold_db": 0.0, "ratio": 0.5, "attack": 0.5, "release": 0.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "ratio must be at least 1"},
+    {"id": "de_esser.empty", "op": "de_esser", "args": {"samples": [], "cutoff": 1.0, "q": 1.0, "threshold_db": 0.0, "ratio": 2.0, "attack": 0.5, "release": 0.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "samples must not be empty"}
+  ]
+}

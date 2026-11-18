@@ -668,6 +668,7 @@ public static class Conformance
                     t => Dsp.Expand(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7))
                 : Bind((Reals(a.Get("samples")), a.D("threshold_db"), a.D("ratio"), a.D("attack"), a.D("release"), a.Has("knee_db") ? a.D("knee_db") : 0.0, a.Has("makeup_db") ? a.D("makeup_db") : 0.0),
                     t => Dsp.Expand(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
+            "de_esser" => Bind((Reals(a.Get("samples")), a.D("cutoff"), a.D("q"), a.D("threshold_db"), a.D("ratio"), a.D("attack"), a.D("release"), a.D("sample_rate")), t => Dsp.DeEsser(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8)),
             "duck" => a.Get("samples") is Complex[] dks
                 ? Bind((dks, Reals(a.Get("key")), a.D("threshold_db"), a.D("ratio"), a.D("attack"), a.D("release"), a.Has("knee_db") ? a.D("knee_db") : 0.0, a.Has("makeup_db") ? a.D("makeup_db") : 0.0),
                     t => Dsp.Duck(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8))

@@ -2648,6 +2648,24 @@ def auto_wah(
     return _dry_wet(x, wet, m)
 
 
+def de_esser(
+    samples: ArrayLike,
+    cutoff: float,
+    q: float,
+    threshold_db: float,
+    ratio: float,
+    attack: float,
+    release: float,
+    sample_rate: float,
+) -> NDArray[np.float64]:
+    """Turn the signal down while its band around ``cutoff`` is loud: the sidechain compressor
+    keyed on the unity-peak state-variable band-pass (conventions: De-esser; ADR 0286)."""
+    x = _mono(samples)
+    bp = svf(x, cutoff, q, sample_rate, output="bandpass")
+    key = (1 / float(q)) * np.asarray(bp, dtype=np.float64)
+    return np.asarray(duck(x, key, threshold_db, ratio, attack, release), dtype=np.float64)
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

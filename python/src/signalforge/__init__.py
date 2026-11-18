@@ -78,6 +78,7 @@ from .dsp import (
     crossfade,
     crossover_split,
     dc_blocker,
+    de_esser,
     dead_zone,
     decimate,
     duck,
@@ -439,7 +440,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.84"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.85"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -596,6 +597,7 @@ __all__ = [
     "dc_blocker",
     "dc_offset",
     "dct",
+    "de_esser",
     "dead_zone",
     "decay_curvature",
     "decay_time",

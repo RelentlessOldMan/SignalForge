@@ -291,6 +291,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "duck": dsp.duck,
     "svf": dsp.svf,
     "auto_wah": dsp.auto_wah,
+    "de_esser": dsp.de_esser,
     "transient_shaper": dsp.transient_shaper,
     "fade": dsp.fade,
     "crossfade": dsp.crossfade,

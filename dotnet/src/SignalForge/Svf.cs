@@ -198,4 +198,27 @@ public static partial class Dsp
             g[n] = Math.Tan(Math.PI * (low + (high - low) * Math.Min(env[n], 1.0)) / sampleRate);
         return g;
     }
+
+    /// <summary>Turns the signal down while its band around <paramref name="cutoff"/> is loud:
+    /// the sidechain compressor keyed on the unity-peak state-variable band-pass (conventions:
+    /// De-esser; ADR 0286).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="cutoff">The centre of the sibilant band, Hz, above 0 and below half the
+    /// sample rate.</param>
+    /// <param name="q">The band's quality factor, finite and positive.</param>
+    /// <param name="thresholdDb">The key level above which the gain falls, dB.</param>
+    /// <param name="ratio">The compression ratio, at least 1.</param>
+    /// <param name="attack">The envelope follower's attack coefficient, in [0, 1).</param>
+    /// <param name="release">The envelope follower's release coefficient, in [0, 1).</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] DeEsser(ReadOnlySpan<double> samples, double cutoff, double q, double thresholdDb, double ratio, double attack, double release, double sampleRate)
+    {
+        double[] key = Svf(samples, cutoff, q, sampleRate, SvfOutput.Bandpass);
+        double k = 1 / q;
+        for (int n = 0; n < key.Length; n++)
+            key[n] = k * key[n];
+        return Duck(samples, key, thresholdDb, ratio, attack, release);
+    }
 }
