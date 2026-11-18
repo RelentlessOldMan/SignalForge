@@ -223,6 +223,7 @@ from .measurements import (
     PhaseNoiseSpurs,
     PowerCcdf,
     PowerStats,
+    RescaledRange,
     Sfdr,
     TemporalCentroid,
     ToneMetrics,
@@ -273,6 +274,7 @@ from .measurements import (
     power_ccdf,
     power_ccdf_level,
     power_stats,
+    rescaled_range,
     reverberation_time,
     sample_entropy,
     schroeder_decay,
@@ -507,7 +509,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.27"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.28"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -558,6 +560,7 @@ __all__ = [
     "QpskLinkConfig",
     "QpskLinkReport",
     "Resampler",
+    "RescaledRange",
     "Schur",
     "Sfdr",
     "Signal",
@@ -908,6 +911,7 @@ __all__ = [
     "reflection_to_lpc",
     "resample",
     "resample_taps",
+    "rescaled_range",
     "reverberation_time",
     "reverse_delay",
     "rician_fading",

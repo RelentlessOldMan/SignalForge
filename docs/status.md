@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hurst exponent by rescaled range in `measurements` (`hurst_exponent(samples, scales)`: the
-     least-squares slope of `ln(R/S)` against `ln s`, `R/S` averaged over non-overlapping boxes).
    - dispersion entropy in `measurements` (`dispersion_entropy(samples, m, classes, delay=1)`:
      Rostaghi and Azami's normal-CDF mapping to `c` classes and the Shannon entropy of the
      patterns over `ln cᵐ`).
@@ -2744,6 +2742,11 @@ Updated with every chunk of work. Dates are absolute.
   languages 1e-7 apart, as `dⁿ` amplifies the rounding of zero distances.
   Python 7418 passed, 2 skipped; .NET 6604 passed; conformance 4607/4607 in both. Version
   2026.11.18.27.
+- 2026-11-18: Rescaled range (ADR 0340): `rescaled_range(samples, scales)` in `measurements`
+  (C# `Measurements.RescaledRange`), giving `RescaledRange(scales, values, hurst)`: mean `R/S`
+  over non-overlapping boxes and the Hurst exponent as the log-log slope, no small-sample
+  correction. Python 7431 passed, 2 skipped; .NET 6616 passed; conformance 4616/4616 in both. Version
+  2026.11.18.28.
 
 ## Not built
 

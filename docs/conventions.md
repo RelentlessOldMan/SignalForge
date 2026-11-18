@@ -250,6 +250,12 @@ rule for code not written yet.
   `k` samples minus their own mean, `d` the Chebyshev distance, `D = exp(−dⁿ/r)`,
   `φ_k = Σ_{i≠j} D / (M(M − 1))`. Real, finite, at least `m + 2` samples; integer `m ≥ 1`;
   finite `r > 0`, `n ≥ 1`. **(implemented)**
+- **Rescaled range** ([ADR 0340](adr/0340-rescaled-range.md); `rescaled_range(samples, scales)`,
+  C# `Measurements.RescaledRange`): per scale `s`, `B = floor(N/s)` boxes from the start; in each
+  `Z_t = Σ_{u≤t} (x_u − mean)`, `R = max Z − min Z`, `S` the population standard deviation; the
+  value is the mean `R/S`; `hurst` the least-squares slope of `ln` value against `ln s`. No
+  small-sample correction. Result `(scales, values, hurst)`. At least two strictly increasing
+  integer scales, `4 ≤ s ≤ N`; every box `S > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

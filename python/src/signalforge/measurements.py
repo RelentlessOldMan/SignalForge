@@ -106,6 +106,16 @@ class Mtie:
     values: NDArray[np.float64]
 
 
+@dataclass(frozen=True, eq=False)
+class RescaledRange:
+    """Mean rescaled ranges at each box size and the Hurst exponent they give (conventions:
+    Rescaled range; ADR 0340)."""
+
+    scales: NDArray[np.int64]
+    values: NDArray[np.float64]
+    hurst: float
+
+
 @dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
@@ -550,6 +560,42 @@ def fuzzy_entropy(samples: ArrayLike, m: int, r: float, n: float = 2) -> float:
     if not (a > 0 and b > 0):
         raise ValueError("the memberships underflowed to 0")
     return math.log(a) - math.log(b)
+
+
+def rescaled_range(samples: ArrayLike, scales: Sequence[int]) -> RescaledRange:
+    """Hurst's rescaled-range analysis: the mean ``R/S`` over non-overlapping boxes of each
+    size, and the least-squares slope of its logarithm against ``ln s`` (conventions:
+    Rescaled range; ADR 0340)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    sizes = [count(s, "scales") for s in scales]
+    if len(sizes) < 2:
+        raise ValueError("scales must have at least two entries")
+    if any(sizes[i + 1] <= sizes[i] for i in range(len(sizes) - 1)):
+        raise ValueError("scales must be strictly increasing")
+    if sizes[0] < 4 or sizes[-1] > x.shape[0]:
+        raise ValueError("each scale must be at least 4 and at most len(samples)")
+    values = np.empty(len(sizes))
+    for i, s in enumerate(sizes):
+        boxes = x.shape[0] // s
+        y = x[: boxes * s].reshape(boxes, s)
+        y = y - y.mean(axis=1, keepdims=True)
+        z = np.cumsum(y, axis=1)
+        spread = np.sqrt(np.mean(y * y, axis=1))
+        if not np.all(spread > 0):
+            raise ValueError("every box must vary")
+        values[i] = float(np.mean((z.max(axis=1) - z.min(axis=1)) / spread))
+    lx = np.log(np.array(sizes, dtype=np.float64))
+    ly = np.log(values)
+    dx = lx - lx.mean()
+    hurst = float(np.sum(dx * (ly - ly.mean())) / np.sum(dx * dx))
+    return RescaledRange(np.array(sizes, dtype=np.int64), values, hurst)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
