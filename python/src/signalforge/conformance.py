@@ -294,6 +294,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "de_esser": dsp.de_esser,
     "two_band_compress": dsp.two_band_compress,
     "exciter": dsp.exciter,
+    "octave_up": dsp.octave_up,
     "transient_shaper": dsp.transient_shaper,
     "fade": dsp.fade,
     "crossfade": dsp.crossfade,

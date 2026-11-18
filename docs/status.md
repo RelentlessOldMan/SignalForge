@@ -6,11 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - an octave-up effect (`octave_up(samples, mix)`, the full-wave rectifier `|x|` with its mean
-     removed per the DC blocker, mixed with the dry signal as the other effects mix).
    - a bass enhancer (`bass_enhancer(samples, order, cutoff, sample_rate, drive, mix)`, the
      exciter's mirror: harmonics of the `crossover_split` low band, high-passed at `cutoff` so
      only the new harmonics are added).
+   - an octave-down effect (`octave_down(samples, mix)`, the flip-flop divider: a sign that
+     toggles at each rising zero crossing multiplies `|x|`, halving the frequency; dry/wet mix).
 
 ## Built
 
@@ -2477,6 +2477,10 @@ Updated with every chunk of work. Dates are absolute.
   `crossover_split` high band.
   Python 6798 passed, 2 skipped; .NET 6023 passed; conformance 4160/4160 in both. Version
   2026.11.17.87.
+- 2026-11-17: Octave-up effect (ADR 0289): `octave_up(samples, pole, mix)` in `dsp` (C#
+  `Dsp.OctaveUp`, real): `dc_blocker(|x|, pole)` blended with the dry signal.
+  Python 6808 passed, 2 skipped; .NET 6032 passed; conformance 4167/4167 in both. Version
+  2026.11.17.88.
 
 ## Not built
 

@@ -130,6 +130,7 @@ from .dsp import (
     mu_law_expand,
     noise_gate,
     normalize_peak,
+    octave_up,
     pan,
     peak_hold,
     peaking_eq,
@@ -442,7 +443,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.87"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.88"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -730,6 +731,7 @@ __all__ = [
     "occupied_bandwidth",
     "octave_band_levels",
     "octave_bands",
+    "octave_up",
     "odd_even_ratio",
     "ofdm_demodulate",
     "ofdm_modulate",

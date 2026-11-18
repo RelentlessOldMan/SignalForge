@@ -2709,6 +2709,18 @@ def exciter(
     return y
 
 
+def octave_up(samples: ArrayLike, pole: float, mix: float) -> NDArray[np.float64]:
+    """Full-wave rectify real samples, block the DC, and blend with the dry signal (conventions:
+    Octave-up effect; ADR 0289)."""
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    x = _mono(samples)
+    wet = np.asarray(dc_blocker(np.abs(x), pole), dtype=np.float64)
+    y: NDArray[np.float64] = _dry_wet(x, wet, m)
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

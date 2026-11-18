@@ -63,4 +63,30 @@ public static partial class Dsp
         if (!double.IsFinite(pole) || pole < 0 || pole >= 1)
             throw new ArgumentOutOfRangeException(nameof(pole), "pole must be in [0, 1)");
     }
+
+    /// <summary>Full-wave rectifies real samples, blocks the DC, and blends with the dry signal
+    /// (conventions: Octave-up effect; ADR 0289).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="pole">The DC blocker's pole, in [0, 1).</param>
+    /// <param name="mix">The wet fraction, in [0, 1].</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] OctaveUp(ReadOnlySpan<double> samples, double pole, double mix)
+    {
+        CheckMix(mix);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        double[] r = new double[samples.Length];
+        for (int n = 0; n < r.Length; n++)
+        {
+            if (!double.IsFinite(samples[n]))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            r[n] = Math.Abs(samples[n]);
+        }
+        double[] wet = DcBlocker(r, pole);
+        double[] y = new double[r.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = samples[n] * (1 - mix) + wet[n] * mix;
+        return y;
+    }
 }
