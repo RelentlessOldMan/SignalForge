@@ -231,17 +231,65 @@ def bandlimited_sawtooth(
     if f == 0:
         raise ValueError("frequency must not be 0")
     u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    acc = np.zeros(u.size)
+    for k in range(1, _top_harmonic(sample_rate, f) + 1):
+        acc += np.sin((2 * np.pi * k) * u) / k
+    y: NDArray[np.float64] = ((-2 * amp) / np.pi) * acc
+    return y
+
+
+def _top_harmonic(sample_rate: float, frequency: float) -> int:
+    """The largest ``k >= 0`` with ``k |f| < fs/2``, tested in floating point."""
     half = 0.5 * float(sample_rate)
-    af = abs(f)
+    af = abs(frequency)
     top = int(half / af)
     while (top + 1) * af < half:
         top += 1
     while top > 0 and top * af >= half:
         top -= 1
+    return top
+
+
+def _nonzero_frequency(frequency: float) -> float:
+    f = real(frequency, "frequency")
+    if f == 0:
+        raise ValueError("frequency must not be 0")
+    return f
+
+
+def bandlimited_square(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Square at duty 1/2 from its odd harmonics up to the Nyquist frequency, ``phase`` in
+    cycles (conventions: Band-limited square and triangle; ADR 0309)."""
+    f = _nonzero_frequency(frequency)
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
     acc = np.zeros(u.size)
-    for k in range(1, top + 1):
+    for k in range(1, _top_harmonic(sample_rate, f) + 1, 2):
         acc += np.sin((2 * np.pi * k) * u) / k
-    y: NDArray[np.float64] = ((-2 * amp) / np.pi) * acc
+    y: NDArray[np.float64] = ((4 * amp) / np.pi) * acc
+    return y
+
+
+def bandlimited_triangle(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Triangle from its odd harmonics up to the Nyquist frequency, peaking at the start of
+    each cycle, ``phase`` in cycles (conventions: Band-limited square and triangle; ADR 0309)."""
+    f = _nonzero_frequency(frequency)
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    acc = np.zeros(u.size)
+    for k in range(1, _top_harmonic(sample_rate, f) + 1, 2):
+        acc += np.cos((2 * np.pi * k) * u) / (k * k)
+    y: NDArray[np.float64] = ((8 * amp) / (np.pi * np.pi)) * acc
     return y
 
 

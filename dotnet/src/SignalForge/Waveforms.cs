@@ -403,12 +403,7 @@ public static class Waveforms
         if (frequency == 0)
             throw new ArgumentOutOfRangeException(nameof(frequency), "frequency must not be 0");
         double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
-        double half = 0.5 * sampleRate, af = Math.Abs(frequency);
-        long top = (long)Math.Min(half / af, int.MaxValue);
-        while ((top + 1) * af < half)
-            top++;
-        while (top > 0 && top * af >= half)
-            top--;
+        long top = TopHarmonic(sampleRate, frequency);
         double c = (-2 * amplitude) / Math.PI;
         for (int n = 0; n < u.Length; n++)
         {
@@ -453,5 +448,71 @@ public static class Waveforms
             u[n] = (table[i] * (1 - r)) + (table[(i + 1) % size] * r);
         }
         return u;
+    }
+
+    /// <summary>Square at duty 1/2 from its odd harmonics up to the Nyquist frequency, with the
+    /// phase in cycles (conventions: Band-limited square and triangle; ADR 0309).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite and not 0.</param>
+    /// <param name="amplitude">The peak amplitude of the full series, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] BandlimitedSquare(double sampleRate, int numSamples, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        if (frequency == 0)
+            throw new ArgumentOutOfRangeException(nameof(frequency), "frequency must not be 0");
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        long top = TopHarmonic(sampleRate, frequency);
+        double c = (4 * amplitude) / Math.PI;
+        for (int n = 0; n < u.Length; n++)
+        {
+            double acc = 0;
+            for (long k = 1; k <= top; k += 2)
+                acc += Math.Sin((2 * Math.PI * k) * u[n]) / k;
+            u[n] = c * acc;
+        }
+        return u;
+    }
+
+    /// <summary>Triangle from its odd harmonics up to the Nyquist frequency, peaking at the
+    /// start of each cycle, with the phase in cycles (conventions: Band-limited square and
+    /// triangle; ADR 0309).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite and not 0.</param>
+    /// <param name="amplitude">The peak amplitude of the full series, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] BandlimitedTriangle(double sampleRate, int numSamples, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        if (frequency == 0)
+            throw new ArgumentOutOfRangeException(nameof(frequency), "frequency must not be 0");
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        long top = TopHarmonic(sampleRate, frequency);
+        double c = (8 * amplitude) / (Math.PI * Math.PI);
+        for (int n = 0; n < u.Length; n++)
+        {
+            double acc = 0;
+            for (long k = 1; k <= top; k += 2)
+                acc += Math.Cos((2 * Math.PI * k) * u[n]) / (double)(k * k);
+            u[n] = c * acc;
+        }
+        return u;
+    }
+
+    private static long TopHarmonic(double sampleRate, double frequency)
+    {
+        double half = 0.5 * sampleRate, af = Math.Abs(frequency);
+        long top = (long)Math.Min(half / af, int.MaxValue);
+        while ((top + 1) * af < half)
+            top++;
+        while (top > 0 && top * af >= half)
+            top--;
+        return top;
     }
 }

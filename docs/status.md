@@ -6,12 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a band-limited square in `waveforms` (`bandlimited_square(sample_rate, num_samples,
-     frequency, amplitude=1, phase=0)`: `(4A/π)·Σ_{k odd} sin((2π·k)·u)/k` over the odd
-     harmonics `k·|f| < fs/2`, the series of the naive square at duty 1/2).
-   - a band-limited triangle in `waveforms` (`bandlimited_triangle(sample_rate, num_samples,
-     frequency, amplitude=1, phase=0)`: `(8A/π²)·Σ_{k odd} cos((2π·k)·u)/k²` over the odd
-     harmonics `k·|f| < fs/2`, the series of the naive triangle).
+   - a PolyBLEP sawtooth in `waveforms` (`polyblep_sawtooth(sample_rate, num_samples, frequency,
+     amplitude=1, phase=0)`: the naive `2u − 1` minus the two-sample polynomial residual
+     `t + t − t·t − 1` for `t = u/dt < 1` and `t·t + t + t + 1` for `t = (u − 1)/dt > −1`,
+     `dt = |f|/fs`; a cheap near-alias-free saw).
+   - a pulse-width-modulated square in `waveforms` (`pwm(sample_rate, frequency, duty)`: `duty`
+     a per-sample array in [0, 1], `A` for `u < duty[n]` and `−A` after, the oscillators'
+     phase).
 
 ## Built
 
@@ -2580,6 +2581,12 @@ Updated with every chunk of work. Dates are absolute.
   pitch with linear interpolation that wraps from the last entry to the first.
   Python 7017 passed, 2 skipped; .NET 6233 passed; conformance 4330/4330 in both. Version
   2026.11.17.107.
+- 2026-11-17: Band-limited square and triangle (ADR 0309): `bandlimited_square` and
+  `bandlimited_triangle` in `waveforms` (C# `Waveforms.BandlimitedSquare`,
+  `BandlimitedTriangle`): the odd-harmonic Fourier series up to the Nyquist frequency; the
+  sawtooth's harmonic count moved into a shared helper.
+  Python 7033 passed, 2 skipped; .NET 6248 passed; conformance 4343/4343 in both. Version
+  2026.11.17.108.
 
 ## Not built
 

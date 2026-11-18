@@ -66,6 +66,13 @@ rule for code not written yet.
   C# `Waveforms.FmTone`, [ADR 0306](adr/0306-fm-tone.md)): real,
   `A·cos(2π·fc·(n/fs) + I·sin(2π·fm·(n/fs)))`, `2π·f` formed first as in `tone`. Positive
   finite `sample_rate`; `carrier`, `modulator`, `index`, `amplitude` finite. **(implemented)**
+- **Band-limited square and triangle** (`bandlimited_square(...)`,
+  `bandlimited_triangle(...)`, same arguments as `bandlimited_sawtooth`, C#
+  `Waveforms.BandlimitedSquare`, `BandlimitedTriangle`,
+  [ADR 0309](adr/0309-bandlimited-square-triangle.md)): `u` and `K` as for the band-limited
+  sawtooth; sums over odd `k ≤ K` in increasing order; square `((4·A)/π)·Σ sin((2π·k)·u)/k`;
+  triangle `((8·A)/(π·π))·Σ cos((2π·k)·u)/(k·k)`. Same rules as the sawtooth.
+  **(implemented)**
 - **Band-limited sawtooth** (`bandlimited_sawtooth(sample_rate, num_samples, frequency,
   amplitude=1, phase=0)`, C# `Waveforms.BandlimitedSawtooth`,
   [ADR 0307](adr/0307-bandlimited-sawtooth.md)): `u` as for the oscillators; `K` the largest
