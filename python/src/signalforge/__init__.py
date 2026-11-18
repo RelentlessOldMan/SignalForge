@@ -254,6 +254,7 @@ from .measurements import (
     katz_dimension,
     kay_frequency,
     lateral_fraction,
+    lempel_ziv_complexity,
     modified_allan_deviation,
     modulation_transfer,
     noise_compensated_decay,
@@ -501,7 +502,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.23"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.24"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -767,6 +768,7 @@ __all__ = [
     "lateral_fraction",
     "lattice_filter",
     "lattice_synthesis",
+    "lempel_ziv_complexity",
     "levinson",
     "limit",
     "lin_to_db",

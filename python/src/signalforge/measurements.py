@@ -418,6 +418,37 @@ def petrosian_dimension(samples: ArrayLike) -> float:
     return math.log10(n) / (math.log10(n) + math.log10(n / (n + 0.4 * changes)))
 
 
+def lempel_ziv_complexity(bits: ArrayLike) -> int:
+    """The LZ76 phrase count of a 0/1 sequence, by the Kaspar-Schuster scan (conventions:
+    Lempel-Ziv complexity; ADR 0336)."""
+    b = np.asarray(bits)
+    if b.ndim != 1 or b.shape[0] < 1:
+        raise ValueError("bits must be a one-dimensional array of at least 1")
+    if not np.all((b == 0) | (b == 1)):
+        raise ValueError("bits must be 0 or 1")
+    s = b.astype(np.uint8).tolist()
+    n = len(s)
+    if n == 1:
+        return 1
+    i, k, start, k_max, phrases = 0, 1, 1, 1, 1
+    while True:
+        if s[i + k - 1] == s[start + k - 1]:
+            k += 1
+            if start + k > n:
+                return phrases + 1
+        else:
+            k_max = max(k_max, k)
+            i += 1
+            if i == start:
+                phrases += 1
+                start += k_max
+                if start + 1 > n:
+                    return phrases
+                i, k, k_max = 0, 1, 1
+            else:
+                k = 1
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -230,6 +230,11 @@ rule for code not written yet.
   `petrosian_dimension(samples)`, C# `Measurements.PetrosianDimension`): `n = N`, `N_Δ` the `i`
   with `sign(Δ[i])·sign(Δ[i+1]) < 0`, `D = log10 n / (log10 n + log10(n/(n + 0.4 N_Δ)))`. Real,
   finite, at least 3 samples. **(implemented)**
+- **Lempel-Ziv complexity** ([ADR 0336](adr/0336-lempel-ziv-complexity.md);
+  `lempel_ziv_complexity(bits)`, C# `Measurements.LempelZivComplexity`): the LZ76 phrase count;
+  each phrase `s[p … q]` has the smallest `q` with `s[p … q]` not a substring of `s[0 … q−1]`; a
+  copyable piece at the end counts as one. Bits 0 or 1, at least one; raw count, not normalized.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

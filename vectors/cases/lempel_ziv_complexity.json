@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "lempel_ziv_complexity",
+  "description": "Lempel-Ziv complexity (conventions: Lempel-Ziv complexity; ADR 0336).",
+  "cases": [
+    {"id": "lempel_ziv_complexity.lempel_ziv", "op": "lempel_ziv_complexity", "args": {"bits": [0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1]}, "expected": 6, "source": "Lempel and Ziv's example: 0 . 001 . 10 . 100 . 1000 . 101"},
+    {"id": "lempel_ziv_complexity.one", "op": "lempel_ziv_complexity", "args": {"bits": [1]}, "expected": 1, "source": "a single bit is one phrase"},
+    {"id": "lempel_ziv_complexity.zeros", "op": "lempel_ziv_complexity", "args": {"bits": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "expected": 2, "source": "all zeros: 0 . then a copy of the rest"},
+    {"id": "lempel_ziv_complexity.alternating", "op": "lempel_ziv_complexity", "args": {"bits": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]}, "expected": 3, "source": "0 . 1 . then a copy"},
+    {"id": "lempel_ziv_complexity.ones_then_zeros", "op": "lempel_ziv_complexity", "args": {"bits": [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "expected": 3, "source": "a run of ones, then of zeros"},
+    {"id": "lempel_ziv_complexity.pseudo_random", "op": "lempel_ziv_complexity", "args": {"bits": [0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1]}, "expected": 27, "source": "200 bits from Python's random.Random(336)"},
+    {"id": "lempel_ziv_complexity.recurrence", "op": "lempel_ziv_complexity", "args": {"bits": [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0]}, "expected": 20, "source": "120 bits of b[n] = b[n-7] xor b[n-6] from all ones"},
+    {"id": "lempel_ziv_complexity.empty", "op": "lempel_ziv_complexity", "args": {"bits": []}, "error": "invalid_argument", "source": "at least one bit"},
+    {"id": "lempel_ziv_complexity.two", "op": "lempel_ziv_complexity", "args": {"bits": [0, 1, 2]}, "error": "invalid_argument", "source": "bits must be 0 or 1"}
+  ]
+}

@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Lempel-Ziv complexity in `measurements` (`lempel_ziv_complexity(bits)`: the LZ76 phrase
-     count of a 0/1 sequence, Kaspar-Schuster scan).
    - MTIE in `measurements` (`mtie(time_error, sample_interval, window_sizes)`: the largest
      peak-to-peak time error over every window of `n + 1` samples, `τ = n·τ₀`).
 
@@ -2719,6 +2717,11 @@ Updated with every chunk of work. Dates are absolute.
   signs, not steps. At least 3 samples.
   Python 7369 passed, 2 skipped; .NET 6557 passed; conformance 4571/4571 in both. Version
   2026.11.18.23.
+- 2026-11-18: Lempel-Ziv complexity (ADR 0336): `lempel_ziv_complexity(bits)` in `measurements`
+  (C# `Measurements.LempelZivComplexity`): the LZ76 phrase count by the Kaspar-Schuster scan,
+  raw and not normalized; vectors from a direct parse by the definition.
+  Python 7381 passed, 2 skipped; .NET 6569 passed; conformance 4580/4580 in both. Version
+  2026.11.18.24.
 
 ## Not built
 
