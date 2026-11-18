@@ -3043,6 +3043,22 @@ def quantize(
     return part(np.asarray(x, dtype=np.float64))
 
 
+def bitcrush(samples: ArrayLike, bits: int, *, hold: int = 1) -> NDArray[np.float64]:
+    """Hold every ``hold``-th sample, then round to ``bits`` bits of full scale +-1
+    (conventions: Bitcrusher; ADR 0266)."""
+    b = count(bits, "bits")
+    if not 2 <= b <= 24:
+        raise ValueError("bits must be from 2 to 24")
+    h = count(hold, "hold")
+    if h < 1:
+        raise ValueError("hold must be at least 1")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    held = np.real(sample_and_hold(x, h))
+    return np.real(quantize(held, 2.0 ** (1 - b), levels=2**b - 1))
+
+
 def dead_zone(samples: ArrayLike, width: float) -> NDArray[np.float64]:
     """Soft threshold: 0 where ``|x| <= width``, otherwise ``x`` moved ``width`` toward 0
     (conventions: Dead zone; ADR 0246)."""

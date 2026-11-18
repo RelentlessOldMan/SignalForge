@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "bitcrush",
+  "description": "Bitcrusher (conventions: Bitcrusher; ADR 0266).",
+  "cases": [
+    {"id": "bitcrush.two_bits", "op": "bitcrush", "args": {"samples": [-1.0, -0.3, -0.25, 0.0, 0.2, 0.25, 0.75, 1.0], "bits": 2}, "expected": [-0.5, -0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5], "tol": {"abs": 0.0, "rel": 0.0}, "source": "2 bits: step 1/2, levels -1/2, 0, 1/2; ties 0.25 and -0.25 go to 0"},
+    {"id": "bitcrush.four_bits", "op": "bitcrush", "args": {"samples": [0.1, -0.6, 0.95, -1.0, 0.0625, 0.1875], "bits": 4}, "expected": [0.125, -0.625, 0.875, -0.875, 0.0, 0.25], "tol": {"abs": 0.0, "rel": 0.0}, "source": "4 bits: step 1/8, at most 7/8; 1/16 rounds to 0, 3/16 to 1/4"},
+    {"id": "bitcrush.hold", "op": "bitcrush", "args": {"samples": [0.1, 0.9, -0.4, 0.3, 0.7, -0.9, 0.2], "bits": 3, "hold": 3}, "expected": [0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25], "tol": {"abs": 0.0, "rel": 0.0}, "source": "3 bits, hold 3: x[0], x[3], x[6] rounded to quarters"},
+    {"id": "bitcrush.sixteen_bits", "op": "bitcrush", "args": {"samples": [0.123456789, -0.987654321, 0.5], "bits": 16}, "expected": [0.123443603515625, -0.987640380859375, 0.5], "tol": {"abs": 0.0, "rel": 0.0}, "source": "16 bits: step 2^-15"},
+    {"id": "bitcrush.bits_low", "op": "bitcrush", "args": {"samples": [0.5], "bits": 1}, "error": "invalid_argument", "source": "bits must be at least 2"},
+    {"id": "bitcrush.bits_high", "op": "bitcrush", "args": {"samples": [0.5], "bits": 25}, "error": "invalid_argument", "source": "bits must be at most 24"},
+    {"id": "bitcrush.hold_zero", "op": "bitcrush", "args": {"samples": [0.5], "bits": 8, "hold": 0}, "error": "invalid_argument", "source": "hold must be at least 1"},
+    {"id": "bitcrush.empty", "op": "bitcrush", "args": {"samples": [], "bits": 8}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "bitcrush.nan_sample", "op": "bitcrush", "args": {"samples": ["nan"], "bits": 8}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

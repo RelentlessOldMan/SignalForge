@@ -1976,6 +1976,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0265](adr/0265-pan.md)): constant power `θ = (position + 1)·(π/4)`, `gL = cos θ`,
   `gR = sin θ`; linear `gL = (1 − position)/2`, `gR = (1 + position)/2`; `left = x·gL`,
   `right = x·gR`. `position` in `[−1, 1]`; samples real, finite, non-empty. **(implemented)**
+- **Bitcrusher** (`bitcrush(samples, bits, *, hold=1)`, C# `Dsp.Bitcrush`,
+  [ADR 0266](adr/0266-bitcrush.md)): `quantize(sample_and_hold(x, hold), 2^(1−bits),
+  levels=2^bits − 1)`, so outputs lie on `k·2^(1−bits)`, `|k| ≤ 2^(bits−1) − 1`. Integer `bits`
+  from 2 to 24, integer `hold ≥ 1`; samples real, finite, non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

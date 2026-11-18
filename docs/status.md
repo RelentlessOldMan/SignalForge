@@ -6,8 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a bitcrusher (`bitcrush(samples, bits, hold)`, sample-and-hold by `hold` then a mid-tread
-     quantizer at `2^(1−bits)` steps).
+   - a stereo width control (`stereo_width(left, right, width)`, mid/side with the side scaled
+     by `width ≥ 0`: 0 is mono, 1 unchanged);
+   - peak normalization (`normalize_peak(samples, peak=1.0)`, scale so `max |x| = peak`);
+   - a lookahead peak limiter (`limit(samples, threshold, lookahead, release)`, gain the running
+     minimum of `min(1, T/|x|)` over the lookahead window, with one-pole release).
 
 ## Built
 
@@ -2356,6 +2359,11 @@ Updated with every chunk of work. Dates are absolute.
   `(1 ∓ position)/2` gains.
   Python 6503 passed, 2 skipped; .NET 5753 passed; conformance 3938/3938 in both. Version
   2026.11.17.64.
+- 2026-11-17: Bitcrusher (ADR 0266): `bitcrush(samples, bits, *, hold=1)` in `dsp` (C#
+  `Dsp.Bitcrush`), sample-and-hold then the mid-tread quantizer at step `2^(1−bits)` with
+  `2^bits − 1` levels; exact outputs.
+  Python 6515 passed, 2 skipped; .NET 5764 passed; conformance 3947/3947 in both. Version
+  2026.11.17.65.
 
 ## Not built
 

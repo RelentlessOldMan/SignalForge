@@ -190,4 +190,21 @@ public static partial class Dsp
 
     private static double QuantizeOne(double v, double step, double top) =>
         step * Math.Clamp(Math.Round(v / step, MidpointRounding.ToEven), -top, top);
+
+    /// <summary>Holds every <paramref name="hold"/>-th sample, then rounds to
+    /// <paramref name="bits"/> bits of full scale ±1 (conventions: Bitcrusher; ADR 0266).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="bits">The word length, 2 to 24.</param>
+    /// <param name="hold">Samples each held value lasts, at least 1.</param>
+    /// <returns>One output per sample, on the grid <c>k·2^(1−bits)</c>.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Bitcrush(ReadOnlySpan<double> samples, int bits, int hold = 1)
+    {
+        if (bits < 2 || bits > 24)
+            throw new ArgumentOutOfRangeException(nameof(bits), "bits must be from 2 to 24");
+        if (hold < 1)
+            throw new ArgumentOutOfRangeException(nameof(hold), "hold must be at least 1");
+        double[] held = SampleAndHold(samples, hold);
+        return Quantize(held, Math.ScaleB(1.0, 1 - bits), (1 << bits) - 1);
+    }
 }
