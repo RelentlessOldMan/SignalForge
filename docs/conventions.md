@@ -261,6 +261,11 @@ rule for code not written yet.
   `y = Φ((x − μ)/σ)`, `σ` the population standard deviation; class `min(c, floor(c·y) + 1)`;
   Shannon entropy of the `N − (m − 1)·delay` class patterns over `ln cᵐ`. Real, finite, not
   constant; `1 ≤ m ≤ 10`, `2 ≤ c ≤ 64`, `delay ≥ 1`; at least one pattern. **(implemented)**
+- **SVD entropy** ([ADR 0342](adr/0342-svd-entropy.md); `svd_entropy(samples, order, delay=1)`,
+  C# `Measurements.SvdEntropy`): the singular values `σ` of the `K × order` delay-embedding
+  matrix (rows `x_i, x_{i+delay}, …`, mean not removed), `p = σ/Σσ`, `−Σ p ln p / ln(order)`.
+  Real, finite, not all 0; `2 ≤ order ≤ 32`, `delay ≥ 1`, `K = N − (order − 1)·delay ≥ order`.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

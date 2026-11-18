@@ -284,6 +284,7 @@ from .measurements import (
     sound_strength,
     speech_transmission_index,
     stage_support,
+    svd_entropy,
     teager_energy,
     temporal_centroid,
     time_deviation,
@@ -510,7 +511,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.29"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.30"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -962,6 +963,7 @@ __all__ = [
     "stereo_width",
     "stutter",
     "supersaw",
+    "svd_entropy",
     "svf",
     "tape_stop",
     "teager_energy",

@@ -6,9 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - SVD entropy in `measurements` (`svd_entropy(samples, order, delay=1)`: the Shannon
-     entropy of the normalized singular values of the delay-embedding matrix, over
-     `ln(order)`).
    - weighted permutation entropy in `measurements` (Fadlallah et al.: each ordinal pattern
      weighted by the population variance of its window).
    - increment entropy in `measurements` (Liu et al.: sign and quantized size of the
@@ -2757,6 +2754,11 @@ Updated with every chunk of work. Dates are absolute.
   `ln cᵐ`. Next restocked with SVD, weighted permutation and increment entropy.
   Python 7447 passed, 2 skipped; .NET 6632 passed; conformance 4629/4629 in both. Version
   2026.11.18.29.
+- 2026-11-18: SVD entropy (ADR 0342): `svd_entropy(samples, order, delay=1)` in `measurements`
+  (C# `Measurements.SvdEntropy`): normalized singular values of the delay embedding, mean not
+  removed. C# takes them by Hestenes' one-sided Jacobi; the generator by eigenvalues of the
+  exact Gram matrix. Python 7462 passed, 2 skipped; .NET 6647 passed; conformance 4640/4640 in both. Version
+  2026.11.18.30.
 
 ## Not built
 

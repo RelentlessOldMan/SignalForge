@@ -271,6 +271,7 @@ public static class Conformance
             "fuzzy_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r"), a.Has("n") ? a.D("n") : 2.0), t => Measurements.FuzzyEntropy(t.Item1, t.Item2, t.Item3, t.Item4)),
             "rescaled_range" => Bind((Reals(a.Get("samples")), Ints(a.Get("scales"))), t => Measurements.RescaledRange(t.Item1, t.Item2)),
             "dispersion_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.I("classes"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.DispersionEntropy(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "svd_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.SvdEntropy(t.Item1, t.Item2, t.Item3)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

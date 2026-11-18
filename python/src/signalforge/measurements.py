@@ -634,6 +634,35 @@ def dispersion_entropy(samples: ArrayLike, m: int, classes: int, delay: int = 1)
     return float(-np.sum(p * np.log(p)) / (k * math.log(c)))
 
 
+def svd_entropy(samples: ArrayLike, order: int, delay: int = 1) -> float:
+    """The Shannon entropy of the normalized singular values of the delay-embedding matrix,
+    over ``ln(order)`` (conventions: SVD entropy; ADR 0342)."""
+    m = count(order, "order")
+    tau = count(delay, "delay")
+    if not 2 <= m <= 32:
+        raise ValueError("order must be from 2 to 32")
+    if tau < 1:
+        raise ValueError("delay must be at least 1")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    rows = x.shape[0] - (m - 1) * tau
+    if rows < m:
+        raise ValueError("samples are too short: need len(samples) - (order - 1)*delay >= order")
+    if not np.any(x != 0):
+        raise ValueError("samples must not all be 0")
+    idx = np.arange(rows)[:, None] + tau * np.arange(m)[None, :]
+    s = np.linalg.svd(x[idx], compute_uv=False)
+    p = s / np.sum(s)
+    p = p[p > 0]
+    return float(-np.sum(p * np.log(p)) / math.log(m))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
