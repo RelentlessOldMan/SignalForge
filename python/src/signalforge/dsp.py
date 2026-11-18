@@ -2696,6 +2696,28 @@ def mid_side_decode(mid: ArrayLike, side: ArrayLike) -> LeftRight:
     return LeftRight(m + s, m - s)
 
 
+def pan(samples: ArrayLike, position: float, *, law: str = "constant_power") -> LeftRight:
+    """Pan a mono signal to left and right, ``position`` from -1 (left) to 1 (right)
+    (conventions: Panner; ADR 0265)."""
+    p = real(position, "position")
+    if not -1 <= p <= 1:
+        raise ValueError("position must be from -1 to 1")
+    if law == "constant_power":
+        theta = (p + 1) * (math.pi / 4)
+        gl, gr = math.cos(theta), math.sin(theta)
+    elif law == "linear":
+        gl, gr = (1 - p) / 2, (1 + p) / 2
+    else:
+        raise ValueError('law must be "constant_power" or "linear"')
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    x = np.asarray(x, dtype=np.float64)
+    return LeftRight(x * gl, x * gr)
+
+
 def saturate(samples: ArrayLike, drive: float) -> NDArray[np.float64]:
     """Tanh saturator ``tanh(drive x) / tanh(drive)``, unity at ``x = +-1`` (conventions: Tanh
     saturator; ADR 0259)."""

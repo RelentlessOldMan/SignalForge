@@ -12,6 +12,17 @@ public sealed record MidSide(double[] Mid, double[] Side);
 /// <param name="Right">The right channel.</param>
 public sealed record LeftRight(double[] Left, double[] Right);
 
+/// <summary>How <see cref="Dsp.Pan"/> splits a mono signal (conventions: Panner;
+/// ADR 0265).</summary>
+public enum PanLaw
+{
+    /// <summary><c>gL = cos θ</c>, <c>gR = sin θ</c>, <c>θ = (position + 1)·π/4</c>.</summary>
+    ConstantPower,
+
+    /// <summary><c>gL = (1 − position)/2</c>, <c>gR = (1 + position)/2</c>.</summary>
+    Linear,
+}
+
 public static partial class Dsp
 {
     /// <summary>Encodes a stereo pair as <c>mid = (left + right)/2</c>,
@@ -64,6 +75,47 @@ public static partial class Dsp
                 throw new ArgumentException("side must be finite", nameof(side));
             left[n] = m + s;
             right[n] = m - s;
+        }
+        return new LeftRight(left, right);
+    }
+
+    /// <summary>Pans a mono signal to left and right, <paramref name="position"/> from −1 (left)
+    /// to 1 (right) (conventions: Panner; ADR 0265).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="position">From −1 (hard left) to 1 (hard right).</param>
+    /// <param name="law">The pan law.</param>
+    /// <returns>The left and right channels.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static LeftRight Pan(ReadOnlySpan<double> samples, double position, PanLaw law = PanLaw.ConstantPower)
+    {
+        if (!double.IsFinite(position) || position < -1 || position > 1)
+            throw new ArgumentOutOfRangeException(nameof(position), "position must be from -1 to 1");
+        double gl, gr;
+        switch (law)
+        {
+            case PanLaw.ConstantPower:
+                double theta = (position + 1) * (Math.PI / 4);
+                gl = Math.Cos(theta);
+                gr = Math.Sin(theta);
+                break;
+            case PanLaw.Linear:
+                gl = (1 - position) / 2;
+                gr = (1 + position) / 2;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(law), "law must be ConstantPower or Linear");
+        }
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        var left = new double[samples.Length];
+        var right = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double v = samples[n];
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            left[n] = v * gl;
+            right[n] = v * gr;
         }
         return new LeftRight(left, right);
     }

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "pan",
+  "description": "Panner (conventions: Panner; ADR 0265).",
+  "cases": [
+    {"id": "pan.centre", "op": "pan", "args": {"samples": [1.0, -0.5, 0.25, 2.0], "position": 0.0}, "expected": {"left": [0.7071067811865476, -0.3535533905932738, 0.1767766952966369, 1.4142135623730951], "right": [0.7071067811865476, -0.3535533905932738, 0.1767766952966369, 1.4142135623730951]}, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "constant power, centre: both gains cos(pi/4) = 1/sqrt 2"},
+    {"id": "pan.hard_left", "op": "pan", "args": {"samples": [1.0, -0.5, 0.25, 2.0], "position": -1.0}, "expected": {"left": [1.0, -0.5, 0.25, 2.0], "right": [0.0, -0.0, 0.0, 0.0]}, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "constant power, -1: left gain 1, right gain 0"},
+    {"id": "pan.hard_right", "op": "pan", "args": {"samples": [1.0, -0.5, 0.25, 2.0], "position": 1.0}, "expected": {"left": [6.123233995736766e-17, -3.061616997868383e-17, 1.5308084989341915e-17, 1.2246467991473532e-16], "right": [1.0, -0.5, 0.25, 2.0]}, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "constant power, 1: right gain 1, left gain cos(pi/2)"},
+    {"id": "pan.quarter", "op": "pan", "args": {"samples": [1.0, -0.5, 0.25, 2.0], "position": 0.5, "law": "constant_power"}, "expected": {"left": [0.38268343236508984, -0.19134171618254492, 0.09567085809127246, 0.7653668647301797], "right": [0.9238795325112867, -0.46193976625564337, 0.23096988312782168, 1.8477590650225735]}, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "constant power, 0.5: theta = 3 pi/8"},
+    {"id": "pan.linear_centre", "op": "pan", "args": {"samples": [1.0, -0.5, 0.25, 2.0], "position": 0.0, "law": "linear"}, "expected": {"left": [0.5, -0.25, 0.125, 1.0], "right": [0.5, -0.25, 0.125, 1.0]}, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "linear, centre: both gains 1/2"},
+    {"id": "pan.linear_left", "op": "pan", "args": {"samples": [1.0, -0.5, 0.25, 2.0], "position": -0.5, "law": "linear"}, "expected": {"left": [0.75, -0.375, 0.1875, 1.5], "right": [0.25, -0.125, 0.0625, 0.5]}, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "linear, -0.5: gains 3/4 and 1/4"},
+    {"id": "pan.position_high", "op": "pan", "args": {"samples": [1.0], "position": 1.5}, "error": "invalid_argument", "source": "position must be at most 1"},
+    {"id": "pan.position_nan", "op": "pan", "args": {"samples": [1.0], "position": "nan"}, "error": "invalid_argument", "source": "position must be finite"},
+    {"id": "pan.bad_law", "op": "pan", "args": {"samples": [1.0], "position": 0.0, "law": "square"}, "error": "invalid_argument", "source": "law must be constant_power or linear"},
+    {"id": "pan.empty", "op": "pan", "args": {"samples": [], "position": 0.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "pan.inf_sample", "op": "pan", "args": {"samples": ["inf"], "position": 0.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a panner (`pan(samples, position, *, law="constant_power")`, mono to left and right with
-     constant-power `cos/sin` or linear gains, `position` in `[−1, 1]`);
    - a bitcrusher (`bitcrush(samples, bits, hold)`, sample-and-hold by `hold` then a mid-tread
      quantizer at `2^(1−bits)` steps).
 
@@ -2353,6 +2351,11 @@ Updated with every chunk of work. Dates are absolute.
   `Dsp.MidSideDecode`), halves of sum and difference, plain sum and difference back.
   Python 6489 passed, 2 skipped; .NET 5740 passed; conformance 3927/3927 in both. Version
   2026.11.17.63.
+- 2026-11-17: Panner (ADR 0265): `pan(samples, position, *, law="constant_power")` in `dsp` (C#
+  `Dsp.Pan`, `PanLaw`) → `LeftRight`, constant-power `cos/sin` of `(position + 1)·π/4` or linear
+  `(1 ∓ position)/2` gains.
+  Python 6503 passed, 2 skipped; .NET 5753 passed; conformance 3938/3938 in both. Version
+  2026.11.17.64.
 
 ## Not built
 

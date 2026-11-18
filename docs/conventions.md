@@ -1972,6 +1972,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `Dsp.MidSideEncode`, `Dsp.MidSideDecode`, [ADR 0264](adr/0264-mid-side.md)):
   `mid = (left + right)/2`, `side = (left − right)/2`; `left = mid + side`,
   `right = mid − side`. Inputs real, finite, non-empty, equal length. **(implemented)**
+- **Panner** (`pan(samples, position, *, law="constant_power")`, C# `Dsp.Pan`,
+  [ADR 0265](adr/0265-pan.md)): constant power `θ = (position + 1)·(π/4)`, `gL = cos θ`,
+  `gR = sin θ`; linear `gL = (1 − position)/2`, `gR = (1 + position)/2`; `left = x·gL`,
+  `right = x·gR`. `position` in `[−1, 1]`; samples real, finite, non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
