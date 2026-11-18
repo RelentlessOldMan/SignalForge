@@ -285,4 +285,77 @@ public static class Waveforms
         }
         return output;
     }
+
+    /// <summary>Naive sawtooth <c>A·(2u − 1)</c>, with <c>u</c> the phase in cycles
+    /// (conventions: Oscillators; ADR 0305).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Sawtooth(double sampleRate, int numSamples, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        for (int n = 0; n < u.Length; n++)
+            u[n] = amplitude * ((2 * u[n]) - 1);
+        return u;
+    }
+
+    /// <summary>Naive square: <paramref name="amplitude"/> for the first
+    /// <paramref name="duty"/> of each cycle and its negative after (conventions: Oscillators;
+    /// ADR 0305).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite.</param>
+    /// <param name="duty">The high fraction of each cycle, in [0, 1].</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Square(double sampleRate, int numSamples, double frequency,
+        double duty = 0.5, double amplitude = 1.0, double phase = 0.0)
+    {
+        if (!(duty >= 0 && duty <= 1))
+            throw new ArgumentOutOfRangeException(nameof(duty), "duty must be in [0, 1]");
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        for (int n = 0; n < u.Length; n++)
+            u[n] = u[n] < duty ? amplitude : -amplitude;
+        return u;
+    }
+
+    /// <summary>Naive triangle <c>A·(4·|u − 1/2| − 1)</c>, peaking at the start of each cycle
+    /// (conventions: Oscillators; ADR 0305).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Triangle(double sampleRate, int numSamples, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        for (int n = 0; n < u.Length; n++)
+            u[n] = amplitude * ((4 * Math.Abs(u[n] - 0.5)) - 1);
+        return u;
+    }
+
+    private static double[] Cycle(double sampleRate, int numSamples, double frequency,
+        double amplitude, double phase)
+    {
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        ArgumentOutOfRangeException.ThrowIfNegative(numSamples);
+        CheckTone(frequency, amplitude, phase);
+        var u = new double[numSamples];
+        for (int n = 0; n < numSamples; n++)
+        {
+            double t = (frequency * (n / sampleRate)) + phase;
+            u[n] = t - Math.Floor(t);
+        }
+        return u;
+    }
 }

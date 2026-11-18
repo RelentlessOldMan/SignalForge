@@ -1,4 +1,5 @@
-"""Waveform generators: tones, multitones, chirps, pulse trains, envelopes and PRBS. Definitions in
+"""Waveform generators: tones, multitones, chirps, oscillators, pulse trains, envelopes
+and PRBS. Definitions in
 docs/conventions.md."""
 
 from __future__ import annotations
@@ -133,6 +134,65 @@ def pulse_train(
         raise ValueError("width must be at most period")
     on = np.mod(np.arange(n, dtype=np.int64) - d, p) < w
     return np.where(on, amp, 0.0).astype(np.float64)
+
+
+def _cycle(
+    sample_rate: float, num_samples: int, frequency: float, amplitude: float, phase: float
+) -> tuple[NDArray[np.float64], float]:
+    """The phase in cycles, ``u = t - floor(t)``, and the checked amplitude."""
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    size = _count(num_samples, "num_samples")
+    f = real(frequency, "frequency")
+    amp = real(amplitude, "amplitude")
+    p = real(phase, "phase")
+    t = f * (np.arange(size) / fs) + p
+    return t - np.floor(t), amp
+
+
+def sawtooth(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Naive sawtooth ``A(2u - 1)``, ``phase`` in cycles (conventions: Oscillators; ADR 0305)."""
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    y: NDArray[np.float64] = amp * (2 * u - 1)
+    return y
+
+
+def square(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    duty: float = 0.5,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Naive square, ``A`` for the first ``duty`` of each cycle and ``-A`` after, ``phase`` in
+    cycles (conventions: Oscillators; ADR 0305)."""
+    d = real(duty, "duty")
+    if not 0 <= d <= 1:
+        raise ValueError("duty must be in [0, 1]")
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    return np.where(u < d, amp, -amp).astype(np.float64)
+
+
+def triangle(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Naive triangle ``A(4|u - 1/2| - 1)``, peaking at the start of each cycle, ``phase`` in
+    cycles (conventions: Oscillators; ADR 0305)."""
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    y: NDArray[np.float64] = amp * (4 * np.abs(u - 0.5) - 1)
+    return y
 
 
 def adsr(

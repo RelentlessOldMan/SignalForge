@@ -62,6 +62,13 @@ rule for code not written yet.
   frequency jump. Samples `A·e^(jθ[n])` (or `A·cos θ[n]`) with
   `θ[n] = 2π·(start·t + (stop − start)·t²/(2T)) + φ`, `t = n/fs`. With `num_samples = 0` the result
   is empty. Frequencies, amplitude and phase finite.
+- **Oscillators** (`sawtooth(sample_rate, num_samples, frequency, amplitude=1, phase=0)`,
+  `square(…, frequency, duty=0.5, amplitude=1, phase=0)`, `triangle(…)`, C#
+  `Waveforms.Sawtooth`, `Square`, `Triangle`, [ADR 0305](adr/0305-oscillators.md)): real;
+  `phase` in **cycles**; `t = f·(n/fs) + phase`, `u = t − floor(t)`; sawtooth `A·(2u − 1)`;
+  square `A` for `u < duty`, else `−A`; triangle `A·(4·|u − 1/2| − 1)`. Naive (they alias).
+  Positive finite `sample_rate`; finite `frequency`, `amplitude`, `phase`; `duty` in [0, 1].
+  **(implemented)**
 - **ADSR envelope** (`adsr(num_samples, attack, decay, sustain, release, gate)`, C#
   `Waveforms.Adsr`, [ADR 0303](adr/0303-adsr.md)): held, `h(n) = n/A` for `n < A`,
   `1 − (1 − S)·((n − A)/D)` for `A ≤ n < A + D`, `S` after; for `n ≥ G`, `k = n − G`,

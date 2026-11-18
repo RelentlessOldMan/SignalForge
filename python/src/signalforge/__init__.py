@@ -455,9 +455,20 @@ from .units import (
     vrms_to_dbm,
     w_to_dbm,
 )
-from .waveforms import adsr, chirp, multitone, newman_phases, prbs, pulse_train, tone
+from .waveforms import (
+    adsr,
+    chirp,
+    multitone,
+    newman_phases,
+    prbs,
+    pulse_train,
+    sawtooth,
+    square,
+    tone,
+    triangle,
+)
 
-__version__ = "2026.11.17.103"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.104"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -836,6 +847,7 @@ __all__ = [
     "saturate",
     "savgol_coefficients",
     "savgol_filter",
+    "sawtooth",
     "schmitt_trigger",
     "schroeder_decay",
     "schroeder_reverb",
@@ -864,6 +876,7 @@ __all__ = [
     "spectral_variation",
     "spectrogram",
     "speech_transmission_index",
+    "square",
     "stage_support",
     "stereo_width",
     "stutter",
@@ -882,6 +895,7 @@ __all__ = [
     "transient_shaper",
     "treble_ratio",
     "tremolo",
+    "triangle",
     "tristimulus",
     "two_band_compress",
     "two_tone_imd",
