@@ -249,6 +249,7 @@ from .measurements import (
     integrated_phase_noise,
     kay_frequency,
     lateral_fraction,
+    modified_allan_deviation,
     modulation_transfer,
     noise_compensated_decay,
     noise_figure_cascade,
@@ -493,7 +494,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.16"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.17"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -781,6 +782,7 @@ __all__ = [
     "mid_side_decode",
     "mid_side_encode",
     "minimum_phase",
+    "modified_allan_deviation",
     "modulation_transfer",
     "moving_average",
     "moving_rms",

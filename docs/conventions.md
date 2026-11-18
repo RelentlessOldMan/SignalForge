@@ -188,6 +188,12 @@ rule for code not written yet.
   `AllanDeviation(taus, deviations)` in the factors' order. Real, finite, `M ≥ 2`; finite
   positive `sample_interval`; non-empty integer factors with `1 ≤ m` and `2m ≤ M`.
   **(implemented)**
+- **Modified Allan deviation** ([ADR 0328](adr/0328-modified-allan-deviation.md);
+  `modified_allan_deviation(fractional_frequency, sample_interval, averaging_factors)`, C#
+  `Measurements.ModifiedAllanDeviation`): `ȳ_k` as for the Allan deviation, `d_i = ȳ_{i+m} −
+  ȳ_i`, `S_j = Σ_{i=j}^{j+m−1} d_i` for `j = 0 … M−3m+1`, `σ² = Σ S_j² / (2m²(M − 3m + 2))`,
+  `τ = m·τ₀`. Gives `AllanDeviation(taus, deviations)`. Rules as the Allan deviation but
+  `3m ≤ M + 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

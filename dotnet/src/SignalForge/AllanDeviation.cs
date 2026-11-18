@@ -62,4 +62,65 @@ public static partial class Measurements
         }
         return new AllanDeviation(taus, deviations);
     }
+
+    /// <summary>The modified Allan deviation of fractional-frequency samples at
+    /// <c>τ = m·sampleInterval</c> for each averaging factor <c>m</c> (conventions: Modified
+    /// Allan deviation; ADR 0328).</summary>
+    /// <param name="fractionalFrequency">Fractional-frequency samples, finite, at least 2.</param>
+    /// <param name="sampleInterval">The interval each sample averages over, in seconds, finite
+    /// and positive.</param>
+    /// <param name="averagingFactors">The factors <c>m</c>, at least one, each with
+    /// <c>1 ≤ m</c> and <c>3m ≤ N + 1</c>.</param>
+    /// <returns>The averaging times and deviations.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static AllanDeviation ModifiedAllanDeviation(ReadOnlySpan<double> fractionalFrequency, double sampleInterval,
+        ReadOnlySpan<int> averagingFactors)
+    {
+        if (!(double.IsFinite(sampleInterval) && sampleInterval > 0))
+            throw new ArgumentOutOfRangeException(nameof(sampleInterval), sampleInterval, "must be finite and positive");
+        int size = fractionalFrequency.Length;
+        if (size < 2)
+            throw new ArgumentException("needs at least 2 samples", nameof(fractionalFrequency));
+        foreach (double v in fractionalFrequency)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("fractionalFrequency must be finite", nameof(fractionalFrequency));
+        }
+        if (averagingFactors.IsEmpty)
+            throw new ArgumentException("averagingFactors must not be empty", nameof(averagingFactors));
+        foreach (int m in averagingFactors)
+        {
+            if (m < 1 || m > (size + 1) / 3)
+                throw new ArgumentException("each averaging factor m must be at least 1 with 3m <= N + 1", nameof(averagingFactors));
+        }
+        var taus = new double[averagingFactors.Length];
+        var deviations = new double[averagingFactors.Length];
+        for (int f = 0; f < averagingFactors.Length; f++)
+        {
+            int m = averagingFactors[f];
+            var means = new double[size - m + 1];
+            for (int k = 0; k < means.Length; k++)
+            {
+                double s = 0;
+                for (int i = k; i < k + m; i++)
+                    s += fractionalFrequency[i];
+                means[k] = s / m;
+            }
+            var d = new double[size - (2 * m) + 1];
+            for (int i = 0; i < d.Length; i++)
+                d[i] = means[i + m] - means[i];
+            int terms = size - (3 * m) + 2;
+            double sum = 0;
+            for (int j = 0; j < terms; j++)
+            {
+                double s = 0;
+                for (int i = j; i < j + m; i++)
+                    s += d[i];
+                sum += s * s;
+            }
+            taus[f] = m * sampleInterval;
+            deviations[f] = Math.Sqrt(sum / (2.0 * m * m * terms));
+        }
+        return new AllanDeviation(taus, deviations);
+    }
 }
