@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a two-band compressor (`multiband_compress(samples, order, cutoff, sample_rate, low, high)`,
-     each `crossover_split` band through its own `compress` settings, then summed).
    - a harmonic exciter (`exciter(samples, order, cutoff, sample_rate, drive, mix)`, the
      `crossover_split` high band through `soft_clip(drive·high)/drive`, added to the input at `mix`).
+   - an octave-up effect (`octave_up(samples, mix)`, the full-wave rectifier `|x|` with its mean
+     removed per the DC blocker, mixed with the dry signal as the other effects mix).
 
 ## Built
 
@@ -2465,6 +2465,12 @@ Updated with every chunk of work. Dates are absolute.
   state-variable band-pass of the input, hard knee, no make-up.
   Python 6777 passed, 2 skipped; .NET 6004 passed; conformance 4145/4145 in both. Version
   2026.11.17.85.
+- 2026-11-17: Two-band compressor (ADR 0287): `two_band_compress(samples, order, cutoff,
+  sample_rate, low_threshold_db, low_ratio, high_threshold_db, high_ratio, attack, release)` in
+  `dsp` (C# `Dsp.TwoBandCompress`, real): each `crossover_split` band through `compress` with its
+  own threshold and ratio, then summed.
+  Python 6787 passed, 2 skipped; .NET 6013 passed; conformance 4152/4152 in both. Version
+  2026.11.17.86.
 
 ## Not built
 

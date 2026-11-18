@@ -58,4 +58,29 @@ public static partial class Dsp
         }
         return new Bands(new IirFilter(lr.Low).Process(samples), new IirFilter(lr.High).Process(samples));
     }
+
+    /// <summary>Splits real samples with a Linkwitz-Riley crossover, compresses each band with
+    /// its own threshold and ratio, and sums them (conventions: Two-band compressor;
+    /// ADR 0287).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="order">The crossover order, even, from 2 to 2000.</param>
+    /// <param name="cutoff">The crossover frequency, Hz, between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">The sample rate, Hz.</param>
+    /// <param name="lowThresholdDb">The low band's threshold, dB.</param>
+    /// <param name="lowRatio">The low band's ratio, at least 1.</param>
+    /// <param name="highThresholdDb">The high band's threshold, dB.</param>
+    /// <param name="highRatio">The high band's ratio, at least 1.</param>
+    /// <param name="attack">The envelope followers' attack coefficient, in [0, 1).</param>
+    /// <param name="release">The envelope followers' release coefficient, in [0, 1).</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] TwoBandCompress(ReadOnlySpan<double> samples, int order, double cutoff, double sampleRate, double lowThresholdDb, double lowRatio, double highThresholdDb, double highRatio, double attack, double release)
+    {
+        Bands b = CrossoverSplit(samples, order, cutoff, sampleRate);
+        double[] lo = Compress(b.Low, lowThresholdDb, lowRatio, attack, release);
+        double[] hi = Compress(b.High, highThresholdDb, highRatio, attack, release);
+        for (int n = 0; n < lo.Length; n++)
+            lo[n] += hi[n];
+        return lo;
+    }
 }

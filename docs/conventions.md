@@ -2079,6 +2079,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   threshold_db, ratio, attack, release)` with `key = (1/q)·svf(samples, cutoff, q, fs,
   output="bandpass")`; hard knee, no make-up. Real samples; the SVF's and the sidechain
   compressor's rules. **(implemented)**
+- **Two-band compressor** (`two_band_compress(samples, order, cutoff, sample_rate,
+  low_threshold_db, low_ratio, high_threshold_db, high_ratio, attack, release)`, C#
+  `Dsp.TwoBandCompress`, [ADR 0287](adr/0287-two-band-compress.md)): with `b =
+  crossover_split(samples, order, cutoff, fs)`, `compress(b.low, low_threshold_db, low_ratio,
+  attack, release) + compress(b.high, high_threshold_db, high_ratio, attack, release)`; hard
+  knee, no make-up. Real samples; the splitter's and the compressor's rules. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

@@ -2666,6 +2666,27 @@ def de_esser(
     return np.asarray(duck(x, key, threshold_db, ratio, attack, release), dtype=np.float64)
 
 
+def two_band_compress(
+    samples: ArrayLike,
+    order: int,
+    cutoff: float,
+    sample_rate: float,
+    low_threshold_db: float,
+    low_ratio: float,
+    high_threshold_db: float,
+    high_ratio: float,
+    attack: float,
+    release: float,
+) -> NDArray[np.float64]:
+    """Split real samples with a Linkwitz-Riley crossover, compress each band with its own
+    threshold and ratio, and sum them (conventions: Two-band compressor; ADR 0287)."""
+    b = crossover_split(samples, order, cutoff, sample_rate)
+    lo = compress(b.low, low_threshold_db, low_ratio, attack, release)
+    hi = compress(b.high, high_threshold_db, high_ratio, attack, release)
+    y: NDArray[np.float64] = np.asarray(lo, dtype=np.float64) + np.asarray(hi, dtype=np.float64)
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

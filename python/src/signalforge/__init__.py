@@ -161,6 +161,7 @@ from .dsp import (
     tilt_eq,
     transient_shaper,
     tremolo,
+    two_band_compress,
     upsample,
     vibrato,
     wavefold,
@@ -440,7 +441,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.85"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.86"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -850,6 +851,7 @@ __all__ = [
     "treble_ratio",
     "tremolo",
     "tristimulus",
+    "two_band_compress",
     "two_tone_imd",
     "two_tone_ip2",
     "two_tone_ip5",

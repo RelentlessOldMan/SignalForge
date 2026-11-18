@@ -674,6 +674,7 @@ public static class Conformance
                     t => Dsp.Duck(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8))
                 : Bind((Reals(a.Get("samples")), Reals(a.Get("key")), a.D("threshold_db"), a.D("ratio"), a.D("attack"), a.D("release"), a.Has("knee_db") ? a.D("knee_db") : 0.0, a.Has("makeup_db") ? a.D("makeup_db") : 0.0),
                     t => Dsp.Duck(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8)),
+            "two_band_compress" => Bind((Reals(a.Get("samples")), a.I("order"), a.D("cutoff"), a.D("sample_rate"), a.D("low_threshold_db"), a.D("low_ratio"), a.D("high_threshold_db"), a.D("high_ratio"), a.D("attack"), a.D("release")), t => Dsp.TwoBandCompress(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8, t.Item9, t.Item10)),
             "compress" => a.Get("samples") is Complex[] cps
                 ? Bind((cps, a.D("threshold_db"), a.D("ratio"), a.D("attack"), a.D("release"), a.Has("knee_db") ? a.D("knee_db") : 0.0, a.Has("makeup_db") ? a.D("makeup_db") : 0.0),
                     t => Dsp.Compress(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7))
