@@ -261,4 +261,89 @@ public static partial class Dsp
             y[n] = new Complex(samples[n].Real * f[n], samples[n].Imaginary * f[n]);
         return y;
     }
+
+    /// <summary>Lookahead peak limiter on real samples (conventions: Lookahead peak limiter;
+    /// ADR 0269).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="threshold">The largest output magnitude, finite and positive.</param>
+    /// <param name="lookahead">Samples ahead the gain allows for, at least 0.</param>
+    /// <param name="release">The one-pole recovery coefficient, in [0, 1).</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Limit(ReadOnlySpan<double> samples, double threshold, int lookahead, double release)
+    {
+        CheckLimit(threshold, lookahead, release);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        var mag = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            if (!double.IsFinite(samples[n]))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            mag[n] = Math.Abs(samples[n]);
+        }
+        double[] g = LimitGain(mag, threshold, lookahead, release);
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+            y[n] = samples[n] * g[n];
+        return y;
+    }
+
+    /// <summary>Lookahead peak limiter on complex samples, part by part (conventions: Lookahead
+    /// peak limiter; ADR 0269).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="threshold">The largest output magnitude, finite and positive.</param>
+    /// <param name="lookahead">Samples ahead the gain allows for, at least 0.</param>
+    /// <param name="release">The one-pole recovery coefficient, in [0, 1).</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Limit(ReadOnlySpan<Complex> samples, double threshold, int lookahead, double release)
+    {
+        CheckLimit(threshold, lookahead, release);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        var mag = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            Complex v = samples[n];
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            mag[n] = Complex.Abs(v);
+        }
+        double[] g = LimitGain(mag, threshold, lookahead, release);
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+            y[n] = new Complex(samples[n].Real * g[n], samples[n].Imaginary * g[n]);
+        return y;
+    }
+
+    private static void CheckLimit(double threshold, int lookahead, double release)
+    {
+        if (!double.IsFinite(threshold) || !(threshold > 0))
+            throw new ArgumentOutOfRangeException(nameof(threshold), "threshold must be positive");
+        if (lookahead < 0)
+            throw new ArgumentOutOfRangeException(nameof(lookahead), "lookahead must be at least 0");
+        if (!double.IsFinite(release) || release < 0 || release >= 1)
+            throw new ArgumentOutOfRangeException(nameof(release), "release must be in [0, 1)");
+    }
+
+    private static double[] LimitGain(double[] mag, double threshold, int lookahead, double release)
+    {
+        int count = mag.Length;
+        var c = new double[count];
+        for (int n = 0; n < count; n++)
+            c[n] = mag[n] > threshold ? threshold / mag[n] : 1.0;
+        var g = new double[count];
+        double prev = 1.0;
+        for (int n = 0; n < count; n++)
+        {
+            double a = c[n];
+            int end = (int)Math.Min((long)n + lookahead, count - 1);
+            for (int k = n + 1; k <= end; k++)
+                a = Math.Min(a, c[k]);
+            prev = a < prev ? a : a + release * (prev - a);
+            g[n] = prev;
+        }
+        return g;
+    }
 }

@@ -284,6 +284,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "crossfade": dsp.crossfade,
     "compressor_gain": dsp.compressor_gain,
     "noise_gate": dsp.noise_gate,
+    "limit": dsp.limit,
     "expander_gain": dsp.expander_gain,
     "compress": dsp.compress,
     "expand": dsp.expand,

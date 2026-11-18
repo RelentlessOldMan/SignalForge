@@ -6,8 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a lookahead peak limiter (`limit(samples, threshold, lookahead, release)`, gain the running
-     minimum of `min(1, T/|x|)` over the lookahead window, with one-pole release).
+   - an auto-panner (`auto_pan(samples, rate, depth, sample_rate)`, the panner with a cosine LFO
+     position `depth·cos(2π·rate·n/fs)`, → `LeftRight`);
+   - a vibrato (`vibrato(samples, delay, depth, rate, sample_rate)`, a cosine-modulated delay
+     read with linear interpolation, wet only);
+   - a flanger (`flanger(samples, delay, depth, rate, sample_rate, mix)`, the vibrato mixed with
+     the dry signal).
 
 ## Built
 
@@ -2369,6 +2373,11 @@ Updated with every chunk of work. Dates are absolute.
   `Dsp.NormalizePeak`, real and complex), one gain `g = peak / max|x|`, then `x·g`.
   Python 6541 passed, 2 skipped; .NET 5788 passed; conformance 3967/3967 in both. Version
   2026.11.17.67.
+- 2026-11-17: Lookahead peak limiter (ADR 0269): `limit(samples, threshold, lookahead, release)`
+  in `dsp` (C# `Dsp.Limit`, real and complex), gain the minimum of `min(1, T/|x|)` over the
+  next `lookahead` samples, instant attack, one-pole release; `|y| ≤ T`.
+  Python 6557 passed, 2 skipped; .NET 5803 passed; conformance 3980/3980 in both. Version
+  2026.11.17.68.
 
 ## Not built
 

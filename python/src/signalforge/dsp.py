@@ -2837,6 +2837,40 @@ def expander_gain(
     return g
 
 
+def limit(
+    samples: ArrayLike, threshold: float, lookahead: int, release: float
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Lookahead peak limiter: the gain falls in time for the loudest sample ``lookahead`` ahead
+    and recovers with a one-pole ``release`` (conventions: Lookahead peak limiter; ADR 0269)."""
+    t = real(threshold, "threshold")
+    if not t > 0:
+        raise ValueError("threshold must be positive")
+    la = count(lookahead, "lookahead")
+    r_c = real(release, "release")
+    if not 0 <= r_c < 1:
+        raise ValueError("release must be in [0, 1)")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    mag = np.abs(x)
+    c = np.ones(x.size)
+    loud = mag > t
+    c[loud] = t / mag[loud]
+    a = c.copy()
+    for k in range(1, min(la, x.size - 1) + 1):
+        a[:-k] = np.minimum(a[:-k], c[k:])
+    g = np.empty(x.size)
+    prev = 1.0
+    for n in range(x.size):
+        v = float(a[n])
+        prev = v if v < prev else v + r_c * (prev - v)
+        g[n] = prev
+    if np.iscomplexobj(x):
+        y: NDArray[Any] = x.real * g + 1j * (x.imag * g)
+        return y
+    return np.asarray(x, dtype=np.float64) * g
+
+
 def noise_gate(
     samples: ArrayLike, threshold: float, *, hold: int = 0
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

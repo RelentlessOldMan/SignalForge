@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "limit",
+  "description": "Lookahead peak limiter (conventions: Lookahead peak limiter; ADR 0269).",
+  "cases": [
+    {"id": "limit.no_lookahead", "op": "limit", "args": {"samples": [0.25, 0.5, 2.0, -0.5, 0.25, 0.25, 0.25, 0.25], "threshold": 1.0, "lookahead": 0, "release": 0.5}, "expected": [0.25, 0.5, 1.0, -0.375, 0.21875, 0.234375, 0.2421875, 0.24609375], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "lookahead 0: gain 1/2 at the peak, then recovers 1/2 of the way each sample"},
+    {"id": "limit.lookahead_2", "op": "limit", "args": {"samples": [0.25, 0.5, 2.0, -0.5, 0.25, 0.25, 0.25, 0.25], "threshold": 1.0, "lookahead": 2, "release": 0.5}, "expected": [0.125, 0.25, 1.0, -0.375, 0.21875, 0.234375, 0.2421875, 0.24609375], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "lookahead 2: gain falls to 1/2 two samples early"},
+    {"id": "limit.hold_release", "op": "limit", "args": {"samples": [0.25, 0.5, 2.0, -0.5, 0.25, 0.25, 0.25, 0.25], "threshold": 1.0, "lookahead": 1, "release": 0.0}, "expected": [0.25, 0.25, 1.0, -0.5, 0.25, 0.25, 0.25, 0.25], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "release 0: gain back to 1 at once"},
+    {"id": "limit.quiet", "op": "limit", "args": {"samples": [0.1, -0.2, 0.3], "threshold": 0.5, "lookahead": 4, "release": 0.9}, "expected": [0.1, -0.2, 0.3], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "below threshold: unchanged"},
+    {"id": "limit.dense", "op": "limit", "args": {"samples": [0.9, -1.3, 1.7, -0.4, 2.2, 0.6, -0.8, 1.1, 0.3, -1.9, 0.05], "threshold": 0.8, "lookahead": 3, "release": 0.75}, "expected": [0.42352941176470593, -0.4727272727272728, 0.6181818181818182, -0.14545454545454548, 0.8, 0.27272727272727276, -0.33684210526315794, 0.46315789473684216, 0.12631578947368421, -0.8, 0.028289473684210528], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "threshold 0.8, lookahead 3, release 0.75 on a busy signal"},
+    {"id": "limit.lookahead_past_end", "op": "limit", "args": {"samples": [0.5, 0.5, 4.0], "threshold": 1.0, "lookahead": 10, "release": 0.5}, "expected": [0.125, 0.125, 1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "lookahead longer than the signal"},
+    {"id": "limit.complex", "op": "limit", "args": {"samples": {"re": [0.3, 0.75, 0.0, 0.1875], "im": [0.4, 1.0, 0.5, 0.25]}, "threshold": 1.0, "lookahead": 1, "release": 0.5}, "expected": {"re": [0.24, 0.6000000000000001, 0.0, 0.17812499999999998], "im": [0.32000000000000006, 0.8, 0.45, 0.2375]}, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "complex, |x| 5/4 at sample 1: gain 4/5 from sample 0"},
+    {"id": "limit.threshold_zero", "op": "limit", "args": {"samples": [1.0, -2.0], "threshold": 0.0, "lookahead": 1, "release": 0.5}, "error": "invalid_argument", "source": "threshold must be positive"},
+    {"id": "limit.lookahead_negative", "op": "limit", "args": {"samples": [1.0, -2.0], "threshold": 1.0, "lookahead": -1, "release": 0.5}, "error": "invalid_argument", "source": "lookahead must be at least 0"},
+    {"id": "limit.release_one", "op": "limit", "args": {"samples": [1.0, -2.0], "threshold": 1.0, "lookahead": 1, "release": 1.0}, "error": "invalid_argument", "source": "release must be below 1"},
+    {"id": "limit.release_negative", "op": "limit", "args": {"samples": [1.0, -2.0], "threshold": 1.0, "lookahead": 1, "release": -0.25}, "error": "invalid_argument", "source": "release must be at least 0"},
+    {"id": "limit.empty", "op": "limit", "args": {"samples": [], "threshold": 1.0, "lookahead": 1, "release": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "limit.nan_sample", "op": "limit", "args": {"samples": [1.0, "nan"], "threshold": 1.0, "lookahead": 1, "release": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

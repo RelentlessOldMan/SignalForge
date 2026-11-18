@@ -1988,6 +1988,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0268](adr/0268-normalize-peak.md)): `g = peak / max|x|`, `y = x·g` (complex: part by
   part). Finite `peak > 0`; samples finite, non-empty, not all zero; output the same kind.
   **(implemented)**
+- **Lookahead peak limiter** (`limit(samples, threshold, lookahead, release)`, C#
+  `Dsp.Limit`, [ADR 0269](adr/0269-limit.md)): `c[n] = min(1, T/|x[n]|)` (1 at 0),
+  `a[n] = min c[n … n + lookahead]` (clamped at the end), `g[−1] = 1`, `g[n] = a[n]` if
+  `a[n] < g[n−1]`, else `a[n] + release·(g[n−1] − a[n])`; `y = x·g` (complex: part by part).
+  Finite `threshold > 0`, integer `lookahead ≥ 0`, `release` in `[0, 1)`; samples finite,
+  non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

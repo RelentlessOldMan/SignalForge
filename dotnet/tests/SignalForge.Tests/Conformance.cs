@@ -669,6 +669,9 @@ public static class Conformance
                     t => Dsp.Compress(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7)),
             "expander_gain" => Bind((Reals(a.Get("level_db")), a.D("threshold_db"), a.D("ratio"), a.Has("knee_db") ? a.D("knee_db") : 0.0),
                 t => Dsp.ExpanderGain(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "limit" => a.Get("samples") is Complex[] lms
+                ? Bind((lms, a.D("threshold"), a.I("lookahead"), a.D("release")), t => Dsp.Limit(t.Item1, t.Item2, t.Item3, t.Item4))
+                : Bind((Reals(a.Get("samples")), a.D("threshold"), a.I("lookahead"), a.D("release")), t => Dsp.Limit(t.Item1, t.Item2, t.Item3, t.Item4)),
             "noise_gate" => a.Get("samples") is Complex[] ngs
                 ? Bind((ngs, a.D("threshold"), a.Has("hold") ? a.I("hold") : 0), t => Dsp.NoiseGate(t.Item1, t.Item2, t.Item3))
                 : Bind((Reals(a.Get("samples")), a.D("threshold"), a.Has("hold") ? a.I("hold") : 0), t => Dsp.NoiseGate(t.Item1, t.Item2, t.Item3)),
