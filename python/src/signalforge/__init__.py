@@ -129,6 +129,7 @@ from .dsp import (
     sos_group_delay,
     sos_response,
     thiran_allpass,
+    tremolo,
     upsample,
     wavefold,
     zero_phase_filter,
@@ -407,7 +408,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.59"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.60"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -784,6 +785,7 @@ __all__ = [
     "transfer_function",
     "transfer_function_h2",
     "treble_ratio",
+    "tremolo",
     "tristimulus",
     "two_tone_imd",
     "two_tone_ip2",

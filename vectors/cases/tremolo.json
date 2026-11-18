@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "tremolo",
+  "description": "Tremolo (conventions: Tremolo; ADR 0261).",
+  "cases": [
+    {"id": "tremolo.quarter", "op": "tremolo", "args": {"samples": [1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0], "rate": 250.0, "depth": 0.5, "sample_rate": 1000.0}, "expected": [1.0, 0.75, 0.5, 0.75, 2.0, 1.5000000000000002, 1.0, 1.4999999999999998], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "rate fs/4, depth 1/2: gains 1, 3/4, 1/2, 3/4"},
+    {"id": "tremolo.full_depth", "op": "tremolo", "args": {"samples": [1.0, -1.0, 0.5, 0.25], "rate": 4000.0, "depth": 1.0, "sample_rate": 8000.0}, "expected": [1.0, -0.0, 0.5, 0.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "rate fs/2, depth 1: gains 1, 0, 1, 0"},
+    {"id": "tremolo.zero_depth", "op": "tremolo", "args": {"samples": [0.25, -1.5, 3.0], "rate": 7.0, "depth": 0.0, "sample_rate": 1000.0}, "expected": [0.25, -1.5, 3.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "depth 0: unchanged"},
+    {"id": "tremolo.general", "op": "tremolo", "args": {"samples": [0.5, -1.0, 1.5, 2.0, -0.25, 0.75, 1.0], "rate": 5.5, "depth": 0.75, "sample_rate": 48.0}, "expected": [0.5, -0.9069399278046165, 1.010920983123779, 0.8333223252352986, -0.06569445378539984, 0.2165045414439314, 0.48149371286309117], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "general rate"},
+    {"id": "tremolo.complex", "op": "tremolo", "args": {"samples": {"re": [1.0, 2.0, -3.0, 0.5], "im": [0.5, -1.0, 4.0, 0.0]}, "rate": 250.0, "depth": 1.0, "sample_rate": 1000.0}, "expected": {"re": [1.0, 1.0, -0.0, 0.24999999999999994], "im": [0.5, -0.5, 0.0, 0.0]}, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "complex scaled part by part, gains 1, 1/2, 0, 1/2"},
+    {"id": "tremolo.depth_above_one", "op": "tremolo", "args": {"samples": [1.0], "rate": 5.0, "depth": 1.5, "sample_rate": 1000.0}, "error": "invalid_argument", "source": "depth must be in [0, 1]"},
+    {"id": "tremolo.depth_negative", "op": "tremolo", "args": {"samples": [1.0], "rate": 5.0, "depth": -0.25, "sample_rate": 1000.0}, "error": "invalid_argument", "source": "depth must be in [0, 1]"},
+    {"id": "tremolo.rate_inf", "op": "tremolo", "args": {"samples": [1.0], "rate": "inf", "depth": 0.5, "sample_rate": 1000.0}, "error": "invalid_argument", "source": "rate must be finite"},
+    {"id": "tremolo.sample_rate_zero", "op": "tremolo", "args": {"samples": [1.0], "rate": 5.0, "depth": 0.5, "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "tremolo.empty", "op": "tremolo", "args": {"samples": [], "rate": 5.0, "depth": 0.5, "sample_rate": 1000.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "tremolo.nan_sample", "op": "tremolo", "args": {"samples": [1.0, "nan"], "rate": 5.0, "depth": 0.5, "sample_rate": 1000.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

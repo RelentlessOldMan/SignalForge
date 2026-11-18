@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a tremolo (`tremolo(samples, rate, depth, sample_rate)`, gain
-     `1 − depth·(1 − cos(2π·rate·n/fs))/2`, from 1 down to `1 − depth`);
    - fades (`fade(samples, fade_in, fade_out, *, shape="linear")`, linear or raised-cosine
      ramps over the first and last samples);
    - a crossfade (`crossfade(a, b, overlap, *, shape="linear")`, joining two signals with
@@ -2336,6 +2334,10 @@ Updated with every chunk of work. Dates are absolute.
   for `tone`.
   Python 6434 passed, 2 skipped; .NET 5688 passed; conformance 3883/3883 in both. Version
   2026.11.17.59.
+- 2026-11-17: Tremolo (ADR 0261): `tremolo(samples, rate, depth, sample_rate)` in `dsp` (C#
+  `Dsp.Tremolo`, real and complex), gain `1 − depth·(1 − cos)/2` on the ring modulator's carrier.
+  Python 6447 passed, 2 skipped; .NET 5701 passed; conformance 3894/3894 in both. Version
+  2026.11.17.60.
 
 ## Not built
 

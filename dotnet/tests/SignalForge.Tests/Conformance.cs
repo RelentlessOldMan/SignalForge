@@ -674,6 +674,9 @@ public static class Conformance
                 : Bind((Reals(a.Get("samples")), a.D("threshold"), a.Has("hold") ? a.I("hold") : 0), t => Dsp.NoiseGate(t.Item1, t.Item2, t.Item3)),
             "compressor_gain" => Bind((Reals(a.Get("level_db")), a.D("threshold_db"), a.D("ratio"), a.Has("knee_db") ? a.D("knee_db") : 0.0),
                 t => Dsp.CompressorGain(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "tremolo" => a.Get("samples") is Complex[] trs
+                ? Bind((trs, a.D("rate"), a.D("depth"), a.D("sample_rate")), t => Dsp.Tremolo(t.Item1, t.Item2, t.Item3, t.Item4))
+                : Bind((Reals(a.Get("samples")), a.D("rate"), a.D("depth"), a.D("sample_rate")), t => Dsp.Tremolo(t.Item1, t.Item2, t.Item3, t.Item4)),
             "ring_modulate" => a.Get("samples") is Complex[] rms
                 ? Bind((rms, a.D("frequency"), a.D("sample_rate"), a.Has("phase") ? a.D("phase") : 0.0), t => Dsp.RingModulate(t.Item1, t.Item2, t.Item3, t.Item4))
                 : Bind((Reals(a.Get("samples")), a.D("frequency"), a.D("sample_rate"), a.Has("phase") ? a.D("phase") : 0.0), t => Dsp.RingModulate(t.Item1, t.Item2, t.Item3, t.Item4)),

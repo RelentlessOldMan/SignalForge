@@ -1955,6 +1955,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `Dsp.RingModulate`, [ADR 0260](adr/0260-ring-modulate.md)): `y[n] = x[n]·cos((2π·f)·(n/fs) + φ)`,
   the argument built as for `tone`. Finite `sample_rate > 0`; finite `frequency` and `phase`;
   samples finite, non-empty; real or complex, the same kind out. **(implemented)**
+- **Tremolo** (`tremolo(samples, rate, depth, sample_rate)`, C# `Dsp.Tremolo`,
+  [ADR 0261](adr/0261-tremolo.md)): `c = cos((2π·rate)·(n/fs))`; `g = 1 − depth·(1 − c)/2`;
+  `y = x·g`. Finite `rate`; `depth` in `[0, 1]`; finite `sample_rate > 0`; samples finite,
+  non-empty; real or complex, the same kind out. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

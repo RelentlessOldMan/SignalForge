@@ -2557,6 +2557,26 @@ def sample_and_hold(
     return y
 
 
+def tremolo(
+    samples: ArrayLike, rate: float, depth: float, sample_rate: float
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Multiply by the gain ``1 - depth (1 - cos(2 pi rate n / fs)) / 2`` (conventions: Tremolo;
+    ADR 0261)."""
+    f = real(rate, "rate")
+    d = real(depth, "depth")
+    if not 0 <= d <= 1:
+        raise ValueError("depth must be in [0, 1]")
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    c = np.cos(2.0 * np.pi * f * (np.arange(x.size) / fs))
+    y: NDArray[Any] = x * (1 - d * (1 - c) / 2)
+    return y
+
+
 def ring_modulate(
     samples: ArrayLike, frequency: float, sample_rate: float, *, phase: float = 0.0
 ) -> NDArray[np.complex128] | NDArray[np.float64]:
