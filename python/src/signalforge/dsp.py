@@ -2888,6 +2888,22 @@ def reverse_delay(samples: ArrayLike, block: int, mix: float) -> NDArray[np.floa
     return y
 
 
+def stutter(samples: ArrayLike, start: int, length: int, repeats: int) -> NDArray[np.float64]:
+    """Play the ``length``-sample slice at ``start`` ``repeats`` times in a row over the input
+    (conventions: Stutter; ADR 0299)."""
+    s = count(start, "start")
+    b = count(length, "length")
+    if b < 1:
+        raise ValueError("length must be at least 1")
+    r = count(repeats, "repeats")
+    x = _mono(samples)
+    n = np.arange(x.size)
+    run = (n >= s) & (n < s + r * b)
+    y = x.copy()
+    y[run] = x[s + (n[run] - s) % b]
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

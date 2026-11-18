@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "stutter",
+  "description": "Stutter (conventions: Stutter; ADR 0299).",
+  "cases": [
+    {"id": "stutter.three", "op": "stutter", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0], "start": 2, "length": 3, "repeats": 3}, "expected": [1.0, 2.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 12.0, 13.0, 14.0, 15.0, 16.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "slice 3..5 three times from n = 2, then the input resumes"},
+    {"id": "stutter.past_end", "op": "stutter", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0], "start": 12, "length": 3, "repeats": 4}, "expected": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 13.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "the repeats run past the end and are cut off"},
+    {"id": "stutter.once", "op": "stutter", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0], "start": 4, "length": 5, "repeats": 1}, "expected": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "one repeat: the input"},
+    {"id": "stutter.none", "op": "stutter", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0], "start": 4, "length": 5, "repeats": 0}, "expected": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "no repeats: the input"},
+    {"id": "stutter.single_sample", "op": "stutter", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0], "start": 7, "length": 1, "repeats": 6}, "expected": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 14.0, 15.0, 16.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "a one-sample slice held for six samples"},
+    {"id": "stutter.start_past_end", "op": "stutter", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0], "start": 20, "length": 2, "repeats": 3}, "expected": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "a start past the end: the input"},
+    {"id": "stutter.length_zero", "op": "stutter", "args": {"samples": [1.0, 2.0], "start": 0, "length": 0, "repeats": 2}, "error": "invalid_argument", "source": "length must be at least 1"},
+    {"id": "stutter.start_negative", "op": "stutter", "args": {"samples": [1.0, 2.0], "start": -1, "length": 1, "repeats": 2}, "error": "invalid_argument", "source": "start must be at least 0"},
+    {"id": "stutter.repeats_negative", "op": "stutter", "args": {"samples": [1.0, 2.0], "start": 0, "length": 1, "repeats": -1}, "error": "invalid_argument", "source": "repeats must be at least 0"},
+    {"id": "stutter.empty", "op": "stutter", "args": {"samples": [], "start": 0, "length": 1, "repeats": 2}, "error": "invalid_argument", "source": "samples must not be empty"}
+  ]
+}

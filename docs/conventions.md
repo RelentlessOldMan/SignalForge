@@ -2137,6 +2137,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `wet[n] = x[(q − 1)·B + (B − 1 − r)]` for `q ≥ 1` and 0 for `q = 0`;
   `y = (1 − mix)·x + mix·wet`. Real, finite, non-empty samples; integer `block ≥ 1`; `mix` in
   [0, 1]. **(implemented)**
+- **Stutter** (`stutter(samples, start, length, repeats)`, C# `Dsp.Stutter`,
+  [ADR 0299](adr/0299-stutter.md)): `y[n] = x[start + (n − start) mod length]` for
+  `start ≤ n < start + repeats·length`, `x[n]` elsewhere. Real, finite, non-empty samples;
+  integers `start ≥ 0`, `length ≥ 1`, `repeats ≥ 0`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

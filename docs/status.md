@@ -6,11 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a stutter (`stutter(samples, start, length, repeats)`: for
-     `start ≤ n < start + repeats·length` the output is `x[start + (n − start) mod length]`, the
-     input elsewhere).
    - a multi-tap delay (`multitap_delay(samples, delays, gains)`:
      `y[n] = x[n] + Σ_k g_k·x[n − d_k]`, zero before the start, taps summed in list order).
+   - a frequency shifter (`frequency_shift(samples, shift, sample_rate)`: the Bode shifter,
+     `Re(analytic_signal(x)·e^{j2π·shift·n/fs})`, every component moved by `shift` Hz).
 
 ## Built
 
@@ -2528,6 +2527,11 @@ Updated with every chunk of work. Dates are absolute.
   silent in the first block, dry/wet blend.
   Python 6908 passed, 2 skipped; .NET 6127 passed; conformance 4244/4244 in both. Version
   2026.11.17.97.
+- 2026-11-17: Stutter (ADR 0299): `stutter(samples, start, length, repeats)` in `dsp` (C#
+  `Dsp.Stutter`, real): the `length`-sample slice at `start` played `repeats` times over the
+  input, which then resumes at its own time.
+  Python 6920 passed, 2 skipped; .NET 6139 passed; conformance 4254/4254 in both. Version
+  2026.11.17.98.
 
 ## Not built
 

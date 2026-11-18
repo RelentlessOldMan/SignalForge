@@ -105,4 +105,35 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Plays the <paramref name="length"/>-sample slice at <paramref name="start"/>
+    /// <paramref name="repeats"/> times in a row over the input (conventions: Stutter;
+    /// ADR 0299).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="start">The first sample of the slice, at least 0.</param>
+    /// <param name="length">The slice length in samples, at least 1.</param>
+    /// <param name="repeats">How many times the slice plays, at least 0.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Stutter(ReadOnlySpan<double> samples, int start, int length, int repeats)
+    {
+        if (start < 0)
+            throw new ArgumentOutOfRangeException(nameof(start), "start must be at least 0");
+        if (length < 1)
+            throw new ArgumentOutOfRangeException(nameof(length), "length must be at least 1");
+        if (repeats < 0)
+            throw new ArgumentOutOfRangeException(nameof(repeats), "repeats must be at least 0");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        long end = start + ((long)repeats * length);
+        double[] y = samples.ToArray();
+        for (int n = start; n < y.Length && n < end; n++)
+            y[n] = samples[start + ((n - start) % length)];
+        return y;
+    }
 }
