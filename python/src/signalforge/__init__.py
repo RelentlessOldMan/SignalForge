@@ -211,11 +211,13 @@ from .measurements import (
     AutocorrelationPitch,
     CascadeNoiseFigure,
     CepstrumPitch,
+    DetrendedFluctuation,
     EnergySeparation,
     GainCompression,
     GccPhat,
     HjorthParameters,
     IntegratedPhaseNoise,
+    Mtie,
     NoiseFigure,
     PhaseNoise,
     PhaseNoiseSpurs,
@@ -257,6 +259,7 @@ from .measurements import (
     lempel_ziv_complexity,
     modified_allan_deviation,
     modulation_transfer,
+    mtie,
     noise_compensated_decay,
     noise_figure_cascade,
     noise_figure_y_factor,
@@ -502,7 +505,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.24"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.25"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -519,6 +522,7 @@ __all__ = [
     "CrossSpectralDensity",
     "Crossover",
     "DbBandwidth",
+    "DetrendedFluctuation",
     "DfeEqualization",
     "DfeTaps",
     "EnergySeparation",
@@ -539,6 +543,7 @@ __all__ = [
     "Levinson",
     "LineRemoval",
     "MidSide",
+    "Mtie",
     "NoiseFigure",
     "NoisePowerRatio",
     "OccupiedBandwidth",
@@ -800,6 +805,7 @@ __all__ = [
     "modulation_transfer",
     "moving_average",
     "moving_rms",
+    "mtie",
     "mu_law_compress",
     "mu_law_expand",
     "multipath",

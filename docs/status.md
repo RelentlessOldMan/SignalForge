@@ -6,8 +6,17 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - MTIE in `measurements` (`mtie(time_error, sample_interval, window_sizes)`: the largest
-     peak-to-peak time error over every window of `n + 1` samples, `τ = n·τ₀`).
+   - multiscale entropy in `measurements` (`multiscale_entropy(samples, m, r, scales)`: Costa's
+     sample entropy of the non-overlapping coarse-grained means at each scale, `r` fixed in
+     sample units).
+   - fuzzy entropy in `measurements` (`fuzzy_entropy(samples, m, r, n=2)`: Chen's
+     `ln φ_m − ln φ_{m+1}` with baseline-removed templates and the membership
+     `exp(−dⁿ/r)`).
+   - Hurst exponent by rescaled range in `measurements` (`hurst_exponent(samples, scales)`: the
+     least-squares slope of `ln(R/S)` against `ln s`, `R/S` averaged over non-overlapping boxes).
+   - dispersion entropy in `measurements` (`dispersion_entropy(samples, m, classes, delay=1)`:
+     Rostaghi and Azami's normal-CDF mapping to `c` classes and the Shannon entropy of the
+     patterns over `ln cᵐ`).
 
 ## Built
 
@@ -2722,6 +2731,13 @@ Updated with every chunk of work. Dates are absolute.
   raw and not normalized; vectors from a direct parse by the definition.
   Python 7381 passed, 2 skipped; .NET 6569 passed; conformance 4580/4580 in both. Version
   2026.11.18.24.
+- 2026-11-18: Maximum time interval error (ADR 0337): `mtie(time_error, sample_interval,
+  window_sizes)` in `measurements` (C# `Measurements.Mtie`), giving `Mtie(taus, values)`: the
+  largest peak-to-peak time error over windows of `n + 1` samples. Also exported
+  `DetrendedFluctuation` from the package, which ADR 0332 missed. Added four new Next candidates
+  (multiscale, fuzzy and dispersion entropy, the rescaled-range Hurst exponent).
+  Python 7393 passed, 2 skipped; .NET 6580 passed; conformance 4589/4589 in both. Version
+  2026.11.18.25.
 
 ## Not built
 

@@ -266,6 +266,7 @@ public static class Conformance
             "katz_dimension" => Bind(Reals(a.Get("samples")), x => Measurements.KatzDimension(x)),
             "petrosian_dimension" => Bind(Reals(a.Get("samples")), x => Measurements.PetrosianDimension(x)),
             "lempel_ziv_complexity" => Bind(Bits(a.Get("bits")), b => Measurements.LempelZivComplexity(b)),
+            "mtie" => Bind((Reals(a.Get("time_error")), a.D("sample_interval"), Ints(a.Get("window_sizes"))), t => Measurements.Mtie(t.Item1, t.Item2, t.Item3)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

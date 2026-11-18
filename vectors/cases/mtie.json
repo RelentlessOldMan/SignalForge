@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "mtie",
+  "description": "Maximum time interval error (conventions: Maximum time interval error; ADR 0337).",
+  "cases": [
+    {"id": "mtie.ramp", "op": "mtie", "args": {"time_error": [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5], "sample_interval": 1.0, "window_sizes": [1, 4, 9]}, "expected": {"taus": [1.0, 4.0, 9.0], "values": [0.5, 2.0, 4.5]}, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "a ramp of 0.5 per sample: MTIE = 0.5 n"},
+    {"id": "mtie.step", "op": "mtie", "args": {"time_error": [0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 3.0, 3.0, 3.0, 3.0], "sample_interval": 0.25, "window_sizes": [1, 3]}, "expected": {"taus": [0.25, 0.75], "values": [3.0, 3.0]}, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "a step of 3: every window that holds it sees 3"},
+    {"id": "mtie.ns_wander", "op": "mtie", "args": {"time_error": [0.0, 2.7939677238464355e-09, 9.313225746154785e-10, -3.725290298461914e-09, 1.862645149230957e-09, 6.51925802230835e-09, 4.6566128730773926e-09, -9.313225746154785e-10, 0.0, 5.587935447692871e-09, -2.7939677238464355e-09, 1.862645149230957e-09], "sample_interval": 0.0625, "window_sizes": [2, 5, 1, 11]}, "expected": {"taus": [0.125, 0.3125, 0.0625, 0.6875], "values": [1.0244548320770264e-08, 1.0244548320770264e-08, 8.381903171539307e-09, 1.0244548320770264e-08]}, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "nanosecond-scale wander, sizes out of order"},
+    {"id": "mtie.spike", "op": "mtie", "args": {"time_error": [0.0, 0.0, 0.0, 5.0, 0.0, 0.0, -1.0, 0.0], "sample_interval": 0.001, "window_sizes": [1, 2, 3]}, "expected": {"taus": [0.001, 0.002, 0.003], "values": [5.0, 5.0, 6.0]}, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "a single spike and a dip three samples later"},
+    {"id": "mtie.size_zero", "op": "mtie", "args": {"time_error": [0.0, 1.0, 0.5, 2.0], "sample_interval": 1.0, "window_sizes": [0]}, "error": "invalid_argument", "source": "each window size must be at least 1"},
+    {"id": "mtie.size_too_big", "op": "mtie", "args": {"time_error": [0.0, 1.0, 0.5, 2.0], "sample_interval": 1.0, "window_sizes": [4]}, "error": "invalid_argument", "source": "each window size must be at most N - 1"},
+    {"id": "mtie.no_sizes", "op": "mtie", "args": {"time_error": [0.0, 1.0, 0.5, 2.0], "sample_interval": 1.0, "window_sizes": []}, "error": "invalid_argument", "source": "window_sizes must not be empty"},
+    {"id": "mtie.interval_negative", "op": "mtie", "args": {"time_error": [0.0, 1.0, 0.5, 2.0], "sample_interval": -1.0, "window_sizes": [1]}, "error": "invalid_argument", "source": "sample_interval must be positive"},
+    {"id": "mtie.one_sample", "op": "mtie", "args": {"time_error": [1.0], "sample_interval": 1.0, "window_sizes": [1]}, "error": "invalid_argument", "source": "at least 2 samples"}
+  ]
+}

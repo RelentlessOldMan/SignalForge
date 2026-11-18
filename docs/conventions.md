@@ -235,6 +235,11 @@ rule for code not written yet.
   each phrase `s[p … q]` has the smallest `q` with `s[p … q]` not a substring of `s[0 … q−1]`; a
   copyable piece at the end counts as one. Bits 0 or 1, at least one; raw count, not normalized.
   **(implemented)**
+- **Maximum time interval error** ([ADR 0337](adr/0337-mtie.md); `mtie(time_error,
+  sample_interval, window_sizes)`, C# `Measurements.Mtie`): time-error samples in seconds; for
+  each `n`, `τ = n·τ₀` and `MTIE = max_k (max − min of x[k … k+n])`. Result `(taus, values)`.
+  Real, finite, at least 2 samples; finite positive `τ₀`; window sizes not empty,
+  `1 ≤ n ≤ N − 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

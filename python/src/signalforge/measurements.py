@@ -97,6 +97,15 @@ class DetrendedFluctuation:
     alpha: float
 
 
+@dataclass(frozen=True, eq=False)
+class Mtie:
+    """Maximum time interval errors in seconds at observation intervals ``taus`` in seconds
+    (conventions: Maximum time interval error; ADR 0337)."""
+
+    taus: NDArray[np.float64]
+    values: NDArray[np.float64]
+
+
 @dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
@@ -447,6 +456,33 @@ def lempel_ziv_complexity(bits: ArrayLike) -> int:
                 i, k, k_max = 0, 1, 1
             else:
                 k = 1
+
+
+def mtie(time_error: ArrayLike, sample_interval: float, window_sizes: Sequence[int]) -> Mtie:
+    """The maximum time interval error: the largest peak-to-peak time error over every window
+    of ``n + 1`` samples, at ``tau = n * sample_interval`` (conventions: Maximum time interval
+    error; ADR 0337)."""
+    tau0 = real(sample_interval, "sample_interval")
+    if not tau0 > 0:
+        raise ValueError("sample_interval must be positive")
+    x = np.asarray(time_error)
+    if x.ndim != 1 or x.shape[0] < 2:
+        raise ValueError("time_error must be a one-dimensional array of at least 2")
+    if np.iscomplexobj(x):
+        raise ValueError("time_error must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("time_error must be finite")
+    sizes = [count(n, "window_sizes") for n in window_sizes]
+    if not sizes:
+        raise ValueError("window_sizes must not be empty")
+    if any(n < 1 or n > x.shape[0] - 1 for n in sizes):
+        raise ValueError("each window size n must be from 1 to len(time_error) - 1")
+    values = np.empty(len(sizes))
+    for i, n in enumerate(sizes):
+        w = np.lib.stride_tricks.sliding_window_view(x, n + 1)
+        values[i] = float(np.max(w.max(axis=1) - w.min(axis=1)))
+    return Mtie(np.array(sizes, dtype=np.float64) * tau0, values)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
