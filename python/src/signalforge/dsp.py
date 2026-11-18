@@ -2613,6 +2613,42 @@ def fade(
     return y
 
 
+def vibrato(
+    samples: ArrayLike, delay: float, depth: float, rate: float, sample_rate: float
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Read through a delay ``delay + depth cos(2 pi rate n / fs)`` samples, linearly
+    interpolated, from rest (conventions: Vibrato; ADR 0271)."""
+    dl = real(delay, "delay")
+    if not dl >= 0:
+        raise ValueError("delay must be at least 0")
+    dp = real(depth, "depth")
+    if not 0 <= dp <= dl:
+        raise ValueError("depth must be from 0 to delay")
+    f = real(rate, "rate")
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = np.arange(x.size)
+    d = dl + dp * np.cos(2.0 * np.pi * f * (n / fs))
+    p = n - d
+    i = np.floor(p).astype(np.int64)
+    frac = p - i
+    zero = np.zeros(1, dtype=x.dtype)
+    pad = np.concatenate([zero, x, zero])  # pad[k + 1] = x[k]; x[-1] reads 0
+    lo = np.where(i >= 0, pad[np.clip(i, -1, x.size) + 1], 0)
+    hi = np.where(i + 1 >= 0, pad[np.clip(i + 1, -1, x.size) + 1], 0)
+    if np.iscomplexobj(x):
+        re = lo.real * (1 - frac) + hi.real * frac
+        im = lo.imag * (1 - frac) + hi.imag * frac
+        yc: NDArray[Any] = re + 1j * im
+        return yc
+    y: NDArray[np.float64] = lo * (1 - frac) + hi * frac
+    return y
+
+
 def tremolo(
     samples: ArrayLike, rate: float, depth: float, sample_rate: float
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

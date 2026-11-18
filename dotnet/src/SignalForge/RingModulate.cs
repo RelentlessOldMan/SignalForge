@@ -120,4 +120,79 @@ public static partial class Dsp
             c[n] = 1 - depth * (1 - c[n]) / 2;
         return c;
     }
+
+    /// <summary>Reads real samples through a delay <c>delay + depth·cos((2π·rate)·(n/fs))</c>
+    /// samples, linearly interpolated, from rest (conventions: Vibrato; ADR 0271).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="delay">The centre delay, samples, finite and at least 0.</param>
+    /// <param name="depth">The delay swing, samples, from 0 to <paramref name="delay"/>.</param>
+    /// <param name="rate">The LFO frequency, Hz, finite.</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Vibrato(ReadOnlySpan<double> samples, double delay, double depth, double rate, double sampleRate)
+    {
+        CheckVibrato(delay, depth);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        double[] c = RingCarrier(samples.Length, rate, sampleRate, 0);
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double p = n - (delay + depth * c[n]);
+            double fl = Math.Floor(p);
+            double f = p - fl;
+            long i = (long)fl;
+            double lo = i >= 0 ? samples[(int)i] : 0, hi = i + 1 >= 0 && f > 0 ? samples[(int)(i + 1)] : 0;
+            y[n] = lo * (1 - f) + hi * f;
+        }
+        return y;
+    }
+
+    /// <summary>Reads complex samples through a delay <c>delay + depth·cos((2π·rate)·(n/fs))</c>
+    /// samples, linearly interpolated part by part, from rest (conventions: Vibrato;
+    /// ADR 0271).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="delay">The centre delay, samples, finite and at least 0.</param>
+    /// <param name="depth">The delay swing, samples, from 0 to <paramref name="delay"/>.</param>
+    /// <param name="rate">The LFO frequency, Hz, finite.</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Vibrato(ReadOnlySpan<Complex> samples, double delay, double depth, double rate, double sampleRate)
+    {
+        CheckVibrato(delay, depth);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (Complex v in samples)
+        {
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        double[] c = RingCarrier(samples.Length, rate, sampleRate, 0);
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double p = n - (delay + depth * c[n]);
+            double fl = Math.Floor(p);
+            double f = p - fl, u = 1 - f;
+            long i = (long)fl;
+            Complex lo = i >= 0 ? samples[(int)i] : Complex.Zero, hi = i + 1 >= 0 && f > 0 ? samples[(int)(i + 1)] : Complex.Zero;
+            y[n] = new Complex(lo.Real * u + hi.Real * f, lo.Imaginary * u + hi.Imaginary * f);
+        }
+        return y;
+    }
+
+    private static void CheckVibrato(double delay, double depth)
+    {
+        if (!double.IsFinite(delay) || delay < 0)
+            throw new ArgumentOutOfRangeException(nameof(delay), "delay must be at least 0");
+        if (!double.IsFinite(depth) || depth < 0 || depth > delay)
+            throw new ArgumentOutOfRangeException(nameof(depth), "depth must be from 0 to delay");
+    }
 }

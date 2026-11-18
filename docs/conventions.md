@@ -1998,6 +1998,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   C# `Dsp.AutoPan`, [ADR 0270](adr/0270-auto-pan.md)): the panner at
   `p[n] = depth·cos((2π·rate)·(n/fs))`, per sample. Finite `rate`, `depth` in `[0, 1]`, finite
   `sample_rate > 0`; samples real, finite, non-empty. **(implemented)**
+- **Vibrato** (`vibrato(samples, delay, depth, rate, sample_rate)`, C# `Dsp.Vibrato`,
+  [ADR 0271](adr/0271-vibrato.md)): `d[n] = delay + depth·cos((2π·rate)·(n/fs))` samples,
+  `p = n − d`, `i = ⌊p⌋`, `f = p − i`, `y = x[i]·(1 − f) + x[i+1]·f` with `x[k < 0] = 0`
+  (complex: part by part). Finite `delay ≥ 0`, `depth` in `[0, delay]`, finite `rate`, finite
+  `sample_rate > 0`; samples finite, non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

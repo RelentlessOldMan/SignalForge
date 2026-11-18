@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a vibrato (`vibrato(samples, delay, depth, rate, sample_rate)`, a cosine-modulated delay
-     read with linear interpolation, wet only);
    - a flanger (`flanger(samples, delay, depth, rate, sample_rate, mix)`, the vibrato mixed with
      the dry signal).
 
@@ -2381,6 +2379,11 @@ Updated with every chunk of work. Dates are absolute.
   `depth·cos((2π·rate)·(n/fs))` per sample; the panner's gains now come from one helper.
   Python 6570 passed, 2 skipped; .NET 5815 passed; conformance 3990/3990 in both. Version
   2026.11.17.69.
+- 2026-11-17: Vibrato (ADR 0271): `vibrato(samples, delay, depth, rate, sample_rate)` in `dsp`
+  (C# `Dsp.Vibrato`, real and complex), a delay `delay + depth·cos((2π·rate)·(n/fs))` samples
+  read with linear interpolation from rest.
+  Python 6586 passed, 2 skipped; .NET 5830 passed; conformance 4003/4003 in both. Version
+  2026.11.17.70.
 
 ## Not built
 

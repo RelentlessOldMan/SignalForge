@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "vibrato",
+  "description": "Vibrato (conventions: Vibrato; ADR 0271).",
+  "cases": [
+    {"id": "vibrato.whole_delay", "op": "vibrato", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75, 0.5, -0.25], "delay": 2.0, "depth": 0.0, "rate": 1.0, "sample_rate": 8.0}, "expected": [0.0, 0.0, 1.0, -0.5, 0.25, 2.0, -1.0, 0.75], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "depth 0, delay 2: a shift by 2 from rest"},
+    {"id": "vibrato.half_delay", "op": "vibrato", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75, 0.5, -0.25], "delay": 0.5, "depth": 0.0, "rate": 1.0, "sample_rate": 8.0}, "expected": [0.5, 0.25, -0.125, 1.125, 0.5, -0.125, 0.625, 0.125], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "depth 0, delay 1/2: neighbours averaged"},
+    {"id": "vibrato.zero_delay", "op": "vibrato", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75, 0.5, -0.25], "delay": 0.0, "depth": 0.0, "rate": 3.0, "sample_rate": 8.0}, "expected": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75, 0.5, -0.25], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "delay 0: unchanged"},
+    {"id": "vibrato.quarter_rate", "op": "vibrato", "args": {"samples": [1.0, -0.5, 0.25, 2.0, -1.0, 0.75, 0.5, -0.25], "delay": 2.0, "depth": 1.0, "rate": 2.0, "sample_rate": 8.0}, "expected": [0.0, 0.0, -0.5, -0.49999999999999983, -0.5, 1.9999999999999991, 0.75, 0.75], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "delay 2 + cos(pi n/2): delays 3, 2, 1, 2, ... (whole samples)"},
+    {"id": "vibrato.modulated", "op": "vibrato", "args": {"samples": [0.3, -0.7, 1.1, 0.4, -0.9, 0.2, 0.8, -0.6, 0.5, 1.3, -0.1, 0.05], "delay": 3.25, "depth": 1.5, "rate": 0.7, "sample_rate": 10.0}, "expected": [0.0, 0.0, 0.0, 0.11308955077581521, -0.6440704506185437, 0.6578254850929033, -0.8290939779276258, 0.3482240555854446, 0.5974693796346718, -0.2875489224502466, -0.3651219592813362, 0.01820016461889845], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "delay 3.25, depth 1.5, rate 0.7 Hz at 10 Hz"},
+    {"id": "vibrato.complex", "op": "vibrato", "args": {"samples": {"re": [1.0, 0.0, -2.0, 0.5], "im": [0.0, 1.0, 0.5, -1.0]}, "delay": 1.5, "depth": 0.0, "rate": 1.0, "sample_rate": 4.0}, "expected": {"re": [0.0, 0.5, 0.5, -1.0], "im": [0.0, 0.0, 0.5, 0.75]}, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "complex, delay 3/2: x[n-2] and x[n-1] averaged"},
+    {"id": "vibrato.delay_negative", "op": "vibrato", "args": {"samples": [1.0, 2.0], "delay": -1.0, "depth": 1.0, "rate": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "delay must be at least 0"},
+    {"id": "vibrato.depth_above_delay", "op": "vibrato", "args": {"samples": [1.0, 2.0], "delay": 2.0, "depth": 2.5, "rate": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "depth must be at most delay"},
+    {"id": "vibrato.depth_negative", "op": "vibrato", "args": {"samples": [1.0, 2.0], "delay": 2.0, "depth": -0.5, "rate": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "depth must be at least 0"},
+    {"id": "vibrato.rate_inf", "op": "vibrato", "args": {"samples": [1.0, 2.0], "delay": 2.0, "depth": 1.0, "rate": "inf", "sample_rate": 8.0}, "error": "invalid_argument", "source": "rate must be finite"},
+    {"id": "vibrato.fs_negative", "op": "vibrato", "args": {"samples": [1.0, 2.0], "delay": 2.0, "depth": 1.0, "rate": 1.0, "sample_rate": -8.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "vibrato.empty", "op": "vibrato", "args": {"samples": [], "delay": 2.0, "depth": 1.0, "rate": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "vibrato.nan_sample", "op": "vibrato", "args": {"samples": [1.0, "nan"], "delay": 2.0, "depth": 1.0, "rate": 1.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

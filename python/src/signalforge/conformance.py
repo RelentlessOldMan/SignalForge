@@ -281,6 +281,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "mid_side_decode": dsp.mid_side_decode,
     "ring_modulate": dsp.ring_modulate,
     "tremolo": dsp.tremolo,
+    "vibrato": dsp.vibrato,
     "fade": dsp.fade,
     "crossfade": dsp.crossfade,
     "compressor_gain": dsp.compressor_gain,
