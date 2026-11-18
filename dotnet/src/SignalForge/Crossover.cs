@@ -138,4 +138,28 @@ public static partial class Dsp
             y[n] = samples[n] + mix * h[n];
         return y;
     }
+
+    /// <summary>Rotary speaker: the high band through vibrato and tremolo at the horn rate, the
+    /// low band through tremolo at the drum rate, summed (conventions: Rotary-speaker effect;
+    /// ADR 0292).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="order">The crossover order, even, from 2 to 2000.</param>
+    /// <param name="cutoff">The crossover frequency, Hz, between 0 and sampleRate/2.</param>
+    /// <param name="hornRate">The horn's rotation rate, Hz.</param>
+    /// <param name="drumRate">The drum's rotation rate, Hz.</param>
+    /// <param name="delay">The horn's mean delay, samples, at least 0.</param>
+    /// <param name="depth">The horn's delay swing, samples, from 0 to delay.</param>
+    /// <param name="tremoloDepth">The depth of both tremolos, in [0, 1].</param>
+    /// <param name="sampleRate">The sample rate, Hz.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Rotary(ReadOnlySpan<double> samples, int order, double cutoff, double hornRate, double drumRate, double delay, double depth, double tremoloDepth, double sampleRate)
+    {
+        Bands b = CrossoverSplit(samples, order, cutoff, sampleRate);
+        double[] horn = Tremolo(Vibrato(b.High, delay, depth, hornRate, sampleRate), hornRate, tremoloDepth, sampleRate);
+        double[] drum = Tremolo(b.Low, drumRate, tremoloDepth, sampleRate);
+        for (int n = 0; n < horn.Length; n++)
+            horn[n] += drum[n];
+        return horn;
+    }
 }

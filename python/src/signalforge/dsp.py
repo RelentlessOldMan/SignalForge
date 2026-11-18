@@ -2757,6 +2757,27 @@ def octave_down(samples: ArrayLike, mix: float) -> NDArray[np.float64]:
     return y
 
 
+def rotary(
+    samples: ArrayLike,
+    order: int,
+    cutoff: float,
+    horn_rate: float,
+    drum_rate: float,
+    delay: float,
+    depth: float,
+    tremolo_depth: float,
+    sample_rate: float,
+) -> NDArray[np.float64]:
+    """Rotary speaker: the high band through vibrato and tremolo at the horn rate, the low band
+    through tremolo at the drum rate, summed (conventions: Rotary-speaker effect; ADR 0292)."""
+    b = crossover_split(samples, order, cutoff, sample_rate)
+    v = vibrato(b.high, delay, depth, horn_rate, sample_rate)
+    horn = np.asarray(tremolo(v, horn_rate, tremolo_depth, sample_rate), dtype=np.float64)
+    drum = np.asarray(tremolo(b.low, drum_rate, tremolo_depth, sample_rate), dtype=np.float64)
+    y: NDArray[np.float64] = horn + drum
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

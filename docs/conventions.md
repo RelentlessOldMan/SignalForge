@@ -2102,6 +2102,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0291](adr/0291-octave-down.md)): a sign starting at +1 flips before sample `n ≥ 1` when
   `x[n−1] < 0 ≤ x[n]`; `wet[n] = s·|x[n]|`; `y = (1 − mix)·x + mix·wet`. No hysteresis. Real,
   finite, non-empty samples; `mix` in [0, 1]. **(implemented)**
+- **Rotary-speaker effect** (`rotary(samples, order, cutoff, horn_rate, drum_rate, delay, depth,
+  tremolo_depth, sample_rate)`, C# `Dsp.Rotary`, [ADR 0292](adr/0292-rotary.md)): with `b =
+  crossover_split(samples, order, cutoff, fs)`, `tremolo(vibrato(b.high, delay, depth,
+  horn_rate, fs), horn_rate, tremolo_depth, fs) + tremolo(b.low, drum_rate, tremolo_depth, fs)`.
+  Real samples; the splitter's, vibrato's and tremolo's rules. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

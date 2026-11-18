@@ -6,11 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a rotary-speaker effect (`rotary(...)`: the `crossover_split` high band through `vibrato`
-     and `tremolo` at the horn rate, the low band through `tremolo` at the drum rate, summed).
    - a channel vocoder (`vocoder(carrier, modulator, bands, low, high, q, attack, release,
      sample_rate)`: log-spaced state-variable band-passes on both signals, each carrier band
      scaled by the envelope of the matching modulator band, summed).
+   - a slicer (`slicer(samples, rate, duty, sample_rate)`: the trance gate, gain 1 for the first
+     `duty` of each `1/rate` second cycle and 0 for the rest, cycle position `rate·n/fs mod 1`).
 
 ## Built
 
@@ -2491,6 +2491,12 @@ Updated with every chunk of work. Dates are absolute.
   with the dry signal.
   Python 6828 passed, 2 skipped; .NET 6051 passed; conformance 4182/4182 in both. Version
   2026.11.17.90.
+- 2026-11-17: Rotary-speaker effect (ADR 0292): `rotary(samples, order, cutoff, horn_rate,
+  drum_rate, delay, depth, tremolo_depth, sample_rate)` in `dsp` (C# `Dsp.Rotary`, real): the
+  `crossover_split` high band through `vibrato` and `tremolo` at the horn rate plus the low band
+  through `tremolo` at the drum rate.
+  Python 6838 passed, 2 skipped; .NET 6060 passed; conformance 4189/4189 in both. Version
+  2026.11.17.91.
 
 ## Not built
 

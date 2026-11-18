@@ -704,6 +704,7 @@ public static class Conformance
             "flanger" => a.Get("samples") is Complex[] fls
                 ? Bind((fls, a.D("delay"), a.D("depth"), a.D("rate"), a.D("sample_rate"), a.D("mix")), t => Dsp.Flanger(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6))
                 : Bind((Reals(a.Get("samples")), a.D("delay"), a.D("depth"), a.D("rate"), a.D("sample_rate"), a.D("mix")), t => Dsp.Flanger(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
+            "rotary" => Bind((Reals(a.Get("samples")), a.I("order"), a.D("cutoff"), a.D("horn_rate"), a.D("drum_rate"), a.D("delay"), a.D("depth"), a.D("tremolo_depth"), a.D("sample_rate")), t => Dsp.Rotary(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6, t.Item7, t.Item8, t.Item9)),
             "vibrato" => a.Get("samples") is Complex[] vbs
                 ? Bind((vbs, a.D("delay"), a.D("depth"), a.D("rate"), a.D("sample_rate")), t => Dsp.Vibrato(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5))
                 : Bind((Reals(a.Get("samples")), a.D("delay"), a.D("depth"), a.D("rate"), a.D("sample_rate")), t => Dsp.Vibrato(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
