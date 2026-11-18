@@ -2557,6 +2557,24 @@ def sample_and_hold(
     return y
 
 
+def ring_modulate(
+    samples: ArrayLike, frequency: float, sample_rate: float, *, phase: float = 0.0
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Multiply by the carrier ``cos(2 pi f n / fs + phase)`` (conventions: Ring modulator;
+    ADR 0260)."""
+    f = real(frequency, "frequency")
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive")
+    ph = real(phase, "phase")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    arg = 2.0 * np.pi * f * (np.arange(x.size) / fs) + ph
+    y: NDArray[Any] = x * np.cos(arg)
+    return y
+
+
 def saturate(samples: ArrayLike, drive: float) -> NDArray[np.float64]:
     """Tanh saturator ``tanh(drive x) / tanh(drive)``, unity at ``x = +-1`` (conventions: Tanh
     saturator; ADR 0259)."""

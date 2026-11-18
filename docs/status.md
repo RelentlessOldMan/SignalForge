@@ -6,8 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a ring modulator (`ring_modulate(samples, frequency, sample_rate, *, phase=0.0)`,
-     `x[n]·cos(2π f n/fs + φ)`).
+   - a tremolo (`tremolo(samples, rate, depth, sample_rate)`, gain
+     `1 − depth·(1 − cos(2π·rate·n/fs))/2`, from 1 down to `1 − depth`);
+   - fades (`fade(samples, fade_in, fade_out, *, shape="linear")`, linear or raised-cosine
+     ramps over the first and last samples);
+   - a crossfade (`crossfade(a, b, overlap, *, shape="linear")`, joining two signals with
+     complementary ramps).
 
 ## Built
 
@@ -2327,6 +2331,11 @@ Updated with every chunk of work. Dates are absolute.
   `tanh(drive·x)/tanh(drive)`, unity at ±1.
   Python 6421 passed, 2 skipped; .NET 5675 passed; conformance 3872/3872 in both. Version
   2026.11.17.58.
+- 2026-11-17: Ring modulator (ADR 0260): `ring_modulate(samples, frequency, sample_rate, *,
+  phase=0.0)` in `dsp` (C# `Dsp.RingModulate`, real and complex), the carrier argument built as
+  for `tone`.
+  Python 6434 passed, 2 skipped; .NET 5688 passed; conformance 3883/3883 in both. Version
+  2026.11.17.59.
 
 ## Not built
 

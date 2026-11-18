@@ -1951,6 +1951,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
 - **Tanh saturator** (`saturate(samples, drive)`, C# `Dsp.Saturate`,
   [ADR 0259](adr/0259-saturate.md)): `y = tanh(drive·x)/tanh(drive)`, in that order. Finite
   `drive > 0`; samples real, finite, non-empty. **(implemented)**
+- **Ring modulator** (`ring_modulate(samples, frequency, sample_rate, *, phase=0.0)`, C#
+  `Dsp.RingModulate`, [ADR 0260](adr/0260-ring-modulate.md)): `y[n] = x[n]·cos((2π·f)·(n/fs) + φ)`,
+  the argument built as for `tone`. Finite `sample_rate > 0`; finite `frequency` and `phase`;
+  samples finite, non-empty; real or complex, the same kind out. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

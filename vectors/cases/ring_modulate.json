@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "ring_modulate",
+  "description": "Ring modulator (conventions: Ring modulator; ADR 0260).",
+  "cases": [
+    {"id": "ring_modulate.quarter", "op": "ring_modulate", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0], "frequency": 250.0, "sample_rate": 1000.0}, "expected": [1.0, 1.2246467991473532e-16, -3.0, -7.347880794884119e-16, 5.0, 1.83697019872103e-15, -7.0, -3.429011037612589e-15], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "f = fs/4: carrier 1, 0, -1, 0, ..."},
+    {"id": "ring_modulate.half", "op": "ring_modulate", "args": {"samples": [0.5, 0.5, -0.25, 0.25], "frequency": 4000.0, "sample_rate": 8000.0}, "expected": [0.5, -0.5, -0.25, -0.25], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "f = fs/2: carrier +-1"},
+    {"id": "ring_modulate.phase", "op": "ring_modulate", "args": {"samples": [1.0, 1.0, 1.0, 1.0], "frequency": 250.0, "sample_rate": 1000.0, "phase": 1.5707963267948966}, "expected": [6.123233995736766e-17, -1.0, -1.8369701987210297e-16, 1.0], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "f = fs/4, phase pi/2: 0, -1, 0, 1"},
+    {"id": "ring_modulate.general", "op": "ring_modulate", "args": {"samples": [0.25, -1.5, 2.0, 0.75, -0.5, 1.25, 3.0], "frequency": 1234.5, "sample_rate": 44100.0}, "expected": [0.25, -1.4768577218969163, 1.8775266324027546, 0.6479909916171025, -0.38127656384540715, 0.7969858056162031, 1.478851468980435], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "general carrier frequency"},
+    {"id": "ring_modulate.negative_frequency", "op": "ring_modulate", "args": {"samples": [1.0, -2.0, 0.5, 1.5], "frequency": -300.0, "sample_rate": 1000.0, "phase": 0.25}, "expected": [0.9689124217106447, 0.12823051352668047, -0.46464350691673695, 0.9576693249244811], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "negative f, cos is even"},
+    {"id": "ring_modulate.complex", "op": "ring_modulate", "args": {"samples": {"re": [1.0, 2.0, -3.0, 0.5], "im": [0.5, -1.0, 4.0, 0.0]}, "frequency": 250.0, "sample_rate": 1000.0}, "expected": {"re": [1.0, 1.2246467991473532e-16, 3.0, -9.184850993605148e-17], "im": [0.5, -6.123233995736766e-17, -4.0, -0.0]}, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "complex scaled part by part by the real fs/4 carrier"},
+    {"id": "ring_modulate.sample_rate_zero", "op": "ring_modulate", "args": {"samples": [1.0], "frequency": 100.0, "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "ring_modulate.frequency_inf", "op": "ring_modulate", "args": {"samples": [1.0], "frequency": "inf", "sample_rate": 1000.0}, "error": "invalid_argument", "source": "frequency must be finite"},
+    {"id": "ring_modulate.phase_nan", "op": "ring_modulate", "args": {"samples": [1.0], "frequency": 100.0, "sample_rate": 1000.0, "phase": "nan"}, "error": "invalid_argument", "source": "phase must be finite"},
+    {"id": "ring_modulate.empty", "op": "ring_modulate", "args": {"samples": [], "frequency": 100.0, "sample_rate": 1000.0}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "ring_modulate.nan_sample", "op": "ring_modulate", "args": {"samples": [1.0, "nan"], "frequency": 100.0, "sample_rate": 1000.0}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}
