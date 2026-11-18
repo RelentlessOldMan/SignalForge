@@ -240,6 +240,11 @@ rule for code not written yet.
   each `n`, `τ = n·τ₀` and `MTIE = max_k (max − min of x[k … k+n])`. Result `(taus, values)`.
   Real, finite, at least 2 samples; finite positive `τ₀`; window sizes not empty,
   `1 ≤ n ≤ N − 1`. **(implemented)**
+- **Multiscale entropy** ([ADR 0338](adr/0338-multiscale-entropy.md);
+  `multiscale_entropy(samples, m, r, scales)`, C# `Measurements.MultiscaleEntropy`): per scale
+  `τ`, the sample entropy of `y[j] = (Σ_{i=jτ}^{jτ+τ−1} x[i]) / τ`, `j < floor(N/τ)`, with the
+  same `r` at every scale. Scales not empty, each `≥ 1`, `floor(N/τ) ≥ m + 2`; otherwise as sample
+  entropy. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,9 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - multiscale entropy in `measurements` (`multiscale_entropy(samples, m, r, scales)`: Costa's
-     sample entropy of the non-overlapping coarse-grained means at each scale, `r` fixed in
-     sample units).
    - fuzzy entropy in `measurements` (`fuzzy_entropy(samples, m, r, n=2)`: Chen's
      `ln φ_m − ln φ_{m+1}` with baseline-removed templates and the membership
      `exp(−dⁿ/r)`).
@@ -2738,6 +2735,12 @@ Updated with every chunk of work. Dates are absolute.
   (multiscale, fuzzy and dispersion entropy, the rescaled-range Hurst exponent).
   Python 7393 passed, 2 skipped; .NET 6580 passed; conformance 4589/4589 in both. Version
   2026.11.18.25.
+- 2026-11-18: Multiscale entropy (ADR 0338): `multiscale_entropy(samples, m, r, scales)` in
+  `measurements` (C# `Measurements.MultiscaleEntropy`): sample entropy of the non-overlapping
+  coarse-grained means per scale, `r` fixed; the generator asserts no comparison with `r` can
+  flip under rounding.
+  Python 7404 passed, 2 skipped; .NET 6591 passed; conformance 4597/4597 in both. Version
+  2026.11.18.26.
 
 ## Not built
 

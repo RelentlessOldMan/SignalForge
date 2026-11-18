@@ -485,6 +485,34 @@ def mtie(time_error: ArrayLike, sample_interval: float, window_sizes: Sequence[i
     return Mtie(np.array(sizes, dtype=np.float64) * tau0, values)
 
 
+def multiscale_entropy(
+    samples: ArrayLike, m: int, r: float, scales: Sequence[int]
+) -> NDArray[np.float64]:
+    """Costa's multiscale entropy: the sample entropy of the non-overlapping coarse-grained
+    means at each scale, ``r`` the same at every scale (conventions: Multiscale entropy;
+    ADR 0338)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    k = count(m, "m")
+    sizes = [count(s, "scales") for s in scales]
+    if not sizes:
+        raise ValueError("scales must not be empty")
+    if any(s < 1 or x.shape[0] // s < k + 2 for s in sizes):
+        raise ValueError("each scale must be at least 1 with len(samples) // scale >= m + 2")
+    out = np.empty(len(sizes))
+    for i, s in enumerate(sizes):
+        boxes = x.shape[0] // s
+        coarse = x[: boxes * s].reshape(boxes, s).sum(axis=1) / s
+        out[i] = sample_entropy(coarse, k, r)
+    return out
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

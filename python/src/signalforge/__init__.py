@@ -260,6 +260,7 @@ from .measurements import (
     modified_allan_deviation,
     modulation_transfer,
     mtie,
+    multiscale_entropy,
     noise_compensated_decay,
     noise_figure_cascade,
     noise_figure_y_factor,
@@ -505,7 +506,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.25"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.26"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -809,6 +810,7 @@ __all__ = [
     "mu_law_compress",
     "mu_law_expand",
     "multipath",
+    "multiscale_entropy",
     "multitap_delay",
     "multitaper_line_removal",
     "multitaper_psd",
