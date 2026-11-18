@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "noise_gate",
+  "description": "Noise gate (conventions: Noise gate; ADR 0255).",
+  "cases": [
+    {"id": "noise_gate.no_hold", "op": "noise_gate", "args": {"samples": [0.25, 1.5, -0.5, -2.0, 1.0, 0.75, 3.0], "threshold": 1.0}, "expected": [0.0, 1.5, 0.0, -2.0, 0.0, 0.0, 3.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "hold 0: only samples above 1 pass; 1.0 itself does not"},
+    {"id": "noise_gate.hold_bridges", "op": "noise_gate", "args": {"samples": [2.0, 0.5, 0.25, 0.125, 3.0, 0.5, 0.25, 0.125, 0.0625], "threshold": 1.0, "hold": 2}, "expected": [2.0, 0.5, 0.25, 0.0, 3.0, 0.5, 0.25, 0.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "hold 2: two quiet samples pass after each loud one, the third is cut"},
+    {"id": "noise_gate.starts_closed", "op": "noise_gate", "args": {"samples": [0.5, 0.5, 1.5, 0.5], "threshold": 1.0, "hold": 3}, "expected": [0.0, 0.0, 1.5, 0.5], "tol": {"abs": 0.0, "rel": 0.0}, "source": "hold 3: closed until the first loud sample"},
+    {"id": "noise_gate.threshold_zero", "op": "noise_gate", "args": {"samples": [0.0, -0.0, 0.125, 0.0, 0.0], "threshold": 0.0, "hold": 1}, "expected": [0.0, 0.0, 0.125, 0.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "threshold 0: any nonzero opens"},
+    {"id": "noise_gate.complex", "op": "noise_gate", "args": {"samples": {"re": [0.375, 3.0, 0.0, -0.375, 0.375], "im": [0.5, 4.0, 0.5, 0.5, -0.5]}, "threshold": 1.0, "hold": 1}, "expected": {"re": [0.0, 3.0, 0.0, 0.0, 0.0], "im": [0.0, 4.0, 0.5, 0.0, 0.0]}, "tol": {"abs": 0.0, "rel": 0.0}, "source": "complex by magnitude: |x| = 5/8, 5, 1/2, 5/8, 5/8 against 1, hold 1"},
+    {"id": "noise_gate.threshold_negative", "op": "noise_gate", "args": {"samples": [1.0], "threshold": -1.0}, "error": "invalid_argument", "source": "threshold must be at least 0"},
+    {"id": "noise_gate.hold_negative", "op": "noise_gate", "args": {"samples": [1.0], "threshold": 0.5, "hold": -1}, "error": "invalid_argument", "source": "hold must be at least 0"},
+    {"id": "noise_gate.empty", "op": "noise_gate", "args": {"samples": [], "threshold": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "noise_gate.nan_sample", "op": "noise_gate", "args": {"samples": [1.0, "nan"], "threshold": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

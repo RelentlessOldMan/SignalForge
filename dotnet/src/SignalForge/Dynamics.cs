@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace SignalForge;
 
 public static partial class Dsp
@@ -39,5 +41,65 @@ public static partial class Dsp
             }
         }
         return g;
+    }
+
+    /// <summary>Passes real samples while <c>|x| &gt; threshold</c> and for
+    /// <paramref name="hold"/> samples after, 0 otherwise (conventions: Noise gate;
+    /// ADR 0255).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="threshold">The opening level, finite and at least 0.</param>
+    /// <param name="hold">Samples to stay open after the last one above the threshold, at least 0.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] NoiseGate(ReadOnlySpan<double> samples, double threshold, int hold = 0)
+    {
+        CheckNoiseGate(threshold, hold);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        var y = new double[samples.Length];
+        long c = (long)hold + 1;
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double v = samples[n];
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            c = Math.Abs(v) > threshold ? 0 : Math.Min(c + 1, (long)hold + 1);
+            y[n] = c <= hold ? v : 0;
+        }
+        return y;
+    }
+
+    /// <summary>Passes complex samples while <c>|x| &gt; threshold</c> and for
+    /// <paramref name="hold"/> samples after, 0 otherwise (conventions: Noise gate;
+    /// ADR 0255).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="threshold">The opening level, finite and at least 0.</param>
+    /// <param name="hold">Samples to stay open after the last one above the threshold, at least 0.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] NoiseGate(ReadOnlySpan<Complex> samples, double threshold, int hold = 0)
+    {
+        CheckNoiseGate(threshold, hold);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        var y = new Complex[samples.Length];
+        long c = (long)hold + 1;
+        for (int n = 0; n < samples.Length; n++)
+        {
+            Complex v = samples[n];
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            c = Complex.Abs(v) > threshold ? 0 : Math.Min(c + 1, (long)hold + 1);
+            y[n] = c <= hold ? v : Complex.Zero;
+        }
+        return y;
+    }
+
+    private static void CheckNoiseGate(double threshold, int hold)
+    {
+        if (!double.IsFinite(threshold) || !(threshold >= 0))
+            throw new ArgumentOutOfRangeException(nameof(threshold), "threshold must be at least 0");
+        if (hold < 0)
+            throw new ArgumentOutOfRangeException(nameof(hold), "hold must be at least 0");
     }
 }

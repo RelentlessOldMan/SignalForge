@@ -1929,6 +1929,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `s·q·q/(2W)`, `q = d + W/2` (edges in the knee; `W = 0` gives 0 at `d = 0`). Gain in dB, `≤ 0`. Finite
   `threshold_db`; finite `ratio ≥ 1`; finite `knee_db ≥ 0`; levels real, finite, non-empty.
   **(implemented)**
+- **Noise gate** (`noise_gate(samples, threshold, *, hold=0)`, C# `Dsp.NoiseGate`,
+  [ADR 0255](adr/0255-noise-gate.md)): counter `c` from `hold + 1`; `|x[n]| > threshold` sets
+  `c = 0`, otherwise `c` rises by 1 (capped at `hold + 1`); `y[n] = x[n]` if `c ≤ hold`, else 0.
+  Strict comparison; complex by magnitude. Finite `threshold ≥ 0`; integer `hold ≥ 0`; samples
+  finite, non-empty; output the same kind. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

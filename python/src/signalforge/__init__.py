@@ -102,6 +102,7 @@ from .dsp import (
     moving_rms,
     mu_law_compress,
     mu_law_expand,
+    noise_gate,
     peak_hold,
     pulse_shape,
     quantize,
@@ -401,7 +402,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.53"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.54"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -657,6 +658,7 @@ __all__ = [
     "noise_compensated_decay",
     "noise_figure_cascade",
     "noise_figure_y_factor",
+    "noise_gate",
     "noise_power_ratio",
     "occupied_bandwidth",
     "octave_band_levels",

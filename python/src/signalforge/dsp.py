@@ -2557,6 +2557,28 @@ def sample_and_hold(
     return y
 
 
+def noise_gate(
+    samples: ArrayLike, threshold: float, *, hold: int = 0
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Pass samples while ``|x| > threshold`` and for ``hold`` samples after, 0 otherwise
+    (conventions: Noise gate; ADR 0255)."""
+    th = real(threshold, "threshold")
+    if not th >= 0:
+        raise ValueError("threshold must be at least 0")
+    h = count(hold, "hold")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    m = np.abs(x)
+    keep = np.zeros(x.size, dtype=bool)
+    c = h + 1
+    for n in range(x.size):
+        c = 0 if m[n] > th else min(c + 1, h + 1)
+        keep[n] = c <= h
+    y: NDArray[Any] = np.where(keep, x, 0)
+    return y
+
+
 def compressor_gain(
     level_db: ArrayLike, threshold_db: float, ratio: float, *, knee_db: float = 0.0
 ) -> NDArray[np.float64]:

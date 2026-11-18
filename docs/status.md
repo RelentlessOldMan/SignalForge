@@ -6,8 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a noise gate (`noise_gate(samples, threshold, *, hold=0)`, passing samples while the
-     magnitude is above the threshold and for `hold` samples after, zero otherwise).
+   - a downward-expander gain computer (`expander_gain(level_db, threshold_db, ratio, *,
+     knee_db=0.0)`, the mirror of ADR 0254 below the threshold);
+   - a feed-forward compressor (`compress(samples, threshold_db, ratio, attack, release, *,
+     knee_db=0.0)`, peak detector per ADR 0238 in dB, gain per ADR 0254, applied per sample).
 
 ## Built
 
@@ -2299,6 +2301,14 @@ Updated with every chunk of work. Dates are absolute.
   - The knee squares by multiplication, not `pow`, so both languages give the same bits.
   Python 6355 passed, 2 skipped; .NET 5611 passed; conformance 3818/3818 in both. Version
   2026.11.17.53.
+- 2026-11-17: Noise gate (ADR 0255): `noise_gate(samples, threshold, *, hold=0)` in `dsp`
+  (C# `Dsp.NoiseGate`, real and complex by magnitude).
+  - It is a hard gate with a hold counter and starts closed.
+  - Lesson: complex vectors that compare a magnitude with a threshold use binary-fraction
+    3-4-5 triangles kept away from the threshold. `np.abs` and `Complex.Abs` are not
+    guaranteed to round `|0.6 + 0.8i|` to exactly 1.
+  Python 6366 passed, 2 skipped; .NET 5622 passed; conformance 3827/3827 in both. Version
+  2026.11.17.54.
 
 ## Not built
 
