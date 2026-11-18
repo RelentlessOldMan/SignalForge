@@ -62,6 +62,10 @@ rule for code not written yet.
   frequency jump. Samples `A·e^(jθ[n])` (or `A·cos θ[n]`) with
   `θ[n] = 2π·(start·t + (stop − start)·t²/(2T)) + φ`, `t = n/fs`. With `num_samples = 0` the result
   is empty. Frequencies, amplitude and phase finite.
+- **FM tone** (`fm_tone(sample_rate, num_samples, carrier, modulator, index, amplitude=1)`,
+  C# `Waveforms.FmTone`, [ADR 0306](adr/0306-fm-tone.md)): real,
+  `A·cos(2π·fc·(n/fs) + I·sin(2π·fm·(n/fs)))`, `2π·f` formed first as in `tone`. Positive
+  finite `sample_rate`; `carrier`, `modulator`, `index`, `amplitude` finite. **(implemented)**
 - **Oscillators** (`sawtooth(sample_rate, num_samples, frequency, amplitude=1, phase=0)`,
   `square(…, frequency, duty=0.5, amplitude=1, phase=0)`, `triangle(…)`, C#
   `Waveforms.Sawtooth`, `Square`, `Triangle`, [ADR 0305](adr/0305-oscillators.md)): real;

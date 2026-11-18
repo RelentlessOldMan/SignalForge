@@ -6,15 +6,15 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a two-operator FM tone in `waveforms` (`fm_tone(sample_rate, num_samples, carrier,
-     modulator, index, amplitude=1)`: `A·cos(2π·fc·n/fs + I·sin(2π·fm·n/fs))`, Chowning's
-     FM; sidebands at `fc ± k·fm` with Bessel amplitudes `J_k(I)`).
    - a sidechain ducker in `dsp` (`duck(samples, key, depth, attack, release)`: the key's
      envelope `e` from `envelope_follower`, `y = x·(1 − depth·min(e, 1))`, same-length real
      signals).
    - a band-limited sawtooth in `waveforms` (`bandlimited_sawtooth(sample_rate, num_samples,
      frequency, amplitude=1, phase=0)`: the Fourier series `−(2A/π)·Σ_k sin(2πk·u)/k` summed
      over the harmonics `k·|f| < fs/2`, so nothing aliases).
+   - a wavetable oscillator in `waveforms` (`wavetable(table, sample_rate, num_samples,
+     frequency, phase=0)`: one cycle of `L` samples read at `u·L`, `u` the oscillators' phase
+     in cycles, with linear interpolation that wraps from the last entry to the first).
 
 ## Built
 
@@ -2567,6 +2567,11 @@ Updated with every chunk of work. Dates are absolute.
   in cycles, `u = frac(f·n/fs + phase)`.
   Python 6990 passed, 2 skipped; .NET 6207 passed; conformance 4310/4310 in both. Version
   2026.11.17.104.
+- 2026-11-17: FM tone (ADR 0306): `fm_tone(sample_rate, num_samples, carrier, modulator,
+  index, amplitude=1)` in `waveforms` (C# `Waveforms.FmTone`): Chowning's two-operator FM,
+  `A·cos(2π·fc·n/fs + I·sin(2π·fm·n/fs))`; the tests check the sidebands against `J_k(I)`.
+  Python 6998 passed, 2 skipped; .NET 6215 passed; conformance 4316/4316 in both. Version
+  2026.11.17.105.
 
 ## Not built
 

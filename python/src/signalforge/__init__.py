@@ -458,6 +458,7 @@ from .units import (
 from .waveforms import (
     adsr,
     chirp,
+    fm_tone,
     multitone,
     newman_phases,
     prbs,
@@ -468,7 +469,7 @@ from .waveforms import (
     triangle,
 )
 
-__version__ = "2026.11.17.104"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.105"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -671,6 +672,7 @@ __all__ = [
     "fir_lowpass",
     "fir_response",
     "flanger",
+    "fm_tone",
     "fractional_delay",
     "frequency_offset",
     "frequency_shift",

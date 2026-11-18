@@ -358,4 +358,33 @@ public static class Waveforms
         }
         return u;
     }
+
+    /// <summary>Two-operator FM, <c>A·cos(2π·fc·n/fs + I·sin(2π·fm·n/fs))</c> (conventions: FM
+    /// tone; ADR 0306).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="carrier">The carrier frequency in Hz, finite.</param>
+    /// <param name="modulator">The modulator frequency in Hz, finite.</param>
+    /// <param name="index">The peak phase deviation in radians, finite.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] FmTone(double sampleRate, int numSamples, double carrier,
+        double modulator, double index, double amplitude = 1.0)
+    {
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        ArgumentOutOfRangeException.ThrowIfNegative(numSamples);
+        Check.Finite(carrier, nameof(carrier));
+        Check.Finite(modulator, nameof(modulator));
+        Check.Finite(index, nameof(index));
+        Check.Finite(amplitude, nameof(amplitude));
+        double wc = 2.0 * Math.PI * carrier, wm = 2.0 * Math.PI * modulator;
+        var y = new double[numSamples];
+        for (int n = 0; n < numSamples; n++)
+        {
+            double t = n / sampleRate;
+            y[n] = amplitude * Math.Cos((wc * t) + (index * Math.Sin(wm * t)));
+        }
+        return y;
+    }
 }

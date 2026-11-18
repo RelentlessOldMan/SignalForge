@@ -195,6 +195,29 @@ def triangle(
     return y
 
 
+def fm_tone(
+    sample_rate: float,
+    num_samples: int,
+    carrier: float,
+    modulator: float,
+    index: float,
+    amplitude: float = 1.0,
+) -> NDArray[np.float64]:
+    """Two-operator FM, ``A cos(2 pi fc n/fs + I sin(2 pi fm n/fs))`` (conventions: FM tone;
+    ADR 0306)."""
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    size = _count(num_samples, "num_samples")
+    fc = real(carrier, "carrier")
+    fm = real(modulator, "modulator")
+    i = real(index, "index")
+    amp = real(amplitude, "amplitude")
+    t = np.arange(size) / fs
+    y: NDArray[np.float64] = amp * np.cos(2.0 * np.pi * fc * t + i * np.sin(2.0 * np.pi * fm * t))
+    return y
+
+
 def adsr(
     num_samples: int, attack: int, decay: int, sustain: float, release: int, gate: int
 ) -> NDArray[np.float64]:
