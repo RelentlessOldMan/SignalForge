@@ -674,6 +674,8 @@ public static class Conformance
                 : Bind((Reals(a.Get("samples")), a.D("threshold"), a.Has("hold") ? a.I("hold") : 0), t => Dsp.NoiseGate(t.Item1, t.Item2, t.Item3)),
             "compressor_gain" => Bind((Reals(a.Get("level_db")), a.D("threshold_db"), a.D("ratio"), a.Has("knee_db") ? a.D("knee_db") : 0.0),
                 t => Dsp.CompressorGain(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "crossfade" => a.Get("a") is Complex[] || a.Get("b") is Complex[]? Bind((Complexes(a.Get("a")), Complexes(a.Get("b")), a.I("overlap"), Fade(a)), t => Dsp.Crossfade(t.Item1, t.Item2, t.Item3, t.Item4))
+                : Bind((Reals(a.Get("a")), Reals(a.Get("b")), a.I("overlap"), Fade(a)), t => Dsp.Crossfade(t.Item1, t.Item2, t.Item3, t.Item4)),
             "fade" => a.Get("samples") is Complex[] fds
                 ? Bind((fds, a.I("fade_in"), a.I("fade_out"), Fade(a)), t => Dsp.Fade(t.Item1, t.Item2, t.Item3, t.Item4))
                 : Bind((Reals(a.Get("samples")), a.I("fade_in"), a.I("fade_out"), Fade(a)), t => Dsp.Fade(t.Item1, t.Item2, t.Item3, t.Item4)),

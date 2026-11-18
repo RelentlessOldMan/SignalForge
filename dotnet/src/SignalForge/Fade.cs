@@ -81,4 +81,86 @@ public static partial class Dsp
 
     private static double FadeRamp(double t, FadeShape shape) =>
         shape == FadeShape.Linear ? t : (1 - Math.Cos(Math.PI * t)) / 2;
+
+    /// <summary>Joins real <paramref name="a"/> and <paramref name="b"/> over
+    /// <paramref name="overlap"/> shared samples with complementary ramps (conventions:
+    /// Crossfade; ADR 0263).</summary>
+    /// <param name="a">The first input, finite, at least one sample.</param>
+    /// <param name="b">The second input, finite, at least one sample.</param>
+    /// <param name="overlap">Shared samples, from 0 to the length of each input.</param>
+    /// <param name="shape">The ramp shape.</param>
+    /// <returns><c>a.Length + b.Length − overlap</c> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Crossfade(ReadOnlySpan<double> a, ReadOnlySpan<double> b, int overlap, FadeShape shape = FadeShape.Linear)
+    {
+        double[] w = CrossfadeWeights(a.Length, b.Length, overlap, shape);
+        foreach (double v in a)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("a must be finite", nameof(a));
+        }
+        foreach (double v in b)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("b must be finite", nameof(b));
+        }
+        int head = a.Length - overlap;
+        var y = new double[head + b.Length];
+        a[..head].CopyTo(y);
+        for (int k = 0; k < overlap; k++)
+            y[head + k] = a[head + k] * (1 - w[k]) + b[k] * w[k];
+        b[overlap..].CopyTo(y.AsSpan(a.Length));
+        return y;
+    }
+
+    /// <summary>Joins complex <paramref name="a"/> and <paramref name="b"/> over
+    /// <paramref name="overlap"/> shared samples with complementary ramps (conventions:
+    /// Crossfade; ADR 0263).</summary>
+    /// <param name="a">The first input, finite, at least one sample.</param>
+    /// <param name="b">The second input, finite, at least one sample.</param>
+    /// <param name="overlap">Shared samples, from 0 to the length of each input.</param>
+    /// <param name="shape">The ramp shape.</param>
+    /// <returns><c>a.Length + b.Length − overlap</c> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Crossfade(ReadOnlySpan<Complex> a, ReadOnlySpan<Complex> b, int overlap, FadeShape shape = FadeShape.Linear)
+    {
+        double[] w = CrossfadeWeights(a.Length, b.Length, overlap, shape);
+        foreach (Complex v in a)
+        {
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("a must be finite", nameof(a));
+        }
+        foreach (Complex v in b)
+        {
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("b must be finite", nameof(b));
+        }
+        int head = a.Length - overlap;
+        var y = new Complex[head + b.Length];
+        a[..head].CopyTo(y);
+        for (int k = 0; k < overlap; k++)
+        {
+            Complex p = a[head + k], q = b[k];
+            double u = 1 - w[k];
+            y[head + k] = new Complex(p.Real * u + q.Real * w[k], p.Imaginary * u + q.Imaginary * w[k]);
+        }
+        b[overlap..].CopyTo(y.AsSpan(a.Length));
+        return y;
+    }
+
+    private static double[] CrossfadeWeights(int lengthA, int lengthB, int overlap, FadeShape shape)
+    {
+        if (lengthA == 0)
+            throw new ArgumentException("a must not be empty", nameof(lengthA));
+        if (lengthB == 0)
+            throw new ArgumentException("b must not be empty", nameof(lengthB));
+        if (overlap < 0 || overlap > Math.Min(lengthA, lengthB))
+            throw new ArgumentOutOfRangeException(nameof(overlap), "overlap must be from 0 to the length of each input");
+        if (!Enum.IsDefined(shape))
+            throw new ArgumentOutOfRangeException(nameof(shape), "shape must be Linear or Cosine");
+        var w = new double[overlap];
+        for (int k = 0; k < overlap; k++)
+            w[k] = FadeRamp((double)(k + 1) / (overlap + 1), shape);
+        return w;
+    }
 }

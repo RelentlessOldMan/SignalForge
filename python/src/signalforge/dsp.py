@@ -2557,12 +2557,37 @@ def sample_and_hold(
     return y
 
 
-def _fade_ramp(length: int, shape: str) -> NDArray[np.float64]:
-    t = np.arange(length) / length
+def _ramp(t: NDArray[np.float64], shape: str) -> NDArray[np.float64]:
     if shape == "linear":
         return t
     r: NDArray[np.float64] = (1 - np.cos(np.pi * t)) / 2
     return r
+
+
+def _fade_ramp(length: int, shape: str) -> NDArray[np.float64]:
+    return _ramp(np.arange(length) / length, shape)
+
+
+def crossfade(
+    a: ArrayLike, b: ArrayLike, overlap: int, *, shape: str = "linear"
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Join ``a`` and ``b`` over ``overlap`` shared samples with complementary ramps
+    (conventions: Crossfade; ADR 0263)."""
+    length = count(overlap, "overlap")
+    if shape not in ("linear", "cosine"):
+        raise ValueError('shape must be "linear" or "cosine"')
+    xa = _vector(a, "a")
+    xb = _vector(b, "b")
+    if not np.all(np.isfinite(xa)):
+        raise ValueError("a must be finite")
+    if not np.all(np.isfinite(xb)):
+        raise ValueError("b must be finite")
+    if length > min(xa.size, xb.size):
+        raise ValueError("overlap must be at most the length of each input")
+    w = _ramp((np.arange(length) + 1) / (length + 1), shape)
+    mid = xa[xa.size - length :] * (1 - w) + xb[:length] * w
+    y: NDArray[Any] = np.concatenate([xa[: xa.size - length], mid, xb[length:]])
+    return y
 
 
 def fade(

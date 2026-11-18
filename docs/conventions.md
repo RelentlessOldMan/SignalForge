@@ -1964,6 +1964,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   (cosine); gain 1, times `r(n/Lᵢ)` for `n < Lᵢ`, times `r(k/Lₒ)` for `k = N−1−n < Lₒ`; first
   and last ramp samples 0. Integer `fade_in`, `fade_out` in `[0, N]`; samples finite, non-empty;
   real or complex, the same kind out. **(implemented)**
+- **Crossfade** (`crossfade(a, b, overlap, *, shape="linear")`, C# `Dsp.Crossfade`,
+  [ADR 0263](adr/0263-crossfade.md)): `a[:Nₐ−L]`, then for `k < L`, `t = (k+1)/(L+1)`,
+  `w = r(t)` (the fade ramp), `a[Nₐ−L+k]·(1 − w) + b[k]·w`, then `b[L:]`. Integer `overlap` in
+  `[0, min(Nₐ, N_b)]`; inputs finite, non-empty; complex if either is. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

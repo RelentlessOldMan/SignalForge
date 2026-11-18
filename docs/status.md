@@ -6,8 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a crossfade (`crossfade(a, b, overlap, *, shape="linear")`, joining two signals with
-     complementary ramps).
+   - mid/side coding (`mid_side_encode(left, right)` and `mid_side_decode(mid, side)`,
+     `M = (L + R)/2`, `S = (L − R)/2`, exact inverse `L = M + S`, `R = M − S`);
+   - a panner (`pan(samples, position, *, law="constant_power")`, mono to left and right with
+     constant-power `cos/sin` or linear gains, `position` in `[−1, 1]`);
+   - a bitcrusher (`bitcrush(samples, bits, hold)`, sample-and-hold by `hold` then a mid-tread
+     quantizer at `2^(1−bits)` steps).
 
 ## Built
 
@@ -2341,6 +2345,11 @@ Updated with every chunk of work. Dates are absolute.
   that start and end at 0 and multiply where they overlap.
   Python 6461 passed, 2 skipped; .NET 5714 passed; conformance 3905/3905 in both. Version
   2026.11.17.61.
+- 2026-11-17: Crossfade (ADR 0263): `crossfade(a, b, overlap, *, shape="linear")` in `dsp` (C#
+  `Dsp.Crossfade`, real and complex, complex out if either input is), complementary fade ramps at
+  `t = (k+1)/(L+1)`.
+  Python 6476 passed, 2 skipped; .NET 5728 passed; conformance 3917/3917 in both. Version
+  2026.11.17.62.
 
 ## Not built
 

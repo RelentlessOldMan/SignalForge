@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "crossfade",
+  "description": "Crossfade (conventions: Crossfade; ADR 0263).",
+  "cases": [
+    {"id": "crossfade.linear", "op": "crossfade", "args": {"a": [1.0, 1.0, 1.0, 1.0, 1.0], "b": [0.0, 0.0, 0.0, 0.0], "overlap": 3}, "expected": [1.0, 1.0, 0.75, 0.5, 0.25, 0.0], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "linear, overlap 3: 1, 1, 3/4, 1/2, 1/4, 0"},
+    {"id": "crossfade.concatenate", "op": "crossfade", "args": {"a": [0.5, -0.25], "b": [1.5, 2.0, -1.0], "overlap": 0}, "expected": [0.5, -0.25, 1.5, 2.0, -1.0], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "overlap 0: concatenation"},
+    {"id": "crossfade.full_overlap", "op": "crossfade", "args": {"a": [2.0, -2.0, 4.0], "b": [1.0, 3.0, -1.0], "overlap": 3}, "expected": [1.75, 0.5, 0.25], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "overlap the whole of both"},
+    {"id": "crossfade.cosine", "op": "crossfade", "args": {"a": [1.0, 1.0, 1.0, 1.0], "b": [-1.0, -1.0, -1.0, -1.0, -1.0], "overlap": 3, "shape": "cosine"}, "expected": [1.0, 0.7071067811865475, 5.551115123125783e-17, -0.7071067811865475, -1.0, -1.0], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "cosine, overlap 3: middle sample 1/2 of each"},
+    {"id": "crossfade.cosine_signal", "op": "crossfade", "args": {"a": [0.25, -1.0, 1.5, 2.0, -0.5, 0.75], "b": [1.0, -1.25, 0.5, 0.125, 3.0], "overlap": 4, "shape": "cosine"}, "expected": [0.25, -1.0, 1.4522542485937369, 0.8771526158592896, 0.15450849718747373, 0.18468218925782892, 3.0], "tol": {"abs": 1e-15, "rel": 0.0}, "source": "cosine on two signals"},
+    {"id": "crossfade.complex", "op": "crossfade", "args": {"a": {"re": [1.0, 2.0, -3.0], "im": [0.5, -1.0, 4.0]}, "b": {"re": [0.0, 1.0, 2.0], "im": [2.0, 0.0, -2.0]}, "overlap": 1}, "expected": {"re": [1.0, 2.0, -1.5, 1.0, 2.0], "im": [0.5, -1.0, 3.0, 0.0, -2.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "complex, overlap 1: the shared sample is (a + b)/2"},
+    {"id": "crossfade.mixed", "op": "crossfade", "args": {"a": [1.0, 1.0], "b": {"re": [0.0, 0.0], "im": [2.0, 2.0]}, "overlap": 1}, "expected": {"re": [1.0, 0.5, 0.0], "im": [0.0, 1.0, 2.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "real a, complex b: complex out, 1, 1/2 + i, 2i"},
+    {"id": "crossfade.overlap_negative", "op": "crossfade", "args": {"a": [1.0, 2.0], "b": [3.0, 4.0], "overlap": -1}, "error": "invalid_argument", "source": "overlap must be at least 0"},
+    {"id": "crossfade.overlap_too_long", "op": "crossfade", "args": {"a": [1.0, 2.0], "b": [1.0], "overlap": 2}, "error": "invalid_argument", "source": "overlap must be at most the length of each input"},
+    {"id": "crossfade.bad_shape", "op": "crossfade", "args": {"a": [1.0, 2.0], "b": [3.0, 4.0], "overlap": 1, "shape": "square"}, "error": "invalid_argument", "source": "shape must be linear or cosine"},
+    {"id": "crossfade.empty_a", "op": "crossfade", "args": {"a": [], "b": [3.0, 4.0], "overlap": 0}, "error": "invalid_argument", "source": "a must not be empty"},
+    {"id": "crossfade.nan_b", "op": "crossfade", "args": {"a": [1.0, 2.0], "b": [1.0, "nan"], "overlap": 1}, "error": "invalid_argument", "source": "b must be finite"}
+  ]
+}
