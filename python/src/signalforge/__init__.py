@@ -238,6 +238,7 @@ from .measurements import (
     decay_curvature,
     decay_time,
     definition,
+    detrended_fluctuation,
     early_decay_time,
     energy_separation,
     energy_time_curve,
@@ -497,7 +498,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.20"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.21"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -673,6 +674,7 @@ __all__ = [
     "decode_samples",
     "definition",
     "delta",
+    "detrended_fluctuation",
     "dfe_equalizer",
     "dfe_least_squares",
     "dpss_tapers",

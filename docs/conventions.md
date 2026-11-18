@@ -209,6 +209,13 @@ rule for code not written yet.
   `time_deviation(fractional_frequency, sample_interval, averaging_factors)`, C#
   `Measurements.TimeDeviation`): `TDEV = (τ/√3)·MDEV(τ)` in seconds, MDEV as the modified Allan
   deviation; the same rules and result type. **(implemented)**
+- **Detrended fluctuation analysis** ([ADR 0332](adr/0332-detrended-fluctuation.md);
+  `detrended_fluctuation(samples, scales)`, C# `Measurements.DetrendedFluctuation`): DFA-1. Profile
+  `Y[i] = Σ_{j≤i} (x[j] − x̄)`; for scale `s`, `B = floor(N/s)` boxes from the start, a
+  least-squares line over `t = 0 … s−1` removed in each; `F(s) = sqrt(Σ r² / (B·s))`; `α` the
+  least-squares slope of `ln F` against `ln s`. Result `(scales, fluctuations, alpha)`. Real,
+  finite; at least two strictly increasing integer scales, `4 ≤ s ≤ N`; every `F(s) > 0`.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

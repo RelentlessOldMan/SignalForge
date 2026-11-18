@@ -6,9 +6,18 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - detrended fluctuation analysis in `measurements` (`detrended_fluctuation(samples,
-     scales)`: the RMS of the linearly detrended profile in non-overlapping boxes per scale,
-     and the log-log slope `α`).
+   - approximate entropy in `measurements` (`approximate_entropy(samples, m, r)`: Pincus's
+     `Φ_m(r) − Φ_{m+1}(r)`, self-matches counted, Chebyshev distance, `r` in sample units).
+   - Katz fractal dimension in `measurements` (`katz_dimension(samples)`:
+     `log10(n)/(log10(n) + log10(d/L))` with `n` steps, `L` the summed step lengths and `d` the
+     largest distance from the first point, in sample index and value).
+   - Petrosian fractal dimension in `measurements` (`petrosian_dimension(samples)`:
+     `log10 n / (log10 n + log10(n/(n + 0.4·N_Δ)))`, `N_Δ` the sign changes of the first
+     difference).
+   - Lempel-Ziv complexity in `measurements` (`lempel_ziv_complexity(bits)`: the LZ76 phrase
+     count of a 0/1 sequence, Kaspar-Schuster scan).
+   - MTIE in `measurements` (`mtie(time_error, sample_interval, window_sizes)`: the largest
+     peak-to-peak time error over every window of `n + 1` samples, `τ = n·τ₀`).
 
 ## Built
 
@@ -2699,6 +2708,13 @@ Updated with every chunk of work. Dates are absolute.
   seconds, the `AllanDeviation` result and rules of ADR 0328.
   Python 7325 passed, 2 skipped; .NET 6516 passed; conformance 4539/4539 in both. Version
   2026.11.18.20.
+- 2026-11-18: Detrended fluctuation analysis (ADR 0332): `detrended_fluctuation(samples, scales)`
+  in `measurements` (C# `Measurements.DetrendedFluctuation`), DFA-1: the result
+  `DetrendedFluctuation(scales, fluctuations, alpha)`; at least two strictly increasing scales
+  `4 ≤ s ≤ N`. Added five new Next candidates (approximate entropy, Katz and Petrosian
+  dimensions, Lempel-Ziv complexity, MTIE).
+  Python 7338 passed, 2 skipped; .NET 6527 passed; conformance 4548/4548 in both. Version
+  2026.11.18.21.
 
 ## Not built
 

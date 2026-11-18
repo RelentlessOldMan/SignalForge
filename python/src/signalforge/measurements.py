@@ -87,6 +87,16 @@ class AllanDeviation:
     deviations: NDArray[np.float64]
 
 
+@dataclass(frozen=True, eq=False)
+class DetrendedFluctuation:
+    """DFA-1 fluctuations at each box size and their scaling exponent (conventions: Detrended
+    fluctuation analysis; ADR 0332)."""
+
+    scales: NDArray[np.int64]
+    fluctuations: NDArray[np.float64]
+    alpha: float
+
+
 @dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
@@ -300,6 +310,45 @@ def time_deviation(
     mod = modified_allan_deviation(fractional_frequency, sample_interval, averaging_factors)
     deviations: NDArray[np.float64] = mod.taus / math.sqrt(3) * mod.deviations
     return AllanDeviation(mod.taus, deviations)
+
+
+def detrended_fluctuation(samples: ArrayLike, scales: Sequence[int]) -> DetrendedFluctuation:
+    """Detrended fluctuation analysis, DFA-1: the RMS of the linearly detrended profile in
+    boxes of each size, and the log-log slope ``alpha`` (conventions: Detrended fluctuation
+    analysis; ADR 0332)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    sizes = [count(s, "scales") for s in scales]
+    size = x.shape[0]
+    if len(sizes) < 2:
+        raise ValueError("scales must have at least two entries")
+    if any(sizes[i + 1] <= sizes[i] for i in range(len(sizes) - 1)):
+        raise ValueError("scales must be strictly increasing")
+    if sizes[0] < 4 or sizes[-1] > size:
+        raise ValueError("each scale must be at least 4 and at most len(samples)")
+    profile = np.cumsum(x - x.mean())
+    fluctuations = np.empty(len(sizes))
+    for i, s in enumerate(sizes):
+        boxes = size // s
+        y = profile[: boxes * s].reshape(boxes, s)
+        t = np.arange(s, dtype=np.float64) - (s - 1) / 2
+        yc = y - y.mean(axis=1, keepdims=True)
+        slope = (yc @ t) / float(t @ t)
+        r = yc - slope[:, None] * t
+        fluctuations[i] = math.sqrt(float(np.sum(r * r)) / (boxes * s))
+    if not np.all(fluctuations > 0):
+        raise ValueError("the detrended profile must fluctuate at every scale")
+    lx = np.log(np.array(sizes, dtype=np.float64))
+    ly = np.log(fluctuations)
+    dx = lx - lx.mean()
+    alpha = float(np.sum(dx * (ly - ly.mean())) / np.sum(dx * dx))
+    return DetrendedFluctuation(np.array(sizes, dtype=np.int64), fluctuations, alpha)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "detrended_fluctuation",
+  "description": "Detrended fluctuation analysis, DFA-1 (conventions: Detrended fluctuation analysis; ADR 0332).",
+  "cases": [
+    {"id": "detrended_fluctuation.alternating", "op": "detrended_fluctuation", "args": {"samples": [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0], "scales": [4, 8]}, "expected": {"scales": [4, 8], "fluctuations": [0.4472135954999579, 0.4879500364742666], "alpha": 0.12576938349798206}, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "+-1 alternating: profile 1, 0, 1, 0, ...; at s = 4 the residuals are 0.2, -0.6, 0.6, -0.2, F^2 = 1/5"},
+    {"id": "detrended_fluctuation.mixed", "op": "detrended_fluctuation", "args": {"samples": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5, -1.25, 0.75, 0.0, 1.5, -0.75, 2.0, 0.5, -1.0, 1.25, 0.625, -2.0, 0.25, 1.75], "scales": [4, 5, 7, 11, 23]}, "expected": {"scales": [4, 5, 7, 11, 23], "fluctuations": [0.7971629381751262, 0.8381061239485128, 0.8918595617535063, 1.1754499534115463, 1.1792872040483775], "alpha": 0.25019268831339203}, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "23 arbitrary dyadic samples, leftovers at the end of most scales"},
+    {"id": "detrended_fluctuation.walk", "op": "detrended_fluctuation", "args": {"samples": [0.0, 1.0, 3.0, 2.0, 4.0, 5.0, 3.0, 6.0, 8.0, 7.0, 9.0, 12.0, 10.0, 11.0, 14.0, 13.0], "scales": [4, 8, 16]}, "expected": {"scales": [4, 8, 16], "fluctuations": [0.8023403267940606, 1.8662494219053103, 8.808194087793211], "alpha": 1.7282800213823852}, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "an integer walk with drift, one box at s = 16"},
+    {"id": "detrended_fluctuation.one_scale", "op": "detrended_fluctuation", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0, -1.0, 0.25], "scales": [4]}, "error": "invalid_argument", "source": "at least two scales are needed"},
+    {"id": "detrended_fluctuation.scale_three", "op": "detrended_fluctuation", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0, -1.0, 0.25], "scales": [3, 4]}, "error": "invalid_argument", "source": "each scale must be at least 4"},
+    {"id": "detrended_fluctuation.scale_too_big", "op": "detrended_fluctuation", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0, -1.0, 0.25], "scales": [4, 9]}, "error": "invalid_argument", "source": "each scale must be at most N"},
+    {"id": "detrended_fluctuation.not_increasing", "op": "detrended_fluctuation", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0, -1.0, 0.25], "scales": [8, 4]}, "error": "invalid_argument", "source": "scales must be strictly increasing"},
+    {"id": "detrended_fluctuation.constant", "op": "detrended_fluctuation", "args": {"samples": [2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5], "scales": [4, 8]}, "error": "invalid_argument", "source": "a constant has a zero profile"},
+    {"id": "detrended_fluctuation.nan", "op": "detrended_fluctuation", "args": {"samples": [0.0, 1.0, "nan", 2.0, 1.0, 0.0, 1.0, 2.0], "scales": [4, 8]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}
