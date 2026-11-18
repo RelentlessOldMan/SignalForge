@@ -310,6 +310,30 @@ def hard_sync_sawtooth(
     return y
 
 
+def dpw_sawtooth(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Differentiated parabolic waveform: the scaled first difference of the squared naive
+    sawtooth, ``phase`` in cycles (conventions: DPW sawtooth; ADR 0317)."""
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    f = real(frequency, "frequency")
+    if not abs(f) <= 0.5 * sample_rate:
+        raise ValueError("|frequency| must be at most sample_rate/2")
+    x = 2 * u - 1
+    if f == 0:
+        y: NDArray[np.float64] = amp * x
+        return y
+    t = f * (-1 / sample_rate) + phase
+    before = 2 * (t - math.floor(t)) - 1
+    prev = np.concatenate(([before], x[:-1]))
+    y = amp * ((x * x - prev * prev) * (sample_rate / (4 * f)))
+    return y
+
+
 def polyblep_sawtooth(
     sample_rate: float,
     num_samples: int,

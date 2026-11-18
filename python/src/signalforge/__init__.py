@@ -461,6 +461,7 @@ from .waveforms import (
     bandlimited_square,
     bandlimited_triangle,
     chirp,
+    dpw_sawtooth,
     fm_tone,
     hard_sync_sawtooth,
     multitone,
@@ -480,7 +481,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.5"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.6"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -653,6 +654,7 @@ __all__ = [
     "dfe_equalizer",
     "dfe_least_squares",
     "dpss_tapers",
+    "dpw_sawtooth",
     "duck",
     "early_decay_time",
     "elliptic_bandpass",

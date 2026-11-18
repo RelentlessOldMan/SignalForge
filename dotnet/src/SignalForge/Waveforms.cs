@@ -739,4 +739,38 @@ public static class Waveforms
             acc[n] = amplitude * (acc[n] / voices);
         return acc;
     }
+
+    /// <summary>Differentiated parabolic waveform: the scaled first difference of the squared
+    /// naive sawtooth, with the phase in cycles (conventions: DPW sawtooth; ADR 0317).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite, with magnitude at most half the sample
+    /// rate.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] DpwSawtooth(double sampleRate, int numSamples, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        if (!(Math.Abs(frequency) <= 0.5 * sampleRate))
+            throw new ArgumentOutOfRangeException(nameof(frequency), "|frequency| must be at most sampleRate/2");
+        if (frequency == 0)
+        {
+            for (int n = 0; n < u.Length; n++)
+                u[n] = amplitude * ((2 * u[n]) - 1);
+            return u;
+        }
+        double t = (frequency * (-1 / sampleRate)) + phase;
+        double prev = (2 * (t - Math.Floor(t))) - 1;
+        double scale = sampleRate / (4 * frequency);
+        for (int n = 0; n < u.Length; n++)
+        {
+            double x = (2 * u[n]) - 1;
+            u[n] = amplitude * (((x * x) - (prev * prev)) * scale);
+            prev = x;
+        }
+        return u;
+    }
 }

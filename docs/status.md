@@ -6,9 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a DPW sawtooth in `waveforms` (`dpw_sawtooth(sample_rate, num_samples, frequency,
-     amplitude=1, phase=0)`: the differentiated parabolic waveform, the first difference of
-     `(2u − 1)²` scaled by `fs/(4·f)`; another cheap alias-reduced saw).
    - colored noise in `channel` or `waveforms` (`color_noise(white, exponent)`: the real FFT of
      the given samples, bin `k ≥ 1` scaled by `k^(−exponent/2)`, bin 0 set to 0, inverse FFT;
      `exponent` 1 pink, 2 brown, −1 blue. Deterministic given the samples, so vectors work
@@ -2626,6 +2623,11 @@ Updated with every chunk of work. Dates are absolute.
   PolyBLEP sawtooths spread evenly over `±detune` cents, voice `k` at phase `k/voices`.
   Python 7133 passed, 2 skipped; .NET 6339 passed; conformance 4408/4408 in both. Version
   2026.11.18.5.
+- 2026-11-18: DPW sawtooth (ADR 0317): `dpw_sawtooth(sample_rate, num_samples, frequency,
+  amplitude=1, phase=0)` in `waveforms` (C# `Waveforms.DpwSawtooth`): the scaled first
+  difference of the squared naive sawtooth, with a true predecessor for the first sample.
+  Python 7145 passed, 2 skipped; .NET 6350 passed; conformance 4416/4416 in both. Version
+  2026.11.18.6.
 
 ## Not built
 

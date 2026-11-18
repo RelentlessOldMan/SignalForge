@@ -71,6 +71,11 @@ rule for code not written yet.
   oscillators; `y[n] = A` for `u[n] < duty[n]`, else `−A`. `duty` a 1-D real array (may be
   empty), every value in [0, 1]; positive finite `sample_rate`; finite `frequency`,
   `amplitude`, `phase`. **(implemented)**
+- **DPW sawtooth** (`dpw_sawtooth(sample_rate, num_samples, frequency, amplitude=1,
+  phase=0)`, C# `Waveforms.DpwSawtooth`, [ADR 0317](adr/0317-dpw-sawtooth.md)): `u[n]` as for
+  the oscillators, also at `n = −1`; `x = 2·u − 1`;
+  `y[n] = A·((x[n]·x[n] − x[n−1]·x[n−1])·(fs/(4·f)))`; at `f = 0`, `y = A·x`. Rules of the
+  PolyBLEP sawtooth. **(implemented)**
 - **Supersaw** (`supersaw(sample_rate, num_samples, frequency, detune, voices=7,
   amplitude=1)`, C# `Waveforms.Supersaw`, [ADR 0316](adr/0316-supersaw.md)): voice `k` of `V`
   at `c_k = detune·(2·k/(V − 1) − 1)` cents (0 when `V = 1`), `f_k = f·2^(c_k/1200)`, the
