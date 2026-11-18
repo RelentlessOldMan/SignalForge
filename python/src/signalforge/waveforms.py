@@ -476,6 +476,29 @@ def phase_distortion(
     return y
 
 
+def blit(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Bandlimited impulse train: every harmonic below ``sample_rate/2`` at amplitude ``2A/M``,
+    peak ``A`` (conventions: Bandlimited impulse train; ADR 0320)."""
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    f = abs(real(frequency, "frequency"))
+    if not 0 < f <= 0.5 * sample_rate:
+        raise ValueError("frequency must be non-zero with |frequency| at most sample_rate/2")
+    h = math.floor(sample_rate / (2 * f))
+    if h * f >= sample_rate / 2:
+        h -= 1
+    m = 2 * h + 1
+    v = np.where(u <= 0.5, u, u - 1)
+    safe = np.where(v == 0, 1.0, np.sin(np.pi * v))
+    y: NDArray[np.float64] = np.where(v == 0, amp, amp * (np.sin(m * (np.pi * v)) / (m * safe)))
+    return y
+
+
 def supersaw(
     sample_rate: float,
     num_samples: int,

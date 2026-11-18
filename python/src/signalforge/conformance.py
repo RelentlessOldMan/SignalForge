@@ -76,6 +76,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "polyblep_sawtooth": waveforms.polyblep_sawtooth,
     "polyblep_pwm": waveforms.polyblep_pwm,
     "polyblep_square": waveforms.polyblep_square,
+    "blit": waveforms.blit,
     "phase_distortion": waveforms.phase_distortion,
     "dpw_sawtooth": waveforms.dpw_sawtooth,
     "supersaw": waveforms.supersaw,

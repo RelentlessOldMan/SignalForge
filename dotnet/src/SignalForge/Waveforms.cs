@@ -799,4 +799,34 @@ public static class Waveforms
         }
         return u;
     }
+
+    /// <summary>Bandlimited impulse train: every harmonic below half the sample rate at
+    /// amplitude <c>2A/M</c>, peak <c>A</c> (conventions: Bandlimited impulse train;
+    /// ADR 0320).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite and non-zero, with magnitude at most half
+    /// the sample rate.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Blit(double sampleRate, int numSamples, double frequency,
+        double amplitude = 1.0, double phase = 0.0)
+    {
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        double f = Math.Abs(frequency);
+        if (!(f > 0 && f <= 0.5 * sampleRate))
+            throw new ArgumentOutOfRangeException(nameof(frequency), frequency, "must be non-zero with magnitude at most sampleRate/2");
+        double h = Math.Floor(sampleRate / (2 * f));
+        if (h * f >= sampleRate / 2)
+            h -= 1;
+        double m = (2 * h) + 1;
+        for (int n = 0; n < u.Length; n++)
+        {
+            double v = u[n] <= 0.5 ? u[n] : u[n] - 1;
+            u[n] = v == 0 ? amplitude : amplitude * (Math.Sin(m * (Math.PI * v)) / (m * Math.Sin(Math.PI * v)));
+        }
+        return u;
+    }
 }

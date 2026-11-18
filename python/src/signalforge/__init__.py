@@ -461,6 +461,7 @@ from .waveforms import (
     bandlimited_sawtooth,
     bandlimited_square,
     bandlimited_triangle,
+    blit,
     chirp,
     dpw_sawtooth,
     fm_tone,
@@ -483,7 +484,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.8"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.9"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -591,6 +592,7 @@ __all__ = [
     "bessel_lowpass",
     "bit_errors",
     "bitcrush",
+    "blit",
     "block_leq",
     "burg",
     "burg_psd",

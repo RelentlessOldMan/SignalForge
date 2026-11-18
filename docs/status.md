@@ -6,10 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a bandlimited impulse train in `waveforms` (`blit(sample_rate, num_samples, frequency,
-     amplitude=1, phase=0)`: `H` the number of harmonics `m ≥ 1` with `m·|f| < fs/2`;
-     `y = A·(1 + 2·Σ_{m=1}^{H} cos(2π·m·u))/(2H + 1)`, by the Dirichlet closed form
-     `sin((2H+1)πu)/((2H+1)·sin(πu))`, 1 at `u = 0`).
    - a Chebyshev waveshaper in `dsp` (`chebyshev_shaper(samples, weights)`:
      `y = Σ_k weights[k]·T_k(x)` by Clenshaw, `|x| ≤ 1`; a unit sine in gives harmonic `k` at
      `weights[k]`).
@@ -2643,6 +2639,11 @@ Updated with every chunk of work. Dates are absolute.
   `(knee, 1/2)`, `(1, 1)`. (A Karplus–Strong candidate was dropped from Next: ADR 0304 has it.)
   Python 7177 passed, 2 skipped; .NET 6374 passed; conformance 4433/4433 in both. Version
   2026.11.18.8.
+- 2026-11-18: Bandlimited impulse train (ADR 0320): `blit(sample_rate, num_samples,
+  frequency, amplitude=1, phase=0)` in `waveforms` (C# `Waveforms.Blit`): every harmonic
+  below Nyquist at `2A/M`, by the Dirichlet closed form; vectors from the cosine sum.
+  Python 7189 passed, 2 skipped; .NET 6386 passed; conformance 4442/4442 in both. Version
+  2026.11.18.9.
 
 ## Not built
 

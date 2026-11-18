@@ -71,6 +71,12 @@ rule for code not written yet.
   oscillators; `y[n] = A` for `u[n] < duty[n]`, else `−A`. `duty` a 1-D real array (may be
   empty), every value in [0, 1]; positive finite `sample_rate`; finite `frequency`,
   `amplitude`, `phase`. **(implemented)**
+- **Bandlimited impulse train** (`blit(sample_rate, num_samples, frequency, amplitude=1,
+  phase=0)`, C# `Waveforms.Blit`, [ADR 0320](adr/0320-blit.md)): `H` the number of `m ≥ 1`
+  with `m·|f| < fs/2` (`⌊fs/(2|f|)⌋`, less 1 when `H·|f| ≥ fs/2`), `M = 2H + 1`;
+  `y = A·(1 + 2·Σ_{m=1}^{H} cos(2π·m·u))/M`, computed with `v = u` (`u ≤ 1/2`) or `u − 1` as
+  `A` at `v = 0`, else `A·(sin(M·(π·v))/(M·sin(π·v)))`. Finite non-zero `frequency`,
+  `|f| ≤ fs/2`; finite `amplitude`, `phase`. **(implemented)**
 - **Phase-distortion oscillator** (`phase_distortion(sample_rate, num_samples, frequency, knee,
   amplitude=1, phase=0)`, C# `Waveforms.PhaseDistortion`,
   [ADR 0319](adr/0319-phase-distortion.md)): `u` as for the oscillators; `w = u/(2·knee)` for
