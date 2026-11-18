@@ -846,6 +846,11 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   [ADR 0185](adr/0185-analytic-signal.md)): `z = ifft(fft(x)·W)` with `W[0] = 1`, `W[k] = 2`
   for `0 < 2k < N`, `W[N/2] = 1` for even `N`, `W[k] = 0` for `2k > N` (Marple); `Re z = x` up
   to rounding. Input real, 1-D, finite, not empty; complex input is invalid. **(implemented)**
+- **Frequency shifter** (`frequency_shift(samples, shift, sample_rate)`, C#
+  `Spectral.FrequencyShift`, [ADR 0301](adr/0301-frequency-shift.md)): with
+  `z = analytic_signal(x)` and `θ[n] = (2π·shift)·(n/fs)`, `y[n] = Re z[n]·cos θ[n] −
+  Im z[n]·sin θ[n]`. Samples as for `analytic_signal`; finite `shift`; finite
+  `sample_rate > 0`. **(implemented)**
 - **Instantaneous frequency** (`instantaneous_frequency(samples, sample_rate)`, C#
   `Spectral.InstantaneousFrequency`, [ADR 0187](adr/0187-instantaneous-frequency.md)): `f[n] =
   fs/(2π)·atan2(Im w, Re w)`, `w = z[n+1]·conj z[n]`, `z` the analytic signal; `N − 1` values in

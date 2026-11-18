@@ -6,11 +6,14 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a frequency shifter (`frequency_shift(samples, shift, sample_rate)`: the Bode shifter,
-     `Re(analytic_signal(x)·e^{j2π·shift·n/fs})`, every component moved by `shift` Hz).
    - a delay-line pitch shifter (`pitch_shift(samples, ratio, window)`: two taps whose delays
      ramp as `W·φ` and `W·frac(φ + 1/2)`, `φ = frac(n·(1 − ratio)/W)`, read with linear
      interpolation and crossfaded by `sin²(πφ)` and `cos²(πφ)`).
+   - an ADSR envelope (`adsr(attack, decay, sustain, release, gate, length)`, integer sample
+     counts: linear rise to 1 over `attack`, fall to `sustain` over `decay`, hold until `gate`,
+     linear fall from the level at `gate` to 0 over `release`, zero to `length`).
+   - a Karplus–Strong pluck (`karplus_strong(excitation, delay, length, decay)`:
+     `y[n] = e[n] + decay·(y[n − D] + y[n − D − 1])/2`, the excitation zero-padded to `length`).
 
 ## Built
 
@@ -2538,6 +2541,11 @@ Updated with every chunk of work. Dates are absolute.
   order.
   Python 6930 passed, 2 skipped; .NET 6149 passed; conformance 4262/4262 in both. Version
   2026.11.17.99.
+- 2026-11-17: Frequency shifter (ADR 0301): `frequency_shift(samples, shift, sample_rate)` in
+  `spectral` (C# `Spectral.FrequencyShift`, real): Bode's single-sideband shifter,
+  `Re z·cos θ − Im z·sin θ` with `z` the analytic signal and `θ = (2π·shift)·(n/fs)`.
+  Python 6940 passed, 2 skipped; .NET 6159 passed; conformance 4270/4270 in both. Version
+  2026.11.17.100.
 
 ## Not built
 

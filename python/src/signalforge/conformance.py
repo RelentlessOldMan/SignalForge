@@ -187,6 +187,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "delta": spectral.delta,
     "cepstral_lifter": spectral.cepstral_lifter,
     "analytic_signal": spectral.analytic_signal,
+    "frequency_shift": spectral.frequency_shift,
     "instantaneous_frequency": spectral.instantaneous_frequency,
     "spectral_variation": spectral.spectral_variation,
     "band_energy_ratio": spectral.band_energy_ratio,

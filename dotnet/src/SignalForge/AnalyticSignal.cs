@@ -48,4 +48,28 @@ public static partial class Spectral
         }
         return f;
     }
+
+    /// <summary>Moves every component by <paramref name="shift"/> Hz:
+    /// <c>Re(z·e^{j2π·shift·n/fs})</c> with <c>z</c> the analytic signal (conventions: Frequency
+    /// shifter; ADR 0301).</summary>
+    /// <param name="samples">Real samples, finite, not empty.</param>
+    /// <param name="shift">The shift in Hz, finite, of either sign.</param>
+    /// <param name="sampleRate">Sample rate in Hz, positive and finite.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] FrequencyShift(ReadOnlySpan<double> samples, double shift, double sampleRate)
+    {
+        if (!double.IsFinite(shift))
+            throw new ArgumentOutOfRangeException(nameof(shift), "shift must be finite");
+        Check.PositiveFinite(sampleRate, nameof(sampleRate));
+        Complex[] z = AnalyticSignal(samples);
+        var y = new double[z.Length];
+        double w = 2 * Math.PI * shift;
+        for (int n = 0; n < y.Length; n++)
+        {
+            double theta = w * (n / sampleRate);
+            y[n] = (z[n].Real * Math.Cos(theta)) - (z[n].Imaginary * Math.Sin(theta));
+        }
+        return y;
+    }
 }

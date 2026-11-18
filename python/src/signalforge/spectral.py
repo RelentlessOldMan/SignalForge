@@ -2981,6 +2981,19 @@ def analytic_signal(samples: ArrayLike) -> NDArray[np.complex128]:
     return np.asarray(np.fft.ifft(np.fft.fft(x) * w), dtype=np.complex128)
 
 
+def frequency_shift(samples: ArrayLike, shift: float, sample_rate: float) -> NDArray[np.float64]:
+    """Move every component by ``shift`` Hz: ``Re(z e^{j 2 pi shift n / fs})`` with ``z`` the
+    analytic signal (conventions: Frequency shifter; ADR 0301)."""
+    f = real(shift, "shift")
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive and finite")
+    z = analytic_signal(samples)
+    theta = (2 * math.pi * f) * (np.arange(z.shape[0]) / fs)
+    y: NDArray[np.float64] = z.real * np.cos(theta) - z.imag * np.sin(theta)
+    return y
+
+
 def instantaneous_frequency(samples: ArrayLike, sample_rate: float) -> NDArray[np.float64]:
     """The instantaneous frequency ``fs/(2 pi) arg(z[n+1] conj z[n])`` in Hz, ``N - 1`` values,
     with ``z`` the analytic signal (conventions: Instantaneous frequency; ADR 0187)."""

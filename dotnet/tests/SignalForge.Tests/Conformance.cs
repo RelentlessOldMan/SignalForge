@@ -443,6 +443,7 @@ public static class Conformance
                 t => Spectral.Mfcc(t.Item1, t.Item2, t.Item3, t.Item4)),
             "delta" => Bind((Rows(a.Get("frames")), a.OptInt("width") ?? 2), t => Spectral.Delta(t.Item1, t.Item2)),
             "instantaneous_frequency" => Bind((Reals(a.Get("samples")), a.D("sample_rate")), t => Spectral.InstantaneousFrequency(t.Item1, t.Item2)),
+            "frequency_shift" => Bind((Reals(a.Get("samples")), a.D("shift"), a.D("sample_rate")), t => Spectral.FrequencyShift(t.Item1, t.Item2, t.Item3)),
             "analytic_signal" => Bind(Reals(a.Get("samples")), x => Spectral.AnalyticSignal(x)),
             "cepstral_lifter" => Bind((Reals(a.Get("coefficients")), a.OptInt("length") ?? 22), t => Spectral.CepstralLifter(t.Item1, t.Item2)),
             "real_cepstrum" => Bind((Reals(a.Get("samples")), a.Has("nfft") ? a.I("nfft") : (int?)null),

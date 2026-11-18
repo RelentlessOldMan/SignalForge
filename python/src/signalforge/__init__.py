@@ -351,6 +351,7 @@ from .spectral import (
     fft,
     fft_frequencies,
     find_tones,
+    frequency_shift,
     generalized_lomb_scargle,
     goertzel,
     harmonic_centroid,
@@ -454,7 +455,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.99"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.100"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -658,6 +659,7 @@ __all__ = [
     "flanger",
     "fractional_delay",
     "frequency_offset",
+    "frequency_shift",
     "fsk_ber_theory",
     "fsk_demod_noncoherent",
     "fsk_modulate",
