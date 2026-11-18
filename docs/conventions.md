@@ -1923,6 +1923,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
 - **Rectifier** (`rectify(samples, *, full=True)`, C# `Dsp.Rectify`,
   [ADR 0253](adr/0253-rectify.md)): full wave `|x|`; half wave `x` if `x > 0`, else `0` (`−0`
   gives `+0`). Samples real, finite, non-empty. **(implemented)**
+- **Compressor gain computer** (`compressor_gain(level_db, threshold_db, ratio, *,
+  knee_db=0.0)`, C# `Dsp.CompressorGain`, [ADR 0254](adr/0254-compressor-gain.md)): with
+  `d = x − T`, `s = 1/ratio − 1`, `W = knee_db`: `0` if `2d < −W`; `s·d` if `2d > W`; else
+  `s·q·q/(2W)`, `q = d + W/2` (edges in the knee; `W = 0` gives 0 at `d = 0`). Gain in dB, `≤ 0`. Finite
+  `threshold_db`; finite `ratio ≥ 1`; finite `knee_db ≥ 0`; levels real, finite, non-empty.
+  **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

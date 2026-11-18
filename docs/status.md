@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a compressor gain computer (`compressor_gain(level_db, threshold_db, ratio, *, knee_db=0.0)`,
-     the static curve of a dynamic-range compressor, hard or quadratic soft knee; levels in dB);
    - a noise gate (`noise_gate(samples, threshold, *, hold=0)`, passing samples while the
      magnitude is above the threshold and for `hold` samples after, zero otherwise).
 
@@ -2295,6 +2293,12 @@ Updated with every chunk of work. Dates are absolute.
   - `−0` gives `+0`.
   Python 6343 passed, 2 skipped; .NET 5598 passed; conformance 3808/3808 in both. Version
   2026.11.17.52.
+- 2026-11-17: Compressor gain computer (ADR 0254): `compressor_gain(level_db, threshold_db, ratio, *,
+  knee_db=0.0)` in `dsp` (C# `Dsp.CompressorGain`).
+  - It is the static dB curve: a hard knee, or a quadratic soft knee with its edges in the knee.
+  - The knee squares by multiplication, not `pow`, so both languages give the same bits.
+  Python 6355 passed, 2 skipped; .NET 5611 passed; conformance 3818/3818 in both. Version
+  2026.11.17.53.
 
 ## Not built
 

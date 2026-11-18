@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "compressor_gain",
+  "description": "Compressor gain computer (conventions: Compressor gain computer; ADR 0254).",
+  "cases": [
+    {"id": "compressor_gain.hard_knee", "op": "compressor_gain", "args": {"level_db": [-40.0, -20.0, -19.0, -10.0, 0.0], "threshold_db": -20.0, "ratio": 4.0}, "expected": [0.0, 0.0, -0.75, -7.5, -15.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "T = -20, R = 4, hard knee: 0 at and below T, -3/4 dB per dB above"},
+    {"id": "compressor_gain.soft_knee", "op": "compressor_gain", "args": {"level_db": [-30.0, -24.0, -22.0, -20.0, -18.0, -16.0, -10.0], "threshold_db": -20.0, "ratio": 4.0, "knee_db": 8.0}, "expected": [0.0, 0.0, -0.1875, -0.75, -1.6875, -3.0, -7.5], "tol": {"abs": 0.0, "rel": 0.0}, "source": "T = -20, R = 4, 8 dB knee: edges at -24 and -16 are in the knee"},
+    {"id": "compressor_gain.ratio_two", "op": "compressor_gain", "args": {"level_db": [-6.5, -3.0, 0.0, 6.25], "threshold_db": -3.0, "ratio": 2.0, "knee_db": 2.0}, "expected": [0.0, -0.125, -1.5, -4.625], "tol": {"abs": 0.0, "rel": 0.0}, "source": "R = 2, 2 dB knee"},
+    {"id": "compressor_gain.ratio_three", "op": "compressor_gain", "args": {"level_db": [-12.0, -9.0, -5.0, 0.0], "threshold_db": -10.0, "ratio": 3.0, "knee_db": 4.0}, "expected": [0.0, -0.75, -3.3333333333333335, -6.666666666666667], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "R = 3: 1/R - 1 rounds"},
+    {"id": "compressor_gain.ratio_one", "op": "compressor_gain", "args": {"level_db": [-50.0, 0.0, 20.0], "threshold_db": -10.0, "ratio": 1.0, "knee_db": 6.0}, "expected": [0.0, 0.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "R = 1: 0 dB everywhere"},
+    {"id": "compressor_gain.ratio_below_one", "op": "compressor_gain", "args": {"level_db": [0.0], "threshold_db": -10.0, "ratio": 0.5}, "error": "invalid_argument", "source": "ratio must be at least 1"},
+    {"id": "compressor_gain.knee_negative", "op": "compressor_gain", "args": {"level_db": [0.0], "threshold_db": -10.0, "ratio": 2.0, "knee_db": -1.0}, "error": "invalid_argument", "source": "knee_db must be at least 0"},
+    {"id": "compressor_gain.threshold_nan", "op": "compressor_gain", "args": {"level_db": [0.0], "threshold_db": "nan", "ratio": 2.0}, "error": "invalid_argument", "source": "threshold_db must be finite"},
+    {"id": "compressor_gain.empty", "op": "compressor_gain", "args": {"level_db": [], "threshold_db": -10.0, "ratio": 2.0}, "error": "invalid_argument", "source": "level_db must not be empty"},
+    {"id": "compressor_gain.nan_level", "op": "compressor_gain", "args": {"level_db": [0.0, "nan"], "threshold_db": -10.0, "ratio": 2.0}, "error": "invalid_argument", "source": "level_db must be finite"}
+  ]
+}

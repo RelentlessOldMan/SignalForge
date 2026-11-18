@@ -2557,6 +2557,37 @@ def sample_and_hold(
     return y
 
 
+def compressor_gain(
+    level_db: ArrayLike, threshold_db: float, ratio: float, *, knee_db: float = 0.0
+) -> NDArray[np.float64]:
+    """Static compressor gain in dB: 0 below the threshold, slope ``1/ratio - 1`` above, with a
+    quadratic knee of width ``knee_db`` (conventions: Compressor gain computer; ADR 0254)."""
+    t = real(threshold_db, "threshold_db")
+    r = real(ratio, "ratio")
+    if not r >= 1:
+        raise ValueError("ratio must be at least 1")
+    w = real(knee_db, "knee_db")
+    if not w >= 0:
+        raise ValueError("knee_db must be at least 0")
+    x = _vector(level_db, "level_db")
+    if np.iscomplexobj(x):
+        raise ValueError("level_db must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("level_db must be finite")
+    s = 1 / r - 1
+    g = np.zeros(x.size)
+    for n in range(x.size):
+        d = float(x[n]) - t
+        if 2 * d < -w:
+            g[n] = 0.0
+        elif 2 * d > w:
+            g[n] = s * d
+        elif w > 0:
+            q = d + w / 2
+            g[n] = s * q * q / (2 * w)
+    return g
+
+
 def rectify(samples: ArrayLike, *, full: bool = True) -> NDArray[np.float64]:
     """Full-wave ``|x|`` or half-wave ``max(x, 0)`` rectifier (conventions: Rectifier;
     ADR 0253)."""
