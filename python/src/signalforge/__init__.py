@@ -26,6 +26,8 @@ from .dsp import (
     Levinson,
     Resampler,
     Schur,
+    a_law_compress,
+    a_law_expand,
     a_weighting_sos,
     allpass_comb,
     allpass_first_order,
@@ -394,7 +396,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.47"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.48"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -461,6 +463,8 @@ __all__ = [
     "TwoToneIp2",
     "TwoToneIp5",
     "WindowStats",
+    "a_law_compress",
+    "a_law_expand",
     "a_weighting",
     "a_weighting_sos",
     "acpr",

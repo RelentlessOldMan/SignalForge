@@ -2557,6 +2557,48 @@ def sample_and_hold(
     return y
 
 
+def _a_law_args(samples: ArrayLike, a: float) -> tuple[NDArray[np.float64], float]:
+    av = real(a, "a")
+    if not av >= 1:
+        raise ValueError("a must be at least 1")
+    x = _vector(samples, "samples")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if np.any(np.abs(x) > 1):
+        raise ValueError("samples must be within [-1, 1]")
+    return np.asarray(x, dtype=np.float64), av
+
+
+def a_law_compress(samples: ArrayLike, a: float = 87.6) -> NDArray[np.float64]:
+    """Continuous A-law compression on [-1, 1]: ``A|x| / L`` below ``1/A``, else
+    ``(1 + ln(A|x|)) / L`` with ``L = 1 + ln A`` (conventions: A-law companding; ADR 0249)."""
+    x, av = _a_law_args(samples, a)
+    big = 1 + math.log(av)
+    m = np.abs(x)
+    lin = m < 1 / av
+    mag = np.empty(m.size)
+    mag[lin] = av * m[lin] / big
+    mag[~lin] = (1 + np.log(av * m[~lin])) / big
+    y: NDArray[np.float64] = np.sign(x) * mag
+    return y
+
+
+def a_law_expand(samples: ArrayLike, a: float = 87.6) -> NDArray[np.float64]:
+    """Continuous A-law expansion on [-1, 1], the inverse of :func:`a_law_compress`
+    (conventions: A-law companding; ADR 0249)."""
+    y, av = _a_law_args(samples, a)
+    big = 1 + math.log(av)
+    m = np.abs(y)
+    lin = m < 1 / big
+    mag = np.empty(m.size)
+    mag[lin] = m[lin] * big / av
+    mag[~lin] = np.exp(m[~lin] * big - 1) / av
+    x: NDArray[np.float64] = np.sign(y) * mag
+    return x
+
+
 def _mu_law_args(samples: ArrayLike, mu: float) -> tuple[NDArray[np.float64], float]:
     m = real(mu, "mu")
     if not m > 0:

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "a_law",
+  "description": "A-law companding (conventions: A-law companding; ADR 0249).",
+  "cases": [
+    {"id": "a_law.compress_anchors", "op": "a_law_compress", "args": {"samples": [0.0, 1.0, -1.0]}, "expected": [0.0, 1.0, -1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "0 -> 0, +-1 -> (1 + ln A) / L = +-1 analytically (default A)"},
+    {"id": "a_law.expand_anchors", "op": "a_law_expand", "args": {"samples": [0.0, 1.0, -1.0]}, "expected": [0.0, 1.0, -1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "the inverse of the anchors (default A)"},
+    {"id": "a_law.identity", "op": "a_law_compress", "args": {"samples": [0.5, -0.25, 0.875, -1.0], "a": 1.0}, "expected": [0.5, -0.25, 0.875, -1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "A = 1: L = 1, every sample linear"},
+    {"id": "a_law.identity_expand", "op": "a_law_expand", "args": {"samples": [0.5, -0.25, 0.875, -1.0], "a": 1.0}, "expected": [0.5, -0.25, 0.875, -1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "A = 1: the identity"},
+    {"id": "a_law.compress_curve", "op": "a_law_compress", "args": {"samples": [0.001, -0.005, 0.011, -0.02, 0.1, -0.5, 0.9], "a": 87.6}, "expected": [0.016006487384190197, -0.080032436920951, 0.17607136122609215, -0.2851855378647552, 0.5792659903877442, -0.8733464429107332, 0.9807482675266121], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "closed-form curve, A = 87.6, both branches"},
+    {"id": "a_law.expand_curve", "op": "a_law_expand", "args": {"samples": [0.05, -0.15, 0.17, -0.4, 0.75, 0.99], "a": 87.6}, "expected": [0.0031237334463141246, -0.009371200338942374, 0.010620693717468025, -0.03749046673349468, 0.254565973296826, 0.9467428068298772], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "closed-form inverse, A = 87.6, both branches"},
+    {"id": "a_law.a_below_one", "op": "a_law_compress", "args": {"samples": [0.5], "a": 0.5}, "error": "invalid_argument", "source": "a must be at least 1"},
+    {"id": "a_law.out_of_range", "op": "a_law_compress", "args": {"samples": [1.5]}, "error": "invalid_argument", "source": "samples must be within [-1, 1]"},
+    {"id": "a_law.out_of_range_expand", "op": "a_law_expand", "args": {"samples": [-1.25]}, "error": "invalid_argument", "source": "samples must be within [-1, 1]"},
+    {"id": "a_law.empty", "op": "a_law_expand", "args": {"samples": []}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "a_law.nan_sample", "op": "a_law_compress", "args": {"samples": [0.5, "nan"]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

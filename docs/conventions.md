@@ -1902,6 +1902,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `sign(x)·log1p(μ|x|)/log1p(μ)`, expand `sign(y)·expm1(|y|·log1p(μ))/μ` (`sign(0) = 0`; the
   continuous curve, not G.711 segments). Finite `μ > 0`; samples real, finite, non-empty, in
   `[−1, 1]`. **(implemented)**
+- **A-law companding** (`a_law_compress(samples, a=87.6)`, `a_law_expand`, C#
+  `Dsp.ALawCompress`, `Dsp.ALawExpand`, [ADR 0249](adr/0249-a-law.md)): with `L = 1 + ln A`,
+  compress `A|x|/L` below `|x| = 1/A`, else `(1 + ln(A|x|))/L`; expand `|y|·L/A` below
+  `|y| = 1/L`, else `exp(|y|·L − 1)/A`; the knee goes to the log branch; sign last
+  (`sign(0) = 0`). Finite `a ≥ 1`; samples real, finite, non-empty, in `[−1, 1]`.
+  **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

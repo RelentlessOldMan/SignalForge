@@ -48,4 +48,60 @@ public static partial class Dsp
                 throw new ArgumentException("samples must be within [-1, 1]", nameof(samples));
         }
     }
+
+    /// <summary>Continuous A-law compression on <c>[−1, 1]</c>: <c>A|x|/L</c> below
+    /// <c>1/A</c>, else <c>(1 + ln(A|x|))/L</c> with <c>L = 1 + ln A</c> (conventions: A-law
+    /// companding; ADR 0249).</summary>
+    /// <param name="samples">Finite samples in <c>[−1, 1]</c>, at least one.</param>
+    /// <param name="a">The compression parameter <c>A</c>, finite and at least 1.</param>
+    /// <returns>One compressed value per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ALawCompress(ReadOnlySpan<double> samples, double a = 87.6)
+    {
+        CheckALaw(samples, a);
+        double big = 1 + Math.Log(a);
+        var y = new double[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+        {
+            double m = Math.Abs(samples[n]);
+            double mag = m < 1 / a ? a * m / big : (1 + Math.Log(a * m)) / big;
+            y[n] = Math.Sign(samples[n]) * mag;
+        }
+        return y;
+    }
+
+    /// <summary>Continuous A-law expansion on <c>[−1, 1]</c>, the inverse of
+    /// <see cref="ALawCompress"/> (conventions: A-law companding; ADR 0249).</summary>
+    /// <param name="samples">Finite samples in <c>[−1, 1]</c>, at least one.</param>
+    /// <param name="a">The compression parameter <c>A</c>, finite and at least 1.</param>
+    /// <returns>One expanded value per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ALawExpand(ReadOnlySpan<double> samples, double a = 87.6)
+    {
+        CheckALaw(samples, a);
+        double big = 1 + Math.Log(a);
+        var x = new double[samples.Length];
+        for (int n = 0; n < x.Length; n++)
+        {
+            double m = Math.Abs(samples[n]);
+            double mag = m < 1 / big ? m * big / a : Math.Exp(m * big - 1) / a;
+            x[n] = Math.Sign(samples[n]) * mag;
+        }
+        return x;
+    }
+
+    private static void CheckALaw(ReadOnlySpan<double> samples, double a)
+    {
+        if (!double.IsFinite(a) || !(a >= 1))
+            throw new ArgumentOutOfRangeException(nameof(a), "a must be at least 1");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            if (Math.Abs(v) > 1)
+                throw new ArgumentException("samples must be within [-1, 1]", nameof(samples));
+        }
+    }
 }
