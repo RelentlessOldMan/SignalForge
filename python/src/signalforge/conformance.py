@@ -274,6 +274,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "compressor_gain": dsp.compressor_gain,
     "noise_gate": dsp.noise_gate,
     "expander_gain": dsp.expander_gain,
+    "compress": dsp.compress,
     "cic_interpolate": dsp.cic_interpolate,
     "fir_filter": lambda taps, samples, chunks: _chunked(dsp.FirFilter(taps), samples, chunks),
     "butterworth_lowpass": dsp.butterworth_lowpass,

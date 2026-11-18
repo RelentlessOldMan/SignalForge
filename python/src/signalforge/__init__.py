@@ -62,6 +62,7 @@ from .dsp import (
     cic_interpolate,
     cic_taps,
     comb_filter,
+    compress,
     compressor_gain,
     convolve,
     cross_correlation,
@@ -403,7 +404,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.55"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.56"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -536,6 +537,7 @@ __all__ = [
     "coherence_threshold",
     "coherent_output_power",
     "comb_filter",
+    "compress",
     "compressor_gain",
     "convolve",
     "cross_correlation",

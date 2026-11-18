@@ -141,4 +141,83 @@ public static partial class Dsp
         }
         return g;
     }
+
+    /// <summary>Feed-forward compressor on real samples: envelope follower, compressor gain in
+    /// dB, makeup, applied per sample (conventions: Feed-forward compressor; ADR 0257).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="thresholdDb">The threshold in dB, finite.</param>
+    /// <param name="ratio">The compression ratio, finite and at least 1.</param>
+    /// <param name="attack">The detector's attack coefficient, in [0, 1).</param>
+    /// <param name="release">The detector's release coefficient, in [0, 1).</param>
+    /// <param name="kneeDb">The knee width in dB, finite and at least 0.</param>
+    /// <param name="makeupDb">The makeup gain in dB, finite.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Compress(ReadOnlySpan<double> samples, double thresholdDb, double ratio, double attack, double release, double kneeDb = 0, double makeupDb = 0)
+    {
+        CheckCompress(thresholdDb, ratio, kneeDb, makeupDb);
+        double[] f = CompressFactors(EnvelopeFollower(samples, attack, release), thresholdDb, ratio, kneeDb, makeupDb);
+        for (int n = 0; n < f.Length; n++)
+            f[n] = samples[n] * f[n];
+        return f;
+    }
+
+    /// <summary>Feed-forward compressor on complex samples: envelope follower, compressor gain in
+    /// dB, makeup, applied per sample (conventions: Feed-forward compressor; ADR 0257).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="thresholdDb">The threshold in dB, finite.</param>
+    /// <param name="ratio">The compression ratio, finite and at least 1.</param>
+    /// <param name="attack">The detector's attack coefficient, in [0, 1).</param>
+    /// <param name="release">The detector's release coefficient, in [0, 1).</param>
+    /// <param name="kneeDb">The knee width in dB, finite and at least 0.</param>
+    /// <param name="makeupDb">The makeup gain in dB, finite.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Compress(ReadOnlySpan<Complex> samples, double thresholdDb, double ratio, double attack, double release, double kneeDb = 0, double makeupDb = 0)
+    {
+        CheckCompress(thresholdDb, ratio, kneeDb, makeupDb);
+        double[] f = CompressFactors(EnvelopeFollower(samples, attack, release), thresholdDb, ratio, kneeDb, makeupDb);
+        var y = new Complex[f.Length];
+        for (int n = 0; n < f.Length; n++)
+            y[n] = new Complex(samples[n].Real * f[n], samples[n].Imaginary * f[n]);
+        return y;
+    }
+
+    private static void CheckCompress(double thresholdDb, double ratio, double kneeDb, double makeupDb)
+    {
+        if (!double.IsFinite(thresholdDb))
+            throw new ArgumentOutOfRangeException(nameof(thresholdDb), "threshold_db must be finite");
+        if (!double.IsFinite(ratio) || !(ratio >= 1))
+            throw new ArgumentOutOfRangeException(nameof(ratio), "ratio must be at least 1");
+        if (!double.IsFinite(kneeDb) || !(kneeDb >= 0))
+            throw new ArgumentOutOfRangeException(nameof(kneeDb), "knee_db must be at least 0");
+        if (!double.IsFinite(makeupDb))
+            throw new ArgumentOutOfRangeException(nameof(makeupDb), "makeup_db must be finite");
+    }
+
+    private static double[] CompressFactors(double[] env, double thresholdDb, double ratio, double kneeDb, double makeupDb)
+    {
+        int m = 0;
+        foreach (double e in env)
+        {
+            if (e > 0)
+                m++;
+        }
+        var levels = new double[m];
+        int k = 0;
+        foreach (double e in env)
+        {
+            if (e > 0)
+                levels[k++] = 20 * Math.Log10(e);
+        }
+        double[] gp = m > 0 ? CompressorGain(levels, thresholdDb, ratio, kneeDb) : [];
+        var f = new double[env.Length];
+        k = 0;
+        for (int n = 0; n < env.Length; n++)
+        {
+            double g = env[n] > 0 ? gp[k++] : 0;
+            f[n] = Math.Pow(10, (g + makeupDb) / 20);
+        }
+        return f;
+    }
 }

@@ -6,8 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a feed-forward compressor (`compress(samples, threshold_db, ratio, attack, release, *,
-     knee_db=0.0)`, peak detector per ADR 0238 in dB, gain per ADR 0254, applied per sample).
+   - a downward expander (`expand(samples, threshold_db, ratio, attack, release, *,
+     knee_db=0.0)`, the ADR 0257 chain with the ADR 0256 gain);
+   - a tanh saturator (`saturate(samples, drive)`, `tanh(drive·x)/tanh(drive)`, unity at ±1);
+   - a ring modulator (`ring_modulate(samples, frequency, sample_rate, *, phase=0.0)`,
+     `x[n]·cos(2π f n/fs + φ)`).
 
 ## Built
 
@@ -2312,6 +2315,12 @@ Updated with every chunk of work. Dates are absolute.
   threshold, with a quadratic knee.
   Python 6376 passed, 2 skipped; .NET 5632 passed; conformance 3835/3835 in both. Version
   2026.11.17.55.
+- 2026-11-17: Feed-forward compressor (ADR 0257): `compress(samples, threshold_db, ratio, attack,
+  release, *, knee_db=0.0, makeup_db=0.0)` in `dsp` (C# `Dsp.Compress`, real and complex), the
+  envelope follower (ADR 0238) in dB into the gain computer (ADR 0254), then makeup; a zero
+  envelope gives 0 dB.
+  Python 6393 passed, 2 skipped; .NET 5648 passed; conformance 3849/3849 in both. Version
+  2026.11.17.56.
 
 ## Not built
 

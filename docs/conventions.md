@@ -1939,6 +1939,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `d = x − T`, `s = ratio − 1`, `W = knee_db`: `0` if `2d > W`; `s·d` if `2d < −W`; else
   `q = d − W/2`, `−(s·q·q/(2W))` (edges in the knee; `W = 0` gives 0 at `d = 0`). Gain in dB,
   `≤ 0`. Rules as the compressor gain computer. **(implemented)**
+- **Feed-forward compressor** (`compress(samples, threshold_db, ratio, attack, release, *,
+  knee_db=0.0, makeup_db=0.0)`, C# `Dsp.Compress`, [ADR 0257](adr/0257-compress.md)): `e` =
+  envelope follower (ADR 0238); `g = compressor_gain(20·log10 e)` (ADR 0254), `g = 0` where
+  `e = 0`; `y = x·10^((g + makeup_db)/20)`. Rules of both parts, plus finite `makeup_db`; real or
+  complex, the same kind out. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

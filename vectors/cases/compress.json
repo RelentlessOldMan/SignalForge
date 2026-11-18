@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "compress",
+  "description": "Feed-forward compressor (conventions: Feed-forward compressor; ADR 0257).",
+  "cases": [
+    {"id": "compress.instant", "op": "compress", "args": {"samples": [0.5, 4.0, -100.0, 0.0, 1.0, -0.25, 9.0], "threshold_db": 0.0, "ratio": 2.0, "attack": 0.0, "release": 0.0}, "expected": [0.5, 2.0, -10.0, 0.0, 1.0, -0.25, 3.0], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "attack = release = 0, T = 0 dB, R = 2: |y| = sqrt|x| above 1, unchanged at and below"},
+    {"id": "compress.instant_threshold", "op": "compress", "args": {"samples": [0.125, 0.5, 2.0, -8.0, 0.25], "threshold_db": -12.0, "ratio": 4.0, "attack": 0.0, "release": 0.0}, "expected": [0.125, 0.29836130709053454, 0.4219466069747978, -0.5967226141810692, 0.25], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "instant, T = -12 dB, R = 4"},
+    {"id": "compress.soft_knee", "op": "compress", "args": {"samples": [0.5, 0.75, 1.0, 1.5, 2.0, 4.0], "threshold_db": 0.0, "ratio": 3.0, "attack": 0.0, "release": 0.0, "knee_db": 6.0}, "expected": [0.5, 0.7487958197911243, 0.9440608762859234, 1.1447142425533319, 1.259921049894873, 1.5874010519681991], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "instant, R = 3, 6 dB knee"},
+    {"id": "compress.smoothed", "op": "compress", "args": {"samples": [0.0, 2.0, 2.0, 2.0, 2.0, 0.5, 0.5, 0.5, 0.0, 0.0], "threshold_db": -6.0, "ratio": 4.0, "attack": 0.5, "release": 0.75}, "expected": [0.0, 1.191324287058021, 0.8789446993246584, 0.7829814248576817, 0.7434966937754407, 0.21636421235646958, 0.24844872838269844, 0.2811115090947477, 0.0, 0.0], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "attack 1/2, release 3/4: step up then down, T = -6 dB, R = 4"},
+    {"id": "compress.makeup", "op": "compress", "args": {"samples": [0.25, 1.0, 16.0], "threshold_db": 0.0, "ratio": 2.0, "attack": 0.0, "release": 0.0, "makeup_db": 6.0}, "expected": [0.4988155787422199, 1.9952623149688795, 7.981049259875518], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "instant, R = 2, 6 dB makeup"},
+    {"id": "compress.ratio_one", "op": "compress", "args": {"samples": [0.5, -3.0, 7.0], "threshold_db": -20.0, "ratio": 1.0, "attack": 0.25, "release": 0.5}, "expected": [0.5, -3.0, 7.0], "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "R = 1: unchanged"},
+    {"id": "compress.complex", "op": "compress", "args": {"samples": {"re": [3.0, 0.0, 0.375, -6.0], "im": [4.0, 0.25, -0.5, 8.0]}, "threshold_db": 0.0, "ratio": 2.0, "attack": 0.0, "release": 0.0}, "expected": {"re": [1.3416407864998738, 0.0, 0.375, -1.8973665961010275], "im": [1.7888543819998317, 0.25, -0.5, 2.5298221281347035]}, "tol": {"abs": 1e-15, "rel": 1e-12}, "source": "complex by magnitude, instant, T = 0 dB, R = 2: |x| = 5, 1/4, 5/8, 10; phase kept"},
+    {"id": "compress.ratio_below_one", "op": "compress", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 0.5, "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "ratio must be at least 1"},
+    {"id": "compress.attack_one", "op": "compress", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 2.0, "attack": 1.0, "release": 0.5}, "error": "invalid_argument", "source": "attack must be in [0, 1)"},
+    {"id": "compress.release_negative", "op": "compress", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": -0.25}, "error": "invalid_argument", "source": "release must be in [0, 1)"},
+    {"id": "compress.knee_negative", "op": "compress", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": 0.5, "knee_db": -1.0}, "error": "invalid_argument", "source": "knee_db must be at least 0"},
+    {"id": "compress.makeup_inf", "op": "compress", "args": {"samples": [1.0], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": 0.5, "makeup_db": "inf"}, "error": "invalid_argument", "source": "makeup_db must be finite"},
+    {"id": "compress.empty", "op": "compress", "args": {"samples": [], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "compress.nan_sample", "op": "compress", "args": {"samples": [1.0, "nan"], "threshold_db": -10.0, "ratio": 2.0, "attack": 0.5, "release": 0.5}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}
