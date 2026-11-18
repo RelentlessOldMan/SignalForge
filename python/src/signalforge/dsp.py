@@ -3055,6 +3055,27 @@ def quantize(
     return part(np.asarray(x, dtype=np.float64))
 
 
+def normalize_peak(
+    samples: ArrayLike, peak: float = 1.0
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """Scale by ``peak / max |x|`` so the largest magnitude is ``peak`` (conventions: Peak
+    normalization; ADR 0268)."""
+    p = real(peak, "peak")
+    if not p > 0:
+        raise ValueError("peak must be positive")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    top = float(np.max(np.abs(x)))
+    if top == 0:
+        raise ValueError("samples must not all be zero")
+    g = p / top
+    if np.iscomplexobj(x):
+        y: NDArray[Any] = x.real * g + 1j * (x.imag * g)
+        return y
+    return np.asarray(x, dtype=np.float64) * g
+
+
 def bitcrush(samples: ArrayLike, bits: int, *, hold: int = 1) -> NDArray[np.float64]:
     """Hold every ``hold``-th sample, then round to ``bits`` bits of full scale +-1
     (conventions: Bitcrusher; ADR 0266)."""

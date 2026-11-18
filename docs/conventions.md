@@ -1984,6 +1984,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0267](adr/0267-stereo-width.md)): `m = (left + right)/2`, `s = ((left − right)/2)·width`,
   `left' = m + s`, `right' = m − s`. Finite `width ≥ 0`; inputs real, finite, non-empty, equal
   length. **(implemented)**
+- **Peak normalization** (`normalize_peak(samples, peak=1.0)`, C# `Dsp.NormalizePeak`,
+  [ADR 0268](adr/0268-normalize-peak.md)): `g = peak / max|x|`, `y = x·g` (complex: part by
+  part). Finite `peak > 0`; samples finite, non-empty, not all zero; output the same kind.
+  **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

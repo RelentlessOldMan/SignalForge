@@ -272,6 +272,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "wavefold": dsp.wavefold,
     "rectify": dsp.rectify,
     "saturate": dsp.saturate,
+    "normalize_peak": dsp.normalize_peak,
     "stereo_width": dsp.stereo_width,
     "bitcrush": dsp.bitcrush,
     "pan": dsp.pan,

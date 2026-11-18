@@ -145,4 +145,64 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Scales real samples by <c>peak / max|x|</c> (conventions: Peak normalization;
+    /// ADR 0268).</summary>
+    /// <param name="samples">Finite samples, at least one, not all zero.</param>
+    /// <param name="peak">The target largest magnitude, finite and positive.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] NormalizePeak(ReadOnlySpan<double> samples, double peak = 1.0)
+    {
+        CheckPeak(peak);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        double top = 0;
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            top = Math.Max(top, Math.Abs(v));
+        }
+        if (top == 0)
+            throw new ArgumentException("samples must not all be zero", nameof(samples));
+        double g = peak / top;
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+            y[n] = samples[n] * g;
+        return y;
+    }
+
+    /// <summary>Scales complex samples by <c>peak / max|x|</c>, part by part (conventions: Peak
+    /// normalization; ADR 0268).</summary>
+    /// <param name="samples">Finite samples, at least one, not all zero.</param>
+    /// <param name="peak">The target largest magnitude, finite and positive.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] NormalizePeak(ReadOnlySpan<Complex> samples, double peak = 1.0)
+    {
+        CheckPeak(peak);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        double top = 0;
+        foreach (Complex v in samples)
+        {
+            if (!double.IsFinite(v.Real) || !double.IsFinite(v.Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            top = Math.Max(top, Complex.Abs(v));
+        }
+        if (top == 0)
+            throw new ArgumentException("samples must not all be zero", nameof(samples));
+        double g = peak / top;
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+            y[n] = new Complex(samples[n].Real * g, samples[n].Imaginary * g);
+        return y;
+    }
+
+    private static void CheckPeak(double peak)
+    {
+        if (!double.IsFinite(peak) || !(peak > 0))
+            throw new ArgumentOutOfRangeException(nameof(peak), "peak must be positive");
+    }
 }

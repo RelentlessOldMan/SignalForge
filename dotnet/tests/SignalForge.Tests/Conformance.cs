@@ -690,6 +690,9 @@ public static class Conformance
             "pan" => Bind((Reals(a.Get("samples")), a.D("position"), Pan(a)), t => Dsp.Pan(t.Item1, t.Item2, t.Item3)),
             "bitcrush" => Bind((Reals(a.Get("samples")), a.I("bits"), a.Has("hold") ? a.I("hold") : 1), t => Dsp.Bitcrush(t.Item1, t.Item2, t.Item3)),
             "stereo_width" => Bind((Reals(a.Get("left")), Reals(a.Get("right")), a.D("width")), t => Dsp.StereoWidth(t.Item1, t.Item2, t.Item3)),
+            "normalize_peak" => a.Get("samples") is Complex[] nps
+                ? Bind((nps, a.Has("peak") ? a.D("peak") : 1.0), t => Dsp.NormalizePeak(t.Item1, t.Item2))
+                : Bind((Reals(a.Get("samples")), a.Has("peak") ? a.D("peak") : 1.0), t => Dsp.NormalizePeak(t.Item1, t.Item2)),
             "saturate" => Bind((Reals(a.Get("samples")), a.D("drive")), t => Dsp.Saturate(t.Item1, t.Item2)),
             "rectify" => Bind((Reals(a.Get("samples")), a.Flag("full", true)), t => Dsp.Rectify(t.Item1, t.Item2)),
             "wavefold" => Bind((Reals(a.Get("samples")), a.D("limit")), t => Dsp.Wavefold(t.Item1, t.Item2)),

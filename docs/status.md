@@ -6,7 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - peak normalization (`normalize_peak(samples, peak=1.0)`, scale so `max |x| = peak`);
    - a lookahead peak limiter (`limit(samples, threshold, lookahead, release)`, gain the running
      minimum of `min(1, T/|x|)` over the lookahead window, with one-pole release).
 
@@ -2366,6 +2365,10 @@ Updated with every chunk of work. Dates are absolute.
   `Dsp.StereoWidth`) → `LeftRight`, mid/side with the side scaled by `width`.
   Python 6527 passed, 2 skipped; .NET 5775 passed; conformance 3956/3956 in both. Version
   2026.11.17.66.
+- 2026-11-17: Peak normalization (ADR 0268): `normalize_peak(samples, peak=1.0)` in `dsp` (C#
+  `Dsp.NormalizePeak`, real and complex), one gain `g = peak / max|x|`, then `x·g`.
+  Python 6541 passed, 2 skipped; .NET 5788 passed; conformance 3967/3967 in both. Version
+  2026.11.17.67.
 
 ## Not built
 
