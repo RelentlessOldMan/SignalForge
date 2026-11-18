@@ -71,6 +71,10 @@ rule for code not written yet.
   oscillators; `y[n] = A` for `u[n] < duty[n]`, else `−A`. `duty` a 1-D real array (may be
   empty), every value in [0, 1]; positive finite `sample_rate`; finite `frequency`,
   `amplitude`, `phase`. **(implemented)**
+- **Feedback FM operator** (`feedback_fm(sample_rate, num_samples, frequency, feedback,
+  amplitude=1, phase=0)`, C# `Waveforms.FeedbackFm`, [ADR 0322](adr/0322-feedback-fm.md)): `u`
+  as for the oscillators; `s[−1] = 0`, `s[n] = sin((2π·u[n]) + (feedback·s[n−1]))`; `y = A·s`.
+  Finite `frequency`, `amplitude`, `phase`; finite `0 ≤ feedback ≤ 1.5`. **(implemented)**
 - **Bandlimited impulse train** (`blit(sample_rate, num_samples, frequency, amplitude=1,
   phase=0)`, C# `Waveforms.Blit`, [ADR 0320](adr/0320-blit.md)): `H` the number of `m ≥ 1`
   with `m·|f| < fs/2` (`⌊fs/(2|f|)⌋`, less 1 when `H·|f| ≥ fs/2`), `M = 2H + 1`;

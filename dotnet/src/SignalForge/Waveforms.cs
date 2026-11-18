@@ -829,4 +829,30 @@ public static class Waveforms
         }
         return u;
     }
+
+    /// <summary>An FM operator modulated by its own last output:
+    /// <c>s[n] = sin(2π·u[n] + feedback·s[n−1])</c>, <c>y = A·s</c> (conventions: Feedback FM
+    /// operator; ADR 0322).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite.</param>
+    /// <param name="feedback">The feedback, finite, from 0 (a sine) to 1.5.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] FeedbackFm(double sampleRate, int numSamples, double frequency,
+        double feedback, double amplitude = 1.0, double phase = 0.0)
+    {
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        if (!(feedback >= 0 && feedback <= 1.5))
+            throw new ArgumentOutOfRangeException(nameof(feedback), feedback, "must be from 0 to 1.5");
+        double prev = 0;
+        for (int n = 0; n < u.Length; n++)
+        {
+            prev = Math.Sin((2 * Math.PI * u[n]) + (feedback * prev));
+            u[n] = amplitude * prev;
+        }
+        return u;
+    }
 }

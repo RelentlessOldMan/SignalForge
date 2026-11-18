@@ -499,6 +499,29 @@ def blit(
     return y
 
 
+def feedback_fm(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    feedback: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """An FM operator modulated by its own last output, ``s[n] = sin(2 pi u[n] + feedback
+    s[n-1])``, ``y = A s`` (conventions: Feedback FM operator; ADR 0322)."""
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    b = real(feedback, "feedback")
+    if not 0 <= b <= 1.5:
+        raise ValueError("feedback must be between 0 and 1.5")
+    s = np.empty(u.size)
+    prev = 0.0
+    for n, theta in enumerate((2 * math.pi * u).tolist()):
+        prev = math.sin(theta + b * prev)
+        s[n] = prev
+    y: NDArray[np.float64] = amp * s
+    return y
+
+
 def supersaw(
     sample_rate: float,
     num_samples: int,

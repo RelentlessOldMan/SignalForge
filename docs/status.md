@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a feedback FM operator in `waveforms` (`feedback_fm(sample_rate, num_samples, frequency,
-     feedback, amplitude=1, phase=0)`: `s[n] = sin(2π·u[n] + feedback·s[n−1])`, `s[−1] = 0`,
-     `y = A·s`; `0 ≤ feedback ≤ 1.5`; from sine at 0 towards a sawtooth-like wave).
+   - a sine wavefolder in `dsp` (`sine_fold(samples, drive)`: `y = sin((π/2)·drive·x)`; smooth
+     folds where the triangle wavefolder of ADR 0252 has corners; `drive > 0`).
+   - a BLIT sawtooth in `waveforms` (`blit_sawtooth(...)`: the leaky running sum of the
+     bandlimited impulse train less its mean; state the leak and the start-up rule in the ADR).
 
 ## Built
 
@@ -2649,6 +2650,11 @@ Updated with every chunk of work. Dates are absolute.
   gives harmonic `k` at `w_k`. Vectors from the three-term recurrence.
   Python 7203 passed, 2 skipped; .NET 6398 passed; conformance 4451/4451 in both. Version
   2026.11.18.10.
+- 2026-11-18: Feedback FM operator (ADR 0322): `feedback_fm(sample_rate, num_samples,
+  frequency, feedback, amplitude=1, phase=0)` in `waveforms` (C# `Waveforms.FeedbackFm`):
+  `s[n] = sin(2π·u[n] + feedback·s[n−1])`, `0 ≤ feedback ≤ 1.5`, from a sine towards a saw.
+  Python 7214 passed, 2 skipped; .NET 6409 passed; conformance 4459/4459 in both. Version
+  2026.11.18.11.
 
 ## Not built
 

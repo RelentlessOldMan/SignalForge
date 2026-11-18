@@ -465,6 +465,7 @@ from .waveforms import (
     blit,
     chirp,
     dpw_sawtooth,
+    feedback_fm,
     fm_tone,
     hard_sync_sawtooth,
     multitone,
@@ -485,7 +486,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.10"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.11"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -683,6 +684,7 @@ __all__ = [
     "fade",
     "farrow_delay",
     "farrow_resample",
+    "feedback_fm",
     "fft",
     "fft_frequencies",
     "find_tones",
