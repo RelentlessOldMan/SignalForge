@@ -2017,6 +2017,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `y[n] = c[n]·x[n] + x[n−1] − c[n]·y[n−1]` in series from rest (complex: part by part);
   `y = x·(1 − mix) + w·mix`. Integer `stages ≥ 1`; `0 < low ≤ high < fs/2`; finite `rate`;
   finite `mix` in `[0, 1]`. **(implemented)**
+- **Ping-pong delay** (`ping_pong_delay(samples, delay, feedback, mix)`, C#
+  `Dsp.PingPongDelay`, [ADR 0275](adr/0275-ping-pong-delay.md)): a `LeftRight` from real mono
+  samples. `a[n] = x[n − D] + g·b[n − D]`, then `b[n] = g·a[n − D]`, zero before time 0;
+  `left = x·(1 − mix) + a·mix`, `right = x·(1 − mix) + b·mix`. Integer `delay ≥ 1`; finite
+  `|feedback| < 1`; finite `mix` in `[0, 1]`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

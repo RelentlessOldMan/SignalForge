@@ -6,9 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a ping-pong delay (`ping_pong_delay(samples, delay, feedback, mix)`, mono in, a
-     `LeftRight` out, the echoes alternating sides every `delay` samples with gain `feedback`
-     each bounce, `|feedback| < 1`);
    - a Haas widener (`haas(samples, delay, *, side="right")`, mono in, a `LeftRight` out with
      one side delayed by an integer `delay` samples).
 
@@ -2402,6 +2399,11 @@ Updated with every chunk of work. Dates are absolute.
   frequency sweeps from `low` to `high` under a cosine LFO, mixed with the dry signal.
   Python 6625 passed, 2 skipped; .NET 5866 passed; conformance 4033/4033 in both. Version
   2026.11.17.73.
+- 2026-11-17: Ping-pong delay (ADR 0275): `ping_pong_delay(samples, delay, feedback, mix)` in
+  `dsp` (C# `Dsp.PingPongDelay`), a `LeftRight` from mono samples whose echoes alternate sides
+  every `delay` samples, each bounce scaled by `feedback`.
+  Python 6638 passed, 2 skipped; .NET 5878 passed; conformance 4043/4043 in both. Version
+  2026.11.17.74.
 
 ## Not built
 

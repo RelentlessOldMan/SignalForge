@@ -182,4 +182,46 @@ public static partial class Dsp
         double theta = (position + 1) * (Math.PI / 4);
         return (Math.Cos(theta), Math.Sin(theta));
     }
+
+    /// <summary>Echoes every <paramref name="delay"/> samples that alternate left and right,
+    /// each bounce scaled by <paramref name="feedback"/>, mixed with the dry signal
+    /// (conventions: Ping-pong delay; ADR 0275).</summary>
+    /// <param name="samples">Real, finite mono samples, at least one.</param>
+    /// <param name="delay">The echo spacing, samples, at least 1.</param>
+    /// <param name="feedback">The gain per bounce, finite, magnitude below 1.</param>
+    /// <param name="mix">The wet share, 0 to 1.</param>
+    /// <returns>The left and right channels, each as long as the input.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static LeftRight PingPongDelay(ReadOnlySpan<double> samples, int delay, double feedback, double mix)
+    {
+        if (delay < 1)
+            throw new ArgumentOutOfRangeException(nameof(delay), "delay must be at least 1");
+        if (!double.IsFinite(feedback) || !(Math.Abs(feedback) < 1))
+            throw new ArgumentOutOfRangeException(nameof(feedback), "feedback must be in (-1, 1)");
+        CheckMix(mix);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        int len = samples.Length;
+        var a = new double[len];
+        var b = new double[len];
+        for (int n = delay; n < len; n++)
+        {
+            a[n] = samples[n - delay] + feedback * b[n - delay];
+            b[n] = feedback * a[n - delay];
+        }
+        var left = new double[len];
+        var right = new double[len];
+        for (int n = 0; n < len; n++)
+        {
+            double dry = samples[n] * (1 - mix);
+            left[n] = dry + a[n] * mix;
+            right[n] = dry + b[n] * mix;
+        }
+        return new LeftRight(left, right);
+    }
 }

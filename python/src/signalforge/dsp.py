@@ -2895,6 +2895,29 @@ def _mono(samples: ArrayLike) -> NDArray[np.float64]:
     return np.asarray(x, dtype=np.float64)
 
 
+def ping_pong_delay(samples: ArrayLike, delay: int, feedback: float, mix: float) -> LeftRight:
+    """Echoes every ``delay`` samples that alternate left and right, each bounce scaled by
+    ``feedback``, mixed with the dry signal (conventions: Ping-pong delay; ADR 0275)."""
+    d = count(delay, "delay")
+    if d < 1:
+        raise ValueError("delay must be at least 1")
+    g = real(feedback, "feedback")
+    if not abs(g) < 1:
+        raise ValueError("feedback must be in (-1, 1)")
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    x = _mono(samples)
+    xs = x.tolist()
+    a = [0.0] * len(xs)
+    b = [0.0] * len(xs)
+    for n in range(d, len(xs)):
+        a[n] = xs[n - d] + g * b[n - d]
+        b[n] = g * a[n - d]
+    dry = x * (1 - m)
+    return LeftRight(dry + np.array(a) * m, dry + np.array(b) * m)
+
+
 def auto_pan(
     samples: ArrayLike,
     rate: float,

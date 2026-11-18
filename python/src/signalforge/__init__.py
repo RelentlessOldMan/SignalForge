@@ -121,6 +121,7 @@ from .dsp import (
     pan,
     peak_hold,
     phaser,
+    ping_pong_delay,
     pulse_shape,
     quantize,
     rectify,
@@ -424,7 +425,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.73"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.74"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -711,6 +712,7 @@ __all__ = [
     "phase_noise_ssb",
     "phaser",
     "pi_loop_gains",
+    "ping_pong_delay",
     "power_ccdf",
     "power_ccdf_level",
     "power_frequency_offset",
