@@ -6,12 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Schroeder reverberator (`schroeder_reverb(samples, combs, comb_gains, allpasses,
-     allpass_gain, mix)`: the mean of parallel feedback `comb_filter`s, through series
-     `allpass_comb`s, dry/wet mix).
    - a tape stop (`tape_stop(samples, start, length)`: from sample `start` the playback speed
      falls linearly from 1 to 0 over `length` samples, the read position is its running sum,
      read with linear interpolation; silence after).
+   - a Freeverb-style damped comb (`lowpass_feedback_comb(samples, delay, feedback, damping)`:
+     the feedback path through a one-pole low-pass, `f[n] = (1 − d)·y[n−D] + d·f[n−1]`,
+     `y[n] = x[n] + g·f[n]`).
 
 ## Built
 
@@ -2509,6 +2509,11 @@ Updated with every chunk of work. Dates are absolute.
   `t − floor(t)`, `t = rate·(n/fs)`, is below `duty`.
   Python 6862 passed, 2 skipped; .NET 6083 passed; conformance 4208/4208 in both. Version
   2026.11.17.93.
+- 2026-11-17: Schroeder reverberator (ADR 0295): `schroeder_reverb(samples, combs, comb_gains,
+  allpasses, allpass_gain, mix)` in `dsp` (C# `Dsp.SchroederReverb`, real): the mean of parallel
+  feedback combs through series Schroeder all-passes, dry/wet blend.
+  Python 6876 passed, 2 skipped; .NET 6096 passed; conformance 4219/4219 in both. Version
+  2026.11.17.94.
 
 ## Not built
 

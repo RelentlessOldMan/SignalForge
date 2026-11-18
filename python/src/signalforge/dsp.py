@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import cmath
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, cast
 
@@ -2810,6 +2810,39 @@ def vocoder(
         cb = np.asarray(svf(c, f, qq, fs, output="bandpass"), dtype=np.float64) * (1 / qq)
         mb = np.asarray(svf(m, f, qq, fs, output="bandpass"), dtype=np.float64) * (1 / qq)
         y += cb * envelope_follower(mb, attack, release)
+    return y
+
+
+def schroeder_reverb(
+    samples: ArrayLike,
+    combs: Sequence[int],
+    comb_gains: ArrayLike,
+    allpasses: Sequence[int],
+    allpass_gain: float,
+    mix: float,
+) -> NDArray[np.float64]:
+    """Schroeder reverberator: the mean of parallel feedback combs through series all-passes,
+    blended with the dry signal (conventions: Schroeder reverberator; ADR 0295)."""
+    cd = [count(d, "combs") for d in combs]
+    if not 1 <= len(cd) <= 64:
+        raise ValueError("combs must hold 1 to 64 delays")
+    g = np.asarray(comb_gains, dtype=np.float64)
+    if g.ndim != 1 or g.size != len(cd):
+        raise ValueError("comb_gains must hold one gain per comb")
+    ad = [count(d, "allpasses") for d in allpasses]
+    if len(ad) > 64:
+        raise ValueError("allpasses must hold at most 64 delays")
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    x = _mono(samples)
+    w = np.zeros(x.size)
+    for d, gk in zip(cd, g, strict=True):
+        w += np.asarray(comb_filter(x, d, float(gk), feedback=True), dtype=np.float64)
+    w /= len(cd)
+    for d in ad:
+        w = np.asarray(allpass_comb(w, d, allpass_gain), dtype=np.float64)
+    y: NDArray[np.float64] = _dry_wet(x, w, m)
     return y
 
 

@@ -2116,6 +2116,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0294](adr/0294-slicer.md)): with `t = rate·(n/fs)` and `p = t − floor(t)`, `y[n] = x[n]`
   where `p < duty` and 0 otherwise. Real, finite, non-empty samples; `rate` finite and at least
   0; `duty` in [0, 1]. **(implemented)**
+- **Schroeder reverberator** (`schroeder_reverb(samples, combs, comb_gains, allpasses,
+  allpass_gain, mix)`, C# `Dsp.SchroederReverb`, [ADR 0295](adr/0295-schroeder-reverb.md)):
+  `w = (Σ_k comb_filter(x, combs[k], comb_gains[k], feedback=True))/K`, summed in order and
+  divided once, then `allpass_comb(·, d, allpass_gain)` for each `d` of `allpasses` in order;
+  `y = (1 − mix)·x + mix·w`. Real samples; 1 to 64 combs, 0 to 64 all-passes, delays at least
+  1, gains `|g| < 1`, `mix` in [0, 1]. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
