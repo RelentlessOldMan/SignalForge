@@ -2098,6 +2098,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   order, cutoff, fs).low` and `h = crossover_split(soft_clip(drive·l)/drive, order, cutoff,
   fs).high`, `y = x + mix·h`. Real samples; the splitter's rules; `drive` finite and positive;
   `mix` in [0, 1]. **(implemented)**
+- **Octave-down effect** (`octave_down(samples, mix)`, C# `Dsp.OctaveDown`,
+  [ADR 0291](adr/0291-octave-down.md)): a sign starting at +1 flips before sample `n ≥ 1` when
+  `x[n−1] < 0 ≤ x[n]`; `wet[n] = s·|x[n]|`; `y = (1 − mix)·x + mix·wet`. No hysteresis. Real,
+  finite, non-empty samples; `mix` in [0, 1]. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

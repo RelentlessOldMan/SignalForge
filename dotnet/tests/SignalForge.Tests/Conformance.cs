@@ -780,6 +780,7 @@ public static class Conformance
                     t => Dsp.CombFilter(t.Item1, t.Item2, t.Item3, t.Item4))
                 : Bind((Reals(a.Get("samples")), a.I("delay"), a.D("gain"), a.Flag("feedback", false)),
                     t => Dsp.CombFilter(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "octave_down" => Bind((Reals(a.Get("samples")), a.D("mix")), t => Dsp.OctaveDown(t.Item1, t.Item2)),
             "octave_up" => Bind((Reals(a.Get("samples")), a.D("pole"), a.D("mix")), t => Dsp.OctaveUp(t.Item1, t.Item2, t.Item3)),
             "dc_blocker" => a.Get("samples") is Complex[] dcbs
                 ? Bind((dcbs, a.D("pole")), t => Dsp.DcBlocker(t.Item1, t.Item2))

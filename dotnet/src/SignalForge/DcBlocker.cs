@@ -89,4 +89,30 @@ public static partial class Dsp
             y[n] = samples[n] * (1 - mix) + wet[n] * mix;
         return y;
     }
+
+    /// <summary>Multiplies the rectified samples by a sign that flips at each rising zero
+    /// crossing, halving the frequency, and blends with the dry signal (conventions: Octave-down
+    /// effect; ADR 0291).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="mix">The wet fraction, in [0, 1].</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] OctaveDown(ReadOnlySpan<double> samples, double mix)
+    {
+        CheckMix(mix);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        double[] y = new double[samples.Length];
+        double sign = 1;
+        for (int n = 0; n < y.Length; n++)
+        {
+            double v = samples[n];
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            if (n > 0 && samples[n - 1] < 0 && v >= 0)
+                sign = -sign;
+            y[n] = v * (1 - mix) + sign * Math.Abs(v) * mix;
+        }
+        return y;
+    }
 }

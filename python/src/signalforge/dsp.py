@@ -2744,6 +2744,19 @@ def bass_enhancer(
     return y
 
 
+def octave_down(samples: ArrayLike, mix: float) -> NDArray[np.float64]:
+    """Multiply the rectified samples by a sign that flips at each rising zero crossing, halving
+    the frequency, and blend with the dry signal (conventions: Octave-down effect; ADR 0291)."""
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    x = np.asarray(_mono(samples), dtype=np.float64)
+    flips = np.concatenate(([0], np.cumsum((x[:-1] < 0) & (x[1:] >= 0))))
+    sign = np.where(flips % 2 == 0, 1.0, -1.0)
+    y: NDArray[np.float64] = _dry_wet(x, sign * np.abs(x), m)
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

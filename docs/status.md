@@ -6,10 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - an octave-down effect (`octave_down(samples, mix)`, the flip-flop divider: a sign that
-     toggles at each rising zero crossing multiplies `|x|`, halving the frequency; dry/wet mix).
    - a rotary-speaker effect (`rotary(...)`: the `crossover_split` high band through `vibrato`
      and `tremolo` at the horn rate, the low band through `tremolo` at the drum rate, summed).
+   - a channel vocoder (`vocoder(carrier, modulator, bands, low, high, q, attack, release,
+     sample_rate)`: log-spaced state-variable band-passes on both signals, each carrier band
+     scaled by the envelope of the matching modulator band, summed).
 
 ## Built
 
@@ -2485,6 +2486,11 @@ Updated with every chunk of work. Dates are absolute.
   band, high-passed by the same crossover, added to the input at `mix`.
   Python 6819 passed, 2 skipped; .NET 6042 passed; conformance 4175/4175 in both. Version
   2026.11.17.89.
+- 2026-11-17: Octave-down effect (ADR 0291): `octave_down(samples, mix)` in `dsp` (C#
+  `Dsp.OctaveDown`, real): `|x|` times a sign that flips at each rising zero crossing, blended
+  with the dry signal.
+  Python 6828 passed, 2 skipped; .NET 6051 passed; conformance 4182/4182 in both. Version
+  2026.11.17.90.
 
 ## Not built
 
