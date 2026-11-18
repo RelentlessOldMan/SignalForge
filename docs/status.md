@@ -6,9 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a phaser (`phaser(samples, stages, low, high, rate, sample_rate, mix)`, a cascade of
-     first-order allpasses whose break frequency sweeps between `low` and `high` under a cosine
-     LFO, mixed with the dry signal).
+   - a ping-pong delay (`ping_pong_delay(samples, delay, feedback, mix)`, mono in, a
+     `LeftRight` out, the echoes alternating sides every `delay` samples with gain `feedback`
+     each bounce, `|feedback| < 1`);
+   - a Haas widener (`haas(samples, delay, *, side="right")`, mono in, a `LeftRight` out with
+     one side delayed by an integer `delay` samples).
 
 ## Built
 
@@ -2395,6 +2397,11 @@ Updated with every chunk of work. Dates are absolute.
   by the vibrato, flanger and chorus.
   Python 6611 passed, 2 skipped; .NET 5853 passed; conformance 4022/4022 in both. Version
   2026.11.17.72.
+- 2026-11-17: Phaser (ADR 0274): `phaser(samples, stages, low, high, rate, sample_rate, mix)` in
+  `dsp` (C# `Dsp.Phaser`, real and complex), `stages` first-order allpasses whose break
+  frequency sweeps from `low` to `high` under a cosine LFO, mixed with the dry signal.
+  Python 6625 passed, 2 skipped; .NET 5866 passed; conformance 4033/4033 in both. Version
+  2026.11.17.73.
 
 ## Not built
 

@@ -2712,6 +2712,61 @@ def flanger(
     return _dry_wet(x, _vibrato_read(x, dl, dp, f, fs, 0.0), m)
 
 
+def _phaser_chain(v: list[float], c: list[float], stages: int) -> NDArray[np.float64]:
+    for _ in range(stages):
+        x1 = y1 = 0.0
+        out = []
+        for cn, xn in zip(c, v, strict=True):
+            yn = cn * xn + x1 - cn * y1
+            x1, y1 = xn, yn
+            out.append(yn)
+        v = out
+    return np.array(v, dtype=np.float64)
+
+
+def phaser(
+    samples: ArrayLike,
+    stages: int,
+    low: float,
+    high: float,
+    rate: float,
+    sample_rate: float,
+    mix: float,
+) -> NDArray[np.complex128] | NDArray[np.float64]:
+    """``stages`` first-order allpasses whose break frequency sweeps from ``low`` to ``high``
+    under a cosine LFO, mixed with the dry signal (conventions: Phaser; ADR 0274)."""
+    ns = count(stages, "stages")
+    if ns < 1:
+        raise ValueError("stages must be at least 1")
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive")
+    lo = real(low, "low")
+    hi = real(high, "high")
+    if not 0 < lo <= hi < fs / 2:
+        raise ValueError("need 0 < low <= high < sample_rate / 2")
+    f = real(rate, "rate")
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    x = _vector(samples, "samples")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    w = 2.0 * math.pi * f
+    c = []
+    for n in range(x.size):
+        fc = lo + (hi - lo) * ((1 - math.cos(w * (n / fs))) / 2)
+        t = math.tan(math.pi * fc / fs)
+        c.append((t - 1) / (t + 1))
+    if np.iscomplexobj(x):
+        wet: NDArray[Any] = _phaser_chain(x.real.tolist(), c, ns) + 1j * _phaser_chain(
+            x.imag.tolist(), c, ns
+        )
+    else:
+        wet = _phaser_chain(np.asarray(x, dtype=np.float64).tolist(), c, ns)
+    return _dry_wet(x, wet, m)
+
+
 def tremolo(
     samples: ArrayLike, rate: float, depth: float, sample_rate: float
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

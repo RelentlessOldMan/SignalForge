@@ -2011,6 +2011,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `delay + depth·cos((2π·rate)·(n/fs) + (2π·k)/V)`; `w = (v₀ + … + v_{V−1})/V` in voice order;
   `y = x·(1 − mix) + w·mix` (complex: part by part). The vibrato's rules; integer `voices ≥ 1`;
   finite `mix` in `[0, 1]`. **(implemented)**
+- **Phaser** (`phaser(samples, stages, low, high, rate, sample_rate, mix)`, C# `Dsp.Phaser`,
+  [ADR 0274](adr/0274-phaser.md)): `fc[n] = low + (high − low)·((1 − cos((2π·rate)·(n/fs)))/2)`,
+  `t = tan((π·fc)/fs)`, `c = (t − 1)/(t + 1)`; `stages` first-order allpasses
+  `y[n] = c[n]·x[n] + x[n−1] − c[n]·y[n−1]` in series from rest (complex: part by part);
+  `y = x·(1 − mix) + w·mix`. Integer `stages ≥ 1`; `0 < low ≤ high < fs/2`; finite `rate`;
+  finite `mix` in `[0, 1]`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

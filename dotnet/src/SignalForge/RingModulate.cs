@@ -320,4 +320,106 @@ public static partial class Dsp
             throw new ArgumentOutOfRangeException(nameof(voices), "voices must be at least 1");
         CheckMix(mix);
     }
+
+    /// <summary>A chain of first-order allpasses on real samples whose break frequency sweeps
+    /// from <paramref name="low"/> to <paramref name="high"/>, mixed with the dry signal
+    /// (conventions: Phaser; ADR 0274).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="stages">The number of first-order allpasses, at least 1.</param>
+    /// <param name="low">The lowest break frequency, Hz, positive.</param>
+    /// <param name="high">The highest break frequency, Hz, from <paramref name="low"/> to below
+    /// half the sample rate.</param>
+    /// <param name="rate">The LFO frequency, Hz, finite.</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <param name="mix">The wet share, 0 to 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Phaser(ReadOnlySpan<double> samples, int stages, double low, double high, double rate, double sampleRate, double mix)
+    {
+        double[] c = PhaserCoefficients(samples.Length, stages, low, high, rate, sampleRate, mix);
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        double[] wet = PhaserChain(samples.ToArray(), c, stages);
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+            y[n] = samples[n] * (1 - mix) + wet[n] * mix;
+        return y;
+    }
+
+    /// <summary>A chain of first-order allpasses on complex samples, part by part, whose break
+    /// frequency sweeps from <paramref name="low"/> to <paramref name="high"/>, mixed with the
+    /// dry signal (conventions: Phaser; ADR 0274).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="stages">The number of first-order allpasses, at least 1.</param>
+    /// <param name="low">The lowest break frequency, Hz, positive.</param>
+    /// <param name="high">The highest break frequency, Hz, from <paramref name="low"/> to below
+    /// half the sample rate.</param>
+    /// <param name="rate">The LFO frequency, Hz, finite.</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <param name="mix">The wet share, 0 to 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Complex[] Phaser(ReadOnlySpan<Complex> samples, int stages, double low, double high, double rate, double sampleRate, double mix)
+    {
+        double[] c = PhaserCoefficients(samples.Length, stages, low, high, rate, sampleRate, mix);
+        var re = new double[samples.Length];
+        var im = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            if (!double.IsFinite(samples[n].Real) || !double.IsFinite(samples[n].Imaginary))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            re[n] = samples[n].Real;
+            im[n] = samples[n].Imaginary;
+        }
+        double[] wr = PhaserChain(re, c, stages), wi = PhaserChain(im, c, stages);
+        double u = 1 - mix;
+        var y = new Complex[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+            y[n] = new Complex(re[n] * u + wr[n] * mix, im[n] * u + wi[n] * mix);
+        return y;
+    }
+
+    private static double[] PhaserCoefficients(int length, int stages, double low, double high, double rate, double sampleRate, double mix)
+    {
+        if (stages < 1)
+            throw new ArgumentOutOfRangeException(nameof(stages), "stages must be at least 1");
+        if (!double.IsFinite(sampleRate) || sampleRate <= 0)
+            throw new ArgumentOutOfRangeException(nameof(sampleRate), "sampleRate must be positive");
+        if (!double.IsFinite(low) || !double.IsFinite(high) || !(low > 0 && low <= high && high < sampleRate / 2))
+            throw new ArgumentOutOfRangeException(nameof(high), "need 0 < low <= high < sampleRate / 2");
+        if (!double.IsFinite(rate))
+            throw new ArgumentOutOfRangeException(nameof(rate), "rate must be finite");
+        CheckMix(mix);
+        if (length == 0)
+            throw new ArgumentException("samples must not be empty", nameof(length));
+        double w = 2.0 * Math.PI * rate;
+        var c = new double[length];
+        for (int n = 0; n < length; n++)
+        {
+            double fc = low + (high - low) * ((1 - Math.Cos(w * (n / sampleRate))) / 2);
+            double t = Math.Tan(Math.PI * fc / sampleRate);
+            c[n] = (t - 1) / (t + 1);
+        }
+        return c;
+    }
+
+    private static double[] PhaserChain(double[] v, double[] c, int stages)
+    {
+        for (int s = 0; s < stages; s++)
+        {
+            double x1 = 0, y1 = 0;
+            var o = new double[v.Length];
+            for (int n = 0; n < v.Length; n++)
+            {
+                o[n] = c[n] * v[n] + x1 - c[n] * y1;
+                x1 = v[n];
+                y1 = o[n];
+            }
+            v = o;
+        }
+        return v;
+    }
 }
