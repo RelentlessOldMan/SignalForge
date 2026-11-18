@@ -689,6 +689,7 @@ public static class Conformance
             "mid_side_decode" => Bind((Reals(a.Get("mid")), Reals(a.Get("side"))), t => Dsp.MidSideDecode(t.Item1, t.Item2)),
             "pan" => Bind((Reals(a.Get("samples")), a.D("position"), Pan(a)), t => Dsp.Pan(t.Item1, t.Item2, t.Item3)),
             "bitcrush" => Bind((Reals(a.Get("samples")), a.I("bits"), a.Has("hold") ? a.I("hold") : 1), t => Dsp.Bitcrush(t.Item1, t.Item2, t.Item3)),
+            "stereo_width" => Bind((Reals(a.Get("left")), Reals(a.Get("right")), a.D("width")), t => Dsp.StereoWidth(t.Item1, t.Item2, t.Item3)),
             "saturate" => Bind((Reals(a.Get("samples")), a.D("drive")), t => Dsp.Saturate(t.Item1, t.Item2)),
             "rectify" => Bind((Reals(a.Get("samples")), a.Flag("full", true)), t => Dsp.Rectify(t.Item1, t.Item2)),
             "wavefold" => Bind((Reals(a.Get("samples")), a.D("limit")), t => Dsp.Wavefold(t.Item1, t.Item2)),

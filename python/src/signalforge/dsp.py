@@ -2696,6 +2696,18 @@ def mid_side_decode(mid: ArrayLike, side: ArrayLike) -> LeftRight:
     return LeftRight(m + s, m - s)
 
 
+def stereo_width(left: ArrayLike, right: ArrayLike, width: float) -> LeftRight:
+    """Scale the side channel by ``width``: 0 is mono, 1 unchanged (conventions: Stereo width;
+    ADR 0267)."""
+    w = real(width, "width")
+    if not w >= 0:
+        raise ValueError("width must be at least 0")
+    a, b = _stereo(left, right, ("left", "right"))
+    m = (a + b) / 2
+    s = ((a - b) / 2) * w
+    return LeftRight(m + s, m - s)
+
+
 def pan(samples: ArrayLike, position: float, *, law: str = "constant_power") -> LeftRight:
     """Pan a mono signal to left and right, ``position`` from -1 (left) to 1 (right)
     (conventions: Panner; ADR 0265)."""

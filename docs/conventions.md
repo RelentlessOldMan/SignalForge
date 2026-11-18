@@ -1980,6 +1980,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0266](adr/0266-bitcrush.md)): `quantize(sample_and_hold(x, hold), 2^(1−bits),
   levels=2^bits − 1)`, so outputs lie on `k·2^(1−bits)`, `|k| ≤ 2^(bits−1) − 1`. Integer `bits`
   from 2 to 24, integer `hold ≥ 1`; samples real, finite, non-empty. **(implemented)**
+- **Stereo width** (`stereo_width(left, right, width)`, C# `Dsp.StereoWidth`,
+  [ADR 0267](adr/0267-stereo-width.md)): `m = (left + right)/2`, `s = ((left − right)/2)·width`,
+  `left' = m + s`, `right' = m − s`. Finite `width ≥ 0`; inputs real, finite, non-empty, equal
+  length. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

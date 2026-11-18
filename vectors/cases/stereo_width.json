@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "stereo_width",
+  "description": "Stereo width (conventions: Stereo width; ADR 0267).",
+  "cases": [
+    {"id": "stereo_width.unity", "op": "stereo_width", "args": {"left": [1.0, -0.5, 0.25, 3.0, 0.0], "right": [0.5, 0.5, -0.75, 1.0, -2.0], "width": 1.0}, "expected": {"left": [1.0, -0.5, 0.25, 3.0, 0.0], "right": [0.5, 0.5, -0.75, 1.0, -2.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "width 1: unchanged"},
+    {"id": "stereo_width.mono", "op": "stereo_width", "args": {"left": [1.0, -0.5, 0.25, 3.0, 0.0], "right": [0.5, 0.5, -0.75, 1.0, -2.0], "width": 0.0}, "expected": {"left": [0.75, 0.0, -0.25, 2.0, -1.0], "right": [0.75, 0.0, -0.25, 2.0, -1.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "width 0: both channels (l + r)/2"},
+    {"id": "stereo_width.narrow", "op": "stereo_width", "args": {"left": [1.0, -0.5, 0.25, 3.0, 0.0], "right": [0.5, 0.5, -0.75, 1.0, -2.0], "width": 0.5}, "expected": {"left": [0.875, -0.25, 0.0, 2.5, -0.5], "right": [0.625, 0.25, -0.5, 1.5, -1.5]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "width 1/2: side halved"},
+    {"id": "stereo_width.wide", "op": "stereo_width", "args": {"left": [1.0, -0.5, 0.25, 3.0, 0.0], "right": [0.5, 0.5, -0.75, 1.0, -2.0], "width": 2.0}, "expected": {"left": [1.25, -1.0, 0.75, 4.0, 1.0], "right": [0.25, 1.0, -1.25, 0.0, -3.0]}, "tol": {"abs": 1e-15, "rel": 0.0}, "source": "width 2: side doubled, l' = (3l - r)/2"},
+    {"id": "stereo_width.width_negative", "op": "stereo_width", "args": {"left": [1.0], "right": [0.0], "width": -0.5}, "error": "invalid_argument", "source": "width must be at least 0"},
+    {"id": "stereo_width.width_inf", "op": "stereo_width", "args": {"left": [1.0], "right": [0.0], "width": "inf"}, "error": "invalid_argument", "source": "width must be finite"},
+    {"id": "stereo_width.lengths", "op": "stereo_width", "args": {"left": [1.0], "right": [0.0, 1.0], "width": 1.0}, "error": "invalid_argument", "source": "left and right must have the same length"},
+    {"id": "stereo_width.empty", "op": "stereo_width", "args": {"left": [], "right": [], "width": 1.0}, "error": "invalid_argument", "source": "left must not be empty"},
+    {"id": "stereo_width.nan", "op": "stereo_width", "args": {"left": [1.0], "right": ["nan"], "width": 1.0}, "error": "invalid_argument", "source": "right must be finite"}
+  ]
+}

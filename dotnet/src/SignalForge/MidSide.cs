@@ -119,4 +119,35 @@ public static partial class Dsp
         }
         return new LeftRight(left, right);
     }
+
+    /// <summary>Scales the side channel by <paramref name="width"/>: 0 is mono, 1 unchanged
+    /// (conventions: Stereo width; ADR 0267).</summary>
+    /// <param name="left">The left channel, finite, at least one sample.</param>
+    /// <param name="right">The right channel, finite, the same length.</param>
+    /// <param name="width">The side gain, finite and at least 0.</param>
+    /// <returns>The left and right channels.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static LeftRight StereoWidth(ReadOnlySpan<double> left, ReadOnlySpan<double> right, double width)
+    {
+        if (!double.IsFinite(width) || width < 0)
+            throw new ArgumentOutOfRangeException(nameof(width), "width must be at least 0");
+        if (left.IsEmpty)
+            throw new ArgumentException("left must not be empty", nameof(left));
+        if (right.Length != left.Length)
+            throw new ArgumentException("left and right must have the same length", nameof(right));
+        var outLeft = new double[left.Length];
+        var outRight = new double[left.Length];
+        for (int n = 0; n < left.Length; n++)
+        {
+            double a = left[n], b = right[n];
+            if (!double.IsFinite(a))
+                throw new ArgumentException("left must be finite", nameof(left));
+            if (!double.IsFinite(b))
+                throw new ArgumentException("right must be finite", nameof(right));
+            double m = (a + b) / 2, s = (a - b) / 2 * width;
+            outLeft[n] = m + s;
+            outRight[n] = m - s;
+        }
+        return new LeftRight(outLeft, outRight);
+    }
 }

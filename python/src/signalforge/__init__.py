@@ -136,6 +136,7 @@ from .dsp import (
     soft_clip,
     sos_group_delay,
     sos_response,
+    stereo_width,
     thiran_allpass,
     tremolo,
     upsample,
@@ -416,7 +417,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.65"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.66"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -791,6 +792,7 @@ __all__ = [
     "spectrogram",
     "speech_transmission_index",
     "stage_support",
+    "stereo_width",
     "teager_energy",
     "temporal_centroid",
     "thiran_allpass",

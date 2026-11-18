@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a stereo width control (`stereo_width(left, right, width)`, mid/side with the side scaled
-     by `width ≥ 0`: 0 is mono, 1 unchanged);
    - peak normalization (`normalize_peak(samples, peak=1.0)`, scale so `max |x| = peak`);
    - a lookahead peak limiter (`limit(samples, threshold, lookahead, release)`, gain the running
      minimum of `min(1, T/|x|)` over the lookahead window, with one-pole release).
@@ -2364,6 +2362,10 @@ Updated with every chunk of work. Dates are absolute.
   `2^bits − 1` levels; exact outputs.
   Python 6515 passed, 2 skipped; .NET 5764 passed; conformance 3947/3947 in both. Version
   2026.11.17.65.
+- 2026-11-17: Stereo width (ADR 0267): `stereo_width(left, right, width)` in `dsp` (C#
+  `Dsp.StereoWidth`) → `LeftRight`, mid/side with the side scaled by `width`.
+  Python 6527 passed, 2 skipped; .NET 5775 passed; conformance 3956/3956 in both. Version
+  2026.11.17.66.
 
 ## Not built
 
