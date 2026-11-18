@@ -197,6 +197,12 @@ public sealed record AmAmPm(double[] LevelsDb, int[] Counts, double[] GainDb, do
 public sealed record GainCompression(double SmallSignalGainDb, double[] GainDb, double[] Compression, double InputPointDb,
     double OutputPointDb, double SaturatedOutputDb);
 
+/// <summary>Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).</summary>
+/// <param name="Activity">The population variance of the samples.</param>
+/// <param name="Mobility">The RMS frequency in radians per sample, <c>sqrt(var(d)/var(x))</c>.</param>
+/// <param name="Complexity">The first difference's mobility over the signal's; 1 for a sine.</param>
+public sealed record HjorthParameters(double Activity, double Mobility, double Complexity);
+
 /// <summary>The energy-weighted mean time of a signal and its spread about it (conventions: Temporal centroid; ADR 0147).</summary>
 /// <param name="Centroid">The weighted mean time in seconds, sample 0 being at 0.</param>
 /// <param name="Spread">The weighted standard deviation about it in seconds.</param>
@@ -293,6 +299,46 @@ public static partial class Measurements
         double curve = left - 2 * peak + right;
         double delta = peak >= left && peak >= right && curve < 0 ? (left - right) / (2 * curve) : 0;
         return (best, best + delta);
+    }
+
+    /// <summary>Activity <c>var(x)</c>, mobility <c>sqrt(var(d)/var(x))</c> and complexity
+    /// <c>sqrt(var(dd)/var(d)) / mobility</c>, <c>d</c> and <c>dd</c> the first and second
+    /// differences (conventions: Hjorth parameters; ADR 0324).</summary>
+    /// <param name="samples">Real samples, finite, at least 3, not constant or a straight ramp.</param>
+    /// <returns>The three parameters.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static HjorthParameters HjorthParameters(ReadOnlySpan<double> samples)
+    {
+        if (samples.Length < 3)
+            throw new ArgumentException("needs at least 3 samples", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        var d = new double[samples.Length - 1];
+        for (int n = 0; n < d.Length; n++)
+            d[n] = samples[n + 1] - samples[n];
+        var dd = new double[d.Length - 1];
+        for (int n = 0; n < dd.Length; n++)
+            dd[n] = d[n + 1] - d[n];
+        double v0 = PopulationVariance(samples), v1 = PopulationVariance(d), v2 = PopulationVariance(dd);
+        if (!(v0 > 0 && v1 > 0))
+            throw new ArgumentException("the samples and their differences must vary", nameof(samples));
+        double mobility = Math.Sqrt(v1 / v0);
+        return new HjorthParameters(v0, mobility, Math.Sqrt(v2 / v1) / mobility);
+    }
+
+    private static double PopulationVariance(ReadOnlySpan<double> v)
+    {
+        double mean = 0;
+        foreach (double e in v)
+            mean += e;
+        mean /= v.Length;
+        double sum = 0;
+        foreach (double e in v)
+            sum += (e - mean) * (e - mean);
+        return sum / v.Length;
     }
 
     /// <summary>The <c>|x|²</c>-weighted mean of the sample times <c>n / sampleRate</c>, and the

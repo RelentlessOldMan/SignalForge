@@ -6,8 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a BLIT sawtooth in `waveforms` (`blit_sawtooth(...)`: the leaky running sum of the
-     bandlimited impulse train less its mean; state the leak and the start-up rule in the ADR).
+   - permutation entropy in `measurements` (`permutation_entropy(samples, order, delay=1)`:
+     Shannon entropy of the ordinal patterns, normalized by `log(order!)`; ties by index).
+   - sample entropy in `measurements` (`sample_entropy(samples, m, r)`: `−ln(A/B)` with the
+     Chebyshev distance, self-matches excluded, both counts over the same `N − m` templates).
+   - Allan deviation in `measurements` (`allan_deviation(fractional_frequency, sample_interval,
+     averaging_factors)`: the overlapping estimator from fractional-frequency samples).
 
 ## Built
 
@@ -2657,6 +2661,12 @@ Updated with every chunk of work. Dates are absolute.
   `Dsp.SineFold`): `sin((π/2)·drive·x)`, smooth folds beside the triangle folder of ADR 0252.
   Python 7224 passed, 2 skipped; .NET 6419 passed; conformance 4466/4466 in both. Version
   2026.11.18.12.
+- 2026-11-18: Hjorth parameters (ADR 0324): `hjorth_parameters(samples)` in `measurements` (C#
+  `Measurements.HjorthParameters`): activity, mobility and complexity from the population
+  variances of the signal and its first two differences. The BLIT sawtooth candidate was
+  dropped: it would only re-derive `bandlimited_sawtooth` with a leaky integrator.
+  Python 7236 passed, 2 skipped; .NET 6430 passed; conformance 4474/4474 in both. Version
+  2026.11.18.13.
 
 ## Not built
 

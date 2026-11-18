@@ -213,6 +213,7 @@ from .measurements import (
     EnergySeparation,
     GainCompression,
     GccPhat,
+    HjorthParameters,
     IntegratedPhaseNoise,
     NoiseFigure,
     PhaseNoise,
@@ -241,6 +242,7 @@ from .measurements import (
     exceedance_levels,
     gain_compression,
     gcc_phat,
+    hjorth_parameters,
     iacc,
     integrated_phase_noise,
     kay_frequency,
@@ -487,7 +489,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.12"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.13"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -516,6 +518,7 @@ __all__ = [
     "HarmonicFTest",
     "HarmonicSeries",
     "HarmonicToNoise",
+    "HjorthParameters",
     "IirFilter",
     "IntegratedPhaseNoise",
     "LeftRight",
@@ -722,6 +725,7 @@ __all__ = [
     "harmonic_series",
     "harmonic_to_noise",
     "high_shelf",
+    "hjorth_parameters",
     "hz_to_bark",
     "hz_to_erb_rate",
     "hz_to_mel",

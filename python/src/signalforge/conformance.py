@@ -88,6 +88,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "autocorrelation_pitch": measurements.autocorrelation_pitch,
     "cepstrum_pitch": measurements.cepstrum_pitch,
     "temporal_centroid": measurements.temporal_centroid,
+    "hjorth_parameters": measurements.hjorth_parameters,
     "time_weighting": measurements.time_weighting,
     "octave_band_levels": measurements.octave_band_levels,
     "exceedance_levels": measurements.exceedance_levels,

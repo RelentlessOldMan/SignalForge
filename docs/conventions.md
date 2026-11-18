@@ -181,6 +181,12 @@ rule for code not written yet.
   `x ≥ 0` (so 0 and −0.0 are positive), negative otherwise; `rate = #{n : sign x[n] ≠ sign
   x[n+1]} / (N − 1)`, per adjacent pair, from 0 to 1. Real, finite, at least two samples.
   **(implemented)**
+- **Hjorth parameters** ([ADR 0324](adr/0324-hjorth-parameters.md);
+  `hjorth_parameters(samples)`, C# `Measurements.HjorthParameters`): `var` the population
+  variance; `d[n] = x[n+1] − x[n]`, `dd[n] = d[n+1] − d[n]`; `activity = var(x)`,
+  `mobility = sqrt(var(d)/var(x))`, `complexity = sqrt(var(dd)/var(d)) / mobility`; per sample,
+  not per second. Gives `HjorthParameters(activity, mobility, complexity)`. Real, finite, at
+  least 3 samples, `var(x) > 0` and `var(d) > 0`. **(implemented)**
 - **Temporal centroid** ([ADR 0147](adr/0147-temporal-centroid.md);
   `temporal_centroid(samples, sample_rate)`, C# `Measurements.TemporalCentroid`): weights
   `p_n = |x[n]|²` at `t_n = n / fs` (sample 0 at t = 0); `centroid = Σ p t / Σ p` and

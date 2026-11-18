@@ -79,6 +79,16 @@ class CepstrumPitch:
 
 
 @dataclass(frozen=True)
+class HjorthParameters:
+    """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
+    Mobility is in radians per sample."""
+
+    activity: float
+    mobility: float
+    complexity: float
+
+
+@dataclass(frozen=True)
 class TemporalCentroid:
     """The energy-weighted mean time of a signal and its spread about it, both in seconds
     (conventions: Temporal centroid; ADR 0147)."""
@@ -142,6 +152,28 @@ def zero_crossing_rate(samples: ArrayLike) -> float:
         raise ValueError("samples must be finite")
     positive = x >= 0
     return int(np.count_nonzero(positive[1:] != positive[:-1])) / int(x.shape[0] - 1)
+
+
+def hjorth_parameters(samples: ArrayLike) -> HjorthParameters:
+    """Activity ``var(x)``, mobility ``sqrt(var(d)/var(x))`` and complexity
+    ``sqrt(var(dd)/var(d)) / mobility``, ``d`` and ``dd`` the first and second differences
+    (conventions: Hjorth parameters; ADR 0324)."""
+    x = np.asarray(samples)
+    if x.ndim != 1 or x.shape[0] < 3:
+        raise ValueError("samples must be a one-dimensional array of at least 3")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    d = np.diff(x)
+    v0 = float(np.var(x))
+    v1 = float(np.var(d))
+    v2 = float(np.var(np.diff(d)))
+    if not (v0 > 0 and v1 > 0):
+        raise ValueError("the samples and their differences must vary")
+    mobility = math.sqrt(v1 / v0)
+    return HjorthParameters(v0, mobility, math.sqrt(v2 / v1) / mobility)
 
 
 def temporal_centroid(samples: ArrayLike, sample_rate: float) -> TemporalCentroid:
