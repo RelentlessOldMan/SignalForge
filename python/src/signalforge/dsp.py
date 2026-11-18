@@ -2846,6 +2846,29 @@ def schroeder_reverb(
     return y
 
 
+def lowpass_feedback_comb(
+    samples: ArrayLike, delay: int, feedback: float, damping: float
+) -> NDArray[np.float64]:
+    """Feedback comb whose loop runs through a one-pole low-pass, so treble decays faster
+    (conventions: Damped feedback comb; ADR 0297)."""
+    d = count(delay, "delay")
+    if d < 1:
+        raise ValueError("delay must be at least 1")
+    g = real(feedback, "feedback")
+    if not abs(g) < 1:
+        raise ValueError("feedback must satisfy |feedback| < 1")
+    a = real(damping, "damping")
+    if not 0 <= a < 1:
+        raise ValueError("damping must be in [0, 1)")
+    x = _mono(samples)
+    y = np.empty_like(x)
+    f = 0.0
+    for n in range(x.size):
+        f = (1 - a) * (y[n - d] if n >= d else 0.0) + a * f
+        y[n] = x[n] + g * f
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

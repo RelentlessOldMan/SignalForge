@@ -6,12 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Freeverb-style damped comb (`lowpass_feedback_comb(samples, delay, feedback, damping)`:
-     the feedback path through a one-pole low-pass, `f[n] = (1 − d)·y[n−D] + d·f[n−1]`,
-     `y[n] = x[n] + g·f[n]`).
    - a reverse delay (`reverse_delay(samples, block, mix)`: each `block`-sample chunk played
      backwards one block late, `wet[n] = x[(q − 1)·B + (B − 1 − r)]` with `n = q·B + r`, zero
      for the first block; dry/wet mix).
+   - a stutter (`stutter(samples, start, length, repeats)`: for
+     `start ≤ n < start + repeats·length` the output is `x[start + (n − start) mod length]`, the
+     input elsewhere).
 
 ## Built
 
@@ -2519,6 +2519,11 @@ Updated with every chunk of work. Dates are absolute.
   closed-form running sum `start + (k − k(k+1)/(2L))` with linear interpolation, then silence.
   Python 6886 passed, 2 skipped; .NET 6106 passed; conformance 4227/4227 in both. Version
   2026.11.17.95.
+- 2026-11-17: Damped feedback comb (ADR 0297): `lowpass_feedback_comb(samples, delay,
+  feedback, damping)` in `dsp` (C# `Dsp.LowpassFeedbackComb`, real): Moorer's comb with a
+  one-pole low-pass in the loop, `f[n] = (1 − d)·y[n − D] + d·f[n − 1]`, `y[n] = x[n] + g·f[n]`.
+  Python 6898 passed, 2 skipped; .NET 6117 passed; conformance 4236/4236 in both. Version
+  2026.11.17.96.
 
 ## Not built
 

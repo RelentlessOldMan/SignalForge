@@ -2127,6 +2127,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `k ≤ 0`; for `1 ≤ k < L`, `p = start + (k − k(k+1)/(2L))`, `i = ⌊p⌋`, `f = p − i`,
   `y = x[i]·(1 − f) + x[i+1]·f`; 0 for `k ≥ L`. Real, finite, non-empty samples; integer
   `start ≥ 0`, `length ≥ 1`. **(implemented)**
+- **Damped feedback comb** (`lowpass_feedback_comb(samples, delay, feedback, damping)`, C#
+  `Dsp.LowpassFeedbackComb`, [ADR 0297](adr/0297-lowpass-feedback-comb.md)):
+  `f[n] = (1 − d)·y[n − D] + d·f[n − 1]`, `y[n] = x[n] + g·f[n]`, with `y[k < 0] = 0` and
+  `f[−1] = 0`. Real, finite, non-empty samples; integer `delay ≥ 1`; `|feedback| < 1`;
+  `damping` in [0, 1). **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
