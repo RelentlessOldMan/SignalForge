@@ -3817,6 +3817,25 @@ def rectify(samples: ArrayLike, *, full: bool = True) -> NDArray[np.float64]:
     return y
 
 
+def chebyshev_shaper(samples: ArrayLike, weights: ArrayLike) -> NDArray[np.float64]:
+    """Waveshape by ``sum_k weights[k] T_k(x)``, Clenshaw's recurrence; a full-scale cosine in
+    gives harmonic ``k`` at ``weights[k]`` (conventions: Chebyshev waveshaper; ADR 0321)."""
+    x = _vector(samples, "samples")
+    w = _vector(weights, "weights")
+    if np.iscomplexobj(x) or np.iscomplexobj(w):
+        raise ValueError("samples and weights must be real")
+    if not (np.all(np.isfinite(x)) and np.all(np.isfinite(w))):
+        raise ValueError("samples and weights must be finite")
+    if not np.all(np.abs(x) <= 1):
+        raise ValueError("samples must be within [-1, 1]")
+    b1 = np.zeros(x.size)
+    b2 = np.zeros(x.size)
+    for k in range(w.size - 1, 0, -1):
+        b1, b2 = w[k] + (2 * x * b1 - b2), b1
+    y: NDArray[np.float64] = w[0] + (x * b1 - b2)
+    return y
+
+
 def wavefold(samples: ArrayLike, limit: float) -> NDArray[np.float64]:
     """Fold samples back into ``[-limit, limit]`` by reflecting about each limit, the triangle
     wave of period ``4 limit`` (conventions: Wavefolder; ADR 0252)."""

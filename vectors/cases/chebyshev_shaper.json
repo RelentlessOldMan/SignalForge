@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "chebyshev_shaper",
+  "description": "Chebyshev waveshaper (conventions: Chebyshev waveshaper; ADR 0321).",
+  "cases": [
+    {"id": "chebyshev_shaper.third", "op": "chebyshev_shaper", "args": {"samples": [-1.0, -0.75, -0.5, -0.125, 0.0, 0.3, 0.5, 0.875, 1.0], "weights": [0.0, 0.0, 0.0, 1.0]}, "expected": [-1.0, 0.5625, 1.0, 0.3671875, 0.0, -0.7919999999999999, -1.0, 0.0546875, 1.0], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "T_3 = 4x^3 - 3x alone"},
+    {"id": "chebyshev_shaper.mix", "op": "chebyshev_shaper", "args": {"samples": [-1.0, -0.75, -0.5, -0.125, 0.0, 0.3, 0.5, 0.875, 1.0], "weights": [0.1, 1.0, 0.5, -0.25, 0.125]}, "expected": [-0.024999999999999994, -0.84921875, -0.9625, -0.491552734375, -0.275, 0.2311, 0.5375, 1.172509765625, 1.475], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "a mix of T_0 .. T_4"},
+    {"id": "chebyshev_shaper.tenth", "op": "chebyshev_shaper", "args": {"samples": [-0.9, -0.2, 0.05, 0.7, 0.99], "weights": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": [-0.2007474688000005, 0.4284556288000001, -0.87748254995, -0.09984005120000061, 0.15477686589017026], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "T_10 alone, ten steps"},
+    {"id": "chebyshev_shaper.constant", "op": "chebyshev_shaper", "args": {"samples": [0.25, -0.5], "weights": [0.75]}, "expected": [0.75, 0.75], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "one weight: y = w_0"},
+    {"id": "chebyshev_shaper.harmonic", "op": "chebyshev_shaper", "args": {"samples": [1.0, 0.0, -1.0, 0.0], "weights": [0.0, 0.0, 1.0]}, "expected": [1.0, -1.0, 1.0, -1.0], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "T_2(cos t) = cos 2t at t = 0, pi/2, pi, 3pi/2: 1, -1, 1, -1"},
+    {"id": "chebyshev_shaper.above_one", "op": "chebyshev_shaper", "args": {"samples": [0.5, 1.0000001], "weights": [0.0, 1.0]}, "error": "invalid_argument", "source": "samples must be within [-1, 1]"},
+    {"id": "chebyshev_shaper.no_weights", "op": "chebyshev_shaper", "args": {"samples": [0.5, -0.5], "weights": []}, "error": "invalid_argument", "source": "weights must not be empty"},
+    {"id": "chebyshev_shaper.no_samples", "op": "chebyshev_shaper", "args": {"samples": [], "weights": [0.0, 1.0]}, "error": "invalid_argument", "source": "samples must not be empty"},
+    {"id": "chebyshev_shaper.weight_nan", "op": "chebyshev_shaper", "args": {"samples": [0.5, -0.5], "weights": [1.0, "nan"]}, "error": "invalid_argument", "source": "weights must be finite"}
+  ]
+}

@@ -290,6 +290,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "soft_clip": dsp.soft_clip,
     "hard_clip": dsp.hard_clip,
     "wavefold": dsp.wavefold,
+    "chebyshev_shaper": dsp.chebyshev_shaper,
     "rectify": dsp.rectify,
     "saturate": dsp.saturate,
     "normalize_peak": dsp.normalize_peak,

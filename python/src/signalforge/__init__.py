@@ -67,6 +67,7 @@ from .dsp import (
     chebyshev2_bandstop,
     chebyshev2_highpass,
     chebyshev2_lowpass,
+    chebyshev_shaper,
     chorus,
     cic_compensator,
     cic_decimate,
@@ -484,7 +485,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.9"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.10"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -616,6 +617,7 @@ __all__ = [
     "chebyshev2_bandstop",
     "chebyshev2_highpass",
     "chebyshev2_lowpass",
+    "chebyshev_shaper",
     "chirp",
     "chorus",
     "cic_compensator",

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Chebyshev waveshaper in `dsp` (`chebyshev_shaper(samples, weights)`:
-     `y = Σ_k weights[k]·T_k(x)` by Clenshaw, `|x| ≤ 1`; a unit sine in gives harmonic `k` at
-     `weights[k]`).
+   - a feedback FM operator in `waveforms` (`feedback_fm(sample_rate, num_samples, frequency,
+     feedback, amplitude=1, phase=0)`: `s[n] = sin(2π·u[n] + feedback·s[n−1])`, `s[−1] = 0`,
+     `y = A·s`; `0 ≤ feedback ≤ 1.5`; from sine at 0 towards a sawtooth-like wave).
 
 ## Built
 
@@ -2644,6 +2644,11 @@ Updated with every chunk of work. Dates are absolute.
   below Nyquist at `2A/M`, by the Dirichlet closed form; vectors from the cosine sum.
   Python 7189 passed, 2 skipped; .NET 6386 passed; conformance 4442/4442 in both. Version
   2026.11.18.9.
+- 2026-11-18: Chebyshev waveshaper (ADR 0321): `chebyshev_shaper(samples, weights)` in `dsp`
+  (C# `Dsp.ChebyshevShaper`): `Σ_k w_k·T_k(x)` by Clenshaw on `[−1, 1]`; a full-scale cosine
+  gives harmonic `k` at `w_k`. Vectors from the three-term recurrence.
+  Python 7203 passed, 2 skipped; .NET 6398 passed; conformance 4451/4451 in both. Version
+  2026.11.18.10.
 
 ## Not built
 

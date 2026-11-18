@@ -75,6 +75,43 @@ public static partial class Dsp
             throw new ArgumentOutOfRangeException(nameof(limit), "limit must be at least 0");
     }
 
+    /// <summary>Waveshapes by <c>Σ_k weights[k]·T_k(x)</c> with Clenshaw's recurrence; a
+    /// full-scale cosine in gives harmonic <c>k</c> at <c>weights[k]</c> (conventions: Chebyshev
+    /// waveshaper; ADR 0321).</summary>
+    /// <param name="samples">Finite samples in [−1, 1], at least one.</param>
+    /// <param name="weights">The finite weight of each polynomial from <c>T_0</c>, at least
+    /// one.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] ChebyshevShaper(ReadOnlySpan<double> samples, ReadOnlySpan<double> weights)
+    {
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        if (weights.IsEmpty)
+            throw new ArgumentException("weights must not be empty", nameof(weights));
+        foreach (double v in weights)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("weights must be finite", nameof(weights));
+        }
+        var y = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double x = samples[n];
+            if (!(Math.Abs(x) <= 1))
+                throw new ArgumentException("samples must be finite and within [-1, 1]", nameof(samples));
+            double b1 = 0, b2 = 0;
+            for (int k = weights.Length - 1; k > 0; k--)
+            {
+                double b = weights[k] + ((2 * x * b1) - b2);
+                b2 = b1;
+                b1 = b;
+            }
+            y[n] = weights[0] + ((x * b1) - b2);
+        }
+        return y;
+    }
+
     /// <summary>Folds samples back into <c>[−limit, limit]</c> by reflecting about each limit,
     /// the triangle wave of period <c>4·limit</c> (conventions: Wavefolder; ADR 0252).</summary>
     /// <param name="samples">Finite samples, at least one.</param>

@@ -2010,6 +2010,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   [ADR 0251](adr/0251-hard-clip.md)): real `min(max(x, −limit), limit)`; complex `x` if
   `|x| ≤ limit`, else `x·(limit/|x|)` (the phase kept). Finite `limit ≥ 0`; samples finite,
   non-empty; output the same kind. **(implemented)**
+- **Chebyshev waveshaper** (`chebyshev_shaper(samples, weights)`, C# `Dsp.ChebyshevShaper`,
+  [ADR 0321](adr/0321-chebyshev-shaper.md)): `y = Σ_k w_k·T_k(x)` by Clenshaw:
+  `b_k = w_k + (2·x·b_{k+1} − b_{k+2})` for `k = K … 1` from `b_{K+1} = b_{K+2} = 0`, then
+  `y = w_0 + (x·b_1 − b_2)`. Real, non-empty, finite samples in `[−1, 1]`; real, non-empty,
+  finite weights. **(implemented)**
 - **Wavefolder** (`wavefold(samples, limit)`, C# `Dsp.Wavefold`,
   [ADR 0252](adr/0252-wavefold.md)): reflect about `±L` until inside; computed as `u = x + L`,
   `t = u − 4L·⌊u/(4L)⌋`, `y = L − |t − 2L|`, in that order, no library modulo. Finite
