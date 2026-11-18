@@ -6,10 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a harmonic exciter (`exciter(samples, order, cutoff, sample_rate, drive, mix)`, the
-     `crossover_split` high band through `soft_clip(drive·high)/drive`, added to the input at `mix`).
    - an octave-up effect (`octave_up(samples, mix)`, the full-wave rectifier `|x|` with its mean
      removed per the DC blocker, mixed with the dry signal as the other effects mix).
+   - a bass enhancer (`bass_enhancer(samples, order, cutoff, sample_rate, drive, mix)`, the
+     exciter's mirror: harmonics of the `crossover_split` low band, high-passed at `cutoff` so
+     only the new harmonics are added).
 
 ## Built
 
@@ -2471,6 +2472,11 @@ Updated with every chunk of work. Dates are absolute.
   own threshold and ratio, then summed.
   Python 6787 passed, 2 skipped; .NET 6013 passed; conformance 4152/4152 in both. Version
   2026.11.17.86.
+- 2026-11-17: Harmonic exciter (ADR 0288): `exciter(samples, order, cutoff, sample_rate, drive,
+  mix)` in `dsp` (C# `Dsp.Exciter`, real): `x + mix·soft_clip(drive·h)/drive` with `h` the
+  `crossover_split` high band.
+  Python 6798 passed, 2 skipped; .NET 6023 passed; conformance 4160/4160 in both. Version
+  2026.11.17.87.
 
 ## Not built
 

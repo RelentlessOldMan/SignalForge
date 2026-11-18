@@ -2687,6 +2687,28 @@ def two_band_compress(
     return y
 
 
+def exciter(
+    samples: ArrayLike,
+    order: int,
+    cutoff: float,
+    sample_rate: float,
+    drive: float,
+    mix: float,
+) -> NDArray[np.float64]:
+    """Add soft-clipped harmonics of the band above ``cutoff`` to real samples (conventions:
+    Harmonic exciter; ADR 0288)."""
+    dr = real(drive, "drive")
+    if not 0 < dr < math.inf:
+        raise ValueError("drive must be finite and positive")
+    m = real(mix, "mix")
+    if not 0 <= m <= 1:
+        raise ValueError("mix must be in [0, 1]")
+    b = crossover_split(samples, order, cutoff, sample_rate)
+    x = _mono(samples)
+    y: NDArray[np.float64] = np.asarray(x, dtype=np.float64) + m * (soft_clip(dr * b.high) / dr)
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

@@ -83,4 +83,30 @@ public static partial class Dsp
             lo[n] += hi[n];
         return lo;
     }
+
+    /// <summary>Adds soft-clipped harmonics of the band above <paramref name="cutoff"/> to real
+    /// samples (conventions: Harmonic exciter; ADR 0288).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="order">The crossover order, even, from 2 to 2000.</param>
+    /// <param name="cutoff">The crossover frequency, Hz, between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">The sample rate, Hz.</param>
+    /// <param name="drive">The gain into the clipper, finite and positive.</param>
+    /// <param name="mix">The amount of the clipped band added, in [0, 1].</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Exciter(ReadOnlySpan<double> samples, int order, double cutoff, double sampleRate, double drive, double mix)
+    {
+        if (!(drive > 0 && double.IsFinite(drive)))
+            throw new ArgumentOutOfRangeException(nameof(drive), "drive must be finite and positive");
+        CheckMix(mix);
+        Bands b = CrossoverSplit(samples, order, cutoff, sampleRate);
+        double[] u = new double[b.High.Length];
+        for (int n = 0; n < u.Length; n++)
+            u[n] = drive * b.High[n];
+        double[] c = SoftClip(u);
+        double[] y = new double[u.Length];
+        for (int n = 0; n < y.Length; n++)
+            y[n] = samples[n] + mix * (c[n] / drive);
+        return y;
+    }
 }

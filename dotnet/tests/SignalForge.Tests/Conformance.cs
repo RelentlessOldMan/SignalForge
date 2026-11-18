@@ -731,6 +731,7 @@ public static class Conformance
             "hard_clip" => a.Get("samples") is Complex[] hcs
                 ? Bind((hcs, a.D("limit")), t => Dsp.HardClip(t.Item1, t.Item2))
                 : Bind((Reals(a.Get("samples")), a.D("limit")), t => Dsp.HardClip(t.Item1, t.Item2)),
+            "exciter" => Bind((Reals(a.Get("samples")), a.I("order"), a.D("cutoff"), a.D("sample_rate"), a.D("drive"), a.D("mix")), t => Dsp.Exciter(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "soft_clip" => Bind(Reals(a.Get("samples")), t => Dsp.SoftClip(t)),
             "a_law_compress" => Bind((Reals(a.Get("samples")), a.Has("a") ? a.D("a") : 87.6), t => Dsp.ALawCompress(t.Item1, t.Item2)),
             "a_law_expand" => Bind((Reals(a.Get("samples")), a.Has("a") ? a.D("a") : 87.6), t => Dsp.ALawExpand(t.Item1, t.Item2)),
