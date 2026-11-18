@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "adsr",
+  "description": "ADSR envelope (conventions: ADSR envelope; ADR 0303).",
+  "cases": [
+    {"id": "adsr.full", "op": "adsr", "args": {"num_samples": 20, "attack": 4, "decay": 4, "sustain": 0.5, "release": 4, "gate": 12}, "expected": [0.0, 0.25, 0.5, 0.75, 1.0, 0.875, 0.75, 0.625, 0.5, 0.5, 0.5, 0.5, 0.5, 0.375, 0.25, 0.125, 0.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "every stage: attack 4, decay 4 to 0.5, hold, release 4"},
+    {"id": "adsr.odd_lengths", "op": "adsr", "args": {"num_samples": 30, "attack": 3, "decay": 5, "sustain": 0.3, "release": 7, "gate": 15}, "expected": [0.0, 0.3333333333333333, 0.6666666666666666, 1.0, 0.86, 0.72, 0.58, 0.44, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.2571428571428571, 0.21428571428571427, 0.17142857142857143, 0.12857142857142856, 0.08571428571428572, 0.04285714285714286, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "lengths that are not powers of two"},
+    {"id": "adsr.early_release", "op": "adsr", "args": {"num_samples": 12, "attack": 6, "decay": 2, "sustain": 0.4, "release": 4, "gate": 3}, "expected": [0.0, 0.16666666666666666, 0.3333333333333333, 0.5, 0.375, 0.25, 0.125, 0.0, 0.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "let go during the attack, from 1/2"},
+    {"id": "adsr.in_decay", "op": "adsr", "args": {"num_samples": 14, "attack": 2, "decay": 6, "sustain": 0.2, "release": 3, "gate": 5}, "expected": [0.0, 0.5, 1.0, 0.8666666666666667, 0.7333333333333334, 0.6, 0.4, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "let go during the decay"},
+    {"id": "adsr.instant", "op": "adsr", "args": {"num_samples": 6, "attack": 0, "decay": 0, "sustain": 0.7, "release": 0, "gate": 3}, "expected": [0.7, 0.7, 0.7, 0.0, 0.0, 0.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "no attack, decay or release"},
+    {"id": "adsr.never_released", "op": "adsr", "args": {"num_samples": 10, "attack": 2, "decay": 2, "sustain": 0.6, "release": 3, "gate": 50}, "expected": [0.0, 0.5, 1.0, 0.8, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "a gate past the end: the key is held throughout"},
+    {"id": "adsr.sustain_high", "op": "adsr", "args": {"num_samples": 8, "attack": 2, "decay": 2, "sustain": 1.5, "release": 2, "gate": 5}, "error": "invalid_argument", "source": "sustain must be at most 1"},
+    {"id": "adsr.attack_negative", "op": "adsr", "args": {"num_samples": 8, "attack": -1, "decay": 2, "sustain": 0.5, "release": 2, "gate": 5}, "error": "invalid_argument", "source": "attack must be at least 0"},
+    {"id": "adsr.gate_negative", "op": "adsr", "args": {"num_samples": 8, "attack": 2, "decay": 2, "sustain": 0.5, "release": 2, "gate": -1}, "error": "invalid_argument", "source": "gate must be at least 0"},
+    {"id": "adsr.no_samples", "op": "adsr", "args": {"num_samples": 0, "attack": 2, "decay": 2, "sustain": 0.5, "release": 2, "gate": 5}, "error": "invalid_argument", "source": "num_samples must be at least 1"}
+  ]
+}

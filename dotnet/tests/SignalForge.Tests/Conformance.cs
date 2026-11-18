@@ -234,6 +234,7 @@ public static class Conformance
             "multitone" => Multitone(a),
             "newman_phases" => Bind(a.I("count"), Waveforms.NewmanPhases),
             "chirp" => Chirp(a),
+            "adsr" => Bind((a.I("num_samples"), a.I("attack"), a.I("decay"), a.D("sustain"), a.I("release"), a.I("gate")), t => Waveforms.Adsr(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "pulse_train" => Bind((a.I("num_samples"), a.I("period"), a.I("width"), a.Opt("amplitude", 1), a.Has("delay") ? a.I("delay") : 0),
                 t => Waveforms.PulseTrain(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "temporal_centroid" => a.Get("samples") is Complex[]? Bind((Complexes(a.Get("samples")), a.D("sample_rate")), t => Measurements.TemporalCentroid(t.Item1, t.Item2))

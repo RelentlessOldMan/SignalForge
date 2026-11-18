@@ -64,6 +64,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "newman_phases": waveforms.newman_phases,
     "chirp": waveforms.chirp,
     "pulse_train": waveforms.pulse_train,
+    "adsr": waveforms.adsr,
     "power_stats": measurements.power_stats,
     "autocorrelation_pitch": measurements.autocorrelation_pitch,
     "cepstrum_pitch": measurements.cepstrum_pitch,

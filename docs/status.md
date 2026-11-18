@@ -6,13 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - an ADSR envelope (`adsr(attack, decay, sustain, release, gate, length)`, integer sample
-     counts: linear rise to 1 over `attack`, fall to `sustain` over `decay`, hold until `gate`,
-     linear fall from the level at `gate` to 0 over `release`, zero to `length`).
    - a Karplus–Strong pluck (`karplus_strong(excitation, delay, length, decay)`:
      `y[n] = e[n] + decay·(y[n − D] + y[n − D − 1])/2`, the excitation zero-padded to `length`).
    - classic oscillator waveforms in `waveforms` (`sawtooth`, `square` with a duty cycle,
      `triangle`): naive, from the phase `frac(f·n/fs + φ₀)`, signatures shaped like `tone`.
+   - a two-operator FM tone in `waveforms` (`fm_tone(sample_rate, num_samples, carrier,
+     modulator, index, amplitude=1)`: `A·cos(2π·fc·n/fs + I·sin(2π·fm·n/fs))`, Chowning's
+     FM; sidebands at `fc ± k·fm` with Bessel amplitudes `J_k(I)`).
 
 ## Built
 
@@ -2550,6 +2550,11 @@ Updated with every chunk of work. Dates are absolute.
   `1 − ratio` samples per sample, wrapping every window, crossfaded by `sin²(πφ)` and `cos²(πφ)`.
   Python 6950 passed, 2 skipped; .NET 6169 passed; conformance 4278/4278 in both. Version
   2026.11.17.101.
+- 2026-11-17: ADSR envelope (ADR 0303): `adsr(num_samples, attack, decay, sustain, release,
+  gate)` in `waveforms` (C# `Waveforms.Adsr`): linear attack, decay and release in whole
+  samples, the release starting from the level at the gate.
+  Python 6962 passed, 2 skipped; .NET 6181 passed; conformance 4288/4288 in both. Version
+  2026.11.17.102.
 
 ## Not built
 

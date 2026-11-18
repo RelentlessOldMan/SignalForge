@@ -1,4 +1,4 @@
-"""Waveform generators: tones, multitones, chirps, pulse trains and PRBS. Definitions in
+"""Waveform generators: tones, multitones, chirps, pulse trains, envelopes and PRBS. Definitions in
 docs/conventions.md."""
 
 from __future__ import annotations
@@ -133,6 +133,41 @@ def pulse_train(
         raise ValueError("width must be at most period")
     on = np.mod(np.arange(n, dtype=np.int64) - d, p) < w
     return np.where(on, amp, 0.0).astype(np.float64)
+
+
+def adsr(
+    num_samples: int, attack: int, decay: int, sustain: float, release: int, gate: int
+) -> NDArray[np.float64]:
+    """Attack-decay-sustain-release envelope in whole samples, let go at ``gate``
+    (conventions: ADSR envelope; ADR 0303)."""
+    size = _count(num_samples, "num_samples")
+    if size < 1:
+        raise ValueError("num_samples must be at least 1")
+    a = _count(attack, "attack")
+    d = _count(decay, "decay")
+    r = _count(release, "release")
+    g = _count(gate, "gate")
+    s = real(sustain, "sustain")
+    if not 0 <= s <= 1:
+        raise ValueError("sustain must be in [0, 1]")
+
+    def held(n: int) -> float:
+        if n < a:
+            return n / a
+        if n < a + d:
+            return 1 - (1 - s) * ((n - a) / d)
+        return s
+
+    level = held(g)
+    out = np.empty(size)
+    for n in range(size):
+        if n < g:
+            out[n] = held(n)
+        elif n - g < r:
+            out[n] = level * (1 - (n - g) / r)
+        else:
+            out[n] = 0.0
+    return out
 
 
 def prbs(

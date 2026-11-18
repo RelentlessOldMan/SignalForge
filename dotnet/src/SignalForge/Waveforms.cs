@@ -238,4 +238,51 @@ public static class Waveforms
                 output[i] ^= 1;
         return output;
     }
+
+    /// <summary>Attack-decay-sustain-release envelope in whole samples, let go at
+    /// <paramref name="gate"/> (conventions: ADSR envelope; ADR 0303).</summary>
+    /// <param name="numSamples">The length, at least 1.</param>
+    /// <param name="attack">The rise from 0 to 1, in samples, at least 0.</param>
+    /// <param name="decay">The fall from 1 to the sustain level, in samples, at least 0.</param>
+    /// <param name="sustain">The held level, in [0, 1].</param>
+    /// <param name="release">The fall to 0 after the gate, in samples, at least 0.</param>
+    /// <param name="gate">The sample where the key is let go, at least 0.</param>
+    /// <returns>The envelope, <paramref name="numSamples"/> values.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Adsr(int numSamples, int attack, int decay, double sustain, int release, int gate)
+    {
+        if (numSamples < 1)
+            throw new ArgumentOutOfRangeException(nameof(numSamples), "numSamples must be at least 1");
+        if (attack < 0)
+            throw new ArgumentOutOfRangeException(nameof(attack), "attack must be at least 0");
+        if (decay < 0)
+            throw new ArgumentOutOfRangeException(nameof(decay), "decay must be at least 0");
+        if (release < 0)
+            throw new ArgumentOutOfRangeException(nameof(release), "release must be at least 0");
+        if (gate < 0)
+            throw new ArgumentOutOfRangeException(nameof(gate), "gate must be at least 0");
+        if (!(sustain >= 0 && sustain <= 1))
+            throw new ArgumentOutOfRangeException(nameof(sustain), "sustain must be in [0, 1]");
+
+        double Held(long n)
+        {
+            if (n < attack)
+                return (double)n / attack;
+            if (n < (long)attack + decay)
+                return 1 - ((1 - sustain) * ((double)(n - attack) / decay));
+            return sustain;
+        }
+
+        double level = Held(gate);
+        var output = new double[numSamples];
+        for (int n = 0; n < numSamples; n++)
+        {
+            long k = (long)n - gate;
+            if (k < 0)
+                output[n] = Held(n);
+            else if (k < release)
+                output[n] = level * (1 - ((double)k / release));
+        }
+        return output;
+    }
 }

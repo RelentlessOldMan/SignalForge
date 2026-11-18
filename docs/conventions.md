@@ -62,6 +62,11 @@ rule for code not written yet.
   frequency jump. Samples `A·e^(jθ[n])` (or `A·cos θ[n]`) with
   `θ[n] = 2π·(start·t + (stop − start)·t²/(2T)) + φ`, `t = n/fs`. With `num_samples = 0` the result
   is empty. Frequencies, amplitude and phase finite.
+- **ADSR envelope** (`adsr(num_samples, attack, decay, sustain, release, gate)`, C#
+  `Waveforms.Adsr`, [ADR 0303](adr/0303-adsr.md)): held, `h(n) = n/A` for `n < A`,
+  `1 − (1 − S)·((n − A)/D)` for `A ≤ n < A + D`, `S` after; for `n ≥ G`, `k = n − G`,
+  `h(G)·(1 − k/R)` for `k < R` and 0 after. Integer counts at least 0 (`num_samples` at least
+  1); `sustain` in [0, 1]. **(implemented)**
 - **Pulse train** (`pulse_train(num_samples, period, width, amplitude=1, delay=0)`, real): in whole
   samples, `x[n] = A` when `(n − delay) mod period < width` and 0 otherwise, `mod` the floored
   modulo (non-negative for a negative `n − delay`). `period ≥ 1`, `0 ≤ width ≤ period`, `delay`
