@@ -2927,6 +2927,30 @@ def multitap_delay(
     return y
 
 
+def karplus_strong(
+    excitation: ArrayLike, delay: int, length: int, decay: float
+) -> NDArray[np.float64]:
+    """Plucked string: the excitation through a ``delay``-sample loop with a two-point average
+    (conventions: Karplus-Strong pluck; ADR 0304)."""
+    d = count(delay, "delay")
+    if d < 1:
+        raise ValueError("delay must be at least 1")
+    size = count(length, "length")
+    if size < 1:
+        raise ValueError("length must be at least 1")
+    g = real(decay, "decay")
+    if not 0 <= g <= 1:
+        raise ValueError("decay must be in [0, 1]")
+    e = _mono(excitation)
+    if e.size > size:
+        raise ValueError("excitation must be at most length samples")
+    y = np.zeros(size)
+    y[: e.size] = e
+    for n in range(d, size):
+        y[n] += g * ((y[n - d] + (y[n - d - 1] if n > d else 0.0)) * 0.5)
+    return y
+
+
 def comb_filter(
     samples: ArrayLike, delay: int, gain: float, *, feedback: bool = False
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

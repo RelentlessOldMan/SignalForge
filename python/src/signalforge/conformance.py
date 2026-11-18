@@ -309,6 +309,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "stutter": dsp.stutter,
     "multitap_delay": dsp.multitap_delay,
     "pitch_shift": dsp.pitch_shift,
+    "karplus_strong": dsp.karplus_strong,
     "transient_shaper": dsp.transient_shaper,
     "fade": dsp.fade,
     "crossfade": dsp.crossfade,

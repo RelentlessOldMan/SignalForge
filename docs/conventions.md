@@ -2160,6 +2160,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `φ_b = (φ + 1/2) − floor(φ + 1/2)`; taps read `n − W·φ` and `n − W·φ_b` with the vibrato's
   linear interpolation, `x[k] = 0` outside the signal; `y = sin²(πφ)·A + cos²(πφ)·B`. Real,
   finite, non-empty samples; finite `ratio > 0`; finite `window ≥ 1`. **(implemented)**
+- **Karplus–Strong pluck** (`karplus_strong(excitation, delay, length, decay)`, C#
+  `Dsp.KarplusStrong`, [ADR 0304](adr/0304-karplus-strong.md)): `e` zero-padded to `length`,
+  `y[n] = e[n] + decay·((y[n − D] + y[n − D − 1])·0.5)`, `y[k < 0] = 0`. Real, finite
+  excitation of 1 to `length` samples; integers `delay ≥ 1`, `length ≥ 1`; `decay` in [0, 1].
+  **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

@@ -109,6 +109,7 @@ from .dsp import (
     interpolate,
     itakura_saito,
     kaiser_parameters,
+    karplus_strong,
     lagrange_fir,
     lar_to_reflection,
     lattice_filter,
@@ -456,7 +457,7 @@ from .units import (
 )
 from .waveforms import adsr, chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.102"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.103"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -696,6 +697,7 @@ __all__ = [
     "iq_imbalance",
     "itakura_saito",
     "kaiser_parameters",
+    "karplus_strong",
     "kay_frequency",
     "lagrange_fir",
     "lar_to_reflection",

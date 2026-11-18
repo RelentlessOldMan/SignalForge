@@ -172,4 +172,36 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Plucked string: the excitation through a <paramref name="delay"/>-sample loop
+    /// with a two-point average (conventions: Karplus–Strong pluck; ADR 0304).</summary>
+    /// <param name="excitation">Real, finite samples, 1 to <paramref name="length"/>.</param>
+    /// <param name="delay">The loop delay in samples, at least 1.</param>
+    /// <param name="length">The output length in samples, at least 1.</param>
+    /// <param name="decay">The loop gain, in [0, 1].</param>
+    /// <returns><paramref name="length"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] KarplusStrong(ReadOnlySpan<double> excitation, int delay, int length, double decay)
+    {
+        if (delay < 1)
+            throw new ArgumentOutOfRangeException(nameof(delay), "delay must be at least 1");
+        if (length < 1)
+            throw new ArgumentOutOfRangeException(nameof(length), "length must be at least 1");
+        if (!(decay >= 0 && decay <= 1))
+            throw new ArgumentOutOfRangeException(nameof(decay), "decay must be in [0, 1]");
+        if (excitation.IsEmpty)
+            throw new ArgumentException("excitation must not be empty", nameof(excitation));
+        if (excitation.Length > length)
+            throw new ArgumentException("excitation must be at most length samples", nameof(excitation));
+        double[] y = new double[length];
+        for (int n = 0; n < excitation.Length; n++)
+        {
+            if (!double.IsFinite(excitation[n]))
+                throw new ArgumentException("excitation must be finite", nameof(excitation));
+            y[n] = excitation[n];
+        }
+        for (int n = delay; n < length; n++)
+            y[n] += decay * ((y[n - delay] + (n > delay ? y[n - delay - 1] : 0.0)) * 0.5);
+        return y;
+    }
 }

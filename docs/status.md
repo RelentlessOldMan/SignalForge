@@ -6,13 +6,14 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Karplus–Strong pluck (`karplus_strong(excitation, delay, length, decay)`:
-     `y[n] = e[n] + decay·(y[n − D] + y[n − D − 1])/2`, the excitation zero-padded to `length`).
    - classic oscillator waveforms in `waveforms` (`sawtooth`, `square` with a duty cycle,
      `triangle`): naive, from the phase `frac(f·n/fs + φ₀)`, signatures shaped like `tone`.
    - a two-operator FM tone in `waveforms` (`fm_tone(sample_rate, num_samples, carrier,
      modulator, index, amplitude=1)`: `A·cos(2π·fc·n/fs + I·sin(2π·fm·n/fs))`, Chowning's
      FM; sidebands at `fc ± k·fm` with Bessel amplitudes `J_k(I)`).
+   - a sidechain ducker in `dsp` (`duck(samples, key, depth, attack, release)`: the key's
+     envelope `e` from `envelope_follower`, `y = x·(1 − depth·min(e, 1))`, same-length real
+     signals).
 
 ## Built
 
@@ -2555,6 +2556,11 @@ Updated with every chunk of work. Dates are absolute.
   samples, the release starting from the level at the gate.
   Python 6962 passed, 2 skipped; .NET 6181 passed; conformance 4288/4288 in both. Version
   2026.11.17.102.
+- 2026-11-17: Karplus–Strong pluck (ADR 0304): `karplus_strong(excitation, delay, length,
+  decay)` in `dsp` (C# `Dsp.KarplusStrong`, real): the excitation through a delay loop with a
+  two-point average, `y[n] = e[n] + decay·(y[n − D] + y[n − D − 1])/2`.
+  Python 6974 passed, 2 skipped; .NET 6192 passed; conformance 4297/4297 in both. Version
+  2026.11.17.103.
 
 ## Not built
 
