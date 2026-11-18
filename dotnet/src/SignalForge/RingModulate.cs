@@ -422,4 +422,34 @@ public static partial class Dsp
         }
         return v;
     }
+
+    /// <summary>Trance gate: passes the first <paramref name="duty"/> of each 1/rate second
+    /// cycle and mutes the rest (conventions: Slicer; ADR 0294).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="rate">The gate rate, Hz, finite and at least 0.</param>
+    /// <param name="duty">The open fraction of each cycle, in [0, 1].</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] Slicer(ReadOnlySpan<double> samples, double rate, double duty, double sampleRate)
+    {
+        if (!(rate >= 0 && double.IsFinite(rate)))
+            throw new ArgumentOutOfRangeException(nameof(rate), "rate must be finite and at least 0");
+        if (!(duty >= 0 && duty <= 1))
+            throw new ArgumentOutOfRangeException(nameof(duty), "duty must be in [0, 1]");
+        if (!(sampleRate > 0 && double.IsFinite(sampleRate)))
+            throw new ArgumentOutOfRangeException(nameof(sampleRate), "sampleRate must be finite and positive");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        double[] y = new double[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+        {
+            double v = samples[n];
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            double t = rate * (n / sampleRate);
+            y[n] = t - Math.Floor(t) < duty ? v : 0.0;
+        }
+        return y;
+    }
 }

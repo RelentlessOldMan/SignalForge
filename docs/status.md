@@ -6,11 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a slicer (`slicer(samples, rate, duty, sample_rate)`: the trance gate, gain 1 for the first
-     `duty` of each `1/rate` second cycle and 0 for the rest, cycle position `rate·n/fs mod 1`).
    - a Schroeder reverberator (`schroeder_reverb(samples, combs, comb_gains, allpasses,
      allpass_gain, mix)`: the mean of parallel feedback `comb_filter`s, through series
      `allpass_comb`s, dry/wet mix).
+   - a tape stop (`tape_stop(samples, start, length)`: from sample `start` the playback speed
+     falls linearly from 1 to 0 over `length` samples, the read position is its running sum,
+     read with linear interpolation; silence after).
 
 ## Built
 
@@ -2503,6 +2504,11 @@ Updated with every chunk of work. Dates are absolute.
   matching modulator band, summed.
   Python 6850 passed, 2 skipped; .NET 6071 passed; conformance 4198/4198 in both. Version
   2026.11.17.92.
+- 2026-11-17: Slicer (ADR 0294): `slicer(samples, rate, duty, sample_rate)` in `dsp` (C#
+  `Dsp.Slicer`, real): the trance gate, passing `x[n]` where the cycle position
+  `t − floor(t)`, `t = rate·(n/fs)`, is below `duty`.
+  Python 6862 passed, 2 skipped; .NET 6083 passed; conformance 4208/4208 in both. Version
+  2026.11.17.93.
 
 ## Not built
 

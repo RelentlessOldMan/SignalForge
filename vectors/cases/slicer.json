@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "slicer",
+  "description": "Slicer (conventions: Slicer; ADR 0294).",
+  "cases": [
+    {"id": "slicer.half", "op": "slicer", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], "rate": 0.125, "duty": 0.5, "sample_rate": 1.0}, "expected": [1.0, 2.0, 3.0, 4.0, 0.0, 0.0, 0.0, 0.0, 9.0, 10.0, 11.0, 12.0, 0.0, 0.0, 0.0, 0.0, 17.0, 18.0, 19.0, 20.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "8-sample cycle, open for the first 4"},
+    {"id": "slicer.hz", "op": "slicer", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], "rate": 2.0, "duty": 0.375, "sample_rate": 16.0}, "expected": [1.0, 2.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.0, 10.0, 11.0, 0.0, 0.0, 0.0, 0.0, 0.0, 17.0, 18.0, 19.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "2 Hz at fs 16: 8-sample cycle, open for the first 3"},
+    {"id": "slicer.edge_closed", "op": "slicer", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], "rate": 0.25, "duty": 0.25, "sample_rate": 1.0}, "expected": [1.0, 0.0, 0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 9.0, 0.0, 0.0, 0.0, 13.0, 0.0, 0.0, 0.0, 17.0, 0.0, 0.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "p = 0.25 = duty is closed: only the first of every 4"},
+    {"id": "slicer.duty_one", "op": "slicer", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], "rate": 0.125, "duty": 1.0, "sample_rate": 1.0}, "expected": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "duty 1: the input"},
+    {"id": "slicer.duty_zero", "op": "slicer", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], "rate": 0.125, "duty": 0.0, "sample_rate": 1.0}, "expected": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "duty 0: silence"},
+    {"id": "slicer.rate_zero", "op": "slicer", "args": {"samples": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], "rate": 0.0, "duty": 0.1, "sample_rate": 1.0}, "expected": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "rate 0: stays at p = 0, open"},
+    {"id": "slicer.duty_high", "op": "slicer", "args": {"samples": [1.0, 2.0], "rate": 1.0, "duty": 1.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "duty must be at most 1"},
+    {"id": "slicer.rate_negative", "op": "slicer", "args": {"samples": [1.0, 2.0], "rate": -1.0, "duty": 0.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "rate must be at least 0"},
+    {"id": "slicer.sample_rate_zero", "op": "slicer", "args": {"samples": [1.0, 2.0], "rate": 1.0, "duty": 0.5, "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "slicer.empty", "op": "slicer", "args": {"samples": [], "rate": 1.0, "duty": 0.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "samples must not be empty"}
+  ]
+}

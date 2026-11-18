@@ -157,6 +157,7 @@ from .dsp import (
     schmitt_trigger,
     schur,
     slew_limiter,
+    slicer,
     soft_clip,
     sos_group_delay,
     sos_response,
@@ -447,7 +448,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.92"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.93"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -824,6 +825,7 @@ __all__ = [
     "schur",
     "sfdr",
     "slew_limiter",
+    "slicer",
     "sliding_dft",
     "soft_clip",
     "sos_group_delay",

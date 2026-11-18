@@ -3182,6 +3182,22 @@ def tremolo(
     return y
 
 
+def slicer(samples: ArrayLike, rate: float, duty: float, sample_rate: float) -> NDArray[np.float64]:
+    """Trance gate: pass the first ``duty`` of each ``1/rate`` second cycle and mute the rest
+    (conventions: Slicer; ADR 0294)."""
+    f = real(rate, "rate")
+    if not f >= 0:
+        raise ValueError("rate must be at least 0")
+    d = real(duty, "duty")
+    if not 0 <= d <= 1:
+        raise ValueError("duty must be in [0, 1]")
+    fs = _rate(sample_rate)
+    x = _mono(samples)
+    t = f * (np.arange(x.size) / fs)
+    y: NDArray[np.float64] = np.where(t - np.floor(t) < d, x, 0.0)
+    return y
+
+
 def ring_modulate(
     samples: ArrayLike, frequency: float, sample_rate: float, *, phase: float = 0.0
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

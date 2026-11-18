@@ -2112,6 +2112,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `f_k = low·(high/low)^((k + 1/2)/bands)` and is `(1/q)·svf(·, f_k, q, fs, "bandpass")`; `y =
   Σ_k C_k·envelope_follower(M_k, attack, release)`. Real, finite, non-empty signals of one
   length; `bands` from 1 to 1000; `0 < low < high < fs/2`. **(implemented)**
+- **Slicer** (`slicer(samples, rate, duty, sample_rate)`, C# `Dsp.Slicer`,
+  [ADR 0294](adr/0294-slicer.md)): with `t = rate·(n/fs)` and `p = t − floor(t)`, `y[n] = x[n]`
+  where `p < duty` and 0 otherwise. Real, finite, non-empty samples; `rate` finite and at least
+  0; `duty` in [0, 1]. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero
