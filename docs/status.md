@@ -9,10 +9,9 @@ Updated with every chunk of work. Dates are absolute.
    - a pulse-width-modulated square in `waveforms` (`pwm(sample_rate, frequency, duty)`: `duty`
      a per-sample array in [0, 1], `A` for `u < duty[n]` and `−A` after, the oscillators'
      phase).
-   - a PolyBLEP square in `waveforms` (`polyblep_square(sample_rate, num_samples, frequency,
-     duty=0.5, amplitude=1, phase=0)`: the naive square plus the PolyBLEP residual `r(u)` at
-     the rising edge and minus `r(frac(u + 1 − duty))` at the falling one, the residual of
-     ADR 0310).
+   - a ring modulator in `waveforms` or `dsp` (`ring_modulate(samples, carrier_frequency,
+     sample_rate, mix=1)`: `(1 − mix)·x + mix·x·cos(2π·f·n/fs)`; grep `dsp.py` first for an
+     existing mixer).
 
 ## Built
 
@@ -2593,6 +2592,12 @@ Updated with every chunk of work. Dates are absolute.
   than ten times lower than the naive form.
   Python 7044 passed, 2 skipped; .NET 6258 passed; conformance 4351/4351 in both. Version
   2026.11.17.109.
+- 2026-11-18: PolyBLEP square (ADR 0311): `polyblep_square(sample_rate, num_samples,
+  frequency, duty=0.5, amplitude=1, phase=0)` in `waveforms` (C# `Waveforms.PolyblepSquare`):
+  the naive square with the PolyBLEP residual added at the rise and taken off at the fall, any
+  duty; the residual is now one helper shared with the PolyBLEP sawtooth.
+  Python 7063 passed, 2 skipped; .NET 6276 passed; conformance 4363/4363 in both. Version
+  2026.11.18.0.
 
 ## Not built
 

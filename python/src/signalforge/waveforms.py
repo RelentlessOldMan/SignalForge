@@ -306,7 +306,12 @@ def polyblep_sawtooth(
     f = real(frequency, "frequency")
     if not abs(f) <= 0.5 * sample_rate:
         raise ValueError("|frequency| must be at most sample_rate/2")
-    dt = abs(f) / sample_rate
+    y: NDArray[np.float64] = amp * ((2 * u - 1) - _blep(u, abs(f) / sample_rate))
+    return y
+
+
+def _blep(u: NDArray[np.float64], dt: float) -> NDArray[np.float64]:
+    """The PolyBLEP residual at phase ``u`` for a jump at ``u = 0`` (ADR 0310)."""
     r = np.zeros(u.size)
     after = u < dt
     t = u[after] / dt
@@ -314,7 +319,32 @@ def polyblep_sawtooth(
     before = ~after & (u > 1 - dt)
     t = (u[before] - 1) / dt
     r[before] = t * t + t + t + 1
-    y: NDArray[np.float64] = amp * ((2 * u - 1) - r)
+    return r
+
+
+def polyblep_square(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    duty: float = 0.5,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Naive square with the PolyBLEP residual at both edges, ``phase`` in cycles
+    (conventions: PolyBLEP square; ADR 0311)."""
+    d = real(duty, "duty")
+    if not 0 <= d <= 1:
+        raise ValueError("duty must be in [0, 1]")
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    f = real(frequency, "frequency")
+    if not abs(f) <= 0.5 * sample_rate:
+        raise ValueError("|frequency| must be at most sample_rate/2")
+    dt = abs(f) / sample_rate
+    low = u < d
+    v = u - d
+    v[low] += 1
+    naive = np.where(low, amp, -amp)
+    y: NDArray[np.float64] = naive + amp * _blep(u, dt) - amp * _blep(v, dt)
     return y
 
 
