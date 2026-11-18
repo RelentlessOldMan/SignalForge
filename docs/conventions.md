@@ -2064,6 +2064,12 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `H(s) = (T·s + 1)/(s + T)`, `T = 10^(gain_db/40)`: with `t = tan((π·frequency)/fs)`,
   `b0 = (T + t)/(1 + T·t)`, `b1 = (t − T)/(1 + T·t)`, `a1 = (T·t − 1)/(1 + T·t)`. Gain `1/T` at
   DC, `T` at fs/2, 1 at the pivot. `0 < frequency < fs/2`; finite `gain_db`. **(implemented)**
+- **Linkwitz-Riley crossover** (`linkwitz_riley(order, cutoff, sample_rate)` returning
+  `Crossover(low, high)`, C# `Dsp.LinkwitzRiley`, [ADR 0284](adr/0284-linkwitz-riley.md)): with
+  `N = order/2`, `low` is the `butterworth_lowpass(N)` sections twice over and `high` the
+  `butterworth_highpass(N)` sections twice over, the first `high` section's `b` negated when `N`
+  is odd. Both are 1/2 in magnitude at the cutoff; `|low + high| = 1`. Even `order` from 2 to
+  2000; the Butterworth cutoff rules. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

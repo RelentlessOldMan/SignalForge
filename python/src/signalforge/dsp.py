@@ -1621,6 +1621,29 @@ def butterworth_highpass(order: int, cutoff: float, sample_rate: float) -> NDArr
     return _butterworth(order, cutoff, sample_rate, high=True)
 
 
+@dataclass(frozen=True, eq=False)
+class Crossover:
+    """The low and high bands of a crossover, each a cascade of second-order sections
+    (conventions: Linkwitz-Riley crossover; ADR 0284)."""
+
+    low: NDArray[np.float64]
+    high: NDArray[np.float64]
+
+
+def linkwitz_riley(order: int, cutoff: float, sample_rate: float) -> Crossover:
+    """Linkwitz-Riley crossover of even ``order``: each band a squared Butterworth of half the
+    order, the two summing to an all-pass (conventions: Linkwitz-Riley crossover; ADR 0284)."""
+    n = count(order, "order")
+    if n < 2 or n > 2000 or n % 2:
+        raise ValueError("order must be even, from 2 to 2000")
+    lo = butterworth_lowpass(n // 2, cutoff, sample_rate)
+    hi = butterworth_highpass(n // 2, cutoff, sample_rate)
+    high = np.vstack([hi, hi])
+    if (n // 2) % 2:
+        high[0, :3] = -high[0, :3]
+    return Crossover(np.vstack([lo, lo]), high)
+
+
 def _eq_terms(
     frequency: float, gain_db: float, q: float, sample_rate: float
 ) -> tuple[float, float, float, float]:

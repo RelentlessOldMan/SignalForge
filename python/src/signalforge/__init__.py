@@ -21,6 +21,7 @@ from .channel import (
 from .core import Signal
 from .dsp import (
     ArOrderSelection,
+    Crossover,
     FirFilter,
     IirFilter,
     LeftRight,
@@ -110,6 +111,7 @@ from .dsp import (
     levinson,
     limit,
     line_spectral_frequencies,
+    linkwitz_riley,
     low_shelf,
     lpc_cepstrum,
     lpc_to_autocorrelation,
@@ -435,7 +437,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.82"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.83"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -448,6 +450,7 @@ __all__ = [
     "CepstrumPitch",
     "Coherence",
     "CrossSpectralDensity",
+    "Crossover",
     "DbBandwidth",
     "DfeEqualization",
     "DfeTaps",
@@ -677,6 +680,7 @@ __all__ = [
     "limit",
     "lin_to_db",
     "line_spectral_frequencies",
+    "linkwitz_riley",
     "lms_equalizer",
     "lomb_scargle",
     "lomb_scargle_bootstrap",

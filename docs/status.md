@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Linkwitz-Riley crossover (`linkwitz_riley(order, cutoff, sample_rate)`, even order, the
-     low and high cascades as two squared Butterworths whose sum is all-pass).
+   - a two-band splitter (`crossover_split(samples, order, cutoff, sample_rate)`, the
+     Linkwitz-Riley bands applied from rest, returning the low and high signals, whose sum is
+     the all-pass of the input).
    - a de-esser (`de_esser(samples, cutoff, q, threshold_db, ratio, attack, release, sample_rate)`,
      the sidechain compressor keyed on the state-variable band-pass of the input).
 
@@ -2449,6 +2450,12 @@ Updated with every chunk of work. Dates are absolute.
   `+gain_db/2` at fs/2, unity at the pivot.
   Python 6745 passed, 2 skipped; .NET 5977 passed; conformance 4125/4125 in both. Version
   2026.11.17.82.
+- 2026-11-17: Linkwitz-Riley crossover (ADR 0284): `linkwitz_riley(order, cutoff, sample_rate)`
+  in `dsp` (C# `Dsp.LinkwitzRiley`), returning a new `Crossover(low, high)` of squared
+  Butterworth cascades, the high band inverted when half the order is odd, summing to an
+  all-pass.
+  Python 6758 passed, 2 skipped; .NET 5987 passed; conformance 4132/4132 in both. Version
+  2026.11.17.83.
 
 ## Not built
 
