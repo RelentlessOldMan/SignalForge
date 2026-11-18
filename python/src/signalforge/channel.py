@@ -451,6 +451,27 @@ def rapp_amplifier(
     return y
 
 
+def color_noise(white: ArrayLike, exponent: float) -> NDArray[np.float64]:
+    """Shape real white samples to a ``1/f**exponent`` power spectrum: DFT bin ``k`` scaled by
+    ``min(k, N - k)**(-exponent/2)``, bin 0 by 0 (conventions: Colored noise; ADR 0318)."""
+    x = np.asarray(white)
+    if np.iscomplexobj(x) or x.dtype == np.bool_:
+        raise ValueError("white must be real")
+    x = np.asarray(x, dtype=np.float64)
+    if x.ndim != 1:
+        raise ValueError("white must be one-dimensional")
+    if not np.all(np.isfinite(x)):
+        raise ValueError("white must be finite")
+    e = real(exponent, "exponent")
+    if x.size == 0:
+        return x.copy()
+    k = np.arange(x.size // 2 + 1, dtype=np.float64)
+    g = np.zeros(k.size)
+    g[1:] = k[1:] ** (-e / 2)
+    y: NDArray[np.float64] = np.fft.irfft(np.fft.rfft(x) * g, x.size)
+    return y
+
+
 def dc_offset(samples: ArrayLike, offset: complex) -> NDArray[np.complex128]:
     """``samples + offset`` (conventions: Channel, DC offset)."""
     x = np.asarray(samples)

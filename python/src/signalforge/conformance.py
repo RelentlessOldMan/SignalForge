@@ -379,6 +379,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "iq_imbalance": channel.iq_imbalance,
     "iq_image_rejection_db": channel.iq_image_rejection_db,
     "dc_offset": channel.dc_offset,
+    "color_noise": channel.color_noise,
     "saleh_amplifier": channel.saleh_amplifier,
     "rapp_amplifier": channel.rapp_amplifier,
     "phase_noise": channel.phase_noise,

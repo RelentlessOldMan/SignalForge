@@ -6,10 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - colored noise in `channel` or `waveforms` (`color_noise(white, exponent)`: the real FFT of
-     the given samples, bin `k ≥ 1` scaled by `k^(−exponent/2)`, bin 0 set to 0, inverse FFT;
-     `exponent` 1 pink, 2 brown, −1 blue. Deterministic given the samples, so vectors work
-     across languages; grep `spectral.py` for an existing FFT-domain shaper first).
+   - a Karplus–Strong pluck in `waveforms` (`karplus_strong(excitation, num_samples, delay,
+     decay=1)`: `y[n] = x[n]` for `n < delay` (the excitation, zero-padded), then
+     `y[n] = decay·(y[n−delay] + y[n−delay−1])/2`; deterministic given the excitation).
+   - a phase-distortion oscillator in `waveforms` (`phase_distortion(sample_rate, num_samples,
+     frequency, knee, amplitude=1, phase=0)`: `y = −A·cos(2π·w(u))`, `w` piecewise linear
+     through `(0, 0)`, `(knee, 1/2)`, `(1, 1)`; `knee = 1/2` is a cosine, small `knee` a
+     bright saw-like shape).
 
 ## Built
 
@@ -2628,6 +2631,12 @@ Updated with every chunk of work. Dates are absolute.
   difference of the squared naive sawtooth, with a true predecessor for the first sample.
   Python 7145 passed, 2 skipped; .NET 6350 passed; conformance 4416/4416 in both. Version
   2026.11.18.6.
+- 2026-11-18: Colored noise (ADR 0318): `color_noise(white, exponent)` in `channel` (C#
+  `Channel.ColorNoise`): DFT bin `k` of the given white samples scaled by
+  `min(k, N − k)^(−exponent/2)`, bin 0 by 0; pink, brown, blue. Deterministic given the
+  samples, so the vectors check it sample for sample.
+  Python 7162 passed, 2 skipped; .NET 6361 passed; conformance 4424/4424 in both. Version
+  2026.11.18.7.
 
 ## Not built
 

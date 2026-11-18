@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "color_noise",
+  "description": "Colored noise (conventions: Colored noise; ADR 0318).",
+  "cases": [
+    {"id": "color_noise.white_less_mean", "op": "color_noise", "args": {"white": [0.5, -1.25, 2.0, 0.75, -0.5, 1.5, -2.0, 0.25], "exponent": 0.0}, "expected": [0.34374999999999856, -1.4062499999999993, 1.8437500000000002, 0.5937499999999997, -0.6562499999999988, 1.343749999999999, -2.15625, 0.09375000000000017], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "exponent 0: the samples less their mean, 1.25/8"},
+    {"id": "color_noise.pink_even", "op": "color_noise", "args": {"white": [0.5, -1.25, 2.0, 0.75, -0.5, 1.5, -2.0, 0.25], "exponent": 1.0}, "expected": [0.07339004358522427, -0.765312718136989, 1.3311173681581159, 0.6320201731631939, -0.22964004358522433, 0.6563976751920334, -1.4873673681581157, -0.2106051302182387], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "pink, N = 8: bin 4 is the Nyquist bin, scaled by 4^(-1/2)"},
+    {"id": "color_noise.brown_odd", "op": "color_noise", "args": {"white": [1.0, 0.0, -0.5, 0.25, 0.5, -1.0, 0.75, -0.25, 0.125], "exponent": 2.0}, "expected": [0.4759009516946033, 0.03521029122604815, -0.2670848221041344, -0.015719781563520815, 0.0013044954338275704, -0.44356332604401355, 0.10926327431336215, -0.05040367554876444, 0.15509259259259292], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "brown, N = 9: no Nyquist bin"},
+    {"id": "color_noise.blue", "op": "color_noise", "args": {"white": [1.0, 0.0, -0.5, 0.25, 0.5, -1.0, 0.75, -0.25, 0.125], "exponent": -1.0}, "expected": [1.3353179950506895, -0.23896597315581178, -0.8916140119587225, 0.27584809574691244, 0.8773289766642127, -1.8912061891347973, 1.3477540387992306, -0.7105317871571049, -0.1039311448546068], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "blue: the high bins are raised"},
+    {"id": "color_noise.impulse", "op": "color_noise", "args": {"white": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0], "exponent": 1.5}, "expected": [0.6046497421089253, -0.005549149192031875, -0.19265203664175487, -0.20824737044135164, -0.19265203664175515, -0.005549149192032078], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "an impulse: the output is h itself"},
+    {"id": "color_noise.one", "op": "color_noise", "args": {"white": [3.0], "exponent": 1.0}, "expected": [0.0], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "N = 1: only bin 0, set to 0"},
+    {"id": "color_noise.empty", "op": "color_noise", "args": {"white": [], "exponent": 1.0}, "expected": [], "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "no samples: nothing out"},
+    {"id": "color_noise.exponent_infinite", "op": "color_noise", "args": {"white": [1.0, 2.0, 3.0], "exponent": "inf"}, "error": "invalid_argument", "source": "exponent must be finite"}
+  ]
+}

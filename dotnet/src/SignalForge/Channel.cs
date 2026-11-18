@@ -521,6 +521,38 @@ public static class Channel
         return acc;
     }
 
+    /// <summary>Shapes real white samples to a 1/f^<paramref name="exponent"/> power spectrum:
+    /// DFT bin <c>k</c> scaled by <c>min(k, N − k)^(−exponent/2)</c>, bin 0 by 0 (conventions:
+    /// Colored noise; ADR 0318).</summary>
+    /// <param name="white">The white samples, finite; may be empty.</param>
+    /// <param name="exponent">The spectral exponent, finite: 1 pink, 2 brown, −1 blue.</param>
+    /// <returns>The shaped samples, as many as <paramref name="white"/>.</returns>
+    /// <exception cref="ArgumentException">A sample or the exponent is not finite.</exception>
+    public static double[] ColorNoise(ReadOnlySpan<double> white, double exponent)
+    {
+        foreach (double v in white)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("white must be finite", nameof(white));
+        }
+        if (!double.IsFinite(exponent))
+            throw new ArgumentOutOfRangeException(nameof(exponent), exponent, "must be finite");
+        int n = white.Length;
+        if (n == 0)
+            return [];
+        Complex[] x = Spectral.Fft(white);
+        for (int k = 0; k < n; k++)
+        {
+            int m = Math.Min(k, n - k);
+            x[k] *= m == 0 ? 0.0 : Math.Pow(m, -exponent / 2);
+        }
+        Complex[] y = Spectral.Ifft(x);
+        var r = new double[n];
+        for (int i = 0; i < n; i++)
+            r[i] = y[i].Real;
+        return r;
+    }
+
     private static double ImbalanceGain(double gainDb, double phase)
     {
         if (!double.IsFinite(gainDb))

@@ -860,6 +860,7 @@ public static class Conformance
                 t => Channel.SalehAmplifier(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "rapp_amplifier" => Bind((Complexes(a.Get("samples")), a.D("gain"), a.D("saturation"), a.D("smoothness")),
                 t => Channel.RappAmplifier(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "color_noise" => Bind((Reals(a.Get("white")), a.D("exponent")), t => Channel.ColorNoise(t.Item1, t.Item2)),
             "dc_offset" => Bind((Complexes(a.Get("samples")), ComplexScalar(a.Get("offset"))), t => Channel.DcOffset(t.Item1, t.Item2)),
             "evm" => Bind((Complexes(a.Get("measured")), Complexes(a.Get("reference"))), t => Metrics.Evm(t.Item1, t.Item2)),
             "qpsk_ber_rayleigh_theory" => Bind(a.D("eb_n0_db"), Metrics.QpskBerRayleighTheory),

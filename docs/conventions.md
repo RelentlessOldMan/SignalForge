@@ -2282,6 +2282,11 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   full 3 dB width `linewidth_hz`; `E[e^{jφ[n]}] = e^{−nσ²/2}`. `linewidth_hz` finite and `≥ 0`
   (0 is the identity); seeded as for AWGN, with streams that differ between languages.
   **(implemented)**
+- **Colored noise** (`color_noise(white, exponent)`, C# `Channel.ColorNoise`,
+  [ADR 0318](adr/0318-color-noise.md)): `X = DFT(white)`; bin `k` scaled by
+  `min(k, N − k)^(−exponent/2)`, bin 0 by 0; `y = Re(IDFT(·))`, circular, not normalized. Real,
+  one-dimensional, finite `white` (may be empty); finite `exponent`: 1 pink, 2 brown, −1
+  blue. **(implemented)**
 - **DC offset** (`dc_offset(samples, offset)`): `y = x + offset`, `offset` a complex number (a real
   one is `offset + 0j`), finite in both parts. **(implemented)**
 - **Multipath** (`multipath(samples, delays, gains)`, [ADR 0038](adr/0038-multipath.md)): a static

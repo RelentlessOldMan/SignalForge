@@ -5,6 +5,7 @@ from .channel import (
     clock_drift,
     clock_jitter,
     clock_offset,
+    color_noise,
     dc_offset,
     farrow_delay,
     farrow_resample,
@@ -481,7 +482,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.6"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.7"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -627,6 +628,7 @@ __all__ = [
     "coherence_confidence_interval",
     "coherence_threshold",
     "coherent_output_power",
+    "color_noise",
     "comb_filter",
     "compress",
     "compressor_gain",
