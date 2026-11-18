@@ -6,12 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a tape stop (`tape_stop(samples, start, length)`: from sample `start` the playback speed
-     falls linearly from 1 to 0 over `length` samples, the read position is its running sum,
-     read with linear interpolation; silence after).
    - a Freeverb-style damped comb (`lowpass_feedback_comb(samples, delay, feedback, damping)`:
      the feedback path through a one-pole low-pass, `f[n] = (1 − d)·y[n−D] + d·f[n−1]`,
      `y[n] = x[n] + g·f[n]`).
+   - a reverse delay (`reverse_delay(samples, block, mix)`: each `block`-sample chunk played
+     backwards one block late, `wet[n] = x[(q − 1)·B + (B − 1 − r)]` with `n = q·B + r`, zero
+     for the first block; dry/wet mix).
 
 ## Built
 
@@ -2514,6 +2514,11 @@ Updated with every chunk of work. Dates are absolute.
   feedback combs through series Schroeder all-passes, dry/wet blend.
   Python 6876 passed, 2 skipped; .NET 6096 passed; conformance 4219/4219 in both. Version
   2026.11.17.94.
+- 2026-11-17: Tape stop (ADR 0296): `tape_stop(samples, start, length)` in `dsp` (C#
+  `Dsp.TapeStop`, real): from `start` the speed falls as `1 − k/L`, the input is read at the
+  closed-form running sum `start + (k − k(k+1)/(2L))` with linear interpolation, then silence.
+  Python 6886 passed, 2 skipped; .NET 6106 passed; conformance 4227/4227 in both. Version
+  2026.11.17.95.
 
 ## Not built
 

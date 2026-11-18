@@ -301,6 +301,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "vocoder": dsp.vocoder,
     "slicer": dsp.slicer,
     "schroeder_reverb": dsp.schroeder_reverb,
+    "tape_stop": dsp.tape_stop,
     "transient_shaper": dsp.transient_shaper,
     "fade": dsp.fade,
     "crossfade": dsp.crossfade,

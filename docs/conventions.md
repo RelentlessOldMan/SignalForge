@@ -2122,6 +2122,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   divided once, then `allpass_comb(·, d, allpass_gain)` for each `d` of `allpasses` in order;
   `y = (1 − mix)·x + mix·w`. Real samples; 1 to 64 combs, 0 to 64 all-passes, delays at least
   1, gains `|g| < 1`, `mix` in [0, 1]. **(implemented)**
+- **Tape stop** (`tape_stop(samples, start, length)`, C# `Dsp.TapeStop`,
+  [ADR 0296](adr/0296-tape-stop.md)): with `k = n − start` and `L = length`, the input for
+  `k ≤ 0`; for `1 ≤ k < L`, `p = start + (k − k(k+1)/(2L))`, `i = ⌊p⌋`, `f = p − i`,
+  `y = x[i]·(1 − f) + x[i+1]·f`; 0 for `k ≥ L`. Real, finite, non-empty samples; integer
+  `start ≥ 0`, `length ≥ 1`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

@@ -3231,6 +3231,26 @@ def slicer(samples: ArrayLike, rate: float, duty: float, sample_rate: float) -> 
     return y
 
 
+def tape_stop(samples: ArrayLike, start: int, length: int) -> NDArray[np.float64]:
+    """Slow the playback from sample ``start`` to a halt over ``length`` samples, read with
+    linear interpolation, then silence (conventions: Tape stop; ADR 0296)."""
+    s = count(start, "start")
+    n_len = count(length, "length")
+    if n_len < 1:
+        raise ValueError("length must be at least 1")
+    x = _mono(samples)
+    k = (np.arange(x.size) - s).astype(np.float64)
+    y = x.copy()
+    mid = (k >= 1) & (k < n_len)
+    km = k[mid]
+    p = s + (km - km * (km + 1) / (2.0 * n_len))
+    i = np.floor(p).astype(np.int64)
+    f = p - i
+    y[mid] = x[i] * (1 - f) + x[i + 1] * f
+    y[k >= n_len] = 0.0
+    return y
+
+
 def ring_modulate(
     samples: ArrayLike, frequency: float, sample_rate: float, *, phase: float = 0.0
 ) -> NDArray[np.complex128] | NDArray[np.float64]:

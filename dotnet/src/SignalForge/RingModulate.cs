@@ -452,4 +452,44 @@ public static partial class Dsp
         }
         return y;
     }
+
+    /// <summary>Slows the playback from sample <paramref name="start"/> to a halt over
+    /// <paramref name="length"/> samples, read with linear interpolation, then silence
+    /// (conventions: Tape stop; ADR 0296).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="start">The sample where the slowdown begins, at least 0.</param>
+    /// <param name="length">The samples it takes to stop, at least 1.</param>
+    /// <returns>One output per sample.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] TapeStop(ReadOnlySpan<double> samples, int start, int length)
+    {
+        if (start < 0)
+            throw new ArgumentOutOfRangeException(nameof(start), "start must be at least 0");
+        if (length < 1)
+            throw new ArgumentOutOfRangeException(nameof(length), "length must be at least 1");
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        double[] y = new double[samples.Length];
+        for (int n = 0; n < y.Length; n++)
+        {
+            double k = (double)n - start;
+            if (k < 1)
+            {
+                y[n] = samples[n];
+            }
+            else if (k < length)
+            {
+                double p = start + (k - k * (k + 1) / (2.0 * length));
+                int i = (int)Math.Floor(p);
+                double f = p - i;
+                y[n] = samples[i] * (1 - f) + samples[i + 1] * f;
+            }
+        }
+        return y;
+    }
 }
