@@ -6,13 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a Karplus–Strong pluck in `waveforms` (`karplus_strong(excitation, num_samples, delay,
-     decay=1)`: `y[n] = x[n]` for `n < delay` (the excitation, zero-padded), then
-     `y[n] = decay·(y[n−delay] + y[n−delay−1])/2`; deterministic given the excitation).
-   - a phase-distortion oscillator in `waveforms` (`phase_distortion(sample_rate, num_samples,
-     frequency, knee, amplitude=1, phase=0)`: `y = −A·cos(2π·w(u))`, `w` piecewise linear
-     through `(0, 0)`, `(knee, 1/2)`, `(1, 1)`; `knee = 1/2` is a cosine, small `knee` a
-     bright saw-like shape).
+   - a bandlimited impulse train in `waveforms` (`blit(sample_rate, num_samples, frequency,
+     amplitude=1, phase=0)`: `H` the number of harmonics `m ≥ 1` with `m·|f| < fs/2`;
+     `y = A·(1 + 2·Σ_{m=1}^{H} cos(2π·m·u))/(2H + 1)`, by the Dirichlet closed form
+     `sin((2H+1)πu)/((2H+1)·sin(πu))`, 1 at `u = 0`).
+   - a Chebyshev waveshaper in `dsp` (`chebyshev_shaper(samples, weights)`:
+     `y = Σ_k weights[k]·T_k(x)` by Clenshaw, `|x| ≤ 1`; a unit sine in gives harmonic `k` at
+     `weights[k]`).
 
 ## Built
 
@@ -2637,6 +2637,12 @@ Updated with every chunk of work. Dates are absolute.
   samples, so the vectors check it sample for sample.
   Python 7162 passed, 2 skipped; .NET 6361 passed; conformance 4424/4424 in both. Version
   2026.11.18.7.
+- 2026-11-18: Phase-distortion oscillator (ADR 0319): `phase_distortion(sample_rate,
+  num_samples, frequency, knee, amplitude=1, phase=0)` in `waveforms` (C#
+  `Waveforms.PhaseDistortion`): `−A·cos(2π·w(u))`, `w` piecewise linear through `(0, 0)`,
+  `(knee, 1/2)`, `(1, 1)`. (A Karplus–Strong candidate was dropped from Next: ADR 0304 has it.)
+  Python 7177 passed, 2 skipped; .NET 6374 passed; conformance 4433/4433 in both. Version
+  2026.11.18.8.
 
 ## Not built
 

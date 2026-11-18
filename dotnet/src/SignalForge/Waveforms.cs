@@ -773,4 +773,30 @@ public static class Waveforms
         }
         return u;
     }
+
+    /// <summary>Phase-distortion oscillator: <c>−A·cos(2π·w(u))</c> with <c>w</c> piecewise
+    /// linear through (0, 0), (knee, 1/2) and (1, 1) (conventions: Phase-distortion oscillator;
+    /// ADR 0319).</summary>
+    /// <param name="sampleRate">The sample rate, positive and finite.</param>
+    /// <param name="numSamples">The length, at least 0.</param>
+    /// <param name="frequency">The frequency, finite.</param>
+    /// <param name="knee">Where in the cycle the phase reaches 1/2, finite, strictly between
+    /// 0 and 1; 1/2 gives a cosine.</param>
+    /// <param name="amplitude">The peak amplitude, finite.</param>
+    /// <param name="phase">The starting phase in cycles, finite.</param>
+    /// <returns><paramref name="numSamples"/> samples.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static double[] PhaseDistortion(double sampleRate, int numSamples, double frequency,
+        double knee, double amplitude = 1.0, double phase = 0.0)
+    {
+        double[] u = Cycle(sampleRate, numSamples, frequency, amplitude, phase);
+        if (!(knee > 0 && knee < 1))
+            throw new ArgumentOutOfRangeException(nameof(knee), knee, "must be strictly between 0 and 1");
+        for (int n = 0; n < u.Length; n++)
+        {
+            double w = u[n] < knee ? u[n] / (2 * knee) : 0.5 + ((u[n] - knee) / (2 * (1 - knee)));
+            u[n] = -amplitude * Math.Cos(2 * Math.PI * w);
+        }
+        return u;
+    }
 }

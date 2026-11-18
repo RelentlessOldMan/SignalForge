@@ -457,6 +457,25 @@ def polyblep_triangle(
     return y
 
 
+def phase_distortion(
+    sample_rate: float,
+    num_samples: int,
+    frequency: float,
+    knee: float,
+    amplitude: float = 1.0,
+    phase: float = 0.0,
+) -> NDArray[np.float64]:
+    """Phase-distortion oscillator: ``-A cos(2 pi w(u))`` with ``w`` piecewise linear through
+    ``(0, 0)``, ``(knee, 1/2)``, ``(1, 1)`` (conventions: Phase-distortion oscillator; ADR 0319)."""
+    u, amp = _cycle(sample_rate, num_samples, frequency, amplitude, phase)
+    k = real(knee, "knee")
+    if not 0 < k < 1:
+        raise ValueError("knee must be between 0 and 1, exclusive")
+    w = np.where(u < k, u / (2 * k), 0.5 + (u - k) / (2 * (1 - k)))
+    y: NDArray[np.float64] = -amp * np.cos(2 * np.pi * w)
+    return y
+
+
 def supersaw(
     sample_rate: float,
     num_samples: int,

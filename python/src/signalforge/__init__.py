@@ -467,6 +467,7 @@ from .waveforms import (
     hard_sync_sawtooth,
     multitone,
     newman_phases,
+    phase_distortion,
     polyblep_pwm,
     polyblep_sawtooth,
     polyblep_square,
@@ -482,7 +483,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.7"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.8"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -792,6 +793,7 @@ __all__ = [
     "peak_hold",
     "peak_widths",
     "peaking_eq",
+    "phase_distortion",
     "phase_noise",
     "phase_noise_spurs",
     "phase_noise_ssb",

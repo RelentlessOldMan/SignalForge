@@ -71,6 +71,11 @@ rule for code not written yet.
   oscillators; `y[n] = A` for `u[n] < duty[n]`, else `−A`. `duty` a 1-D real array (may be
   empty), every value in [0, 1]; positive finite `sample_rate`; finite `frequency`,
   `amplitude`, `phase`. **(implemented)**
+- **Phase-distortion oscillator** (`phase_distortion(sample_rate, num_samples, frequency, knee,
+  amplitude=1, phase=0)`, C# `Waveforms.PhaseDistortion`,
+  [ADR 0319](adr/0319-phase-distortion.md)): `u` as for the oscillators; `w = u/(2·knee)` for
+  `u < knee`, else `1/2 + (u − knee)/(2·(1 − knee))`; `y = −A·cos(2π·w)`. Finite `frequency`,
+  `amplitude`, `phase`; finite `0 < knee < 1`. **(implemented)**
 - **DPW sawtooth** (`dpw_sawtooth(sample_rate, num_samples, frequency, amplitude=1,
   phase=0)`, C# `Waveforms.DpwSawtooth`, [ADR 0317](adr/0317-dpw-sawtooth.md)): `u[n]` as for
   the oscillators, also at `n = −1`; `x = 2·u − 1`;
