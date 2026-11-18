@@ -599,6 +599,7 @@ public static class Conformance
             "resampler" => ChunkedOp(a, (a.I("up"), a.I("down"), a.Has("taps") ? Reals(a.Get("taps")) : null),
                 c => new Resampler(c.Item1, c.Item2, c.Item3), (f, x) => f.Process(x), (f, z) => f.Process(z)),
             "butterworth_lowpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthLowpass(t.Item1, t.Item2, t.Item3)),
+            "crossover_split" => Bind((Reals(a.Get("samples")), a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.CrossoverSplit(t.Item1, t.Item2, t.Item3, t.Item4)),
             "linkwitz_riley" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.LinkwitzRiley(t.Item1, t.Item2, t.Item3)),
             "butterworth_highpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.ButterworthHighpass(t.Item1, t.Item2, t.Item3)),
             "chebyshev1_lowpass" => Bind((a.I("order"), a.D("ripple_db"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.Chebyshev1Lowpass(t.Item1, t.Item2, t.Item3, t.Item4)),

@@ -6,6 +6,12 @@ namespace SignalForge;
 /// <param name="High">The high band's sections.</param>
 public sealed record Crossover(double[][] Low, double[][] High);
 
+/// <summary>The low and high bands of a split signal (conventions: Two-band splitter;
+/// ADR 0285).</summary>
+/// <param name="Low">The low band.</param>
+/// <param name="High">The high band.</param>
+public sealed record Bands(double[] Low, double[] High);
+
 public static partial class Dsp
 {
     /// <summary>Linkwitz-Riley crossover of even <paramref name="order"/>: each band a squared
@@ -30,5 +36,26 @@ public static partial class Dsp
                 high[0][i] = -high[0][i];
         }
         return new Crossover(low, high);
+    }
+
+    /// <summary>Splits real samples into the low and high bands of a Linkwitz-Riley crossover,
+    /// each run from rest (conventions: Two-band splitter; ADR 0285).</summary>
+    /// <param name="samples">Real, finite samples, at least one.</param>
+    /// <param name="order">The crossover order, even, from 2 to 2000.</param>
+    /// <param name="cutoff">The crossover frequency, Hz, between 0 and sampleRate/2.</param>
+    /// <param name="sampleRate">The sample rate, Hz.</param>
+    /// <returns>The low and high bands, each as long as the input.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static Bands CrossoverSplit(ReadOnlySpan<double> samples, int order, double cutoff, double sampleRate)
+    {
+        Crossover lr = LinkwitzRiley(order, cutoff, sampleRate);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        foreach (double v in samples)
+        {
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+        }
+        return new Bands(new IirFilter(lr.Low).Process(samples), new IirFilter(lr.High).Process(samples));
     }
 }

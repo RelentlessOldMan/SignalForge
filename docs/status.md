@@ -6,11 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a two-band splitter (`crossover_split(samples, order, cutoff, sample_rate)`, the
-     Linkwitz-Riley bands applied from rest, returning the low and high signals, whose sum is
-     the all-pass of the input).
    - a de-esser (`de_esser(samples, cutoff, q, threshold_db, ratio, attack, release, sample_rate)`,
      the sidechain compressor keyed on the state-variable band-pass of the input).
+   - a two-band compressor (`multiband_compress(samples, order, cutoff, sample_rate, low, high)`,
+     each `crossover_split` band through its own `compress` settings, then summed).
 
 ## Built
 
@@ -2456,6 +2455,11 @@ Updated with every chunk of work. Dates are absolute.
   all-pass.
   Python 6758 passed, 2 skipped; .NET 5987 passed; conformance 4132/4132 in both. Version
   2026.11.17.83.
+- 2026-11-17: Two-band splitter (ADR 0285): `crossover_split(samples, order, cutoff,
+  sample_rate)` in `dsp` (C# `Dsp.CrossoverSplit`, real), returning a new `Bands(low, high)`: the
+  Linkwitz-Riley bands run from rest, summing to the crossover's all-pass of the input.
+  Python 6767 passed, 2 skipped; .NET 5995 passed; conformance 4138/4138 in both. Version
+  2026.11.17.84.
 
 ## Not built
 

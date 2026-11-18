@@ -308,6 +308,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "zero_phase_filter": dsp.zero_phase_filter,
     "butterworth_highpass": dsp.butterworth_highpass,
     "linkwitz_riley": dsp.linkwitz_riley,
+    "crossover_split": dsp.crossover_split,
     "chebyshev1_lowpass": dsp.chebyshev1_lowpass,
     "chebyshev1_highpass": dsp.chebyshev1_highpass,
     "chebyshev2_lowpass": dsp.chebyshev2_lowpass,

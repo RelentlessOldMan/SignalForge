@@ -2070,6 +2070,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `butterworth_highpass(N)` sections twice over, the first `high` section's `b` negated when `N`
   is odd. Both are 1/2 in magnitude at the cutoff; `|low + high| = 1`. Even `order` from 2 to
   2000; the Butterworth cutoff rules. **(implemented)**
+- **Two-band splitter** (`crossover_split(samples, order, cutoff, sample_rate)` returning
+  `Bands(low, high)`, C# `Dsp.CrossoverSplit`, [ADR 0285](adr/0285-crossover-split.md)): the
+  `linkwitz_riley` bands, each run from rest over the real, finite, non-empty samples by
+  `IirFilter`; `low + high` is the crossover's all-pass of the input. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

@@ -1644,6 +1644,24 @@ def linkwitz_riley(order: int, cutoff: float, sample_rate: float) -> Crossover:
     return Crossover(np.vstack([lo, lo]), high)
 
 
+@dataclass(frozen=True, eq=False)
+class Bands:
+    """The low and high bands of a split signal (conventions: Two-band splitter; ADR 0285)."""
+
+    low: NDArray[np.float64]
+    high: NDArray[np.float64]
+
+
+def crossover_split(samples: ArrayLike, order: int, cutoff: float, sample_rate: float) -> Bands:
+    """Split real samples into the low and high bands of a Linkwitz-Riley crossover, each run from
+    rest (conventions: Two-band splitter; ADR 0285)."""
+    lr = linkwitz_riley(order, cutoff, sample_rate)
+    x = _mono(samples)
+    low = np.asarray(IirFilter(lr.low).process(x), dtype=np.float64)
+    high = np.asarray(IirFilter(lr.high).process(x), dtype=np.float64)
+    return Bands(low, high)
+
+
 def _eq_terms(
     frequency: float, gain_db: float, q: float, sample_rate: float
 ) -> tuple[float, float, float, float]:
