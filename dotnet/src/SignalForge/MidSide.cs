@@ -90,21 +90,8 @@ public static partial class Dsp
     {
         if (!double.IsFinite(position) || position < -1 || position > 1)
             throw new ArgumentOutOfRangeException(nameof(position), "position must be from -1 to 1");
-        double gl, gr;
-        switch (law)
-        {
-            case PanLaw.ConstantPower:
-                double theta = (position + 1) * (Math.PI / 4);
-                gl = Math.Cos(theta);
-                gr = Math.Sin(theta);
-                break;
-            case PanLaw.Linear:
-                gl = (1 - position) / 2;
-                gr = (1 + position) / 2;
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(law), "law must be ConstantPower or Linear");
-        }
+        CheckPanLaw(law);
+        (double gl, double gr) = PanGains(position, law);
         if (samples.IsEmpty)
             throw new ArgumentException("samples must not be empty", nameof(samples));
         var left = new double[samples.Length];
@@ -149,5 +136,50 @@ public static partial class Dsp
             outRight[n] = m - s;
         }
         return new LeftRight(outLeft, outRight);
+    }
+
+    /// <summary>Pans a mono signal under a cosine LFO, position
+    /// <c>depth·cos((2π·rate)·(n/fs))</c> (conventions: Auto-panner; ADR 0270).</summary>
+    /// <param name="samples">Finite samples, at least one.</param>
+    /// <param name="rate">The LFO frequency, Hz, finite.</param>
+    /// <param name="depth">The swing either side of centre, 0 to 1.</param>
+    /// <param name="sampleRate">The sample rate, Hz, finite and positive.</param>
+    /// <param name="law">The pan law.</param>
+    /// <returns>The left and right channels.</returns>
+    /// <exception cref="ArgumentException">An argument is out of range.</exception>
+    public static LeftRight AutoPan(ReadOnlySpan<double> samples, double rate, double depth, double sampleRate, PanLaw law = PanLaw.ConstantPower)
+    {
+        if (!double.IsFinite(depth) || depth < 0 || depth > 1)
+            throw new ArgumentOutOfRangeException(nameof(depth), "depth must be in [0, 1]");
+        CheckPanLaw(law);
+        if (samples.IsEmpty)
+            throw new ArgumentException("samples must not be empty", nameof(samples));
+        double[] c = RingCarrier(samples.Length, rate, sampleRate, 0);
+        var left = new double[samples.Length];
+        var right = new double[samples.Length];
+        for (int n = 0; n < samples.Length; n++)
+        {
+            double v = samples[n];
+            if (!double.IsFinite(v))
+                throw new ArgumentException("samples must be finite", nameof(samples));
+            (double gl, double gr) = PanGains(depth * c[n], law);
+            left[n] = v * gl;
+            right[n] = v * gr;
+        }
+        return new LeftRight(left, right);
+    }
+
+    private static void CheckPanLaw(PanLaw law)
+    {
+        if (!Enum.IsDefined(law))
+            throw new ArgumentOutOfRangeException(nameof(law), "law must be ConstantPower or Linear");
+    }
+
+    private static (double Left, double Right) PanGains(double position, PanLaw law)
+    {
+        if (law == PanLaw.Linear)
+            return ((1 - position) / 2, (1 + position) / 2);
+        double theta = (position + 1) * (Math.PI / 4);
+        return (Math.Cos(theta), Math.Sin(theta));
     }
 }

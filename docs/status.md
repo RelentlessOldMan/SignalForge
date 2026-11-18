@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - an auto-panner (`auto_pan(samples, rate, depth, sample_rate)`, the panner with a cosine LFO
-     position `depth·cos(2π·rate·n/fs)`, → `LeftRight`);
    - a vibrato (`vibrato(samples, delay, depth, rate, sample_rate)`, a cosine-modulated delay
      read with linear interpolation, wet only);
    - a flanger (`flanger(samples, delay, depth, rate, sample_rate, mix)`, the vibrato mixed with
@@ -2378,6 +2376,11 @@ Updated with every chunk of work. Dates are absolute.
   next `lookahead` samples, instant attack, one-pole release; `|y| ≤ T`.
   Python 6557 passed, 2 skipped; .NET 5803 passed; conformance 3980/3980 in both. Version
   2026.11.17.68.
+- 2026-11-17: Auto-panner (ADR 0270): `auto_pan(samples, rate, depth, sample_rate, *,
+  law="constant_power")` in `dsp` (C# `Dsp.AutoPan`) → `LeftRight`, the panner's gains at
+  `depth·cos((2π·rate)·(n/fs))` per sample; the panner's gains now come from one helper.
+  Python 6570 passed, 2 skipped; .NET 5815 passed; conformance 3990/3990 in both. Version
+  2026.11.17.69.
 
 ## Not built
 

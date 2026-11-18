@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "auto_pan",
+  "description": "Auto-panner (conventions: Auto-panner; ADR 0270).",
+  "cases": [
+    {"id": "auto_pan.quarter_rate", "op": "auto_pan", "args": {"samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "rate": 2.0, "depth": 1.0, "sample_rate": 8.0}, "expected": {"left": [6.123233995736766e-17, 0.7071067811865476, 1.0, 0.7071067811865477, 6.123233995736766e-17, 0.7071067811865474, 1.0, 0.7071067811865478], "right": [1.0, 0.7071067811865476, 0.0, 0.7071067811865474, 1.0, 0.7071067811865477, 0.0, 0.7071067811865472]}, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "rate fs/4, depth 1: positions 1, 0, -1, 0, ... (right, centre, left)"},
+    {"id": "auto_pan.zero_depth", "op": "auto_pan", "args": {"samples": [0.5, -0.25, 1.0], "rate": 3.0, "depth": 0.0, "sample_rate": 48.0}, "expected": {"left": [0.3535533905932738, -0.1767766952966369, 0.7071067811865476], "right": [0.3535533905932738, -0.1767766952966369, 0.7071067811865476]}, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "depth 0: stays at centre"},
+    {"id": "auto_pan.signal", "op": "auto_pan", "args": {"samples": [0.25, -1.0, 1.5, 2.0, -0.5, 0.75, 0.1, -0.3, 0.9, 1.2], "rate": 1.5, "depth": 0.6, "sample_rate": 20.0}, "expected": {"left": [0.07725424859373686, -0.3574361400361711, 0.7301846145375254, 1.3062140370304327, -0.4011143561139791, 0.6746219172228698, 0.09436770108006035, -0.2847743058096038, 0.8274904917850278, 1.0093345412212242], "right": [0.23776412907378838, -0.9339375813168901, 1.3102787599181653, 1.5145312441361714, -0.29850841415154106, 0.3276969160711455, 0.0330868099529764, -0.09435886153752744, 0.353920168972288, 0.6490329605634377]}, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "depth 0.6, rate 1.5 Hz at 20 Hz on a signal"},
+    {"id": "auto_pan.linear", "op": "auto_pan", "args": {"samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "rate": 2.0, "depth": 0.5, "sample_rate": 8.0, "law": "linear"}, "expected": {"left": [0.25, 0.5, 0.75, 0.5, 0.25, 0.49999999999999994, 0.75, 0.5000000000000001], "right": [0.75, 0.5, 0.25, 0.49999999999999994, 0.75, 0.5000000000000001, 0.25, 0.4999999999999999]}, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "linear law: gains (1 -+ p)/2"},
+    {"id": "auto_pan.depth_high", "op": "auto_pan", "args": {"samples": [1.0], "rate": 1.0, "depth": 1.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "depth must be at most 1"},
+    {"id": "auto_pan.depth_negative", "op": "auto_pan", "args": {"samples": [1.0], "rate": 1.0, "depth": -0.1, "sample_rate": 8.0}, "error": "invalid_argument", "source": "depth must be at least 0"},
+    {"id": "auto_pan.rate_nan", "op": "auto_pan", "args": {"samples": [1.0], "rate": "nan", "depth": 0.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "rate must be finite"},
+    {"id": "auto_pan.fs_zero", "op": "auto_pan", "args": {"samples": [1.0], "rate": 1.0, "depth": 0.5, "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "auto_pan.bad_law", "op": "auto_pan", "args": {"samples": [1.0], "rate": 1.0, "depth": 0.5, "sample_rate": 8.0, "law": "square"}, "error": "invalid_argument", "source": "law must be constant_power or linear"},
+    {"id": "auto_pan.empty", "op": "auto_pan", "args": {"samples": [], "rate": 1.0, "depth": 0.5, "sample_rate": 8.0}, "error": "invalid_argument", "source": "samples must not be empty"}
+  ]
+}

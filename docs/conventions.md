@@ -1994,6 +1994,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `a[n] < g[n−1]`, else `a[n] + release·(g[n−1] − a[n])`; `y = x·g` (complex: part by part).
   Finite `threshold > 0`, integer `lookahead ≥ 0`, `release` in `[0, 1)`; samples finite,
   non-empty. **(implemented)**
+- **Auto-panner** (`auto_pan(samples, rate, depth, sample_rate, *, law="constant_power")`,
+  C# `Dsp.AutoPan`, [ADR 0270](adr/0270-auto-pan.md)): the panner at
+  `p[n] = depth·cos((2π·rate)·(n/fs))`, per sample. Finite `rate`, `depth` in `[0, 1]`, finite
+  `sample_rate > 0`; samples real, finite, non-empty. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

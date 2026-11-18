@@ -690,6 +690,7 @@ public static class Conformance
                 : Bind((Reals(a.Get("samples")), a.D("frequency"), a.D("sample_rate"), a.Has("phase") ? a.D("phase") : 0.0), t => Dsp.RingModulate(t.Item1, t.Item2, t.Item3, t.Item4)),
             "mid_side_encode" => Bind((Reals(a.Get("left")), Reals(a.Get("right"))), t => Dsp.MidSideEncode(t.Item1, t.Item2)),
             "mid_side_decode" => Bind((Reals(a.Get("mid")), Reals(a.Get("side"))), t => Dsp.MidSideDecode(t.Item1, t.Item2)),
+            "auto_pan" => Bind((Reals(a.Get("samples")), a.D("rate"), a.D("depth"), a.D("sample_rate"), Pan(a)), t => Dsp.AutoPan(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "pan" => Bind((Reals(a.Get("samples")), a.D("position"), Pan(a)), t => Dsp.Pan(t.Item1, t.Item2, t.Item3)),
             "bitcrush" => Bind((Reals(a.Get("samples")), a.I("bits"), a.Has("hold") ? a.I("hold") : 1), t => Dsp.Bitcrush(t.Item1, t.Item2, t.Item3)),
             "stereo_width" => Bind((Reals(a.Get("left")), Reals(a.Get("right")), a.D("width")), t => Dsp.StereoWidth(t.Item1, t.Item2, t.Item3)),

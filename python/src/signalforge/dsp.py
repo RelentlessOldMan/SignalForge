@@ -2714,20 +2714,56 @@ def pan(samples: ArrayLike, position: float, *, law: str = "constant_power") -> 
     p = real(position, "position")
     if not -1 <= p <= 1:
         raise ValueError("position must be from -1 to 1")
+    _check_law(law)
+    gl, gr = _pan_gains(p, law)
+    x = _mono(samples)
+    return LeftRight(x * gl, x * gr)
+
+
+def _check_law(law: str) -> None:
+    if law not in ("constant_power", "linear"):
+        raise ValueError('law must be "constant_power" or "linear"')
+
+
+def _pan_gains(p: float, law: str) -> tuple[float, float]:
     if law == "constant_power":
         theta = (p + 1) * (math.pi / 4)
-        gl, gr = math.cos(theta), math.sin(theta)
-    elif law == "linear":
-        gl, gr = (1 - p) / 2, (1 + p) / 2
-    else:
-        raise ValueError('law must be "constant_power" or "linear"')
+        return math.cos(theta), math.sin(theta)
+    return (1 - p) / 2, (1 + p) / 2
+
+
+def _mono(samples: ArrayLike) -> NDArray[np.float64]:
     x = _vector(samples, "samples")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
-    x = np.asarray(x, dtype=np.float64)
-    return LeftRight(x * gl, x * gr)
+    return np.asarray(x, dtype=np.float64)
+
+
+def auto_pan(
+    samples: ArrayLike,
+    rate: float,
+    depth: float,
+    sample_rate: float,
+    *,
+    law: str = "constant_power",
+) -> LeftRight:
+    """Pan under a cosine LFO, position ``depth cos(2 pi rate n / fs)`` (conventions:
+    Auto-panner; ADR 0270)."""
+    f = real(rate, "rate")
+    d = real(depth, "depth")
+    if not 0 <= d <= 1:
+        raise ValueError("depth must be in [0, 1]")
+    fs = real(sample_rate, "sample_rate")
+    if not fs > 0:
+        raise ValueError("sample_rate must be positive")
+    _check_law(law)
+    x = _mono(samples)
+    w = 2.0 * math.pi * f
+    gains = [_pan_gains(d * math.cos(w * (n / fs)), law) for n in range(x.size)]
+    g = np.array(gains, dtype=np.float64).reshape(x.size, 2)
+    return LeftRight(x * g[:, 0], x * g[:, 1])
 
 
 def saturate(samples: ArrayLike, drive: float) -> NDArray[np.float64]:

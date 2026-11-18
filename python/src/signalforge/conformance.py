@@ -276,6 +276,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "stereo_width": dsp.stereo_width,
     "bitcrush": dsp.bitcrush,
     "pan": dsp.pan,
+    "auto_pan": dsp.auto_pan,
     "mid_side_encode": dsp.mid_side_encode,
     "mid_side_decode": dsp.mid_side_decode,
     "ring_modulate": dsp.ring_modulate,
