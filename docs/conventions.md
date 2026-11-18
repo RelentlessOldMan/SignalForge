@@ -181,6 +181,11 @@ rule for code not written yet.
   `x ≥ 0` (so 0 and −0.0 are positive), negative otherwise; `rate = #{n : sign x[n] ≠ sign
   x[n+1]} / (N − 1)`, per adjacent pair, from 0 to 1. Real, finite, at least two samples.
   **(implemented)**
+- **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
+  C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
+  a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
+  `m` and `m+1`; `−ln(A/B)`, `+∞` when `A = 0`. `r` in sample units, not scaled by σ. Real,
+  finite, `N ≥ m + 2`; integer `m ≥ 1`; finite `r ≥ 0`; `B > 0`. **(implemented)**
 - **Permutation entropy** ([ADR 0325](adr/0325-permutation-entropy.md);
   `permutation_entropy(samples, order, delay=1)`, C# `Measurements.PermutationEntropy`): windows
   `v_j = x[i + j·delay]`, `j < order`, `i < L = N − (order−1)·delay`; each window's pattern is

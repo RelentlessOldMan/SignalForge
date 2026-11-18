@@ -154,6 +154,38 @@ def zero_crossing_rate(samples: ArrayLike) -> float:
     return int(np.count_nonzero(positive[1:] != positive[:-1])) / int(x.shape[0] - 1)
 
 
+def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
+    """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
+    for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
+    k = count(m, "m")
+    if k < 1:
+        raise ValueError("m must be at least 1")
+    tol = real(r, "r")
+    if tol < 0:
+        raise ValueError("r must be at least 0")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    starts = x.shape[0] - k
+    if starts < 2:
+        raise ValueError("samples must be at least m + 2 long")
+    t = x[np.arange(starts)[:, None] + np.arange(k + 1)[None, :]]
+    b = a = 0
+    for i in range(starts - 1):
+        d = np.abs(t[i + 1 :] - t[i])
+        near = np.max(d[:, :k], axis=1) <= tol
+        b += int(np.count_nonzero(near))
+        a += int(np.count_nonzero(near & (d[:, k] <= tol)))
+    if b == 0:
+        raise ValueError("no two templates match, so sample entropy is undefined")
+    return math.inf if a == 0 else -math.log(a / b)
+
+
 def permutation_entropy(samples: ArrayLike, order: int, delay: int = 1) -> float:
     """The Shannon entropy of the ordinal patterns of ``order`` samples ``delay`` apart, over
     ``ln(order!)`` (conventions: Permutation entropy; ADR 0325)."""

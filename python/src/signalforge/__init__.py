@@ -259,6 +259,7 @@ from .measurements import (
     power_ccdf_level,
     power_stats,
     reverberation_time,
+    sample_entropy,
     schroeder_decay,
     sfdr,
     sound_exposure,
@@ -490,7 +491,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.14"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.15"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -885,6 +886,7 @@ __all__ = [
     "rrc_taps",
     "saleh_amplifier",
     "sample_and_hold",
+    "sample_entropy",
     "saturate",
     "savgol_coefficients",
     "savgol_filter",

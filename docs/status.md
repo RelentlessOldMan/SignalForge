@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - sample entropy in `measurements` (`sample_entropy(samples, m, r)`: `−ln(A/B)` with the
-     Chebyshev distance, self-matches excluded, both counts over the same `N − m` templates).
    - Allan deviation in `measurements` (`allan_deviation(fractional_frequency, sample_interval,
      averaging_factors)`: the overlapping estimator from fractional-frequency samples).
 
@@ -2670,6 +2668,11 @@ Updated with every chunk of work. Dates are absolute.
   index, normalized by `ln(order!)`; `2 ≤ order ≤ 8`.
   Python 7252 passed, 2 skipped; .NET 6446 passed; conformance 4486/4486 in both. Version
   2026.11.18.14.
+- 2026-11-18: Sample entropy (ADR 0326): `sample_entropy(samples, m, r)` in `measurements` (C#
+  `Measurements.SampleEntropy`): Richman-Moorman `−ln(A/B)`, Chebyshev distance, self-matches
+  excluded, `N − m` starts for both lengths, `+∞` when `A = 0`; `r` in sample units.
+  Python 7265 passed, 2 skipped; .NET 6459 passed; conformance 4496/4496 in both. Version
+  2026.11.18.15.
 
 ## Not built
 
