@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "suite": "tilt_eq",
+  "description": "Tilt EQ (conventions: Tilt EQ; ADR 0283).",
+  "cases": [
+    {"id": "tilt_eq.bright", "op": "tilt_eq", "args": {"frequency": 1000.0, "gain_db": 6.0, "sample_rate": 48000.0}, "expected": [[1.3528322752808275, -1.2328533140683882, 0.0, 1.0, -0.8305252127225924, 0.0]], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "+6 dB tilt about 1 kHz at 48 kHz"},
+    {"id": "tilt_eq.dark", "op": "tilt_eq", "args": {"frequency": 0.1, "gain_db": -10.0, "sample_rate": 1.0}, "expected": [[0.7501895569573123, -0.20074276040432745, 0.0, 1.0, -0.6910233603048024, 0.0]], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "-10 dB tilt about 0.1 fs"},
+    {"id": "tilt_eq.flat", "op": "tilt_eq", "args": {"frequency": 0.25, "gain_db": 0.0, "sample_rate": 1.0}, "expected": [[1.0, -5.551115123125783e-17, 0.0, 1.0, -5.551115123125783e-17, 0.0]], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "0 dB: unity"},
+    {"id": "tilt_eq.high_pivot", "op": "tilt_eq", "args": {"frequency": 0.45, "gain_db": 3.0, "sample_rate": 1.0}, "expected": [[0.8822125042575863, 0.6026934257445871, 0.0, 1.0, 0.7648140053420206, 0.0]], "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "pivot near fs/2"},
+    {"id": "tilt_eq.frequency_zero", "op": "tilt_eq", "args": {"frequency": 0.0, "gain_db": 3.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "frequency must be positive"},
+    {"id": "tilt_eq.frequency_nyquist", "op": "tilt_eq", "args": {"frequency": 4.0, "gain_db": 3.0, "sample_rate": 8.0}, "error": "invalid_argument", "source": "frequency must be below fs/2"},
+    {"id": "tilt_eq.rate_zero", "op": "tilt_eq", "args": {"frequency": 1.0, "gain_db": 3.0, "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"}
+  ]
+}

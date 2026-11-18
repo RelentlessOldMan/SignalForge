@@ -1682,6 +1682,19 @@ def high_shelf(
     )
 
 
+def tilt_eq(frequency: float, gain_db: float, sample_rate: float) -> NDArray[np.float64]:
+    """Tilt EQ section: ``-gain_db/2`` at DC, ``+gain_db/2`` at fs/2, unity at ``frequency``
+    (conventions: Tilt EQ; ADR 0283)."""
+    fs = _rate(sample_rate)
+    f = real(frequency, "frequency")
+    if not 0 < f < fs / 2:
+        raise ValueError("frequency must be in (0, sample_rate / 2)")
+    big_t = 10 ** (real(gain_db, "gain_db") / 40)
+    t = math.tan(math.pi * f / fs)
+    d = 1 + big_t * t
+    return _usable([[(big_t + t) / d, (t - big_t) / d, 0.0, 1.0, (big_t * t - 1) / d, 0.0]])
+
+
 def bessel_lowpass(order: int, cutoff: float, sample_rate: float) -> NDArray[np.float64]:
     """Bessel (maximally flat delay) low-pass by the bilinear transform, as second-order sections,
     -3 dB at ``cutoff`` (conventions: IIR filters)."""

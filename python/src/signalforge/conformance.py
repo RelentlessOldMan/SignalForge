@@ -316,6 +316,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "low_shelf": dsp.low_shelf,
     "high_shelf": dsp.high_shelf,
     "peaking_eq": dsp.peaking_eq,
+    "tilt_eq": dsp.tilt_eq,
     "bessel_highpass": dsp.bessel_highpass,
     "bessel_bandpass": dsp.bessel_bandpass,
     "allpass_first_order": dsp.allpass_first_order,

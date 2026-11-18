@@ -153,6 +153,7 @@ from .dsp import (
     stereo_width,
     svf,
     thiran_allpass,
+    tilt_eq,
     transient_shaper,
     tremolo,
     upsample,
@@ -434,7 +435,7 @@ from .units import (
 )
 from .waveforms import chirp, multitone, newman_phases, prbs, pulse_train, tone
 
-__version__ = "2026.11.17.81"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.17.82"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -828,6 +829,7 @@ __all__ = [
     "teager_energy",
     "temporal_centroid",
     "thiran_allpass",
+    "tilt_eq",
     "time_weighting",
     "timing_offset",
     "tone",

@@ -2059,6 +2059,11 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
   `b = [1 + αA, −2c, 1 − αA]`, `a = [1 + α/A, −2c, 1 − α/A]`; the shelf forms are in the ADR.
   Gain `A²` at DC (low shelf), fs/2 (high shelf) or `w0` (peaking), 1 at the other end(s).
   `0 < frequency < fs/2`, finite `q > 0`, finite `gain_db`. **(implemented)**
+- **Tilt EQ** (`tilt_eq(frequency, gain_db, sample_rate)`, C# `Dsp.TiltEq`,
+  [ADR 0283](adr/0283-tilt-eq.md)): one section `[b0, b1, 0, 1, a1, 0]` from
+  `H(s) = (T·s + 1)/(s + T)`, `T = 10^(gain_db/40)`: with `t = tan((π·frequency)/fs)`,
+  `b0 = (T + t)/(1 + T·t)`, `b1 = (t − T)/(1 + T·t)`, `a1 = (T·t − 1)/(1 + T·t)`. Gain `1/T` at
+  DC, `T` at fs/2, 1 at the pivot. `0 < frequency < fs/2`; finite `gain_db`. **(implemented)**
 - **Streaming resampling** (`Resampler(up, down, taps=None)`, methods `process(chunk)` and
   `reset()`, [ADR 0027](adr/0027-streaming-resampling.md)): causal. With `L, M` reduced as above,
   `u` the zero-stuffed concatenation of every chunk since the start or the last reset (zero

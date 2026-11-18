@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - a tilt EQ (`tilt_eq(frequency, gain_db, sample_rate)`, one first-order section pivoting at
-     `frequency`: `−gain_db/2` at DC and `+gain_db/2` at fs/2, by the bilinear transform).
+   - a Linkwitz-Riley crossover (`linkwitz_riley(order, cutoff, sample_rate)`, even order, the
+     low and high cascades as two squared Butterworths whose sum is all-pass).
    - a de-esser (`de_esser(samples, cutoff, q, threshold_db, ratio, attack, release, sample_rate)`,
      the sidechain compressor keyed on the state-variable band-pass of the input).
 
@@ -2444,6 +2444,11 @@ Updated with every chunk of work. Dates are absolute.
   the analogue prototypes; vectors take the tan route in exact rationals.
   Python 6735 passed, 2 skipped; .NET 5968 passed; conformance 4118/4118 in both. Version
   2026.11.17.81.
+- 2026-11-17: Tilt EQ (ADR 0283): `tilt_eq(frequency, gain_db, sample_rate)` in `dsp` (C#
+  `Dsp.TiltEq`), one first-order section from `(T·s + 1)/(s + T)`: `−gain_db/2` at DC,
+  `+gain_db/2` at fs/2, unity at the pivot.
+  Python 6745 passed, 2 skipped; .NET 5977 passed; conformance 4125/4125 in both. Version
+  2026.11.17.82.
 
 ## Not built
 

@@ -607,6 +607,7 @@ public static class Conformance
             "low_shelf" => Bind((a.D("frequency"), a.D("gain_db"), a.D("q"), a.D("sample_rate")), t => Dsp.LowShelf(t.Item1, t.Item2, t.Item3, t.Item4)),
             "high_shelf" => Bind((a.D("frequency"), a.D("gain_db"), a.D("q"), a.D("sample_rate")), t => Dsp.HighShelf(t.Item1, t.Item2, t.Item3, t.Item4)),
             "peaking_eq" => Bind((a.D("frequency"), a.D("gain_db"), a.D("q"), a.D("sample_rate")), t => Dsp.PeakingEq(t.Item1, t.Item2, t.Item3, t.Item4)),
+            "tilt_eq" => Bind((a.D("frequency"), a.D("gain_db"), a.D("sample_rate")), t => Dsp.TiltEq(t.Item1, t.Item2, t.Item3)),
             "bessel_lowpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.BesselLowpass(t.Item1, t.Item2, t.Item3)),
             "bessel_highpass" => Bind((a.I("order"), a.D("cutoff"), a.D("sample_rate")), t => Dsp.BesselHighpass(t.Item1, t.Item2, t.Item3)),
             "allpass_first_order" => Bind((a.D("cutoff"), a.D("sample_rate")), t => Dsp.AllpassFirstOrder(t.Item1, t.Item2)),
