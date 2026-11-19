@@ -2719,6 +2719,44 @@ def kl_divergence(p: ArrayLike, q: ArrayLike) -> float:
     return max(d, 0.0)
 
 
+def js_divergence(p: ArrayLike, q: ArrayLike) -> float:
+    """The Jensen-Shannon divergence between the discrete distributions ``p`` and ``q``, each
+    normalized by its own sum, in nats (conventions: Jensen-Shannon divergence; ADR 0408)."""
+    pair = []
+    for name, v in (("p", p), ("q", q)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and non-negative")
+        values = a.tolist()
+        total = 0.0
+        for w in values:
+            total += w
+        if total <= 0:
+            raise ValueError(f"{name} must have a positive sum")
+        pair.append((values, total))
+    (pv, ps), (qv, qs) = pair
+    if len(pv) != len(qv):
+        raise ValueError("p and q must have the same length")
+    d = 0.0
+    for a_, b_ in zip(pv, qv, strict=True):
+        pi, qi = a_ / ps, b_ / qs
+        mi = (pi + qi) / 2.0
+        t = 0.0
+        if pi > 0:
+            t += pi * math.log(pi / mi)
+        if qi > 0:
+            t += qi * math.log(qi / mi)
+        d += t
+    return min(max(d / 2.0, 0.0), math.log(2.0))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

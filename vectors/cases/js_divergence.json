@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "js_divergence",
+  "description": "The Jensen-Shannon divergence (conventions: Jensen-Shannon divergence; ADR 0408).",
+  "cases": [
+    {"id": "js_divergence.same", "op": "js_divergence", "args": {"p": [1.0, 2.0, 3.0], "q": [2.0, 4.0, 6.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "the same distribution after scaling: 0"},
+    {"id": "js_divergence.disjoint", "op": "js_divergence", "args": {"p": [1.0, 0.0], "q": [0.0, 3.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "no common support: the bound ln 2"},
+    {"id": "js_divergence.half", "op": "js_divergence", "args": {"p": [1.0, 0.0], "q": [1.0, 1.0]}, "expected": 0.2157615543388357, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "P = (1, 0), Q = (1/2, 1/2), M = (3/4, 1/4): (1/2)[ln 4/3 + (1/2) ln 2/3 + (1/2) ln 2] = (3/2) ln 2 - (3/4) ln 3"},
+    {"id": "js_divergence.counts", "op": "js_divergence", "args": {"p": [6.0, 5.0, 3.0, 2.0, 4.0, 1.0, 4.0, 4.0, 0.0, 3.0, 4.0, 2.0, 0.0, 4.0, 6.0, 3.0], "q": [4.0, 4.0, 4.0, 5.0, 6.0, 0.0, 6.0, 5.0, 2.0, 2.0, 5.0, 1.0, 4.0, 1.0, 0.0, 1.0]}, "expected": 0.12154175460639396, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "16 counts each from random.Random(408), 0 to 6, with zeros"},
+    {"id": "js_divergence.empty", "op": "js_divergence", "args": {"p": [], "q": []}, "error": "invalid_argument", "source": "p needs a value"},
+    {"id": "js_divergence.lengths", "op": "js_divergence", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, 1.0]}, "error": "invalid_argument", "source": "p and q must match"},
+    {"id": "js_divergence.negative", "op": "js_divergence", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, -0.5, 3.0]}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "js_divergence.not_finite", "op": "js_divergence", "args": {"p": [1.0, "nan", 1.0], "q": [2.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "js_divergence.zero_sum", "op": "js_divergence", "args": {"p": [1.0, 2.0, 3.0], "q": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "q must have a positive sum"}
+  ]
+}

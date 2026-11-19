@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Jensen–Shannon divergence in `measurements` (`p` and `q` as for the
-     Kullback–Leibler divergence, but zeros allowed anywhere: `½KL(P‖M) + ½KL(Q‖M)` with
-     `M = (P + Q)/2`, in nats, from 0 to ln 2).
+   - The Hellinger distance in `measurements` (`p` and `q` as for the Jensen–Shannon
+     divergence: `√(½·Σ(√Pᵢ − √Qᵢ)²)`, from 0 to 1).
 
 ## Built
 
@@ -3077,6 +3076,11 @@ Updated with every chunk of work. Dates are absolute.
   distribution from another, each normalized by its own sum.
   Python 8277 passed, 2 skipped; .NET 7424 passed; conformance 5253/5253 in both. Version
   2026.11.19.34.
+- 2026-11-19: The Jensen–Shannon divergence (ADR 0408): `js_divergence(p, q)` in
+  `measurements` (C# `Measurements.JsDivergence`): the mean Kullback–Leibler divergence of two
+  discrete distributions from their average, in nats, from 0 to ln 2.
+  Python 8289 passed, 2 skipped; .NET 7435 passed; conformance 5262/5262 in both. Version
+  2026.11.19.35.
 
 ## Not built
 

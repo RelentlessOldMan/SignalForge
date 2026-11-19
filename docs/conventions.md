@@ -575,6 +575,10 @@ rule for code not written yet.
   each divided by its own sum taken in order; terms with `pᵢ = 0` dropped; below 0 from
   rounding gives 0. Equal lengths at least 1, finite, non-negative, each sum above 0; `qᵢ = 0`
   where `pᵢ > 0` is an error. **(implemented)**
+- **Jensen–Shannon divergence** ([ADR 0408](adr/0408-js-divergence.md);
+  `js_divergence(p, q)`, C# `Measurements.JsDivergence`): `½·Σ [Pᵢ·ln(Pᵢ/Mᵢ) + Qᵢ·ln(Qᵢ/Mᵢ)]`
+  in nats, `Mᵢ = (Pᵢ + Qᵢ)/2`, zero terms dropped, the `P` term first; clamped to `[0, ln 2]`.
+  Inputs as for the Kullback–Leibler divergence, zeros allowed anywhere. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
