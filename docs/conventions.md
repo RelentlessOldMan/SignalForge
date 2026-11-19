@@ -460,6 +460,10 @@ rule for code not written yet.
   ranks; `R_j` the column sums of the ranks, `S = Σ(R_j − m(n + 1)/2)²`, `T = Σ(t³ − t)` per
   rater; `W = 12S/(m²(n³ − n) − mΣT)`. Real, finite, 2-D; `m ≥ 2`, `n ≥ 2`; not every row
   constant. **(implemented)**
+- **Cronbach's alpha** ([ADR 0380](adr/0380-cronbach-alpha.md); `cronbach_alpha(scores)`, C#
+  `Measurements.CronbachAlpha`): rows are items, columns subjects; `σ_i²` the sample variance
+  (`N − 1`) of row `i`, `σ_t²` that of the column sums; `α = k/(k − 1)(1 − Σσ_i²/σ_t²)`.
+  Real, finite, 2-D; `k ≥ 2`, `N ≥ 2`; `σ_t² > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

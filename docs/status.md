@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Cronbach's alpha in `measurements` (a 2-D array, `k` items by `N` subjects:
-     `α = k/(k − 1)·(1 − Σσ_i²/σ_t²)`, sample variances with `N − 1`, `σ_t²` the variance of
-     the subject totals).
+   - The intraclass correlation ICC(3,1) in `measurements` (two-way, consistency: rows are
+     raters, columns subjects as for Kendall's W; `(MS_S − MS_E)/(MS_S + (k − 1)MS_E)` from
+     the two-way ANOVA mean squares).
 
 ## Built
 
@@ -2939,6 +2939,11 @@ Updated with every chunk of work. Dates are absolute.
   items in the columns, with the tie correction.
   Python 7933 passed, 2 skipped; .NET 7107 passed; conformance 4993/4993 in both. Version
   2026.11.19.5.
+- 2026-11-19: Cronbach's alpha (ADR 0380): `cronbach_alpha(scores)` in `measurements` (C#
+  `Measurements.CronbachAlpha`): the internal consistency of the items in the rows over the
+  subjects in the columns.
+  Python 7944 passed, 2 skipped; .NET 7117 passed; conformance 5001/5001 in both. Version
+  2026.11.19.6.
 
 ## Not built
 

@@ -1924,6 +1924,32 @@ def kendall_w(ratings: ArrayLike) -> float:
     return 12 * s / denominator
 
 
+def cronbach_alpha(scores: ArrayLike) -> float:
+    """Cronbach's alpha: the internal consistency of the items in the rows of ``scores`` over
+    the subjects in its columns, at most 1 (conventions: Cronbach's alpha; ADR 0380)."""
+    a = np.asarray(scores)
+    if a.ndim != 2:
+        raise ValueError("scores must be two-dimensional")
+    if np.iscomplexobj(a):
+        raise ValueError("scores must be real")
+    try:
+        a = a.astype(np.float64, copy=False)
+    except (TypeError, ValueError):
+        raise ValueError("scores must be real numbers") from None
+    if not np.all(np.isfinite(a)):
+        raise ValueError("scores must be finite")
+    k, n = int(a.shape[0]), int(a.shape[1])
+    if k < 2:
+        raise ValueError("scores must have at least 2 items (rows)")
+    if n < 2:
+        raise ValueError("scores must have at least 2 subjects (columns)")
+    items = float(np.sum(np.var(a, axis=1, ddof=1)))
+    total = float(np.var(np.sum(a, axis=0), ddof=1))
+    if total == 0:
+        raise ValueError("the subject totals must not all be equal")
+    return k / (k - 1) * (1 - items / total)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
