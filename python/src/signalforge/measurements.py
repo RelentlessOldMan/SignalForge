@@ -1765,6 +1765,41 @@ def hoeffding_d(x: ArrayLike, y: ArrayLike) -> float:
     return 30 * top / (nf * (nf - 1) * (nf - 2) * (nf - 3) * (nf - 4))
 
 
+def blomqvist_beta(x: ArrayLike, y: ArrayLike) -> float:
+    """Blomqvist's beta, the medial correlation: the share of samples on the same side of both
+    medians less the share on opposite sides, samples on a median dropped (conventions:
+    Blomqvist's beta; ADR 0375)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    a, b = pair
+    n = a.shape[0]
+    if b.shape[0] != n:
+        raise ValueError("x and y must be the same length")
+    if n == 0:
+        raise ValueError("x and y must not be empty")
+    signs = []
+    for v in (a, b):
+        s = np.sort(v)
+        k = n // 2
+        med = s[k] if n % 2 == 1 else (s[k - 1] + s[k]) / 2
+        signs.append(np.sign(v - med))
+    p = signs[0] * signs[1]
+    agree = int(np.count_nonzero(p > 0))
+    disagree = int(np.count_nonzero(p < 0))
+    if agree + disagree == 0:
+        raise ValueError("every sample lies on a median")
+    return (agree - disagree) / (agree + disagree)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

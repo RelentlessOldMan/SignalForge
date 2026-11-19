@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Blomqvist's beta in `measurements` (the medial correlation: the share of samples in the
-     quadrants that agree about the two medians less the share that disagree, samples on a
-     median dropped).
+   - Chatterjee's xi in `measurements` (sort the pairs by `x`, ties in `x` kept in record
+     order; `r_i = #{j: y_j ≤ y_(i)}`, `l_i = #{j: y_j ≥ y_(i)}`;
+     `ξ = 1 − NΣ|r_{i+1} − r_i| / (2Σ l_i(N − l_i))`).
 
 ## Built
 
@@ -2916,6 +2916,10 @@ Updated with every chunk of work. Dates are absolute.
   rule for the bivariate ranks.
   Python 7868 passed, 2 skipped; .NET 7047 passed; conformance 4946/4946 in both. Version
   2026.11.18.63.
+- 2026-11-19: Blomqvist's beta (ADR 0375): `blomqvist_beta(x, y)` in `measurements` (C#
+  `Measurements.BlomqvistBeta`): the medial correlation, samples on a median dropped.
+  Python 7883 passed, 2 skipped; .NET 7061 passed; conformance 4957/4957 in both. Version
+  2026.11.19.0.
 
 ## Not built
 

@@ -304,6 +304,7 @@ public static class Conformance
             "distance_correlation" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.DistanceCorrelation(t.Item1, t.Item2)),
             "biweight_midcorrelation" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.BiweightMidcorrelation(t.Item1, t.Item2)),
             "hoeffding_d" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.HoeffdingD(t.Item1, t.Item2)),
+            "blomqvist_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.BlomqvistBeta(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

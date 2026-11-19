@@ -437,6 +437,11 @@ rule for code not written yet.
   `φ` = 1 below, 1/2 equal, 0 above; `D₁ = Σ(Q−1)(Q−2)`, `D₂ = Σ(R−1)(R−2)(S−1)(S−2)`,
   `D₃ = Σ(R−2)(S−2)(Q−1)`; `D = 30((N−2)(N−3)D₁ + D₂ − 2(N−2)D₃)/(N(N−1)(N−2)(N−3)(N−4))`,
   1 for a monotone pair without ties. Real, finite, equal lengths; `N ≥ 5`. **(implemented)**
+- **Blomqvist's beta** ([ADR 0375](adr/0375-blomqvist-beta.md); `blomqvist_beta(x, y)`, C#
+  `Measurements.BlomqvistBeta`): medians the middle value, or `(a + b)/2` of the two middle
+  values for even `N`; samples on either median dropped; `β = (n₊ − n₋)/(n₊ + n₋)` with `n₊`
+  the samples on the same side of both medians and `n₋` on opposite sides. Real, finite, equal
+  lengths; at least one sample off both medians. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

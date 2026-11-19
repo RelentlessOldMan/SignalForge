@@ -252,6 +252,7 @@ from .measurements import (
     bass_ratio,
     biweight_midcorrelation,
     block_leq,
+    blomqvist_beta,
     bubble_entropy,
     buishand_range,
     centre_time,
@@ -554,7 +555,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.63"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.0"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -687,6 +688,7 @@ __all__ = [
     "biweight_midcorrelation",
     "blit",
     "block_leq",
+    "blomqvist_beta",
     "bubble_entropy",
     "buishand_range",
     "burg",
