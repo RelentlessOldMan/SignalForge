@@ -276,6 +276,7 @@ from .measurements import (
     fuzzy_entropy,
     gain_compression,
     gcc_phat,
+    goodman_kruskal_gamma,
     hadamard_deviation,
     higuchi_dimension,
     hjorth_parameters,
@@ -556,7 +557,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.2"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.3"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -816,6 +817,7 @@ __all__ = [
     "gcc_phat",
     "generalized_lomb_scargle",
     "goertzel",
+    "goodman_kruskal_gamma",
     "haas",
     "hadamard_deviation",
     "hampel_filter",

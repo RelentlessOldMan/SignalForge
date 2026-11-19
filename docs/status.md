@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Goodman and Kruskal's gamma in `measurements` (`γ = (C − D)/(C + D)` over all pairs,
-     `C` concordant and `D` discordant, pairs tied in either record dropped).
+   - Somers' D in `measurements` (`d_yx = (C − D)/(pairs not tied in x)`, the asymmetric
+     version of Kendall's tau for predicting `y` from `x`).
 
 ## Built
 
@@ -2924,6 +2924,11 @@ Updated with every chunk of work. Dates are absolute.
   ties in `x` kept in record order.
   Python 7896 passed, 2 skipped; .NET 7073 passed; conformance 4966/4966 in both. Version
   2026.11.19.2.
+- 2026-11-19: Goodman and Kruskal's gamma (ADR 0377): `goodman_kruskal_gamma(x, y)` in
+  `measurements` (C# `Measurements.GoodmanKruskalGamma`): concordant less discordant pairs over
+  their sum, pairs tied in either record dropped.
+  Python 7908 passed, 2 skipped; .NET 7084 passed; conformance 4975/4975 in both. Version
+  2026.11.19.3.
 
 ## Not built
 

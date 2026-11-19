@@ -447,6 +447,10 @@ rule for code not written yet.
   random); `r_i = #{j: y_j ≤ y_(i)}`, `l_i = #{j: y_j ≥ y_(i)}`;
   `ξ = 1 − N Σ|r_{i+1} − r_i| / (2 Σ l_i(N − l_i))`, sums exact integers. Not symmetric. Real,
   finite, equal lengths; `N ≥ 2`, `y` not constant. **(implemented)**
+- **Goodman and Kruskal's gamma** ([ADR 0377](adr/0377-goodman-kruskal-gamma.md);
+  `goodman_kruskal_gamma(x, y)`, C# `Measurements.GoodmanKruskalGamma`): over pairs `i < j`,
+  `C` concordant and `D` discordant by comparison, pairs tied in either record in neither;
+  `γ = (C − D)/(C + D)`. Real, finite, equal lengths; `C + D > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
