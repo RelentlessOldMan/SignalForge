@@ -395,6 +395,11 @@ rule for code not written yet.
   sign(x_j − x_i)` for `t = 0 … N − 2`; `K = max |U_t|`; `index` the smallest `t` reaching it
   (the last sample before the change); `p_value = min(1, 2 exp(−6K²/(N³ + N²)))`. Real,
   finite; `N ≥ 2`. **(implemented)**
+- **Buishand range test** ([ADR 0367](adr/0367-buishand-range.md); `buishand_range(samples)` →
+  `BuishandRange(q, r, index)`, C# `Measurements.BuishandRange`): float mean `(Σ x)/N`;
+  `S_k = Σ_{i≤k} (x_i − x̄)`, `k = 0 … N − 1`, in order; population `σ`;
+  `q = max |S_k|/σ`; `r = (max(0, max S) − min(0, min S))/σ`; `index` the smallest `k` with
+  the largest `|S_k|`. Real, finite; `N ≥ 2`; not all equal. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

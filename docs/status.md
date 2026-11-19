@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Buishand range test in `measurements` (partial sums `S_k = Σ_{i≤k} (x_i − x̄)`, the
-     rescaled range `(max S − min S)/σ` with the population standard deviation, and
-     `max |S|/σ`, with their locations).
+   - standard normal homogeneity test in `measurements` (Alexandersson: with `z` the samples
+     standardized by the mean and population standard deviation,
+     `T_k = k z̄₁² + (N − k) z̄₂²` over the splits, its maximum and location).
 
 ## Built
 
@@ -2878,6 +2878,11 @@ Updated with every chunk of work. Dates are absolute.
   Pettitt's approximate p-value.
   Python 7777 passed, 2 skipped; .NET 6960 passed; conformance 4881/4881 in both. Version
   2026.11.18.55.
+- 2026-11-18: Buishand range test (ADR 0367): `buishand_range(samples)` in `measurements`
+  (C# `Measurements.BuishandRange`): the partial sums of the deviations from the mean, their
+  largest size and range over the population standard deviation, and the change location.
+  Python 7786 passed, 2 skipped; .NET 6968 passed; conformance 4887/4887 in both. Version
+  2026.11.18.56.
 
 ## Not built
 

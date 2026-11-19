@@ -202,6 +202,16 @@ class Pettitt:
 
 
 @dataclass(frozen=True)
+class BuishandRange:
+    """Buishand's rescaled partial-sum maximum and range, and where the maximum is reached
+    (conventions: Buishand range test; ADR 0367)."""
+
+    q: float
+    r: float
+    index: int
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -1487,6 +1497,33 @@ def pettitt(samples: ArrayLike) -> Pettitt:
             best, where = abs(u), t
     p = min(1.0, 2 * math.exp(-6 * best * best / (n**3 + n**2)))
     return Pettitt(best, where, p)
+
+
+def buishand_range(samples: ArrayLike) -> BuishandRange:
+    """Buishand's range test: the partial sums of the deviations from the mean, their largest
+    size and their range over the population standard deviation, and the last sample before
+    the change (conventions: Buishand range test; ADR 0367)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 2:
+        raise ValueError("samples must have at least 2 values")
+    d = x - float(np.sum(x)) / n
+    var = float(np.dot(d, d)) / n
+    if not var > 0:
+        raise ValueError("samples must not all be equal")
+    sigma = math.sqrt(var)
+    s = np.cumsum(d)
+    index = int(np.argmax(np.abs(s)))
+    hi = max(0.0, float(np.max(s)))
+    lo = min(0.0, float(np.min(s)))
+    return BuishandRange(abs(float(s[index])) / sigma, (hi - lo) / sigma, index)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

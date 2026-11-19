@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "suite": "buishand_range",
+  "description": "Buishand range test (conventions: Buishand range test; ADR 0367).",
+  "cases": [
+    {"id": "buishand_range.step_by_hand", "op": "buishand_range", "args": {"samples": [0.0, 0.0, 2.0, 2.0]}, "expected": {"q": 2.0, "r": 2.0, "index": 1}, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "mean 1, deviations -1, -1, 1, 1: S = -1, -2, -1, 0; sigma 1: q = 2, r = 0 - (-2) = 2, index 1"},
+    {"id": "buishand_range.both_signs", "op": "buishand_range", "args": {"samples": [1.0, -1.0, 3.0, -3.0]}, "expected": {"q": 1.3416407864998738, "r": 1.3416407864998738, "index": 2}, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "mean 0: S = 1, 0, 3, 0; sigma sqrt 5: q = r = 3/sqrt 5, index 2"},
+    {"id": "buishand_range.shift_in_noise", "op": "buishand_range", "args": {"samples": [-1.75, 1.875, -1.875, 0.75, -0.25, -2.0, 0.375, 1.125, 1.5, -1.875, -1.625, -0.25, -1.875, 1.625, 0.125, 1.625, 0.125, 0.25, -0.375, 1.0, -0.875, -0.625, 0.25, 1.0, -1.25, -1.375, -0.75, -0.125, -1.375, 2.0, -1.875, -0.5, 0.5, -2.0, 0.375, 0.25, -0.75, -1.125, -1.5, 1.625, 3.375, 2.0, 0.125, 0.5, 3.25, 0.75, 3.25, 0.625, 1.125, 1.625, 0.0, 2.75, 0.0, 3.125, 3.375, 2.75, 1.0, 3.5, -0.25, 3.5, 2.375, 1.875, 1.125, -0.125, 1.75, 1.0, 0.75, -0.125, 3.5, 0.625, 1.5, 3.25, 1.75, 1.5, 0.625, -0.125, 0.625, 2.875, 0.625, 0.875, 0.75, 2.625, -0.125, 2.25, 0.875, 0.0, -0.25, 0.25, 2.625, 1.125, 1.375, 0.125, 0.0, 2.125, -0.125, 0.375, 1.75, 3.0, 2.125, -0.375, -0.125, 3.25, 2.625, 2.0, 2.375, 2.75, 0.375, 1.625, 2.625, 1.625, 0.875, 0.125, 1.125, 1.5, 1.75, 2.875, 0.5, 2.625, -0.5, 2.875, 1.125, 3.375, 2.5, 0.625, 2.75, 3.125, 0.125, 0.0]}, "expected": {"q": 33.010265745589464, "r": 34.21848462255222, "index": 38}, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "128 random eighths from random.Random(367), raised by 3/2 from sample 40 on"},
+    {"id": "buishand_range.one_sample", "op": "buishand_range", "args": {"samples": [1.0]}, "error": "invalid_argument", "source": "N must be at least 2"},
+    {"id": "buishand_range.constant", "op": "buishand_range", "args": {"samples": [2.0, 2.0, 2.0]}, "error": "invalid_argument", "source": "samples must not all be equal"},
+    {"id": "buishand_range.nan", "op": "buishand_range", "args": {"samples": [0.0, "nan", 1.0]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

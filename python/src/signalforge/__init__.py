@@ -211,6 +211,7 @@ from .measurements import (
     AmAmPm,
     AutocorrelationPitch,
     BartelsRankTest,
+    BuishandRange,
     CascadeNoiseFigure,
     CepstrumPitch,
     CorrelationSum,
@@ -250,6 +251,7 @@ from .measurements import (
     bass_ratio,
     block_leq,
     bubble_entropy,
+    buishand_range,
     centre_time,
     cepstrum_pitch,
     clarity,
@@ -544,7 +546,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.55"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.56"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -556,6 +558,7 @@ __all__ = [
     "BandEnergyRatio",
     "Bands",
     "BartelsRankTest",
+    "BuishandRange",
     "CarrierRecovery",
     "CascadeNoiseFigure",
     "CepstrumPitch",
@@ -675,6 +678,7 @@ __all__ = [
     "blit",
     "block_leq",
     "bubble_entropy",
+    "buishand_range",
     "burg",
     "burg_psd",
     "butterworth_bandpass",
