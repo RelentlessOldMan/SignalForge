@@ -212,6 +212,15 @@ class BuishandRange:
 
 
 @dataclass(frozen=True)
+class Snht:
+    """The standard normal homogeneity statistic and the last sample before the change
+    (conventions: Standard normal homogeneity test; ADR 0368)."""
+
+    statistic: float
+    index: int
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -1524,6 +1533,32 @@ def buishand_range(samples: ArrayLike) -> BuishandRange:
     hi = max(0.0, float(np.max(s)))
     lo = min(0.0, float(np.min(s)))
     return BuishandRange(abs(float(s[index])) / sigma, (hi - lo) / sigma, index)
+
+
+def snht(samples: ArrayLike) -> Snht:
+    """Alexandersson's standard normal homogeneity test: the largest ``T_k`` over the splits,
+    and the last sample before the change (conventions: Standard normal homogeneity test;
+    ADR 0368)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 2:
+        raise ValueError("samples must have at least 2 values")
+    d = x - float(np.sum(x)) / n
+    var = float(np.dot(d, d)) / n
+    if not var > 0:
+        raise ValueError("samples must not all be equal")
+    s = np.cumsum(d)[:-1]
+    k = np.arange(1, n, dtype=np.float64)
+    t = n * s * s / (k * (n - k) * var)
+    index = int(np.argmax(t))
+    return Snht(float(t[index]), index)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

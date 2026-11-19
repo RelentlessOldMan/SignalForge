@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - standard normal homogeneity test in `measurements` (Alexandersson: with `z` the samples
-     standardized by the mean and population standard deviation,
-     `T_k = k z̄₁² + (N − k) z̄₂²` over the splits, its maximum and location).
+   - Spearman rank correlation in `measurements` (the Pearson correlation of the mean ranks
+     of two equal-length records, ties handled by the mean rank).
 
 ## Built
 
@@ -2883,6 +2882,11 @@ Updated with every chunk of work. Dates are absolute.
   largest size and range over the population standard deviation, and the change location.
   Python 7786 passed, 2 skipped; .NET 6968 passed; conformance 4887/4887 in both. Version
   2026.11.18.56.
+- 2026-11-18: Standard normal homogeneity test (ADR 0368): `snht(samples)` in `measurements`
+  (C# `Measurements.Snht`): Alexandersson's largest `T_k` over the splits of the standardized
+  record, and the change location.
+  Python 7795 passed, 2 skipped; .NET 6977 passed; conformance 4893/4893 in both. Version
+  2026.11.18.57.
 
 ## Not built
 

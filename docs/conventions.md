@@ -400,6 +400,11 @@ rule for code not written yet.
   `S_k = Σ_{i≤k} (x_i − x̄)`, `k = 0 … N − 1`, in order; population `σ`;
   `q = max |S_k|/σ`; `r = (max(0, max S) − min(0, min S))/σ`; `index` the smallest `k` with
   the largest `|S_k|`. Real, finite; `N ≥ 2`; not all equal. **(implemented)**
+- **Standard normal homogeneity test** ([ADR 0368](adr/0368-snht.md); `snht(samples)` →
+  `Snht(statistic, index)`, C# `Measurements.Snht`): float mean `(Σ x)/N`, population `σ²`;
+  `T_k = N S_k²/(k(N − k)σ²)` for `k = 1 … N − 1` (equal to `k z̄₁² + (N − k) z̄₂²`), with
+  `S_k` the in-order sum of the first `k` deviations; `statistic = max T_k`; `index = k − 1`
+  for the smallest `k` reaching it. Real, finite; `N ≥ 2`; not all equal. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

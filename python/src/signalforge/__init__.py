@@ -234,6 +234,7 @@ from .measurements import (
     RescaledRange,
     RunsTest,
     Sfdr,
+    Snht,
     TemporalCentroid,
     ToneMetrics,
     TurningPoints,
@@ -310,6 +311,7 @@ from .measurements import (
     sens_slope,
     sfdr,
     slope_entropy,
+    snht,
     sound_exposure,
     sound_strength,
     speech_transmission_index,
@@ -546,7 +548,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.56"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.57"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -610,6 +612,7 @@ __all__ = [
     "Schur",
     "Sfdr",
     "Signal",
+    "Snht",
     "SpectralContrast",
     "SpectralCrest",
     "SpectralDensity",
@@ -1003,6 +1006,7 @@ __all__ = [
     "slicer",
     "sliding_dft",
     "slope_entropy",
+    "snht",
     "soft_clip",
     "sos_group_delay",
     "sos_response",
