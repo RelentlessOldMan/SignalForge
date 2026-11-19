@@ -464,6 +464,11 @@ rule for code not written yet.
   `Measurements.CronbachAlpha`): rows are items, columns subjects; `σ_i²` the sample variance
   (`N − 1`) of row `i`, `σ_t²` that of the column sums; `α = k/(k − 1)(1 − Σσ_i²/σ_t²)`.
   Real, finite, 2-D; `k ≥ 2`, `N ≥ 2`; `σ_t² > 0`. **(implemented)**
+- **ICC(3,1)** ([ADR 0381](adr/0381-icc-consistency.md); `icc_consistency(ratings)`, C#
+  `Measurements.IccConsistency`): rows are raters, columns subjects; `SS_S = kΣ(c_j − x̄)²`,
+  `SS_E = Σ(x_ij − r_i − c_j + x̄)²`, `MS_S = SS_S/(n − 1)`, `MS_E = SS_E/((n − 1)(k − 1))`;
+  `(MS_S − MS_E)/(MS_S + (k − 1)MS_E)`. Real, finite, 2-D; `k ≥ 2`, `n ≥ 2`; denominator
+  positive. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

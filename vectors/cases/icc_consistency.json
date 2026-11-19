@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "icc_consistency",
+  "description": "ICC(3,1) (conventions: ICC(3,1); ADR 0381).",
+  "cases": [
+    {"id": "icc_consistency.offset_raters", "op": "icc_consistency", "args": {"ratings": [[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]]}, "expected": 1.0, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "the second rater is the first plus 1: no residual, ICC = 1"},
+    {"id": "icc_consistency.opposed", "op": "icc_consistency", "args": {"ratings": [[1.0, 2.0, 3.0], [3.0, 2.0, 1.0]]}, "expected": -1.0, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "the column means are all 2, so MS_S = 0; residuals -1, 0, 1, 1, 0, -1 give MS_E = 4/2 = 2: (0 - 2)/(0 + 2) = -1"},
+    {"id": "icc_consistency.shrout_fleiss", "op": "icc_consistency", "args": {"ratings": [[9.0, 6.0, 8.0, 7.0, 10.0, 6.0], [2.0, 1.0, 4.0, 1.0, 5.0, 2.0], [5.0, 3.0, 6.0, 2.0, 6.0, 4.0], [8.0, 2.0, 8.0, 6.0, 9.0, 7.0]]}, "expected": 0.7148407148407149, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "the example of Shrout and Fleiss (1979), 4 judges by 6 targets; their published ICC(3,1) is 0.71: MS_S = 11.24, MS_E = 1.02"},
+    {"id": "icc_consistency.five_raters", "op": "icc_consistency", "args": {"ratings": [[6.75, 7.5, 10.0, -0.5, 3.25, 0.75, 3.0, 1.75, 9.0, 9.75, 10.5, 8.75, 10.25, 5.75, 8.5], [10.5, 8.75, 10.5, 3.0, 3.5, 3.0, 6.25, 5.0, 10.25, 11.25, 10.75, 12.25, 12.0, 7.0, 10.0], [6.0, 4.75, 7.0, -0.75, -0.5, -1.5, 2.0, 1.75, 6.75, 7.25, 7.0, 8.0, 6.25, 3.25, 9.25], [7.25, 8.0, 10.0, -0.75, 4.25, 2.25, 4.75, 3.75, 9.75, 10.25, 9.25, 11.5, 10.5, 4.25, 11.5], [10.0, 11.75, 13.0, 4.5, 5.0, 3.0, 9.0, 5.0, 11.5, 13.75, 13.5, 12.5, 11.25, 7.75, 12.75]]}, "expected": 0.9342917783531091, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "5 raters of 15 subjects from random.Random(381): a common score in quarters, a fixed offset per rater and independent quarters"},
+    {"id": "icc_consistency.one_rater", "op": "icc_consistency", "args": {"ratings": [[1.0, 2.0, 3.0]]}, "error": "invalid_argument", "source": "k must be at least 2"},
+    {"id": "icc_consistency.one_subject", "op": "icc_consistency", "args": {"ratings": [[1.0], [2.0]]}, "error": "invalid_argument", "source": "n must be at least 2"},
+    {"id": "icc_consistency.no_spread", "op": "icc_consistency", "args": {"ratings": [[1.0, 1.0, 1.0], [4.0, 4.0, 4.0]]}, "error": "invalid_argument", "source": "every column is the same once the rater offsets are removed"},
+    {"id": "icc_consistency.nan", "op": "icc_consistency", "args": {"ratings": [[1.0, 2.0, 3.0], [1.0, "nan", 3.0]]}, "error": "invalid_argument", "source": "ratings must be finite"}
+  ]
+}

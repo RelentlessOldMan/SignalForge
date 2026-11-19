@@ -1950,6 +1950,37 @@ def cronbach_alpha(scores: ArrayLike) -> float:
     return k / (k - 1) * (1 - items / total)
 
 
+def icc_consistency(ratings: ArrayLike) -> float:
+    """The intraclass correlation ICC(3,1): the two-way consistency of a single rating, raters
+    in the rows of ``ratings`` and subjects in its columns (conventions: ICC(3,1); ADR 0381)."""
+    a = np.asarray(ratings)
+    if a.ndim != 2:
+        raise ValueError("ratings must be two-dimensional")
+    if np.iscomplexobj(a):
+        raise ValueError("ratings must be real")
+    try:
+        a = a.astype(np.float64, copy=False)
+    except (TypeError, ValueError):
+        raise ValueError("ratings must be real numbers") from None
+    if not np.all(np.isfinite(a)):
+        raise ValueError("ratings must be finite")
+    k, n = int(a.shape[0]), int(a.shape[1])
+    if k < 2:
+        raise ValueError("ratings must have at least 2 raters (rows)")
+    if n < 2:
+        raise ValueError("ratings must have at least 2 subjects (columns)")
+    grand = float(np.mean(a))
+    rows = np.mean(a, axis=1)
+    cols = np.mean(a, axis=0)
+    ms_s = k * float(np.sum((cols - grand) ** 2)) / (n - 1)
+    residual = a - rows[:, None] - cols[None, :] + grand
+    ms_e = float(np.sum(residual**2)) / ((n - 1) * (k - 1))
+    denominator = ms_s + (k - 1) * ms_e
+    if denominator == 0:
+        raise ValueError("the subjects do not differ once the rater offsets are removed")
+    return (ms_s - ms_e) / denominator
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

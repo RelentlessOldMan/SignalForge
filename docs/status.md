@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The intraclass correlation ICC(3,1) in `measurements` (two-way, consistency: rows are
-     raters, columns subjects as for Kendall's W; `(MS_S − MS_E)/(MS_S + (k − 1)MS_E)` from
-     the two-way ANOVA mean squares).
+   - Fleiss' kappa in `measurements` (a 2-D array of counts, `N` subjects by `q` categories,
+     every row summing to the same `n ≥ 2` raters: `κ = (P̄ − P̄_e)/(1 − P̄_e)`).
 
 ## Built
 
@@ -2944,6 +2943,11 @@ Updated with every chunk of work. Dates are absolute.
   subjects in the columns.
   Python 7944 passed, 2 skipped; .NET 7117 passed; conformance 5001/5001 in both. Version
   2026.11.19.6.
+- 2026-11-19: ICC(3,1) (ADR 0381): `icc_consistency(ratings)` in `measurements` (C#
+  `Measurements.IccConsistency`): the two-way consistency intraclass correlation of a single
+  rating, raters in the rows and subjects in the columns.
+  Python 7955 passed, 2 skipped; .NET 7127 passed; conformance 5009/5009 in both. Version
+  2026.11.19.7.
 
 ## Not built
 

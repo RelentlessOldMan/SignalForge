@@ -283,6 +283,7 @@ from .measurements import (
     hjorth_parameters,
     hoeffding_d,
     iacc,
+    icc_consistency,
     increment_entropy,
     integrated_phase_noise,
     katz_dimension,
@@ -560,7 +561,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.6"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.7"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -840,6 +841,7 @@ __all__ = [
     "hz_to_erb_rate",
     "hz_to_mel",
     "iacc",
+    "icc_consistency",
     "idct",
     "ifft",
     "increment_entropy",
