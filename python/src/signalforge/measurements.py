@@ -1655,6 +1655,44 @@ def pearson_correlation(x: ArrayLike, y: ArrayLike) -> float:
     return float(np.dot(u, w)) / math.sqrt(float(np.dot(u, u)) * float(np.dot(w, w)))
 
 
+def _double_centred(v: NDArray[np.float64]) -> NDArray[np.float64]:
+    a = np.abs(v[:, None] - v[None, :])
+    m = a.mean(axis=1)
+    out: NDArray[np.float64] = a - m[:, None] - m[None, :] + float(m.mean())
+    return out
+
+
+def distance_correlation(x: ArrayLike, y: ArrayLike) -> float:
+    """The distance correlation of ``x`` and ``y``, from the double-centred distance matrices,
+    0 only for independent records (conventions: Distance correlation; ADR 0372)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    a, b = pair
+    n = a.shape[0]
+    if b.shape[0] != n:
+        raise ValueError("x and y must be the same length")
+    if n < 2:
+        raise ValueError("x and y must have at least 2 values")
+    if a.min() == a.max() or b.min() == b.max():
+        raise ValueError("neither x nor y may have every value equal")
+    big_a = _double_centred(a)
+    big_b = _double_centred(b)
+    nn = float(n) * n
+    cov = float(np.sum(big_a * big_b)) / nn
+    va = float(np.sum(big_a * big_a)) / nn
+    vb = float(np.sum(big_b * big_b)) / nn
+    return math.sqrt(max(0.0, cov) / math.sqrt(va * vb))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

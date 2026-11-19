@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - distance correlation in `measurements` (Székely, Rizzo and Bakirov: the double-centred
-     distance matrices `A` and `B`, `dCov² = mean(A·B)`, and
-     `dCor = √(dCov²(x, y)/√(dVar²(x) dVar²(y)))`).
+   - biweight midcorrelation in `measurements` (with `u = (x − med x)/(9 MAD x)` and
+     weights `(1 − u²)²` where `|u| < 1`, the correlation of the weighted deviations from the
+     medians; the same for `y`).
 
 ## Built
 
@@ -2901,6 +2901,11 @@ Updated with every chunk of work. Dates are absolute.
   (C# `Measurements.PearsonCorrelation`): the product-moment correlation with float means.
   Python 7832 passed, 2 skipped; .NET 7014 passed; conformance 4921/4921 in both. Version
   2026.11.18.60.
+- 2026-11-18: Distance correlation (ADR 0372): `distance_correlation(x, y)` in
+  `measurements` (C# `Measurements.DistanceCorrelation`): Székely's V-statistic dCor from the
+  double-centred distance matrices.
+  Python 7845 passed, 2 skipped; .NET 7026 passed; conformance 4930/4930 in both. Version
+  2026.11.18.61.
 
 ## Not built
 

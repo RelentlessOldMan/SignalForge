@@ -421,6 +421,11 @@ rule for code not written yet.
   `r = Σ (x − x̄)(y − ȳ)/√(Σ (x − x̄)² · Σ (y − ȳ)²)`, the product, then the square root, then
   the quotient; not clamped. Real, finite, equal lengths; `N ≥ 2`; neither record constant.
   **(implemented)**
+- **Distance correlation** ([ADR 0372](adr/0372-distance-correlation.md);
+  `distance_correlation(x, y)`, C# `Measurements.DistanceCorrelation`): `a_ij = |x_i − x_j|`,
+  double-centred `A_ij = a_ij − ā_i· − ā_·j + ā_··` (likewise `B`); V-statistics
+  `dCov² = ΣAB/N²`, `dVar² = ΣA²/N²`; `dCor = √(max(0, dCov²)/√(dVar²(x) dVar²(y)))`. Real,
+  finite, equal lengths; `N ≥ 2`; neither record constant. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
