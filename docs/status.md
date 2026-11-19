@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Cliff's delta in `measurements` (two real samples `x` and `y`, each at least 1:
-     `(#(xᵢ > yⱼ) − #(xᵢ < yⱼ))/(n_x·n_y)` over every pair, from −1 to 1).
+   - The Vargha–Delaney A in `measurements` (as for Cliff's delta:
+     `(#(xᵢ > yⱼ) + #(xᵢ = yⱼ)/2)/(n_x·n_y)`, the probability that a draw from `x` beats one from
+     `y`, ties counting half).
 
 ## Built
 
@@ -3036,6 +3037,11 @@ Updated with every chunk of work. Dates are absolute.
   standard deviation.
   Python 8182 passed, 2 skipped; .NET 7337 passed; conformance 5182/5182 in both. Version
   2026.11.19.26.
+- 2026-11-19: Cliff's delta (ADR 0400): `cliff_delta(x, y)` in `measurements` (C#
+  `Measurements.CliffDelta`): the net share of cross-sample pairs where `x` is larger, from a
+  sort and binary searches.
+  Python 8194 passed, 2 skipped; .NET 7348 passed; conformance 5191/5191 in both. Version
+  2026.11.19.27.
 
 ## Not built
 

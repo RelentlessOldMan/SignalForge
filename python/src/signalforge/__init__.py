@@ -262,6 +262,7 @@ from .measurements import (
     cepstrum_pitch,
     chatterjee_xi,
     clarity,
+    cliff_delta,
     cohen_d,
     cohen_kappa,
     correlation_sum,
@@ -579,7 +580,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.26"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.27"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -749,6 +750,7 @@ __all__ = [
     "cic_interpolate",
     "cic_taps",
     "clarity",
+    "cliff_delta",
     "clock_drift",
     "clock_jitter",
     "clock_offset",

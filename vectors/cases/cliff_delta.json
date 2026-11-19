@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "cliff_delta",
+  "description": "Cliff's delta (conventions: Cliff's delta; ADR 0400).",
+  "cases": [
+    {"id": "cliff_delta.above", "op": "cliff_delta", "args": {"x": [5.0, 6.0], "y": [1.0, 2.0, 3.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "every x above every y: 1"},
+    {"id": "cliff_delta.below", "op": "cliff_delta", "args": {"x": [1.0, 2.0], "y": [5.0, 6.0, 7.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "every x below every y: -1"},
+    {"id": "cliff_delta.all_tied", "op": "cliff_delta", "args": {"x": [2.0, 2.0], "y": [2.0, 2.0, 2.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "every pair tied: 0"},
+    {"id": "cliff_delta.hand", "op": "cliff_delta", "args": {"x": [1.0, 3.0, 5.0], "y": [2.0, 3.0, 4.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x = 1 loses 3; 3 beats 2, ties 3, loses to 4; 5 beats 3: (4 - 4)/9 = 0"},
+    {"id": "cliff_delta.hand_two", "op": "cliff_delta", "args": {"x": [2.0, 4.0, 6.0, 8.0], "y": [1.0, 5.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "wins 1 + 1 + 2 + 2 = 6, losses 1 + 1 = 2: 4/8 = 1/2"},
+    {"id": "cliff_delta.rounded_gaussian", "op": "cliff_delta", "args": {"x": [10, 12, 11, 8, 11, 8, 14, 9, 6, 9, 10, 12, 15, 8, 11, 7, 12, 11, 11, 10, 10, 12, 12, 10, 12, 12, 13, 9, 13, 8, 15, 6, 10, 10, 14, 13, 4, 8, 6, 6], "y": [7, 12, 13, 7, 9, 11, 9, 7, 9, 13, 13, 7, 11, 12, 9, 7, 10, 11, 7, 7, 13, 12, 10, 12, 13, 9, 11, 11, 7, 11, 9, 6, 9, 13, 8, 9, 8, 11, 12, 7, 9, 12, 10, 8, 13, 11, 13, 11, 11, 10, 9, 12, 10, 13, 10]}, "expected": 0.03636363636363636, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 and 55 values from random.Random(400), N(10.5, 2) and N(10, 2) rounded to integers, so with ties"},
+    {"id": "cliff_delta.x_empty", "op": "cliff_delta", "args": {"x": [], "y": [2.0, 4.0]}, "error": "invalid_argument", "source": "x needs a value"},
+    {"id": "cliff_delta.y_empty", "op": "cliff_delta", "args": {"x": [1.0, 2.0, 3.0], "y": []}, "error": "invalid_argument", "source": "y needs a value"},
+    {"id": "cliff_delta.not_finite", "op": "cliff_delta", "args": {"x": [1.0, 2.0, 3.0], "y": [2.0, "nan"]}, "error": "invalid_argument", "source": "values must be finite"}
+  ]
+}

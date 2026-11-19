@@ -539,6 +539,10 @@ rule for code not written yet.
 - **Glass's delta** ([ADR 0399](adr/0399-glass-delta.md); `glass_delta(x, y)`, C#
   `Measurements.GlassDelta`): `(x̄ − ȳ)/s_y`, `x` treated and `y` the control, `s_y` its sample
   standard deviation over `n_y − 1`. `n_x ≥ 1`, `n_y ≥ 2`, finite; `s_y > 0`. **(implemented)**
+- **Cliff's delta** ([ADR 0400](adr/0400-cliff-delta.md); `cliff_delta(x, y)`, C#
+  `Measurements.CliffDelta`): `(#(xᵢ > yⱼ) − #(xᵢ < yⱼ))/(n_x·n_y)` over every pair, ties in
+  neither count; one division of whole numbers in `double`. Each sample at least 1, finite.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

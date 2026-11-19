@@ -2499,6 +2499,29 @@ def glass_delta(x: ArrayLike, y: ArrayLike) -> float:
     return (means[0] - means[1]) / s
 
 
+def cliff_delta(x: ArrayLike, y: ArrayLike) -> float:
+    """Cliff's delta: over every pair of a value of ``x`` and one of ``y``, the share where
+    ``x`` is larger less the share where it is smaller, from -1 to 1 (conventions: Cliff's
+    delta; ADR 0400)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    xs, ys = pair[0], np.sort(pair[1])
+    below = int(np.sum(np.searchsorted(ys, xs, side="left")))
+    above = int(np.sum(ys.size - np.searchsorted(ys, xs, side="right")))
+    return float(below - above) / float(xs.size * ys.size)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
