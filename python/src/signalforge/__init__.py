@@ -283,6 +283,7 @@ from .measurements import (
     sample_entropy,
     schroeder_decay,
     sfdr,
+    slope_entropy,
     sound_exposure,
     sound_strength,
     speech_transmission_index,
@@ -515,7 +516,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.34"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.35"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -945,6 +946,7 @@ __all__ = [
     "slew_limiter",
     "slicer",
     "sliding_dft",
+    "slope_entropy",
     "soft_clip",
     "sos_group_delay",
     "sos_response",

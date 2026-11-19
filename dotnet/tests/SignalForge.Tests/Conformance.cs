@@ -276,6 +276,7 @@ public static class Conformance
             "increment_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.I("levels")), t => Measurements.IncrementEntropy(t.Item1, t.Item2, t.Item3)),
             "bubble_entropy" => Bind((Reals(a.Get("samples")), a.I("m")), t => Measurements.BubbleEntropy(t.Item1, t.Item2)),
             "attention_entropy" => Bind(Reals(a.Get("samples")), x => Measurements.AttentionEntropy(x)),
+            "slope_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.Has("gamma") ? a.D("gamma") : 1.0, a.Has("delta") ? a.D("delta") : 1e-3), t => Measurements.SlopeEntropy(t.Item1, t.Item2, t.Item3, t.Item4)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

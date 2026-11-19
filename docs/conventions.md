@@ -285,6 +285,11 @@ rule for code not written yet.
   maxima and minima; four interval sets (max to max, min to min, each max to the next min, each
   min to the next max); the mean of their Shannon entropies in nats. Real, finite; every set
   non-empty. **(implemented)**
+- **Slope entropy** ([ADR 0347](adr/0347-slope-entropy.md); `slope_entropy(samples, m,
+  gamma=1.0, delta=1e-3)`, C# `Measurements.SlopeEntropy`): each step `d` of a window of `m`
+  samples becomes `+2` (`d > γ`), `+1` (`δ < d ≤ γ`), `0` (`|d| ≤ δ`), `−1` (`−γ ≤ d < −δ`) or
+  `−2` (`d < −γ`); the Shannon entropy in nats of the `N − m + 1` patterns, not normalized.
+  Real, finite, at least `m` samples; `2 ≤ m ≤ 16`; `0 ≤ δ < γ`, finite. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -788,6 +788,40 @@ def attention_entropy(samples: ArrayLike) -> float:
     return total / 4
 
 
+def slope_entropy(samples: ArrayLike, m: int, gamma: float = 1.0, delta: float = 1e-3) -> float:
+    """Cuesta-Frau's slope entropy: each step of a window as one of five symbols by the
+    thresholds ``gamma`` and ``delta``, then the Shannon entropy in nats of the patterns
+    (conventions: Slope entropy; ADR 0347)."""
+    k = count(m, "m")
+    if not 2 <= k <= 16:
+        raise ValueError("m must be from 2 to 16")
+    g = real(gamma, "gamma")
+    d0 = real(delta, "delta")
+    if not 0 <= d0 < g:
+        raise ValueError("need 0 <= delta < gamma")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    windows = x.shape[0] - k + 1
+    if windows < 1:
+        raise ValueError("samples must be at least m long")
+    d = np.diff(x)
+    symbols = np.zeros(d.shape[0], dtype=np.int64)
+    symbols[d > d0] = 1
+    symbols[d > g] = 2
+    symbols[d < -d0] = -1
+    symbols[d < -g] = -2
+    idx = np.arange(windows)[:, None] + np.arange(k - 1)[None, :]
+    _, counts = np.unique(symbols[idx], axis=0, return_counts=True)
+    p = counts / windows
+    return float(-np.sum(p * np.log(p)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

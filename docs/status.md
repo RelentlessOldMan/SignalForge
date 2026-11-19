@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - slope entropy in `measurements` (Cuesta-Frau: the differences of each window mapped to
-     five symbols by thresholds `γ` and `δ`, Shannon entropy of the patterns).
    - phase entropy in `measurements` (Rohila and Sharma: the second-order difference plot cut
      into `k` angular sectors, the entropy of the slope-angle mass in each, over `ln k`).
 
@@ -2780,6 +2778,11 @@ Updated with every chunk of work. Dates are absolute.
   entropies in nats. Next restocked with slope and phase entropy.
   Python 7515 passed, 2 skipped; .NET 6699 passed; conformance 4680/4680 in both. Version
   2026.11.18.34.
+- 2026-11-18: Slope entropy (ADR 0347): `slope_entropy(samples, m, gamma=1.0, delta=1e-3)` in
+  `measurements` (C# `Measurements.SlopeEntropy`): five step symbols by Cuesta-Frau's
+  thresholds, entropy in nats.
+  Python 7529 passed, 2 skipped; .NET 6713 passed; conformance 4691/4691 in both. Version
+  2026.11.18.35.
 
 ## Not built
 
