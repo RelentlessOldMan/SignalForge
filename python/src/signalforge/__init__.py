@@ -236,6 +236,7 @@ from .measurements import (
     am_am_pm,
     approximate_entropy,
     attention_entropy,
+    auto_mutual_information,
     autocorrelation_pitch,
     bass_ratio,
     block_leq,
@@ -522,7 +523,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.39"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.40"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -620,6 +621,7 @@ __all__ = [
     "ar_spectral_flatness",
     "arcsine_to_reflection",
     "attention_entropy",
+    "auto_mutual_information",
     "auto_pan",
     "auto_wah",
     "autocorrelation",

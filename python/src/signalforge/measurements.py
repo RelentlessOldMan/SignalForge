@@ -997,6 +997,45 @@ def fisher_information(samples: ArrayLike, order: int, delay: int = 1) -> float:
     return float(np.sum(step[keep] ** 2 / head[keep]))
 
 
+def auto_mutual_information(
+    samples: ArrayLike, lags: Sequence[int], bins: int = 16
+) -> NDArray[np.float64]:
+    """Fraser and Swinney's auto mutual information: the mutual information in nats between
+    ``x_t`` and ``x_{t+lag}`` from an equal-width histogram, at each lag (conventions: Auto
+    mutual information; ADR 0352)."""
+    nb = count(bins, "bins")
+    if not 2 <= nb <= 4096:
+        raise ValueError("bins must be from 2 to 4096")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    taus = [count(t, "lags") for t in lags]
+    if len(taus) < 1:
+        raise ValueError("lags must have at least one entry")
+    if any(t > x.shape[0] - 1 for t in taus):
+        raise ValueError("each lag must be at most len(samples) - 1")
+    lo, hi = float(np.min(x)), float(np.max(x))
+    if not hi > lo:
+        raise ValueError("samples must not all be equal")
+    b = np.minimum(nb - 1, np.floor((x - lo) * nb / (hi - lo)).astype(np.int64))
+    out = np.empty(len(taus))
+    for i, t in enumerate(taus):
+        n = x.shape[0] - t
+        first, second = b[:n], b[t:]
+        ca = np.bincount(first, minlength=nb).astype(np.float64)
+        cb = np.bincount(second, minlength=nb).astype(np.float64)
+        joint = np.bincount(first * nb + second, minlength=nb * nb).astype(np.float64)
+        ia, ib = np.divmod(np.flatnonzero(joint), nb)
+        cab = joint[joint > 0]
+        out[i] = float(np.sum(cab / n * np.log(cab * n / (ca[ia] * cb[ib]))))
+    return out
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

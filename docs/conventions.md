@@ -315,6 +315,12 @@ rule for code not written yet.
   singular values of SVD entropy's embedding, sorted largest first and divided by their sum,
   `σ̄_1 ≥ … ≥ σ̄_m`; `Σ_{i<m} (σ̄_{i+1} − σ̄_i)² / σ̄_i`, a term with `σ̄_i = 0` being 0. The
   rules are SVD entropy's. **(implemented)**
+- **Auto mutual information** ([ADR 0352](adr/0352-auto-mutual-information.md);
+  `auto_mutual_information(samples, lags, bins=16)`, C# `Measurements.AutoMutualInformation`):
+  sample `x` in bin `min(B − 1, floor((x − lo)·B/(hi − lo)))` over the record's range; at lag
+  `τ` the `n = N − τ` pairs `(x_t, x_{t+τ})` give `Σ (c_ab/n)·ln(c_ab·n/(c_a·c_b))` in nats,
+  the marginals counted over the same pairs. Real, finite, not all equal; lags from 0 to
+  `N − 1`, at least one; `2 ≤ bins ≤ 4096`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

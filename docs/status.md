@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - auto mutual information in `measurements` (Fraser and Swinney: the mutual information
-     between `x_t` and `x_{t+τ}` from an equal-width 2-D histogram, at each lag).
    - Rényi entropy in `measurements` (the order-`α` entropy of an equal-width histogram of
      the samples, with Shannon at `α = 1`).
 
@@ -2805,6 +2803,11 @@ Updated with every chunk of work. Dates are absolute.
   spectrum of SVD entropy's embedding, `Σ (σ̄_{i+1} − σ̄_i)² / σ̄_i`.
   Python 7588 passed, 2 skipped; .NET 6771 passed; conformance 4737/4737 in both. Version
   2026.11.18.39.
+- 2026-11-18: Auto mutual information (ADR 0352): `auto_mutual_information(samples, lags,
+  bins=16)` in `measurements` (C# `Measurements.AutoMutualInformation`): histogram mutual
+  information in nats between `x_t` and `x_{t+τ}` at each lag.
+  Python 7603 passed, 2 skipped; .NET 6786 passed; conformance 4749/4749 in both. Version
+  2026.11.18.40.
 
 ## Not built
 
