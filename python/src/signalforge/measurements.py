@@ -2325,6 +2325,48 @@ def roc_auc(truth: ArrayLike, score: ArrayLike) -> float:
     return (r1 - n1 * (n1 + 1) / 2) / (float(n1) * n0)
 
 
+def average_precision(truth: ArrayLike, score: ArrayLike) -> float:
+    """The average precision of a real ``score`` against the binary ``truth``: the precision
+    at each distinct score, weighted by the positives first reached there (conventions:
+    Average precision; ADR 0394)."""
+    t = np.asarray(truth)
+    s = np.asarray(score)
+    for name, r in (("truth", t), ("score", s)):
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+    t = t.astype(np.float64, copy=False)
+    s = s.astype(np.float64, copy=False)
+    if t.size != s.size:
+        raise ValueError("truth and score must be the same length")
+    if not np.all((t == 0) | (t == 1)):
+        raise ValueError("truth must hold only 0 and 1")
+    if not np.all(np.isfinite(s)):
+        raise ValueError("score must be finite")
+    n1 = int(np.count_nonzero(t == 1))
+    if n1 == 0:
+        raise ValueError("truth must hold at least one 1")
+    order = np.argsort(-s, kind="stable")
+    ss = s[order].tolist()
+    tt = t[order].tolist()
+    total = 0.0
+    seen = hits = 0
+    i = 0
+    while i < len(ss):
+        k = 0
+        j = i
+        while j < len(ss) and ss[j] == ss[i]:
+            k += int(tt[j] == 1)
+            j += 1
+        seen = j
+        hits += k
+        if k:
+            total += float(k * hits) / seen
+        i = j
+    return total / n1
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

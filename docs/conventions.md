@@ -517,6 +517,10 @@ rule for code not written yet.
   `Measurements.RocAuc`): truth 0 or 1, scores finite, higher meaning positive;
   `(R₁ − n₁(n₁ + 1)/2)/(n₁·n₀)` from mean ranks, a tied pair counting 1/2. Equal lengths; at
   least one positive and one negative. **(implemented)**
+- **Average precision** ([ADR 0394](adr/0394-average-precision.md);
+  `average_precision(truth, score)`, C# `Measurements.AveragePrecision`): records as for the
+  ROC AUC; thresholds the distinct scores from the highest down, `(1/n₁)·Σ kτ·Tτ/Dτ`, no
+  interpolation, ties one threshold. Equal lengths; at least one positive. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

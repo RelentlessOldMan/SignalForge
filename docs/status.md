@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The average precision in `measurements` (`truth` 0 or 1 and a real `score`, as for the
-     ROC AUC: the mean, over the positives, of the precision at each positive's score, tied
-     scores taken as one threshold).
+   - Markedness in `measurements` (truth and decision as for the Matthews correlation:
+     `TP/(TP + FP) + TN/(TN + FN) − 1`, the precision and the negative predictive value less 1).
 
 ## Built
 
@@ -3007,6 +3006,11 @@ Updated with every chunk of work. Dates are absolute.
   counting half, from mean ranks.
   Python 8109 passed, 2 skipped; .NET 7269 passed; conformance 5127/5127 in both. Version
   2026.11.19.20.
+- 2026-11-19: The average precision (ADR 0394): `average_precision(truth, score)` in
+  `measurements` (C# `Measurements.AveragePrecision`): the step sum of precision over the
+  recall gained at each distinct score, ties one threshold.
+  Python 8123 passed, 2 skipped; .NET 7283 passed; conformance 5138/5138 in both. Version
+  2026.11.19.21.
 
 ## Not built
 
@@ -3019,6 +3023,9 @@ packaging and publishing.
 
 ## Lessons
 
+- 2026-11-19: Python's `json` writes `float("inf")` and `float("nan")` as bare `Infinity` and
+  `NaN`, which the C# reader rejects, failing every conformance test at load. A generator
+  writes the strings `"inf"`, `"-inf"` and `"nan"` instead (vectors/README.md).
 - 2026-11-16: NumPy's complex product `x * conj(x)` need not have an exactly zero imaginary part (it can
   use fused multiply-add), so a quantity defined as real, such as an autocorrelation's lag 0,
   is computed from `re² + im²` directly.

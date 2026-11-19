@@ -248,6 +248,7 @@ from .measurements import (
     attention_entropy,
     auto_mutual_information,
     autocorrelation_pitch,
+    average_precision,
     bartels_rank_test,
     bass_ratio,
     biweight_midcorrelation,
@@ -573,7 +574,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.20"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.21"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -686,6 +687,7 @@ __all__ = [
     "auto_wah",
     "autocorrelation",
     "autocorrelation_pitch",
+    "average_precision",
     "awgn",
     "balance",
     "band_energy_ratio",
