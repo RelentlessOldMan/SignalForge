@@ -146,6 +146,16 @@ class LargestLyapunov:
 
 
 @dataclass(frozen=True)
+class AggregatedVariance:
+    """The variance of the block means at each size and the Hurst exponent they give
+    (conventions: Aggregated variance; ADR 0355)."""
+
+    sizes: NDArray[np.int64]
+    values: NDArray[np.float64]
+    hurst: float
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -1119,6 +1129,39 @@ def largest_lyapunov(
     dx = ks - ks.mean()
     exponent = float(np.sum(dx * (divergence - divergence.mean())) / np.sum(dx * dx))
     return LargestLyapunov(divergence, exponent)
+
+
+def aggregated_variance(samples: ArrayLike, sizes: Sequence[int]) -> AggregatedVariance:
+    """The aggregated-variance Hurst estimator: the population variance of the means of
+    non-overlapping blocks at each size, and ``1 + slope/2`` of its log-log line
+    (conventions: Aggregated variance; ADR 0355)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    s = [count(v, "sizes") for v in sizes]
+    if len(s) < 2:
+        raise ValueError("sizes must have at least two entries")
+    if any(s[i + 1] <= s[i] for i in range(len(s) - 1)):
+        raise ValueError("sizes must be strictly increasing")
+    if s[0] < 1 or 2 * s[-1] > x.shape[0]:
+        raise ValueError("each size must be at least 1 and at most len(samples)/2")
+    values = np.empty(len(s))
+    for i, size in enumerate(s):
+        blocks = x.shape[0] // size
+        means = x[: blocks * size].reshape(blocks, size).mean(axis=1)
+        values[i] = float(np.mean((means - means.mean()) ** 2))
+    if not np.all(values > 0):
+        raise ValueError("every size must have block means that vary")
+    lx = np.log(np.array(s, dtype=np.float64))
+    ly = np.log(values)
+    dx = lx - lx.mean()
+    beta = float(np.sum(dx * (ly - ly.mean())) / np.sum(dx * dx))
+    return AggregatedVariance(np.array(s, dtype=np.int64), values, 1 + beta / 2)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

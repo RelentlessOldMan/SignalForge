@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - aggregated variance in `measurements` (the variance of the means of non-overlapping
-     blocks at each size, and the Hurst exponent `1 + slope/2` of its log-log line).
    - Tsallis entropy in `measurements` (the order-`q` entropy of ADR 0352's histogram,
      `(1 − Σ p^q)/(q − 1)`, Shannon at `q = 1`).
 
@@ -2820,6 +2818,11 @@ Updated with every chunk of work. Dates are absolute.
   mean log divergence of Chebyshev-nearest neighbours and its slope.
   Python 7635 passed, 2 skipped; .NET 6821 passed; conformance 4775/4775 in both. Version
   2026.11.18.42.
+- 2026-11-18: Aggregated variance (ADR 0355): `aggregated_variance(samples, sizes)` in
+  `measurements` (C# `Measurements.AggregatedVariance`): the population variance of block
+  means at each size and the Hurst exponent `1 + β/2`.
+  Python 7648 passed, 2 skipped; .NET 6833 passed; conformance 4785/4785 in both. Version
+  2026.11.18.43.
 
 ## Not built
 

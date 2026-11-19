@@ -333,6 +333,12 @@ rule for code not written yet.
   `divergence[k]`, `k = 0 … K`, is the mean of `ln d_j(k)` over the pairs with
   `d_j(k) > 0`; `exponent` is its least-squares slope against `k`. Real, finite samples;
   `m, τ, K ≥ 1`, `w ≥ 0`; `P ≥ 2w + 2`; some `d_j(k) > 0` at every `k`. **(implemented)**
+- **Aggregated variance** ([ADR 0355](adr/0355-aggregated-variance.md);
+  `aggregated_variance(samples, sizes)`, C# `Measurements.AggregatedVariance`): at size `s`,
+  the population variance (over `B = floor(N/s)`) of the means of the first `B` blocks of
+  `s` samples; `hurst = 1 + β/2`, `β` the least-squares slope of `ln values` against `ln s`.
+  Real, finite samples; at least two sizes, strictly increasing, from 1 to `N/2`; every
+  value above 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
