@@ -218,6 +218,7 @@ from .measurements import (
     GccPhat,
     HjorthParameters,
     IntegratedPhaseNoise,
+    LargestLyapunov,
     Mtie,
     NoiseFigure,
     PhaseNoise,
@@ -267,6 +268,7 @@ from .measurements import (
     integrated_phase_noise,
     katz_dimension,
     kay_frequency,
+    largest_lyapunov,
     lateral_fraction,
     lempel_ziv_complexity,
     modified_allan_deviation,
@@ -524,7 +526,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.41"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.42"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -559,6 +561,7 @@ __all__ = [
     "HjorthParameters",
     "IirFilter",
     "IntegratedPhaseNoise",
+    "LargestLyapunov",
     "LeftRight",
     "Levinson",
     "LineRemoval",
@@ -801,6 +804,7 @@ __all__ = [
     "kay_frequency",
     "lagrange_fir",
     "lar_to_reflection",
+    "largest_lyapunov",
     "lateral_fraction",
     "lattice_filter",
     "lattice_synthesis",

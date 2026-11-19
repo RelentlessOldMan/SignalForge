@@ -137,6 +137,15 @@ class RecurrenceQuantification:
 
 
 @dataclass(frozen=True)
+class LargestLyapunov:
+    """Rosenstein's mean log divergence at each step and the exponent it gives, per sample
+    (conventions: Largest Lyapunov exponent; ADR 0354)."""
+
+    divergence: NDArray[np.float64]
+    exponent: float
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -1064,6 +1073,52 @@ def renyi_entropy(samples: ArrayLike, alpha: float, bins: int = 16) -> float:
     if a == 1:
         return float(-np.sum(p * np.log(p)))
     return math.log(float(np.sum(p**a))) / (1 - a)
+
+
+def largest_lyapunov(
+    samples: ArrayLike, m: int, steps: int, delay: int = 1, theiler: int = 0
+) -> LargestLyapunov:
+    """Rosenstein's largest Lyapunov exponent: each embedded point's nearest neighbour outside
+    the Theiler window, the mean log of their distance as both move on, and its least-squares
+    slope (conventions: Largest Lyapunov exponent; ADR 0354)."""
+    k = count(m, "m")
+    big_k = count(steps, "steps")
+    tau = count(delay, "delay")
+    w = count(theiler, "theiler")
+    if k < 1 or big_k < 1 or tau < 1:
+        raise ValueError("m, steps and delay must be at least 1")
+    if w < 0:
+        raise ValueError("theiler must be at least 0")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    windows = x.shape[0] - (k - 1) * tau
+    p = windows - big_k
+    if p < 2 * w + 2:
+        raise ValueError("too few points: need N - (m - 1)*delay - steps >= 2*theiler + 2")
+    emb = x[np.arange(windows)[:, None] + tau * np.arange(k)[None, :]]
+    idx = np.arange(p)
+    near = np.empty(p, dtype=np.int64)
+    for j in range(p):
+        d = np.max(np.abs(emb[:p] - emb[j]), axis=1)
+        d[np.abs(idx - j) <= w] = np.inf
+        near[j] = int(np.argmin(d))
+    divergence = np.empty(big_k + 1)
+    for s in range(big_k + 1):
+        d = np.max(np.abs(emb[s : s + p] - emb[near + s]), axis=1)
+        d = d[d > 0]
+        if d.shape[0] == 0:
+            raise ValueError("every pair has distance 0 at some step")
+        divergence[s] = float(np.mean(np.log(d)))
+    ks = np.arange(big_k + 1, dtype=np.float64)
+    dx = ks - ks.mean()
+    exponent = float(np.sum(dx * (divergence - divergence.mean())) / np.sum(dx * dx))
+    return LargestLyapunov(divergence, exponent)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

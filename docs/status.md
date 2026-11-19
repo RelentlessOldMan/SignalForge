@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - largest Lyapunov exponent in `measurements` (Rosenstein: each embedded point's nearest
-     neighbour outside a Theiler window, the mean log distance as both move on `k` steps,
-     and its least-squares slope).
+   - aggregated variance in `measurements` (the variance of the means of non-overlapping
+     blocks at each size, and the Hurst exponent `1 + slope/2` of its log-log line).
+   - Tsallis entropy in `measurements` (the order-`q` entropy of ADR 0352's histogram,
+     `(1 − Σ p^q)/(q − 1)`, Shannon at `q = 1`).
 
 ## Built
 
@@ -2814,6 +2815,11 @@ Updated with every chunk of work. Dates are absolute.
   histogram, Shannon at `α = 1`.
   Python 7621 passed, 2 skipped; .NET 6807 passed; conformance 4764/4764 in both. Version
   2026.11.18.41.
+- 2026-11-18: Largest Lyapunov exponent (ADR 0354): `largest_lyapunov(samples, m, steps,
+  delay=1, theiler=0)` in `measurements` (C# `Measurements.LargestLyapunov`): Rosenstein's
+  mean log divergence of Chebyshev-nearest neighbours and its slope.
+  Python 7635 passed, 2 skipped; .NET 6821 passed; conformance 4775/4775 in both. Version
+  2026.11.18.42.
 
 ## Not built
 

@@ -326,6 +326,13 @@ rule for code not written yet.
   information; over the occupied bins, `ln K` at `α = 0`, `−Σ p ln p` at `α = 1`,
   `ln(Σ p^α)/(1 − α)` otherwise, in nats. Real, finite, not all equal; `α` finite, `≥ 0`;
   `2 ≤ bins ≤ 4096`. **(implemented)**
+- **Largest Lyapunov exponent** ([ADR 0354](adr/0354-largest-lyapunov.md);
+  `largest_lyapunov(samples, m, steps, delay=1, theiler=0)`, C# `Measurements.LargestLyapunov`):
+  of the vectors embedded as for the correlation sum, the first `P = W − K` take part; each
+  is paired with its Chebyshev-nearest `j'` with `|j − j'| > w`, the lowest on a tie;
+  `divergence[k]`, `k = 0 … K`, is the mean of `ln d_j(k)` over the pairs with
+  `d_j(k) > 0`; `exponent` is its least-squares slope against `k`. Real, finite samples;
+  `m, τ, K ≥ 1`, `w ≥ 0`; `P ≥ 2w + 2`; some `d_j(k) > 0` at every `k`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
