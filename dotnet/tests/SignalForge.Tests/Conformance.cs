@@ -282,6 +282,7 @@ public static class Conformance
             "recurrence_quantification" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("radius"), a.Has("delay") ? a.I("delay") : 1, a.Has("min_line") ? a.I("min_line") : 2, a.Has("theiler") ? a.I("theiler") : 0), t => Measurements.RecurrenceQuantification(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
             "fisher_information" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.FisherInformation(t.Item1, t.Item2, t.Item3)),
             "auto_mutual_information" => Bind((Reals(a.Get("samples")), Ints(a.Get("lags")), a.Has("bins") ? a.I("bins") : 16), t => Measurements.AutoMutualInformation(t.Item1, t.Item2, t.Item3)),
+            "renyi_entropy" => Bind((Reals(a.Get("samples")), a.D("alpha"), a.Has("bins") ? a.I("bins") : 16), t => Measurements.RenyiEntropy(t.Item1, t.Item2, t.Item3)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

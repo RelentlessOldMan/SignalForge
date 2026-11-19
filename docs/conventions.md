@@ -321,6 +321,11 @@ rule for code not written yet.
   `τ` the `n = N − τ` pairs `(x_t, x_{t+τ})` give `Σ (c_ab/n)·ln(c_ab·n/(c_a·c_b))` in nats,
   the marginals counted over the same pairs. Real, finite, not all equal; lags from 0 to
   `N − 1`, at least one; `2 ≤ bins ≤ 4096`. **(implemented)**
+- **Rényi entropy** ([ADR 0353](adr/0353-renyi-entropy.md); `renyi_entropy(samples, alpha,
+  bins=16)`, C# `Measurements.RenyiEntropy`): the samples binned as for auto mutual
+  information; over the occupied bins, `ln K` at `α = 0`, `−Σ p ln p` at `α = 1`,
+  `ln(Σ p^α)/(1 − α)` otherwise, in nats. Real, finite, not all equal; `α` finite, `≥ 0`;
+  `2 ≤ bins ≤ 4096`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

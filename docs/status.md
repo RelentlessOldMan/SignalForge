@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Rényi entropy in `measurements` (the order-`α` entropy of an equal-width histogram of
-     the samples, with Shannon at `α = 1`).
+   - largest Lyapunov exponent in `measurements` (Rosenstein: each embedded point's nearest
+     neighbour outside a Theiler window, the mean log distance as both move on `k` steps,
+     and its least-squares slope).
 
 ## Built
 
@@ -2808,6 +2809,11 @@ Updated with every chunk of work. Dates are absolute.
   information in nats between `x_t` and `x_{t+τ}` at each lag.
   Python 7603 passed, 2 skipped; .NET 6786 passed; conformance 4749/4749 in both. Version
   2026.11.18.40.
+- 2026-11-18: Rényi entropy (ADR 0353): `renyi_entropy(samples, alpha, bins=16)` in
+  `measurements` (C# `Measurements.RenyiEntropy`): order-`α` entropy in nats of ADR 0352's
+  histogram, Shannon at `α = 1`.
+  Python 7621 passed, 2 skipped; .NET 6807 passed; conformance 4764/4764 in both. Version
+  2026.11.18.41.
 
 ## Not built
 

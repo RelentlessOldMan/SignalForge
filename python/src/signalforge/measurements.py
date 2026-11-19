@@ -1036,6 +1036,36 @@ def auto_mutual_information(
     return out
 
 
+def renyi_entropy(samples: ArrayLike, alpha: float, bins: int = 16) -> float:
+    """The order-``alpha`` Rényi entropy in nats of an equal-width histogram of the samples,
+    Shannon's at ``alpha = 1`` (conventions: Rényi entropy; ADR 0353)."""
+    a = real(alpha, "alpha")
+    if not a >= 0:
+        raise ValueError("alpha must be at least 0")
+    nb = count(bins, "bins")
+    if not 2 <= nb <= 4096:
+        raise ValueError("bins must be from 2 to 4096")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    lo, hi = float(np.min(x)), float(np.max(x))
+    if not hi > lo:
+        raise ValueError("samples must not all be equal")
+    b = np.minimum(nb - 1, np.floor((x - lo) * nb / (hi - lo)).astype(np.int64))
+    c = np.bincount(b)
+    p = c[c > 0] / x.shape[0]
+    if a == 0:
+        return math.log(p.shape[0])
+    if a == 1:
+        return float(-np.sum(p * np.log(p)))
+    return math.log(float(np.sum(p**a))) / (1 - a)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
