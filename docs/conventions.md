@@ -482,6 +482,11 @@ rule for code not written yet.
   `Measurements.ScottPi`): categories as for Cohen's kappa; `A` the items with `a_i = b_i`,
   `F = Σ_c (a_c + b_c)²`; `π = (4NA − F)/(4N² − F)`. Real, finite, equal lengths, `N ≥ 1`;
   `F < 4N²`. **(implemented)**
+- **Matthews correlation** ([ADR 0385](adr/0385-matthews-correlation.md);
+  `matthews_correlation(truth, decision)`, C# `Measurements.MatthewsCorrelation`): values 0
+  and 1, 1 positive; `(TP·TN − FP·FN)/√((TP + FP)(TP + FN)(TN + FP)(TN + FN))`, the product
+  in `double` in that order. Equal lengths, `N ≥ 1`; both classes in both records.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

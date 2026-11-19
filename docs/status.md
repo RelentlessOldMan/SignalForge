@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Matthews correlation coefficient in `measurements` (two binary records, truth and
-     decision, values 0 and 1: `(TP·TN − FP·FN)/√((TP+FP)(TP+FN)(TN+FP)(TN+FN))`).
+   - The F1 score in `measurements` (truth and decision as for the Matthews correlation:
+     `F1 = 2TP/(2TP + FP + FN)`, the harmonic mean of precision and recall).
 
 ## Built
 
@@ -2963,6 +2963,11 @@ Updated with every chunk of work. Dates are absolute.
   rates.
   Python 7992 passed, 2 skipped; .NET 7161 passed; conformance 5037/5037 in both. Version
   2026.11.19.10.
+- 2026-11-19: The Matthews correlation (ADR 0385): `matthews_correlation(truth, decision)` in
+  `measurements` (C# `Measurements.MatthewsCorrelation`): the phi coefficient of a binary
+  decision against the truth.
+  Python 8006 passed, 2 skipped; .NET 7174 passed; conformance 5048/5048 in both. Version
+  2026.11.19.11.
 
 ## Not built
 

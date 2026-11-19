@@ -314,6 +314,7 @@ public static class Conformance
             "fleiss_kappa" => Bind(Rows(a.Get("counts")), Measurements.FleissKappa),
             "cohen_kappa" => Bind((Reals(a.Get("a")), Reals(a.Get("b"))), t => Measurements.CohenKappa(t.Item1, t.Item2)),
             "scott_pi" => Bind((Reals(a.Get("a")), Reals(a.Get("b"))), t => Measurements.ScottPi(t.Item1, t.Item2)),
+            "matthews_correlation" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.MatthewsCorrelation(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
