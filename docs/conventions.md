@@ -361,6 +361,11 @@ rule for code not written yet.
   `ρ_k = Σ_{t<N−k} (x_t − x̄)(x_{t+k} − x̄) / Σ (x_t − x̄)²`, the value is
   `Q = N(N + 2) Σ_{k=1}^{h} ρ_k²/(N − k)`; no p-value. Real, finite, not all equal;
   `1 ≤ lags ≤ N − 1`. **(implemented)**
+- **Turning point test** ([ADR 0360](adr/0360-turning-points.md); `turning_points(samples)` →
+  `TurningPoints(count, z)`, C# `Measurements.TurningPoints`): `count` is the number of
+  `1 ≤ i ≤ N − 2` with `x_i` strictly above or strictly below both neighbours (a tie is not a
+  turning point); `z = (count − 2(N − 2)/3)/√((16N − 29)/90)`. Real, finite; `N ≥ 3`.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

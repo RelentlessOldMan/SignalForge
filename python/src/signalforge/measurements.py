@@ -156,6 +156,15 @@ class AggregatedVariance:
 
 
 @dataclass(frozen=True)
+class TurningPoints:
+    """The number of strict local extrema and its z-score against an i.i.d. record
+    (conventions: Turning point test; ADR 0360)."""
+
+    count: int
+    z: float
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -1272,6 +1281,27 @@ def ljung_box(samples: ArrayLike, lags: int) -> float:
         rho = float(np.dot(d[:-k], d[k:])) / c0
         q += rho * rho / (n - k)
     return float(n * (n + 2)) * q
+
+
+def turning_points(samples: ArrayLike) -> TurningPoints:
+    """The turning point test: the number of samples strictly above or below both neighbours,
+    and its z-score against the i.i.d. mean ``2(N-2)/3`` and variance ``(16N-29)/90``
+    (conventions: Turning point test; ADR 0360)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 3:
+        raise ValueError("samples must have at least 3 values")
+    a, b, c = x[:-2], x[1:-1], x[2:]
+    k = int(np.count_nonzero(((b > a) & (b > c)) | ((b < a) & (b < c))))
+    z = (k - 2 * (n - 2) / 3) / math.sqrt((16 * n - 29) / 90)
+    return TurningPoints(k, z)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

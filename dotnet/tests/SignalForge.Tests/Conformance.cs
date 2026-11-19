@@ -289,6 +289,7 @@ public static class Conformance
             "time_irreversibility" => Bind((Reals(a.Get("samples")), a.Has("lag") ? a.I("lag") : 1), t => Measurements.TimeIrreversibility(t.Item1, t.Item2)),
             "cosine_similarity_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.CosineSimilarityEntropy(t.Item1, t.Item2, t.Item3, t.Item4)),
             "ljung_box" => Bind((Reals(a.Get("samples")), a.I("lags")), t => Measurements.LjungBox(t.Item1, t.Item2)),
+            "turning_points" => Bind(Reals(a.Get("samples")), t => Measurements.TurningPoints(t)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

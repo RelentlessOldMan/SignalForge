@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - turning point test in `measurements` (the number of strict local extrema and its
-     z-score against the i.i.d. mean `2(N − 2)/3` and variance `(16N − 29)/90`).
+   - runs test in `measurements` (Wald–Wolfowitz: runs of samples above and below the mean,
+     samples equal to it dropped, and the z-score against `2n₁n₂/n + 1` and
+     `2n₁n₂(2n₁n₂ − n)/(n²(n − 1))`).
 
 ## Built
 
@@ -2843,6 +2844,11 @@ Updated with every chunk of work. Dates are absolute.
   autocorrelation; no p-value.
   Python 7705 passed, 2 skipped; .NET 6889 passed; conformance 4830/4830 in both. Version
   2026.11.18.47.
+- 2026-11-18: Turning point test (ADR 0360): `turning_points(samples)` in `measurements`
+  (C# `Measurements.TurningPoints`): the count of strict local extrema and its z-score against
+  the i.i.d. mean `2(N − 2)/3` and variance `(16N − 29)/90`.
+  Python 7715 passed, 2 skipped; .NET 6899 passed; conformance 4837/4837 in both. Version
+  2026.11.18.48.
 
 ## Not built
 

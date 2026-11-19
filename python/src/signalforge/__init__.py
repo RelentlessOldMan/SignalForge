@@ -231,6 +231,7 @@ from .measurements import (
     Sfdr,
     TemporalCentroid,
     ToneMetrics,
+    TurningPoints,
     TwoToneImd,
     TwoToneIp2,
     TwoToneIp5,
@@ -311,6 +312,7 @@ from .measurements import (
     tone_metrics,
     treble_ratio,
     tsallis_entropy,
+    turning_points,
     two_tone_imd,
     two_tone_ip2,
     two_tone_ip5,
@@ -532,7 +534,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.47"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.48"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -608,6 +610,7 @@ __all__ = [
     "ToneMetrics",
     "TransferFunction",
     "Tristimulus",
+    "TurningPoints",
     "TwoToneImd",
     "TwoToneIp2",
     "TwoToneIp5",
@@ -1023,6 +1026,7 @@ __all__ = [
     "triangle",
     "tristimulus",
     "tsallis_entropy",
+    "turning_points",
     "two_band_compress",
     "two_tone_imd",
     "two_tone_ip2",
