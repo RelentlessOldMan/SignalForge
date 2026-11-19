@@ -509,6 +509,10 @@ rule for code not written yet.
 - **Brier score** ([ADR 0391](adr/0391-brier-score.md); `brier_score(outcome, probability)`,
   C# `Measurements.BrierScore`): outcomes 0 or 1, probabilities in `[0, 1]`;
   `(1/N)·Σ (pᵢ − yᵢ)²`, summed in order. Equal lengths, `N ≥ 1`. **(implemented)**
+- **Log loss** ([ADR 0392](adr/0392-log-loss.md); `log_loss(outcome, probability)`, C#
+  `Measurements.LogLoss`): records as for the Brier score; `−(1/N)·Σ ℓᵢ` in nats, `ℓᵢ = ln pᵢ`
+  for `yᵢ = 1` and `ln(1 − pᵢ)` for `yᵢ = 0`, only that term formed; no clipping. A certain
+  wrong forecast is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

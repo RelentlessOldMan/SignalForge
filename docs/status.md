@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The log loss in `measurements` (`outcome` 0 or 1 and `probability` in `[0, 1]`, as for
-     the Brier score: `−mean(y·ln p + (1 − y)·ln(1 − p))`, an error where a certain forecast is
-     wrong).
+   - The ROC AUC in `measurements` (`truth` 0 or 1 and a real `score`, the same length: the
+     share of positive–negative pairs where the positive scores higher, ties counting half).
 
 ## Built
 
@@ -2997,6 +2996,11 @@ Updated with every chunk of work. Dates are absolute.
   probability and a binary outcome.
   Python 8080 passed, 2 skipped; .NET 7242 passed; conformance 5104/5104 in both. Version
   2026.11.19.17.
+- 2026-11-19: The log loss (ADR 0392): `log_loss(outcome, probability)` in `measurements`
+  (C# `Measurements.LogLoss`): the negative mean log-likelihood of binary outcomes under the
+  forecast probabilities, in nats.
+  Python 8094 passed, 2 skipped; .NET 7255 passed; conformance 5115/5115 in both. Version
+  2026.11.19.18.
 
 ## Not built
 

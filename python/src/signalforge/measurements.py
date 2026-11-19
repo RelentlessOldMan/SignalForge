@@ -2267,6 +2267,36 @@ def brier_score(outcome: ArrayLike, probability: ArrayLike) -> float:
     return total / y.size
 
 
+def log_loss(outcome: ArrayLike, probability: ArrayLike) -> float:
+    """The log loss of the forecast ``probability`` of a binary event against the
+    ``outcome``, 0 or 1: the negative mean natural log-likelihood, in nats (conventions: Log
+    loss; ADR 0392)."""
+    y = np.asarray(outcome)
+    p = np.asarray(probability)
+    for name, r in (("outcome", y), ("probability", p)):
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+    y = y.astype(np.float64, copy=False)
+    p = p.astype(np.float64, copy=False)
+    if y.size != p.size:
+        raise ValueError("outcome and probability must be the same length")
+    if y.size < 1:
+        raise ValueError("outcome and probability must not be empty")
+    if not np.all((y == 0) | (y == 1)):
+        raise ValueError("outcome must hold only 0 and 1")
+    if not np.all((p >= 0) & (p <= 1)):
+        raise ValueError("probability must be in [0, 1]")
+    total = 0.0
+    for pi, yi in zip(p.tolist(), y.tolist(), strict=True):
+        q = pi if yi == 1 else 1.0 - pi
+        if q == 0:
+            raise ValueError("a forecast of certainty was wrong: the loss is infinite")
+        total += math.log(q)
+    return -total / y.size
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
