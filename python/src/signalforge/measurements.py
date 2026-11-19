@@ -2571,6 +2571,35 @@ def kolmogorov_smirnov(x: ArrayLike, y: ArrayLike) -> float:
     return float(gap) / float(xs.size * ys.size)
 
 
+def wasserstein_distance(x: ArrayLike, y: ArrayLike) -> float:
+    """The first Wasserstein distance between the samples ``x`` and ``y``: the area between
+    their empirical distribution functions (conventions: first Wasserstein distance;
+    ADR 0403)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(np.sort(a))
+    xs, ys = pair
+    t = np.unique(np.concatenate([xs, ys]))
+    cx = np.searchsorted(xs, t, side="right").astype(np.int64)
+    cy = np.searchsorted(ys, t, side="right").astype(np.int64)
+    gaps = np.abs(cx * ys.size - cy * xs.size).tolist()
+    points = t.tolist()
+    total = 0.0
+    for m in range(len(points) - 1):
+        total += float(gaps[m]) * (points[m + 1] - points[m])
+    return total / float(xs.size * ys.size)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

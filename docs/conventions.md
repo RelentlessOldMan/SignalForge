@@ -551,6 +551,11 @@ rule for code not written yet.
   `kolmogorov_smirnov(x, y)`, C# `Measurements.KolmogorovSmirnov`): `max_t |F_x(t) − F_y(t)|`
   over the pooled values, as the whole number `|#(x ≤ t)·n_y − #(y ≤ t)·n_x|` divided once by
   `n_x·n_y`. Each sample at least 1, finite. **(implemented)**
+- **First Wasserstein distance** ([ADR 0403](adr/0403-wasserstein-distance.md);
+  `wasserstein_distance(x, y)`, C# `Measurements.WassersteinDistance`): `∫|F_x − F_y| dt` as
+  `Σ g_m·(t_{m+1} − t_m)` over the distinct pooled values in order, `g_m` the whole number
+  `|#(x ≤ t_m)·n_y − #(y ≤ t_m)·n_x|`, then one division by `n_x·n_y`. Each sample at least 1,
+  finite. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

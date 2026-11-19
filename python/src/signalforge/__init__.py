@@ -363,6 +363,7 @@ from .measurements import (
     two_tone_ip5,
     vargha_delaney_a,
     von_neumann_ratio,
+    wasserstein_distance,
     weighted_permutation_entropy,
     youden_j,
     zero_crossing_rate,
@@ -582,7 +583,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.29"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.30"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1131,6 +1132,7 @@ __all__ = [
     "von_neumann_ratio",
     "vrms_to_dbm",
     "w_to_dbm",
+    "wasserstein_distance",
     "wavefold",
     "wavetable",
     "weighted_permutation_entropy",

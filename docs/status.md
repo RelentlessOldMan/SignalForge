@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The first Wasserstein distance between two samples in `measurements` (two real samples,
-     each at least 1: `∫|F_x(t) − F_y(t)| dt` over the empirical distribution functions).
+   - The energy distance between two samples in `measurements` (two real samples, each at
+     least 1: `2·mean|xᵢ − yⱼ| − mean|xᵢ − xₖ| − mean|yⱼ − yₗ|`, the means over all ordered
+     pairs, zero pairs included).
 
 ## Built
 
@@ -3051,6 +3052,11 @@ Updated with every chunk of work. Dates are absolute.
   largest gap between two empirical distribution functions, from sorts and a merge.
   Python 8217 passed, 2 skipped; .NET 7369 passed; conformance 5208/5208 in both. Version
   2026.11.19.29.
+- 2026-11-19: The first Wasserstein distance (ADR 0403): `wasserstein_distance(x, y)` in
+  `measurements` (C# `Measurements.WassersteinDistance`): the area between two empirical
+  distribution functions, from sorts and a merge.
+  Python 8229 passed, 2 skipped; .NET 7380 passed; conformance 5217/5217 in both. Version
+  2026.11.19.30.
 
 ## Not built
 
