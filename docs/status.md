@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - correlation sum in `measurements` (Grassberger-Procaccia: the share of embedded pairs
-     closer than each radius in the Chebyshev distance, and the log-log slope as the
-     correlation dimension).
+   - recurrence quantification in `measurements` (the recurrence rate and determinism of
+     the Chebyshev recurrence plot at radius `ε`, with a minimum diagonal line length).
+   - Fisher information in `measurements` (the normalized singular spectrum of the
+     embedding, as for SVD entropy, and `Σ (σ_{i+1} − σ_i)² / σ_i`).
 
 ## Built
 
@@ -2789,6 +2790,11 @@ Updated with every chunk of work. Dates are absolute.
   Chebyshev distances between windows, over `ln M`. Phase entropy was dropped from Next.
   Python 7541 passed, 2 skipped; .NET 6724 passed; conformance 4699/4699 in both. Version
   2026.11.18.36.
+- 2026-11-18: Correlation sum (ADR 0349): `correlation_sum(samples, m, radii, delay=1,
+  theiler=0)` in `measurements` (C# `Measurements.CorrelationSum`), giving `CorrelationSum`
+  with the share of pairs strictly closer than each radius and the correlation dimension.
+  Python 7558 passed, 2 skipped; .NET 6741 passed; conformance 4713/4713 in both. Version
+  2026.11.18.37.
 
 ## Not built
 

@@ -211,6 +211,7 @@ from .measurements import (
     AutocorrelationPitch,
     CascadeNoiseFigure,
     CepstrumPitch,
+    CorrelationSum,
     DetrendedFluctuation,
     EnergySeparation,
     GainCompression,
@@ -241,6 +242,7 @@ from .measurements import (
     centre_time,
     cepstrum_pitch,
     clarity,
+    correlation_sum,
     decay_curvature,
     decay_time,
     definition,
@@ -517,7 +519,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.36"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.37"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -531,6 +533,7 @@ __all__ = [
     "CascadeNoiseFigure",
     "CepstrumPitch",
     "Coherence",
+    "CorrelationSum",
     "CrossSpectralDensity",
     "Crossover",
     "DbBandwidth",
@@ -679,6 +682,7 @@ __all__ = [
     "compress",
     "compressor_gain",
     "convolve",
+    "correlation_sum",
     "cross_correlation",
     "cross_spectral_density",
     "crossfade",

@@ -278,6 +278,7 @@ public static class Conformance
             "attention_entropy" => Bind(Reals(a.Get("samples")), x => Measurements.AttentionEntropy(x)),
             "slope_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.Has("gamma") ? a.D("gamma") : 1.0, a.Has("delta") ? a.D("delta") : 1e-3), t => Measurements.SlopeEntropy(t.Item1, t.Item2, t.Item3, t.Item4)),
             "distribution_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.Has("bins") ? a.I("bins") : 512), t => Measurements.DistributionEntropy(t.Item1, t.Item2, t.Item3)),
+            "correlation_sum" => Bind((Reals(a.Get("samples")), a.I("m"), Reals(a.Get("radii")), a.Has("delay") ? a.I("delay") : 1, a.Has("theiler") ? a.I("theiler") : 0), t => Measurements.CorrelationSum(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

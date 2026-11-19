@@ -117,6 +117,16 @@ class RescaledRange:
 
 
 @dataclass(frozen=True)
+class CorrelationSum:
+    """The correlation sum at each radius and the correlation dimension it gives (conventions:
+    Correlation sum; ADR 0349)."""
+
+    radii: NDArray[np.float64]
+    values: NDArray[np.float64]
+    dimension: float
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -852,6 +862,52 @@ def distribution_entropy(samples: ArrayLike, m: int, bins: int = 512) -> float:
     p = np.bincount(b) / d.shape[0]
     p = p[p > 0]
     return float(-np.sum(p * np.log(p)) / math.log(nb))
+
+
+def correlation_sum(
+    samples: ArrayLike, m: int, radii: ArrayLike, delay: int = 1, theiler: int = 0
+) -> CorrelationSum:
+    """Grassberger and Procaccia's correlation sum: the share of embedded pairs closer than
+    each radius in the Chebyshev distance, and the least-squares slope of its logarithm
+    against ``ln r`` (conventions: Correlation sum; ADR 0349)."""
+    k = count(m, "m")
+    tau = count(delay, "delay")
+    w = count(theiler, "theiler")
+    if k < 1 or tau < 1:
+        raise ValueError("m and delay must be at least 1")
+    if w < 0:
+        raise ValueError("theiler must be at least 0")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    r = np.asarray(radii)
+    if r.ndim != 1 or np.iscomplexobj(r):
+        raise ValueError("radii must be real and one-dimensional")
+    r = r.astype(np.float64, copy=False)
+    if r.shape[0] < 2:
+        raise ValueError("radii must have at least two entries")
+    if not (np.all(np.isfinite(r)) and r[0] > 0 and np.all(np.diff(r) > 0)):
+        raise ValueError("radii must be finite, positive and strictly increasing")
+    windows = x.shape[0] - (k - 1) * tau
+    if windows - w < 2:
+        raise ValueError("there must be at least one pair")
+    emb = x[np.arange(windows)[:, None] + tau * np.arange(k)[None, :]]
+    d = np.sort(
+        np.concatenate([np.max(np.abs(emb[s:] - emb[:-s]), axis=1) for s in range(w + 1, windows)])
+    )
+    values = np.searchsorted(d, r, side="left") / d.shape[0]
+    if not np.all(values > 0):
+        raise ValueError("every radius must have a pair closer than it")
+    lx = np.log(r)
+    ly = np.log(values)
+    dx = lx - lx.mean()
+    dimension = float(np.sum(dx * (ly - ly.mean())) / np.sum(dx * dx))
+    return CorrelationSum(r.copy(), values, dimension)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

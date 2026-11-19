@@ -296,6 +296,12 @@ rule for code not written yet.
   `min(M − 1, floor((d − lo)·M/(hi − lo)))` over their range; `−Σ p ln p / ln M`; 0 if all
   distances are equal. Real, finite, at least `m + 1` samples; `m ≥ 1`;
   `2 ≤ bins ≤ 1 000 000`. **(implemented)**
+- **Correlation sum** ([ADR 0349](adr/0349-correlation-sum.md); `correlation_sum(samples, m,
+  radii, delay=1, theiler=0)`, C# `Measurements.CorrelationSum`): over the pairs `i < j` with
+  `j − i > w` of the vectors `(x_i, x_{i+τ}, …, x_{i+(m−1)τ})`, `C(r)` is the share whose
+  Chebyshev distance is strictly below `r`; `dimension` is the least-squares slope of
+  `ln C` against `ln r`. Real, finite samples; `m, τ ≥ 1`, `w ≥ 0`, at least one pair; at
+  least two radii, finite, positive, strictly increasing, each `C(r) > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
