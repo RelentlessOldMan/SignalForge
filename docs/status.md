@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Vargha–Delaney A in `measurements` (as for Cliff's delta:
-     `(#(xᵢ > yⱼ) + #(xᵢ = yⱼ)/2)/(n_x·n_y)`, the probability that a draw from `x` beats one from
-     `y`, ties counting half).
+   - The two-sample Kolmogorov–Smirnov statistic in `measurements` (two real samples, each at
+     least 1: `sup |F_x(t) − F_y(t)|` over the empirical distribution functions).
 
 ## Built
 
@@ -3042,6 +3041,11 @@ Updated with every chunk of work. Dates are absolute.
   sort and binary searches.
   Python 8194 passed, 2 skipped; .NET 7348 passed; conformance 5191/5191 in both. Version
   2026.11.19.27.
+- 2026-11-19: The Vargha–Delaney A (ADR 0401): `vargha_delaney_a(x, y)` in `measurements`
+  (C# `Measurements.VarghaDelaneyA`): the probability that a draw from `x` beats one from `y`,
+  ties counting half.
+  Python 8206 passed, 2 skipped; .NET 7359 passed; conformance 5200/5200 in both. Version
+  2026.11.19.28.
 
 ## Not built
 

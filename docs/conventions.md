@@ -543,6 +543,10 @@ rule for code not written yet.
   `Measurements.CliffDelta`): `(#(xᵢ > yⱼ) − #(xᵢ < yⱼ))/(n_x·n_y)` over every pair, ties in
   neither count; one division of whole numbers in `double`. Each sample at least 1, finite.
   **(implemented)**
+- **Vargha–Delaney A** ([ADR 0401](adr/0401-vargha-delaney-a.md); `vargha_delaney_a(x, y)`,
+  C# `Measurements.VarghaDelaneyA`): `(2·#(xᵢ > yⱼ) + #(xᵢ = yⱼ))/(2·n_x·n_y)`, one division of
+  whole numbers in `double`, not formed from Cliff's delta. Rules as for Cliff's delta.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

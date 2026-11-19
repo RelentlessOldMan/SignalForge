@@ -2522,6 +2522,30 @@ def cliff_delta(x: ArrayLike, y: ArrayLike) -> float:
     return float(below - above) / float(xs.size * ys.size)
 
 
+def vargha_delaney_a(x: ArrayLike, y: ArrayLike) -> float:
+    """The Vargha-Delaney A: the probability that a value of ``x`` exceeds a value of ``y``,
+    ties counting half, over every pair (conventions: Vargha-Delaney A; ADR 0401)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    xs, ys = pair[0], np.sort(pair[1])
+    left = np.searchsorted(ys, xs, side="left")
+    right = np.searchsorted(ys, xs, side="right")
+    wins = int(np.sum(left))
+    ties = int(np.sum(right - left))
+    return float(2 * wins + ties) / float(2 * xs.size * ys.size)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
