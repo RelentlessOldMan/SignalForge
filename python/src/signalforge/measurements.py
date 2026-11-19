@@ -2016,6 +2016,36 @@ def fleiss_kappa(counts: ArrayLike) -> float:
     return (observed - expected) / (1 - expected)
 
 
+def cohen_kappa(a: ArrayLike, b: ArrayLike) -> float:
+    """Cohen's kappa: the chance-corrected agreement of two raters' labels ``a`` and ``b`` of
+    the same items (conventions: Cohen's kappa; ADR 0383)."""
+    pair = []
+    for name, v in (("a", a), ("b", b)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(r)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(r)
+    x, y = pair
+    if x.size != y.size:
+        raise ValueError("a and b must be the same length")
+    if x.size < 1:
+        raise ValueError("a and b must not be empty")
+    n = int(x.size)
+    agree = int(np.count_nonzero(x == y))
+    labels, codes = np.unique(np.concatenate([x, y]), return_inverse=True)
+    ca = np.bincount(codes[:n], minlength=labels.size).astype(np.int64)
+    cb = np.bincount(codes[n:], minlength=labels.size).astype(np.int64)
+    chance = int(np.sum(ca * cb))
+    if chance == n * n:
+        raise ValueError("both raters give every item the same label")
+    return float((n * agree - chance) / (n * n - chance))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

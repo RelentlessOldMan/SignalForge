@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "cohen_kappa",
+  "description": "Cohen's kappa (conventions: Cohen's kappa; ADR 0383).",
+  "cases": [
+    {"id": "cohen_kappa.two_by_two", "op": "cohen_kappa", "args": {"a": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "b": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.4, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "50 items: both yes 20, yes/no 5, no/yes 10, both no 15; p_o = 35/50 = 0.7, p_e = (25*30 + 25*20)/2500 = 0.5, kappa = 0.2/0.5 = 0.4"},
+    {"id": "cohen_kappa.full_agreement", "op": "cohen_kappa", "args": {"a": [0.0, 1.0, 2.0, 1.0], "b": [0.0, 1.0, 2.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "identical labels: NA = 16, E = 1 + 4 + 1 = 6, kappa = 10/10 = 1"},
+    {"id": "cohen_kappa.none_agree", "op": "cohen_kappa", "args": {"a": [0.0, 1.0], "b": [1.0, 0.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the raters swap two labels: A = 0, E = 2, kappa = -2/2 = -1"},
+    {"id": "cohen_kappa.unshared_category", "op": "cohen_kappa", "args": {"a": [0.0, 0.0, 1.0, 2.0], "b": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.2727272727272727, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "2 appears only in a: A = 2, E = 2*1 + 1*3 = 5, kappa = (8 - 5)/(16 - 5) = 3/11"},
+    {"id": "cohen_kappa.five_classes", "op": "cohen_kappa", "args": {"a": [4.0, 4.0, 3.0, 1.0, 1.0, 3.0, 0.0, 2.0, 2.0, 1.0, 0.0, 1.0, 2.0, 4.0, 0.0, 0.0, 2.0, 1.0, 4.0, 2.0, 4.0, 3.0, 2.0, 3.0, 4.0, 4.0, 2.0, 3.0, 0.0, 0.0, 4.0, 4.0, 3.0, 1.0, 1.0, 1.0, 2.0, 2.0, 1.0, 2.0, 0.0, 0.0, 0.0, 2.0, 3.0, 1.0, 4.0, 1.0, 1.0, 4.0, 4.0, 2.0, 3.0, 3.0, 1.0, 0.0, 2.0, 2.0, 3.0, 0.0], "b": [4.0, 4.0, 3.0, 1.0, 1.0, 3.0, 4.0, 2.0, 2.0, 1.0, 0.0, 2.0, 0.0, 4.0, 4.0, 0.0, 2.0, 1.0, 1.0, 1.0, 0.0, 0.0, 2.0, 3.0, 4.0, 0.0, 2.0, 3.0, 0.0, 0.0, 1.0, 0.0, 3.0, 2.0, 1.0, 1.0, 2.0, 2.0, 1.0, 2.0, 3.0, 0.0, 0.0, 2.0, 0.0, 1.0, 4.0, 1.0, 1.0, 4.0, 1.0, 1.0, 3.0, 3.0, 1.0, 4.0, 2.0, 2.0, 3.0, 0.0]}, "expected": 0.6444754269780412, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "60 labels in 0..4 from random.Random(383); b copies a with probability 0.6, else a random label"},
+    {"id": "cohen_kappa.lengths_differ", "op": "cohen_kappa", "args": {"a": [0.0, 1.0, 1.0, 2.0], "b": [0.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "a and b must be the same length"},
+    {"id": "cohen_kappa.empty", "op": "cohen_kappa", "args": {"a": [], "b": []}, "error": "invalid_argument", "source": "N must be at least 1"},
+    {"id": "cohen_kappa.one_label", "op": "cohen_kappa", "args": {"a": [3.0, 3.0, 3.0], "b": [3.0, 3.0, 3.0]}, "error": "invalid_argument", "source": "p_e = 1 when both raters use the same single label"},
+    {"id": "cohen_kappa.nan", "op": "cohen_kappa", "args": {"a": [0.0, 1.0, 1.0, 2.0], "b": [0.0, "nan", 2.0, 2.0]}, "error": "invalid_argument", "source": "labels must be finite"}
+  ]
+}

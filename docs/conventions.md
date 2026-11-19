@@ -474,6 +474,10 @@ rule for code not written yet.
   choosing that category; `p_j = Σ_i n_ij/(Nn)`, `P̄_e = Σp_j²`,
   `P_i = (Σ_j n_ij² − n)/(n(n − 1))`; `κ = (P̄ − P̄_e)/(1 − P̄_e)`. Whole, not negative,
   2-D; `N ≥ 1`, `q ≥ 2`; equal row sums `n ≥ 2`; `P̄_e < 1`. **(implemented)**
+- **Cohen's kappa** ([ADR 0383](adr/0383-cohen-kappa.md); `cohen_kappa(a, b)`, C#
+  `Measurements.CohenKappa`): categories are the distinct values, compared with `==`; `A`
+  the items with `a_i = b_i`, `E = Σ_c a_c b_c` from the counts per category;
+  `κ = (NA − E)/(N² − E)`. Real, finite, equal lengths, `N ≥ 1`; `E < N²`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

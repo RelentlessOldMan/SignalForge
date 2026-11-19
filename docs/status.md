@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Cohen's kappa in `measurements` (two raters' labels of the same `N` items, equal-length
-     records whose distinct values are the categories: `κ = (p_o − p_e)/(1 − p_e)`, `p_e`
-     from the two raters' marginal rates).
+   - Scott's pi in `measurements` (as Cohen's kappa, but `p_e = Σ_c π_c²` with `π_c` the
+     share of category `c` in both raters' labels pooled).
 
 ## Built
 
@@ -2954,6 +2953,11 @@ Updated with every chunk of work. Dates are absolute.
   subject, from the counts per subject and category.
   Python 7968 passed, 2 skipped; .NET 7139 passed; conformance 5019/5019 in both. Version
   2026.11.19.8.
+- 2026-11-19: Cohen's kappa (ADR 0383): `cohen_kappa(a, b)` in `measurements` (C#
+  `Measurements.CohenKappa`): the chance-corrected agreement of two raters' labels of the same
+  items.
+  Python 7980 passed, 2 skipped; .NET 7150 passed; conformance 5028/5028 in both. Version
+  2026.11.19.9.
 
 ## Not built
 
