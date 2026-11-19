@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Glass's delta in `measurements` (`x` the treated sample and `y` the control, each at
-     least 2: `(mean x − mean y)/s_y`, `s_y` the sample standard deviation of the control alone).
+   - Cliff's delta in `measurements` (two real samples `x` and `y`, each at least 1:
+     `(#(xᵢ > yⱼ) − #(xᵢ < yⱼ))/(n_x·n_y)` over every pair, from −1 to 1).
 
 ## Built
 
@@ -3031,6 +3031,11 @@ Updated with every chunk of work. Dates are absolute.
   function.
   Python 8171 passed, 2 skipped; .NET 7327 passed; conformance 5174/5174 in both. Version
   2026.11.19.25.
+- 2026-11-19: Glass's delta (ADR 0399): `glass_delta(x, y)` in `measurements` (C#
+  `Measurements.GlassDelta`): the difference of a treated and a control mean over the control's
+  standard deviation.
+  Python 8182 passed, 2 skipped; .NET 7337 passed; conformance 5182/5182 in both. Version
+  2026.11.19.26.
 
 ## Not built
 

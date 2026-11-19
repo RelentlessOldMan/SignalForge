@@ -536,6 +536,9 @@ rule for code not written yet.
 - **Hedges' g** ([ADR 0398](adr/0398-hedges-g.md); `hedges_g(x, y)`, C#
   `Measurements.HedgesG`): Cohen's d times the exact `J(m) = Γ(m/2)/(√(m/2)·Γ((m − 1)/2))`,
   `m = n_x + n_y − 2`, from a log-gamma difference; rules as for Cohen's d. **(implemented)**
+- **Glass's delta** ([ADR 0399](adr/0399-glass-delta.md); `glass_delta(x, y)`, C#
+  `Measurements.GlassDelta`): `(x̄ − ȳ)/s_y`, `x` treated and `y` the control, `s_y` its sample
+  standard deviation over `n_y − 1`. `n_x ≥ 1`, `n_y ≥ 2`, finite; `s_y > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

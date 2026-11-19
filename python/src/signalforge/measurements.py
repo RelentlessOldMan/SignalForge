@@ -2467,6 +2467,38 @@ def hedges_g(x: ArrayLike, y: ArrayLike) -> float:
     return j * d
 
 
+def glass_delta(x: ArrayLike, y: ArrayLike) -> float:
+    """Glass's delta: the difference of the means of the treated sample ``x`` and the control
+    ``y`` over the control's sample standard deviation (conventions: Glass's delta;
+    ADR 0399)."""
+    pair = []
+    for name, v, least in (("x", x, 1), ("y", y, 2)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < least:
+            raise ValueError(f"{name} must hold at least {least} values")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a.tolist())
+    means = []
+    for values in pair:
+        total = 0.0
+        for v in values:
+            total += v
+        means.append(total / len(values))
+    ss = 0.0
+    for v in pair[1]:
+        ss += (v - means[1]) * (v - means[1])
+    s = math.sqrt(ss / (len(pair[1]) - 1))
+    if s == 0:
+        raise ValueError("the control's standard deviation is zero")
+    return (means[0] - means[1]) / s
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
