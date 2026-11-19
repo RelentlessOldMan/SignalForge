@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Markedness in `measurements` (truth and decision as for the Matthews correlation:
-     `TP/(TP + FP) + TN/(TN + FN) − 1`, the precision and the negative predictive value less 1).
+   - The balanced accuracy in `measurements` (truth and decision as for the Matthews
+     correlation: `(TP/(TP + FN) + TN/(TN + FP))/2`, the mean of sensitivity and specificity).
 
 ## Built
 
@@ -3011,6 +3011,11 @@ Updated with every chunk of work. Dates are absolute.
   recall gained at each distinct score, ties one threshold.
   Python 8123 passed, 2 skipped; .NET 7283 passed; conformance 5138/5138 in both. Version
   2026.11.19.21.
+- 2026-11-19: Markedness (ADR 0395): `markedness(truth, decision)` in `measurements` (C#
+  `Measurements.Markedness`): the precision and the negative predictive value of a binary
+  decision less 1, the dual of Youden's J.
+  Python 8136 passed, 2 skipped; .NET 7295 passed; conformance 5148/5148 in both. Version
+  2026.11.19.22.
 
 ## Not built
 

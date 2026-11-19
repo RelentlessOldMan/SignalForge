@@ -304,6 +304,7 @@ from .measurements import (
     ljung_box,
     log_loss,
     mann_kendall,
+    markedness,
     matthews_correlation,
     modified_allan_deviation,
     modulation_transfer,
@@ -574,7 +575,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.21"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.22"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -910,6 +911,7 @@ __all__ = [
     "lpc_to_reflection",
     "lsf_to_lpc",
     "mann_kendall",
+    "markedness",
     "matthews_correlation",
     "median_filter",
     "mel_filterbank",

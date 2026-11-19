@@ -2367,6 +2367,35 @@ def average_precision(truth: ArrayLike, score: ArrayLike) -> float:
     return total / n1
 
 
+def markedness(truth: ArrayLike, decision: ArrayLike) -> float:
+    """Markedness of a binary ``decision`` against the ``truth``, both records of 0 and 1: the
+    precision and the negative predictive value less 1, from -1 to 1 (conventions:
+    Markedness; ADR 0395)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    tn = int(np.count_nonzero(~t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    if tp + fp == 0 or tn + fn == 0:
+        raise ValueError("decision must hold at least one 0 and one 1")
+    return float(tp * tn - fp * fn) / float((tp + fp) * (tn + fn))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

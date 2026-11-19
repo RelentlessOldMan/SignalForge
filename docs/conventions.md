@@ -521,6 +521,10 @@ rule for code not written yet.
   `average_precision(truth, score)`, C# `Measurements.AveragePrecision`): records as for the
   ROC AUC; thresholds the distinct scores from the highest down, `(1/n₁)·Σ kτ·Tτ/Dτ`, no
   interpolation, ties one threshold. Equal lengths; at least one positive. **(implemented)**
+- **Markedness** ([ADR 0395](adr/0395-markedness.md); `markedness(truth, decision)`, C#
+  `Measurements.Markedness`): records as for the Matthews correlation;
+  `(TP·TN − FP·FN)/((TP + FP)(TN + FN))`, one division of whole numbers in `double`. Equal
+  lengths, `N ≥ 1`; the decision holds a 1 and a 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
