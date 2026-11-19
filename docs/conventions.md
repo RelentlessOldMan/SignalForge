@@ -591,6 +591,10 @@ rule for code not written yet.
   `total_variation_distance(p, q)`, C# `Measurements.TotalVariationDistance`): `½·Σ|Pᵢ − Qᵢ|`,
   summed in order, clamped to at most 1. Inputs as for the Hellinger distance.
   **(implemented)**
+- **Pearson chi-square divergence** ([ADR 0412](adr/0412-chi-square-divergence.md);
+  `chi_square_divergence(p, q)`, C# `Measurements.ChiSquareDivergence`): `Σ (Pᵢ − Qᵢ)²/Qᵢ`,
+  summed in order; indices with `pᵢ = qᵢ = 0` dropped. Inputs as for the Kullback–Leibler
+  divergence; `qᵢ = 0` where `pᵢ > 0` is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

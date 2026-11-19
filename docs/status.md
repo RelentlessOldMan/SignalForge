@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Pearson chi-square divergence in `measurements` (`p` and `q` as for the
-     Kullback–Leibler divergence: `Σ (Pᵢ − Qᵢ)²/Qᵢ`, terms with `qᵢ = 0 = pᵢ` dropped,
-     `qᵢ = 0` where `pᵢ > 0` an error).
+   - The Rényi divergence in `measurements` (`p` and `q` as for the Kullback–Leibler
+     divergence, and an order `alpha > 0`, not 1: `ln(Σ Pᵢ^α·Qᵢ^(1−α))/(α − 1)`, terms with
+     `Pᵢ = 0` dropped; for `α > 1`, `qᵢ = 0` where `pᵢ > 0` an error).
 
 ## Built
 
@@ -3097,6 +3097,11 @@ Updated with every chunk of work. Dates are absolute.
   discrete distributions, from 0 to 1.
   Python 8329 passed, 2 skipped; .NET 7472 passed; conformance 5293/5293 in both. Version
   2026.11.19.38.
+- 2026-11-19: The Pearson chi-square divergence (ADR 0412): `chi_square_divergence(p, q)` in
+  `measurements` (C# `Measurements.ChiSquareDivergence`): the expected squared relative error
+  of one discrete distribution against another.
+  Python 8344 passed, 2 skipped; .NET 7486 passed; conformance 5305/5305 in both. Version
+  2026.11.19.39.
 
 ## Not built
 

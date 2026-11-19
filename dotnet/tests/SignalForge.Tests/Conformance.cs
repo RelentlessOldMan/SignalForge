@@ -341,6 +341,7 @@ public static class Conformance
             "hellinger_distance" => Bind((Reals(a.Get("p")), Reals(a.Get("q"))), t => Measurements.HellingerDistance(t.Item1, t.Item2)),
             "bhattacharyya_distance" => Bind((Reals(a.Get("p")), Reals(a.Get("q"))), t => Measurements.BhattacharyyaDistance(t.Item1, t.Item2)),
             "total_variation_distance" => Bind((Reals(a.Get("p")), Reals(a.Get("q"))), t => Measurements.TotalVariationDistance(t.Item1, t.Item2)),
+            "chi_square_divergence" => Bind((Reals(a.Get("p")), Reals(a.Get("q"))), t => Measurements.ChiSquareDivergence(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

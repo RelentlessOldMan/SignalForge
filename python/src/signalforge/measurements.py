@@ -2855,6 +2855,43 @@ def total_variation_distance(p: ArrayLike, q: ArrayLike) -> float:
     return min(s / 2.0, 1.0)
 
 
+def chi_square_divergence(p: ArrayLike, q: ArrayLike) -> float:
+    """The Pearson chi-square divergence of the discrete distribution ``p`` from ``q``, each
+    normalized by its own sum (conventions: Pearson chi-square divergence; ADR 0412)."""
+    pair = []
+    for name, v in (("p", p), ("q", q)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and non-negative")
+        values = a.tolist()
+        total = 0.0
+        for w in values:
+            total += w
+        if total <= 0:
+            raise ValueError(f"{name} must have a positive sum")
+        pair.append((values, total))
+    (pv, ps), (qv, qs) = pair
+    if len(pv) != len(qv):
+        raise ValueError("p and q must have the same length")
+    s = 0.0
+    for a_, b_ in zip(pv, qv, strict=True):
+        if b_ == 0:
+            if a_ > 0:
+                raise ValueError("q is zero where p is not: the divergence is infinite")
+            continue
+        qi = b_ / qs
+        d = a_ / ps - qi
+        s += d * d / qi
+    return s
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
