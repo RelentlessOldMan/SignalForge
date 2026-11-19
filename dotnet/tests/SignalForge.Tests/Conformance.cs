@@ -287,6 +287,7 @@ public static class Conformance
             "aggregated_variance" => Bind((Reals(a.Get("samples")), Ints(a.Get("sizes"))), t => Measurements.AggregatedVariance(t.Item1, t.Item2)),
             "tsallis_entropy" => Bind((Reals(a.Get("samples")), a.D("q"), a.Has("bins") ? a.I("bins") : 16), t => Measurements.TsallisEntropy(t.Item1, t.Item2, t.Item3)),
             "time_irreversibility" => Bind((Reals(a.Get("samples")), a.Has("lag") ? a.I("lag") : 1), t => Measurements.TimeIrreversibility(t.Item1, t.Item2)),
+            "cosine_similarity_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.CosineSimilarityEntropy(t.Item1, t.Item2, t.Item3, t.Item4)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

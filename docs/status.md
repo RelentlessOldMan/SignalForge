@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - cosine similarity entropy in `measurements` (Chanwimalueang and Mandic: the share of
-     pairs of embedded vectors whose angular distance is below `r`, and its binary
-     Shannon entropy).
+   - Ljung–Box statistic in `measurements` (`Q = N(N+2) Σ_{k=1}^{h} ρ_k²/(N − k)` from the
+     mean-removed, biased sample autocorrelation; the chi-squared p-value is left out).
 
 ## Built
 
@@ -2834,6 +2833,11 @@ Updated with every chunk of work. Dates are absolute.
   `M3/(M2·√M2)`, negated by reversing the record.
   Python 7677 passed, 2 skipped; .NET 6862 passed; conformance 4808/4808 in both. Version
   2026.11.18.45.
+- 2026-11-18: Cosine similarity entropy (ADR 0358): `cosine_similarity_entropy(samples, m, r,
+  delay=1)` in `measurements` (C# `Measurements.CosineSimilarityEntropy`): the binary entropy
+  in bits of the share of embedded-vector pairs with angular distance below `r`.
+  Python 7692 passed, 2 skipped; .NET 6877 passed; conformance 4820/4820 in both. Version
+  2026.11.18.46.
 
 ## Not built
 

@@ -349,6 +349,13 @@ rule for code not written yet.
   `Δ_t = x_{t+τ} − x_t`, `t = 0 … N − τ − 1`, and `M_k` the mean of `Δ^k`, the value is
   `M_3/(M_2·√M_2)`; reversing the record negates it. Real, finite samples;
   `1 ≤ lag ≤ N − 1`; `M_2 > 0`. **(implemented)**
+- **Cosine similarity entropy** ([ADR 0358](adr/0358-cosine-similarity-entropy.md);
+  `cosine_similarity_entropy(samples, m, r, delay=1)`, C# `Measurements.CosineSimilarityEntropy`):
+  vectors `v_i = (x_i, …, x_{i+(m−1)τ})`, `i < W = N − (m − 1)τ`; angular distance
+  `arccos(c)/π` of the clipped cosine similarity; `B` the share of pairs `i < j` with distance
+  strictly below `r`; value `−B log2 B − (1 − B) log2(1 − B)` bits, `0 log 0 = 0`. No mean
+  removal. Real, finite; `m, delay ≥ 1`; `W ≥ 2`; `0 < r ≤ 1`; no all-zero vector.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

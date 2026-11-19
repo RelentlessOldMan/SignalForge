@@ -1215,6 +1215,39 @@ def time_irreversibility(samples: ArrayLike, lag: int = 1) -> float:
     return m3 / (m2 * math.sqrt(m2))
 
 
+def cosine_similarity_entropy(samples: ArrayLike, m: int, r: float, delay: int = 1) -> float:
+    """The binary Shannon entropy in bits of the share of embedded-vector pairs whose angular
+    distance is below ``r`` (conventions: Cosine similarity entropy; ADR 0358)."""
+    dim = count(m, "m")
+    tau = count(delay, "delay")
+    if dim < 1 or tau < 1:
+        raise ValueError("m and delay must be at least 1")
+    rr = real(r, "r")
+    if not 0 < rr <= 1:
+        raise ValueError("r must be above 0 and at most 1")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    w = x.shape[0] - (dim - 1) * tau
+    if w < 2:
+        raise ValueError("there must be at least two embedded vectors")
+    v = np.stack([x[k * tau : k * tau + w] for k in range(dim)], axis=1)
+    norms = np.sqrt(np.sum(v * v, axis=1))
+    if not np.all(norms > 0):
+        raise ValueError("no embedded vector may be all zeros")
+    c = np.clip((v @ v.T) / np.outer(norms, norms), -1.0, 1.0)
+    i, j = np.triu_indices(w, 1)
+    b = int(np.count_nonzero(np.arccos(c[i, j]) / math.pi < rr)) / i.shape[0]
+    if b in (0.0, 1.0):
+        return 0.0
+    return -b * math.log2(b) - (1 - b) * math.log2(1 - b)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
