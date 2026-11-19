@@ -127,6 +127,16 @@ class CorrelationSum:
 
 
 @dataclass(frozen=True)
+class RecurrenceQuantification:
+    """The recurrence rate, determinism and longest diagonal line of a recurrence plot
+    (conventions: Recurrence quantification; ADR 0350)."""
+
+    rate: float
+    determinism: float
+    longest: int
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -908,6 +918,53 @@ def correlation_sum(
     dx = lx - lx.mean()
     dimension = float(np.sum(dx * (ly - ly.mean())) / np.sum(dx * dx))
     return CorrelationSum(r.copy(), values, dimension)
+
+
+def recurrence_quantification(
+    samples: ArrayLike,
+    m: int,
+    radius: float,
+    delay: int = 1,
+    min_line: int = 2,
+    theiler: int = 0,
+) -> RecurrenceQuantification:
+    """Zbilut and Webber's recurrence quantification: the recurrence rate, determinism and
+    longest diagonal line of the Chebyshev recurrence plot (conventions: Recurrence
+    quantification; ADR 0350)."""
+    k = count(m, "m")
+    tau = count(delay, "delay")
+    lmin = count(min_line, "min_line")
+    w = count(theiler, "theiler")
+    if k < 1 or tau < 1 or lmin < 1:
+        raise ValueError("m, delay and min_line must be at least 1")
+    eps = real(radius, "radius")
+    if not eps > 0:
+        raise ValueError("radius must be positive")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    windows = x.shape[0] - (k - 1) * tau
+    if windows - w < 2:
+        raise ValueError("there must be at least one point outside the Theiler window")
+    emb = x[np.arange(windows)[:, None] + tau * np.arange(k)[None, :]]
+    points = recurrent = on_lines = longest = 0
+    for s in range(w + 1, windows):
+        r = np.max(np.abs(emb[s:] - emb[:-s]), axis=1) < eps
+        points += r.shape[0]
+        edges = np.diff(np.concatenate(([0], r.astype(np.int8), [0])))
+        runs = np.flatnonzero(edges == -1) - np.flatnonzero(edges == 1)
+        recurrent += int(np.sum(runs))
+        on_lines += int(np.sum(runs[runs >= lmin]))
+        if runs.shape[0] > 0:
+            longest = max(longest, int(np.max(runs)))
+    if recurrent == 0:
+        raise ValueError("there are no recurrent points at this radius")
+    return RecurrenceQuantification(recurrent / points, on_lines / recurrent, longest)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

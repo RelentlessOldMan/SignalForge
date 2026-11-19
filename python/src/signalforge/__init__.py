@@ -224,6 +224,7 @@ from .measurements import (
     PhaseNoiseSpurs,
     PowerCcdf,
     PowerStats,
+    RecurrenceQuantification,
     RescaledRange,
     Sfdr,
     TemporalCentroid,
@@ -281,6 +282,7 @@ from .measurements import (
     power_ccdf,
     power_ccdf_level,
     power_stats,
+    recurrence_quantification,
     rescaled_range,
     reverberation_time,
     sample_entropy,
@@ -519,7 +521,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.37"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.38"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -570,6 +572,7 @@ __all__ = [
     "PowerStats",
     "QpskLinkConfig",
     "QpskLinkReport",
+    "RecurrenceQuantification",
     "Resampler",
     "RescaledRange",
     "Schur",
@@ -922,6 +925,7 @@ __all__ = [
     "read_wav_info",
     "real_cepstrum",
     "rectify",
+    "recurrence_quantification",
     "reflection_to_arcsine",
     "reflection_to_autocorrelation",
     "reflection_to_lar",

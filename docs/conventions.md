@@ -302,6 +302,14 @@ rule for code not written yet.
   Chebyshev distance is strictly below `r`; `dimension` is the least-squares slope of
   `ln C` against `ln r`. Real, finite samples; `m, τ ≥ 1`, `w ≥ 0`, at least one pair; at
   least two radii, finite, positive, strictly increasing, each `C(r) > 0`. **(implemented)**
+- **Recurrence quantification** ([ADR 0350](adr/0350-recurrence-quantification.md);
+  `recurrence_quantification(samples, m, radius, delay=1, min_line=2, theiler=0)`, C#
+  `Measurements.RecurrenceQuantification`): over the points `j − i > w` of the plot of
+  vectors embedded as for the correlation sum, recurrent where the Chebyshev distance is
+  strictly below `radius`; `rate` = recurrent / points; `determinism` = recurrent points on
+  diagonal runs of at least `min_line` / recurrent points; `longest` = the longest run, 0 if
+  none. Real, finite samples; `m, τ, min_line ≥ 1`, `w ≥ 0`; `radius` finite, positive; at
+  least one point and one recurrent point. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - recurrence quantification in `measurements` (the recurrence rate and determinism of
-     the Chebyshev recurrence plot at radius `ε`, with a minimum diagonal line length).
+   - auto mutual information in `measurements` (Fraser and Swinney: the mutual information
+     between `x_t` and `x_{t+τ}` from an equal-width 2-D histogram, at each lag).
    - Fisher information in `measurements` (the normalized singular spectrum of the
      embedding, as for SVD entropy, and `Σ (σ_{i+1} − σ_i)² / σ_i`).
 
@@ -2795,6 +2795,11 @@ Updated with every chunk of work. Dates are absolute.
   with the share of pairs strictly closer than each radius and the correlation dimension.
   Python 7558 passed, 2 skipped; .NET 6741 passed; conformance 4713/4713 in both. Version
   2026.11.18.37.
+- 2026-11-18: Recurrence quantification (ADR 0350): `recurrence_quantification(samples, m,
+  radius, delay=1, min_line=2, theiler=0)` in `measurements` (C#
+  `Measurements.RecurrenceQuantification`): recurrence rate, determinism, longest line.
+  Python 7574 passed, 2 skipped; .NET 6757 passed; conformance 4726/4726 in both. Version
+  2026.11.18.38.
 
 ## Not built
 
