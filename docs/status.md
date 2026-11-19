@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Hodges–Lehmann shift estimate in `measurements` (two real samples, each at least 1:
-     the median of all `n_x·n_y` differences `xᵢ − yⱼ`, the two middle ones averaged when the
-     count is even).
+   - The Kullback–Leibler divergence in `measurements` (`p` and `q` two discrete
+     distributions of equal length, non-negative, each normalized by its own sum:
+     `Σ pᵢ·ln(pᵢ/qᵢ)` in nats, terms with `pᵢ = 0` dropped, `qᵢ = 0` where `pᵢ > 0` an error).
 
 ## Built
 
@@ -3067,6 +3067,11 @@ Updated with every chunk of work. Dates are absolute.
   of squared gaps between two empirical distribution functions over the pooled sample.
   Python 8251 passed, 2 skipped; .NET 7400 passed; conformance 5233/5233 in both. Version
   2026.11.19.32.
+- 2026-11-19: The Hodges–Lehmann shift estimate (ADR 0406): `hodges_lehmann(x, y)` in
+  `measurements` (C# `Measurements.HodgesLehmann`): the median of every difference between
+  the two samples.
+  Python 8263 passed, 2 skipped; .NET 7411 passed; conformance 5242/5242 in both. Version
+  2026.11.19.33.
 
 ## Not built
 

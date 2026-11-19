@@ -295,6 +295,7 @@ from .measurements import (
     hedges_g,
     higuchi_dimension,
     hjorth_parameters,
+    hodges_lehmann,
     hoeffding_d,
     iacc,
     icc_consistency,
@@ -585,7 +586,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.32"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.33"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -874,6 +875,7 @@ __all__ = [
     "high_shelf",
     "higuchi_dimension",
     "hjorth_parameters",
+    "hodges_lehmann",
     "hoeffding_d",
     "hz_to_bark",
     "hz_to_erb_rate",

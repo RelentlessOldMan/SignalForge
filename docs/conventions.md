@@ -566,6 +566,10 @@ rule for code not written yet.
   F_y(z_k))²` over every pooled value with its multiplicity (Anderson 1962). Summed as `c·g²`
   per distinct value in increasing order, `g = |#(x ≤ t)·n_y − #(y ≤ t)·n_x|`, then one
   division by `n_x·n_y·N²`. Each sample at least 1, finite. **(implemented)**
+- **Hodges–Lehmann shift estimate** ([ADR 0406](adr/0406-hodges-lehmann.md);
+  `hodges_lehmann(x, y)`, C# `Measurements.HodgesLehmann`): the median of the `n_x·n_y`
+  differences `xᵢ − yⱼ` in `double`; with an even count `(a + b)/2` of the middle two. Each
+  sample at least 1, finite. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -2659,6 +2659,29 @@ def cramer_von_mises(x: ArrayLike, y: ArrayLike) -> float:
     return total / (float(xs.size) * float(ys.size) * float(n) * float(n))
 
 
+def hodges_lehmann(x: ArrayLike, y: ArrayLike) -> float:
+    """The Hodges-Lehmann shift estimate: the median of every difference between a value of
+    ``x`` and a value of ``y`` (conventions: Hodges-Lehmann shift estimate; ADR 0406)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    d = np.sort((pair[0][:, None] - pair[1][None, :]).ravel())
+    m = d.size
+    if m % 2 == 1:
+        return float(d[m // 2])
+    return (float(d[m // 2 - 1]) + float(d[m // 2])) / 2.0
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
