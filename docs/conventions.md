@@ -469,6 +469,11 @@ rule for code not written yet.
   `SS_E = Σ(x_ij − r_i − c_j + x̄)²`, `MS_S = SS_S/(n − 1)`, `MS_E = SS_E/((n − 1)(k − 1))`;
   `(MS_S − MS_E)/(MS_S + (k − 1)MS_E)`. Real, finite, 2-D; `k ≥ 2`, `n ≥ 2`; denominator
   positive. **(implemented)**
+- **Fleiss' kappa** ([ADR 0382](adr/0382-fleiss-kappa.md); `fleiss_kappa(counts)`, C#
+  `Measurements.FleissKappa`): rows are subjects, columns categories, entries the raters
+  choosing that category; `p_j = Σ_i n_ij/(Nn)`, `P̄_e = Σp_j²`,
+  `P_i = (Σ_j n_ij² − n)/(n(n − 1))`; `κ = (P̄ − P̄_e)/(1 − P̄_e)`. Whole, not negative,
+  2-D; `N ≥ 1`, `q ≥ 2`; equal row sums `n ≥ 2`; `P̄_e < 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Fleiss' kappa in `measurements` (a 2-D array of counts, `N` subjects by `q` categories,
-     every row summing to the same `n ≥ 2` raters: `κ = (P̄ − P̄_e)/(1 − P̄_e)`).
+   - Cohen's kappa in `measurements` (two raters' labels of the same `N` items, equal-length
+     records whose distinct values are the categories: `κ = (p_o − p_e)/(1 − p_e)`, `p_e`
+     from the two raters' marginal rates).
 
 ## Built
 
@@ -2948,6 +2949,11 @@ Updated with every chunk of work. Dates are absolute.
   rating, raters in the rows and subjects in the columns.
   Python 7955 passed, 2 skipped; .NET 7127 passed; conformance 5009/5009 in both. Version
   2026.11.19.7.
+- 2026-11-19: Fleiss' kappa (ADR 0382): `fleiss_kappa(counts)` in `measurements` (C#
+  `Measurements.FleissKappa`): the chance-corrected agreement of a fixed number of raters per
+  subject, from the counts per subject and category.
+  Python 7968 passed, 2 skipped; .NET 7139 passed; conformance 5019/5019 in both. Version
+  2026.11.19.8.
 
 ## Not built
 

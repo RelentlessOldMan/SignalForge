@@ -1981,6 +1981,41 @@ def icc_consistency(ratings: ArrayLike) -> float:
     return (ms_s - ms_e) / denominator
 
 
+def fleiss_kappa(counts: ArrayLike) -> float:
+    """Fleiss' kappa: the chance-corrected agreement of raters who each put every subject in
+    one category, from ``counts[subject, category]`` (conventions: Fleiss' kappa; ADR 0382)."""
+    a = np.asarray(counts)
+    if a.ndim != 2:
+        raise ValueError("counts must be two-dimensional")
+    if np.iscomplexobj(a):
+        raise ValueError("counts must be real")
+    try:
+        a = a.astype(np.float64, copy=False)
+    except (TypeError, ValueError):
+        raise ValueError("counts must be real numbers") from None
+    if not np.all(np.isfinite(a)):
+        raise ValueError("counts must be finite")
+    if np.any(a < 0) or np.any(a != np.floor(a)):
+        raise ValueError("counts must be whole numbers, not negative")
+    subjects, categories = int(a.shape[0]), int(a.shape[1])
+    if subjects < 1:
+        raise ValueError("counts must have at least 1 subject (row)")
+    if categories < 2:
+        raise ValueError("counts must have at least 2 categories (columns)")
+    sums = np.sum(a, axis=1)
+    n = float(sums[0])
+    if np.any(sums != n):
+        raise ValueError("every subject must have the same number of ratings")
+    if n < 2:
+        raise ValueError("every subject must have at least 2 ratings")
+    p = np.sum(a, axis=0) / (subjects * n)
+    expected = float(np.sum(p**2))
+    if expected == 1:
+        raise ValueError("every rating is in the same category")
+    observed = float(np.mean((np.sum(a**2, axis=1) - n) / (n * (n - 1))))
+    return (observed - expected) / (1 - expected)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

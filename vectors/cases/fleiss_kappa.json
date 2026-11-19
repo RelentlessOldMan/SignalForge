@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "fleiss_kappa",
+  "description": "Fleiss' kappa (conventions: Fleiss' kappa; ADR 0382).",
+  "cases": [
+    {"id": "fleiss_kappa.full_agreement", "op": "fleiss_kappa", "args": {"counts": [[3.0, 0.0], [0.0, 3.0]]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "3 raters agree on each subject, half the ratings in each category: P = 1, Pe = 1/2, kappa = 1"},
+    {"id": "fleiss_kappa.split", "op": "fleiss_kappa", "args": {"counts": [[1.0, 1.0], [1.0, 1.0]]}, "expected": -1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "2 raters disagree on both subjects: P = 0, Pe = 1/2, kappa = -1"},
+    {"id": "fleiss_kappa.fleiss_example", "op": "fleiss_kappa", "args": {"counts": [[0.0, 0.0, 0.0, 0.0, 14.0], [0.0, 2.0, 6.0, 4.0, 2.0], [0.0, 0.0, 3.0, 5.0, 6.0], [0.0, 3.0, 9.0, 2.0, 0.0], [2.0, 2.0, 8.0, 1.0, 1.0], [7.0, 7.0, 0.0, 0.0, 0.0], [3.0, 2.0, 6.0, 3.0, 0.0], [2.0, 5.0, 3.0, 2.0, 2.0], [6.0, 5.0, 2.0, 1.0, 0.0], [0.0, 2.0, 2.0, 3.0, 7.0]]}, "expected": 0.20993070442195524, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "the worked example of 10 subjects, 14 raters and 5 categories after Fleiss (1971), whose kappa is given as 0.210"},
+    {"id": "fleiss_kappa.random_ratings", "op": "fleiss_kappa", "args": {"counts": [[4.0, 0.0, 2.0, 0.0], [3.0, 0.0, 1.0, 2.0], [3.0, 3.0, 0.0, 0.0], [3.0, 0.0, 1.0, 2.0], [3.0, 2.0, 0.0, 1.0], [4.0, 1.0, 0.0, 1.0], [3.0, 1.0, 0.0, 2.0], [6.0, 0.0, 0.0, 0.0], [5.0, 1.0, 0.0, 0.0], [3.0, 1.0, 1.0, 1.0], [2.0, 1.0, 1.0, 2.0], [0.0, 2.0, 1.0, 3.0], [2.0, 2.0, 1.0, 1.0], [2.0, 3.0, 1.0, 0.0], [3.0, 1.0, 1.0, 1.0], [3.0, 3.0, 0.0, 0.0], [2.0, 1.0, 3.0, 0.0], [2.0, 3.0, 1.0, 0.0], [4.0, 0.0, 2.0, 0.0], [3.0, 3.0, 0.0, 0.0], [2.0, 2.0, 1.0, 1.0], [6.0, 0.0, 0.0, 0.0], [3.0, 3.0, 0.0, 0.0], [3.0, 0.0, 3.0, 0.0], [1.0, 2.0, 1.0, 2.0], [3.0, 2.0, 1.0, 0.0], [5.0, 0.0, 0.0, 1.0], [4.0, 0.0, 2.0, 0.0], [4.0, 0.0, 1.0, 1.0], [4.0, 1.0, 1.0, 0.0]]}, "expected": 0.02796194868838282, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 subjects of 6 ratings in 4 unevenly used categories from random.Random(382)"},
+    {"id": "fleiss_kappa.one_category", "op": "fleiss_kappa", "args": {"counts": [[3.0], [3.0]]}, "error": "invalid_argument", "source": "q must be at least 2"},
+    {"id": "fleiss_kappa.unequal_raters", "op": "fleiss_kappa", "args": {"counts": [[2.0, 1.0], [1.0, 1.0]]}, "error": "invalid_argument", "source": "every row must sum to the same n"},
+    {"id": "fleiss_kappa.one_rater", "op": "fleiss_kappa", "args": {"counts": [[1.0, 0.0], [0.0, 1.0]]}, "error": "invalid_argument", "source": "n must be at least 2"},
+    {"id": "fleiss_kappa.fraction", "op": "fleiss_kappa", "args": {"counts": [[1.5, 1.5], [2.0, 1.0]]}, "error": "invalid_argument", "source": "counts must be whole numbers"},
+    {"id": "fleiss_kappa.negative", "op": "fleiss_kappa", "args": {"counts": [[4.0, -1.0], [2.0, 1.0]]}, "error": "invalid_argument", "source": "counts must not be negative"},
+    {"id": "fleiss_kappa.one_category_used", "op": "fleiss_kappa", "args": {"counts": [[3.0, 0.0], [3.0, 0.0]]}, "error": "invalid_argument", "source": "Pe = 1 when every rating is in the same category"}
+  ]
+}
