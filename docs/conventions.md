@@ -356,6 +356,11 @@ rule for code not written yet.
   strictly below `r`; value `−B log2 B − (1 − B) log2(1 − B)` bits, `0 log 0 = 0`. No mean
   removal. Real, finite; `m, delay ≥ 1`; `W ≥ 2`; `0 < r ≤ 1`; no all-zero vector.
   **(implemented)**
+- **Ljung–Box statistic** ([ADR 0359](adr/0359-ljung-box.md); `ljung_box(samples, lags)`,
+  C# `Measurements.LjungBox`): with the biased, mean-removed
+  `ρ_k = Σ_{t<N−k} (x_t − x̄)(x_{t+k} − x̄) / Σ (x_t − x̄)²`, the value is
+  `Q = N(N + 2) Σ_{k=1}^{h} ρ_k²/(N − k)`; no p-value. Real, finite, not all equal;
+  `1 ≤ lags ≤ N − 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

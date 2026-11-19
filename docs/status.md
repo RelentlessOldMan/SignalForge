@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Ljung–Box statistic in `measurements` (`Q = N(N+2) Σ_{k=1}^{h} ρ_k²/(N − k)` from the
-     mean-removed, biased sample autocorrelation; the chi-squared p-value is left out).
+   - turning point test in `measurements` (the number of strict local extrema and its
+     z-score against the i.i.d. mean `2(N − 2)/3` and variance `(16N − 29)/90`).
 
 ## Built
 
@@ -2838,6 +2838,11 @@ Updated with every chunk of work. Dates are absolute.
   in bits of the share of embedded-vector pairs with angular distance below `r`.
   Python 7692 passed, 2 skipped; .NET 6877 passed; conformance 4820/4820 in both. Version
   2026.11.18.46.
+- 2026-11-18: Ljung–Box statistic (ADR 0359): `ljung_box(samples, lags)` in `measurements`
+  (C# `Measurements.LjungBox`): `N(N + 2) Σ ρ_k²/(N − k)` from the biased, mean-removed
+  autocorrelation; no p-value.
+  Python 7705 passed, 2 skipped; .NET 6889 passed; conformance 4830/4830 in both. Version
+  2026.11.18.47.
 
 ## Not built
 

@@ -1248,6 +1248,32 @@ def cosine_similarity_entropy(samples: ArrayLike, m: int, r: float, delay: int =
     return -b * math.log2(b) - (1 - b) * math.log2(1 - b)
 
 
+def ljung_box(samples: ArrayLike, lags: int) -> float:
+    """The Ljung-Box statistic ``N(N+2) sum rho_k^2/(N-k)`` over lags 1 to ``lags``
+    (conventions: Ljung-Box statistic; ADR 0359)."""
+    h = count(lags, "lags")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if not 1 <= h <= n - 1:
+        raise ValueError("lags must be from 1 to len(samples) - 1")
+    d = x - np.mean(x)
+    c0 = float(np.dot(d, d))
+    if not c0 > 0:
+        raise ValueError("samples must not all be equal")
+    q = 0.0
+    for k in range(1, h + 1):
+        rho = float(np.dot(d[:-k], d[k:])) / c0
+        q += rho * rho / (n - k)
+    return float(n * (n + 2)) * q
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

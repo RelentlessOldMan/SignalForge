@@ -274,6 +274,7 @@ from .measurements import (
     largest_lyapunov,
     lateral_fraction,
     lempel_ziv_complexity,
+    ljung_box,
     modified_allan_deviation,
     modulation_transfer,
     mtie,
@@ -531,7 +532,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.46"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.47"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -822,6 +823,7 @@ __all__ = [
     "lin_to_db",
     "line_spectral_frequencies",
     "linkwitz_riley",
+    "ljung_box",
     "lms_equalizer",
     "lomb_scargle",
     "lomb_scargle_bootstrap",
