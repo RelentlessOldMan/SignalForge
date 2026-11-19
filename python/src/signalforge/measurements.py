@@ -1340,6 +1340,27 @@ def runs_test(samples: ArrayLike) -> RunsTest:
     return RunsTest(runs, (runs - p / n - 1) / math.sqrt(var))
 
 
+def von_neumann_ratio(samples: ArrayLike) -> float:
+    """The sum of squared successive differences over the sum of squared deviations from the
+    mean, about 2 for an i.i.d. record (conventions: von Neumann ratio; ADR 0362)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if x.shape[0] < 2:
+        raise ValueError("samples must have at least 2 values")
+    d = x - np.mean(x)
+    den = float(np.dot(d, d))
+    if not den > 0:
+        raise ValueError("samples must not all be equal")
+    s = np.diff(x)
+    return float(np.dot(s, s)) / den
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

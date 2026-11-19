@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - von Neumann ratio in `measurements` (the mean square successive difference over the
-     variance, `Σ (x_{t+1} − x_t)² / Σ (x_t − x̄)²`, about 2 for an i.i.d. record).
+   - Bartels rank test in `measurements` (the von Neumann ratio of the ranks, ties given
+     their mean rank, and its z-score against 2 with variance
+     `4(N − 2)(5N² − 2N − 9)/(5N(N + 1)(N − 1)²)`).
 
 ## Built
 
@@ -2853,6 +2854,11 @@ Updated with every chunk of work. Dates are absolute.
   dropped, and the z-score of the count.
   Python 7727 passed, 2 skipped; .NET 6911 passed; conformance 4846/4846 in both. Version
   2026.11.18.49.
+- 2026-11-18: von Neumann ratio (ADR 0362): `von_neumann_ratio(samples)` in `measurements`
+  (C# `Measurements.VonNeumannRatio`): the plain ratio of the squared successive differences
+  to the squared deviations from the mean, about 2 for an i.i.d. record.
+  Python 7737 passed, 2 skipped; .NET 6920 passed; conformance 4853/4853 in both. Version
+  2026.11.18.50.
 
 ## Not built
 

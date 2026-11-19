@@ -371,6 +371,11 @@ rule for code not written yet.
   equal dropped; `runs` the number of blocks of equal labels; `n₁`, `n₂` the label counts,
   `n = n₁ + n₂`; `z = (runs − 2n₁n₂/n − 1)/√(2n₁n₂(2n₁n₂ − n)/(n²(n − 1)))`. Real, finite;
   the variance must be above 0. **(implemented)**
+- **von Neumann ratio** ([ADR 0362](adr/0362-von-neumann-ratio.md); `von_neumann_ratio(samples)`,
+  C# `Measurements.VonNeumannRatio`): the plain ratio
+  `Σ_{t<N−1} (x_{t+1} − x_t)² / Σ_t (x_t − x̄)²`, not von Neumann's `δ²/s²`, which is
+  `N/(N − 1)` times it; about 2 for an i.i.d. record. Real, finite; `N ≥ 2`; not all equal.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

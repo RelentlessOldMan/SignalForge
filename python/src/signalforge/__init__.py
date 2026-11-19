@@ -318,6 +318,7 @@ from .measurements import (
     two_tone_imd,
     two_tone_ip2,
     two_tone_ip5,
+    von_neumann_ratio,
     weighted_permutation_entropy,
     zero_crossing_rate,
 )
@@ -536,7 +537,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.49"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.50"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1038,6 +1039,7 @@ __all__ = [
     "upsample",
     "vibrato",
     "vocoder",
+    "von_neumann_ratio",
     "vrms_to_dbm",
     "w_to_dbm",
     "wavefold",
