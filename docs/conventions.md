@@ -271,6 +271,11 @@ rule for code not written yet.
   `Measurements.WeightedPermutationEntropy`): the windows and patterns of permutation entropy,
   each window weighted by its population variance; `p(π) = Σ w (pattern π) / Σ w`;
   `−Σ p ln p / ln(order!)`. Its rules, plus at least one window that varies. **(implemented)**
+- **Increment entropy** ([ADR 0344](adr/0344-increment-entropy.md);
+  `increment_entropy(samples, m, levels)`, C# `Measurements.IncrementEntropy`): increments
+  `v = diff(x)`, `σ` their population deviation; letter `(sign v, min(R, floor(|v|·R/σ)))`; the
+  Shannon entropy in nats of the `N − m` words of `m` letters, not normalized. Real, finite, at
+  least `m + 1` samples, increments not all 0; `m ≥ 1`, `1 ≤ levels ≤ 1000`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

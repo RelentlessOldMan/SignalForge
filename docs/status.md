@@ -6,8 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - increment entropy in `measurements` (Liu et al.: sign and quantized size of the
-     increments, `R` levels, Shannon entropy of the words).
+   - bubble entropy in `measurements` (Manis et al.: the bubble-sort swap counts of windows
+     of `m` and `m + 1`, Rényi-2 entropies, `(H_{m+1} − H_m)/ln((m+1)/(m−1))`).
+   - attention entropy in `measurements` (Yang et al.: the Shannon entropy of the intervals
+     between successive local peaks).
 
 ## Built
 
@@ -2762,6 +2764,12 @@ Updated with every chunk of work. Dates are absolute.
   patterns of ADR 0325, each window weighted by its population variance.
   Python 7477 passed, 2 skipped; .NET 6661 passed; conformance 4651/4651 in both. Version
   2026.11.18.31.
+- 2026-11-18: Increment entropy (ADR 0344): `increment_entropy(samples, m, levels)` in
+  `measurements` (C# `Measurements.IncrementEntropy`): letters of sign and size
+  `min(R, floor(|v|·R/σ))`, population `σ`, entropy in nats, not normalized. Next restocked
+  with bubble and attention entropy.
+  Python 7491 passed, 2 skipped; .NET 6675 passed; conformance 4662/4662 in both. Version
+  2026.11.18.32.
 
 ## Not built
 

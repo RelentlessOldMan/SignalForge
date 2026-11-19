@@ -255,6 +255,7 @@ from .measurements import (
     higuchi_dimension,
     hjorth_parameters,
     iacc,
+    increment_entropy,
     integrated_phase_noise,
     katz_dimension,
     kay_frequency,
@@ -512,7 +513,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.31"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.32"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -766,6 +767,7 @@ __all__ = [
     "iacc",
     "idct",
     "ifft",
+    "increment_entropy",
     "inharmonicity",
     "instantaneous_frequency",
     "integrated_phase_noise",

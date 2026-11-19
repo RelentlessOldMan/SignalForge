@@ -696,6 +696,38 @@ def weighted_permutation_entropy(samples: ArrayLike, order: int, delay: int = 1)
     return float(-np.sum(p * np.log(p)) / math.log(math.factorial(m)))
 
 
+def increment_entropy(samples: ArrayLike, m: int, levels: int) -> float:
+    """The Shannon entropy in nats of words of ``m`` increment letters, each the sign and the
+    quantized size of a step (conventions: Increment entropy; ADR 0344)."""
+    k = count(m, "m")
+    r = count(levels, "levels")
+    if k < 1:
+        raise ValueError("m must be at least 1")
+    if not 1 <= r <= 1000:
+        raise ValueError("levels must be from 1 to 1000")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    words = x.shape[0] - k
+    if words < 1:
+        raise ValueError("samples must be at least m + 1 long")
+    v = np.diff(x)
+    sigma = float(np.std(v))
+    if not sigma > 0:
+        raise ValueError("the increments must not all be 0")
+    size = np.minimum(r, np.floor(np.abs(v) * r / sigma)).astype(np.int64)
+    letters = (np.sign(v).astype(np.int64) + 1) * (r + 1) + size
+    idx = np.arange(words)[:, None] + np.arange(k)[None, :]
+    _, counts = np.unique(letters[idx], axis=0, return_counts=True)
+    p = counts / words
+    return float(-np.sum(p * np.log(p)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
