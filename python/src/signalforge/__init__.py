@@ -221,6 +221,7 @@ from .measurements import (
     HjorthParameters,
     IntegratedPhaseNoise,
     LargestLyapunov,
+    MannKendall,
     Mtie,
     NoiseFigure,
     PhaseNoise,
@@ -279,6 +280,7 @@ from .measurements import (
     lateral_fraction,
     lempel_ziv_complexity,
     ljung_box,
+    mann_kendall,
     modified_allan_deviation,
     modulation_transfer,
     mtie,
@@ -539,7 +541,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.51"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.52"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -580,6 +582,7 @@ __all__ = [
     "LeftRight",
     "Levinson",
     "LineRemoval",
+    "MannKendall",
     "MidSide",
     "Mtie",
     "NoiseFigure",
@@ -850,6 +853,7 @@ __all__ = [
     "lpc_to_autocorrelation",
     "lpc_to_reflection",
     "lsf_to_lpc",
+    "mann_kendall",
     "median_filter",
     "mel_filterbank",
     "mel_to_hz",

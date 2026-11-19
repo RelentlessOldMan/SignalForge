@@ -381,6 +381,11 @@ rule for code not written yet.
   mean rank; `ratio = Σ (R_{t+1} − R_t)² / Σ (R_t − R̄)²` (the actual denominator);
   `z = (ratio − 2)/√(4(N − 2)(5N² − 2N − 9)/(5N(N + 1)(N − 1)²))`, not adjusted for ties.
   Real, finite; `N ≥ 3`; not all equal. **(implemented)**
+- **Mann–Kendall trend test** ([ADR 0364](adr/0364-mann-kendall.md); `mann_kendall(samples)` →
+  `MannKendall(s, z)`, C# `Measurements.MannKendall`): `S = Σ_{i<j} sign(x_j − x_i)`;
+  `σ² = (N(N − 1)(2N + 5) − Σ t(t − 1)(2t + 5))/18` over the groups of equal samples;
+  `z = (S ∓ 1)/σ` for `S ≷ 0`, 0 at `S = 0`. Real, finite; `N ≥ 2`; not all equal.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

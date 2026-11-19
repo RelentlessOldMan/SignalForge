@@ -183,6 +183,15 @@ class BartelsRankTest:
 
 
 @dataclass(frozen=True)
+class MannKendall:
+    """The Mann-Kendall statistic and its continuity-corrected z-score (conventions:
+    Mann-Kendall trend test; ADR 0364)."""
+
+    s: int
+    z: float
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -1394,6 +1403,33 @@ def bartels_rank_test(samples: ArrayLike) -> BartelsRankTest:
     ratio = float(np.dot(s, s)) / float(np.dot(d, d))
     var = 4 * (n - 2) * (5 * n * n - 2 * n - 9) / (5 * n * (n + 1) * (n - 1) ** 2)
     return BartelsRankTest(ratio, (ratio - 2) / math.sqrt(var))
+
+
+def mann_kendall(samples: ArrayLike) -> MannKendall:
+    """The Mann-Kendall trend test: ``S``, the number of rising pairs less the falling ones,
+    and its tie-corrected, continuity-corrected z-score (conventions: Mann-Kendall trend test;
+    ADR 0364)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 2:
+        raise ValueError("samples must have at least 2 values")
+    _, cnt = np.unique(x, return_counts=True)
+    if cnt.shape[0] < 2:
+        raise ValueError("samples must not all be equal")
+    s = 0
+    for i in range(n - 1):
+        s += int(np.count_nonzero(x[i + 1 :] > x[i])) - int(np.count_nonzero(x[i + 1 :] < x[i]))
+    t = [int(c) for c in cnt]
+    var = (n * (n - 1) * (2 * n + 5) - sum(c * (c - 1) * (2 * c + 5) for c in t)) / 18
+    z = 0.0 if s == 0 else (s - 1 if s > 0 else s + 1) / math.sqrt(var)
+    return MannKendall(s, z)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Mann–Kendall trend test in `measurements` (`S = Σ_{i<j} sign(x_j − x_i)`, its
-     tie-corrected variance `(N(N−1)(2N+5) − Σ t(t−1)(2t+5))/18`, and the continuity-corrected
-     z-score).
+   - Sen's slope in `measurements` (the median of the pairwise slopes
+     `(x_j − x_i)/(j − i)`, `i < j`, per sample, with the mean of the two middle slopes for
+     an even count).
 
 ## Built
 
@@ -2864,6 +2864,11 @@ Updated with every chunk of work. Dates are absolute.
   against 2 with Bartels's variance.
   Python 7747 passed, 2 skipped; .NET 6930 passed; conformance 4860/4860 in both. Version
   2026.11.18.51.
+- 2026-11-18: Mann–Kendall trend test (ADR 0364): `mann_kendall(samples)` in `measurements`
+  (C# `Measurements.MannKendall`): `S`, the rising pairs less the falling ones, and its
+  tie-corrected, continuity-corrected z-score.
+  Python 7758 passed, 2 skipped; .NET 6941 passed; conformance 4868/4868 in both. Version
+  2026.11.18.52.
 
 ## Not built
 
