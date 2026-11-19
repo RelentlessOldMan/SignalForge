@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Bhattacharyya distance in `measurements` (`p` and `q` as for the Hellinger distance:
-     `−ln Σ√(Pᵢ·Qᵢ)`, an error when the two share no support).
+   - The total variation distance in `measurements` (`p` and `q` as for the Hellinger
+     distance: `½·Σ|Pᵢ − Qᵢ|`, from 0 to 1).
 
 ## Built
 
@@ -3086,6 +3086,11 @@ Updated with every chunk of work. Dates are absolute.
   square roots of two discrete distributions, from 0 to 1.
   Python 8302 passed, 2 skipped; .NET 7447 passed; conformance 5272/5272 in both. Version
   2026.11.19.36.
+- 2026-11-19: The Bhattacharyya distance (ADR 0410): `bhattacharyya_distance(p, q)` in
+  `measurements` (C# `Measurements.BhattacharyyaDistance`): minus the log of the overlap of two
+  discrete distributions.
+  Python 8316 passed, 2 skipped; .NET 7460 passed; conformance 5283/5283 in both. Version
+  2026.11.19.37.
 
 ## Not built
 

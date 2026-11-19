@@ -583,6 +583,10 @@ rule for code not written yet.
   `hellinger_distance(p, q)`, C# `Measurements.HellingerDistance`): `√(½·Σ(√Pᵢ − √Qᵢ)²)`, the
   squared root differences summed in order, clamped to at most 1; not `√(1 − Σ√(PᵢQᵢ))`.
   Inputs as for the Jensen–Shannon divergence. **(implemented)**
+- **Bhattacharyya distance** ([ADR 0410](adr/0410-bhattacharyya-distance.md);
+  `bhattacharyya_distance(p, q)`, C# `Measurements.BhattacharyyaDistance`): `0 − ln BC`,
+  `BC = Σ√(Pᵢ·Qᵢ)` summed in order and clamped to at most 1. Inputs as for the Hellinger
+  distance; `BC = 0` is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

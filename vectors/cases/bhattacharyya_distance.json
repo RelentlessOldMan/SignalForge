@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "bhattacharyya_distance",
+  "description": "The Bhattacharyya distance (conventions: Bhattacharyya distance; ADR 0410).",
+  "cases": [
+    {"id": "bhattacharyya_distance.same", "op": "bhattacharyya_distance", "args": {"p": [1.0, 2.0, 3.0], "q": [2.0, 4.0, 6.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "the same distribution after scaling: 0"},
+    {"id": "bhattacharyya_distance.half", "op": "bhattacharyya_distance", "args": {"p": [1.0, 0.0], "q": [1.0, 1.0]}, "expected": 0.34657359027997264, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "P = (1, 0), Q = (1/2, 1/2): BC = 1/sqrt 2, so (1/2) ln 2"},
+    {"id": "bhattacharyya_distance.quarter", "op": "bhattacharyya_distance", "args": {"p": [1.0, 0.0, 0.0, 0.0], "q": [1.0, 1.0, 1.0, 1.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "P a point, Q uniform on 4: BC = 1/2, so ln 2"},
+    {"id": "bhattacharyya_distance.thirds", "op": "bhattacharyya_distance", "args": {"p": [1.0, 1.0, 0.0], "q": [0.0, 1.0, 1.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "overlap only at the middle: BC = 1/2, so ln 2"},
+    {"id": "bhattacharyya_distance.counts", "op": "bhattacharyya_distance", "args": {"p": [1.0, 5.0, 2.0, 0.0, 5.0, 2.0, 0.0, 2.0, 5.0, 5.0, 3.0, 1.0, 1.0, 1.0, 1.0, 3.0], "q": [0.0, 2.0, 1.0, 6.0, 3.0, 5.0, 3.0, 0.0, 4.0, 1.0, 4.0, 6.0, 3.0, 5.0, 5.0, 1.0]}, "expected": 0.2803414446127494, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "16 counts each from random.Random(410), 0 to 6, with zeros"},
+    {"id": "bhattacharyya_distance.empty", "op": "bhattacharyya_distance", "args": {"p": [], "q": []}, "error": "invalid_argument", "source": "p needs a value"},
+    {"id": "bhattacharyya_distance.lengths", "op": "bhattacharyya_distance", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, 1.0]}, "error": "invalid_argument", "source": "p and q must match"},
+    {"id": "bhattacharyya_distance.negative", "op": "bhattacharyya_distance", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, -0.5, 3.0]}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "bhattacharyya_distance.not_finite", "op": "bhattacharyya_distance", "args": {"p": [1.0, "nan", 1.0], "q": [2.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "bhattacharyya_distance.zero_sum", "op": "bhattacharyya_distance", "args": {"p": [1.0, 2.0, 3.0], "q": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "q must have a positive sum"},
+    {"id": "bhattacharyya_distance.disjoint", "op": "bhattacharyya_distance", "args": {"p": [1.0, 0.0, 0.0], "q": [0.0, 2.0, 1.0]}, "error": "invalid_argument", "source": "no shared support: infinite"}
+  ]
+}

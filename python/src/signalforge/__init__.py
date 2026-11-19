@@ -252,6 +252,7 @@ from .measurements import (
     balanced_accuracy,
     bartels_rank_test,
     bass_ratio,
+    bhattacharyya_distance,
     biweight_midcorrelation,
     block_leq,
     blomqvist_beta,
@@ -589,7 +590,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.36"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.37"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -719,6 +720,7 @@ __all__ = [
     "bessel_bandstop",
     "bessel_highpass",
     "bessel_lowpass",
+    "bhattacharyya_distance",
     "bit_errors",
     "bitcrush",
     "biweight_midcorrelation",
