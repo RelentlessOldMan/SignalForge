@@ -280,6 +280,7 @@ public static class Conformance
             "distribution_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.Has("bins") ? a.I("bins") : 512), t => Measurements.DistributionEntropy(t.Item1, t.Item2, t.Item3)),
             "correlation_sum" => Bind((Reals(a.Get("samples")), a.I("m"), Reals(a.Get("radii")), a.Has("delay") ? a.I("delay") : 1, a.Has("theiler") ? a.I("theiler") : 0), t => Measurements.CorrelationSum(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5)),
             "recurrence_quantification" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("radius"), a.Has("delay") ? a.I("delay") : 1, a.Has("min_line") ? a.I("min_line") : 2, a.Has("theiler") ? a.I("theiler") : 0), t => Measurements.RecurrenceQuantification(t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, t.Item6)),
+            "fisher_information" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.FisherInformation(t.Item1, t.Item2, t.Item3)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

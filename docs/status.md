@@ -8,8 +8,8 @@ Updated with every chunk of work. Dates are absolute.
    `docs/adr/` before picking. Candidates:
    - auto mutual information in `measurements` (Fraser and Swinney: the mutual information
      between `x_t` and `x_{t+τ}` from an equal-width 2-D histogram, at each lag).
-   - Fisher information in `measurements` (the normalized singular spectrum of the
-     embedding, as for SVD entropy, and `Σ (σ_{i+1} − σ_i)² / σ_i`).
+   - Rényi entropy in `measurements` (the order-`α` entropy of an equal-width histogram of
+     the samples, with Shannon at `α = 1`).
 
 ## Built
 
@@ -2800,6 +2800,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.RecurrenceQuantification`): recurrence rate, determinism, longest line.
   Python 7574 passed, 2 skipped; .NET 6757 passed; conformance 4726/4726 in both. Version
   2026.11.18.38.
+- 2026-11-18: Fisher information (ADR 0351): `fisher_information(samples, order, delay=1)`
+  in `measurements` (C# `Measurements.FisherInformation`): the sorted, normalized singular
+  spectrum of SVD entropy's embedding, `Σ (σ̄_{i+1} − σ̄_i)² / σ̄_i`.
+  Python 7588 passed, 2 skipped; .NET 6771 passed; conformance 4737/4737 in both. Version
+  2026.11.18.39.
 
 ## Not built
 

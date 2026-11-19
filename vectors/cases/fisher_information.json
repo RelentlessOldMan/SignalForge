@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "fisher_information",
+  "description": "Fisher information (conventions: Fisher information; ADR 0351).",
+  "cases": [
+    {"id": "fisher_information.orthogonal", "op": "fisher_information", "args": {"samples": [1.0, 0.0, -1.0, 0.0, 1.0], "order": 2}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "rows (1,0), (0,-1), (-1,0), (0,1): A^T A = 2I, a flat spectrum, so 0"},
+    {"id": "fisher_information.ramp", "op": "fisher_information", "args": {"samples": [1.0, 2.0, 3.0, 4.0], "order": 2}, "expected": 0.8409057982572898, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "rows (1,2), (2,3), (3,4): A^T A = [[14, 20], [20, 29]], closed form; with p = s/sum, (p2 - p1)^2 / p1"},
+    {"id": "fisher_information.mixed_order_3", "op": "fisher_information", "args": {"samples": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5, -1.25, 0.75], "order": 3}, "expected": 0.021659219176217145, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "twelve arbitrary samples, Jacobi on the exact Gram matrix"},
+    {"id": "fisher_information.noise_order_6", "op": "fisher_information", "args": {"samples": [1.5, 1.125, 0.25, 1.0, 0.625, 3.25, 2.125, -0.5, 2.375, 3.375, -0.375, 0.375, 0.25, 0.0, 1.5, 3.625, -2.625, 4.0, -3.5, 0.25, 2.875, -0.625, -2.125, 3.875, 0.25, -1.75, -1.5, 1.375, 2.875, -2.125, -0.75, 2.625, 0.625, -1.0, 1.75, 4.0, -1.375, -3.875, -0.875, -1.625, -1.625, -3.0, -2.75, -0.125, 3.875, 3.375, 0.0, 2.125, -3.25, -1.5, 2.25, 0.125, 0.75, -0.125, 2.5, 0.75, -1.125, -2.875, -0.5, -0.25, -2.125, 1.0, 0.625, -0.625, 2.25, 0.625, 4.0, 0.875, -3.875, -2.375, -0.875, -0.125, -3.375, 1.125, 3.375, 3.25, -3.5, -0.875, -0.375, 1.625, -0.375, -3.25, 3.0, -0.875, -3.375, 2.875, 0.5, 2.125, -1.125, -1.875], "order": 6, "delay": 2}, "expected": 0.015149664301231432, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "90 random eighths from random.Random(351), order 6, delay 2"},
+    {"id": "fisher_information.square", "op": "fisher_information", "args": {"samples": [0.5, -1.0, 2.0, 0.75, 1.5], "order": 3}, "expected": 0.06904461910412232, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "the shortest record for order 3: a 3 x 3 embedding"},
+    {"id": "fisher_information.order_one", "op": "fisher_information", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0], "order": 1}, "error": "invalid_argument", "source": "order must be at least 2"},
+    {"id": "fisher_information.order_33", "op": "fisher_information", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0], "order": 33}, "error": "invalid_argument", "source": "order must be at most 32"},
+    {"id": "fisher_information.delay_zero", "op": "fisher_information", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0], "order": 2, "delay": 0}, "error": "invalid_argument", "source": "delay must be at least 1"},
+    {"id": "fisher_information.too_short", "op": "fisher_information", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5, 3.0], "order": 5}, "error": "invalid_argument", "source": "five samples give four rows, fewer than order 5"},
+    {"id": "fisher_information.all_zero", "op": "fisher_information", "args": {"samples": [0.0, 0.0, 0.0, 0.0], "order": 2}, "error": "invalid_argument", "source": "samples must not all be 0"},
+    {"id": "fisher_information.nan", "op": "fisher_information", "args": {"samples": [0.0, "nan", 1.0, 2.0], "order": 2}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

@@ -254,6 +254,7 @@ from .measurements import (
     energy_separation,
     energy_time_curve,
     exceedance_levels,
+    fisher_information,
     fuzzy_entropy,
     gain_compression,
     gcc_phat,
@@ -521,7 +522,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.38"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.39"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -746,6 +747,7 @@ __all__ = [
     "fir_least_squares",
     "fir_lowpass",
     "fir_response",
+    "fisher_information",
     "flanger",
     "fm_tone",
     "fractional_delay",

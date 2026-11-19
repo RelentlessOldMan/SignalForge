@@ -310,6 +310,11 @@ rule for code not written yet.
   diagonal runs of at least `min_line` / recurrent points; `longest` = the longest run, 0 if
   none. Real, finite samples; `m, τ, min_line ≥ 1`, `w ≥ 0`; `radius` finite, positive; at
   least one point and one recurrent point. **(implemented)**
+- **Fisher information** ([ADR 0351](adr/0351-fisher-information.md);
+  `fisher_information(samples, order, delay=1)`, C# `Measurements.FisherInformation`): the
+  singular values of SVD entropy's embedding, sorted largest first and divided by their sum,
+  `σ̄_1 ≥ … ≥ σ̄_m`; `Σ_{i<m} (σ̄_{i+1} − σ̄_i)² / σ̄_i`, a term with `σ̄_i = 0` being 0. The
+  rules are SVD entropy's. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
