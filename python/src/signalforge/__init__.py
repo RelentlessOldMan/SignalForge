@@ -324,6 +324,7 @@ from .measurements import (
     mann_kendall,
     markedness,
     matthews_correlation,
+    minkowski_distance,
     modified_allan_deviation,
     modulation_transfer,
     mtie,
@@ -598,7 +599,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.45"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.46"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -961,6 +962,7 @@ __all__ = [
     "mid_side_decode",
     "mid_side_encode",
     "minimum_phase",
+    "minkowski_distance",
     "modified_allan_deviation",
     "modulation_transfer",
     "moving_average",

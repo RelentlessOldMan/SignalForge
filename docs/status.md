@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Minkowski distance in `measurements` (two real vectors `x` and `y` of the same
-     length and an order `p ≥ 1`, finite: `(Σ|xᵢ − yᵢ|^p)^(1/p)`, scaled by the largest
-     difference so it cannot overflow).
+   - The Chebyshev distance in `measurements` (two real vectors `x` and `y` of the same
+     length: `max |xᵢ − yᵢ|`, the Minkowski distance's limit as the order grows).
 
 ## Built
 
@@ -3132,6 +3131,11 @@ Updated with every chunk of work. Dates are absolute.
   combined total that does not match.
   Python 8435 passed, 2 skipped; .NET 7571 passed; conformance 5378/5378 in both. Version
   2026.11.19.45.
+- 2026-11-19: The Minkowski distance (ADR 0419): `minkowski_distance(x, y, order)` in
+  `measurements` (C# `Measurements.MinkowskiDistance`): the `Lᵖ` norm of the difference of two
+  vectors, scaled so it cannot overflow.
+  Python 8451 passed, 2 skipped; .NET 7586 passed; conformance 5391/5391 in both. Version
+  2026.11.19.46.
 
 ## Not built
 

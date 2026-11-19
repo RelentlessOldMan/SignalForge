@@ -348,6 +348,7 @@ public static class Conformance
             "triangular_discrimination" => Bind((Reals(a.Get("p")), Reals(a.Get("q"))), t => Measurements.TriangularDiscrimination(t.Item1, t.Item2)),
             "canberra_distance" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.CanberraDistance(t.Item1, t.Item2)),
             "bray_curtis" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.BrayCurtis(t.Item1, t.Item2)),
+            "minkowski_distance" => Bind((Reals(a.Get("x")), Reals(a.Get("y")), a.D("order")), t => Measurements.MinkowskiDistance(t.Item1, t.Item2, t.Item3)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

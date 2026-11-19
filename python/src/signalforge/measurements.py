@@ -3101,6 +3101,46 @@ def bray_curtis(x: ArrayLike, y: ArrayLike) -> float:
     return min(num / den, 1.0)
 
 
+def minkowski_distance(x: ArrayLike, y: ArrayLike, order: float) -> float:
+    """The order-``order`` Minkowski distance between the real vectors ``x`` and ``y``,
+    scaled by the largest difference so it cannot overflow (conventions: Minkowski distance;
+    ADR 0419)."""
+    p = real(order, "order")
+    if not p >= 1:
+        raise ValueError("order must be at least 1")
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a.tolist())
+    xv, yv = pair
+    if len(xv) != len(yv):
+        raise ValueError("x and y must have the same length")
+    diffs = []
+    m = 0.0
+    for a_, b_ in zip(xv, yv, strict=True):
+        d = abs(a_ - b_)
+        if math.isinf(d):
+            raise ValueError("a difference of x and y overflows")
+        diffs.append(d)
+        if d > m:
+            m = d
+    if m == 0:
+        return 0.0
+    s = 0.0
+    for d in diffs:
+        s += math.pow(d / m, p)
+    return m * math.pow(s, 1.0 / p)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

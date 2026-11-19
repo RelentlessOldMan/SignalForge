@@ -620,6 +620,11 @@ rule for code not written yet.
   C# `Measurements.BrayCurtis`): `Σ|xᵢ − yᵢ| / Σ(xᵢ + yᵢ)`, both sums in order in one pass,
   clamped to at most 1. `x` and `y` finite, non-negative, of equal length at least 1, not
   both all zero; not normalized. **(implemented)**
+- **Minkowski distance** ([ADR 0419](adr/0419-minkowski-distance.md);
+  `minkowski_distance(x, y, order)`, C# `Measurements.MinkowskiDistance`):
+  `m·pow(Σ pow(|xᵢ − yᵢ|/m, p), 1/p)`, `m` the largest difference (`0` when `m = 0`), the
+  terms summed in order. `order` finite, at least 1; `x` and `y` real, finite, of equal
+  length at least 1; a difference that overflows is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
