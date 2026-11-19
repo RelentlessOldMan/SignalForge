@@ -277,6 +277,7 @@ from .measurements import (
     distance_correlation,
     distribution_entropy,
     early_decay_time,
+    energy_distance,
     energy_separation,
     energy_time_curve,
     exceedance_levels,
@@ -583,7 +584,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.30"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.31"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -808,6 +809,7 @@ __all__ = [
     "elliptic_highpass",
     "elliptic_lowpass",
     "encode_samples",
+    "energy_distance",
     "energy_separation",
     "energy_time_curve",
     "envelope_follower",

@@ -556,6 +556,11 @@ rule for code not written yet.
   `Σ g_m·(t_{m+1} − t_m)` over the distinct pooled values in order, `g_m` the whole number
   `|#(x ≤ t_m)·n_y − #(y ≤ t_m)·n_x|`, then one division by `n_x·n_y`. Each sample at least 1,
   finite. **(implemented)**
+- **Energy distance** ([ADR 0404](adr/0404-energy-distance.md); `energy_distance(x, y)`, C#
+  `Measurements.EnergyDistance`): `2A − B − C`, the mean of `|xᵢ − yⱼ|` over all pairs and of
+  `|xᵢ − xₖ|`, `|yⱼ − yₗ|` over all ordered pairs with equal indices; the squared form, no root.
+  Each sum a double loop in order; below 0 from rounding gives 0. Each sample at least 1,
+  finite. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

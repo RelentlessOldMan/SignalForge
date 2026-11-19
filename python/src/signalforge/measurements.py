@@ -2600,6 +2600,36 @@ def wasserstein_distance(x: ArrayLike, y: ArrayLike) -> float:
     return total / float(xs.size * ys.size)
 
 
+def energy_distance(x: ArrayLike, y: ArrayLike) -> float:
+    """The energy distance between the samples ``x`` and ``y``: twice the mean absolute
+    difference between them less the mean within each, the squared form (conventions: energy
+    distance; ADR 0404)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a.tolist())
+    xs, ys = pair
+
+    def mean_gap(p: list[float], q: list[float]) -> float:
+        total = 0.0
+        for u in p:
+            for v in q:
+                total += abs(u - v)
+        return total / (len(p) * len(q))
+
+    e = 2.0 * mean_gap(xs, ys) - mean_gap(xs, xs) - mean_gap(ys, ys)
+    return max(e, 0.0)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

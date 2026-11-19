@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The energy distance between two samples in `measurements` (two real samples, each at
-     least 1: `2·mean|xᵢ − yⱼ| − mean|xᵢ − xₖ| − mean|yⱼ − yₗ|`, the means over all ordered
-     pairs, zero pairs included).
+   - The two-sample Cramér–von Mises statistic in `measurements` (two real samples, each at
+     least 1: `T = n_x·n_y/N² · Σ_k (F_x(z_k) − F_y(z_k))²` over all `N = n_x + n_y` pooled
+     values `z_k`).
 
 ## Built
 
@@ -3057,6 +3057,11 @@ Updated with every chunk of work. Dates are absolute.
   distribution functions, from sorts and a merge.
   Python 8229 passed, 2 skipped; .NET 7380 passed; conformance 5217/5217 in both. Version
   2026.11.19.30.
+- 2026-11-19: The energy distance (ADR 0404): `energy_distance(x, y)` in `measurements` (C#
+  `Measurements.EnergyDistance`): twice the mean absolute difference between two samples less
+  the mean within each, the squared form.
+  Python 8240 passed, 2 skipped; .NET 7390 passed; conformance 5225/5225 in both. Version
+  2026.11.19.31.
 
 ## Not built
 

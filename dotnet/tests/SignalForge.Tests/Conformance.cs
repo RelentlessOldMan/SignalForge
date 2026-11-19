@@ -333,6 +333,7 @@ public static class Conformance
             "vargha_delaney_a" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.VarghaDelaneyA(t.Item1, t.Item2)),
             "kolmogorov_smirnov" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.KolmogorovSmirnov(t.Item1, t.Item2)),
             "wasserstein_distance" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.WassersteinDistance(t.Item1, t.Item2)),
+            "energy_distance" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.EnergyDistance(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
