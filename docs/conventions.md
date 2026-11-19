@@ -513,6 +513,10 @@ rule for code not written yet.
   `Measurements.LogLoss`): records as for the Brier score; `−(1/N)·Σ ℓᵢ` in nats, `ℓᵢ = ln pᵢ`
   for `yᵢ = 1` and `ln(1 − pᵢ)` for `yᵢ = 0`, only that term formed; no clipping. A certain
   wrong forecast is an error. **(implemented)**
+- **ROC AUC** ([ADR 0393](adr/0393-roc-auc.md); `roc_auc(truth, score)`, C#
+  `Measurements.RocAuc`): truth 0 or 1, scores finite, higher meaning positive;
+  `(R₁ − n₁(n₁ + 1)/2)/(n₁·n₀)` from mean ranks, a tied pair counting 1/2. Equal lengths; at
+  least one positive and one negative. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

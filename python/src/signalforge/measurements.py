@@ -2297,6 +2297,34 @@ def log_loss(outcome: ArrayLike, probability: ArrayLike) -> float:
     return -total / y.size
 
 
+def roc_auc(truth: ArrayLike, score: ArrayLike) -> float:
+    """The area under the ROC curve of a real ``score`` against the binary ``truth``: the
+    share of positive-negative pairs where the positive scores higher, ties counting half
+    (conventions: ROC AUC; ADR 0393)."""
+    t = np.asarray(truth)
+    s = np.asarray(score)
+    for name, r in (("truth", t), ("score", s)):
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+    t = t.astype(np.float64, copy=False)
+    s = s.astype(np.float64, copy=False)
+    if t.size != s.size:
+        raise ValueError("truth and score must be the same length")
+    if not np.all((t == 0) | (t == 1)):
+        raise ValueError("truth must hold only 0 and 1")
+    if not np.all(np.isfinite(s)):
+        raise ValueError("score must be finite")
+    pos = t == 1
+    n1 = int(np.count_nonzero(pos))
+    n0 = t.size - n1
+    if n1 == 0 or n0 == 0:
+        raise ValueError("truth must hold at least one 0 and one 1")
+    r1 = float(np.sum(_mean_ranks(s)[pos]))
+    return (r1 - n1 * (n1 + 1) / 2) / (float(n1) * n0)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

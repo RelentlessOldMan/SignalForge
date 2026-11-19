@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The ROC AUC in `measurements` (`truth` 0 or 1 and a real `score`, the same length: the
-     share of positive–negative pairs where the positive scores higher, ties counting half).
+   - The average precision in `measurements` (`truth` 0 or 1 and a real `score`, as for the
+     ROC AUC: the mean, over the positives, of the precision at each positive's score, tied
+     scores taken as one threshold).
 
 ## Built
 
@@ -3001,6 +3002,11 @@ Updated with every chunk of work. Dates are absolute.
   forecast probabilities, in nats.
   Python 8094 passed, 2 skipped; .NET 7255 passed; conformance 5115/5115 in both. Version
   2026.11.19.18.
+- 2026-11-19: The ROC AUC (ADR 0393): `roc_auc(truth, score)` in `measurements` (C#
+  `Measurements.RocAuc`): the share of positive–negative pairs a real score ranks right, ties
+  counting half, from mean ranks.
+  Python 8109 passed, 2 skipped; .NET 7269 passed; conformance 5127/5127 in both. Version
+  2026.11.19.20.
 
 ## Not built
 

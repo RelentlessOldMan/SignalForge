@@ -325,6 +325,7 @@ from .measurements import (
     renyi_entropy,
     rescaled_range,
     reverberation_time,
+    roc_auc,
     runs_test,
     sample_entropy,
     schroeder_decay,
@@ -572,7 +573,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.18"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.20"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1029,6 +1030,7 @@ __all__ = [
     "rician_fading",
     "ring_modulate",
     "rls_equalizer",
+    "roc_auc",
     "rotary",
     "rrc_taps",
     "runs_test",
