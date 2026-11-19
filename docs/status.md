@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - phase entropy in `measurements` (Rohila and Sharma: the second-order difference plot cut
-     into `k` angular sectors, the entropy of the slope-angle mass in each, over `ln k`).
+   - correlation sum in `measurements` (Grassberger-Procaccia: the share of embedded pairs
+     closer than each radius in the Chebyshev distance, and the log-log slope as the
+     correlation dimension).
 
 ## Built
 
@@ -2783,6 +2784,11 @@ Updated with every chunk of work. Dates are absolute.
   thresholds, entropy in nats.
   Python 7529 passed, 2 skipped; .NET 6713 passed; conformance 4691/4691 in both. Version
   2026.11.18.35.
+- 2026-11-18: Distribution entropy (ADR 0348): `distribution_entropy(samples, m, bins=512)`
+  in `measurements` (C# `Measurements.DistributionEntropy`): the histogram entropy of the
+  Chebyshev distances between windows, over `ln M`. Phase entropy was dropped from Next.
+  Python 7541 passed, 2 skipped; .NET 6724 passed; conformance 4699/4699 in both. Version
+  2026.11.18.36.
 
 ## Not built
 

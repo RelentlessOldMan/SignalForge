@@ -290,6 +290,12 @@ rule for code not written yet.
   samples becomes `+2` (`d > γ`), `+1` (`δ < d ≤ γ`), `0` (`|d| ≤ δ`), `−1` (`−γ ≤ d < −δ`) or
   `−2` (`d < −γ`); the Shannon entropy in nats of the `N − m + 1` patterns, not normalized.
   Real, finite, at least `m` samples; `2 ≤ m ≤ 16`; `0 ≤ δ < γ`, finite. **(implemented)**
+- **Distribution entropy** ([ADR 0348](adr/0348-distribution-entropy.md);
+  `distribution_entropy(samples, m, bins=512)`, C# `Measurements.DistributionEntropy`): the
+  Chebyshev distances of all pairs `i < j` of the `N − m + 1` windows; bin
+  `min(M − 1, floor((d − lo)·M/(hi − lo)))` over their range; `−Σ p ln p / ln M`; 0 if all
+  distances are equal. Real, finite, at least `m + 1` samples; `m ≥ 1`;
+  `2 ≤ bins ≤ 1 000 000`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

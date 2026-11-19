@@ -822,6 +822,38 @@ def slope_entropy(samples: ArrayLike, m: int, gamma: float = 1.0, delta: float =
     return float(-np.sum(p * np.log(p)))
 
 
+def distribution_entropy(samples: ArrayLike, m: int, bins: int = 512) -> float:
+    """Li et al.'s distribution entropy: the Shannon entropy of the histogram of Chebyshev
+    distances between windows, over ``ln(bins)`` (conventions: Distribution entropy;
+    ADR 0348)."""
+    k = count(m, "m")
+    nb = count(bins, "bins")
+    if k < 1:
+        raise ValueError("m must be at least 1")
+    if not 2 <= nb <= 1_000_000:
+        raise ValueError("bins must be from 2 to 1000000")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    windows = x.shape[0] - k + 1
+    if windows < 2:
+        raise ValueError("samples must be at least m + 1 long")
+    w = np.lib.stride_tricks.sliding_window_view(x, k)
+    d = np.concatenate([np.max(np.abs(w[i + 1 :] - w[i]), axis=1) for i in range(windows - 1)])
+    lo, hi = float(np.min(d)), float(np.max(d))
+    if not hi > lo:
+        return 0.0
+    b = np.minimum(nb - 1, np.floor((d - lo) * nb / (hi - lo)).astype(np.int64))
+    p = np.bincount(b) / d.shape[0]
+    p = p[p > 0]
+    return float(-np.sum(p * np.log(p)) / math.log(nb))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
