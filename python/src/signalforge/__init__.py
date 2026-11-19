@@ -210,6 +210,7 @@ from .measurements import (
     AllanDeviation,
     AmAmPm,
     AutocorrelationPitch,
+    BartelsRankTest,
     CascadeNoiseFigure,
     CepstrumPitch,
     CorrelationSum,
@@ -243,6 +244,7 @@ from .measurements import (
     attention_entropy,
     auto_mutual_information,
     autocorrelation_pitch,
+    bartels_rank_test,
     bass_ratio,
     block_leq,
     bubble_entropy,
@@ -537,7 +539,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.50"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.51"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -548,6 +550,7 @@ __all__ = [
     "AutocorrelationPitch",
     "BandEnergyRatio",
     "Bands",
+    "BartelsRankTest",
     "CarrierRecovery",
     "CascadeNoiseFigure",
     "CepstrumPitch",
@@ -653,6 +656,7 @@ __all__ = [
     "bandlimited_triangle",
     "bandwidth_expansion",
     "bark_to_hz",
+    "bartels_rank_test",
     "bass_enhancer",
     "bass_ratio",
     "bessel_bandpass",

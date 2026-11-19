@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Bartels rank test in `measurements` (the von Neumann ratio of the ranks, ties given
-     their mean rank, and its z-score against 2 with variance
-     `4(N − 2)(5N² − 2N − 9)/(5N(N + 1)(N − 1)²)`).
+   - Mann–Kendall trend test in `measurements` (`S = Σ_{i<j} sign(x_j − x_i)`, its
+     tie-corrected variance `(N(N−1)(2N+5) − Σ t(t−1)(2t+5))/18`, and the continuity-corrected
+     z-score).
 
 ## Built
 
@@ -2859,6 +2859,11 @@ Updated with every chunk of work. Dates are absolute.
   to the squared deviations from the mean, about 2 for an i.i.d. record.
   Python 7737 passed, 2 skipped; .NET 6920 passed; conformance 4853/4853 in both. Version
   2026.11.18.50.
+- 2026-11-18: Bartels rank test (ADR 0363): `bartels_rank_test(samples)` in `measurements`
+  (C# `Measurements.BartelsRankTest`): the von Neumann ratio of the mean ranks and its z-score
+  against 2 with Bartels's variance.
+  Python 7747 passed, 2 skipped; .NET 6930 passed; conformance 4860/4860 in both. Version
+  2026.11.18.51.
 
 ## Not built
 

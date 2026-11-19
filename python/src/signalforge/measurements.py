@@ -174,6 +174,15 @@ class RunsTest:
 
 
 @dataclass(frozen=True)
+class BartelsRankTest:
+    """The von Neumann ratio of the ranks and its z-score against a random record
+    (conventions: Bartels rank test; ADR 0363)."""
+
+    ratio: float
+    z: float
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -1359,6 +1368,32 @@ def von_neumann_ratio(samples: ArrayLike) -> float:
         raise ValueError("samples must not all be equal")
     s = np.diff(x)
     return float(np.dot(s, s)) / den
+
+
+def bartels_rank_test(samples: ArrayLike) -> BartelsRankTest:
+    """Bartels's rank test of randomness: the von Neumann ratio of the ranks, ties given their
+    mean rank, and its z-score against 2 (conventions: Bartels rank test; ADR 0363)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 3:
+        raise ValueError("samples must have at least 3 values")
+    _, inv, cnt = np.unique(x, return_inverse=True, return_counts=True)
+    if cnt.shape[0] < 2:
+        raise ValueError("samples must not all be equal")
+    start = np.cumsum(cnt) - cnt
+    r = (start + (cnt + 1) / 2)[inv]
+    d = r - (n + 1) / 2
+    s = np.diff(r)
+    ratio = float(np.dot(s, s)) / float(np.dot(d, d))
+    var = 4 * (n - 2) * (5 * n * n - 2 * n - 9) / (5 * n * (n + 1) * (n - 1) ** 2)
+    return BartelsRankTest(ratio, (ratio - 2) / math.sqrt(var))
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

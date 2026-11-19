@@ -376,6 +376,11 @@ rule for code not written yet.
   `Σ_{t<N−1} (x_{t+1} − x_t)² / Σ_t (x_t − x̄)²`, not von Neumann's `δ²/s²`, which is
   `N/(N − 1)` times it; about 2 for an i.i.d. record. Real, finite; `N ≥ 2`; not all equal.
   **(implemented)**
+- **Bartels rank test** ([ADR 0363](adr/0363-bartels-rank-test.md); `bartels_rank_test(samples)` →
+  `BartelsRankTest(ratio, z)`, C# `Measurements.BartelsRankTest`): ranks 1 … N, ties given the
+  mean rank; `ratio = Σ (R_{t+1} − R_t)² / Σ (R_t − R̄)²` (the actual denominator);
+  `z = (ratio − 2)/√(4(N − 2)(5N² − 2N − 9)/(5N(N + 1)(N − 1)²))`, not adjusted for ties.
+  Real, finite; `N ≥ 3`; not all equal. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
