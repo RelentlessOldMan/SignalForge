@@ -368,6 +368,7 @@ from .measurements import (
     tone_metrics,
     total_variation_distance,
     treble_ratio,
+    triangular_discrimination,
     tsallis_entropy,
     turning_points,
     two_tone_imd,
@@ -595,7 +596,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.42"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.43"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1142,6 +1143,7 @@ __all__ = [
     "treble_ratio",
     "tremolo",
     "triangle",
+    "triangular_discrimination",
     "tristimulus",
     "tsallis_entropy",
     "turning_points",

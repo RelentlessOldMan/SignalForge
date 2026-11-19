@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "triangular_discrimination",
+  "description": "The triangular discrimination (conventions: triangular discrimination; ADR 0416).",
+  "cases": [
+    {"id": "triangular_discrimination.same", "op": "triangular_discrimination", "args": {"p": [1.0, 2.0, 3.0], "q": [2.0, 4.0, 6.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "the same distribution after scaling: 0"},
+    {"id": "triangular_discrimination.disjoint", "op": "triangular_discrimination", "args": {"p": [1.0, 0.0, 0.0], "q": [0.0, 2.0, 1.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "no shared support: P + Q summed, 2"},
+    {"id": "triangular_discrimination.half", "op": "triangular_discrimination", "args": {"p": [1.0, 0.0], "q": [1.0, 1.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "P = (1, 0), Q = (1/2, 1/2): (1/4)/(3/2) + (1/4)/(1/2) = 1/6 + 1/2 = 2/3"},
+    {"id": "triangular_discrimination.coin", "op": "triangular_discrimination", "args": {"p": [3.0, 1.0], "q": [1.0, 1.0]}, "expected": 0.13333333333333333, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "P = (3/4, 1/4) against a fair coin: (1/16)/(5/4) + (1/16)/(3/4) = 2/15"},
+    {"id": "triangular_discrimination.shared_zero", "op": "triangular_discrimination", "args": {"p": [3.0, 0.0, 1.0], "q": [1.0, 0.0, 1.0]}, "expected": 0.13333333333333333, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "the coin case with an index zero in both, dropped: 2/15"},
+    {"id": "triangular_discrimination.counts", "op": "triangular_discrimination", "args": {"p": [2.0, 6.0, 0.0, 4.0, 4.0, 4.0, 5.0, 5.0, 4.0, 2.0, 4.0, 2.0, 5.0, 5.0, 3.0, 5.0], "q": [4.0, 6.0, 6.0, 0.0, 4.0, 2.0, 5.0, 6.0, 6.0, 0.0, 5.0, 1.0, 3.0, 4.0, 3.0, 1.0]}, "expected": 0.3012065869619244, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "16 counts each from random.Random(416), 0 to 6, with zeros"},
+    {"id": "triangular_discrimination.empty", "op": "triangular_discrimination", "args": {"p": [], "q": []}, "error": "invalid_argument", "source": "p needs a value"},
+    {"id": "triangular_discrimination.lengths", "op": "triangular_discrimination", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, 1.0]}, "error": "invalid_argument", "source": "p and q must match"},
+    {"id": "triangular_discrimination.negative", "op": "triangular_discrimination", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, -0.5, 3.0]}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "triangular_discrimination.not_finite", "op": "triangular_discrimination", "args": {"p": [1.0, "inf", 1.0], "q": [2.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "triangular_discrimination.zero_sum", "op": "triangular_discrimination", "args": {"p": [0.0, 0.0, 0.0], "q": [2.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "p must have a positive sum"}
+  ]
+}

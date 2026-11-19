@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The triangular discrimination in `measurements` (`p` and `q` as for the Hellinger
-     distance: `Σ (Pᵢ − Qᵢ)²/(Pᵢ + Qᵢ)`, indices zero in both dropped, from 0 to 2).
+   - The Canberra distance in `measurements` (two real vectors `x` and `y` of the same
+     length: `Σ |xᵢ − yᵢ|/(|xᵢ| + |yᵢ|)`, indices zero in both dropped).
 
 ## Built
 
@@ -3116,6 +3116,11 @@ Updated with every chunk of work. Dates are absolute.
   coded for another.
   Python 8393 passed, 2 skipped; .NET 7532 passed; conformance 5345/5345 in both. Version
   2026.11.19.42.
+- 2026-11-19: The triangular discrimination (ADR 0416): `triangular_discrimination(p, q)` in
+  `measurements` (C# `Measurements.TriangularDiscrimination`): Le Cam's bounded, symmetric
+  divergence between two discrete distributions.
+  Python 8407 passed, 2 skipped; .NET 7545 passed; conformance 5356/5356 in both. Version
+  2026.11.19.43.
 
 ## Not built
 
