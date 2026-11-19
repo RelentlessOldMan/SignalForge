@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Youden's J in `measurements` (truth and decision as for the Matthews correlation:
-     `J = TP/(TP + FN) + TN/(TN + FP) − 1`, sensitivity plus specificity less 1).
+   - The Jaccard index of two binary records in `measurements` (truth and decision as for the
+     Matthews correlation: `TP/(TP + FP + FN)`, with `F1 = 2J/(1 + J)`).
 
 ## Built
 
@@ -2972,6 +2972,10 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.F1Score`): the harmonic mean of the precision and recall of a binary decision.
   Python 8017 passed, 2 skipped; .NET 7184 passed; conformance 5056/5056 in both. Version
   2026.11.19.12.
+- 2026-11-19: Youden's J (ADR 0387): `youden_j(truth, decision)` in `measurements` (C#
+  `Measurements.YoudenJ`): sensitivity plus specificity less 1 of a binary decision.
+  Python 8030 passed, 2 skipped; .NET 7196 passed; conformance 5066/5066 in both. Version
+  2026.11.19.13.
 
 ## Not built
 

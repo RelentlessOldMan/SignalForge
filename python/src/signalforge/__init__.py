@@ -349,6 +349,7 @@ from .measurements import (
     two_tone_ip5,
     von_neumann_ratio,
     weighted_permutation_entropy,
+    youden_j,
     zero_crossing_rate,
 )
 from .metrics import (
@@ -566,7 +567,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.12"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.13"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1113,6 +1114,7 @@ __all__ = [
     "write_sigmf_captures",
     "write_sigmf_channels",
     "write_wav",
+    "youden_j",
     "yule_walker_psd",
     "zero_crossing_rate",
     "zero_phase_filter",

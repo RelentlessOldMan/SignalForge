@@ -2130,6 +2130,34 @@ def f1_score(truth: ArrayLike, decision: ArrayLike) -> float:
     return 2 * tp / (2 * tp + wrong)
 
 
+def youden_j(truth: ArrayLike, decision: ArrayLike) -> float:
+    """Youden's J of a binary ``decision`` against the ``truth``, both records of 0 and 1:
+    sensitivity plus specificity less 1, from -1 to 1 (conventions: Youden's J; ADR 0387)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    tn = int(np.count_nonzero(~t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    if tp + fn == 0 or tn + fp == 0:
+        raise ValueError("both classes must appear in the truth")
+    return (tp * tn - fp * fn) / ((tp + fn) * (tn + fp))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
