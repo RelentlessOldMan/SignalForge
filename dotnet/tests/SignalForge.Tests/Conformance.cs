@@ -308,6 +308,7 @@ public static class Conformance
             "chatterjee_xi" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.ChatterjeeXi(t.Item1, t.Item2)),
             "goodman_kruskal_gamma" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.GoodmanKruskalGamma(t.Item1, t.Item2)),
             "somers_d" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.SomersD(t.Item1, t.Item2)),
+            "kendall_w" => Bind(Rows(a.Get("ratings")), Measurements.KendallW),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

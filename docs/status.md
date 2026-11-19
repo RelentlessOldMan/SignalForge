@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Kendall's W in `measurements` (the coefficient of concordance of `m` raters over `n`
-     items, a 2-D array: `W = 12S/(m²(n³ − n) − mΣT)` from the rank sums, mean ranks for
-     ties, `T = Σ(t³ − t)` per rater).
+   - Cronbach's alpha in `measurements` (a 2-D array, `k` items by `N` subjects:
+     `α = k/(k − 1)·(1 − Σσ_i²/σ_t²)`, sample variances with `N − 1`, `σ_t²` the variance of
+     the subject totals).
 
 ## Built
 
@@ -2934,6 +2934,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.SomersD`): `d_yx`, the asymmetric Kendall's tau for predicting `y` from `x`.
   Python 7920 passed, 2 skipped; .NET 7095 passed; conformance 4984/4984 in both. Version
   2026.11.19.4.
+- 2026-11-19: Kendall's W (ADR 0379): `kendall_w(ratings)` in `measurements` (C#
+  `Measurements.KendallW`): the coefficient of concordance of the raters in the rows over the
+  items in the columns, with the tie correction.
+  Python 7933 passed, 2 skipped; .NET 7107 passed; conformance 4993/4993 in both. Version
+  2026.11.19.5.
 
 ## Not built
 

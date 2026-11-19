@@ -1891,6 +1891,39 @@ def somers_d(x: ArrayLike, y: ArrayLike) -> float:
     return float((concordant - discordant) / untied)
 
 
+def kendall_w(ratings: ArrayLike) -> float:
+    """Kendall's W, the coefficient of concordance: how well the raters in the rows of
+    ``ratings`` agree on the order of the items in its columns, from 0 to 1 (conventions:
+    Kendall's W; ADR 0379)."""
+    a = np.asarray(ratings)
+    if a.ndim != 2:
+        raise ValueError("ratings must be two-dimensional")
+    if np.iscomplexobj(a):
+        raise ValueError("ratings must be real")
+    try:
+        a = a.astype(np.float64, copy=False)
+    except (TypeError, ValueError):
+        raise ValueError("ratings must be real numbers") from None
+    if not np.all(np.isfinite(a)):
+        raise ValueError("ratings must be finite")
+    m, n = int(a.shape[0]), int(a.shape[1])
+    if m < 2:
+        raise ValueError("ratings must have at least 2 raters (rows)")
+    if n < 2:
+        raise ValueError("ratings must have at least 2 items (columns)")
+    rank_sums = np.zeros(n)
+    ties = 0
+    for row in a:
+        rank_sums += _mean_ranks(row)
+        counts = np.unique(row, return_counts=True)[1].astype(np.int64)
+        ties += int(np.sum(counts**3 - counts))
+    s = float(np.sum((rank_sums - m * (n + 1) / 2) ** 2))
+    denominator = m * m * (n**3 - n) - m * ties
+    if denominator == 0:
+        raise ValueError("every rater gives every item the same value")
+    return 12 * s / denominator
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

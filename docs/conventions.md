@@ -455,6 +455,11 @@ rule for code not written yet.
   `Measurements.SomersD`): `d_yx`, `y` predicted from `x`; `C`, `D` as for Goodman and
   Kruskal's gamma, `T_x` the pairs tied in `x`; `d_yx = (C − D)/(N(N − 1)/2 − T_x)`. Real,
   finite, equal lengths; at least one pair untied in `x`. **(implemented)**
+- **Kendall's W** ([ADR 0379](adr/0379-kendall-w.md); `kendall_w(ratings)`, C#
+  `Measurements.KendallW`): rows are raters, columns items; each row ranked from 1 with mean
+  ranks; `R_j` the column sums of the ranks, `S = Σ(R_j − m(n + 1)/2)²`, `T = Σ(t³ − t)` per
+  rater; `W = 12S/(m²(n³ − n) − mΣT)`. Real, finite, 2-D; `m ≥ 2`, `n ≥ 2`; not every row
+  constant. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
