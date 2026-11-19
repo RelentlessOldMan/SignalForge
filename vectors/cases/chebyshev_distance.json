@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "chebyshev_distance",
+  "description": "The Chebyshev distance (conventions: Chebyshev distance; ADR 0420).",
+  "cases": [
+    {"id": "chebyshev_distance.same", "op": "chebyshev_distance", "args": {"x": [1.0, -2.0], "y": [1.0, -2.0]}, "expected": 0.0, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "equal vectors: 0"},
+    {"id": "chebyshev_distance.triangle", "op": "chebyshev_distance", "args": {"x": [0.0, 0.0], "y": [3.0, 4.0]}, "expected": 4.0, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "the 3-4-5 triangle: the larger side, 4"},
+    {"id": "chebyshev_distance.signs", "op": "chebyshev_distance", "args": {"x": [1.0, -5.0, 2.0], "y": [-1.0, 1.0, 2.0]}, "expected": 6.0, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "differences 2, 6, 0: 6"},
+    {"id": "chebyshev_distance.huge", "op": "chebyshev_distance", "args": {"x": [1e+300, -1e+300], "y": [-1e+300, 0.0]}, "expected": 2e+300, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "differences 2e300 and 1e300: 2e300"},
+    {"id": "chebyshev_distance.one", "op": "chebyshev_distance", "args": {"x": [0.5], "y": [-0.25]}, "expected": 0.75, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "one coordinate: 3/4"},
+    {"id": "chebyshev_distance.random", "op": "chebyshev_distance", "args": {"x": [-4.75, 0.75, -0.75, 1.25, -3.5, -3.25, -4.75, 3.25, 0.0, 2.75, -4.75, 4.75, -3.0, 3.5, 0.25, 1.75], "y": [-0.75, -3.25, 0.25, -0.75, -2.75, -3.5, -1.0, 2.75, -2.25, 2.5, -3.5, -1.25, 2.75, -5.0, 1.25, 4.75]}, "expected": 8.5, "tol": {"abs": 0.0, "rel": 1e-15}, "source": "16 quarters each from random.Random(420), -5 to 5"},
+    {"id": "chebyshev_distance.empty", "op": "chebyshev_distance", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "x needs a value"},
+    {"id": "chebyshev_distance.lengths", "op": "chebyshev_distance", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 1.0]}, "error": "invalid_argument", "source": "x and y must match"},
+    {"id": "chebyshev_distance.not_finite", "op": "chebyshev_distance", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, "-inf", 1.0]}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "chebyshev_distance.overflow", "op": "chebyshev_distance", "args": {"x": [1e+308], "y": [-1e+308]}, "error": "invalid_argument", "source": "the difference 1e308 - (-1e308) overflows"}
+  ]
+}

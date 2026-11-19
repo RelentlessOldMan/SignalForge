@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Chebyshev distance in `measurements` (two real vectors `x` and `y` of the same
-     length: `max |xᵢ − yᵢ|`, the Minkowski distance's limit as the order grows).
+   - The Hamming distance in `measurements` (two real vectors `x` and `y` of the same
+     length: the number of indices where `xᵢ ≠ yᵢ`, as an int).
 
 ## Built
 
@@ -3136,6 +3136,11 @@ Updated with every chunk of work. Dates are absolute.
   vectors, scaled so it cannot overflow.
   Python 8451 passed, 2 skipped; .NET 7586 passed; conformance 5391/5391 in both. Version
   2026.11.19.46.
+- 2026-11-19: The Chebyshev distance (ADR 0420): `chebyshev_distance(x, y)` in
+  `measurements` (C# `Measurements.ChebyshevDistance`): the largest coordinate difference of
+  two vectors.
+  Python 8464 passed, 2 skipped; .NET 7598 passed; conformance 5401/5401 in both. Version
+  2026.11.19.47.
 
 ## Not built
 

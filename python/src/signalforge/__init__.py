@@ -264,6 +264,7 @@ from .measurements import (
     centre_time,
     cepstrum_pitch,
     chatterjee_xi,
+    chebyshev_distance,
     chi_square_divergence,
     clarity,
     cliff_delta,
@@ -599,7 +600,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.46"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.47"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -764,6 +765,7 @@ __all__ = [
     "chebyshev2_bandstop",
     "chebyshev2_highpass",
     "chebyshev2_lowpass",
+    "chebyshev_distance",
     "chebyshev_shaper",
     "chi_square_divergence",
     "chirp",
