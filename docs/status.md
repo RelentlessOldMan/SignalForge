@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The two-sample Kolmogorov–Smirnov statistic in `measurements` (two real samples, each at
-     least 1: `sup |F_x(t) − F_y(t)|` over the empirical distribution functions).
+   - The first Wasserstein distance between two samples in `measurements` (two real samples,
+     each at least 1: `∫|F_x(t) − F_y(t)| dt` over the empirical distribution functions).
 
 ## Built
 
@@ -3046,6 +3046,11 @@ Updated with every chunk of work. Dates are absolute.
   ties counting half.
   Python 8206 passed, 2 skipped; .NET 7359 passed; conformance 5200/5200 in both. Version
   2026.11.19.28.
+- 2026-11-19: The two-sample Kolmogorov–Smirnov statistic (ADR 0402):
+  `kolmogorov_smirnov(x, y)` in `measurements` (C# `Measurements.KolmogorovSmirnov`): the
+  largest gap between two empirical distribution functions, from sorts and a merge.
+  Python 8217 passed, 2 skipped; .NET 7369 passed; conformance 5208/5208 in both. Version
+  2026.11.19.29.
 
 ## Not built
 

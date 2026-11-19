@@ -547,6 +547,10 @@ rule for code not written yet.
   C# `Measurements.VarghaDelaneyA`): `(2·#(xᵢ > yⱼ) + #(xᵢ = yⱼ))/(2·n_x·n_y)`, one division of
   whole numbers in `double`, not formed from Cliff's delta. Rules as for Cliff's delta.
   **(implemented)**
+- **Two-sample Kolmogorov–Smirnov statistic** ([ADR 0402](adr/0402-kolmogorov-smirnov.md);
+  `kolmogorov_smirnov(x, y)`, C# `Measurements.KolmogorovSmirnov`): `max_t |F_x(t) − F_y(t)|`
+  over the pooled values, as the whole number `|#(x ≤ t)·n_y − #(y ≤ t)·n_x|` divided once by
+  `n_x·n_y`. Each sample at least 1, finite. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
