@@ -494,6 +494,10 @@ rule for code not written yet.
   `Measurements.YoudenJ`): records as for the Matthews correlation;
   `(TP·TN − FP·FN)/((TP + FN)(TN + FP))`, sensitivity plus specificity less 1. Equal
   lengths, `N ≥ 1`; both classes in the truth. **(implemented)**
+- **Jaccard index** ([ADR 0388](adr/0388-jaccard-index.md); `jaccard_index(truth,
+  decision)`, C# `Measurements.JaccardIndex`): records as for the Matthews correlation;
+  `TP/(TP + FP + FN)`. Equal lengths, `N ≥ 1`; at least one 1 in either record.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

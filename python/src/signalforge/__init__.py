@@ -289,6 +289,7 @@ from .measurements import (
     icc_consistency,
     increment_entropy,
     integrated_phase_noise,
+    jaccard_index,
     katz_dimension,
     kay_frequency,
     kendall_tau,
@@ -567,7 +568,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.13"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.14"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -862,6 +863,7 @@ __all__ = [
     "iq_image_rejection_db",
     "iq_imbalance",
     "itakura_saito",
+    "jaccard_index",
     "kaiser_parameters",
     "karplus_strong",
     "katz_dimension",

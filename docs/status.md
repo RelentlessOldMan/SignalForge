@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Jaccard index of two binary records in `measurements` (truth and decision as for the
-     Matthews correlation: `TP/(TP + FP + FN)`, with `F1 = 2J/(1 + J)`).
+   - The Fowlkes–Mallows index in `measurements` (truth and decision as for the Matthews
+     correlation: `TP/√((TP + FP)(TP + FN))`, the geometric mean of precision and recall).
 
 ## Built
 
@@ -2976,6 +2976,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.YoudenJ`): sensitivity plus specificity less 1 of a binary decision.
   Python 8030 passed, 2 skipped; .NET 7196 passed; conformance 5066/5066 in both. Version
   2026.11.19.13.
+- 2026-11-19: The Jaccard index (ADR 0388): `jaccard_index(truth, decision)` in
+  `measurements` (C# `Measurements.JaccardIndex`): the intersection over union of two binary
+  records.
+  Python 8041 passed, 2 skipped; .NET 7206 passed; conformance 5074/5074 in both. Version
+  2026.11.19.14.
 
 ## Not built
 
