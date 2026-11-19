@@ -307,6 +307,7 @@ from .measurements import (
     time_weighting,
     tone_metrics,
     treble_ratio,
+    tsallis_entropy,
     two_tone_imd,
     two_tone_ip2,
     two_tone_ip5,
@@ -528,7 +529,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.43"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.44"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1015,6 +1016,7 @@ __all__ = [
     "tremolo",
     "triangle",
     "tristimulus",
+    "tsallis_entropy",
     "two_band_compress",
     "two_tone_imd",
     "two_tone_ip2",

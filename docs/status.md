@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Tsallis entropy in `measurements` (the order-`q` entropy of ADR 0352's histogram,
-     `(1 − Σ p^q)/(q − 1)`, Shannon at `q = 1`).
+   - time irreversibility in `measurements` (the skewness of the lag-`τ` increments,
+     `⟨Δ³⟩/⟨Δ²⟩^{3/2}`, which is 0 for a time-reversible process).
 
 ## Built
 
@@ -2823,6 +2823,11 @@ Updated with every chunk of work. Dates are absolute.
   means at each size and the Hurst exponent `1 + β/2`.
   Python 7648 passed, 2 skipped; .NET 6833 passed; conformance 4785/4785 in both. Version
   2026.11.18.43.
+- 2026-11-18: Tsallis entropy (ADR 0356): `tsallis_entropy(samples, q, bins=16)` in
+  `measurements` (C# `Measurements.TsallisEntropy`): `(1 − Σ p^q)/(q − 1)` of ADR 0352's
+  histogram, Shannon at `q = 1`.
+  Python 7664 passed, 2 skipped; .NET 6850 passed; conformance 4798/4798 in both. Version
+  2026.11.18.44.
 
 ## Not built
 

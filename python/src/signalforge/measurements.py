@@ -1164,6 +1164,34 @@ def aggregated_variance(samples: ArrayLike, sizes: Sequence[int]) -> AggregatedV
     return AggregatedVariance(np.array(s, dtype=np.int64), values, 1 + beta / 2)
 
 
+def tsallis_entropy(samples: ArrayLike, q: float, bins: int = 16) -> float:
+    """The order-``q`` Tsallis entropy of an equal-width histogram of the samples, Shannon's in
+    nats at ``q = 1`` (conventions: Tsallis entropy; ADR 0356)."""
+    a = real(q, "q")
+    if not a >= 0:
+        raise ValueError("q must be at least 0")
+    nb = count(bins, "bins")
+    if not 2 <= nb <= 4096:
+        raise ValueError("bins must be from 2 to 4096")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    lo, hi = float(np.min(x)), float(np.max(x))
+    if not hi > lo:
+        raise ValueError("samples must not all be equal")
+    b = np.minimum(nb - 1, np.floor((x - lo) * nb / (hi - lo)).astype(np.int64))
+    c = np.bincount(b)
+    p = c[c > 0] / x.shape[0]
+    if a == 1:
+        return float(-np.sum(p * np.log(p)))
+    return (1 - float(np.sum(p**a))) / (a - 1)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

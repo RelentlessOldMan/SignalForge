@@ -339,6 +339,11 @@ rule for code not written yet.
   `s` samples; `hurst = 1 + β/2`, `β` the least-squares slope of `ln values` against `ln s`.
   Real, finite samples; at least two sizes, strictly increasing, from 1 to `N/2`; every
   value above 0. **(implemented)**
+- **Tsallis entropy** ([ADR 0356](adr/0356-tsallis-entropy.md); `tsallis_entropy(samples, q,
+  bins=16)`, C# `Measurements.TsallisEntropy`): the samples binned as for auto mutual
+  information; over the occupied bins, `−Σ p ln p` at `q = 1`, `(1 − Σ p^q)/(q − 1)`
+  otherwise. Real, finite, not all equal; `q` finite, `≥ 0`; `2 ≤ bins ≤ 4096`.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
