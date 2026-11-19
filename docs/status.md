@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Spearman rank correlation in `measurements` (the Pearson correlation of the mean ranks
-     of two equal-length records, ties handled by the mean rank).
+   - Kendall's tau-b in `measurements` (`(n_c − n_d)/√((n₀ − n₁)(n₀ − n₂))` over the pairs
+     of two equal-length records, with the tie counts `n₁` and `n₂`).
 
 ## Built
 
@@ -2887,6 +2887,11 @@ Updated with every chunk of work. Dates are absolute.
   record, and the change location.
   Python 7795 passed, 2 skipped; .NET 6977 passed; conformance 4893/4893 in both. Version
   2026.11.18.57.
+- 2026-11-18: Spearman rank correlation (ADR 0369): `spearman_correlation(x, y)` in
+  `measurements` (C# `Measurements.SpearmanCorrelation`): the Pearson correlation of the mean
+  ranks.
+  Python 7808 passed, 2 skipped; .NET 6990 passed; conformance 4903/4903 in both. Version
+  2026.11.18.58.
 
 ## Not built
 

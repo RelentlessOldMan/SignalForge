@@ -1561,6 +1561,41 @@ def snht(samples: ArrayLike) -> Snht:
     return Snht(float(t[index]), index)
 
 
+def _mean_ranks(x: NDArray[np.float64]) -> NDArray[np.float64]:
+    _, inv, cnt = np.unique(x, return_inverse=True, return_counts=True)
+    start = np.cumsum(cnt) - cnt
+    r: NDArray[np.float64] = (start + (cnt + 1) / 2)[inv].astype(np.float64)
+    return r
+
+
+def spearman_correlation(x: ArrayLike, y: ArrayLike) -> float:
+    """Spearman's rank correlation: the Pearson correlation of the ranks of ``x`` and ``y``,
+    ties given their mean rank (conventions: Spearman rank correlation; ADR 0369)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    a, b = pair
+    n = a.shape[0]
+    if b.shape[0] != n:
+        raise ValueError("x and y must be the same length")
+    if n < 2:
+        raise ValueError("x and y must have at least 2 values")
+    if a.min() == a.max() or b.min() == b.max():
+        raise ValueError("neither x nor y may have every value equal")
+    c = (n + 1) / 2
+    r = _mean_ranks(a) - c
+    s = _mean_ranks(b) - c
+    return float(np.dot(r, s)) / math.sqrt(float(np.dot(r, r)) * float(np.dot(s, s)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "spearman_correlation",
+  "description": "Spearman rank correlation (conventions: Spearman rank correlation; ADR 0369).",
+  "cases": [
+    {"id": "spearman_correlation.monotone_not_linear", "op": "spearman_correlation", "args": {"x": [1.0, 2.0, 3.0, 4.0, 5.0], "y": [1.0, 8.0, 27.0, 64.0, 125.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "y = x^3: the ranks agree, rho = 1"},
+    {"id": "spearman_correlation.reversed", "op": "spearman_correlation", "args": {"x": [0.5, 1.5, 2.5], "y": [9.0, 4.0, -1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "ranks reversed: -1"},
+    {"id": "spearman_correlation.by_hand", "op": "spearman_correlation", "args": {"x": [1.0, 2.0, 3.0, 4.0], "y": [1.0, 3.0, 2.0, 4.0]}, "expected": 0.8, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "ranks 1,2,3,4 and 1,3,2,4: centred -3/2,-1/2,1/2,3/2 and -3/2,1/2,-1/2,3/2; sum of products 9/4-1/4-1/4+9/4 = 4, each sum of squares 5: rho = 4/5"},
+    {"id": "spearman_correlation.ties", "op": "spearman_correlation", "args": {"x": [1.0, 2.0, 2.0, 3.0], "y": [1.0, 1.0, 2.0, 3.0]}, "expected": 0.8333333333333334, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "ranks 1, 5/2, 5/2, 4 and 3/2, 3/2, 3, 4: centred -3/2,0,0,3/2 and -1,-1,1/2,3/2; products 3/2 + 9/4 = 15/4; squares 9/2 and 9/2: rho = 15/4 / (9/2) = 5/6"},
+    {"id": "spearman_correlation.noisy_pair", "op": "spearman_correlation", "args": {"x": [0.75, -0.125, -1.25, 4.75, -4.5, -4.875, 1.875, -1.75, 3.375, -3.25, 4.5, -2.625, 3.875, 2.875, -4.0, 0.5, 1.125, -2.5, 0.125, -5.0, -4.25, 1.875, 3.75, 0.0, 3.625, -4.375, 2.75, -3.625, -1.125, 3.625, -1.375, 0.125, 1.375, 1.25, 2.625, 2.25, -1.875, 1.5, -0.875, -1.0, -3.5, 0.625, 5.0, 2.875, 0.625, 1.625, 1.625, 0.5, 3.5, -2.75, 4.25, 4.0, -3.5, -4.125, -1.5, -4.625, -1.0, 0.875, -1.375, 3.0], "y": [-2.625, 4.125, -3.875, 5.5, -8.0, -2.375, -3.0, -0.625, 6.75, -7.75, 5.5, 1.75, 3.625, 2.625, -7.875, -0.75, 0.25, -3.125, 3.875, -3.625, -1.75, 3.375, 4.625, 1.125, 5.75, -7.125, 4.75, -0.25, -0.375, 0.375, -3.875, 2.875, -2.625, 4.625, -1.75, 0.625, -3.25, 4.375, 1.25, 1.25, -2.875, -0.875, 8.5, 5.0, -3.0, 2.0, -0.25, 0.625, -1.125, -2.5, 5.625, 1.25, -2.625, -1.5, 0.5, -0.875, -0.125, 0.0, -1.25, 3.375]}, "expected": 0.7041957978093853, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "60 random eighths from random.Random(369) and the same plus more random eighths, with ties"},
+    {"id": "spearman_correlation.lengths_differ", "op": "spearman_correlation", "args": {"x": [0.0, 1.0, 0.5], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "x and y must be the same length"},
+    {"id": "spearman_correlation.one_sample", "op": "spearman_correlation", "args": {"x": [1.0], "y": [2.0]}, "error": "invalid_argument", "source": "N must be at least 2"},
+    {"id": "spearman_correlation.constant_x", "op": "spearman_correlation", "args": {"x": [1.0, 1.0, 1.0], "y": [2.0, 1.0, 3.0]}, "error": "invalid_argument", "source": "x must not be constant"},
+    {"id": "spearman_correlation.constant_y", "op": "spearman_correlation", "args": {"x": [0.0, 1.0, 0.5], "y": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "y must not be constant"},
+    {"id": "spearman_correlation.nan", "op": "spearman_correlation", "args": {"x": [0.0, 1.0, 0.5], "y": [0.0, "nan", 1.0]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

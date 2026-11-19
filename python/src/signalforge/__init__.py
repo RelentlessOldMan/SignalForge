@@ -314,6 +314,7 @@ from .measurements import (
     snht,
     sound_exposure,
     sound_strength,
+    spearman_correlation,
     speech_transmission_index,
     stage_support,
     svd_entropy,
@@ -548,7 +549,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.57"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.58"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1012,6 +1013,7 @@ __all__ = [
     "sos_response",
     "sound_exposure",
     "sound_strength",
+    "spearman_correlation",
     "spectral_contrast",
     "spectral_crest",
     "spectral_decrease",

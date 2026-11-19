@@ -405,6 +405,12 @@ rule for code not written yet.
   `T_k = N S_k²/(k(N − k)σ²)` for `k = 1 … N − 1` (equal to `k z̄₁² + (N − k) z̄₂²`), with
   `S_k` the in-order sum of the first `k` deviations; `statistic = max T_k`; `index = k − 1`
   for the smallest `k` reaching it. Real, finite; `N ≥ 2`; not all equal. **(implemented)**
+- **Spearman rank correlation** ([ADR 0369](adr/0369-spearman.md);
+  `spearman_correlation(x, y)`, C# `Measurements.SpearmanCorrelation`): each record ranked from
+  1, ties given the mean rank; `c = (N + 1)/2`;
+  `rho = Σ (r − c)(s − c)/√(Σ (r − c)² · Σ (s − c)²)`, the product, then the square root, then
+  the quotient. Real, finite, equal lengths; `N ≥ 2`; neither record constant.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
