@@ -533,6 +533,9 @@ rule for code not written yet.
 - **Cohen's d** ([ADR 0397](adr/0397-cohen-d.md); `cohen_d(x, y)`, C# `Measurements.CohenD`):
   `(x̄ − ȳ)/s`, `s` the pooled standard deviation over `n_x + n_y − 2`; positive when `x` has
   the larger mean. Each sample at least 2, finite; `s > 0`. **(implemented)**
+- **Hedges' g** ([ADR 0398](adr/0398-hedges-g.md); `hedges_g(x, y)`, C#
+  `Measurements.HedgesG`): Cohen's d times the exact `J(m) = Γ(m/2)/(√(m/2)·Γ((m − 1)/2))`,
+  `m = n_x + n_y − 2`, from a log-gamma difference; rules as for Cohen's d. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

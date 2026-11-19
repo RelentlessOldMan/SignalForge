@@ -2457,6 +2457,16 @@ def cohen_d(x: ArrayLike, y: ArrayLike) -> float:
     return (means[0] - means[1]) / s
 
 
+def hedges_g(x: ArrayLike, y: ArrayLike) -> float:
+    """Hedges' g: Cohen's d of ``x`` and ``y`` times the exact small-sample correction
+    ``J(m) = Gamma(m/2)/(sqrt(m/2) Gamma((m-1)/2))``, ``m = n_x + n_y - 2`` (conventions:
+    Hedges' g; ADR 0398)."""
+    d = cohen_d(x, y)
+    m = np.asarray(x).size + np.asarray(y).size - 2
+    j = math.exp(math.lgamma(m / 2) - math.lgamma((m - 1) / 2)) / math.sqrt(m / 2)
+    return j * d
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

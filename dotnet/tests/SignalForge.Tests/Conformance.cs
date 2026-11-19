@@ -327,6 +327,7 @@ public static class Conformance
             "markedness" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.Markedness(t.Item1, t.Item2)),
             "balanced_accuracy" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.BalancedAccuracy(t.Item1, t.Item2)),
             "cohen_d" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.CohenD(t.Item1, t.Item2)),
+            "hedges_g" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.HedgesG(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

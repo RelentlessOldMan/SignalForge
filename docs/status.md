@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hedges' g in `measurements` (as for Cohen's d, times the exact small-sample correction
-     `Γ(m/2)/(√(m/2)·Γ((m − 1)/2))`, `m = n_x + n_y − 2`).
+   - Glass's delta in `measurements` (`x` the treated sample and `y` the control, each at
+     least 2: `(mean x − mean y)/s_y`, `s_y` the sample standard deviation of the control alone).
 
 ## Built
 
@@ -3026,6 +3026,11 @@ Updated with every chunk of work. Dates are absolute.
   deviation.
   Python 8161 passed, 2 skipped; .NET 7318 passed; conformance 5167/5167 in both. Version
   2026.11.19.24.
+- 2026-11-19: Hedges' g (ADR 0398): `hedges_g(x, y)` in `measurements` (C#
+  `Measurements.HedgesG`): Cohen's d times the exact small-sample correction from the gamma
+  function.
+  Python 8171 passed, 2 skipped; .NET 7327 passed; conformance 5174/5174 in both. Version
+  2026.11.19.25.
 
 ## Not built
 
