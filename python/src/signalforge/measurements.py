@@ -2212,6 +2212,34 @@ def fowlkes_mallows_index(truth: ArrayLike, decision: ArrayLike) -> float:
     return tp / math.sqrt(float(decided) * actual)
 
 
+def diagnostic_odds_ratio(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The diagnostic odds ratio of a binary ``decision`` against the ``truth``, both records
+    of 0 and 1: ``(TP*TN)/(FP*FN)`` (conventions: Diagnostic odds ratio; ADR 0390)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    tn = int(np.count_nonzero(~t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    if fp == 0 or fn == 0:
+        raise ValueError("the ratio needs at least one false positive and one false negative")
+    return float(tp * tn) / float(fp * fn)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

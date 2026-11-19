@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The diagnostic odds ratio in `measurements` (truth and decision as for the Matthews
-     correlation: `(TP·TN)/(FP·FN)`, the odds of a positive decision among the positives over
-     that among the negatives).
+   - The Brier score in `measurements` (`outcome` 0 or 1 and `probability` in `[0, 1]`, the
+     same length: `mean((probability − outcome)²)`).
 
 ## Built
 
@@ -2987,6 +2986,11 @@ Updated with every chunk of work. Dates are absolute.
   precision and recall of a binary decision.
   Python 8054 passed, 2 skipped; .NET 7218 passed; conformance 5084/5084 in both. Version
   2026.11.19.15.
+- 2026-11-19: The diagnostic odds ratio (ADR 0390): `diagnostic_odds_ratio(truth, decision)`
+  in `measurements` (C# `Measurements.DiagnosticOddsRatio`): `(TP·TN)/(FP·FN)` of a binary
+  decision, no continuity correction.
+  Python 8067 passed, 2 skipped; .NET 7230 passed; conformance 5094/5094 in both. Version
+  2026.11.19.16.
 
 ## Not built
 

@@ -502,6 +502,10 @@ rule for code not written yet.
   `fowlkes_mallows_index(truth, decision)`, C# `Measurements.FowlkesMallowsIndex`): records
   as for the Matthews correlation; `TP/√((TP + FP)(TP + FN))`, the product in `double`.
   Equal lengths, `N ≥ 1`; a 1 in each record. **(implemented)**
+- **Diagnostic odds ratio** ([ADR 0390](adr/0390-diagnostic-odds-ratio.md);
+  `diagnostic_odds_ratio(truth, decision)`, C# `Measurements.DiagnosticOddsRatio`): records
+  as for the Matthews correlation; `(TP·TN)/(FP·FN)`, no continuity correction. Equal
+  lengths, `N ≥ 1`; `FP > 0` and `FN > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
