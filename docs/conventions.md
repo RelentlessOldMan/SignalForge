@@ -366,6 +366,11 @@ rule for code not written yet.
   `1 ≤ i ≤ N − 2` with `x_i` strictly above or strictly below both neighbours (a tie is not a
   turning point); `z = (count − 2(N − 2)/3)/√((16N − 29)/90)`. Real, finite; `N ≥ 3`.
   **(implemented)**
+- **Runs test** ([ADR 0361](adr/0361-runs-test.md); `runs_test(samples)` → `RunsTest(runs, z)`,
+  C# `Measurements.RunsTest`): samples above the float mean (sum / N) labelled +, below −,
+  equal dropped; `runs` the number of blocks of equal labels; `n₁`, `n₂` the label counts,
+  `n = n₁ + n₂`; `z = (runs − 2n₁n₂/n − 1)/√(2n₁n₂(2n₁n₂ − n)/(n²(n − 1)))`. Real, finite;
+  the variance must be above 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

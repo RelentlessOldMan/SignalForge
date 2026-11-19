@@ -165,6 +165,15 @@ class TurningPoints:
 
 
 @dataclass(frozen=True)
+class RunsTest:
+    """The number of runs above and below the mean and its z-score against a random record
+    (conventions: Runs test; ADR 0361)."""
+
+    runs: int
+    z: float
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -1302,6 +1311,33 @@ def turning_points(samples: ArrayLike) -> TurningPoints:
     k = int(np.count_nonzero(((b > a) & (b > c)) | ((b < a) & (b < c))))
     z = (k - 2 * (n - 2) / 3) / math.sqrt((16 * n - 29) / 90)
     return TurningPoints(k, z)
+
+
+def runs_test(samples: ArrayLike) -> RunsTest:
+    """The Wald-Wolfowitz runs test about the mean: the number of runs of samples above and
+    below it, those equal to it dropped, and the z-score of that number (conventions: Runs
+    test; ADR 0361)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if x.shape[0] == 0:
+        raise ValueError("samples must not be empty")
+    mean = float(np.sum(x)) / x.shape[0]
+    labels = x[x != mean] > mean
+    n1 = int(np.count_nonzero(labels))
+    n2 = labels.shape[0] - n1
+    n = n1 + n2
+    p = 2 * n1 * n2
+    if not (n > 1 and p > n):
+        raise ValueError("the runs variance must be above 0")
+    runs = 1 + int(np.count_nonzero(labels[1:] != labels[:-1]))
+    var = p * (p - n) / (n * n * (n - 1))
+    return RunsTest(runs, (runs - p / n - 1) / math.sqrt(var))
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

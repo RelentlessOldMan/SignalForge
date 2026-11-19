@@ -228,6 +228,7 @@ from .measurements import (
     PowerStats,
     RecurrenceQuantification,
     RescaledRange,
+    RunsTest,
     Sfdr,
     TemporalCentroid,
     ToneMetrics,
@@ -295,6 +296,7 @@ from .measurements import (
     renyi_entropy,
     rescaled_range,
     reverberation_time,
+    runs_test,
     sample_entropy,
     schroeder_decay,
     sfdr,
@@ -534,7 +536,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.48"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.49"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -590,6 +592,7 @@ __all__ = [
     "RecurrenceQuantification",
     "Resampler",
     "RescaledRange",
+    "RunsTest",
     "Schur",
     "Sfdr",
     "Signal",
@@ -963,6 +966,7 @@ __all__ = [
     "rls_equalizer",
     "rotary",
     "rrc_taps",
+    "runs_test",
     "saleh_amplifier",
     "sample_and_hold",
     "sample_entropy",

@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - runs test in `measurements` (Wald–Wolfowitz: runs of samples above and below the mean,
-     samples equal to it dropped, and the z-score against `2n₁n₂/n + 1` and
-     `2n₁n₂(2n₁n₂ − n)/(n²(n − 1))`).
+   - von Neumann ratio in `measurements` (the mean square successive difference over the
+     variance, `Σ (x_{t+1} − x_t)² / Σ (x_t − x̄)²`, about 2 for an i.i.d. record).
 
 ## Built
 
@@ -2849,6 +2848,11 @@ Updated with every chunk of work. Dates are absolute.
   the i.i.d. mean `2(N − 2)/3` and variance `(16N − 29)/90`.
   Python 7715 passed, 2 skipped; .NET 6899 passed; conformance 4837/4837 in both. Version
   2026.11.18.48.
+- 2026-11-18: Runs test (ADR 0361): `runs_test(samples)` in `measurements` (C#
+  `Measurements.RunsTest`): Wald–Wolfowitz runs above and below the mean, samples equal to it
+  dropped, and the z-score of the count.
+  Python 7727 passed, 2 skipped; .NET 6911 passed; conformance 4846/4846 in both. Version
+  2026.11.18.49.
 
 ## Not built
 
