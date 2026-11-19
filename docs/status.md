@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Jeffreys divergence in `measurements` (`p` and `q` as for the Kullback–Leibler
-     divergence: `Σ (Pᵢ − Qᵢ)·ln(Pᵢ/Qᵢ)`, indices zero in both dropped, an error where only
-     one is zero).
+   - The cross-entropy in `measurements` (`p` and `q` as for the Kullback–Leibler
+     divergence: `−Σ Pᵢ·ln Qᵢ` in nats, terms with `pᵢ = 0` dropped, `qᵢ = 0` where `pᵢ > 0`
+     an error).
 
 ## Built
 
@@ -3107,6 +3107,11 @@ Updated with every chunk of work. Dates are absolute.
   Bhattacharyya, chi-square and Kullback–Leibler divergences.
   Python 8363 passed, 2 skipped; .NET 7504 passed; conformance 5321/5321 in both. Version
   2026.11.19.40.
+- 2026-11-19: The Jeffreys divergence (ADR 0414): `jeffreys_divergence(p, q)` in
+  `measurements` (C# `Measurements.JeffreysDivergence`): the Kullback–Leibler divergence
+  both ways, added.
+  Python 8378 passed, 2 skipped; .NET 7518 passed; conformance 5333/5333 in both. Version
+  2026.11.19.41.
 
 ## Not built
 

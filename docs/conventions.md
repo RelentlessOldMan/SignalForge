@@ -600,6 +600,10 @@ rule for code not written yet.
   `ln(Σ pow(Pᵢ, α)·pow(Qᵢ, 1 − α))/(α − 1)`, summed in order over `pᵢ > 0` (and `qᵢ > 0` for
   `α < 1`), a result below zero clamped to `0`. `alpha` finite, above 0, not 1. Inputs as for
   the Kullback–Leibler divergence; an infinite divergence is an error. **(implemented)**
+- **Jeffreys divergence** ([ADR 0414](adr/0414-jeffreys-divergence.md);
+  `jeffreys_divergence(p, q)`, C# `Measurements.JeffreysDivergence`):
+  `Σ (Pᵢ − Qᵢ)·ln(Pᵢ/Qᵢ)`, summed in order; indices zero in both dropped. Inputs as for the
+  Kullback–Leibler divergence; an index zero in only one is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
