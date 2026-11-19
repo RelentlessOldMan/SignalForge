@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - bubble entropy in `measurements` (Manis et al.: the bubble-sort swap counts of windows
-     of `m` and `m + 1`, Rényi-2 entropies, `(H_{m+1} − H_m)/ln((m+1)/(m−1))`).
    - attention entropy in `measurements` (Yang et al.: the Shannon entropy of the intervals
      between successive local peaks).
 
@@ -2770,6 +2768,11 @@ Updated with every chunk of work. Dates are absolute.
   with bubble and attention entropy.
   Python 7491 passed, 2 skipped; .NET 6675 passed; conformance 4662/4662 in both. Version
   2026.11.18.32.
+- 2026-11-18: Bubble entropy (ADR 0345): `bubble_entropy(samples, m)` in `measurements`
+  (C# `Measurements.BubbleEntropy`): Rényi-2 entropies of the swap counts at `m` and `m + 1`.
+  The libraries count inversions; the generator runs bubble sort.
+  Python 7504 passed, 2 skipped; .NET 6688 passed; conformance 4672/4672 in both. Version
+  2026.11.18.33.
 
 ## Not built
 

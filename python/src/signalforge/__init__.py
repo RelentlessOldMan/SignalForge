@@ -236,6 +236,7 @@ from .measurements import (
     autocorrelation_pitch,
     bass_ratio,
     block_leq,
+    bubble_entropy,
     centre_time,
     cepstrum_pitch,
     clarity,
@@ -513,7 +514,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.32"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.33"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -630,6 +631,7 @@ __all__ = [
     "bitcrush",
     "blit",
     "block_leq",
+    "bubble_entropy",
     "burg",
     "burg_psd",
     "butterworth_bandpass",

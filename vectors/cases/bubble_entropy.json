@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "bubble_entropy",
+  "description": "Bubble entropy (conventions: Bubble entropy; ADR 0345).",
+  "cases": [
+    {"id": "bubble_entropy.ramp", "op": "bubble_entropy", "args": {"samples": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], "m": 2}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "a ramp: every window has 0 swaps, so 0"},
+    {"id": "bubble_entropy.alternating", "op": "bubble_entropy", "args": {"samples": [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0], "m": 2}, "expected": -0.6197610339800446, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "0, 1 alternating: m = 2 swaps 0, 1 in turn; m = 3 windows (0,1,0) and (1,0,1) both have one swap"},
+    {"id": "bubble_entropy.ties", "op": "bubble_entropy", "args": {"samples": [1.0, 1.0, 2.0, 1.0, 1.0, 0.5, 0.5, 3.0, 1.0, 2.0], "m": 3}, "expected": 0.29278174922784606, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "ties are not swapped"},
+    {"id": "bubble_entropy.mixed", "op": "bubble_entropy", "args": {"samples": [0.25, -1.5, 3.0, 2.75, -0.5, 0.125, 1.0, -2.25, 0.375, 2.5, -1.25, 0.75, 0.1, 1.5, -0.75, 2.0, 0.5, -1.0], "m": 4}, "expected": 0.34553393313995734, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "eighteen arbitrary samples, m = 4"},
+    {"id": "bubble_entropy.noise", "op": "bubble_entropy", "args": {"samples": [6.0, -1.75, -6.25, -3.625, 0.25, -4.625, -3.25, -0.375, 4.75, 4.125, -3.875, -1.75, 0.0, 4.375, -1.625, -5.5, 4.375, -0.875, -4.0, -4.875, 6.25, 3.5, -0.875, -6.25, -0.875, -4.0, 6.125, -1.5, 1.5, 0.75, 4.0, -4.25, 3.875, -3.5, 3.125, -2.125, 3.75, -2.0, 0.875, -2.5, -5.625, 1.0, 5.125, -3.875, -5.375, 5.125, 4.625, -0.5, -4.875, 5.5, -5.125, 3.75, 4.125, 1.75, -5.5, 1.75, 2.125, -3.5, -3.875, 1.5, 5.625, -2.125, 4.25, 2.875, 1.5, 3.75, -2.0, 1.75, 4.375, 5.25, -0.375, 2.625, -1.5, -2.625, 1.75, -4.0, -2.75, 1.25, -4.625, 3.5, 4.25, 3.5, -1.875, -4.625, -2.0, 5.875, 5.0, 1.75, 3.75, -5.5, -4.25, -5.875, -1.375, 3.125, -4.25, -5.625, -2.5, -2.5, 5.125, -2.25, -1.375, 4.375, 6.25, 2.75, -2.0, -0.375, 5.0, -5.375, -2.5, -5.5, 4.375, 4.0, 3.375, -6.0, 3.0, 4.625, 3.0, 0.5, -2.625, 3.75, -4.375, -4.875, -4.5, -5.375, -1.25, 5.375, 2.0, -3.5, 5.625, -6.0, -2.25, -5.625, -4.75, -2.5, -0.875, -5.25, -2.125, -1.625, 1.5, 1.625, 6.25, 3.25, -4.625, -3.125, -3.0, 4.25, -4.625, 0.75, 4.25, 1.375], "m": 10}, "expected": 0.7694522461116876, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "150 random eighths from random.Random(345), m = 10"},
+    {"id": "bubble_entropy.shortest", "op": "bubble_entropy", "args": {"samples": [3.0, 1.0, 2.0], "m": 2}, "expected": -0.6309297535714574, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "three samples, m = 2: windows of 3 are one"},
+    {"id": "bubble_entropy.m_one", "op": "bubble_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 1}, "error": "invalid_argument", "source": "m must be at least 2"},
+    {"id": "bubble_entropy.m_65", "op": "bubble_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 65}, "error": "invalid_argument", "source": "m must be at most 64"},
+    {"id": "bubble_entropy.too_short", "op": "bubble_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "m": 5}, "error": "invalid_argument", "source": "samples must be at least m + 1 long"},
+    {"id": "bubble_entropy.nan", "op": "bubble_entropy", "args": {"samples": [0.0, "nan", 1.0], "m": 2}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

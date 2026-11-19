@@ -728,6 +728,35 @@ def increment_entropy(samples: ArrayLike, m: int, levels: int) -> float:
     return float(-np.sum(p * np.log(p)))
 
 
+def bubble_entropy(samples: ArrayLike, m: int) -> float:
+    """Manis et al.'s bubble entropy: Renyi-2 entropies of the bubble-sort swap counts of
+    windows of ``m`` and ``m + 1`` samples (conventions: Bubble entropy; ADR 0345)."""
+    k = count(m, "m")
+    if not 2 <= k <= 64:
+        raise ValueError("m must be from 2 to 64")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if x.shape[0] < k + 1:
+        raise ValueError("samples must be at least m + 1 long")
+
+    def renyi(length: int) -> float:
+        w = np.lib.stride_tricks.sliding_window_view(x, length)
+        swaps = np.zeros(w.shape[0], dtype=np.int64)
+        for j in range(length - 1):
+            swaps += np.sum(w[:, j : j + 1] > w[:, j + 1 :], axis=1)
+        counts = np.bincount(swaps)
+        p = counts / w.shape[0]
+        return -math.log(float(np.sum(p * p)))
+
+    return (renyi(k + 1) - renyi(k)) / math.log((k + 1) / (k - 1))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

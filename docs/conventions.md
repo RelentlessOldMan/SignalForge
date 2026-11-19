@@ -276,6 +276,10 @@ rule for code not written yet.
   `v = diff(x)`, `σ` their population deviation; letter `(sign v, min(R, floor(|v|·R/σ)))`; the
   Shannon entropy in nats of the `N − m` words of `m` letters, not normalized. Real, finite, at
   least `m + 1` samples, increments not all 0; `m ≥ 1`, `1 ≤ levels ≤ 1000`. **(implemented)**
+- **Bubble entropy** ([ADR 0345](adr/0345-bubble-entropy.md); `bubble_entropy(samples, m)`,
+  C# `Measurements.BubbleEntropy`): for `k = m` and `m + 1`, the swap count (strict inversions)
+  of each of the `N − k + 1` windows; `H_k = −ln Σ p_s²`; `(H_{m+1} − H_m)/ln((m + 1)/(m − 1))`.
+  Real, finite, at least `m + 1` samples; integer `2 ≤ m ≤ 64`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
