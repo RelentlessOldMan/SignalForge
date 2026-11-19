@@ -478,6 +478,10 @@ rule for code not written yet.
   `Measurements.CohenKappa`): categories are the distinct values, compared with `==`; `A`
   the items with `a_i = b_i`, `E = Σ_c a_c b_c` from the counts per category;
   `κ = (NA − E)/(N² − E)`. Real, finite, equal lengths, `N ≥ 1`; `E < N²`. **(implemented)**
+- **Scott's pi** ([ADR 0384](adr/0384-scott-pi.md); `scott_pi(a, b)`, C#
+  `Measurements.ScottPi`): categories as for Cohen's kappa; `A` the items with `a_i = b_i`,
+  `F = Σ_c (a_c + b_c)²`; `π = (4NA − F)/(4N² − F)`. Real, finite, equal lengths, `N ≥ 1`;
+  `F < 4N²`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

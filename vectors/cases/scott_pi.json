@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "scott_pi",
+  "description": "Scott's pi (conventions: Scott's pi; ADR 0384).",
+  "cases": [
+    {"id": "scott_pi.two_by_two", "op": "scott_pi", "args": {"a": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "b": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.3939393939393939, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "yes is used 25 + 30 = 55 times of 100, no 45: p_e = 0.55^2 + 0.45^2 = 0.505; p_o = 0.7; pi = 0.195/0.495 = 13/33 (Cohen's kappa is 0.4)"},
+    {"id": "scott_pi.full_agreement", "op": "scott_pi", "args": {"a": [0.0, 1.0, 2.0, 1.0], "b": [0.0, 1.0, 2.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "identical labels: 4NA = 64, F = 4 + 16 + 4 = 24, pi = 40/40 = 1"},
+    {"id": "scott_pi.none_agree", "op": "scott_pi", "args": {"a": [0.0, 1.0], "b": [1.0, 0.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "two labels swapped: A = 0, F = 4 + 4 = 8, pi = -8/8 = -1"},
+    {"id": "scott_pi.unshared_category", "op": "scott_pi", "args": {"a": [0.0, 0.0, 1.0, 2.0], "b": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.15789473684210525, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "pooled counts 3, 4, 1: F = 26; A = 2; pi = (32 - 26)/(64 - 26) = 3/19"},
+    {"id": "scott_pi.five_classes", "op": "scott_pi", "args": {"a": [3.0, 0.0, 4.0, 0.0, 2.0, 1.0, 3.0, 1.0, 0.0, 4.0, 1.0, 3.0, 2.0, 0.0, 1.0, 3.0, 3.0, 1.0, 2.0, 4.0, 4.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 4.0, 4.0, 3.0, 2.0, 2.0, 1.0, 2.0, 1.0, 3.0, 1.0, 3.0, 3.0, 1.0, 2.0, 4.0, 3.0, 3.0, 4.0, 2.0, 2.0, 0.0, 2.0, 4.0, 4.0, 0.0, 3.0, 2.0, 2.0, 1.0, 1.0, 1.0, 0.0, 4.0], "b": [0.0, 0.0, 0.0, 0.0, 2.0, 1.0, 3.0, 1.0, 2.0, 4.0, 0.0, 0.0, 2.0, 0.0, 1.0, 3.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 1.0, 3.0, 3.0, 3.0, 3.0, 2.0, 4.0, 3.0, 2.0, 2.0, 1.0, 2.0, 1.0, 3.0, 2.0, 3.0, 3.0, 1.0, 2.0, 4.0, 3.0, 2.0, 4.0, 2.0, 2.0, 0.0, 2.0, 4.0, 1.0, 0.0, 3.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0]}, "expected": 0.6620313325118817, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "60 labels in 0..4 from random.Random(384); b copies a with probability 0.6, else a random label in 0..2, so the rates differ"},
+    {"id": "scott_pi.lengths_differ", "op": "scott_pi", "args": {"a": [0.0, 1.0, 1.0, 2.0], "b": [0.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "a and b must be the same length"},
+    {"id": "scott_pi.empty", "op": "scott_pi", "args": {"a": [], "b": []}, "error": "invalid_argument", "source": "N must be at least 1"},
+    {"id": "scott_pi.one_label", "op": "scott_pi", "args": {"a": [3.0, 3.0, 3.0], "b": [3.0, 3.0, 3.0]}, "error": "invalid_argument", "source": "p_e = 1 when every label is the same"},
+    {"id": "scott_pi.nan", "op": "scott_pi", "args": {"a": [0.0, 1.0, 1.0, 2.0], "b": [0.0, "nan", 2.0, 2.0]}, "error": "invalid_argument", "source": "labels must be finite"}
+  ]
+}

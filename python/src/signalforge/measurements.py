@@ -2046,6 +2046,34 @@ def cohen_kappa(a: ArrayLike, b: ArrayLike) -> float:
     return float((n * agree - chance) / (n * n - chance))
 
 
+def scott_pi(a: ArrayLike, b: ArrayLike) -> float:
+    """Scott's pi: the agreement of two raters' labels ``a`` and ``b`` of the same items,
+    corrected for chance from their pooled label rates (conventions: Scott's pi; ADR 0384)."""
+    pair = []
+    for name, v in (("a", a), ("b", b)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(r)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(r)
+    x, y = pair
+    if x.size != y.size:
+        raise ValueError("a and b must be the same length")
+    if x.size < 1:
+        raise ValueError("a and b must not be empty")
+    n = int(x.size)
+    agree = int(np.count_nonzero(x == y))
+    counts = np.unique(np.concatenate([x, y]), return_counts=True)[1].astype(np.int64)
+    pooled = int(np.sum(counts**2))
+    if pooled == 4 * n * n:
+        raise ValueError("every label in both records is the same")
+    return float((4 * n * agree - pooled) / (4 * n * n - pooled))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

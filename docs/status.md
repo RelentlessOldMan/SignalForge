@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Scott's pi in `measurements` (as Cohen's kappa, but `p_e = Σ_c π_c²` with `π_c` the
-     share of category `c` in both raters' labels pooled).
+   - The Matthews correlation coefficient in `measurements` (two binary records, truth and
+     decision, values 0 and 1: `(TP·TN − FP·FN)/√((TP+FP)(TP+FN)(TN+FP)(TN+FN))`).
 
 ## Built
 
@@ -2958,6 +2958,11 @@ Updated with every chunk of work. Dates are absolute.
   items.
   Python 7980 passed, 2 skipped; .NET 7150 passed; conformance 5028/5028 in both. Version
   2026.11.19.9.
+- 2026-11-19: Scott's pi (ADR 0384): `scott_pi(a, b)` in `measurements` (C#
+  `Measurements.ScottPi`): two raters' agreement corrected for chance from their pooled label
+  rates.
+  Python 7992 passed, 2 skipped; .NET 7161 passed; conformance 5037/5037 in both. Version
+  2026.11.19.10.
 
 ## Not built
 
