@@ -280,6 +280,11 @@ rule for code not written yet.
   C# `Measurements.BubbleEntropy`): for `k = m` and `m + 1`, the swap count (strict inversions)
   of each of the `N − k + 1` windows; `H_k = −ln Σ p_s²`; `(H_{m+1} − H_m)/ln((m + 1)/(m − 1))`.
   Real, finite, at least `m + 1` samples; integer `2 ≤ m ≤ 64`. **(implemented)**
+- **Attention entropy** ([ADR 0346](adr/0346-attention-entropy.md);
+  `attention_entropy(samples)`, C# `Measurements.AttentionEntropy`): strict interior local
+  maxima and minima; four interval sets (max to max, min to min, each max to the next min, each
+  min to the next max); the mean of their Shannon entropies in nats. Real, finite; every set
+  non-empty. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

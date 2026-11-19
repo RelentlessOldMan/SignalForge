@@ -757,6 +757,37 @@ def bubble_entropy(samples: ArrayLike, m: int) -> float:
     return (renyi(k + 1) - renyi(k)) / math.log((k + 1) / (k - 1))
 
 
+def attention_entropy(samples: ArrayLike) -> float:
+    """The mean Shannon entropy, in nats, of the four kinds of interval between strict local
+    maxima and minima (conventions: Attention entropy; ADR 0346)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    mid, left, right = x[1:-1], x[:-2], x[2:]
+    peaks = np.flatnonzero((mid > left) & (mid > right)) + 1
+    troughs = np.flatnonzero((mid < left) & (mid < right)) + 1
+
+    def following(a: NDArray[np.intp], b: NDArray[np.intp]) -> NDArray[np.intp]:
+        j = np.searchsorted(b, a, side="right")
+        keep = j < b.shape[0]
+        return np.asarray(b[j[keep]] - a[keep])
+
+    sets = [np.diff(peaks), np.diff(troughs), following(peaks, troughs), following(troughs, peaks)]
+    total = 0.0
+    for gaps in sets:
+        if gaps.shape[0] == 0:
+            raise ValueError("one of the four interval sets is empty")
+        _, counts = np.unique(gaps, return_counts=True)
+        p = counts / gaps.shape[0]
+        total += float(-np.sum(p * np.log(p)))
+    return total / 4
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -6,8 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - attention entropy in `measurements` (Yang et al.: the Shannon entropy of the intervals
-     between successive local peaks).
+   - slope entropy in `measurements` (Cuesta-Frau: the differences of each window mapped to
+     five symbols by thresholds `γ` and `δ`, Shannon entropy of the patterns).
+   - phase entropy in `measurements` (Rohila and Sharma: the second-order difference plot cut
+     into `k` angular sectors, the entropy of the slope-angle mass in each, over `ln k`).
 
 ## Built
 
@@ -2773,6 +2775,11 @@ Updated with every chunk of work. Dates are absolute.
   The libraries count inversions; the generator runs bubble sort.
   Python 7504 passed, 2 skipped; .NET 6688 passed; conformance 4672/4672 in both. Version
   2026.11.18.33.
+- 2026-11-18: Attention entropy (ADR 0346): `attention_entropy(samples)` in `measurements`
+  (C# `Measurements.AttentionEntropy`): strict interior extrema, the mean of four interval
+  entropies in nats. Next restocked with slope and phase entropy.
+  Python 7515 passed, 2 skipped; .NET 6699 passed; conformance 4680/4680 in both. Version
+  2026.11.18.34.
 
 ## Not built
 
