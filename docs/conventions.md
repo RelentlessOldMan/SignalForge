@@ -561,6 +561,11 @@ rule for code not written yet.
   `|xᵢ − xₖ|`, `|yⱼ − yₗ|` over all ordered pairs with equal indices; the squared form, no root.
   Each sum a double loop in order; below 0 from rounding gives 0. Each sample at least 1,
   finite. **(implemented)**
+- **Two-sample Cramér–von Mises statistic** ([ADR 0405](adr/0405-cramer-von-mises.md);
+  `cramer_von_mises(x, y)`, C# `Measurements.CramerVonMises`): `n_x·n_y/N² · Σ_k (F_x(z_k) −
+  F_y(z_k))²` over every pooled value with its multiplicity (Anderson 1962). Summed as `c·g²`
+  per distinct value in increasing order, `g = |#(x ≤ t)·n_y − #(y ≤ t)·n_x|`, then one
+  division by `n_x·n_y·N²`. Each sample at least 1, finite. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

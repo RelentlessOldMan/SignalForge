@@ -2630,6 +2630,35 @@ def energy_distance(x: ArrayLike, y: ArrayLike) -> float:
     return max(e, 0.0)
 
 
+def cramer_von_mises(x: ArrayLike, y: ArrayLike) -> float:
+    """The two-sample Cramer-von Mises statistic: the scaled sum of the squared gaps between
+    the empirical distribution functions of ``x`` and ``y`` over the pooled sample
+    (conventions: two-sample Cramer-von Mises statistic; ADR 0405)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(np.sort(a))
+    xs, ys = pair
+    t, copies = np.unique(np.concatenate([xs, ys]), return_counts=True)
+    cx = np.searchsorted(xs, t, side="right").astype(np.int64)
+    cy = np.searchsorted(ys, t, side="right").astype(np.int64)
+    gaps = np.abs(cx * ys.size - cy * xs.size).tolist()
+    total = 0.0
+    for c, g in zip(copies.tolist(), gaps, strict=True):
+        total += float(c) * (float(g) * float(g))
+    n = xs.size + ys.size
+    return total / (float(xs.size) * float(ys.size) * float(n) * float(n))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

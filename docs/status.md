@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The two-sample Cramér–von Mises statistic in `measurements` (two real samples, each at
-     least 1: `T = n_x·n_y/N² · Σ_k (F_x(z_k) − F_y(z_k))²` over all `N = n_x + n_y` pooled
-     values `z_k`).
+   - The Hodges–Lehmann shift estimate in `measurements` (two real samples, each at least 1:
+     the median of all `n_x·n_y` differences `xᵢ − yⱼ`, the two middle ones averaged when the
+     count is even).
 
 ## Built
 
@@ -3062,6 +3062,11 @@ Updated with every chunk of work. Dates are absolute.
   the mean within each, the squared form.
   Python 8240 passed, 2 skipped; .NET 7390 passed; conformance 5225/5225 in both. Version
   2026.11.19.31.
+- 2026-11-19: The two-sample Cramér–von Mises statistic (ADR 0405):
+  `cramer_von_mises(x, y)` in `measurements` (C# `Measurements.CramerVonMises`): the scaled sum
+  of squared gaps between two empirical distribution functions over the pooled sample.
+  Python 8251 passed, 2 skipped; .NET 7400 passed; conformance 5233/5233 in both. Version
+  2026.11.19.32.
 
 ## Not built
 

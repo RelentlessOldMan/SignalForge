@@ -267,6 +267,7 @@ from .measurements import (
     cohen_kappa,
     correlation_sum,
     cosine_similarity_entropy,
+    cramer_von_mises,
     cronbach_alpha,
     decay_curvature,
     decay_time,
@@ -584,7 +585,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.31"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.32"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -772,6 +773,7 @@ __all__ = [
     "convolve",
     "correlation_sum",
     "cosine_similarity_entropy",
+    "cramer_von_mises",
     "cronbach_alpha",
     "cross_correlation",
     "cross_spectral_density",

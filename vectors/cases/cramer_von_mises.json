@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "cramer_von_mises",
+  "description": "The two-sample Cramer-von Mises statistic (conventions: two-sample Cramer-von Mises statistic; ADR 0405).",
+  "cases": [
+    {"id": "cramer_von_mises.one_each", "op": "cramer_von_mises", "args": {"x": [1.0], "y": [4.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "z = 1: (1 - 0)^2; z = 4: 0. 1/4 * 1 = 1/4"},
+    {"id": "cramer_von_mises.same", "op": "cramer_von_mises", "args": {"x": [3.0, 1.0, 2.0], "y": [2.0, 3.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "the same values: 0"},
+    {"id": "cramer_von_mises.hand", "op": "cramer_von_mises", "args": {"x": [1.0, 2.0, 3.0], "y": [2.0, 4.0]}, "expected": 0.1, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "squared gaps 1/9 at 1, 1/36 twice at 2, 1/4 at 3, 0 at 4: sum 5/12, times 6/25 = 1/10"},
+    {"id": "cramer_von_mises.apart", "op": "cramer_von_mises", "args": {"x": [1.0, 2.0], "y": [5.0, 6.0]}, "expected": 0.375, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "squared gaps 1/4, 1, 1/4, 0 at 1, 2, 5, 6: sum 3/2, times 4/16 = 3/8"},
+    {"id": "cramer_von_mises.rounded_gaussian", "op": "cramer_von_mises", "args": {"x": [2.8, 1.0, -0.0, -1.6, 1.0, -0.9, 0.1, -0.1, -0.8, 1.0, 0.4, 1.0, 0.2, 0.5, -0.9, 0.1, 0.2, 0.9, 0.6, -1.2, -0.2, 1.4, -0.8, -0.0, 1.3, 0.2, -0.4, -1.1, -1.0, 1.0, -0.9, -0.4, 0.6, 2.5, -0.0, -0.4, 0.7, 0.3, -0.5, 0.1], "y": [4.3, 1.2, 3.6, -0.0, -1.9, 1.8, 0.1, -0.3, -0.8, -0.8, 0.9, 0.3, 2.6, -0.2, -0.4, 0.9, -3.1, 1.7, 0.4, -0.1, 0.2, 0.6, 2.1, -1.8, -1.1, 2.4, -0.7, 1.7, -0.1, -0.6, -0.3, -0.9, -0.6, 1.2, -0.3, 3.4, 2.4, -0.0, -3.7, -0.5, 0.3, -0.3, 3.0, -1.6, -2.2, 1.5, 0.2, -0.3, -0.3, 0.1, -0.7, 3.5, -4.3, 1.8, 1.2]}, "expected": 0.18546335935532612, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "40 and 55 values from random.Random(405), N(0.3, 1) and N(0, 2) rounded to 0.1, so with ties"},
+    {"id": "cramer_von_mises.x_empty", "op": "cramer_von_mises", "args": {"x": [], "y": [2.0, 4.0]}, "error": "invalid_argument", "source": "x needs a value"},
+    {"id": "cramer_von_mises.y_empty", "op": "cramer_von_mises", "args": {"x": [1.0, 2.0, 3.0], "y": []}, "error": "invalid_argument", "source": "y needs a value"},
+    {"id": "cramer_von_mises.not_finite", "op": "cramer_von_mises", "args": {"x": [1.0, "nan"], "y": [2.0, 4.0]}, "error": "invalid_argument", "source": "values must be finite"}
+  ]
+}
