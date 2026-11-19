@@ -1731,6 +1731,40 @@ def biweight_midcorrelation(x: ArrayLike, y: ArrayLike) -> float:
     return float(np.dot(p, q)) / math.sqrt(float(np.dot(p, p)) * float(np.dot(q, q)))
 
 
+def hoeffding_d(x: ArrayLike, y: ArrayLike) -> float:
+    """Hoeffding's D: a rank statistic of dependence of any shape, 1 for a monotone pair
+    without ties and about 0 for independent ones (conventions: Hoeffding's D; ADR 0374)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    a, b = pair
+    n = a.shape[0]
+    if b.shape[0] != n:
+        raise ValueError("x and y must be the same length")
+    if n < 5:
+        raise ValueError("x and y must have at least 5 values")
+    r = _mean_ranks(a)
+    s = _mean_ranks(b)
+    fa = np.where(a[:, None] < a[None, :], 1.0, np.where(a[:, None] == a[None, :], 0.5, 0.0))
+    fb = np.where(b[:, None] < b[None, :], 1.0, np.where(b[:, None] == b[None, :], 0.5, 0.0))
+    # Column i sums over j; the diagonal j = i is 1/2 * 1/2 and is taken back out.
+    q = 1 + np.sum(fa * fb, axis=0) - 0.25
+    d1 = float(np.sum((q - 1) * (q - 2)))
+    d2 = float(np.sum((r - 1) * (r - 2) * (s - 1) * (s - 2)))
+    d3 = float(np.sum((r - 2) * (s - 2) * (q - 1)))
+    nf = float(n)
+    top = (nf - 2) * (nf - 3) * d1 + d2 - 2 * (nf - 2) * d3
+    return 30 * top / (nf * (nf - 1) * (nf - 2) * (nf - 3) * (nf - 4))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

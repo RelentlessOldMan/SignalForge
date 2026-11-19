@@ -432,6 +432,11 @@ rule for code not written yet.
   `u = (x − m)/(9·MAD)`; `w = (1 − u·u)(1 − u·u)` for `|u| < 1`, else 0; `a = (x − m)w`, `b`
   likewise; `Σab/√(Σa² · Σb²)`. Real, finite, equal lengths; `N ≥ 2`; neither `MAD` 0.
   **(implemented)**
+- **Hoeffding's D** ([ADR 0374](adr/0374-hoeffding-d.md); `hoeffding_d(x, y)`, C#
+  `Measurements.HoeffdingD`): mean ranks `R`, `S`; `Q_i = 1 + Σ_{j≠i} φ(x_j, x_i)φ(y_j, y_i)`,
+  `φ` = 1 below, 1/2 equal, 0 above; `D₁ = Σ(Q−1)(Q−2)`, `D₂ = Σ(R−1)(R−2)(S−1)(S−2)`,
+  `D₃ = Σ(R−2)(S−2)(Q−1)`; `D = 30((N−2)(N−3)D₁ + D₂ − 2(N−2)D₃)/(N(N−1)(N−2)(N−3)(N−4))`,
+  1 for a monotone pair without ties. Real, finite, equal lengths; `N ≥ 5`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

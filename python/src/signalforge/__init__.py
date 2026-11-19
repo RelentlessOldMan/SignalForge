@@ -277,6 +277,7 @@ from .measurements import (
     hadamard_deviation,
     higuchi_dimension,
     hjorth_parameters,
+    hoeffding_d,
     iacc,
     increment_entropy,
     integrated_phase_noise,
@@ -553,7 +554,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.62"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.63"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -824,6 +825,7 @@ __all__ = [
     "high_shelf",
     "higuchi_dimension",
     "hjorth_parameters",
+    "hoeffding_d",
     "hz_to_bark",
     "hz_to_erb_rate",
     "hz_to_mel",

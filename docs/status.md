@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hoeffding's D in `measurements` (from the ranks `R`, `S` and the bivariate ranks `Q`:
-     `D = 30((N−2)(N−3)D₁ + D₂ − 2(N−2)D₃)/(N(N−1)(N−2)(N−3)(N−4))`, `N ≥ 5`).
+   - Blomqvist's beta in `measurements` (the medial correlation: the share of samples in the
+     quadrants that agree about the two medians less the share that disagree, samples on a
+     median dropped).
 
 ## Built
 
@@ -2910,6 +2911,11 @@ Updated with every chunk of work. Dates are absolute.
   median deviations under Tukey's biweight in units of `9 MAD`.
   Python 7857 passed, 2 skipped; .NET 7038 passed; conformance 4939/4939 in both. Version
   2026.11.18.62.
+- 2026-11-18: Hoeffding's D (ADR 0374): `hoeffding_d(x, y)` in `measurements` (C#
+  `Measurements.HoeffdingD`): the rank statistic of dependence of any shape, with SAS's tie
+  rule for the bivariate ranks.
+  Python 7868 passed, 2 skipped; .NET 7047 passed; conformance 4946/4946 in both. Version
+  2026.11.18.63.
 
 ## Not built
 
