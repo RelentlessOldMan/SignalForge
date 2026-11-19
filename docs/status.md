@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The balanced accuracy in `measurements` (truth and decision as for the Matthews
-     correlation: `(TP/(TP + FN) + TN/(TN + FP))/2`, the mean of sensitivity and specificity).
+   - Cohen's d in `measurements` (two real samples `x` and `y`, each at least 2:
+     `(mean x − mean y)/s`, `s` the pooled standard deviation with `n_x + n_y − 2` degrees of
+     freedom).
 
 ## Built
 
@@ -3016,6 +3017,11 @@ Updated with every chunk of work. Dates are absolute.
   decision less 1, the dual of Youden's J.
   Python 8136 passed, 2 skipped; .NET 7295 passed; conformance 5148/5148 in both. Version
   2026.11.19.22.
+- 2026-11-19: The balanced accuracy (ADR 0396): `balanced_accuracy(truth, decision)` in
+  `measurements` (C# `Measurements.BalancedAccuracy`): the mean of the sensitivity and the
+  specificity of a binary decision.
+  Python 8149 passed, 2 skipped; .NET 7307 passed; conformance 5158/5158 in both. Version
+  2026.11.19.23.
 
 ## Not built
 

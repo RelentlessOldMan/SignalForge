@@ -525,6 +525,11 @@ rule for code not written yet.
   `Measurements.Markedness`): records as for the Matthews correlation;
   `(TP·TN − FP·FN)/((TP + FP)(TN + FN))`, one division of whole numbers in `double`. Equal
   lengths, `N ≥ 1`; the decision holds a 1 and a 0. **(implemented)**
+- **Balanced accuracy** ([ADR 0396](adr/0396-balanced-accuracy.md);
+  `balanced_accuracy(truth, decision)`, C# `Measurements.BalancedAccuracy`): records as for
+  the Matthews correlation; `(TP·(TN + FP) + TN·(TP + FN))/(2·(TP + FN)·(TN + FP))`, one
+  division of whole numbers in `double`. Equal lengths, `N ≥ 1`; the truth holds a 1 and a 0.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
