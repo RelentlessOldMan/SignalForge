@@ -262,6 +262,7 @@ from .measurements import (
     cepstrum_pitch,
     chatterjee_xi,
     clarity,
+    cohen_d,
     cohen_kappa,
     correlation_sum,
     cosine_similarity_entropy,
@@ -576,7 +577,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.23"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.24"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -750,6 +751,7 @@ __all__ = [
     "clock_jitter",
     "clock_offset",
     "cma_equalizer",
+    "cohen_d",
     "cohen_kappa",
     "coherence",
     "coherence_confidence_interval",

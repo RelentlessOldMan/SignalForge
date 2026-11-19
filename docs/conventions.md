@@ -530,6 +530,9 @@ rule for code not written yet.
   the Matthews correlation; `(TP·(TN + FP) + TN·(TP + FN))/(2·(TP + FN)·(TN + FP))`, one
   division of whole numbers in `double`. Equal lengths, `N ≥ 1`; the truth holds a 1 and a 0.
   **(implemented)**
+- **Cohen's d** ([ADR 0397](adr/0397-cohen-d.md); `cohen_d(x, y)`, C# `Measurements.CohenD`):
+  `(x̄ − ȳ)/s`, `s` the pooled standard deviation over `n_x + n_y − 2`; positive when `x` has
+  the larger mean. Each sample at least 2, finite; `s > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

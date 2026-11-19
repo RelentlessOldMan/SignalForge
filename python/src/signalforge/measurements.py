@@ -2425,6 +2425,38 @@ def balanced_accuracy(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(tp * (tn + fp) + tn * (tp + fn)) / float(2 * (tp + fn) * (tn + fp))
 
 
+def cohen_d(x: ArrayLike, y: ArrayLike) -> float:
+    """Cohen's d: the difference of the means of ``x`` and ``y`` over their pooled standard
+    deviation, positive when ``x`` has the larger mean (conventions: Cohen's d; ADR 0397)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 2:
+            raise ValueError(f"{name} must hold at least 2 values")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a.tolist())
+    means = []
+    ss = 0.0
+    for values in pair:
+        total = 0.0
+        for v in values:
+            total += v
+        mean = total / len(values)
+        for v in values:
+            ss += (v - mean) * (v - mean)
+        means.append(mean)
+    s = math.sqrt(ss / (len(pair[0]) + len(pair[1]) - 2))
+    if s == 0:
+        raise ValueError("the pooled standard deviation is zero")
+    return (means[0] - means[1]) / s
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

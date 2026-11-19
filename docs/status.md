@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Cohen's d in `measurements` (two real samples `x` and `y`, each at least 2:
-     `(mean x − mean y)/s`, `s` the pooled standard deviation with `n_x + n_y − 2` degrees of
-     freedom).
+   - Hedges' g in `measurements` (as for Cohen's d, times the exact small-sample correction
+     `Γ(m/2)/(√(m/2)·Γ((m − 1)/2))`, `m = n_x + n_y − 2`).
 
 ## Built
 
@@ -3022,6 +3021,11 @@ Updated with every chunk of work. Dates are absolute.
   specificity of a binary decision.
   Python 8149 passed, 2 skipped; .NET 7307 passed; conformance 5158/5158 in both. Version
   2026.11.19.23.
+- 2026-11-19: Cohen's d (ADR 0397): `cohen_d(x, y)` in `measurements` (C#
+  `Measurements.CohenD`): the difference of two sample means over their pooled standard
+  deviation.
+  Python 8161 passed, 2 skipped; .NET 7318 passed; conformance 5167/5167 in both. Version
+  2026.11.19.24.
 
 ## Not built
 
