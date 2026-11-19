@@ -1192,6 +1192,29 @@ def tsallis_entropy(samples: ArrayLike, q: float, bins: int = 16) -> float:
     return (1 - float(np.sum(p**a))) / (a - 1)
 
 
+def time_irreversibility(samples: ArrayLike, lag: int = 1) -> float:
+    """The skewness of the lag increments, ``M3/(M2 sqrt(M2))``, a time-irreversibility
+    statistic that is 0 on average for a reversible process (conventions: Time
+    irreversibility; ADR 0357)."""
+    tau = count(lag, "lag")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    if not 1 <= tau <= x.shape[0] - 1:
+        raise ValueError("lag must be from 1 to len(samples) - 1")
+    d = x[tau:] - x[:-tau]
+    m2 = float(np.mean(d * d))
+    if not m2 > 0:
+        raise ValueError("the increments must not all be 0")
+    m3 = float(np.mean(d * d * d))
+    return m3 / (m2 * math.sqrt(m2))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

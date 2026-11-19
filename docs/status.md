@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - time irreversibility in `measurements` (the skewness of the lag-`τ` increments,
-     `⟨Δ³⟩/⟨Δ²⟩^{3/2}`, which is 0 for a time-reversible process).
+   - cosine similarity entropy in `measurements` (Chanwimalueang and Mandic: the share of
+     pairs of embedded vectors whose angular distance is below `r`, and its binary
+     Shannon entropy).
 
 ## Built
 
@@ -2828,6 +2829,11 @@ Updated with every chunk of work. Dates are absolute.
   histogram, Shannon at `q = 1`.
   Python 7664 passed, 2 skipped; .NET 6850 passed; conformance 4798/4798 in both. Version
   2026.11.18.44.
+- 2026-11-18: Time irreversibility (ADR 0357): `time_irreversibility(samples, lag=1)` in
+  `measurements` (C# `Measurements.TimeIrreversibility`): the skewness of the lag increments,
+  `M3/(M2·√M2)`, negated by reversing the record.
+  Python 7677 passed, 2 skipped; .NET 6862 passed; conformance 4808/4808 in both. Version
+  2026.11.18.45.
 
 ## Not built
 

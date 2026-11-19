@@ -344,6 +344,11 @@ rule for code not written yet.
   information; over the occupied bins, `−Σ p ln p` at `q = 1`, `(1 − Σ p^q)/(q − 1)`
   otherwise. Real, finite, not all equal; `q` finite, `≥ 0`; `2 ≤ bins ≤ 4096`.
   **(implemented)**
+- **Time irreversibility** ([ADR 0357](adr/0357-time-irreversibility.md);
+  `time_irreversibility(samples, lag=1)`, C# `Measurements.TimeIrreversibility`): with
+  `Δ_t = x_{t+τ} − x_t`, `t = 0 … N − τ − 1`, and `M_k` the mean of `Δ^k`, the value is
+  `M_3/(M_2·√M_2)`; reversing the record negates it. Real, finite samples;
+  `1 ≤ lag ≤ N − 1`; `M_2 > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
