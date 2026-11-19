@@ -1596,6 +1596,38 @@ def spearman_correlation(x: ArrayLike, y: ArrayLike) -> float:
     return float(np.dot(r, s)) / math.sqrt(float(np.dot(r, r)) * float(np.dot(s, s)))
 
 
+def kendall_tau(x: ArrayLike, y: ArrayLike) -> float:
+    """Kendall's tau-b: the concordant pairs less the discordant ones, over the tie-corrected
+    count of pairs (conventions: Kendall's tau-b; ADR 0370)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    a, b = pair
+    n = a.shape[0]
+    if b.shape[0] != n:
+        raise ValueError("x and y must be the same length")
+    if n < 2:
+        raise ValueError("x and y must have at least 2 values")
+    if a.min() == a.max() or b.min() == b.max():
+        raise ValueError("neither x nor y may have every value equal")
+    i, j = np.triu_indices(n, 1)
+    s = int(np.sum(np.sign(a[j] - a[i]).astype(np.int64) * np.sign(b[j] - b[i]).astype(np.int64)))
+    n0 = n * (n - 1) // 2
+    ties = []
+    for v in (a, b):
+        _, cnt = np.unique(v, return_counts=True)
+        ties.append(int(np.sum(cnt * (cnt - 1) // 2)))
+    return s / math.sqrt(float(n0 - ties[0]) * float(n0 - ties[1]))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

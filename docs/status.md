@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Kendall's tau-b in `measurements` (`(n_c − n_d)/√((n₀ − n₁)(n₀ − n₂))` over the pairs
-     of two equal-length records, with the tie counts `n₁` and `n₂`).
+   - Pearson correlation in `measurements` (`Σ (x − x̄)(y − ȳ)/√(Σ (x − x̄)² Σ (y − ȳ)²)`
+     of two equal-length real records, float means, the product before the square root).
 
 ## Built
 
@@ -2892,6 +2892,10 @@ Updated with every chunk of work. Dates are absolute.
   ranks.
   Python 7808 passed, 2 skipped; .NET 6990 passed; conformance 4903/4903 in both. Version
   2026.11.18.58.
+- 2026-11-18: Kendall's tau-b (ADR 0370): `kendall_tau(x, y)` in `measurements` (C#
+  `Measurements.KendallTau`): concordant less discordant pairs over the tie-corrected count.
+  Python 7820 passed, 2 skipped; .NET 7002 passed; conformance 4912/4912 in both. Version
+  2026.11.18.59.
 
 ## Not built
 

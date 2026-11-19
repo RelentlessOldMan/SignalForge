@@ -280,6 +280,7 @@ from .measurements import (
     integrated_phase_noise,
     katz_dimension,
     kay_frequency,
+    kendall_tau,
     largest_lyapunov,
     lateral_fraction,
     lempel_ziv_complexity,
@@ -549,7 +550,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.58"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.59"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -837,6 +838,7 @@ __all__ = [
     "karplus_strong",
     "katz_dimension",
     "kay_frequency",
+    "kendall_tau",
     "lagrange_fir",
     "lar_to_reflection",
     "largest_lyapunov",

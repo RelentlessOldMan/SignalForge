@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "kendall_tau",
+  "description": "Kendall's tau-b (conventions: Kendall's tau-b; ADR 0370).",
+  "cases": [
+    {"id": "kendall_tau.one_swap", "op": "kendall_tau", "args": {"x": [1.0, 2.0, 3.0, 4.0], "y": [1.0, 3.0, 2.0, 4.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "6 pairs, one discordant (2,3): (5 - 1)/6 = 2/3"},
+    {"id": "kendall_tau.reversed", "op": "kendall_tau", "args": {"x": [0.5, 1.5, 2.5], "y": [9.0, 4.0, -1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "all discordant: -1"},
+    {"id": "kendall_tau.ties", "op": "kendall_tau", "args": {"x": [1.0, 2.0, 2.0, 3.0], "y": [1.0, 1.0, 2.0, 3.0]}, "expected": 0.8, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "pairs: (0,1) +0, (0,2) +1, (0,3) +1, (1,2) 0, (1,3) +1, (2,3) +1: 4; one tie in each: 4/sqrt(5*5) = 4/5"},
+    {"id": "kendall_tau.noisy_pair", "op": "kendall_tau", "args": {"x": [-3.25, 5.0, -0.5, 4.25, 3.25, -0.75, -3.75, -0.5, 4.75, 4.5, -2.75, 4.25, -5.0, 2.5, -4.25, 0.0, 4.5, 4.0, -0.5, 3.75, -1.25, 0.0, 0.5, -4.0, 2.75, 1.0, -0.25, 3.75, -1.5, -3.25, -1.0, 4.75, -2.75, 0.75, 3.75, 0.75, -2.5, 3.5, -1.5, 4.0, 4.75, -2.75, -4.5, 0.75, 2.75, 2.0, -3.25, -3.75, -0.5, -0.5, 1.75, 3.25, 3.5, -2.5, -5.0, 2.5, 3.0, 1.0, 3.75, -0.75, 3.5, -3.25, 2.75, 3.5, 0.75, 4.0, -1.25, -4.75, 0.0, -5.0], "y": [-1.5, 4.0, 2.5, 0.5, -0.75, -3.0, -3.5, -4.25, 5.25, 5.25, -4.75, 4.25, -8.25, 7.0, -3.75, -2.0, 2.75, 0.5, 2.0, 3.0, -3.75, 3.25, 3.25, -7.25, -0.5, -4.0, -4.5, 2.0, -2.5, -5.25, 1.75, 5.75, 2.25, -1.0, 4.25, 4.5, -0.5, 0.0, 1.25, 0.5, 2.25, -4.5, -4.25, -3.25, -1.25, 0.25, -7.5, -7.75, -2.75, -4.5, 3.5, -1.5, 6.0, -1.25, -6.5, 1.0, 4.5, -1.25, 7.0, -3.5, 1.25, 0.0, 3.75, 8.0, -1.5, 8.75, 1.5, -9.75, -0.75, -0.25]}, "expected": 0.5348108569378963, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "70 random quarters from random.Random(370) and the same plus more, with ties"},
+    {"id": "kendall_tau.lengths_differ", "op": "kendall_tau", "args": {"x": [0.0, 1.0, 0.5], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "x and y must be the same length"},
+    {"id": "kendall_tau.one_sample", "op": "kendall_tau", "args": {"x": [1.0], "y": [2.0]}, "error": "invalid_argument", "source": "N must be at least 2"},
+    {"id": "kendall_tau.constant_x", "op": "kendall_tau", "args": {"x": [1.0, 1.0, 1.0], "y": [2.0, 1.0, 3.0]}, "error": "invalid_argument", "source": "x must not be constant"},
+    {"id": "kendall_tau.constant_y", "op": "kendall_tau", "args": {"x": [0.0, 1.0, 0.5], "y": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "y must not be constant"},
+    {"id": "kendall_tau.nan", "op": "kendall_tau", "args": {"x": [0.0, "nan", 1.0], "y": [2.0, 1.0, 3.0]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

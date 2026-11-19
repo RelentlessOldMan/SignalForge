@@ -411,6 +411,11 @@ rule for code not written yet.
   `rho = Σ (r − c)(s − c)/√(Σ (r − c)² · Σ (s − c)²)`, the product, then the square root, then
   the quotient. Real, finite, equal lengths; `N ≥ 2`; neither record constant.
   **(implemented)**
+- **Kendall's tau-b** ([ADR 0370](adr/0370-kendall-tau.md); `kendall_tau(x, y)`, C#
+  `Measurements.KendallTau`): `n_c − n_d = Σ_{i<j} sign(x_j − x_i) sign(y_j − y_i)`;
+  `n₀ = N(N − 1)/2`; `n₁`, `n₂` = `Σ t(t − 1)/2` over the tie groups of `x` and of `y`;
+  `tau = (n_c − n_d)/√((n₀ − n₁)(n₀ − n₂))`, the product in float before the square root.
+  Real, finite, equal lengths; `N ≥ 2`; neither record constant. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
