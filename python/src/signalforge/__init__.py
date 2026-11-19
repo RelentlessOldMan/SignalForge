@@ -277,6 +277,7 @@ from .measurements import (
     f1_score,
     fisher_information,
     fleiss_kappa,
+    fowlkes_mallows_index,
     fuzzy_entropy,
     gain_compression,
     gcc_phat,
@@ -568,7 +569,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.14"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.15"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -818,6 +819,7 @@ __all__ = [
     "flanger",
     "fleiss_kappa",
     "fm_tone",
+    "fowlkes_mallows_index",
     "fractional_delay",
     "frequency_offset",
     "frequency_shift",

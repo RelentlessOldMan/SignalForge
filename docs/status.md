@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Fowlkes–Mallows index in `measurements` (truth and decision as for the Matthews
-     correlation: `TP/√((TP + FP)(TP + FN))`, the geometric mean of precision and recall).
+   - The diagnostic odds ratio in `measurements` (truth and decision as for the Matthews
+     correlation: `(TP·TN)/(FP·FN)`, the odds of a positive decision among the positives over
+     that among the negatives).
 
 ## Built
 
@@ -2981,6 +2982,11 @@ Updated with every chunk of work. Dates are absolute.
   records.
   Python 8041 passed, 2 skipped; .NET 7206 passed; conformance 5074/5074 in both. Version
   2026.11.19.14.
+- 2026-11-19: The Fowlkes–Mallows index (ADR 0389): `fowlkes_mallows_index(truth, decision)`
+  in `measurements` (C# `Measurements.FowlkesMallowsIndex`): the geometric mean of the
+  precision and recall of a binary decision.
+  Python 8054 passed, 2 skipped; .NET 7218 passed; conformance 5084/5084 in both. Version
+  2026.11.19.15.
 
 ## Not built
 

@@ -498,6 +498,10 @@ rule for code not written yet.
   decision)`, C# `Measurements.JaccardIndex`): records as for the Matthews correlation;
   `TP/(TP + FP + FN)`. Equal lengths, `N ≥ 1`; at least one 1 in either record.
   **(implemented)**
+- **Fowlkes–Mallows index** ([ADR 0389](adr/0389-fowlkes-mallows-index.md);
+  `fowlkes_mallows_index(truth, decision)`, C# `Measurements.FowlkesMallowsIndex`): records
+  as for the Matthews correlation; `TP/√((TP + FP)(TP + FN))`, the product in `double`.
+  Equal lengths, `N ≥ 1`; a 1 in each record. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -2184,6 +2184,34 @@ def jaccard_index(truth: ArrayLike, decision: ArrayLike) -> float:
     return both / either
 
 
+def fowlkes_mallows_index(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Fowlkes-Mallows index of a binary ``decision`` against the ``truth``, both records
+    of 0 and 1: the geometric mean of precision and recall, from 0 to 1 (conventions:
+    Fowlkes-Mallows index; ADR 0389)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    decided = int(np.count_nonzero(d))
+    actual = int(np.count_nonzero(t))
+    if decided == 0 or actual == 0:
+        raise ValueError("truth and decision must each hold at least one 1")
+    return tp / math.sqrt(float(decided) * actual)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
