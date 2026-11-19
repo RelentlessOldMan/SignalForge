@@ -338,6 +338,7 @@ from .measurements import (
     power_ccdf_level,
     power_stats,
     recurrence_quantification,
+    renyi_divergence,
     renyi_entropy,
     rescaled_range,
     reverberation_time,
@@ -592,7 +593,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.39"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.40"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1056,6 +1057,7 @@ __all__ = [
     "reflection_to_autocorrelation",
     "reflection_to_lar",
     "reflection_to_lpc",
+    "renyi_divergence",
     "renyi_entropy",
     "resample",
     "resample_taps",

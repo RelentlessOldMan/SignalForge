@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Rényi divergence in `measurements` (`p` and `q` as for the Kullback–Leibler
-     divergence, and an order `alpha > 0`, not 1: `ln(Σ Pᵢ^α·Qᵢ^(1−α))/(α − 1)`, terms with
-     `Pᵢ = 0` dropped; for `α > 1`, `qᵢ = 0` where `pᵢ > 0` an error).
+   - The Jeffreys divergence in `measurements` (`p` and `q` as for the Kullback–Leibler
+     divergence: `Σ (Pᵢ − Qᵢ)·ln(Pᵢ/Qᵢ)`, indices zero in both dropped, an error where only
+     one is zero).
 
 ## Built
 
@@ -3102,6 +3102,11 @@ Updated with every chunk of work. Dates are absolute.
   of one discrete distribution against another.
   Python 8344 passed, 2 skipped; .NET 7486 passed; conformance 5305/5305 in both. Version
   2026.11.19.39.
+- 2026-11-19: The Rényi divergence (ADR 0413): `renyi_divergence(p, q, alpha)` in
+  `measurements` (C# `Measurements.RenyiDivergence`): the order-`α` family that holds the
+  Bhattacharyya, chi-square and Kullback–Leibler divergences.
+  Python 8363 passed, 2 skipped; .NET 7504 passed; conformance 5321/5321 in both. Version
+  2026.11.19.40.
 
 ## Not built
 

@@ -2892,6 +2892,49 @@ def chi_square_divergence(p: ArrayLike, q: ArrayLike) -> float:
     return s
 
 
+def renyi_divergence(p: ArrayLike, q: ArrayLike, alpha: float) -> float:
+    """The order-``alpha`` Rényi divergence of the discrete distribution ``p`` from ``q``,
+    each normalized by its own sum (conventions: Rényi divergence; ADR 0413)."""
+    al = real(alpha, "alpha")
+    if not al > 0 or al == 1:
+        raise ValueError("alpha must be above 0 and not 1")
+    pair = []
+    for name, v in (("p", p), ("q", q)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and non-negative")
+        values = a.tolist()
+        total = 0.0
+        for w in values:
+            total += w
+        if total <= 0:
+            raise ValueError(f"{name} must have a positive sum")
+        pair.append((values, total))
+    (pv, ps), (qv, qs) = pair
+    if len(pv) != len(qv):
+        raise ValueError("p and q must have the same length")
+    s = 0.0
+    for a_, b_ in zip(pv, qv, strict=True):
+        if a_ == 0:
+            continue
+        if b_ == 0:
+            if al > 1:
+                raise ValueError("q is zero where p is not: the divergence is infinite")
+            continue
+        s += math.pow(a_ / ps, al) * math.pow(b_ / qs, 1.0 - al)
+    if s == 0:
+        raise ValueError("p and q share no support: the divergence is infinite")
+    r = math.log(s) / (al - 1.0)
+    return r if r > 0 else 0.0
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
