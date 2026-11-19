@@ -386,6 +386,10 @@ rule for code not written yet.
   `σ² = (N(N − 1)(2N + 5) − Σ t(t − 1)(2t + 5))/18` over the groups of equal samples;
   `z = (S ∓ 1)/σ` for `S ≷ 0`, 0 at `S = 0`. Real, finite; `N ≥ 2`; not all equal.
   **(implemented)**
+- **Sen's slope** ([ADR 0365](adr/0365-sens-slope.md); `sens_slope(samples)`, C#
+  `Measurements.SensSlope`): the median of `(x_j − x_i)/(j − i)` over every `i < j`, per
+  sample; `(a + b)/2` of the two middle slopes for an even count. Real, finite; `N ≥ 2`.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

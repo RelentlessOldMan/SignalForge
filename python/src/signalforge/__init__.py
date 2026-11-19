@@ -303,6 +303,7 @@ from .measurements import (
     runs_test,
     sample_entropy,
     schroeder_decay,
+    sens_slope,
     sfdr,
     slope_entropy,
     sound_exposure,
@@ -541,7 +542,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.52"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.54"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -987,6 +988,7 @@ __all__ = [
     "schroeder_decay",
     "schroeder_reverb",
     "schur",
+    "sens_slope",
     "sfdr",
     "sine_fold",
     "slew_limiter",

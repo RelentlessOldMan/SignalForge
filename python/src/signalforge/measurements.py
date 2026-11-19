@@ -1432,6 +1432,28 @@ def mann_kendall(samples: ArrayLike) -> MannKendall:
     return MannKendall(s, z)
 
 
+def sens_slope(samples: ArrayLike) -> float:
+    """Sen's slope: the median of the slopes ``(x_j - x_i)/(j - i)`` over every pair
+    ``i < j``, per sample (conventions: Sen's slope; ADR 0365)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 2:
+        raise ValueError("samples must have at least 2 values")
+    i, j = np.triu_indices(n, 1)
+    s = np.sort((x[j] - x[i]) / (j - i))
+    k = s.shape[0]
+    if k % 2:
+        return float(s[k // 2])
+    return (float(s[k // 2 - 1]) + float(s[k // 2])) / 2
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

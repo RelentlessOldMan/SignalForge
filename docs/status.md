@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Sen's slope in `measurements` (the median of the pairwise slopes
-     `(x_j − x_i)/(j − i)`, `i < j`, per sample, with the mean of the two middle slopes for
-     an even count).
+   - Pettitt change-point test in `measurements` (`U_t = Σ_{i≤t<j} sign(x_j − x_i)`, the
+     statistic `K = max |U_t|`, its location, and the approximate p-value
+     `2 exp(−6K²/(N³ + N²))`).
 
 ## Built
 
@@ -2869,6 +2869,10 @@ Updated with every chunk of work. Dates are absolute.
   tie-corrected, continuity-corrected z-score.
   Python 7758 passed, 2 skipped; .NET 6941 passed; conformance 4868/4868 in both. Version
   2026.11.18.52.
+- 2026-11-18: Sen's slope (ADR 0365): `sens_slope(samples)` in `measurements` (C#
+  `Measurements.SensSlope`): the median of the pairwise slopes, per sample.
+  Python 7768 passed, 2 skipped; .NET 6951 passed; conformance 4875/4875 in both. Version
+  2026.11.18.54.
 
 ## Not built
 
