@@ -250,6 +250,7 @@ from .measurements import (
     autocorrelation_pitch,
     bartels_rank_test,
     bass_ratio,
+    biweight_midcorrelation,
     block_leq,
     bubble_entropy,
     buishand_range,
@@ -552,7 +553,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.61"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.62"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -682,6 +683,7 @@ __all__ = [
     "bessel_lowpass",
     "bit_errors",
     "bitcrush",
+    "biweight_midcorrelation",
     "blit",
     "block_leq",
     "bubble_entropy",

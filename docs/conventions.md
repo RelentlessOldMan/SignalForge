@@ -426,6 +426,12 @@ rule for code not written yet.
   double-centred `A_ij = a_ij − ā_i· − ā_·j + ā_··` (likewise `B`); V-statistics
   `dCov² = ΣAB/N²`, `dVar² = ΣA²/N²`; `dCor = √(max(0, dCov²)/√(dVar²(x) dVar²(y)))`. Real,
   finite, equal lengths; `N ≥ 2`; neither record constant. **(implemented)**
+- **Biweight midcorrelation** ([ADR 0373](adr/0373-biweight-midcorrelation.md);
+  `biweight_midcorrelation(x, y)`, C# `Measurements.BiweightMidcorrelation`): median `m`
+  (`(a + b)/2` for an even count), unscaled `MAD` = median of `|x − m|`;
+  `u = (x − m)/(9·MAD)`; `w = (1 − u·u)(1 − u·u)` for `|u| < 1`, else 0; `a = (x − m)w`, `b`
+  likewise; `Σab/√(Σa² · Σb²)`. Real, finite, equal lengths; `N ≥ 2`; neither `MAD` 0.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

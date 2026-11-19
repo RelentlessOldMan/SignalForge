@@ -1693,6 +1693,44 @@ def distance_correlation(x: ArrayLike, y: ArrayLike) -> float:
     return math.sqrt(max(0.0, cov) / math.sqrt(va * vb))
 
 
+def _biweight_terms(v: NDArray[np.float64], name: str) -> NDArray[np.float64]:
+    m = float(np.median(v))
+    d = v - m
+    mad = float(np.median(np.abs(d)))
+    if not mad > 0:
+        raise ValueError(f"{name} must have a nonzero median absolute deviation")
+    u = d / (9 * mad)
+    w = np.where(np.abs(u) < 1, (1 - u * u) * (1 - u * u), 0.0)
+    out: NDArray[np.float64] = d * w
+    return out
+
+
+def biweight_midcorrelation(x: ArrayLike, y: ArrayLike) -> float:
+    """The biweight midcorrelation of ``x`` and ``y``: a correlation of the deviations from
+    the medians, weighted by Tukey's biweight in units of ``9 MAD`` (conventions: Biweight
+    midcorrelation; ADR 0373)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    a, b = pair
+    n = a.shape[0]
+    if b.shape[0] != n:
+        raise ValueError("x and y must be the same length")
+    if n < 2:
+        raise ValueError("x and y must have at least 2 values")
+    p = _biweight_terms(a, "x")
+    q = _biweight_terms(b, "y")
+    return float(np.dot(p, q)) / math.sqrt(float(np.dot(p, p)) * float(np.dot(q, q)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - biweight midcorrelation in `measurements` (with `u = (x − med x)/(9 MAD x)` and
-     weights `(1 − u²)²` where `|u| < 1`, the correlation of the weighted deviations from the
-     medians; the same for `y`).
+   - Hoeffding's D in `measurements` (from the ranks `R`, `S` and the bivariate ranks `Q`:
+     `D = 30((N−2)(N−3)D₁ + D₂ − 2(N−2)D₃)/(N(N−1)(N−2)(N−3)(N−4))`, `N ≥ 5`).
 
 ## Built
 
@@ -2906,6 +2905,11 @@ Updated with every chunk of work. Dates are absolute.
   double-centred distance matrices.
   Python 7845 passed, 2 skipped; .NET 7026 passed; conformance 4930/4930 in both. Version
   2026.11.18.61.
+- 2026-11-18: Biweight midcorrelation (ADR 0373): `biweight_midcorrelation(x, y)` in
+  `measurements` (C# `Measurements.BiweightMidcorrelation`): the robust correlation of the
+  median deviations under Tukey's biweight in units of `9 MAD`.
+  Python 7857 passed, 2 skipped; .NET 7038 passed; conformance 4939/4939 in both. Version
+  2026.11.18.62.
 
 ## Not built
 

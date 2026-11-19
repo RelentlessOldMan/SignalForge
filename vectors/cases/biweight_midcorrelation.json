@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "biweight_midcorrelation",
+  "description": "Biweight midcorrelation (conventions: Biweight midcorrelation; ADR 0373).",
+  "cases": [
+    {"id": "biweight_midcorrelation.line", "op": "biweight_midcorrelation", "args": {"x": [1.0, 2.0, 3.0, 4.0, 5.0], "y": [3.0, 5.0, 7.0, 9.0, 11.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "y = 2x + 1: the weighted deviations of y are twice those of x, so 1"},
+    {"id": "biweight_midcorrelation.outlier_cut_off", "op": "biweight_midcorrelation", "args": {"x": [1.0, 2.0, 3.0, 4.0, 5.0, 100.0], "y": [1.0, 2.0, 3.0, 4.0, 5.0, 200.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "both medians 7/2, MADs 3/2: the 100 and the 200 are more than 13.5 from the median, so their weights are 0, and the rest agree exactly: 1"},
+    {"id": "biweight_midcorrelation.by_hand", "op": "biweight_midcorrelation", "args": {"x": [-1.0, 0.0, 1.0], "y": [0.0, 1.0, -1.0]}, "expected": -0.5, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "x: median 0, MAD 1, u = -1/9, 0, 1/9, w = (80/81)^2; y: median 0, MAD 1, a for x = -w, 0, w and for y = 0, w, -w: sum ab = -w^2, both sums of squares 2w^2: -1/2"},
+    {"id": "biweight_midcorrelation.noisy_pair_with_outlier", "op": "biweight_midcorrelation", "args": {"x": [-3.5, -2.25, -2.125, -1.0, -0.125, 1.125, 2.375, 60.0, 3.375, 0.75, 3.25, -2.875, 1.75, -3.75, 0.0, -2.125, -3.75, -2.25, -2.5, -1.375, -1.875, 1.625, 1.875, -2.75, 1.875, -0.125, 1.875, -3.25, 1.75, 3.25, 3.125, 0.125, 0.25, -0.5, 1.5, -1.125, 2.125, -2.125, 1.75, 0.0, -2.375, -0.625, -3.625, -2.25, -1.5, -1.75, 3.875, -0.625, 4.0, -1.75], "y": [-4.125, -1.75, -0.5, -1.0, -1.0, 1.25, 3.25, -60.0, 2.0, 0.25, 1.875, -4.5, 0.0, -2.625, 1.75, -0.625, -2.625, -2.125, -2.75, 0.625, -3.625, 0.75, 1.25, -3.125, 3.875, -0.5, 0.625, -2.25, 3.25, 4.125, 3.25, -1.5, -1.5, 1.0, -0.5, 0.0, 3.5, -3.25, 1.25, 1.125, -2.375, -0.625, -4.625, -2.5, -3.125, -1.5, 2.375, -2.125, 5.125, -1.125]}, "expected": 0.8765471791963255, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "50 random eighths from random.Random(373), y = x plus more, with sample 7 set to (60, -60)"},
+    {"id": "biweight_midcorrelation.lengths_differ", "op": "biweight_midcorrelation", "args": {"x": [0.0, 1.0, 0.5], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "x and y must be the same length"},
+    {"id": "biweight_midcorrelation.one_sample", "op": "biweight_midcorrelation", "args": {"x": [1.0], "y": [2.0]}, "error": "invalid_argument", "source": "N must be at least 2"},
+    {"id": "biweight_midcorrelation.zero_mad_x", "op": "biweight_midcorrelation", "args": {"x": [1.0, 1.0, 5.0], "y": [2.0, 1.0, 3.0]}, "error": "invalid_argument", "source": "x has MAD 0: two of three samples equal"},
+    {"id": "biweight_midcorrelation.zero_mad_y", "op": "biweight_midcorrelation", "args": {"x": [0.0, 1.0, 0.5], "y": [4.0, 0.0, 4.0]}, "error": "invalid_argument", "source": "y has MAD 0: two of three samples equal"},
+    {"id": "biweight_midcorrelation.nan", "op": "biweight_midcorrelation", "args": {"x": [0.0, 1.0, 0.5], "y": [0.0, "nan", 1.0]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}
