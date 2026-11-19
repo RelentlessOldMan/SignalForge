@@ -3071,6 +3071,36 @@ def canberra_distance(x: ArrayLike, y: ArrayLike) -> float:
     return s
 
 
+def bray_curtis(x: ArrayLike, y: ArrayLike) -> float:
+    """The Bray-Curtis dissimilarity between the non-negative vectors ``x`` and ``y``: the
+    share of their combined total that does not match (conventions: Bray-Curtis
+    dissimilarity; ADR 0418)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and non-negative")
+        pair.append(a.tolist())
+    xv, yv = pair
+    if len(xv) != len(yv):
+        raise ValueError("x and y must have the same length")
+    num = 0.0
+    den = 0.0
+    for a_, b_ in zip(xv, yv, strict=True):
+        num += abs(a_ - b_)
+        den += a_ + b_
+    if den <= 0:
+        raise ValueError("x and y must not both be all zero")
+    return min(num / den, 1.0)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

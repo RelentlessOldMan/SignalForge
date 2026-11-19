@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "bray_curtis",
+  "description": "The Bray-Curtis dissimilarity (conventions: Bray-Curtis dissimilarity; ADR 0418).",
+  "cases": [
+    {"id": "bray_curtis.same", "op": "bray_curtis", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0, 3.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "equal vectors: 0"},
+    {"id": "bray_curtis.apart", "op": "bray_curtis", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "no index where both are positive: 2/2 = 1"},
+    {"id": "bray_curtis.mixed", "op": "bray_curtis", "args": {"x": [3.0, 1.0], "y": [1.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "|3 - 1| + 0 over 3 + 1 + 1 + 1: 2/6 = 1/3"},
+    {"id": "bray_curtis.one_empty", "op": "bray_curtis", "args": {"x": [0.0, 0.0], "y": [1.0, 2.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "x all zero: 3/3 = 1"},
+    {"id": "bray_curtis.scaled", "op": "bray_curtis", "args": {"x": [1.0, 2.0], "y": [2.0, 4.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "y twice x: not normalized, so 3/9 = 1/3"},
+    {"id": "bray_curtis.random", "op": "bray_curtis", "args": {"x": [2.5, 2.75, 0.75, 2.25, 1.0, 2.0, 4.0, 1.75, 2.0, 0.25, 1.25, 3.0, 2.5, 2.75, 4.5, 1.5], "y": [2.25, 5.0, 2.25, 5.0, 3.25, 4.25, 0.75, 0.0, 2.25, 0.5, 4.5, 3.5, 2.75, 0.5, 3.25, 5.0]}, "expected": 0.34796238244514105, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "16 quarters each from random.Random(418), 0 to 5"},
+    {"id": "bray_curtis.empty", "op": "bray_curtis", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "x needs a value"},
+    {"id": "bray_curtis.lengths", "op": "bray_curtis", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 1.0]}, "error": "invalid_argument", "source": "x and y must match"},
+    {"id": "bray_curtis.negative", "op": "bray_curtis", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 3.0]}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "bray_curtis.not_finite", "op": "bray_curtis", "args": {"x": [1.0, "inf", 1.0], "y": [2.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "bray_curtis.all_zero", "op": "bray_curtis", "args": {"x": [0.0, 0.0, 0.0], "y": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "x and y both all zero"}
+  ]
+}

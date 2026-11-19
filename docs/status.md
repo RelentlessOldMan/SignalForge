@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Bray–Curtis dissimilarity in `measurements` (two non-negative vectors `x` and `y`
-     of the same length, not both all zero: `Σ|xᵢ − yᵢ|/Σ(xᵢ + yᵢ)`, from 0 to 1).
+   - The Minkowski distance in `measurements` (two real vectors `x` and `y` of the same
+     length and an order `p ≥ 1`, finite: `(Σ|xᵢ − yᵢ|^p)^(1/p)`, scaled by the largest
+     difference so it cannot overflow).
 
 ## Built
 
@@ -3126,6 +3127,11 @@ Updated with every chunk of work. Dates are absolute.
   size.
   Python 8421 passed, 2 skipped; .NET 7558 passed; conformance 5367/5367 in both. Version
   2026.11.19.44.
+- 2026-11-19: The Bray–Curtis dissimilarity (ADR 0418): `bray_curtis(x, y)` in
+  `measurements` (C# `Measurements.BrayCurtis`): the share of two non-negative vectors'
+  combined total that does not match.
+  Python 8435 passed, 2 skipped; .NET 7571 passed; conformance 5378/5378 in both. Version
+  2026.11.19.45.
 
 ## Not built
 
