@@ -1800,6 +1800,37 @@ def blomqvist_beta(x: ArrayLike, y: ArrayLike) -> float:
     return (agree - disagree) / (agree + disagree)
 
 
+def chatterjee_xi(x: ArrayLike, y: ArrayLike) -> float:
+    """Chatterjee's xi: how well ``x`` predicts ``y``, near 0 for independent records and near 1
+    when ``y`` is a function of ``x`` (conventions: Chatterjee's xi; ADR 0376)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    a, b = pair
+    n = a.shape[0]
+    if b.shape[0] != n:
+        raise ValueError("x and y must be the same length")
+    if n < 2:
+        raise ValueError("x and y must have at least 2 values")
+    ys = b[np.argsort(a, kind="stable")]
+    sy = np.sort(b)
+    r = np.searchsorted(sy, ys, side="right").astype(np.int64)
+    left = n - np.searchsorted(sy, ys, side="left").astype(np.int64)
+    s = int(np.sum(np.abs(np.diff(r))))
+    t = int(np.sum(left * (n - left)))
+    if t == 0:
+        raise ValueError("y must not be constant")
+    return float(1 - (n * s) / (2 * t))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

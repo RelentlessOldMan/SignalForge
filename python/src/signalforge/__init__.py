@@ -257,6 +257,7 @@ from .measurements import (
     buishand_range,
     centre_time,
     cepstrum_pitch,
+    chatterjee_xi,
     clarity,
     correlation_sum,
     cosine_similarity_entropy,
@@ -555,7 +556,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.0"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.2"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -705,6 +706,7 @@ __all__ = [
     "cepstrum_pitch",
     "cepstrum_to_lpc",
     "channel_power",
+    "chatterjee_xi",
     "chebyshev1_bandpass",
     "chebyshev1_bandstop",
     "chebyshev1_highpass",

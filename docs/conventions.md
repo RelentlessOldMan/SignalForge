@@ -442,6 +442,11 @@ rule for code not written yet.
   values for even `N`; samples on either median dropped; `β = (n₊ − n₋)/(n₊ + n₋)` with `n₊`
   the samples on the same side of both medians and `n₋` on opposite sides. Real, finite, equal
   lengths; at least one sample off both medians. **(implemented)**
+- **Chatterjee's xi** ([ADR 0376](adr/0376-chatterjee-xi.md); `chatterjee_xi(x, y)`, C#
+  `Measurements.ChatterjeeXi`): pairs sorted by `x`, ties in `x` kept in record order (not at
+  random); `r_i = #{j: y_j ≤ y_(i)}`, `l_i = #{j: y_j ≥ y_(i)}`;
+  `ξ = 1 − N Σ|r_{i+1} − r_i| / (2 Σ l_i(N − l_i))`, sums exact integers. Not symmetric. Real,
+  finite, equal lengths; `N ≥ 2`, `y` not constant. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

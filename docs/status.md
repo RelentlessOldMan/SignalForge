@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Chatterjee's xi in `measurements` (sort the pairs by `x`, ties in `x` kept in record
-     order; `r_i = #{j: y_j ≤ y_(i)}`, `l_i = #{j: y_j ≥ y_(i)}`;
-     `ξ = 1 − NΣ|r_{i+1} − r_i| / (2Σ l_i(N − l_i))`).
+   - Goodman and Kruskal's gamma in `measurements` (`γ = (C − D)/(C + D)` over all pairs,
+     `C` concordant and `D` discordant, pairs tied in either record dropped).
 
 ## Built
 
@@ -2920,6 +2919,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.BlomqvistBeta`): the medial correlation, samples on a median dropped.
   Python 7883 passed, 2 skipped; .NET 7061 passed; conformance 4957/4957 in both. Version
   2026.11.19.0.
+- 2026-11-19: Chatterjee's xi (ADR 0376): `chatterjee_xi(x, y)` in `measurements` (C#
+  `Measurements.ChatterjeeXi`): the asymmetric rank coefficient of how well `x` predicts `y`,
+  ties in `x` kept in record order.
+  Python 7896 passed, 2 skipped; .NET 7073 passed; conformance 4966/4966 in both. Version
+  2026.11.19.2.
 
 ## Not built
 
