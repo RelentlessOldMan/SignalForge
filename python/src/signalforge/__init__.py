@@ -362,6 +362,7 @@ from .measurements import (
     time_irreversibility,
     time_weighting,
     tone_metrics,
+    total_variation_distance,
     treble_ratio,
     tsallis_entropy,
     turning_points,
@@ -590,7 +591,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.37"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.38"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1126,6 +1127,7 @@ __all__ = [
     "timing_offset",
     "tone",
     "tone_metrics",
+    "total_variation_distance",
     "transfer_function",
     "transfer_function_h2",
     "transient_shaper",

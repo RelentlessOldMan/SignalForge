@@ -587,6 +587,10 @@ rule for code not written yet.
   `bhattacharyya_distance(p, q)`, C# `Measurements.BhattacharyyaDistance`): `0 − ln BC`,
   `BC = Σ√(Pᵢ·Qᵢ)` summed in order and clamped to at most 1. Inputs as for the Hellinger
   distance; `BC = 0` is an error. **(implemented)**
+- **Total variation distance** ([ADR 0411](adr/0411-total-variation-distance.md);
+  `total_variation_distance(p, q)`, C# `Measurements.TotalVariationDistance`): `½·Σ|Pᵢ − Qᵢ|`,
+  summed in order, clamped to at most 1. Inputs as for the Hellinger distance.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

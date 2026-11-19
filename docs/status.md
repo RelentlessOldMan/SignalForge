@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The total variation distance in `measurements` (`p` and `q` as for the Hellinger
-     distance: `½·Σ|Pᵢ − Qᵢ|`, from 0 to 1).
+   - The Pearson chi-square divergence in `measurements` (`p` and `q` as for the
+     Kullback–Leibler divergence: `Σ (Pᵢ − Qᵢ)²/Qᵢ`, terms with `qᵢ = 0 = pᵢ` dropped,
+     `qᵢ = 0` where `pᵢ > 0` an error).
 
 ## Built
 
@@ -3091,6 +3092,11 @@ Updated with every chunk of work. Dates are absolute.
   discrete distributions.
   Python 8316 passed, 2 skipped; .NET 7460 passed; conformance 5283/5283 in both. Version
   2026.11.19.37.
+- 2026-11-19: The total variation distance (ADR 0411): `total_variation_distance(p, q)` in
+  `measurements` (C# `Measurements.TotalVariationDistance`): half the L1 distance between two
+  discrete distributions, from 0 to 1.
+  Python 8329 passed, 2 skipped; .NET 7472 passed; conformance 5293/5293 in both. Version
+  2026.11.19.38.
 
 ## Not built
 
