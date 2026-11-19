@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "pearson_correlation",
+  "description": "Pearson correlation (conventions: Pearson correlation; ADR 0371).",
+  "cases": [
+    {"id": "pearson_correlation.line", "op": "pearson_correlation", "args": {"x": [1.0, 2.0, 3.0, 4.0], "y": [3.0, 5.0, 7.0, 9.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "y = 2x + 1: r = 1"},
+    {"id": "pearson_correlation.by_hand", "op": "pearson_correlation", "args": {"x": [1.0, 2.0, 3.0, 4.0], "y": [1.0, 3.0, 2.0, 4.0]}, "expected": 0.8, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "deviations -3/2,-1/2,1/2,3/2 and -3/2,1/2,-1/2,3/2: products sum to 4, squares to 5 each: r = 4/5"},
+    {"id": "pearson_correlation.not_monotone", "op": "pearson_correlation", "args": {"x": [0.0, 1.0, 2.0, 3.0], "y": [0.0, 2.0, 2.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "a tent: deviations -3/2,-1/2,1/2,3/2 and -1,1,1,-1; products sum to 0, so r = 0"},
+    {"id": "pearson_correlation.noisy_pair", "op": "pearson_correlation", "args": {"x": [-0.125, 4.5, 1.625, 1.5, 4.75, -3.5, -1.25, 0.0, -4.25, -1.75, 4.75, 4.0, -1.625, 4.875, 1.25, 4.375, -5.0, -3.125, -3.0, -1.875, 2.625, -4.25, 4.25, 3.0, -1.25, -1.5, -3.875, -1.375, 2.0, 4.75, 0.75, -3.5, -2.875, 0.75, 2.25, -1.625, 2.125, -3.25, -0.5, 3.625, 3.25, 0.25, 4.375, 0.125, -4.375, -3.875, 3.25, -1.25, 0.25, 2.25, 0.5, -2.875, -1.375, -1.875, -1.25, -3.875, -4.0, -4.625, 2.75, 5.0, -3.625, -0.375, 4.25, -3.875], "y": [-1.8125, -1.625, 0.1875, -3.125, 3.75, 1.5, 2.625, 2.625, -6.0, -4.75, 1.875, -0.875, 4.0625, -0.8125, 5.125, 4.8125, 2.5, -0.1875, 1.125, -4.0625, 1.1875, -3.0, 1.125, -2.25, 1.25, -4.125, -6.1875, 2.9375, 4.5, 2.375, -3.125, 2.0, -2.0625, -1.125, -1.5, -1.8125, -2.3125, -5.125, -5.0, 0.5625, 4.5, -2.375, 4.9375, -0.9375, -1.9375, 2.1875, -0.125, 1.125, 1.125, -3.875, 4.875, -5.6875, -1.0625, -0.3125, -5.625, -4.3125, -6.25, -0.4375, 3.25, 4.625, 1.6875, 1.4375, 5.125, -3.4375]}, "expected": 0.4263289912804543, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "64 random eighths from random.Random(371) and half of each plus more random eighths"},
+    {"id": "pearson_correlation.lengths_differ", "op": "pearson_correlation", "args": {"x": [0.0, 1.0, 0.5], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "x and y must be the same length"},
+    {"id": "pearson_correlation.one_sample", "op": "pearson_correlation", "args": {"x": [1.0], "y": [2.0]}, "error": "invalid_argument", "source": "N must be at least 2"},
+    {"id": "pearson_correlation.constant_x", "op": "pearson_correlation", "args": {"x": [1.0, 1.0, 1.0], "y": [2.0, 1.0, 3.0]}, "error": "invalid_argument", "source": "x must not be constant"},
+    {"id": "pearson_correlation.constant_y", "op": "pearson_correlation", "args": {"x": [0.0, 1.0, 0.5], "y": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "y must not be constant"},
+    {"id": "pearson_correlation.nan", "op": "pearson_correlation", "args": {"x": [0.0, 1.0, 0.5], "y": [0.0, "nan", 1.0]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

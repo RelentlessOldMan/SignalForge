@@ -416,6 +416,11 @@ rule for code not written yet.
   `n₀ = N(N − 1)/2`; `n₁`, `n₂` = `Σ t(t − 1)/2` over the tie groups of `x` and of `y`;
   `tau = (n_c − n_d)/√((n₀ − n₁)(n₀ − n₂))`, the product in float before the square root.
   Real, finite, equal lengths; `N ≥ 2`; neither record constant. **(implemented)**
+- **Pearson correlation** ([ADR 0371](adr/0371-pearson.md); `pearson_correlation(x, y)`, C#
+  `Measurements.PearsonCorrelation`): float means `(Σ x)/N`, `(Σ y)/N`;
+  `r = Σ (x − x̄)(y − ȳ)/√(Σ (x − x̄)² · Σ (y − ȳ)²)`, the product, then the square root, then
+  the quotient; not clamped. Real, finite, equal lengths; `N ≥ 2`; neither record constant.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

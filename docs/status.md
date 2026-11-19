@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Pearson correlation in `measurements` (`Σ (x − x̄)(y − ȳ)/√(Σ (x − x̄)² Σ (y − ȳ)²)`
-     of two equal-length real records, float means, the product before the square root).
+   - distance correlation in `measurements` (Székely, Rizzo and Bakirov: the double-centred
+     distance matrices `A` and `B`, `dCov² = mean(A·B)`, and
+     `dCor = √(dCov²(x, y)/√(dVar²(x) dVar²(y)))`).
 
 ## Built
 
@@ -2896,6 +2897,10 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.KendallTau`): concordant less discordant pairs over the tie-corrected count.
   Python 7820 passed, 2 skipped; .NET 7002 passed; conformance 4912/4912 in both. Version
   2026.11.18.59.
+- 2026-11-18: Pearson correlation (ADR 0371): `pearson_correlation(x, y)` in `measurements`
+  (C# `Measurements.PearsonCorrelation`): the product-moment correlation with float means.
+  Python 7832 passed, 2 skipped; .NET 7014 passed; conformance 4921/4921 in both. Version
+  2026.11.18.60.
 
 ## Not built
 

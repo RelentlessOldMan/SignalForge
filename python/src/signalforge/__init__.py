@@ -294,6 +294,7 @@ from .measurements import (
     noise_figure_cascade,
     noise_figure_y_factor,
     octave_band_levels,
+    pearson_correlation,
     permutation_entropy,
     petrosian_dimension,
     pettitt,
@@ -550,7 +551,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.59"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.60"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -907,6 +908,7 @@ __all__ = [
     "peak_hold",
     "peak_widths",
     "peaking_eq",
+    "pearson_correlation",
     "permutation_entropy",
     "petrosian_dimension",
     "pettitt",
