@@ -293,6 +293,7 @@ from .measurements import (
     goodman_kruskal_gamma,
     hadamard_deviation,
     hedges_g,
+    hellinger_distance,
     higuchi_dimension,
     hjorth_parameters,
     hodges_lehmann,
@@ -588,7 +589,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.35"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.36"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -874,6 +875,7 @@ __all__ = [
     "harmonic_series",
     "harmonic_to_noise",
     "hedges_g",
+    "hellinger_distance",
     "high_shelf",
     "higuchi_dimension",
     "hjorth_parameters",

@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Hellinger distance in `measurements` (`p` and `q` as for the Jensen–Shannon
-     divergence: `√(½·Σ(√Pᵢ − √Qᵢ)²)`, from 0 to 1).
+   - The Bhattacharyya distance in `measurements` (`p` and `q` as for the Hellinger distance:
+     `−ln Σ√(Pᵢ·Qᵢ)`, an error when the two share no support).
 
 ## Built
 
@@ -3081,6 +3081,11 @@ Updated with every chunk of work. Dates are absolute.
   discrete distributions from their average, in nats, from 0 to ln 2.
   Python 8289 passed, 2 skipped; .NET 7435 passed; conformance 5262/5262 in both. Version
   2026.11.19.35.
+- 2026-11-19: The Hellinger distance (ADR 0409): `hellinger_distance(p, q)` in
+  `measurements` (C# `Measurements.HellingerDistance`): the root-mean-square gap between the
+  square roots of two discrete distributions, from 0 to 1.
+  Python 8302 passed, 2 skipped; .NET 7447 passed; conformance 5272/5272 in both. Version
+  2026.11.19.36.
 
 ## Not built
 

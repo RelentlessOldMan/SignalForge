@@ -579,6 +579,10 @@ rule for code not written yet.
   `js_divergence(p, q)`, C# `Measurements.JsDivergence`): `½·Σ [Pᵢ·ln(Pᵢ/Mᵢ) + Qᵢ·ln(Qᵢ/Mᵢ)]`
   in nats, `Mᵢ = (Pᵢ + Qᵢ)/2`, zero terms dropped, the `P` term first; clamped to `[0, ln 2]`.
   Inputs as for the Kullback–Leibler divergence, zeros allowed anywhere. **(implemented)**
+- **Hellinger distance** ([ADR 0409](adr/0409-hellinger-distance.md);
+  `hellinger_distance(p, q)`, C# `Measurements.HellingerDistance`): `√(½·Σ(√Pᵢ − √Qᵢ)²)`, the
+  squared root differences summed in order, clamped to at most 1; not `√(1 − Σ√(PᵢQᵢ))`.
+  Inputs as for the Jensen–Shannon divergence. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
