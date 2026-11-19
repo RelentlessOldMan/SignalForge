@@ -346,6 +346,7 @@ public static class Conformance
             "jeffreys_divergence" => Bind((Reals(a.Get("p")), Reals(a.Get("q"))), t => Measurements.JeffreysDivergence(t.Item1, t.Item2)),
             "cross_entropy" => Bind((Reals(a.Get("p")), Reals(a.Get("q"))), t => Measurements.CrossEntropy(t.Item1, t.Item2)),
             "triangular_discrimination" => Bind((Reals(a.Get("p")), Reals(a.Get("q"))), t => Measurements.TriangularDiscrimination(t.Item1, t.Item2)),
+            "canberra_distance" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.CanberraDistance(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

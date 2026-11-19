@@ -3043,6 +3043,34 @@ def triangular_discrimination(p: ArrayLike, q: ArrayLike) -> float:
     return min(s, 2.0)
 
 
+def canberra_distance(x: ArrayLike, y: ArrayLike) -> float:
+    """The Canberra distance between the real vectors ``x`` and ``y``: each coordinate's
+    difference over the sum of their magnitudes, added (conventions: Canberra distance;
+    ADR 0417)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a.tolist())
+    xv, yv = pair
+    if len(xv) != len(yv):
+        raise ValueError("x and y must have the same length")
+    s = 0.0
+    for a_, b_ in zip(xv, yv, strict=True):
+        if a_ == 0 and b_ == 0:
+            continue
+        s += abs(a_ - b_) / (abs(a_) + abs(b_))
+    return s
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

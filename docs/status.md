@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Canberra distance in `measurements` (two real vectors `x` and `y` of the same
-     length: `Σ |xᵢ − yᵢ|/(|xᵢ| + |yᵢ|)`, indices zero in both dropped).
+   - The Bray–Curtis dissimilarity in `measurements` (two non-negative vectors `x` and `y`
+     of the same length, not both all zero: `Σ|xᵢ − yᵢ|/Σ(xᵢ + yᵢ)`, from 0 to 1).
 
 ## Built
 
@@ -3121,6 +3121,11 @@ Updated with every chunk of work. Dates are absolute.
   divergence between two discrete distributions.
   Python 8407 passed, 2 skipped; .NET 7545 passed; conformance 5356/5356 in both. Version
   2026.11.19.43.
+- 2026-11-19: The Canberra distance (ADR 0417): `canberra_distance(x, y)` in `measurements`
+  (C# `Measurements.CanberraDistance`): an L1 distance with each coordinate scaled by its own
+  size.
+  Python 8421 passed, 2 skipped; .NET 7558 passed; conformance 5367/5367 in both. Version
+  2026.11.19.44.
 
 ## Not built
 
