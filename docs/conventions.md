@@ -487,6 +487,9 @@ rule for code not written yet.
   and 1, 1 positive; `(TP·TN − FP·FN)/√((TP + FP)(TP + FN)(TN + FP)(TN + FN))`, the product
   in `double` in that order. Equal lengths, `N ≥ 1`; both classes in both records.
   **(implemented)**
+- **F1 score** ([ADR 0386](adr/0386-f1-score.md); `f1_score(truth, decision)`, C#
+  `Measurements.F1Score`): records as for the Matthews correlation; `2TP/(2TP + FP + FN)`.
+  Equal lengths, `N ≥ 1`; at least one positive in either record. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

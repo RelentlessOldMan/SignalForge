@@ -274,6 +274,7 @@ from .measurements import (
     energy_separation,
     energy_time_curve,
     exceedance_levels,
+    f1_score,
     fisher_information,
     fleiss_kappa,
     fuzzy_entropy,
@@ -565,7 +566,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.11"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.12"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -795,6 +796,7 @@ __all__ = [
     "exciter",
     "expand",
     "expander_gain",
+    "f1_score",
     "fade",
     "farrow_delay",
     "farrow_resample",

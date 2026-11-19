@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The F1 score in `measurements` (truth and decision as for the Matthews correlation:
-     `F1 = 2TP/(2TP + FP + FN)`, the harmonic mean of precision and recall).
+   - Youden's J in `measurements` (truth and decision as for the Matthews correlation:
+     `J = TP/(TP + FN) + TN/(TN + FP) − 1`, sensitivity plus specificity less 1).
 
 ## Built
 
@@ -2968,6 +2968,10 @@ Updated with every chunk of work. Dates are absolute.
   decision against the truth.
   Python 8006 passed, 2 skipped; .NET 7174 passed; conformance 5048/5048 in both. Version
   2026.11.19.11.
+- 2026-11-19: The F1 score (ADR 0386): `f1_score(truth, decision)` in `measurements` (C#
+  `Measurements.F1Score`): the harmonic mean of the precision and recall of a binary decision.
+  Python 8017 passed, 2 skipped; .NET 7184 passed; conformance 5056/5056 in both. Version
+  2026.11.19.12.
 
 ## Not built
 
