@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The cross-entropy in `measurements` (`p` and `q` as for the Kullback–Leibler
-     divergence: `−Σ Pᵢ·ln Qᵢ` in nats, terms with `pᵢ = 0` dropped, `qᵢ = 0` where `pᵢ > 0`
-     an error).
+   - The triangular discrimination in `measurements` (`p` and `q` as for the Hellinger
+     distance: `Σ (Pᵢ − Qᵢ)²/(Pᵢ + Qᵢ)`, indices zero in both dropped, from 0 to 2).
 
 ## Built
 
@@ -3112,6 +3111,11 @@ Updated with every chunk of work. Dates are absolute.
   both ways, added.
   Python 8378 passed, 2 skipped; .NET 7518 passed; conformance 5333/5333 in both. Version
   2026.11.19.41.
+- 2026-11-19: The cross-entropy (ADR 0415): `cross_entropy(p, q)` in `measurements`
+  (C# `Measurements.CrossEntropy`): the mean code length in nats of one discrete distribution
+  coded for another.
+  Python 8393 passed, 2 skipped; .NET 7532 passed; conformance 5345/5345 in both. Version
+  2026.11.19.42.
 
 ## Not built
 

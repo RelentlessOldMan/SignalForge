@@ -604,6 +604,10 @@ rule for code not written yet.
   `jeffreys_divergence(p, q)`, C# `Measurements.JeffreysDivergence`):
   `Σ (Pᵢ − Qᵢ)·ln(Pᵢ/Qᵢ)`, summed in order; indices zero in both dropped. Inputs as for the
   Kullback–Leibler divergence; an index zero in only one is an error. **(implemented)**
+- **Cross-entropy** ([ADR 0415](adr/0415-cross-entropy.md); `cross_entropy(p, q)`,
+  C# `Measurements.CrossEntropy`): `0 − Σ Pᵢ·ln Qᵢ` in nats, summed in order over `pᵢ > 0`.
+  Inputs as for the Kullback–Leibler divergence; `qᵢ = 0` where `pᵢ > 0` is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

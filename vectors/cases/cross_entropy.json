@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "cross_entropy",
+  "description": "The cross-entropy (conventions: cross-entropy; ADR 0415).",
+  "cases": [
+    {"id": "cross_entropy.point", "op": "cross_entropy", "args": {"p": [1.0, 0.0], "q": [2.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "a point mass coded for itself: 0"},
+    {"id": "cross_entropy.fair", "op": "cross_entropy", "args": {"p": [1.0, 1.0], "q": [1.0, 1.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "a fair coin coded for itself: its entropy, ln 2"},
+    {"id": "cross_entropy.biased_under_fair", "op": "cross_entropy", "args": {"p": [3.0, 1.0], "q": [1.0, 1.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "any P coded for a fair coin: ln 2 whatever P is"},
+    {"id": "cross_entropy.fair_under_biased", "op": "cross_entropy", "args": {"p": [1.0, 1.0], "q": [3.0, 1.0]}, "expected": 0.8369882167858358, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "a fair coin coded for (3/4, 1/4): (1/2) ln(4/3) + (1/2) ln 4 = (1/2) ln(16/3)"},
+    {"id": "cross_entropy.p_zero", "op": "cross_entropy", "args": {"p": [0.0, 1.0, 1.0], "q": [2.0, 1.0, 1.0]}, "expected": 1.3862943611198906, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "p zero at index 0, dropped: Q = (1/2, 1/4, 1/4), so ln 4"},
+    {"id": "cross_entropy.counts", "op": "cross_entropy", "args": {"p": [6.0, 2.0, 1.0, 6.0, 2.0, 1.0, 1.0, 4.0, 6.0, 1.0, 0.0, 4.0, 0.0, 3.0, 1.0, 1.0], "q": [1.0, 6.0, 1.0, 3.0, 2.0, 1.0, 2.0, 3.0, 1.0, 6.0, 4.0, 4.0, 4.0, 2.0, 4.0, 3.0]}, "expected": 3.118086871658969, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "16 counts each from random.Random(415), with zeros in p"},
+    {"id": "cross_entropy.empty", "op": "cross_entropy", "args": {"p": [], "q": []}, "error": "invalid_argument", "source": "p needs a value"},
+    {"id": "cross_entropy.lengths", "op": "cross_entropy", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, 1.0]}, "error": "invalid_argument", "source": "p and q must match"},
+    {"id": "cross_entropy.negative", "op": "cross_entropy", "args": {"p": [1.0, -0.5, 3.0], "q": [2.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "cross_entropy.not_finite", "op": "cross_entropy", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, "nan", 1.0]}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "cross_entropy.zero_sum", "op": "cross_entropy", "args": {"p": [0.0, 0.0, 0.0], "q": [2.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "p must have a positive sum"},
+    {"id": "cross_entropy.infinite", "op": "cross_entropy", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "q is zero where p is not"}
+  ]
+}
