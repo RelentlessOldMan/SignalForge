@@ -451,6 +451,10 @@ rule for code not written yet.
   `goodman_kruskal_gamma(x, y)`, C# `Measurements.GoodmanKruskalGamma`): over pairs `i < j`,
   `C` concordant and `D` discordant by comparison, pairs tied in either record in neither;
   `γ = (C − D)/(C + D)`. Real, finite, equal lengths; `C + D > 0`. **(implemented)**
+- **Somers' D** ([ADR 0378](adr/0378-somers-d.md); `somers_d(x, y)`, C#
+  `Measurements.SomersD`): `d_yx`, `y` predicted from `x`; `C`, `D` as for Goodman and
+  Kruskal's gamma, `T_x` the pairs tied in `x`; `d_yx = (C − D)/(N(N − 1)/2 − T_x)`. Real,
+  finite, equal lengths; at least one pair untied in `x`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

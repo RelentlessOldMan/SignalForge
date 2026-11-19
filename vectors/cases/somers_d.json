@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "somers_d",
+  "description": "Somers' D (conventions: Somers' D; ADR 0378).",
+  "cases": [
+    {"id": "somers_d.one_swap", "op": "somers_d", "args": {"x": [1.0, 2.0, 3.0, 4.0], "y": [1.0, 3.0, 2.0, 4.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no ties: 5 concordant, 1 discordant of 6 pairs: 4/6 = 2/3, Kendall's tau"},
+    {"id": "somers_d.ties_yx", "op": "somers_d", "args": {"x": [1.0, 1.0, 2.0, 3.0], "y": [1.0, 2.0, 2.0, 1.0]}, "expected": -0.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "C = 1, D = 2; one pair tied in x: (1 - 2)/(6 - 1) = -1/5"},
+    {"id": "somers_d.ties_xy", "op": "somers_d", "args": {"x": [1.0, 2.0, 2.0, 1.0], "y": [1.0, 1.0, 2.0, 3.0]}, "expected": -0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same records swapped: two pairs tied in the predictor: (1 - 2)/(6 - 2) = -1/4"},
+    {"id": "somers_d.coarse_predictor", "op": "somers_d", "args": {"x": [0.0, 2.0, 3.0, 3.0, 1.0, 3.0, 3.0, 0.0, 1.0, 1.0, 2.0, 0.0, 3.0, 0.0, 0.0, 3.0, 2.0, 3.0, 2.0, 3.0, 3.0, 1.0, 1.0, 3.0, 3.0, 0.0, 0.0, 2.0, 1.0, 1.0, 3.0, 2.0, 3.0, 0.0, 0.0, 0.0, 2.0, 1.0, 2.0, 0.0, 1.0, 3.0, 3.0, 3.0, 0.0, 0.0, 3.0, 1.0, 3.0, 3.0], "y": [0.5, 4.5, 6.0, 6.25, 2.0, 6.25, 6.25, 0.25, 1.75, 2.5, 3.75, -0.5, 6.5, 0.75, 0.5, 6.75, 3.75, 5.5, 4.0, 6.0, 6.75, 2.75, 2.0, 5.5, 6.0, 0.5, 0.75, 4.75, 2.75, 1.25, 6.25, 3.5, 6.25, 0.75, -0.5, 0.5, 4.25, 2.5, 3.5, 0.25, 1.25, 5.25, 5.75, 5.75, -0.75, 0.25, 5.5, 1.75, 6.0, 5.5]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "50 random levels 0..3 from random.Random(378), y = 2x plus random quarters: many ties in x"},
+    {"id": "somers_d.independent", "op": "somers_d", "args": {"x": [5.125, -5.75, 1.5, -2.5, 1.75, 7.875, 3.75, -1.0, 3.0, -6.875, 1.25, 0.125, -2.125, -1.625, -1.25, -7.625, 2.875, 3.125, -3.625, 5.125, -7.125, 2.875, 5.75, 2.25, 1.25, -5.875, 1.5, -5.0, 4.375, 0.125, -6.25, -4.625, -3.625, 0.0, -6.0, 7.125, 6.25, 5.875, -1.375, -0.875], "y": [1.5, 3.0, -1.0, -3.5, 1.0, -0.5, 3.0, -3.5, 2.0, 4.0, -1.5, 0.0, -1.0, -4.0, 3.0, -1.5, -2.0, 3.5, 4.0, 1.5, -3.0, 2.5, -3.0, 1.0, 1.0, -1.5, -1.5, 3.0, 0.0, 1.0, -1.5, 2.5, 1.0, 3.5, -2.5, -1.5, 3.0, -3.0, -3.0, 2.5]}, "expected": 0.03229974160206718, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "two independent records of 40 random eighths and halves"},
+    {"id": "somers_d.lengths_differ", "op": "somers_d", "args": {"x": [0.0, 1.0, 0.5, 2.0, 3.0], "y": [1.0, 2.0, 3.0, 4.0]}, "error": "invalid_argument", "source": "x and y must be the same length"},
+    {"id": "somers_d.one_sample", "op": "somers_d", "args": {"x": [1.0], "y": [2.0]}, "error": "invalid_argument", "source": "a single sample has no pair"},
+    {"id": "somers_d.constant_x", "op": "somers_d", "args": {"x": [1.0, 1.0, 1.0, 1.0, 1.0], "y": [2.0, 1.0, 3.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "every pair is tied in x"},
+    {"id": "somers_d.nan", "op": "somers_d", "args": {"x": [0.0, 1.0, 0.5, 2.0, 3.0], "y": [0.0, "nan", 1.0, 2.0, 3.0]}, "error": "invalid_argument", "source": "samples must be finite"}
+  ]
+}

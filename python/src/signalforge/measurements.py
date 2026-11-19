@@ -1860,6 +1860,37 @@ def goodman_kruskal_gamma(x: ArrayLike, y: ArrayLike) -> float:
     return (concordant - discordant) / (concordant + discordant)
 
 
+def somers_d(x: ArrayLike, y: ArrayLike) -> float:
+    """Somers' D, ``d_yx``: concordant less discordant pairs over the pairs untied in ``x``,
+    for predicting ``y`` from ``x`` (conventions: Somers' D; ADR 0378)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    a, b = pair
+    n = a.shape[0]
+    if b.shape[0] != n:
+        raise ValueError("x and y must be the same length")
+    sa = (a[:, None] > a[None, :]).astype(np.int8) - (a[:, None] < a[None, :])
+    sb = (b[:, None] > b[None, :]).astype(np.int8) - (b[:, None] < b[None, :])
+    p = sa * sb
+    # The full matrix holds every pair twice.
+    concordant = int(np.count_nonzero(p > 0)) // 2
+    discordant = int(np.count_nonzero(p < 0)) // 2
+    # The diagonal is tied with itself; the rest of the zeros are each pair twice.
+    untied = n * (n - 1) // 2 - (int(np.count_nonzero(sa == 0)) - n) // 2
+    if untied == 0:
+        raise ValueError("no pair is untied in x")
+    return float((concordant - discordant) / untied)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

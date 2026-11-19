@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Somers' D in `measurements` (`d_yx = (C − D)/(pairs not tied in x)`, the asymmetric
-     version of Kendall's tau for predicting `y` from `x`).
+   - Kendall's W in `measurements` (the coefficient of concordance of `m` raters over `n`
+     items, a 2-D array: `W = 12S/(m²(n³ − n) − mΣT)` from the rank sums, mean ranks for
+     ties, `T = Σ(t³ − t)` per rater).
 
 ## Built
 
@@ -2929,6 +2930,10 @@ Updated with every chunk of work. Dates are absolute.
   their sum, pairs tied in either record dropped.
   Python 7908 passed, 2 skipped; .NET 7084 passed; conformance 4975/4975 in both. Version
   2026.11.19.3.
+- 2026-11-19: Somers' D (ADR 0378): `somers_d(x, y)` in `measurements` (C#
+  `Measurements.SomersD`): `d_yx`, the asymmetric Kendall's tau for predicting `y` from `x`.
+  Python 7920 passed, 2 skipped; .NET 7095 passed; conformance 4984/4984 in both. Version
+  2026.11.19.4.
 
 ## Not built
 
