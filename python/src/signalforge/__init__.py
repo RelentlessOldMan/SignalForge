@@ -224,6 +224,7 @@ from .measurements import (
     MannKendall,
     Mtie,
     NoiseFigure,
+    Pettitt,
     PhaseNoise,
     PhaseNoiseSpurs,
     PowerCcdf,
@@ -291,6 +292,7 @@ from .measurements import (
     octave_band_levels,
     permutation_entropy,
     petrosian_dimension,
+    pettitt,
     phase_noise_spurs,
     phase_noise_ssb,
     power_ccdf,
@@ -542,7 +544,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.18.54"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.18.55"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -591,6 +593,7 @@ __all__ = [
     "OccupiedBandwidth",
     "PeakEstimate",
     "PeakWidth",
+    "Pettitt",
     "PhaseNoise",
     "PhaseNoiseSpurs",
     "PowerCcdf",
@@ -896,6 +899,7 @@ __all__ = [
     "peaking_eq",
     "permutation_entropy",
     "petrosian_dimension",
+    "pettitt",
     "phase_distortion",
     "phase_noise",
     "phase_noise_spurs",

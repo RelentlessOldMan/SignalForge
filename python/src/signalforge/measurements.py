@@ -192,6 +192,16 @@ class MannKendall:
 
 
 @dataclass(frozen=True)
+class Pettitt:
+    """Pettitt's change-point statistic, where it is reached, and its approximate p-value
+    (conventions: Pettitt change-point test; ADR 0366)."""
+
+    statistic: int
+    index: int
+    p_value: float
+
+
+@dataclass(frozen=True)
 class HjorthParameters:
     """Hjorth's activity, mobility and complexity (conventions: Hjorth parameters; ADR 0324).
     Mobility is in radians per sample."""
@@ -1452,6 +1462,31 @@ def sens_slope(samples: ArrayLike) -> float:
     if k % 2:
         return float(s[k // 2])
     return (float(s[k // 2 - 1]) + float(s[k // 2])) / 2
+
+
+def pettitt(samples: ArrayLike) -> Pettitt:
+    """Pettitt's change-point test: the largest ``|U_t|`` over the splits, the last sample
+    before the change, and the approximate p-value (conventions: Pettitt change-point test;
+    ADR 0366)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 2:
+        raise ValueError("samples must have at least 2 values")
+    u = 0
+    best, where = -1, 0
+    for t in range(n - 1):
+        u += int(np.count_nonzero(x > x[t])) - int(np.count_nonzero(x < x[t]))
+        if abs(u) > best:
+            best, where = abs(u), t
+    p = min(1.0, 2 * math.exp(-6 * best * best / (n**3 + n**2)))
+    return Pettitt(best, where, p)
 
 
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:

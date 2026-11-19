@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Pettitt change-point test in `measurements` (`U_t = Σ_{i≤t<j} sign(x_j − x_i)`, the
-     statistic `K = max |U_t|`, its location, and the approximate p-value
-     `2 exp(−6K²/(N³ + N²))`).
+   - Buishand range test in `measurements` (partial sums `S_k = Σ_{i≤k} (x_i − x̄)`, the
+     rescaled range `(max S − min S)/σ` with the population standard deviation, and
+     `max |S|/σ`, with their locations).
 
 ## Built
 
@@ -2873,6 +2873,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.SensSlope`): the median of the pairwise slopes, per sample.
   Python 7768 passed, 2 skipped; .NET 6951 passed; conformance 4875/4875 in both. Version
   2026.11.18.54.
+- 2026-11-18: Pettitt change-point test (ADR 0366): `pettitt(samples)` in `measurements`
+  (C# `Measurements.Pettitt`): `K = max |U_t|`, the last sample before the change, and
+  Pettitt's approximate p-value.
+  Python 7777 passed, 2 skipped; .NET 6960 passed; conformance 4881/4881 in both. Version
+  2026.11.18.55.
 
 ## Not built
 

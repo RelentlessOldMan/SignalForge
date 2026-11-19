@@ -390,6 +390,11 @@ rule for code not written yet.
   `Measurements.SensSlope`): the median of `(x_j − x_i)/(j − i)` over every `i < j`, per
   sample; `(a + b)/2` of the two middle slopes for an even count. Real, finite; `N ≥ 2`.
   **(implemented)**
+- **Pettitt change-point test** ([ADR 0366](adr/0366-pettitt.md); `pettitt(samples)` →
+  `Pettitt(statistic, index, p_value)`, C# `Measurements.Pettitt`): `U_t = Σ_{i≤t<j}
+  sign(x_j − x_i)` for `t = 0 … N − 2`; `K = max |U_t|`; `index` the smallest `t` reaching it
+  (the last sample before the change); `p_value = min(1, 2 exp(−6K²/(N³ + N²)))`. Real,
+  finite; `N ≥ 2`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
