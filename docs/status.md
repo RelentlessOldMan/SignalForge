@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Brier score in `measurements` (`outcome` 0 or 1 and `probability` in `[0, 1]`, the
-     same length: `mean((probability − outcome)²)`).
+   - The log loss in `measurements` (`outcome` 0 or 1 and `probability` in `[0, 1]`, as for
+     the Brier score: `−mean(y·ln p + (1 − y)·ln(1 − p))`, an error where a certain forecast is
+     wrong).
 
 ## Built
 
@@ -2991,6 +2992,11 @@ Updated with every chunk of work. Dates are absolute.
   decision, no continuity correction.
   Python 8067 passed, 2 skipped; .NET 7230 passed; conformance 5094/5094 in both. Version
   2026.11.19.16.
+- 2026-11-19: The Brier score (ADR 0391): `brier_score(outcome, probability)` in
+  `measurements` (C# `Measurements.BrierScore`): the mean squared difference between a forecast
+  probability and a binary outcome.
+  Python 8080 passed, 2 skipped; .NET 7242 passed; conformance 5104/5104 in both. Version
+  2026.11.19.17.
 
 ## Not built
 

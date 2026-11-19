@@ -506,6 +506,9 @@ rule for code not written yet.
   `diagnostic_odds_ratio(truth, decision)`, C# `Measurements.DiagnosticOddsRatio`): records
   as for the Matthews correlation; `(TP·TN)/(FP·FN)`, no continuity correction. Equal
   lengths, `N ≥ 1`; `FP > 0` and `FN > 0`. **(implemented)**
+- **Brier score** ([ADR 0391](adr/0391-brier-score.md); `brier_score(outcome, probability)`,
+  C# `Measurements.BrierScore`): outcomes 0 or 1, probabilities in `[0, 1]`;
+  `(1/N)·Σ (pᵢ − yᵢ)²`, summed in order. Equal lengths, `N ≥ 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
