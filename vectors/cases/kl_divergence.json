@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "kl_divergence",
+  "description": "The Kullback-Leibler divergence (conventions: Kullback-Leibler divergence; ADR 0407).",
+  "cases": [
+    {"id": "kl_divergence.same", "op": "kl_divergence", "args": {"p": [1.0, 2.0, 3.0], "q": [2.0, 4.0, 6.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "the same distribution after scaling: 0"},
+    {"id": "kl_divergence.half", "op": "kl_divergence", "args": {"p": [1.0, 0.0], "q": [1.0, 1.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "P = (1, 0), Q = (1/2, 1/2): ln 2"},
+    {"id": "kl_divergence.coin", "op": "kl_divergence", "args": {"p": [3.0, 1.0], "q": [1.0, 1.0]}, "expected": 0.13081203594113697, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "P = (3/4, 1/4) from a fair coin: ln 2 - H(P) = (3/4) ln 3 - ln 2"},
+    {"id": "kl_divergence.reverse", "op": "kl_divergence", "args": {"p": [1.0, 1.0], "q": [3.0, 1.0]}, "expected": 0.14384103622589045, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "P fair, Q = (3/4, 1/4): ln 2 - (1/2) ln 3, not the coin case's value"},
+    {"id": "kl_divergence.counts", "op": "kl_divergence", "args": {"p": [43.0, 7.0, 19.0, 35.0, 26.0, 24.0, 40.0, 48.0, 30.0, 44.0, 34.0, 33.0, 25.0, 5.0, 25.0, 37.0], "q": [28.0, 3.0, 48.0, 33.0, 8.0, 30.0, 14.0, 32.0, 14.0, 27.0, 4.0, 14.0, 13.0, 19.0, 46.0, 49.0]}, "expected": 0.25583020280036517, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "16 counts each from random.Random(407), 1 to 50"},
+    {"id": "kl_divergence.empty", "op": "kl_divergence", "args": {"p": [], "q": []}, "error": "invalid_argument", "source": "p needs a value"},
+    {"id": "kl_divergence.lengths", "op": "kl_divergence", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, 1.0]}, "error": "invalid_argument", "source": "p and q must match"},
+    {"id": "kl_divergence.negative", "op": "kl_divergence", "args": {"p": [1.0, -0.5, 3.0], "q": [2.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "values must be non-negative"},
+    {"id": "kl_divergence.not_finite", "op": "kl_divergence", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, "inf", 1.0]}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "kl_divergence.zero_sum", "op": "kl_divergence", "args": {"p": [0.0, 0.0, 0.0], "q": [2.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "p must have a positive sum"},
+    {"id": "kl_divergence.infinite", "op": "kl_divergence", "args": {"p": [1.0, 2.0, 3.0], "q": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "q is zero where p is not"}
+  ]
+}

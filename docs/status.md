@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Kullback–Leibler divergence in `measurements` (`p` and `q` two discrete
-     distributions of equal length, non-negative, each normalized by its own sum:
-     `Σ pᵢ·ln(pᵢ/qᵢ)` in nats, terms with `pᵢ = 0` dropped, `qᵢ = 0` where `pᵢ > 0` an error).
+   - The Jensen–Shannon divergence in `measurements` (`p` and `q` as for the
+     Kullback–Leibler divergence, but zeros allowed anywhere: `½KL(P‖M) + ½KL(Q‖M)` with
+     `M = (P + Q)/2`, in nats, from 0 to ln 2).
 
 ## Built
 
@@ -3072,6 +3072,11 @@ Updated with every chunk of work. Dates are absolute.
   the two samples.
   Python 8263 passed, 2 skipped; .NET 7411 passed; conformance 5242/5242 in both. Version
   2026.11.19.33.
+- 2026-11-19: The Kullback–Leibler divergence (ADR 0407): `kl_divergence(p, q)` in
+  `measurements` (C# `Measurements.KlDivergence`): the divergence in nats of one discrete
+  distribution from another, each normalized by its own sum.
+  Python 8277 passed, 2 skipped; .NET 7424 passed; conformance 5253/5253 in both. Version
+  2026.11.19.34.
 
 ## Not built
 

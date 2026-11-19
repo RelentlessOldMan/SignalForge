@@ -570,6 +570,11 @@ rule for code not written yet.
   `hodges_lehmann(x, y)`, C# `Measurements.HodgesLehmann`): the median of the `n_x·n_y`
   differences `xᵢ − yⱼ` in `double`; with an even count `(a + b)/2` of the middle two. Each
   sample at least 1, finite. **(implemented)**
+- **Kullback–Leibler divergence** ([ADR 0407](adr/0407-kl-divergence.md);
+  `kl_divergence(p, q)`, C# `Measurements.KlDivergence`): `Σ Pᵢ·ln(Pᵢ/Qᵢ)` in nats, `P` and `Q`
+  each divided by its own sum taken in order; terms with `pᵢ = 0` dropped; below 0 from
+  rounding gives 0. Equal lengths at least 1, finite, non-negative, each sum above 0; `qᵢ = 0`
+  where `pᵢ > 0` is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
