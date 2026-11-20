@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "faith_coefficient",
+  "description": "Faith's coefficient (conventions: Faith's coefficient; ADR 0456).",
+  "cases": [
+    {"id": "faith_coefficient.identical", "op": "faith_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.75, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2: (2 + 1)/4 = 3/4, below 1 though they agree"},
+    {"id": "faith_coefficient.opposite", "op": "faith_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2: (0 + 0)/4 = 0, the least value"},
+    {"id": "faith_coefficient.independent", "op": "faith_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.375, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: (1 + 1/2)/4 = 3/8"},
+    {"id": "faith_coefficient.uneven", "op": "faith_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.4, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2: (1 + 1)/5 = 2/5"},
+    {"id": "faith_coefficient.square", "op": "faith_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.6, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: (4 + 2)/10 = 3/5"},
+    {"id": "faith_coefficient.subset", "op": "faith_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.4, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 2, FP 0, TN 2: (1 + 1)/5 = 2/5"},
+    {"id": "faith_coefficient.far_below", "op": "faith_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 1, FP 3, TN 0: 0/4 = 0"},
+    {"id": "faith_coefficient.constant", "op": "faith_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, TP 2, FN 1: (2 + 0)/3 = 2/3, no error"},
+    {"id": "faith_coefficient.all_zero", "op": "faith_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "both all 0, TN 3: (0 + 3/2)/3 = 1/2, no error"},
+    {"id": "faith_coefficient.all_one", "op": "faith_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "both all 1, TP 3: 3/3 = 1, the greatest value"},
+    {"id": "faith_coefficient.random", "op": "faith_coefficient", "args": {"truth": [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.4125, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(456), about three in ten flipped"},
+    {"id": "faith_coefficient.empty", "op": "faith_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "faith_coefficient.lengths", "op": "faith_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "faith_coefficient.not_binary", "op": "faith_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}

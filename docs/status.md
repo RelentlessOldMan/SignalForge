@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Faith's coefficient in `measurements` (two binary records as for the Jaccard index:
-     `(TP + TN/2) / n`, the shared 1s with the shared 0s counted half, from 0 to 1; never an
-     error once the records are valid).
+   - The Consonni-Todeschini coefficient in `measurements` (two binary records as for the
+     Jaccard index: `ln(1 + TP + TN) / ln(1 + n)`, matching on a log scale, from 0 to 1;
+     never an error once the records are valid).
 
 ## Built
 
@@ -3330,6 +3330,11 @@ Updated with every chunk of work. Dates are absolute.
   two binary records over the matches plus half the mismatches.
   Python 8979 passed, 2 skipped; .NET 8077 passed; conformance 5810/5810 in both. Version
   2026.11.20.1.
+- 2026-11-20: Faith's coefficient (ADR 0456): `faith_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.FaithCoefficient`): the shared 1s of two binary records
+  plus half the shared 0s, over the length.
+  Python 8996 passed, 2 skipped; .NET 8093 passed; conformance 5824/5824 in both. Version
+  2026.11.20.2.
 
 ## Not built
 

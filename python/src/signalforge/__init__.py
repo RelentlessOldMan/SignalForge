@@ -298,6 +298,7 @@ from .measurements import (
     eyraud_coefficient,
     f1_score,
     fager_mcgowan_coefficient,
+    faith_coefficient,
     fisher_information,
     fleiss_kappa,
     forbes_coefficient,
@@ -635,7 +636,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.1"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.2"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -890,6 +891,7 @@ __all__ = [
     "f1_score",
     "fade",
     "fager_mcgowan_coefficient",
+    "faith_coefficient",
     "farrow_delay",
     "farrow_resample",
     "feedback_fm",
