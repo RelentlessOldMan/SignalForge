@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Stiles' coefficient in `measurements` (two binary records as for the Jaccard index:
-     `log10(n·(|n·TP − |A|·|B|| − n/2)² / (|A|·|B|·(n − |A|)·(n − |B|)))`, the logarithm of a
-     continuity-corrected chi-square over n; an error when a record is constant or when
-     `|n·TP − |A|·|B|| = n/2`).
+   - Mountford's coefficient in `measurements` (two binary records as for the Jaccard
+     index: `2·TP / (TP·FN + TP·FP + 2·FN·FP)`, a similarity from 0 with no fixed upper end;
+     an error when the denominator is zero).
 
 ## Built
 
@@ -3306,6 +3305,11 @@ Updated with every chunk of work. Dates are absolute.
   over the product of the four margins.
   Python 8893 passed, 2 skipped; .NET 7996 passed; conformance 5739/5739 in both. Version
   2026.11.19.77.
+- 2026-11-19: Stiles' coefficient (ADR 0451): `stiles_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.StilesCoefficient`): log10 of the continuity-corrected
+  chi-square over n for two binary records.
+  Python 8911 passed, 2 skipped; .NET 8013 passed; conformance 5754/5754 in both. Version
+  2026.11.19.78.
 
 ## Not built
 

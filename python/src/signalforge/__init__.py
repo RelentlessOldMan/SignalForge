@@ -390,6 +390,7 @@ from .measurements import (
     spearman_correlation,
     speech_transmission_index,
     stage_support,
+    stiles_coefficient,
     svd_entropy,
     teager_energy,
     temporal_centroid,
@@ -630,7 +631,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.77"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.78"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1186,6 +1187,7 @@ __all__ = [
     "square",
     "stage_support",
     "stereo_width",
+    "stiles_coefficient",
     "stutter",
     "supersaw",
     "svd_entropy",
