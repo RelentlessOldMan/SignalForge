@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Russell-Rao coefficient in `measurements` (two binary records as for the Jaccard
-     index: the items both mark 1 over the length, `TP / n`).
+   - The Sokal-Sneath coefficient in `measurements` (two binary records as for the Jaccard
+     index: `TP / (TP + 2·(FN + FP))`, the Jaccard index with mismatches weighed double; an
+     error when neither record holds a 1).
 
 ## Built
 
@@ -3166,6 +3167,11 @@ Updated with every chunk of work. Dates are absolute.
   disagreements weighed double.
   Python 8531 passed, 2 skipped; .NET 7659 passed; conformance 5452/5452 in both. Version
   2026.11.19.52.
+- 2026-11-19: The Russell-Rao coefficient (ADR 0426):
+  `russell_rao_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.RussellRaoCoefficient`): the share of items two binary records both mark 1.
+  Python 8542 passed, 2 skipped; .NET 7669 passed; conformance 5460/5460 in both. Version
+  2026.11.19.53.
 
 ## Not built
 

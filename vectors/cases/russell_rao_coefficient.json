@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "russell_rao_coefficient",
+  "description": "The Russell-Rao coefficient (conventions: Russell-Rao coefficient; ADR 0426).",
+  "cases": [
+    {"id": "russell_rao_coefficient.all_ones", "op": "russell_rao_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "both all 1: 1"},
+    {"id": "russell_rao_coefficient.identical", "op": "russell_rao_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same record, half 1: 1/2 (shared 0s do not count)"},
+    {"id": "russell_rao_coefficient.all_zero", "op": "russell_rao_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no 1 at all: 0"},
+    {"id": "russell_rao_coefficient.partial", "op": "russell_rao_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 1.0], "decision": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.4, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "both 1 at items 0 and 4: 2/5"},
+    {"id": "russell_rao_coefficient.random", "op": "russell_rao_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 items each from random.Random(426)"},
+    {"id": "russell_rao_coefficient.empty", "op": "russell_rao_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "russell_rao_coefficient.lengths", "op": "russell_rao_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "russell_rao_coefficient.not_binary", "op": "russell_rao_coefficient", "args": {"truth": [1.0, 2.0, 0.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}

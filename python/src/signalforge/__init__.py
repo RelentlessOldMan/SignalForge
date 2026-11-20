@@ -353,6 +353,7 @@ from .measurements import (
     roc_auc,
     rogers_tanimoto_coefficient,
     runs_test,
+    russell_rao_coefficient,
     sample_entropy,
     schroeder_decay,
     scott_pi,
@@ -605,7 +606,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.52"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.53"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1092,6 +1093,7 @@ __all__ = [
     "rotary",
     "rrc_taps",
     "runs_test",
+    "russell_rao_coefficient",
     "saleh_amplifier",
     "sample_and_hold",
     "sample_entropy",

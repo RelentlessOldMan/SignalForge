@@ -3302,6 +3302,28 @@ def rogers_tanimoto_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
     return m / (m + 2 * u)
 
 
+def russell_rao_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Russell-Rao coefficient of two binary records of 0 and 1: the items both mark 1
+    over the length (conventions: Russell-Rao coefficient; ADR 0426)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    return int(np.count_nonzero(t & d)) / int(t.size)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

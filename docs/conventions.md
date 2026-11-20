@@ -648,6 +648,9 @@ rule for code not written yet.
   `rogers_tanimoto_coefficient(truth, decision)`, C# `Measurements.RogersTanimotoCoefficient`):
   `m / (m + 2u)`, `m` the agreements and `u` the disagreements, from integer counts. Records
   as for the Jaccard index. **(implemented)**
+- **Russell-Rao coefficient** ([ADR 0426](adr/0426-russell-rao-coefficient.md);
+  `russell_rao_coefficient(truth, decision)`, C# `Measurements.RussellRaoCoefficient`):
+  `TP / n` from integer counts. Records as for the Jaccard index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
