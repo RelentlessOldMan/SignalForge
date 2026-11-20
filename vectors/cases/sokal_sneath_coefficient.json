@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "sokal_sneath_coefficient",
+  "description": "The Sokal-Sneath coefficient (conventions: Sokal-Sneath coefficient; ADR 0427).",
+  "cases": [
+    {"id": "sokal_sneath_coefficient.identical", "op": "sokal_sneath_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same set: 1"},
+    {"id": "sokal_sneath_coefficient.subset", "op": "sokal_sneath_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 0.0]}, "expected": 0.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, two mismatches: 1/(1 + 4) = 1/5 (Jaccard 1/3)"},
+    {"id": "sokal_sneath_coefficient.disjoint", "op": "sokal_sneath_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no shared item: 0"},
+    {"id": "sokal_sneath_coefficient.partial", "op": "sokal_sneath_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "A = {0, 1, 2}, B = {1, 2, 3, 4}: TP 2, mismatches 3: 2/(2 + 6) = 1/4"},
+    {"id": "sokal_sneath_coefficient.random", "op": "sokal_sneath_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0], "decision": [0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0]}, "expected": 0.21951219512195122, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 items each from random.Random(427)"},
+    {"id": "sokal_sneath_coefficient.empty", "op": "sokal_sneath_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "sokal_sneath_coefficient.lengths", "op": "sokal_sneath_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "sokal_sneath_coefficient.not_binary", "op": "sokal_sneath_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "sokal_sneath_coefficient.no_one", "op": "sokal_sneath_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "neither record holds a 1"}
+  ]
+}

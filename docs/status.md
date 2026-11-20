@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Sokal-Sneath coefficient in `measurements` (two binary records as for the Jaccard
-     index: `TP / (TP + 2·(FN + FP))`, the Jaccard index with mismatches weighed double; an
-     error when neither record holds a 1).
+   - The Kulczynski coefficient in `measurements` (two binary records as for the Jaccard
+     index: the mean of `TP/(TP + FN)` and `TP/(TP + FP)`, recall and precision; an error
+     when either record holds no 1).
 
 ## Built
 
@@ -3172,6 +3172,12 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.RussellRaoCoefficient`): the share of items two binary records both mark 1.
   Python 8542 passed, 2 skipped; .NET 7669 passed; conformance 5460/5460 in both. Version
   2026.11.19.53.
+- 2026-11-19: The Sokal-Sneath coefficient (ADR 0427):
+  `sokal_sneath_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.SokalSneathCoefficient`): the Jaccard index of two binary records with
+  mismatches weighed double.
+  Python 8554 passed, 2 skipped; .NET 7680 passed; conformance 5469/5469 in both. Version
+  2026.11.19.54.
 
 ## Not built
 

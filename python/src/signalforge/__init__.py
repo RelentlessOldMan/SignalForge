@@ -362,6 +362,7 @@ from .measurements import (
     simple_matching_coefficient,
     slope_entropy,
     snht,
+    sokal_sneath_coefficient,
     somers_d,
     sound_exposure,
     sound_strength,
@@ -606,7 +607,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.53"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.54"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1116,6 +1117,7 @@ __all__ = [
     "slope_entropy",
     "snht",
     "soft_clip",
+    "sokal_sneath_coefficient",
     "somers_d",
     "sos_group_delay",
     "sos_response",
