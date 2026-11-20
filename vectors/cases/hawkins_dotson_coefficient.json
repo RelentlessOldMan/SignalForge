@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "hawkins_dotson_coefficient",
+  "description": "The Hawkins-Dotson coefficient (conventions: the Hawkins-Dotson coefficient; ADR 0454).",
+  "cases": [
+    {"id": "hawkins_dotson_coefficient.identical", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2: (1 + 1)/2 = 1"},
+    {"id": "hawkins_dotson_coefficient.opposite", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2: (0 + 0)/2 = 0, the least value"},
+    {"id": "hawkins_dotson_coefficient.independent", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: (1/3 + 1/3)/2 = 1/3"},
+    {"id": "hawkins_dotson_coefficient.uneven", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.4166666666666667, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2: (1/3 + 2/4)/2 = 5/12"},
+    {"id": "hawkins_dotson_coefficient.square", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: (4/6 + 4/6)/2 = 2/3"},
+    {"id": "hawkins_dotson_coefficient.subset", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.7083333333333334, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 0, TN 3: (2/3 + 3/4)/2 = 17/24"},
+    {"id": "hawkins_dotson_coefficient.far_below", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 1, FP 3, TN 0: (0 + 0)/2 = 0"},
+    {"id": "hawkins_dotson_coefficient.constant", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, TP 2, FN 1, TN 0: (2/3 + 0/1)/2 = 1/3, no error"},
+    {"id": "hawkins_dotson_coefficient.random", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]}, "expected": 0.5671296296296297, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(454), about three in ten flipped"},
+    {"id": "hawkins_dotson_coefficient.empty", "op": "hawkins_dotson_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "hawkins_dotson_coefficient.lengths", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "hawkins_dotson_coefficient.not_binary", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "hawkins_dotson_coefficient.all_zero", "op": "hawkins_dotson_coefficient", "args": {"truth": [0.0, 0.0], "decision": [0.0, 0.0]}, "error": "invalid_argument", "source": "both all 0: TP + FN + FP = 0"},
+    {"id": "hawkins_dotson_coefficient.all_one", "op": "hawkins_dotson_coefficient", "args": {"truth": [1.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "both all 1: TN + FN + FP = 0"}
+  ]
+}

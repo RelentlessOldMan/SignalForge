@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Hawkins-Dotson coefficient in `measurements` (two binary records as for the Jaccard
-     index: the mean of `TP / (TP + FN + FP)` and `TN / (TN + FN + FP)`, the Jaccard index
-     of the 1s and of the 0s, from 0 to 1; an error when either denominator is zero).
+   - The Gower-Legendre coefficient in `measurements` (two binary records as for the
+     Jaccard index: `(TP + TN) / (TP + TN + (FN + FP)/2)`, matching with the mismatches
+     weighted by half, from 0 to 1; never an error once the records are valid).
 
 ## Built
 
@@ -3320,6 +3320,11 @@ Updated with every chunk of work. Dates are absolute.
   against chance, as a difference over a sum.
   Python 8946 passed, 2 skipped; .NET 8046 passed; conformance 5783/5783 in both. Version
   2026.11.19.80.
+- 2026-11-20: The Hawkins-Dotson coefficient (ADR 0454): `hawkins_dotson_coefficient(truth,
+  decision)` in `measurements` (C# `Measurements.HawkinsDotsonCoefficient`): the mean of the
+  Jaccard indices of the 1s and of the 0s of two binary records.
+  Python 8963 passed, 2 skipped; .NET 8062 passed; conformance 5797/5797 in both. Version
+  2026.11.20.0.
 
 ## Not built
 
