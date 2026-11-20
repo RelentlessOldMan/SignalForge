@@ -866,6 +866,10 @@ rule for code not written yet.
   `size_difference(truth, decision)`, C# `Measurements.SizeDifference`):
   `(FN + FP)² / n²`, the two exact integers each converted to a double once. Records as for
   the Jaccard index; constant records are allowed. **(implemented)**
+- **Shape difference** ([ADR 0473](adr/0473-shape-difference.md);
+  `shape_difference(truth, decision)`, C# `Measurements.ShapeDifference`):
+  `(n·(FN + FP) − (FN − FP)²) / n²`, the two exact integers each converted to a double once.
+  Records as for the Jaccard index; constant records are allowed. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

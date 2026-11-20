@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "shape_difference",
+  "description": "The shape difference (conventions: the shape difference; ADR 0473).",
+  "cases": [
+    {"id": "shape_difference.identical", "op": "shape_difference", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 0, FP 0: 0, the least value"},
+    {"id": "shape_difference.opposite", "op": "shape_difference", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2, n 4: (16 - 0)/16 = 1, the greatest value"},
+    {"id": "shape_difference.independent", "op": "shape_difference", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: (8 - 0)/16 = 1/2"},
+    {"id": "shape_difference.square", "op": "shape_difference", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 1, n 10: 20/100 = 1/5"},
+    {"id": "shape_difference.subset", "op": "shape_difference", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.1388888888888889, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 0, n 6: (6 - 1)/36 = 5/36"},
+    {"id": "shape_difference.uneven", "op": "shape_difference", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.4897959183673469, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 3, n 7: (28 - 4)/49 = 24/49"},
+    {"id": "shape_difference.one_way", "op": "shape_difference", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FP 3, n 3: (9 - 9)/9 = 0, opposite but all one way"},
+    {"id": "shape_difference.random", "op": "shape_difference", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.1475, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(473), about three in ten flipped"},
+    {"id": "shape_difference.empty", "op": "shape_difference", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "shape_difference.lengths", "op": "shape_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "shape_difference.not_binary", "op": "shape_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}
