@@ -272,6 +272,7 @@ from .measurements import (
     cliff_delta,
     cohen_d,
     cohen_kappa,
+    cole_coefficient,
     correlation_sum,
     cosine_similarity_entropy,
     cramer_von_mises,
@@ -624,7 +625,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.71"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.72"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -812,6 +813,7 @@ __all__ = [
     "coherence_confidence_interval",
     "coherence_threshold",
     "coherent_output_power",
+    "cole_coefficient",
     "color_noise",
     "comb_filter",
     "compress",

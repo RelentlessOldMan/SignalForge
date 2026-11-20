@@ -3850,6 +3850,42 @@ def digby_h(truth: ArrayLike, decision: ArrayLike) -> float:
     return (px - py) / (px + py)
 
 
+def cole_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """Cole's coefficient of two binary records of 0 and 1: the cross-product difference
+    over the extreme the counts of 1 allow on its side, from -1 to 1 (conventions: Cole's
+    coefficient; ADR 0445)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    n = int(t.size)
+    nt = tp + fn
+    nd = tp + fp
+    if nt in (0, n) or nd in (0, n):
+        raise ValueError("truth and decision must not be constant")
+    cross = n * tp - nt * nd
+    if cross >= 0:
+        den = n * min(nt, nd) - nt * nd
+    else:
+        den = nt * nd - n * max(0, nt + nd - n)
+    return float(cross) / float(den)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

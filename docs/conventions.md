@@ -727,6 +727,12 @@ rule for code not written yet.
   `Measurements.DigbyH`): `(x^(3/4) − y^(3/4)) / (x^(3/4) + y^(3/4))`, `x` and `y` as for
   Yule's Q, each converted to a double once; `v^(3/4)` is `√v · √√v` from correctly rounded
   square roots, never a general power. Rules as for Yule's Q. **(implemented)**
+- **Cole's coefficient** ([ADR 0445](adr/0445-cole-coefficient.md);
+  `cole_coefficient(truth, decision)`, C# `Measurements.ColeCoefficient`): `Δ = n·TP −
+  |A|·|B|` over `n·min(|A|, |B|) − |A|·|B|` when `Δ ≥ 0`, else over
+  `|A|·|B| − n·max(0, |A| + |B| − n)`; both exact integers converted to doubles once, then
+  one division. Records as for the Jaccard index; a constant record is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

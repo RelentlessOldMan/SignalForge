@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Cole's coefficient in `measurements` (two binary records as for the Jaccard index: the
-     cross-product difference `TP·TN − FN·FP` over the largest it can be for the counts of 1
-     when it is positive, and over the magnitude of the most negative it can be when it is
-     negative, so from −1 to 1; an error when a record is constant).
+   - Anderberg's D in `measurements` (two binary records as for the Jaccard index:
+     `(σ − σ') / (2n)` with `σ = max(TP, FN) + max(FP, TN) + max(TP, FP) + max(FN, TN)` and
+     `σ' = max(|A|, n − |A|) + max(|B|, n − |B|)`, the gain in predicting one record from the
+     other; never an error once the records are valid).
 
 ## Built
 
@@ -3276,6 +3276,11 @@ Updated with every chunk of work. Dates are absolute.
   and Yule's Q.
   Python 8796 passed, 2 skipped; .NET 7905 passed; conformance 5660/5660 in both. Version
   2026.11.19.71.
+- 2026-11-19: Cole's coefficient (ADR 0445): `cole_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.ColeCoefficient`): the cross-product difference of two
+  binary records over the extreme the counts of 1 allow on its side.
+  Python 8814 passed, 2 skipped; .NET 7922 passed; conformance 5675/5675 in both. Version
+  2026.11.19.72.
 
 ## Not built
 
