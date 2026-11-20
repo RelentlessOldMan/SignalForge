@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "pattern_difference",
+  "description": "The pattern difference (conventions: the pattern difference; ADR 0474).",
+  "cases": [
+    {"id": "pattern_difference.identical", "op": "pattern_difference", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 0, FP 0: 0, the least value"},
+    {"id": "pattern_difference.opposite", "op": "pattern_difference", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2, n 4: 16/16 = 1, the greatest value"},
+    {"id": "pattern_difference.independent", "op": "pattern_difference", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 4/16 = 1/4"},
+    {"id": "pattern_difference.square", "op": "pattern_difference", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.04, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 1, n 10: 4/100 = 1/25"},
+    {"id": "pattern_difference.subset", "op": "pattern_difference", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 0: 0, disagreeing one way only"},
+    {"id": "pattern_difference.uneven", "op": "pattern_difference", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.24489795918367346, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 3, n 7: 12/49"},
+    {"id": "pattern_difference.one_way", "op": "pattern_difference", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FP 3, FN 0: 0, opposite but all one way"},
+    {"id": "pattern_difference.random", "op": "pattern_difference", "args": {"truth": [1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.09, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(474), about three in ten flipped"},
+    {"id": "pattern_difference.empty", "op": "pattern_difference", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "pattern_difference.lengths", "op": "pattern_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "pattern_difference.not_binary", "op": "pattern_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}

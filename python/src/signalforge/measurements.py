@@ -4714,6 +4714,32 @@ def shape_difference(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(n * (fn + fp) - (fn - fp) ** 2) / float(n * n)
 
 
+def pattern_difference(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The pattern difference of two binary records of 0 and 1: four times the product of
+    the shares of the two kinds of disagreement, from 0 to 1 (conventions: the pattern
+    difference; ADR 0474)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    n = int(t.size)
+    return float(4 * fn * fp) / float(n * n)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

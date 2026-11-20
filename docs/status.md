@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The pattern difference in `measurements` (`pattern_difference`; two binary records as
-     for the Jaccard index: `4·FN·FP / n²`, from 0 to 1).
+   - The variance dissimilarity in `measurements` (`variance_dissimilarity`; two binary
+     records as for the Jaccard index: `(FN + FP) / (4·n)`, from 0 to 1/4).
 
 ## Built
 
@@ -3421,6 +3421,11 @@ Updated with every chunk of work. Dates are absolute.
   records disagree less the squared imbalance of the two kinds of disagreement.
   Python 9260 passed, 2 skipped; .NET 8343 passed; conformance 6040/6040 in both. Version
   2026.11.20.19.
+- 2026-11-20: The pattern difference (ADR 0474): `pattern_difference(truth, decision)` in
+  `measurements` (C# `Measurements.PatternDifference`): four times the product of the
+  shares of the two kinds of disagreement between two binary records.
+  Python 9273 passed, 2 skipped; .NET 8356 passed; conformance 6051/6051 in both. Version
+  2026.11.20.20.
 
 ## Not built
 
