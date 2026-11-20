@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The G statistic of two binary records in `measurements` (`binary_g_statistic`; two
-     binary records as for the Jaccard index: `2·Σ cell·ln(n·cell / (row·column))` over the
-     nonzero cells, 2n times the mutual information in nats, at least 0; no error beyond the
-     record rules).
+   - The positive likelihood ratio in `measurements` (`positive_likelihood_ratio`; two
+     binary records as for the Jaccard index: the true positive rate over the false positive
+     rate, `TP·(FP + TN) / (|A|·FP)`, at least 0; an error when truth has no 1 or FP = 0).
 
 ## Built
 
@@ -3458,6 +3457,11 @@ Updated with every chunk of work. Dates are absolute.
   ratio of two binary records.
   Python 9359 passed, 2 skipped; .NET 8441 passed; conformance 6124/6124 in both. Version
   2026.11.20.26.
+- 2026-11-20: The G statistic of two binary records (ADR 0481): `binary_g_statistic(truth,
+  decision)` in `measurements` (C# `Measurements.BinaryGStatistic`): the log-likelihood
+  ratio statistic of the 2x2 table, 2n times the mutual information.
+  Python 9372 passed, 2 skipped; .NET 8454 passed; conformance 6135/6135 in both. Version
+  2026.11.20.27.
 
 ## Not built
 

@@ -902,6 +902,12 @@ rule for code not written yet.
   `ln(TP·TN / (FN·FP))`, the exact integers `TP·TN` and `FN·FP` converted to doubles once,
   one division, then the platform's natural `log`; no cell correction. Records as for the
   Jaccard index; a zero cell is an error. **(implemented)**
+- **G statistic of two binary records** ([ADR 0481](adr/0481-binary-g-statistic.md);
+  `binary_g_statistic(truth, decision)`, C# `Measurements.BinaryGStatistic`):
+  `2·Σ c·ln(n·c / (r·k))` over the nonzero cells `c` with row total `r` and column total
+  `k`, the exact integers converted to doubles once, the cells added in the order TP, FN,
+  FP, TN, then doubled; not clamped at 0. Records as for the Jaccard index; constant
+  records are allowed. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

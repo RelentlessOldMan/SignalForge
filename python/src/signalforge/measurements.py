@@ -4909,6 +4909,39 @@ def log_odds_ratio(truth: ArrayLike, decision: ArrayLike) -> float:
     return math.log(float(tp * tn) / float(fn * fp))
 
 
+def binary_g_statistic(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The G statistic of the 2x2 table of two binary records of 0 and 1: 2n times their
+    mutual information in nats, at least 0 (conventions: the G statistic of two binary
+    records; ADR 0481)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    n = int(t.size)
+    tn = n - tp - fn - fp
+    na, nb = tp + fn, tp + fp
+    total = 0.0
+    for c, ra, kb in ((tp, na, nb), (fn, na, n - nb), (fp, n - na, nb), (tn, n - na, n - nb)):
+        if c > 0:
+            total += float(c) * math.log(float(n * c) / float(ra * kb))
+    return 2.0 * total
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
