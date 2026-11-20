@@ -411,6 +411,7 @@ public static class Conformance
             "mcnemar_statistic" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.McNemarStatistic(t.Item1, t.Item2)),
             "log_odds_ratio" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.LogOddsRatio(t.Item1, t.Item2)),
             "binary_g_statistic" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.BinaryGStatistic(t.Item1, t.Item2)),
+            "positive_likelihood_ratio" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.PositiveLikelihoodRatio(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

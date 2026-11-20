@@ -908,6 +908,11 @@ rule for code not written yet.
   `k`, the exact integers converted to doubles once, the cells added in the order TP, FN,
   FP, TN, then doubled; not clamped at 0. Records as for the Jaccard index; constant
   records are allowed. **(implemented)**
+- **Positive likelihood ratio** ([ADR 0482](adr/0482-positive-likelihood-ratio.md);
+  `positive_likelihood_ratio(truth, decision)`, C# `Measurements.PositiveLikelihoodRatio`):
+  `TP·(FP + TN) / (|A|·FP)`, the two exact integers each converted to a double once, then
+  one division. Records as for the Jaccard index; truth with no 1, or `FP = 0`, is an
+  error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

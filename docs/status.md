@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The positive likelihood ratio in `measurements` (`positive_likelihood_ratio`; two
-     binary records as for the Jaccard index: the true positive rate over the false positive
-     rate, `TP·(FP + TN) / (|A|·FP)`, at least 0; an error when truth has no 1 or FP = 0).
+   - The negative likelihood ratio in `measurements` (`negative_likelihood_ratio`; two
+     binary records as for the Jaccard index: the false negative rate over the true negative
+     rate, `FN·(FP + TN) / (|A|·TN)`, at least 0; an error when truth has no 1 or TN = 0).
 
 ## Built
 
@@ -3462,6 +3462,11 @@ Updated with every chunk of work. Dates are absolute.
   ratio statistic of the 2x2 table, 2n times the mutual information.
   Python 9372 passed, 2 skipped; .NET 8454 passed; conformance 6135/6135 in both. Version
   2026.11.20.27.
+- 2026-11-20: The positive likelihood ratio (ADR 0482): `positive_likelihood_ratio(truth,
+  decision)` in `measurements` (C# `Measurements.PositiveLikelihoodRatio`): the true
+  positive rate over the false positive rate.
+  Python 9387 passed, 2 skipped; .NET 8469 passed; conformance 6148/6148 in both. Version
+  2026.11.20.28.
 
 ## Not built
 
