@@ -408,6 +408,7 @@ public static class Conformance
             "lance_williams_distance" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.LanceWilliamsDistance(t.Item1, t.Item2)),
             "chord_distance" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.ChordDistance(t.Item1, t.Item2)),
             "binary_chi_square" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.BinaryChiSquare(t.Item1, t.Item2)),
+            "mcnemar_statistic" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.McNemarStatistic(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

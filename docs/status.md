@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - McNemar's statistic in `measurements` (`mcnemar_statistic`; two binary records as for
-     the Jaccard index: `(FN − FP)² / (FN + FP)`, at least 0; an error when the records
-     agree everywhere).
+   - The log odds ratio in `measurements` (`log_odds_ratio`; two binary records as for the
+     Jaccard index: `ln(TP·TN / (FN·FP))`, any real number; an error when a cell is 0).
 
 ## Built
 
@@ -3447,6 +3446,11 @@ Updated with every chunk of work. Dates are absolute.
   Pearson's statistic of the 2x2 table, no continuity correction.
   Python 9331 passed, 2 skipped; .NET 8413 passed; conformance 6100/6100 in both. Version
   2026.11.20.24.
+- 2026-11-20: McNemar's statistic (ADR 0479): `mcnemar_statistic(truth, decision)` in
+  `measurements` (C# `Measurements.McNemarStatistic`): `(FN − FP)² / (FN + FP)` for two
+  paired binary records, no continuity correction.
+  Python 9345 passed, 2 skipped; .NET 8427 passed; conformance 6112/6112 in both. Version
+  2026.11.20.25.
 
 ## Not built
 

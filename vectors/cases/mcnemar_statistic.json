@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "mcnemar_statistic",
+  "description": "McNemar's statistic (conventions: McNemar's statistic; ADR 0479).",
+  "cases": [
+    {"id": "mcnemar_statistic.balanced", "op": "mcnemar_statistic", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 1: 0/2 = 0, the least value"},
+    {"id": "mcnemar_statistic.opposite", "op": "mcnemar_statistic", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2: 0"},
+    {"id": "mcnemar_statistic.subset", "op": "mcnemar_statistic", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 0: 4/2 = 2 = FN + FP"},
+    {"id": "mcnemar_statistic.square", "op": "mcnemar_statistic", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 3, FP 1: 4/4 = 1"},
+    {"id": "mcnemar_statistic.uneven", "op": "mcnemar_statistic", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 3: 4/4 = 1"},
+    {"id": "mcnemar_statistic.lopsided", "op": "mcnemar_statistic", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0]}, "expected": 1.8, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 4, FP 1: 9/5"},
+    {"id": "mcnemar_statistic.one_way", "op": "mcnemar_statistic", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0]}, "expected": 3.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FP 3, FN 0: 9/3 = 3 = n, the greatest value"},
+    {"id": "mcnemar_statistic.random", "op": "mcnemar_statistic", "args": {"truth": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0], "decision": [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 4.454545454545454, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(479), about three in ten flipped"},
+    {"id": "mcnemar_statistic.empty", "op": "mcnemar_statistic", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "mcnemar_statistic.lengths", "op": "mcnemar_statistic", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "mcnemar_statistic.not_binary", "op": "mcnemar_statistic", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "mcnemar_statistic.agree", "op": "mcnemar_statistic", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "equal records: FN + FP = 0"}
+  ]
+}

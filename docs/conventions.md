@@ -892,6 +892,11 @@ rule for code not written yet.
   with `phi = (TP·TN − FN·FP) / sqrt(u · v)`, `u = |A|·|B|`, `v = (n − |A|)·(n − |B|)`, each
   exact integer converted to a double once. No continuity correction. Records as for the
   Jaccard index; a constant record is an error. **(implemented)**
+- **McNemar's statistic** ([ADR 0479](adr/0479-mcnemar-statistic.md);
+  `mcnemar_statistic(truth, decision)`, C# `Measurements.McNemarStatistic`):
+  `(FN − FP)² / (FN + FP)`, the two exact integers each converted to a double once; no
+  continuity correction. Records as for the Jaccard index; records that agree everywhere
+  are an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
