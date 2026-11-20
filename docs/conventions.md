@@ -718,6 +718,11 @@ rule for code not written yet.
   `4·(TP·TN − FN·FP) / ((TP + TN)² + (FN + FP)²)`, both exact integers converted to doubles
   once, then one division. Records as for the Jaccard index; no other error, since the
   denominator is at least `n²/2`. **(implemented)**
+- **Pearson-Heron II coefficient** ([ADR 0443](adr/0443-pearson-heron-ii.md);
+  `pearson_heron_ii(truth, decision)`, C# `Measurements.PearsonHeronII`):
+  `cos(π·√y / (√x + √y))`, `x` and `y` as for Yule's Q, each converted to a double once and
+  rooted once, then `π·sy`, the division and the cosine in that order. Rules as for Yule's
+  Q. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

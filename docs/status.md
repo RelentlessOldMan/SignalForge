@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Pearson-Heron II coefficient in `measurements` (two binary records as for the
-     Jaccard index: `cos(π·√(FN·FP) / (√(TP·TN) + √(FN·FP)))`, an approximation of the
-     tetrachoric correlation; an error when `TP·TN + FN·FP` is zero).
+   - Digby's H in `measurements` (two binary records as for the Jaccard index:
+     `(x^(3/4) − y^(3/4)) / (x^(3/4) + y^(3/4))` with `x = TP·TN`, `y = FN·FP`, between
+     Yule's Q (power 1) and Yule's Y (power 1/2); an error when `x + y` is zero).
 
 ## Built
 
@@ -3264,6 +3264,12 @@ Updated with every chunk of work. Dates are absolute.
   binary records over the squared agreements and disagreements.
   Python 8766 passed, 2 skipped; .NET 7877 passed; conformance 5636/5636 in both. Version
   2026.11.19.69.
+- 2026-11-19: The Pearson-Heron II coefficient (ADR 0443):
+  `pearson_heron_ii(truth, decision)` in `measurements` (C# `Measurements.PearsonHeronII`):
+  an approximation of the tetrachoric correlation of two binary records, `sin(π·Y/2)` of
+  Yule's Y.
+  Python 8781 passed, 2 skipped; .NET 7891 passed; conformance 5648/5648 in both. Version
+  2026.11.19.70.
 
 ## Not built
 

@@ -349,6 +349,7 @@ from .measurements import (
     octave_band_levels,
     overlap_coefficient,
     pearson_correlation,
+    pearson_heron_ii,
     permutation_entropy,
     petrosian_dimension,
     pettitt,
@@ -622,7 +623,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.69"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.70"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1034,6 +1035,7 @@ __all__ = [
     "peak_widths",
     "peaking_eq",
     "pearson_correlation",
+    "pearson_heron_ii",
     "permutation_entropy",
     "petrosian_dimension",
     "pettitt",

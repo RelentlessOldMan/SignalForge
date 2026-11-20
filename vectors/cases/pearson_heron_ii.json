@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "pearson_heron_ii",
+  "description": "The Pearson-Heron II coefficient (conventions: Pearson-Heron II coefficient; ADR 0443).",
+  "cases": [
+    {"id": "pearson_heron_ii.identical", "op": "pearson_heron_ii", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 2, TN 2, no mismatch: cos 0 = 1"},
+    {"id": "pearson_heron_ii.opposite", "op": "pearson_heron_ii", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "FN 2, FP 2, no match: cos pi = -1"},
+    {"id": "pearson_heron_ii.independent", "op": "pearson_heron_ii", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.9311762490793703e-41, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one of each cell: cos(pi/2) = 0"},
+    {"id": "pearson_heron_ii.uneven", "op": "pearson_heron_ii", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.2662553420414155, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 1, FN 1, FP 1, TN 2: cos(pi/(sqrt 2 + 1)) = cos(pi (sqrt 2 - 1))"},
+    {"id": "pearson_heron_ii.square", "op": "pearson_heron_ii", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.8090169943749475, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 4, TN 4, FN 1, FP 1: cos(pi/5) = (1 + sqrt 5)/4"},
+    {"id": "pearson_heron_ii.third", "op": "pearson_heron_ii", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 2, TN 2, FN 1, FP 1: cos(pi/3) = 1/2"},
+    {"id": "pearson_heron_ii.subset", "op": "pearson_heron_ii", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 1, FN 2, FP 0, TN 2: FP empty gives cos 0 = 1"},
+    {"id": "pearson_heron_ii.random", "op": "pearson_heron_ii", "args": {"truth": [0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0], "decision": [0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0]}, "expected": 0.6159757358816632, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "40 bits from random.Random(443), about three in ten flipped"},
+    {"id": "pearson_heron_ii.empty", "op": "pearson_heron_ii", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "pearson_heron_ii.lengths", "op": "pearson_heron_ii", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "pearson_heron_ii.not_binary", "op": "pearson_heron_ii", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "pearson_heron_ii.constant", "op": "pearson_heron_ii", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth all 1: TN and FP are 0, so both products are 0"}
+  ]
+}
