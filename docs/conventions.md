@@ -705,6 +705,10 @@ rule for code not written yet.
   `(n·TP − |A|·|B|) / (n·(TP + FN + FP) − |A|·|B|)`, both exact integers converted to
   doubles once, then one division. Records as for the Jaccard index; a zero denominator
   (equal constant records) is an error. **(implemented)**
+- **Braun-Blanquet coefficient** ([ADR 0440](adr/0440-braun-blanquet-coefficient.md);
+  `braun_blanquet_coefficient(truth, decision)`, C# `Measurements.BraunBlanquetCoefficient`):
+  `TP / max(|A|, |B|)`, one division of the counts. Records as for the Jaccard index; both
+  with no 1 is an error, one with no 1 gives 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

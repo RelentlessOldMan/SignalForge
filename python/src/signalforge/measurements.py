@@ -3697,6 +3697,33 @@ def gilbert_skill_score(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(n * tp - chance) / float(den)
 
 
+def braun_blanquet_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Braun-Blanquet coefficient of two binary records of 0 and 1: the items both mark
+    1 over the larger count of 1 (conventions: Braun-Blanquet coefficient; ADR 0440)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    both = int(np.count_nonzero(t & d))
+    nt = int(np.count_nonzero(t))
+    nd = int(np.count_nonzero(d))
+    if nt == 0 and nd == 0:
+        raise ValueError("truth and decision must not both be all 0")
+    return both / max(nt, nd)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

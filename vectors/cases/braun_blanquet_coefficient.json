@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "braun_blanquet_coefficient",
+  "description": "The Braun-Blanquet coefficient (conventions: Braun-Blanquet coefficient; ADR 0440).",
+  "cases": [
+    {"id": "braun_blanquet_coefficient.identical", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| = |B| = TP = 2: 1"},
+    {"id": "braun_blanquet_coefficient.subset", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 0.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 3, |B| 1, TP 1: 1/3"},
+    {"id": "braun_blanquet_coefficient.disjoint", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 2, |B| 1, TP 0: 0"},
+    {"id": "braun_blanquet_coefficient.partial", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "A = {0, 1, 2}, B = {1, 2, 3, 4}: 2/4 = 1/2"},
+    {"id": "braun_blanquet_coefficient.square", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 4, |B| 2, TP 2: 2/4 = 1/2"},
+    {"id": "braun_blanquet_coefficient.one_empty", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 2, |B| 0: 0/2 = 0"},
+    {"id": "braun_blanquet_coefficient.thirds", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 1.0, 1.0, 0.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 3, |B| 3, TP 1: 1/3"},
+    {"id": "braun_blanquet_coefficient.random", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]}, "expected": 0.38095238095238093, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 items each from random.Random(440)"},
+    {"id": "braun_blanquet_coefficient.empty", "op": "braun_blanquet_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "braun_blanquet_coefficient.lengths", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "braun_blanquet_coefficient.not_binary", "op": "braun_blanquet_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "braun_blanquet_coefficient.all_zero", "op": "braun_blanquet_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "both records all 0: max(|A|, |B|) is 0"}
+  ]
+}

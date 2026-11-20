@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Heidke skill score in `measurements` (two binary records as for the Jaccard index:
-     `2·(TP·TN − FN·FP) / ((TP + FN)·(FN + TN) + (TP + FP)·(FP + TN))`, the agreement beyond
-     chance; an error when the denominator is zero).
+   - Loevinger's H in `measurements` (two binary records as for the Jaccard index:
+     `(n·TP − |A|·|B|) / (n·min(|A|, |B|) − |A|·|B|)`, the covariance over the largest it can
+     be for those counts; an error when the denominator is zero).
 
 ## Built
 
@@ -3248,6 +3248,12 @@ Updated with every chunk of work. Dates are absolute.
   decision with the hits chance expects taken out.
   Python 8720 passed, 2 skipped; .NET 7834 passed; conformance 5599/5599 in both. Version
   2026.11.19.66.
+- 2026-11-19: The Braun-Blanquet coefficient (ADR 0440):
+  `braun_blanquet_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.BraunBlanquetCoefficient`): the shared 1s of two binary records over the
+  larger count of 1.
+  Python 8735 passed, 2 skipped; .NET 7848 passed; conformance 5611/5611 in both. Version
+  2026.11.19.67.
 
 ## Not built
 
@@ -3260,6 +3266,10 @@ packaging and publishing.
 
 ## Lessons
 
+- 2026-11-19: A measure can already exist under another name: the Heidke skill score is
+  `cohen_kappa` on 0/1 records, the Peirce skill score is `youden_j`, the threat score is
+  `jaccard_index`. Grep `__init__.py` for the equivalent measures, not only the new name,
+  before choosing a slice.
 - 2026-11-19: Python's `json` writes `float("inf")` and `float("nan")` as bare `Infinity` and
   `NaN`, which the C# reader rejects, failing every conformance test at load. A generator
   writes the strings `"inf"`, `"-inf"` and `"nan"` instead (vectors/README.md).
