@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Rogers-Tanimoto coefficient in `measurements` (two binary records as for the
-     Jaccard index: `(TP + TN) / (TP + TN + 2·(FN + FP))`, the agreements against twice the
-     disagreements).
+   - The Russell-Rao coefficient in `measurements` (two binary records as for the Jaccard
+     index: the items both mark 1 over the length, `TP / n`).
 
 ## Built
 
@@ -3161,6 +3160,12 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.SimpleMatchingCoefficient`): the share of items two binary records agree on.
   Python 8520 passed, 2 skipped; .NET 7649 passed; conformance 5444/5444 in both. Version
   2026.11.19.51.
+- 2026-11-19: The Rogers-Tanimoto coefficient (ADR 0425):
+  `rogers_tanimoto_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.RogersTanimotoCoefficient`): two binary records' agreements with the
+  disagreements weighed double.
+  Python 8531 passed, 2 skipped; .NET 7659 passed; conformance 5452/5452 in both. Version
+  2026.11.19.52.
 
 ## Not built
 

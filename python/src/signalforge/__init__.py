@@ -351,6 +351,7 @@ from .measurements import (
     rescaled_range,
     reverberation_time,
     roc_auc,
+    rogers_tanimoto_coefficient,
     runs_test,
     sample_entropy,
     schroeder_decay,
@@ -604,7 +605,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.51"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.52"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1087,6 +1088,7 @@ __all__ = [
     "ring_modulate",
     "rls_equalizer",
     "roc_auc",
+    "rogers_tanimoto_coefficient",
     "rotary",
     "rrc_taps",
     "runs_test",

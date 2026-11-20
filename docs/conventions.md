@@ -644,6 +644,10 @@ rule for code not written yet.
 - **Simple matching coefficient** ([ADR 0424](adr/0424-simple-matching-coefficient.md);
   `simple_matching_coefficient(truth, decision)`, C# `Measurements.SimpleMatchingCoefficient`):
   `(TP + TN) / n` from integer counts. Records as for the Jaccard index. **(implemented)**
+- **Rogers-Tanimoto coefficient** ([ADR 0425](adr/0425-rogers-tanimoto-coefficient.md);
+  `rogers_tanimoto_coefficient(truth, decision)`, C# `Measurements.RogersTanimotoCoefficient`):
+  `m / (m + 2u)`, `m` the agreements and `u` the disagreements, from integer counts. Records
+  as for the Jaccard index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

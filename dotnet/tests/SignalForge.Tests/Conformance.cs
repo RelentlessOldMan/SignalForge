@@ -354,6 +354,7 @@ public static class Conformance
             "overlap_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.OverlapCoefficient(t.Item1, t.Item2)),
             "tversky_index" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision")), a.D("alpha"), a.D("beta")), t => Measurements.TverskyIndex(t.Item1, t.Item2, t.Item3, t.Item4)),
             "simple_matching_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.SimpleMatchingCoefficient(t.Item1, t.Item2)),
+            "rogers_tanimoto_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.RogersTanimotoCoefficient(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

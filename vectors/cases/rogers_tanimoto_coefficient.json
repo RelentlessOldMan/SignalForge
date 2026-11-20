@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "rogers_tanimoto_coefficient",
+  "description": "The Rogers-Tanimoto coefficient (conventions: Rogers-Tanimoto coefficient; ADR 0425).",
+  "cases": [
+    {"id": "rogers_tanimoto_coefficient.identical", "op": "rogers_tanimoto_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same record: 1"},
+    {"id": "rogers_tanimoto_coefficient.all_zero", "op": "rogers_tanimoto_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "shared absences count: 1"},
+    {"id": "rogers_tanimoto_coefficient.opposite", "op": "rogers_tanimoto_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "every item differs: 0"},
+    {"id": "rogers_tanimoto_coefficient.partial", "op": "rogers_tanimoto_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 1.0], "decision": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.42857142857142855, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "agree at items 0, 2, 4, differ at 1, 3: 3/(3 + 4) = 3/7"},
+    {"id": "rogers_tanimoto_coefficient.random", "op": "rogers_tanimoto_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0]}, "expected": 0.6, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(425), about a fifth flipped"},
+    {"id": "rogers_tanimoto_coefficient.empty", "op": "rogers_tanimoto_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "rogers_tanimoto_coefficient.lengths", "op": "rogers_tanimoto_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "rogers_tanimoto_coefficient.not_binary", "op": "rogers_tanimoto_coefficient", "args": {"truth": [1.0, 2.0, 0.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}
