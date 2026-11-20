@@ -769,6 +769,11 @@ rule for code not written yet.
   `2·TP / (TP·FN + TP·FP + 2·FN·FP)`, both exact integers converted to doubles once, then
   one division. Records as for the Jaccard index; a zero denominator is an error.
   **(implemented)**
+- **Tarwid's coefficient** ([ADR 0453](adr/0453-tarwid-coefficient.md);
+  `tarwid_coefficient(truth, decision)`, C# `Measurements.TarwidCoefficient`):
+  `(n·TP − |A|·|B|) / (n·TP + |A|·|B|)`, both exact integers converted to doubles once,
+  then one division. Records as for the Jaccard index; a record with no 1 is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

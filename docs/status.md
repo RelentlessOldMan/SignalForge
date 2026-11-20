@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Tarwid's coefficient in `measurements` (two binary records as for the Jaccard index:
-     `(n·TP − |A|·|B|) / (n·TP + |A|·|B|)`, the shared 1s against chance, from −1 to 1; an
-     error when both `TP` and `|A|·|B|` are zero).
+   - The Hawkins-Dotson coefficient in `measurements` (two binary records as for the Jaccard
+     index: the mean of `TP / (TP + FN + FP)` and `TN / (TN + FN + FP)`, the Jaccard index
+     of the 1s and of the 0s, from 0 to 1; an error when either denominator is zero).
 
 ## Built
 
@@ -3315,6 +3315,11 @@ Updated with every chunk of work. Dates are absolute.
   binary records over the products of the counts.
   Python 8928 passed, 2 skipped; .NET 8029 passed; conformance 5768/5768 in both. Version
   2026.11.19.79.
+- 2026-11-19: Tarwid's coefficient (ADR 0453): `tarwid_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.TarwidCoefficient`): the shared 1s of two binary records
+  against chance, as a difference over a sum.
+  Python 8946 passed, 2 skipped; .NET 8046 passed; conformance 5783/5783 in both. Version
+  2026.11.19.80.
 
 ## Not built
 

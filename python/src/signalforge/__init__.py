@@ -393,6 +393,7 @@ from .measurements import (
     stage_support,
     stiles_coefficient,
     svd_entropy,
+    tarwid_coefficient,
     teager_energy,
     temporal_centroid,
     time_deviation,
@@ -632,7 +633,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.79"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.80"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1195,6 +1196,7 @@ __all__ = [
     "svd_entropy",
     "svf",
     "tape_stop",
+    "tarwid_coefficient",
     "teager_energy",
     "temporal_centroid",
     "thiran_allpass",
