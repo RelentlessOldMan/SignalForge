@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The size difference in `measurements` (`size_difference`; two binary records as for
-     the Jaccard index: `(FN + FP)² / n²`, the squared share of disagreements, from 0 to 1).
+   - The shape difference in `measurements` (`shape_difference`; two binary records as for
+     the Jaccard index: `(n·(FN + FP) − (FN − FP)²) / n²`, from 0 to 1).
 
 ## Built
 
@@ -3411,6 +3411,11 @@ Updated with every chunk of work. Dates are absolute.
   two binary records as 0/1 values.
   Python 9234 passed, 2 skipped; .NET 8317 passed; conformance 6018/6018 in both. Version
   2026.11.20.17.
+- 2026-11-20: The size difference (ADR 0472): `size_difference(truth, decision)` in
+  `measurements` (C# `Measurements.SizeDifference`): the squared share of items where two
+  binary records disagree.
+  Python 9247 passed, 2 skipped; .NET 8330 passed; conformance 6029/6029 in both. Version
+  2026.11.20.18.
 
 ## Not built
 

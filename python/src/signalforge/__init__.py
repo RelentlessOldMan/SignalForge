@@ -396,6 +396,7 @@ from .measurements import (
     sens_slope,
     sfdr,
     simple_matching_coefficient,
+    size_difference,
     slope_entropy,
     snht,
     sokal_sneath_coefficient,
@@ -651,7 +652,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.17"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.18"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1191,6 +1192,7 @@ __all__ = [
     "sfdr",
     "simple_matching_coefficient",
     "sine_fold",
+    "size_difference",
     "slew_limiter",
     "slicer",
     "sliding_dft",

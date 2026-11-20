@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "size_difference",
+  "description": "The size difference (conventions: the size difference; ADR 0472).",
+  "cases": [
+    {"id": "size_difference.identical", "op": "size_difference", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN + FP 0: 0, the least value"},
+    {"id": "size_difference.opposite", "op": "size_difference", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN + FP 4, n 4: 16/16 = 1, the greatest value"},
+    {"id": "size_difference.independent", "op": "size_difference", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 4/16 = 1/4"},
+    {"id": "size_difference.square", "op": "size_difference", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.04, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 1, n 10: 4/100 = 1/25"},
+    {"id": "size_difference.subset", "op": "size_difference", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.027777777777777776, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, n 6: 1/36"},
+    {"id": "size_difference.uneven", "op": "size_difference", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.32653061224489793, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 3, n 7: 16/49"},
+    {"id": "size_difference.all_one", "op": "size_difference", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "both all 1: 0, no error"},
+    {"id": "size_difference.random", "op": "size_difference", "args": {"truth": [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0]}, "expected": 0.0625, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(472), about three in ten flipped"},
+    {"id": "size_difference.empty", "op": "size_difference", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "size_difference.lengths", "op": "size_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "size_difference.not_binary", "op": "size_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}
