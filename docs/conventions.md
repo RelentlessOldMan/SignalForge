@@ -641,6 +641,9 @@ rule for code not written yet.
   `TP / ((TP + α·FN) + β·FP)`, the denominator summed in that order. Records as for the
   Jaccard index; `alpha` and `beta` finite and at least 0; a zero denominator is an error.
   **(implemented)**
+- **Simple matching coefficient** ([ADR 0424](adr/0424-simple-matching-coefficient.md);
+  `simple_matching_coefficient(truth, decision)`, C# `Measurements.SimpleMatchingCoefficient`):
+  `(TP + TN) / n` from integer counts. Records as for the Jaccard index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -357,6 +357,7 @@ from .measurements import (
     scott_pi,
     sens_slope,
     sfdr,
+    simple_matching_coefficient,
     slope_entropy,
     snht,
     somers_d,
@@ -603,7 +604,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.50"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.51"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1103,6 +1104,7 @@ __all__ = [
     "scott_pi",
     "sens_slope",
     "sfdr",
+    "simple_matching_coefficient",
     "sine_fold",
     "slew_limiter",
     "slicer",

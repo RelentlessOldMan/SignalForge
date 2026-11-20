@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "suite": "simple_matching_coefficient",
+  "description": "The simple matching coefficient (conventions: simple matching coefficient; ADR 0424).",
+  "cases": [
+    {"id": "simple_matching_coefficient.identical", "op": "simple_matching_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same record: 1"},
+    {"id": "simple_matching_coefficient.all_zero", "op": "simple_matching_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "shared absences count: 1 (the Jaccard index is undefined here)"},
+    {"id": "simple_matching_coefficient.opposite", "op": "simple_matching_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "every item differs: 0"},
+    {"id": "simple_matching_coefficient.partial", "op": "simple_matching_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 1.0], "decision": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.6, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "agree at items 0, 2, 4: 3/5"},
+    {"id": "simple_matching_coefficient.random", "op": "simple_matching_coefficient", "args": {"truth": [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0], "decision": [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0]}, "expected": 0.9, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(424), about a tenth flipped"},
+    {"id": "simple_matching_coefficient.empty", "op": "simple_matching_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "simple_matching_coefficient.lengths", "op": "simple_matching_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "simple_matching_coefficient.not_binary", "op": "simple_matching_coefficient", "args": {"truth": [1.0, 2.0, 0.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}

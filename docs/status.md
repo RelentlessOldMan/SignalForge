@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The simple matching coefficient in `measurements` (two binary records as for the
-     Jaccard index: the items where they agree, 1s and 0s alike, over the length).
+   - The Rogers-Tanimoto coefficient in `measurements` (two binary records as for the
+     Jaccard index: `(TP + TN) / (TP + TN + 2·(FN + FP))`, the agreements against twice the
+     disagreements).
 
 ## Built
 
@@ -3155,6 +3156,11 @@ Updated with every chunk of work. Dates are absolute.
   misses and false alarms weighted apart; Jaccard and Dice as special cases.
   Python 8509 passed, 2 skipped; .NET 7639 passed; conformance 5436/5436 in both. Version
   2026.11.19.50.
+- 2026-11-19: The simple matching coefficient (ADR 0424):
+  `simple_matching_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.SimpleMatchingCoefficient`): the share of items two binary records agree on.
+  Python 8520 passed, 2 skipped; .NET 7649 passed; conformance 5444/5444 in both. Version
+  2026.11.19.51.
 
 ## Not built
 
