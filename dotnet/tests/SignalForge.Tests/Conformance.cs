@@ -373,6 +373,7 @@ public static class Conformance
             "loevinger_h" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.LoevingerH(t.Item1, t.Item2)),
             "michael_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.MichaelCoefficient(t.Item1, t.Item2)),
             "pearson_heron_ii" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.PearsonHeronII(t.Item1, t.Item2)),
+            "digby_h" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.DigbyH(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

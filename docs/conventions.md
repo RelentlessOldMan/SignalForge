@@ -723,6 +723,10 @@ rule for code not written yet.
   `cos(π·√y / (√x + √y))`, `x` and `y` as for Yule's Q, each converted to a double once and
   rooted once, then `π·sy`, the division and the cosine in that order. Rules as for Yule's
   Q. **(implemented)**
+- **Digby's H** ([ADR 0444](adr/0444-digby-h.md); `digby_h(truth, decision)`, C#
+  `Measurements.DigbyH`): `(x^(3/4) − y^(3/4)) / (x^(3/4) + y^(3/4))`, `x` and `y` as for
+  Yule's Q, each converted to a double once; `v^(3/4)` is `√v · √√v` from correctly rounded
+  square roots, never a general power. Rules as for Yule's Q. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Digby's H in `measurements` (two binary records as for the Jaccard index:
-     `(x^(3/4) − y^(3/4)) / (x^(3/4) + y^(3/4))` with `x = TP·TN`, `y = FN·FP`, between
-     Yule's Q (power 1) and Yule's Y (power 1/2); an error when `x + y` is zero).
+   - Cole's coefficient in `measurements` (two binary records as for the Jaccard index: the
+     cross-product difference `TP·TN − FN·FP` over the largest it can be for the counts of 1
+     when it is positive, and over the magnitude of the most negative it can be when it is
+     negative, so from −1 to 1; an error when a record is constant).
 
 ## Built
 
@@ -3270,6 +3271,11 @@ Updated with every chunk of work. Dates are absolute.
   Yule's Y.
   Python 8781 passed, 2 skipped; .NET 7891 passed; conformance 5648/5648 in both. Version
   2026.11.19.70.
+- 2026-11-19: Digby's H (ADR 0444): `digby_h(truth, decision)` in `measurements` (C#
+  `Measurements.DigbyH`): Yule's form at power 3/4 for two binary records, between Yule's Y
+  and Yule's Q.
+  Python 8796 passed, 2 skipped; .NET 7905 passed; conformance 5660/5660 in both. Version
+  2026.11.19.71.
 
 ## Not built
 

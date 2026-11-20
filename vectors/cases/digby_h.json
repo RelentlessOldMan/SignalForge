@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "digby_h",
+  "description": "Digby's H (conventions: Digby's H; ADR 0444).",
+  "cases": [
+    {"id": "digby_h.identical", "op": "digby_h", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 2, TN 2, no mismatch: y = 0 gives 1"},
+    {"id": "digby_h.opposite", "op": "digby_h", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "FN 2, FP 2, no match: x = 0 gives -1"},
+    {"id": "digby_h.independent", "op": "digby_h", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one of each cell: x = y = 1 gives 0"},
+    {"id": "digby_h.uneven", "op": "digby_h", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.2542302383508219, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 1, FN 1, FP 1, TN 2: x 2, y 1: (2^(3/4) - 1)/(2^(3/4) + 1)"},
+    {"id": "digby_h.square", "op": "digby_h", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.7777777777777778, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 4, TN 4, FN 1, FP 1: x 16, y 1: (8 - 1)/(8 + 1) = 7/9"},
+    {"id": "digby_h.fourth_powers", "op": "digby_h", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.9285714285714286, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 9, TN 9, FN 1, FP 1: x 81, y 1: (27 - 1)/(27 + 1) = 13/14"},
+    {"id": "digby_h.subset", "op": "digby_h", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 1, FN 2, FP 0, TN 2: FP empty, y = 0 gives 1"},
+    {"id": "digby_h.random", "op": "digby_h", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0]}, "expected": 0.5569565492442516, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "40 bits from random.Random(444), about three in ten flipped"},
+    {"id": "digby_h.empty", "op": "digby_h", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "digby_h.lengths", "op": "digby_h", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "digby_h.not_binary", "op": "digby_h", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "digby_h.constant", "op": "digby_h", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth all 1: TN and FP are 0, so both products are 0"}
+  ]
+}
