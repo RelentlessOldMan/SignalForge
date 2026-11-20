@@ -298,6 +298,7 @@ from .measurements import (
     glass_delta,
     goodman_kruskal_gamma,
     hadamard_deviation,
+    hamann_coefficient,
     hamming_distance,
     hedges_g,
     hellinger_distance,
@@ -611,7 +612,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.58"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.59"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -894,6 +895,7 @@ __all__ = [
     "goodman_kruskal_gamma",
     "haas",
     "hadamard_deviation",
+    "hamann_coefficient",
     "hamming_distance",
     "hampel_filter",
     "hard_clip",

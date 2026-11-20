@@ -670,6 +670,10 @@ rule for code not written yet.
 - **Yule's Y** ([ADR 0431](adr/0431-yule-y.md); `yule_y(truth, decision)`, C#
   `Measurements.YuleY`): `(√x − √y) / (√x + √y)`, `x` and `y` as for Yule's Q, each
   converted to a double once and rooted once. Rules as for Yule's Q. **(implemented)**
+- **Hamann coefficient** ([ADR 0432](adr/0432-hamann-coefficient.md);
+  `hamann_coefficient(truth, decision)`, C# `Measurements.HamannCoefficient`):
+  `(agreements − disagreements) / n`, an exact integer over the length. Records as for the
+  Jaccard index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

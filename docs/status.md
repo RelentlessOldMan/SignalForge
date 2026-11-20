@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Hamann coefficient in `measurements` (two binary records as for the Jaccard index:
-     the agreements minus the disagreements over the length, from −1 to 1).
+   - The Baroni-Urbani-Buser coefficient in `measurements` (two binary records as for the
+     Jaccard index: `(√(TP·TN) + TP) / (√(TP·TN) + TP + FN + FP)`; an error when both
+     records are all 0).
 
 ## Built
 
@@ -3199,6 +3200,12 @@ Updated with every chunk of work. Dates are absolute.
   companion on the same 2×2 table.
   Python 8606 passed, 2 skipped; .NET 7728 passed; conformance 5509/5509 in both. Version
   2026.11.19.58.
+- 2026-11-19: The Hamann coefficient (ADR 0432):
+  `hamann_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.HamannCoefficient`): the agreements minus the disagreements of two binary
+  records over the length.
+  Python 8619 passed, 2 skipped; .NET 7740 passed; conformance 5519/5519 in both. Version
+  2026.11.19.59.
 
 ## Not built
 

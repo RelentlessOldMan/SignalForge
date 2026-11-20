@@ -3469,6 +3469,30 @@ def yule_y(truth: ArrayLike, decision: ArrayLike) -> float:
     return (sx - sy) / (sx + sy)
 
 
+def hamann_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Hamann coefficient of two binary records of 0 and 1: the share of items they
+    agree on minus the share they disagree on (conventions: Hamann coefficient; ADR 0432)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    n = int(t.size)
+    u = int(np.count_nonzero(t ^ d))
+    return (n - 2 * u) / n
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

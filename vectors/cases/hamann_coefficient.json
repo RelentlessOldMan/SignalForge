@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "hamann_coefficient",
+  "description": "The Hamann coefficient (conventions: Hamann coefficient; ADR 0432).",
+  "cases": [
+    {"id": "hamann_coefficient.identical", "op": "hamann_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "all 4 agree: (4 - 0)/4 = 1"},
+    {"id": "hamann_coefficient.opposite", "op": "hamann_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "all 4 disagree: (0 - 4)/4 = -1"},
+    {"id": "hamann_coefficient.independent", "op": "hamann_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "2 agree, 2 disagree: 0"},
+    {"id": "hamann_coefficient.uneven", "op": "hamann_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "3 agree, 2 disagree: (3 - 2)/5 = 1/5"},
+    {"id": "hamann_coefficient.subset", "op": "hamann_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "3 agree, 2 disagree: (3 - 2)/5 = 1/5 (Yule's Q would give 1)"},
+    {"id": "hamann_coefficient.single", "op": "hamann_coefficient", "args": {"truth": [1.0], "decision": [1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one item, agreed: 1"},
+    {"id": "hamann_coefficient.random", "op": "hamann_coefficient", "args": {"truth": [0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0]}, "expected": 0.4, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(432), about three in ten flipped"},
+    {"id": "hamann_coefficient.empty", "op": "hamann_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "hamann_coefficient.lengths", "op": "hamann_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "hamann_coefficient.not_binary", "op": "hamann_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}
