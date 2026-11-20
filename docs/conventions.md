@@ -923,6 +923,11 @@ rule for code not written yet.
   exposure, `TP·(FN + TN) / ((TP + FP)·FN)`, the two exact integers each converted to a
   double once, then one division. Records as for the Jaccard index; a decision with no 1,
   or `FN = 0`, is an error. **(implemented)**
+- **Attributable fraction** ([ADR 0485](adr/0485-attributable-fraction.md);
+  `attributable_fraction(truth, decision)`, C# `Measurements.AttributableFraction`): the
+  decision as the exposure, `(TP·(FN + TN) − FN·(TP + FP)) / (TP·(FN + TN))`, the two
+  exact integers each converted to a double once, then one division. Records as for the
+  Jaccard index; `TP = 0`, or a decision with no 0, is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

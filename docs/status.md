@@ -6,10 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The attributable fraction in `measurements` (`attributable_fraction`; two binary
-     records as for the Jaccard index, the decision as the exposure: `(RR − 1) / RR` with RR
-     the relative risk, `(TP·(FN + TN) − FN·(TP + FP)) / (TP·(FN + TN))`, at most 1; an
-     error when TP = 0 or the decision has no 0).
+   - The population attributable fraction in `measurements`
+     (`population_attributable_fraction`; two binary records as for the Jaccard index, the
+     decision as the exposure: the share of truth 1s that would go if the exposed had the
+     risk of the unexposed, `1 − n·FN / (|A|·(FN + TN))`, at most 1; an error when truth has
+     no 1 or the decision has no 0).
 
 ## Built
 
@@ -3478,6 +3479,11 @@ Updated with every chunk of work. Dates are absolute.
   the decision as the exposure.
   Python 9417 passed, 2 skipped; .NET 8499 passed; conformance 6174/6174 in both. Version
   2026.11.20.30.
+- 2026-11-20: The attributable fraction (ADR 0485): `attributable_fraction(truth, decision)`
+  in `measurements` (C# `Measurements.AttributableFraction`): `(RR − 1) / RR` among the
+  exposed, the decision as the exposure.
+  Python 9432 passed, 2 skipped; .NET 8514 passed; conformance 6187/6187 in both. Version
+  2026.11.20.31.
 
 ## Not built
 

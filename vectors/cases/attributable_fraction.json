@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "attributable_fraction",
+  "description": "The attributable fraction (conventions: the attributable fraction; ADR 0485).",
+  "cases": [
+    {"id": "attributable_fraction.independent", "op": "attributable_fraction", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: (2 - 2)/2 = 0"},
+    {"id": "attributable_fraction.identical", "op": "attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 0, TN 2: 4/4 = 1, the greatest value"},
+    {"id": "attributable_fraction.square", "op": "attributable_fraction", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.75, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: (20 - 5)/20 = 3/4"},
+    {"id": "attributable_fraction.uneven", "op": "attributable_fraction", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 3, TN 1: (4 - 5)/4 = -1/4, a protective exposure"},
+    {"id": "attributable_fraction.skew", "op": "attributable_fraction", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.5555555555555556, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 3, FN 1, FP 1, TN 2: (9 - 4)/9 = 5/9"},
+    {"id": "attributable_fraction.truth_all_one", "op": "attributable_fraction", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 0, TN 0: (2 - 2)/2 = 0"},
+    {"id": "attributable_fraction.random", "op": "attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}, "expected": 0.4, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(485), about three in ten flipped"},
+    {"id": "attributable_fraction.empty", "op": "attributable_fraction", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "attributable_fraction.lengths", "op": "attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "attributable_fraction.not_binary", "op": "attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "attributable_fraction.no_tp", "op": "attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "opposite records: TP = 0"},
+    {"id": "attributable_fraction.no_truth_one", "op": "attributable_fraction", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth has no 1: TP = 0"},
+    {"id": "attributable_fraction.decision_all_one", "op": "attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the decision has no 0: FN + TN = 0"}
+  ]
+}
