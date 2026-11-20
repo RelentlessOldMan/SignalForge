@@ -5004,6 +5004,37 @@ def negative_likelihood_ratio(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(fn * (fp + tn)) / float((tp + fn) * tn)
 
 
+def relative_risk(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The relative risk of two binary records of 0 and 1, the decision as the exposure: the
+    share of truth 1s where the decision is 1 over the share where it is 0, at least 0
+    (conventions: the relative risk; ADR 0484)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    if tp + fp == 0:
+        raise ValueError("decision must hold a 1")
+    if fn == 0:
+        raise ValueError("the decision must have a false negative")
+    return float(tp * (fn + tn)) / float((tp + fp) * fn)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

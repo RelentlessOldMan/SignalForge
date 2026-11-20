@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "relative_risk",
+  "description": "The relative risk (conventions: the relative risk; ADR 0484).",
+  "cases": [
+    {"id": "relative_risk.independent", "op": "relative_risk", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 1 2/(2 1) = 1"},
+    {"id": "relative_risk.opposite", "op": "relative_risk", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FP 2, FN 2, TN 0: 0/4 = 0, the least value"},
+    {"id": "relative_risk.square", "op": "relative_risk", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 4.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: 4 5/(5 1) = 4"},
+    {"id": "relative_risk.uneven", "op": "relative_risk", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.8, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 3, TN 1: 2 2/(5 1) = 4/5"},
+    {"id": "relative_risk.skew", "op": "relative_risk", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 2.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 3, FN 1, FP 1, TN 2: 3 3/(4 1) = 9/4"},
+    {"id": "relative_risk.truth_all_one", "op": "relative_risk", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 0, TN 0: 2 1/(2 1) = 1"},
+    {"id": "relative_risk.random", "op": "relative_risk", "args": {"truth": [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0], "decision": [0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 2.965909090909091, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(484), about three in ten flipped"},
+    {"id": "relative_risk.empty", "op": "relative_risk", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "relative_risk.lengths", "op": "relative_risk", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "relative_risk.not_binary", "op": "relative_risk", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "relative_risk.no_decision_one", "op": "relative_risk", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision has no 1: TP + FP = 0"},
+    {"id": "relative_risk.no_fn", "op": "relative_risk", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "equal records: FN = 0"},
+    {"id": "relative_risk.decision_all_one", "op": "relative_risk", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the decision has no 0: FN = 0"}
+  ]
+}

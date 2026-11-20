@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The relative risk in `measurements` (`relative_risk`; two binary records as for the
-     Jaccard index, the decision as the exposure: the share of truth 1s where the decision
-     is 1 over the share where it is 0, `TP·(FN + TN) / ((TP + FP)·FN)`, at least 0; an
-     error when the decision has no 1 or FN = 0).
+   - The attributable fraction in `measurements` (`attributable_fraction`; two binary
+     records as for the Jaccard index, the decision as the exposure: `(RR − 1) / RR` with RR
+     the relative risk, `(TP·(FN + TN) − FN·(TP + FP)) / (TP·(FN + TN))`, at most 1; an
+     error when TP = 0 or the decision has no 0).
 
 ## Built
 
@@ -3473,6 +3473,11 @@ Updated with every chunk of work. Dates are absolute.
   negative rate over the true negative rate.
   Python 9402 passed, 2 skipped; .NET 8484 passed; conformance 6161/6161 in both. Version
   2026.11.20.29.
+- 2026-11-20: The relative risk (ADR 0484): `relative_risk(truth, decision)` in
+  `measurements` (C# `Measurements.RelativeRisk`): the risk ratio of two binary records,
+  the decision as the exposure.
+  Python 9417 passed, 2 skipped; .NET 8499 passed; conformance 6174/6174 in both. Version
+  2026.11.20.30.
 
 ## Not built
 
