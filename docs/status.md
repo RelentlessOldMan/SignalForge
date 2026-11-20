@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The extreme dependency score in `measurements` (`extreme_dependency_score`; two binary
-     records as for the Jaccard index: `2·ln(|A| / n) / ln(TP / n) − 1`, from −1 to 1; an
-     error when TP = 0 or TP = n).
+   - The extremal dependence index in `measurements` (`extremal_dependence_index`; two
+     binary records as for the Jaccard index: `(ln F − ln H) / (ln F + ln H)` with
+     H = TP/|A| and F = FP/(n − |A|), from −1 to 1; an error when truth is constant, TP = 0,
+     FP = 0, or H = F = 1).
 
 ## Built
 
@@ -3497,6 +3498,11 @@ Updated with every chunk of work. Dates are absolute.
   `measurements` (C# `Measurements.FrequencyBias`): the decision's 1s over the truth's.
   Python 9476 passed, 2 skipped; .NET 8558 passed; conformance 6225/6225 in both. Version
   2026.11.20.34.
+- 2026-11-20: The extreme dependency score (ADR 0489): `extreme_dependency_score(truth,
+  decision)` in `measurements` (C# `Measurements.ExtremeDependencyScore`): a skill score for
+  rare events.
+  Python 9491 passed, 2 skipped; .NET 8573 passed; conformance 6238/6238 in both. Version
+  2026.11.20.35.
 
 ## Not built
 

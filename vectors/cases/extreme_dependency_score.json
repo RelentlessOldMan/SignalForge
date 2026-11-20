@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "extreme_dependency_score",
+  "description": "The extreme dependency score (conventions: the extreme dependency score; ADR 0489).",
+  "cases": [
+    {"id": "extreme_dependency_score.identical", "op": "extreme_dependency_score", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "|A| 2, TP 2, n 4: 2 ln(1/2)/ln(1/2) - 1 = 1, the greatest value"},
+    {"id": "extreme_dependency_score.square", "op": "extreme_dependency_score", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.51294159473206, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "|A| 5, TP 4, n 10: 2 ln(1/2)/ln(2/5) - 1"},
+    {"id": "extreme_dependency_score.uneven", "op": "extreme_dependency_score", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.35268663218046975, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "|A| 3, TP 2, n 7: 2 ln(3/7)/ln(2/7) - 1"},
+    {"id": "extreme_dependency_score.skew", "op": "extreme_dependency_score", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.320942289833438, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "|A| 4, TP 3, n 7: 2 ln(4/7)/ln(3/7) - 1"},
+    {"id": "extreme_dependency_score.truth_all_one", "op": "extreme_dependency_score", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "|A| 3, TP 2, n 3: 2 ln 1/ln(2/3) - 1 = -1, the least value"},
+    {"id": "extreme_dependency_score.lone", "op": "extreme_dependency_score", "args": {"truth": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "|A| 1, TP 1, n 10: 1, false alarms do not count"},
+    {"id": "extreme_dependency_score.random", "op": "extreme_dependency_score", "args": {"truth": [0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0]}, "expected": 0.7429133973330203, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "40 bits from random.Random(489), about three in ten flipped"},
+    {"id": "extreme_dependency_score.empty", "op": "extreme_dependency_score", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "extreme_dependency_score.lengths", "op": "extreme_dependency_score", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "extreme_dependency_score.not_binary", "op": "extreme_dependency_score", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "extreme_dependency_score.no_tp", "op": "extreme_dependency_score", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "opposite records: TP = 0"},
+    {"id": "extreme_dependency_score.truth_all_zero", "op": "extreme_dependency_score", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth has no 1: TP = 0"},
+    {"id": "extreme_dependency_score.all_one", "op": "extreme_dependency_score", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "both records all 1: TP = n, ln(TP/n) = 0"}
+  ]
+}

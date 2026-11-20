@@ -945,6 +945,11 @@ rule for code not written yet.
   `frequency_bias(truth, decision)`, C# `Measurements.FrequencyBias`): `|B| / |A|`, the
   two exact counts each converted to a double once, then one division. Records as for the
   Jaccard index; truth with no 1 is an error. **(implemented)**
+- **Extreme dependency score** ([ADR 0489](adr/0489-extreme-dependency-score.md);
+  `extreme_dependency_score(truth, decision)`, C# `Measurements.ExtremeDependencyScore`):
+  `2·ln(|A| / n) / ln(TP / n) − 1`, the counts each converted to a double once and each
+  logarithm taken of one division. Records as for the Jaccard index; `TP = 0`, or
+  `TP = n`, is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

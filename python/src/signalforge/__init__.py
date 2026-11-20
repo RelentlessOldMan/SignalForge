@@ -305,6 +305,7 @@ from .measurements import (
     energy_separation,
     energy_time_curve,
     exceedance_levels,
+    extreme_dependency_score,
     eyraud_coefficient,
     f1_score,
     fager_mcgowan_coefficient,
@@ -668,7 +669,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.34"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.35"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -929,6 +930,7 @@ __all__ = [
     "exciter",
     "expand",
     "expander_gain",
+    "extreme_dependency_score",
     "eyraud_coefficient",
     "f1_score",
     "fade",
