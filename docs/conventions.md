@@ -632,6 +632,10 @@ rule for code not written yet.
   C# `Measurements.HammingDistance`): the count of indices with `xᵢ ≠ yᵢ` as doubles (`0.0`
   equals `−0.0`), an int. `x` and `y` real, finite, of equal length at least 1.
   **(implemented)**
+- **Overlap coefficient** ([ADR 0422](adr/0422-overlap-coefficient.md);
+  `overlap_coefficient(truth, decision)`, C# `Measurements.OverlapCoefficient`):
+  `|A ∩ B| / min(|A|, |B|)` from integer counts. Records as for the Jaccard index; either
+  with no 1 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "overlap_coefficient",
+  "description": "The overlap coefficient (conventions: overlap coefficient; ADR 0422).",
+  "cases": [
+    {"id": "overlap_coefficient.identical", "op": "overlap_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same set: 1"},
+    {"id": "overlap_coefficient.subset", "op": "overlap_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the decision a subset of the truth: 1 (Jaccard would give 1/3)"},
+    {"id": "overlap_coefficient.disjoint", "op": "overlap_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no shared item: 0"},
+    {"id": "overlap_coefficient.partial", "op": "overlap_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "A = {0, 1, 2}, B = {1, 2, 3, 4}: 2 shared over the smaller 3, 2/3"},
+    {"id": "overlap_coefficient.random", "op": "overlap_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.5384615384615384, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 items each from random.Random(422)"},
+    {"id": "overlap_coefficient.empty", "op": "overlap_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "overlap_coefficient.lengths", "op": "overlap_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "overlap_coefficient.not_binary", "op": "overlap_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "overlap_coefficient.no_one", "op": "overlap_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision holds no 1"}
+  ]
+}

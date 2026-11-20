@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The overlap coefficient in `measurements` (two binary records as for the Jaccard index:
-     the items both mark 1 over the smaller of the two counts of 1; an error when either has
-     no 1).
+   - The Tversky index in `measurements` (two binary records as for the Jaccard index, and
+     weights `alpha` and `beta` at least 0: `TP/(TP + α·FN + β·FP)`, Jaccard at `α = β = 1`;
+     an error when the denominator is zero).
 
 ## Built
 
@@ -3146,6 +3146,11 @@ Updated with every chunk of work. Dates are absolute.
   (C# `Measurements.HammingDistance`): the number of positions where two sequences differ.
   Python 8477 passed, 2 skipped; .NET 7610 passed; conformance 5411/5411 in both. Version
   2026.11.19.48.
+- 2026-11-19: The overlap coefficient (ADR 0422): `overlap_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.OverlapCoefficient`): the shared items of two binary
+  records over the smaller set.
+  Python 8489 passed, 2 skipped; .NET 7621 passed; conformance 5420/5420 in both. Version
+  2026.11.19.49.
 
 ## Not built
 

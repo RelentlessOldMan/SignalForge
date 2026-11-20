@@ -351,6 +351,7 @@ public static class Conformance
             "minkowski_distance" => Bind((Reals(a.Get("x")), Reals(a.Get("y")), a.D("order")), t => Measurements.MinkowskiDistance(t.Item1, t.Item2, t.Item3)),
             "chebyshev_distance" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.ChebyshevDistance(t.Item1, t.Item2)),
             "hamming_distance" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.HammingDistance(t.Item1, t.Item2)),
+            "overlap_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.OverlapCoefficient(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

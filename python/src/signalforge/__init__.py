@@ -335,6 +335,7 @@ from .measurements import (
     noise_figure_cascade,
     noise_figure_y_factor,
     octave_band_levels,
+    overlap_coefficient,
     pearson_correlation,
     permutation_entropy,
     petrosian_dimension,
@@ -601,7 +602,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.48"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.49"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -995,6 +996,7 @@ __all__ = [
     "odd_even_ratio",
     "ofdm_demodulate",
     "ofdm_modulate",
+    "overlap_coefficient",
     "pan",
     "peak_hold",
     "peak_widths",
