@@ -6,8 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The log odds ratio in `measurements` (`log_odds_ratio`; two binary records as for the
-     Jaccard index: `ln(TP·TN / (FN·FP))`, any real number; an error when a cell is 0).
+   - The G statistic of two binary records in `measurements` (`binary_g_statistic`; two
+     binary records as for the Jaccard index: `2·Σ cell·ln(n·cell / (row·column))` over the
+     nonzero cells, 2n times the mutual information in nats, at least 0; no error beyond the
+     record rules).
 
 ## Built
 
@@ -3451,6 +3453,11 @@ Updated with every chunk of work. Dates are absolute.
   paired binary records, no continuity correction.
   Python 9345 passed, 2 skipped; .NET 8427 passed; conformance 6112/6112 in both. Version
   2026.11.20.25.
+- 2026-11-20: The log odds ratio (ADR 0480): `log_odds_ratio(truth, decision)` in
+  `measurements` (C# `Measurements.LogOddsRatio`): the natural log of the diagnostic odds
+  ratio of two binary records.
+  Python 9359 passed, 2 skipped; .NET 8441 passed; conformance 6124/6124 in both. Version
+  2026.11.20.26.
 
 ## Not built
 

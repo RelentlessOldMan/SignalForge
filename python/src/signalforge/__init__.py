@@ -355,6 +355,7 @@ from .measurements import (
     ljung_box,
     loevinger_h,
     log_loss,
+    log_odds_ratio,
     mann_kendall,
     markedness,
     matthews_correlation,
@@ -659,7 +660,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.25"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.26"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1032,6 +1033,7 @@ __all__ = [
     "lms_equalizer",
     "loevinger_h",
     "log_loss",
+    "log_odds_ratio",
     "lomb_scargle",
     "lomb_scargle_bootstrap",
     "lomb_scargle_false_alarm",

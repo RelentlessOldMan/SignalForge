@@ -897,6 +897,11 @@ rule for code not written yet.
   `(FN − FP)² / (FN + FP)`, the two exact integers each converted to a double once; no
   continuity correction. Records as for the Jaccard index; records that agree everywhere
   are an error. **(implemented)**
+- **Log odds ratio** ([ADR 0480](adr/0480-log-odds-ratio.md);
+  `log_odds_ratio(truth, decision)`, C# `Measurements.LogOddsRatio`):
+  `ln(TP·TN / (FN·FP))`, the exact integers `TP·TN` and `FN·FP` converted to doubles once,
+  one division, then the platform's natural `log`; no cell correction. Records as for the
+  Jaccard index; a zero cell is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

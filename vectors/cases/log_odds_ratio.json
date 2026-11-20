@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "log_odds_ratio",
+  "description": "The log odds ratio (conventions: the log odds ratio; ADR 0480).",
+  "cases": [
+    {"id": "log_odds_ratio.independent", "op": "log_odds_ratio", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one of each cell: ln 1 = 0"},
+    {"id": "log_odds_ratio.square", "op": "log_odds_ratio", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 2.772588722239781, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 4, TN 4, FN 1, FP 1: ln 16 = 4 ln 2"},
+    {"id": "log_odds_ratio.uneven", "op": "log_odds_ratio", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -0.4054651081081644, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 3, TN 1: ln(2/3)"},
+    {"id": "log_odds_ratio.negative", "op": "log_odds_ratio", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 1.0, 1.0, 0.0]}, "expected": -1.3862943611198906, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 1, FN 2, FP 2, TN 1: ln(1/4) = -2 ln 2"},
+    {"id": "log_odds_ratio.skew", "op": "log_odds_ratio", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 1.791759469228055, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 3, FN 1, FP 1, TN 2: ln 6 = ln 2 + ln 3"},
+    {"id": "log_odds_ratio.random", "op": "log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0]}, "expected": 2.005333569526114, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "40 bits from random.Random(480), about three in ten flipped"},
+    {"id": "log_odds_ratio.empty", "op": "log_odds_ratio", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "log_odds_ratio.lengths", "op": "log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "log_odds_ratio.not_binary", "op": "log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "log_odds_ratio.no_fn", "op": "log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "equal records: FN = FP = 0"},
+    {"id": "log_odds_ratio.no_tp", "op": "log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "opposite records: TP = TN = 0"},
+    {"id": "log_odds_ratio.no_tn", "op": "log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "TN = 0"}
+  ]
+}
