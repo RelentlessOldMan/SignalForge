@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Michael's coefficient in `measurements` (two binary records as for the Jaccard index:
-     `4·(TP·TN − FN·FP) / ((TP + TN)² + (FN + FP)²)`; never an error once the records are
-     valid, since the denominator is at least `n²/2`).
+   - The Pearson-Heron II coefficient in `measurements` (two binary records as for the
+     Jaccard index: `cos(π·√(FN·FP) / (√(TP·TN) + √(FN·FP)))`, an approximation of the
+     tetrachoric correlation; an error when `TP·TN + FN·FP` is zero).
 
 ## Built
 
@@ -3259,6 +3259,11 @@ Updated with every chunk of work. Dates are absolute.
   counts of 1 allow.
   Python 8751 passed, 2 skipped; .NET 7863 passed; conformance 5624/5624 in both. Version
   2026.11.19.68.
+- 2026-11-19: Michael's coefficient (ADR 0442): `michael_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.MichaelCoefficient`): the cross-product difference of two
+  binary records over the squared agreements and disagreements.
+  Python 8766 passed, 2 skipped; .NET 7877 passed; conformance 5636/5636 in both. Version
+  2026.11.19.69.
 
 ## Not built
 

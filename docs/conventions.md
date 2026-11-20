@@ -713,6 +713,11 @@ rule for code not written yet.
   C# `Measurements.LoevingerH`): `(n·TP − |A|·|B|) / (n·min(|A|, |B|) − |A|·|B|)`, both
   exact integers converted to doubles once, then one division. Records as for the Jaccard
   index; a constant record (a zero denominator) is an error. **(implemented)**
+- **Michael's coefficient** ([ADR 0442](adr/0442-michael-coefficient.md);
+  `michael_coefficient(truth, decision)`, C# `Measurements.MichaelCoefficient`):
+  `4·(TP·TN − FN·FP) / ((TP + TN)² + (FN + FP)²)`, both exact integers converted to doubles
+  once, then one division. Records as for the Jaccard index; no other error, since the
+  denominator is at least `n²/2`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
