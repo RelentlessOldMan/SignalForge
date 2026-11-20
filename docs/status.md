@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Fossum's coefficient in `measurements` (two binary records as for the Jaccard index:
-     `n·(TP − 1/2)² / (|A|·|B|)`, a similarity that rewards shared 1s; an error when either
-     record has no 1).
+   - Eyraud's coefficient in `measurements` (two binary records as for the Jaccard index:
+     `n²·(n·TP − |A|·|B|) / (|A|·|B|·(n − |A|)·(n − |B|))`, the covariance over the product
+     of the four margins; an error when a record is constant).
 
 ## Built
 
@@ -3295,6 +3295,11 @@ Updated with every chunk of work. Dates are absolute.
   arcsine-transformed simple matching coefficient of two binary records.
   Python 8860 passed, 2 skipped; .NET 7965 passed; conformance 5712/5712 in both. Version
   2026.11.19.75.
+- 2026-11-19: Fossum's coefficient (ADR 0449): `fossum_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.FossumCoefficient`): `n·(TP − 1/2)²/(|A|·|B|)` for two
+  binary records.
+  Python 8877 passed, 2 skipped; .NET 7981 passed; conformance 5726/5726 in both. Version
+  2026.11.19.76.
 
 ## Not built
 

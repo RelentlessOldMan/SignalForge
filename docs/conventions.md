@@ -748,6 +748,11 @@ rule for code not written yet.
   `Measurements.AustinColwellCoefficient`): `p = (TP + TN)/n` from exact integers converted
   to doubles once, then `asin(√p) · 2 / π` in that order. Records as for the Jaccard index;
   no other error. **(implemented)**
+- **Fossum's coefficient** ([ADR 0449](adr/0449-fossum-coefficient.md);
+  `fossum_coefficient(truth, decision)`, C# `Measurements.FossumCoefficient`):
+  `n·(2·TP − 1)² / (4·|A|·|B|)`, both exact integers converted to doubles once, then one
+  division. Records as for the Jaccard index; a record with no 1 is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

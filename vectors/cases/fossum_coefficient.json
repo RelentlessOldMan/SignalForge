@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "fossum_coefficient",
+  "description": "Fossum's coefficient (conventions: Fossum's coefficient; ADR 0449).",
+  "cases": [
+    {"id": "fossum_coefficient.identical", "op": "fossum_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 2.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, TP 2, |A| = |B| = 2: 4 (3/2)^2/4 = 9/4"},
+    {"id": "fossum_coefficient.opposite", "op": "fossum_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, TP 0, |A| = |B| = 2: 4 (1/2)^2/4 = 1/4"},
+    {"id": "fossum_coefficient.independent", "op": "fossum_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, TP 1, |A| = |B| = 2: 4 (1/2)^2/4 = 1/4"},
+    {"id": "fossum_coefficient.uneven", "op": "fossum_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.3125, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 5, TP 1, |A| = |B| = 2: 5 (1/2)^2/4 = 5/16"},
+    {"id": "fossum_coefficient.square", "op": "fossum_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 4.9, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 10, TP 4, |A| = |B| = 5: 10 (7/2)^2/25 = 49/10"},
+    {"id": "fossum_coefficient.subset", "op": "fossum_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 2.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 6, TP 2, |A| 3, |B| 2: 6 (3/2)^2/6 = 9/4"},
+    {"id": "fossum_coefficient.far_below", "op": "fossum_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, TP 0, |A| 1, |B| 3: 4 (1/2)^2/3 = 1/3"},
+    {"id": "fossum_coefficient.constant", "op": "fossum_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 1.125, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, n 3, TP 2, |B| 2: 3 (3/2)^2/6 = 9/8, no error"},
+    {"id": "fossum_coefficient.random", "op": "fossum_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 14.626086956521739, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(449), about three in ten flipped"},
+    {"id": "fossum_coefficient.empty", "op": "fossum_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "fossum_coefficient.lengths", "op": "fossum_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "fossum_coefficient.not_binary", "op": "fossum_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "fossum_coefficient.no_decision_one", "op": "fossum_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "decision all 0: |B| = 0"},
+    {"id": "fossum_coefficient.no_truth_one", "op": "fossum_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "truth all 0: |A| = 0"}
+  ]
+}

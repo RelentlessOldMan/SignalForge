@@ -378,6 +378,7 @@ public static class Conformance
             "anderberg_d" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.AnderbergD(t.Item1, t.Item2)),
             "goodman_kruskal_lambda" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.GoodmanKruskalLambda(t.Item1, t.Item2)),
             "austin_colwell_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.AustinColwellCoefficient(t.Item1, t.Item2)),
+            "fossum_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.FossumCoefficient(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

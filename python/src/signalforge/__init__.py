@@ -300,6 +300,7 @@ from .measurements import (
     fisher_information,
     fleiss_kappa,
     forbes_coefficient,
+    fossum_coefficient,
     fowlkes_mallows_index,
     fuzzy_entropy,
     gain_compression,
@@ -628,7 +629,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.75"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.76"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -901,6 +902,7 @@ __all__ = [
     "fleiss_kappa",
     "fm_tone",
     "forbes_coefficient",
+    "fossum_coefficient",
     "fowlkes_mallows_index",
     "fractional_delay",
     "frequency_offset",
