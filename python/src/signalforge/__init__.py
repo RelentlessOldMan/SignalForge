@@ -273,6 +273,7 @@ from .measurements import (
     chatterjee_xi,
     chebyshev_distance,
     chi_square_divergence,
+    chord_distance,
     clarity,
     cliff_delta,
     cohen_d,
@@ -656,7 +657,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.22"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.23"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -832,6 +833,7 @@ __all__ = [
     "chebyshev_shaper",
     "chi_square_divergence",
     "chirp",
+    "chord_distance",
     "chorus",
     "cic_compensator",
     "cic_decimate",

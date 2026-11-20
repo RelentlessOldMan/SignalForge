@@ -882,6 +882,11 @@ rule for code not written yet.
   `lance_williams_distance(truth, decision)`, C# `Measurements.LanceWilliamsDistance`):
   `(FN + FP) / (2·TP + FN + FP)`, the two exact integers each converted to a double once.
   Records as for the Jaccard index; both all 0 is an error. **(implemented)**
+- **Chord distance of two binary records** ([ADR 0477](adr/0477-chord-distance.md);
+  `chord_distance(truth, decision)`, C# `Measurements.ChordDistance`): `sqrt(2·(1 − o))`
+  with `o = TP / sqrt(|A|·|B|)`, `TP` and `|A|·|B|` exact integers each converted to a
+  double once. Records as for the Jaccard index; a record with no 1 is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

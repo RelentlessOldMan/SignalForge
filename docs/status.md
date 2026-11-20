@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The chord distance of two binary records in `measurements` (`chord_distance`; two
-     binary records as for the Jaccard index: `sqrt(2·(1 − TP / sqrt(|A|·|B|)))`, from 0 to
-     √2; an error when a record has no 1).
+   - The chi-square statistic of two binary records in `measurements`
+     (`binary_chi_square`; two binary records as for the Jaccard index:
+     `n·(TP·TN − FN·FP)² / (|A|·|B|·(n − |A|)·(n − |B|))`, from 0 to n; a constant record
+     is an error).
 
 ## Built
 
@@ -3437,6 +3438,11 @@ Updated with every chunk of work. Dates are absolute.
   coefficient of two binary records.
   Python 9300 passed, 2 skipped; .NET 8383 passed; conformance 6074/6074 in both. Version
   2026.11.20.22.
+- 2026-11-20: The chord distance of two binary records (ADR 0477): `chord_distance(truth,
+  decision)` in `measurements` (C# `Measurements.ChordDistance`): `sqrt(2·(1 − o))` with `o`
+  the Ochiai coefficient.
+  Python 9315 passed, 2 skipped; .NET 8398 passed; conformance 6087/6087 in both. Version
+  2026.11.20.23.
 
 ## Not built
 

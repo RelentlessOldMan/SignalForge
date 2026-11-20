@@ -4793,6 +4793,35 @@ def lance_williams_distance(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(fn + fp) / float(2 * tp + fn + fp)
 
 
+def chord_distance(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The chord distance of two binary records of 0 and 1: sqrt(2 (1 - o)) with o the
+    Ochiai coefficient, from 0 to sqrt 2 (conventions: the chord distance of two binary
+    records; ADR 0477)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    if tp + fn == 0 or tp + fp == 0:
+        raise ValueError("truth and decision must each hold a 1")
+    o = float(tp) / math.sqrt(float((tp + fn) * (tp + fp)))
+    return math.sqrt(2.0 * (1.0 - o))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

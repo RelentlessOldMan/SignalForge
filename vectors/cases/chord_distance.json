@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "chord_distance",
+  "description": "The chord distance of two binary records (conventions: the chord distance of two binary records; ADR 0477).",
+  "cases": [
+    {"id": "chord_distance.identical", "op": "chord_distance", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, |A| 2, |B| 2: o 1, 0, the least value"},
+    {"id": "chord_distance.disjoint", "op": "chord_distance", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 1.4142135623730951, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 0: o 0, sqrt 2, the greatest value"},
+    {"id": "chord_distance.independent", "op": "chord_distance", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 1, |A| 2, |B| 2: o 1/2, sqrt(1) = 1"},
+    {"id": "chord_distance.square", "op": "chord_distance", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.6324555320336759, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 4, |A| 5, |B| 5: o 4/5, sqrt(2/5)"},
+    {"id": "chord_distance.subset", "op": "chord_distance", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.6058108930553725, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, |A| 3, |B| 2: o 2/sqrt 6, square 2 - 4/sqrt 6"},
+    {"id": "chord_distance.uneven", "op": "chord_distance", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.9834655260919701, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, |A| 3, |B| 5: o 2/sqrt 15, square 2 - 4/sqrt 15"},
+    {"id": "chord_distance.all_one", "op": "chord_distance", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "both all 1: o 1, 0, no error"},
+    {"id": "chord_distance.random", "op": "chord_distance", "args": {"truth": [0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0], "decision": [0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]}, "expected": 0.6161773735681639, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "40 bits from random.Random(477), about three in ten flipped"},
+    {"id": "chord_distance.empty", "op": "chord_distance", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "chord_distance.lengths", "op": "chord_distance", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "chord_distance.not_binary", "op": "chord_distance", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "chord_distance.no_truth_one", "op": "chord_distance", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "truth all 0: |A| = 0"},
+    {"id": "chord_distance.no_decision_one", "op": "chord_distance", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "decision all 0: |B| = 0"}
+  ]
+}
