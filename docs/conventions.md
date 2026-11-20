@@ -956,6 +956,14 @@ rule for code not written yet.
   converted to a double once and each logarithm taken of one division. Records as for the
   Jaccard index; a constant truth, `TP = 0`, `FP = 0`, or a decision of all 1 is an error.
   **(implemented)**
+- **Symmetric extremal dependence index**
+  ([ADR 0491](adr/0491-symmetric-extremal-dependence-index.md);
+  `symmetric_extremal_dependence_index(truth, decision)`, C#
+  `Measurements.SymmetricExtremalDependenceIndex`):
+  `(ln F − ln H − ln(1 − F) + ln(1 − H)) / (ln F + ln H + ln(1 − F) + ln(1 − H))` with
+  `H = TP / |A|`, `F = FP / (n − |A|)`; each logarithm taken of one division of two counts,
+  each converted to a double once, the sums left to right. Records as for the Jaccard
+  index; any cell equal to 0 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

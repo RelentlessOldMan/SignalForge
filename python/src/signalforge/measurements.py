@@ -5227,6 +5227,41 @@ def extremal_dependence_index(truth: ArrayLike, decision: ArrayLike) -> float:
     return (lf - lh) / (lf + lh)
 
 
+def symmetric_extremal_dependence_index(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The symmetric extremal dependence index of a binary decision against a binary truth,
+    records of 0 and 1, with H the hit rate and F the false alarm rate, from -1 to 1
+    (conventions: the symmetric extremal dependence index; ADR 0491)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    a = tp + fn
+    b = int(t.size) - a
+    tn = b - fp
+    if min(tp, fn, fp, tn) == 0:
+        raise ValueError("every cell of the table must be non-zero")
+    lf = math.log(float(fp) / float(b))
+    lg = math.log(float(tn) / float(b))
+    lh = math.log(float(tp) / float(a))
+    lm = math.log(float(fn) / float(a))
+    return (lf - lh - lg + lm) / (lf + lh + lg + lm)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

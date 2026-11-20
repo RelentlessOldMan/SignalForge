@@ -429,6 +429,7 @@ from .measurements import (
     stage_support,
     stiles_coefficient,
     svd_entropy,
+    symmetric_extremal_dependence_index,
     tarwid_coefficient,
     teager_energy,
     temporal_centroid,
@@ -670,7 +671,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.36"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.37"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1268,6 +1269,7 @@ __all__ = [
     "supersaw",
     "svd_entropy",
     "svf",
+    "symmetric_extremal_dependence_index",
     "tape_stop",
     "tarwid_coefficient",
     "teager_energy",

@@ -6,11 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The symmetric extremal dependence index in `measurements`
-     (`symmetric_extremal_dependence_index`; two binary records as for the Jaccard index:
-     `(ln F − ln H − ln(1 − F) + ln(1 − H)) / (ln F + ln H + ln(1 − F) + ln(1 − H))` with
-     H = TP/|A| and F = FP/(n − |A|), from −1 to 1; an error when any cell of the table
-     is 0).
+   - The tetrachoric approximation in `measurements` (`tetrachoric_approximation`; two
+     binary records as for the Jaccard index: Pearson's `cos(π / (1 + sqrt(TP·TN / (FN·FP))))`,
+     from −1 to 1; an error when FN·FP = 0).
 
 ## Built
 
@@ -3509,6 +3507,12 @@ Updated with every chunk of work. Dates are absolute.
   skill score from the hit and false alarm rates.
   Python 9508 passed, 2 skipped; .NET 8590 passed; conformance 6253/6253 in both. Version
   2026.11.20.36.
+- 2026-11-20: The symmetric extremal dependence index (ADR 0491):
+  `symmetric_extremal_dependence_index(truth, decision)` in `measurements` (C#
+  `Measurements.SymmetricExtremalDependenceIndex`): the extremal dependence index made
+  symmetric under complementing both records.
+  Python 9526 passed, 2 skipped; .NET 8608 passed; conformance 6269/6269 in both. Version
+  2026.11.20.37.
 
 ## Not built
 
