@@ -335,6 +335,7 @@ from .measurements import (
     integrated_phase_noise,
     jaccard_index,
     jeffreys_divergence,
+    johnson_coefficient,
     js_divergence,
     katz_dimension,
     kay_frequency,
@@ -649,7 +650,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.15"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.16"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -990,6 +991,7 @@ __all__ = [
     "itakura_saito",
     "jaccard_index",
     "jeffreys_divergence",
+    "johnson_coefficient",
     "js_divergence",
     "kaiser_parameters",
     "karplus_strong",

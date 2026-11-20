@@ -853,6 +853,11 @@ rule for code not written yet.
   `(TP + TN) / sqrt(u · v)` with `u = |A|·|B|` and `v = (n − |A|)·(n − |B|)`, each exact
   integer converted to a double once. Records as for the Jaccard index; a constant record
   is an error. **(implemented)**
+- **Johnson coefficient** ([ADR 0470](adr/0470-johnson-coefficient.md);
+  `johnson_coefficient(truth, decision)`, C# `Measurements.JohnsonCoefficient`):
+  `TP/|A| + TP/|B|`, each quotient of exact integers converted to doubles once, added in
+  that order. Records as for the Jaccard index; a record with no 1 is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

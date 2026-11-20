@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Johnson coefficient in `measurements` (`johnson_coefficient`; two binary records
-     as for the Jaccard index: `TP/|A| + TP/|B|`, the sum of the two shares of shared 1s,
-     from 0 to 2; an error when a record has no 1).
+   - The dispersion coefficient in `measurements` (`dispersion_coefficient`; two binary
+     records as for the Jaccard index: `(TP·TN − FN·FP) / n²`, the covariance of the two
+     records, from −1/4 to 1/4).
 
 ## Built
 
@@ -3402,6 +3402,11 @@ Updated with every chunk of work. Dates are absolute.
   over the geometric mean of the margins.
   Python 9205 passed, 2 skipped; .NET 8289 passed; conformance 5994/5994 in both. Version
   2026.11.20.15.
+- 2026-11-20: The Johnson coefficient (ADR 0470): `johnson_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.JohnsonCoefficient`): the sum of the shares of each
+  binary record's 1s that the other shares.
+  Python 9220 passed, 2 skipped; .NET 8304 passed; conformance 6007/6007 in both. Version
+  2026.11.20.16.
 
 ## Not built
 

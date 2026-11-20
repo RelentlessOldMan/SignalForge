@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "johnson_coefficient",
+  "description": "The Johnson coefficient (conventions: the Johnson coefficient; ADR 0470).",
+  "cases": [
+    {"id": "johnson_coefficient.identical", "op": "johnson_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, |A| 2, |B| 2: 1 + 1 = 2"},
+    {"id": "johnson_coefficient.disjoint", "op": "johnson_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0: 0, the least value"},
+    {"id": "johnson_coefficient.independent", "op": "johnson_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, |A| 2, |B| 2: 1/2 + 1/2 = 1"},
+    {"id": "johnson_coefficient.square", "op": "johnson_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 1.6, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, |A| 5, |B| 5: 8/5"},
+    {"id": "johnson_coefficient.subset", "op": "johnson_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 1.6666666666666667, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, |A| 3, |B| 2: 2/3 + 1 = 5/3"},
+    {"id": "johnson_coefficient.uneven", "op": "johnson_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 1.0666666666666667, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, |A| 3, |B| 5: 2/3 + 2/5 = 16/15"},
+    {"id": "johnson_coefficient.all_one", "op": "johnson_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "both all 1: 1 + 1 = 2, no error"},
+    {"id": "johnson_coefficient.random", "op": "johnson_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 1.2916666666666667, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(470), about three in ten flipped"},
+    {"id": "johnson_coefficient.empty", "op": "johnson_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "johnson_coefficient.lengths", "op": "johnson_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "johnson_coefficient.not_binary", "op": "johnson_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "johnson_coefficient.no_decision_one", "op": "johnson_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "decision all 0: |B| = 0"},
+    {"id": "johnson_coefficient.no_truth_one", "op": "johnson_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "truth all 0: |A| = 0"}
+  ]
+}
