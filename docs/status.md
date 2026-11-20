@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The standard error of the log odds ratio in `measurements`
-     (`log_odds_ratio_standard_error`; two binary records as for the Jaccard index: Woolf's
-     `sqrt(1/TP + 1/FN + 1/FP + 1/TN)`, above 0; an error when any cell is 0).
+   - The Haldane log odds ratio in `measurements` (`haldane_log_odds_ratio`; two binary
+     records as for the Jaccard index: `ln((TP + ½)(TN + ½) / ((FN + ½)(FP + ½)))`, the
+     log odds ratio with a half added to every cell, defined for every table).
 
 ## Built
 
@@ -3518,6 +3518,11 @@ Updated with every chunk of work. Dates are absolute.
   cosine approximation to the tetrachoric correlation.
   Python 9541 passed, 2 skipped; .NET 8623 passed; conformance 6282/6282 in both. Version
   2026.11.20.38.
+- 2026-11-20: The standard error of the log odds ratio (ADR 0493):
+  `log_odds_ratio_standard_error(truth, decision)` in `measurements` (C#
+  `Measurements.LogOddsRatioStandardError`): Woolf's large-sample standard error.
+  Python 9556 passed, 2 skipped; .NET 8638 passed; conformance 6295/6295 in both. Version
+  2026.11.20.39.
 
 ## Not built
 

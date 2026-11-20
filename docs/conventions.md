@@ -970,6 +970,13 @@ rule for code not written yet.
   `TP·TN` and `FN·FP` each converted to a double once, then the division, the square root,
   `1 +`, π divided by the sum, and the cosine. Records as for the Jaccard index;
   `FN·FP = 0` is an error. **(implemented)**
+- **Standard error of the log odds ratio**
+  ([ADR 0493](adr/0493-log-odds-ratio-standard-error.md);
+  `log_odds_ratio_standard_error(truth, decision)`, C#
+  `Measurements.LogOddsRatioStandardError`): Woolf's `sqrt(1/TP + 1/FN + 1/FP + 1/TN)`,
+  formed as one exact rational whose numerator and denominator are each converted to a
+  double once, then one division and the square root. Records as for the Jaccard index;
+  any cell equal to 0 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

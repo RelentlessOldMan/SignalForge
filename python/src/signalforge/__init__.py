@@ -361,6 +361,7 @@ from .measurements import (
     loevinger_h,
     log_loss,
     log_odds_ratio,
+    log_odds_ratio_standard_error,
     mann_kendall,
     markedness,
     matthews_correlation,
@@ -672,7 +673,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.38"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.39"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1051,6 +1052,7 @@ __all__ = [
     "loevinger_h",
     "log_loss",
     "log_odds_ratio",
+    "log_odds_ratio_standard_error",
     "lomb_scargle",
     "lomb_scargle_bootstrap",
     "lomb_scargle_false_alarm",
