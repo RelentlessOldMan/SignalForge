@@ -381,6 +381,7 @@ public static class Conformance
             "fossum_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.FossumCoefficient(t.Item1, t.Item2)),
             "eyraud_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.EyraudCoefficient(t.Item1, t.Item2)),
             "stiles_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.StilesCoefficient(t.Item1, t.Item2)),
+            "mountford_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.MountfordCoefficient(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

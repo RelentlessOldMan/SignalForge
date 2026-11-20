@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Mountford's coefficient in `measurements` (two binary records as for the Jaccard
-     index: `2·TP / (TP·FN + TP·FP + 2·FN·FP)`, a similarity from 0 with no fixed upper end;
-     an error when the denominator is zero).
+   - Tarwid's coefficient in `measurements` (two binary records as for the Jaccard index:
+     `(n·TP − |A|·|B|) / (n·TP + |A|·|B|)`, the shared 1s against chance, from −1 to 1; an
+     error when both `TP` and `|A|·|B|` are zero).
 
 ## Built
 
@@ -3310,6 +3310,11 @@ Updated with every chunk of work. Dates are absolute.
   chi-square over n for two binary records.
   Python 8911 passed, 2 skipped; .NET 8013 passed; conformance 5754/5754 in both. Version
   2026.11.19.78.
+- 2026-11-19: Mountford's coefficient (ADR 0452): `mountford_coefficient(truth, decision)`
+  in `measurements` (C# `Measurements.MountfordCoefficient`): twice the shared 1s of two
+  binary records over the products of the counts.
+  Python 8928 passed, 2 skipped; .NET 8029 passed; conformance 5768/5768 in both. Version
+  2026.11.19.79.
 
 ## Not built
 

@@ -347,6 +347,7 @@ from .measurements import (
     minkowski_distance,
     modified_allan_deviation,
     modulation_transfer,
+    mountford_coefficient,
     mtie,
     multiscale_entropy,
     noise_compensated_decay,
@@ -631,7 +632,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.78"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.79"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1017,6 +1018,7 @@ __all__ = [
     "minkowski_distance",
     "modified_allan_deviation",
     "modulation_transfer",
+    "mountford_coefficient",
     "moving_average",
     "moving_rms",
     "mtie",

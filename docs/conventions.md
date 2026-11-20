@@ -764,6 +764,11 @@ rule for code not written yet.
   `v = (n − |A|)·(n − |B|)`, each exact integer converted to a double once, the operations in
   that order. Records as for the Jaccard index; a constant record or `e = 0` is an error.
   **(implemented)**
+- **Mountford's coefficient** ([ADR 0452](adr/0452-mountford-coefficient.md);
+  `mountford_coefficient(truth, decision)`, C# `Measurements.MountfordCoefficient`):
+  `2·TP / (TP·FN + TP·FP + 2·FN·FP)`, both exact integers converted to doubles once, then
+  one division. Records as for the Jaccard index; a zero denominator is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

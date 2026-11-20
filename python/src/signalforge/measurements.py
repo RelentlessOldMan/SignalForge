@@ -4068,6 +4068,35 @@ def stiles_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
     return math.log10(float(n) * fe * fe / (4.0 * float(nt * nd) * float((n - nt) * (n - nd))))
 
 
+def mountford_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """Mountford's coefficient of two binary records of 0 and 1: twice the shared 1s over
+    the products of the counts, at least 0 (conventions: Mountford's coefficient;
+    ADR 0452)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    den = tp * fn + tp * fp + 2 * fn * fp
+    if den == 0:
+        raise ValueError("TP FN + TP FP + 2 FN FP must not be zero")
+    return float(2 * tp) / float(den)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

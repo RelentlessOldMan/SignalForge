@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "mountford_coefficient",
+  "description": "Mountford's coefficient (conventions: Mountford's coefficient; ADR 0452).",
+  "cases": [
+    {"id": "mountford_coefficient.opposite", "op": "mountford_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 2, FP 2: 0/(0 + 0 + 8) = 0, the least"},
+    {"id": "mountford_coefficient.independent", "op": "mountford_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 2/(1 + 1 + 2) = 1/2"},
+    {"id": "mountford_coefficient.uneven", "op": "mountford_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2: 2/(1 + 1 + 2) = 1/2, TN plays no part"},
+    {"id": "mountford_coefficient.square", "op": "mountford_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.8, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: 8/(4 + 4 + 2) = 4/5"},
+    {"id": "mountford_coefficient.subset", "op": "mountford_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 0, TN 3: 4/(2 + 0 + 0) = 2, above 1"},
+    {"id": "mountford_coefficient.far_below", "op": "mountford_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 1, FP 3, TN 0: 0/(0 + 0 + 6) = 0"},
+    {"id": "mountford_coefficient.constant", "op": "mountford_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, TP 2, FN 1, FP 0: 4/2 = 2, no error"},
+    {"id": "mountford_coefficient.many_shared", "op": "mountford_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0]}, "expected": 0.9090909090909091, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 10, FN 1, FP 1: 20/(10 + 10 + 2) = 10/11"},
+    {"id": "mountford_coefficient.random", "op": "mountford_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0], "decision": [1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.1308411214953271, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(452), about three in ten flipped"},
+    {"id": "mountford_coefficient.empty", "op": "mountford_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "mountford_coefficient.lengths", "op": "mountford_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "mountford_coefficient.not_binary", "op": "mountford_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "mountford_coefficient.identical", "op": "mountford_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "FN = FP = 0: the denominator is 0"},
+    {"id": "mountford_coefficient.one_unique", "op": "mountford_coefficient", "args": {"truth": [1.0, 0.0], "decision": [0.0, 0.0]}, "error": "invalid_argument", "source": "TP 0, FN 1, FP 0: the denominator is 0"}
+  ]
+}
