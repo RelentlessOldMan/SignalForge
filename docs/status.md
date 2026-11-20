@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Gower's coefficient in `measurements` (`gower_coefficient`; two binary records as for
-     the Jaccard index: `(TP + TN) / sqrt(|A|·|B|·(n − |A|)·(n − |B|))`, the matches over
-     the geometric mean of the margins, at least 0; a constant record is an error).
+   - The Johnson coefficient in `measurements` (`johnson_coefficient`; two binary records
+     as for the Jaccard index: `TP/|A| + TP/|B|`, the sum of the two shares of shared 1s,
+     from 0 to 2; an error when a record has no 1).
 
 ## Built
 
@@ -3397,6 +3397,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.BaroniUrbaniBuserII`): the first coefficient stretched to run from −1 to 1.
   Python 9189 passed, 2 skipped; .NET 8274 passed; conformance 5981/5981 in both. Version
   2026.11.20.14.
+- 2026-11-20: Gower's coefficient (ADR 0469): `gower_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.GowerCoefficient`): the matches of two binary records
+  over the geometric mean of the margins.
+  Python 9205 passed, 2 skipped; .NET 8289 passed; conformance 5994/5994 in both. Version
+  2026.11.20.15.
 
 ## Not built
 

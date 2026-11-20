@@ -848,6 +848,11 @@ rule for code not written yet.
   `(r + (TP − FN − FP)) / (r + (TP + FN + FP))` with `r = √(TP·TN)`, the integer product
   converted to a double once and rooted once, each bracketed integer converted to a double
   once. Records as for the Jaccard index; both all 0 is an error. **(implemented)**
+- **Gower's coefficient** ([ADR 0469](adr/0469-gower-coefficient.md);
+  `gower_coefficient(truth, decision)`, C# `Measurements.GowerCoefficient`):
+  `(TP + TN) / sqrt(u · v)` with `u = |A|·|B|` and `v = (n − |A|)·(n − |B|)`, each exact
+  integer converted to a double once. Records as for the Jaccard index; a constant record
+  is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
