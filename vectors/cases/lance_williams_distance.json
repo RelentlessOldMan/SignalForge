@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "lance_williams_distance",
+  "description": "The Lance-Williams distance (conventions: the Lance-Williams distance; ADR 0476).",
+  "cases": [
+    {"id": "lance_williams_distance.identical", "op": "lance_williams_distance", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 0, FP 0: 0, the least value"},
+    {"id": "lance_williams_distance.opposite", "op": "lance_williams_distance", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN + FP 4: 4/4 = 1, the greatest value"},
+    {"id": "lance_williams_distance.independent", "op": "lance_williams_distance", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 2/4 = 1/2"},
+    {"id": "lance_williams_distance.square", "op": "lance_williams_distance", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, FN 1, FP 1: 2/10 = 1/5"},
+    {"id": "lance_williams_distance.subset", "op": "lance_williams_distance", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1: 1/5"},
+    {"id": "lance_williams_distance.uneven", "op": "lance_williams_distance", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 3: 4/8 = 1/2"},
+    {"id": "lance_williams_distance.one_way", "op": "lance_williams_distance", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FP 3: 3/3 = 1"},
+    {"id": "lance_williams_distance.random", "op": "lance_williams_distance", "args": {"truth": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0], "decision": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]}, "expected": 0.42105263157894735, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(476), about three in ten flipped"},
+    {"id": "lance_williams_distance.empty", "op": "lance_williams_distance", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "lance_williams_distance.lengths", "op": "lance_williams_distance", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "lance_williams_distance.not_binary", "op": "lance_williams_distance", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "lance_williams_distance.all_zero", "op": "lance_williams_distance", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "both all 0: the denominator is 0"}
+  ]
+}

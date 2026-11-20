@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Lance-Williams distance in `measurements` (`lance_williams_distance`; two binary
-     records as for the Jaccard index: `(FN + FP) / (2·TP + FN + FP)`, from 0 to 1; an
-     error when both records are all 0).
+   - The chord distance of two binary records in `measurements` (`chord_distance`; two
+     binary records as for the Jaccard index: `sqrt(2·(1 − TP / sqrt(|A|·|B|)))`, from 0 to
+     √2; an error when a record has no 1).
 
 ## Built
 
@@ -3432,6 +3432,11 @@ Updated with every chunk of work. Dates are absolute.
   share of items where two binary records disagree.
   Python 9286 passed, 2 skipped; .NET 8369 passed; conformance 6062/6062 in both. Version
   2026.11.20.21.
+- 2026-11-20: The Lance-Williams distance (ADR 0476): `lance_williams_distance(truth,
+  decision)` in `measurements` (C# `Measurements.LanceWilliamsDistance`): 1 less the Dice
+  coefficient of two binary records.
+  Python 9300 passed, 2 skipped; .NET 8383 passed; conformance 6074/6074 in both. Version
+  2026.11.20.22.
 
 ## Not built
 

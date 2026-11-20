@@ -878,6 +878,10 @@ rule for code not written yet.
   `variance_dissimilarity(truth, decision)`, C# `Measurements.VarianceDissimilarity`):
   `(FN + FP) / (4·n)`, the two exact integers each converted to a double once. Records as
   for the Jaccard index; constant records are allowed. **(implemented)**
+- **Lance-Williams distance** ([ADR 0476](adr/0476-lance-williams-distance.md);
+  `lance_williams_distance(truth, decision)`, C# `Measurements.LanceWilliamsDistance`):
+  `(FN + FP) / (2·TP + FN + FP)`, the two exact integers each converted to a double once.
+  Records as for the Jaccard index; both all 0 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
