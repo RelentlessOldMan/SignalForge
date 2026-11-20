@@ -366,6 +366,7 @@ public static class Conformance
             "sorgenfrei_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.SorgenfreiCoefficient(t.Item1, t.Item2)),
             "forbes_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.ForbesCoefficient(t.Item1, t.Item2)),
             "mcconnaughey_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.McConnaugheyCoefficient(t.Item1, t.Item2)),
+            "dennis_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.DennisCoefficient(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

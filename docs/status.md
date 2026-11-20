@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Dennis coefficient in `measurements` (two binary records as for the Jaccard index:
-     `(TP·TN − FN·FP) / √(n·(TP + FN)·(TP + FP))`; an error when either record holds no 1).
+   - The Fager-McGowan coefficient in `measurements` (two binary records as for the Jaccard
+     index: the Ochiai coefficient less `1 / (2·√max(|A|, |B|))`; an error when either
+     record holds no 1).
 
 ## Built
 
@@ -3229,6 +3230,12 @@ Updated with every chunk of work. Dates are absolute.
   records, from −1 to 1.
   Python 8677 passed, 2 skipped; .NET 7794 passed; conformance 5565/5565 in both. Version
   2026.11.19.63.
+- 2026-11-19: The Dennis coefficient (ADR 0437):
+  `dennis_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.DennisCoefficient`): the excess of the shared 1s of two binary records over
+  chance, in units of its square root.
+  Python 8691 passed, 2 skipped; .NET 7807 passed; conformance 5576/5576 in both. Version
+  2026.11.19.64.
 
 ## Not built
 

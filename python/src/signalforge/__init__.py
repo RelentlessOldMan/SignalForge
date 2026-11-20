@@ -279,6 +279,7 @@ from .measurements import (
     decay_curvature,
     decay_time,
     definition,
+    dennis_coefficient,
     detrended_fluctuation,
     diagnostic_odds_ratio,
     dispersion_entropy,
@@ -616,7 +617,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.63"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.64"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -833,6 +834,7 @@ __all__ = [
     "decode_samples",
     "definition",
     "delta",
+    "dennis_coefficient",
     "detrended_fluctuation",
     "dfe_equalizer",
     "dfe_least_squares",

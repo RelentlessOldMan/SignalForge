@@ -691,6 +691,11 @@ rule for code not written yet.
   `mcconnaughey_coefficient(truth, decision)`, C# `Measurements.McConnaugheyCoefficient`):
   `(TP² − FN·FP) / (|A|·|B|)`, both integers converted to doubles once, then one division.
   Records as for the Jaccard index; either with no 1 is an error. **(implemented)**
+- **Dennis coefficient** ([ADR 0437](adr/0437-dennis-coefficient.md);
+  `dennis_coefficient(truth, decision)`, C# `Measurements.DennisCoefficient`):
+  `(TP·TN − FN·FP) / √(n·|A|·|B|)`, both integers converted to doubles once, the
+  denominator rooted once, then one division. Records as for the Jaccard index; either with
+  no 1 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

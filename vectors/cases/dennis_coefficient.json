@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "dennis_coefficient",
+  "description": "The Dennis coefficient (conventions: Dennis coefficient; ADR 0437).",
+  "cases": [
+    {"id": "dennis_coefficient.identical", "op": "dennis_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, TP 2, TN 2: 4/sqrt(4*2*2) = 1"},
+    {"id": "dennis_coefficient.opposite", "op": "dennis_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, FN 2, FP 2: -4/sqrt(4*2*2) = -1"},
+    {"id": "dennis_coefficient.independent", "op": "dennis_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one of each cell: (1 - 1)/4 = 0"},
+    {"id": "dennis_coefficient.uneven", "op": "dennis_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.22360679774997896, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 1, FN 1, FP 1, TN 2: (2 - 1)/sqrt(5*2*2) = 1/sqrt 20"},
+    {"id": "dennis_coefficient.square", "op": "dennis_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.9486832980505138, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 4, TN 4, FN 1, FP 1: (16 - 1)/sqrt(10*5*5) = 3/sqrt 10"},
+    {"id": "dennis_coefficient.subset", "op": "dennis_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.5163977794943223, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 1, FN 2, FP 0, TN 2: 2/sqrt(5*3*1) = 2/sqrt 15"},
+    {"id": "dennis_coefficient.random", "op": "dennis_coefficient", "args": {"truth": [0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]}, "expected": 1.2815506755640997, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "40 bits from random.Random(437), about three in ten flipped"},
+    {"id": "dennis_coefficient.empty", "op": "dennis_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "dennis_coefficient.lengths", "op": "dennis_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "dennis_coefficient.not_binary", "op": "dennis_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "dennis_coefficient.no_one", "op": "dennis_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision holds no 1"}
+  ]
+}
