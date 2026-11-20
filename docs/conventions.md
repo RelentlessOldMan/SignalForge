@@ -843,6 +843,11 @@ rule for code not written yet.
   `TP/(2·TP + FN + FP) + TN/(2·TN + FN + FP)`, each quotient of exact integers converted to
   doubles once, added in that order. Records as for the Jaccard index; both records all 0
   or both all 1 is an error. **(implemented)**
+- **The second Baroni-Urbani-Buser coefficient** ([ADR 0468](adr/0468-baroni-urbani-buser-ii.md);
+  `baroni_urbani_buser_ii(truth, decision)`, C# `Measurements.BaroniUrbaniBuserII`):
+  `(r + (TP − FN − FP)) / (r + (TP + FN + FP))` with `r = √(TP·TN)`, the integer product
+  converted to a double once and rooted once, each bracketed integer converted to a double
+  once. Records as for the Jaccard index; both all 0 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

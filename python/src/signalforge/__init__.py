@@ -253,6 +253,7 @@ from .measurements import (
     average_precision,
     balanced_accuracy,
     baroni_urbani_buser_coefficient,
+    baroni_urbani_buser_ii,
     bartels_rank_test,
     bass_ratio,
     benini_coefficient,
@@ -647,7 +648,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.13"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.14"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -773,6 +774,7 @@ __all__ = [
     "bandwidth_expansion",
     "bark_to_hz",
     "baroni_urbani_buser_coefficient",
+    "baroni_urbani_buser_ii",
     "bartels_rank_test",
     "bass_enhancer",
     "bass_ratio",

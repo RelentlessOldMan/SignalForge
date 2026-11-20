@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The second Baroni-Urbani-Buser coefficient in `measurements`
-     (`baroni_urbani_buser_ii`; two binary records as for the Jaccard index:
-     `(sqrt(TP·TN) + TP − FN − FP) / (sqrt(TP·TN) + TP + FN + FP)`, from −1 to 1; an error
-     when both records are all 0).
+   - Gower's coefficient in `measurements` (`gower_coefficient`; two binary records as for
+     the Jaccard index: `(TP + TN) / sqrt(|A|·|B|·(n − |A|)·(n − |B|))`, the matches over
+     the geometric mean of the margins, at least 0; a constant record is an error).
 
 ## Built
 
@@ -3393,6 +3392,11 @@ Updated with every chunk of work. Dates are absolute.
   Dice coefficients of the 1s and of the 0s of two binary records.
   Python 9174 passed, 2 skipped; .NET 8260 passed; conformance 5969/5969 in both. Version
   2026.11.20.13.
+- 2026-11-20: The second Baroni-Urbani-Buser coefficient (ADR 0468):
+  `baroni_urbani_buser_ii(truth, decision)` in `measurements` (C#
+  `Measurements.BaroniUrbaniBuserII`): the first coefficient stretched to run from −1 to 1.
+  Python 9189 passed, 2 skipped; .NET 8274 passed; conformance 5981/5981 in both. Version
+  2026.11.20.14.
 
 ## Not built
 
