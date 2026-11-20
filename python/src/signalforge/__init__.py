@@ -393,6 +393,7 @@ from .measurements import (
     weighted_permutation_entropy,
     youden_j,
     yule_q,
+    yule_y,
     zero_crossing_rate,
 )
 from .metrics import (
@@ -610,7 +611,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.57"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.58"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1202,6 +1203,7 @@ __all__ = [
     "youden_j",
     "yule_q",
     "yule_walker_psd",
+    "yule_y",
     "zero_crossing_rate",
     "zero_phase_filter",
 ]

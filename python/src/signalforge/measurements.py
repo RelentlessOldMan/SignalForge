@@ -3437,6 +3437,38 @@ def yule_q(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(x - y) / float(x + y)
 
 
+def yule_y(truth: ArrayLike, decision: ArrayLike) -> float:
+    """Yule's Y of two binary records of 0 and 1: the coefficient of colligation, from -1
+    to 1 (conventions: Yule's Y; ADR 0431)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    x = tp * tn
+    y = fn * fp
+    if x + y == 0:
+        raise ValueError("TP*TN + FN*FP must not be zero")
+    sx = math.sqrt(float(x))
+    sy = math.sqrt(float(y))
+    return (sx - sy) / (sx + sy)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

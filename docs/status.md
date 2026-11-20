@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Yule's Y in `measurements` (two binary records as for the Jaccard index:
-     `(√(TP·TN) − √(FN·FP)) / (√(TP·TN) + √(FN·FP))`, the coefficient of colligation; an
-     error when both products are zero).
+   - The Hamann coefficient in `measurements` (two binary records as for the Jaccard index:
+     the agreements minus the disagreements over the length, from −1 to 1).
 
 ## Built
 
@@ -3195,6 +3194,11 @@ Updated with every chunk of work. Dates are absolute.
   −1 to 1.
   Python 8592 passed, 2 skipped; .NET 7715 passed; conformance 5498/5498 in both. Version
   2026.11.19.57.
+- 2026-11-19: Yule's Y (ADR 0431): `yule_y(truth, decision)` in `measurements` (C#
+  `Measurements.YuleY`): the coefficient of colligation of two binary records, Yule's Q's
+  companion on the same 2×2 table.
+  Python 8606 passed, 2 skipped; .NET 7728 passed; conformance 5509/5509 in both. Version
+  2026.11.19.58.
 
 ## Not built
 
