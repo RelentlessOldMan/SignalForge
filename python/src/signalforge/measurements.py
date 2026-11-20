@@ -4158,6 +4158,34 @@ def hawkins_dotson_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(tp * (tn + m) + tn * (tp + m)) / float(den)
 
 
+def gower_legendre_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Gower-Legendre coefficient of two binary records of 0 and 1: the matches over
+    the matches plus half the mismatches, from 0 to 1 (conventions: the Gower-Legendre
+    coefficient; ADR 0455)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    agree = 2 * (tp + tn)
+    return float(agree) / float(agree + fn + fp)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

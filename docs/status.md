@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Gower-Legendre coefficient in `measurements` (two binary records as for the
-     Jaccard index: `(TP + TN) / (TP + TN + (FN + FP)/2)`, matching with the mismatches
-     weighted by half, from 0 to 1; never an error once the records are valid).
+   - Faith's coefficient in `measurements` (two binary records as for the Jaccard index:
+     `(TP + TN/2) / n`, the shared 1s with the shared 0s counted half, from 0 to 1; never an
+     error once the records are valid).
 
 ## Built
 
@@ -3325,6 +3325,11 @@ Updated with every chunk of work. Dates are absolute.
   Jaccard indices of the 1s and of the 0s of two binary records.
   Python 8963 passed, 2 skipped; .NET 8062 passed; conformance 5797/5797 in both. Version
   2026.11.20.0.
+- 2026-11-20: The Gower-Legendre coefficient (ADR 0455): `gower_legendre_coefficient(truth,
+  decision)` in `measurements` (C# `Measurements.GowerLegendreCoefficient`): the matches of
+  two binary records over the matches plus half the mismatches.
+  Python 8979 passed, 2 skipped; .NET 8077 passed; conformance 5810/5810 in both. Version
+  2026.11.20.1.
 
 ## Not built
 

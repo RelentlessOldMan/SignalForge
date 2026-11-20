@@ -779,6 +779,11 @@ rule for code not written yet.
   with `m = FN + FP`, `(TP·(TN + m) + TN·(TP + m)) / (2·(TP + m)·(TN + m))`, both exact
   integers converted to doubles once, then one division. Records as for the Jaccard index;
   a zero denominator (both records all 0, or both all 1) is an error. **(implemented)**
+- **The Gower-Legendre coefficient** ([ADR 0455](adr/0455-gower-legendre-coefficient.md);
+  `gower_legendre_coefficient(truth, decision)`, C# `Measurements.GowerLegendreCoefficient`):
+  `2·(TP + TN) / (2·(TP + TN) + FN + FP)`, both exact integers converted to doubles once,
+  then one division. Records as for the Jaccard index; no other error, since the
+  denominator is at least `n`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

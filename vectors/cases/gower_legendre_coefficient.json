@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "gower_legendre_coefficient",
+  "description": "The Gower-Legendre coefficient (conventions: the Gower-Legendre coefficient; ADR 0455).",
+  "cases": [
+    {"id": "gower_legendre_coefficient.identical", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2: 4/(4 + 0) = 1"},
+    {"id": "gower_legendre_coefficient.opposite", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2: 0/(0 + 2) = 0, the least value"},
+    {"id": "gower_legendre_coefficient.independent", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 2/(2 + 1) = 2/3"},
+    {"id": "gower_legendre_coefficient.uneven", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.75, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2: 3/(3 + 1) = 3/4"},
+    {"id": "gower_legendre_coefficient.square", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.8888888888888888, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: 8/(8 + 1) = 8/9"},
+    {"id": "gower_legendre_coefficient.subset", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.75, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 2, FP 0, TN 2: 3/(3 + 1) = 3/4"},
+    {"id": "gower_legendre_coefficient.far_below", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 1, FP 3, TN 0: 0/(0 + 2) = 0"},
+    {"id": "gower_legendre_coefficient.constant", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.8, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, TP 2, FN 1: 2/(2 + 1/2) = 4/5, no error"},
+    {"id": "gower_legendre_coefficient.all_zero", "op": "gower_legendre_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "both all 0, TN 3: 3/(3 + 0) = 1, no error"},
+    {"id": "gower_legendre_coefficient.random", "op": "gower_legendre_coefficient", "args": {"truth": [0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0]}, "expected": 0.8571428571428571, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(455), about three in ten flipped"},
+    {"id": "gower_legendre_coefficient.empty", "op": "gower_legendre_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "gower_legendre_coefficient.lengths", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "gower_legendre_coefficient.not_binary", "op": "gower_legendre_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}
