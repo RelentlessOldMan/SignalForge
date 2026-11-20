@@ -3170,6 +3170,28 @@ def chebyshev_distance(x: ArrayLike, y: ArrayLike) -> float:
     return m
 
 
+def hamming_distance(x: ArrayLike, y: ArrayLike) -> int:
+    """The Hamming distance between the real vectors ``x`` and ``y``: the number of indices
+    where they differ (conventions: Hamming distance; ADR 0421)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)):
+            raise ValueError(f"{name} must be finite")
+        pair.append(a)
+    xa, ya = pair
+    if xa.size != ya.size:
+        raise ValueError("x and y must have the same length")
+    return int(np.count_nonzero(xa != ya))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

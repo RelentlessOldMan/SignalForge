@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "hamming_distance",
+  "description": "The Hamming distance (conventions: Hamming distance; ADR 0421).",
+  "cases": [
+    {"id": "hamming_distance.same", "op": "hamming_distance", "args": {"x": [1.0, -2.0, 3.0], "y": [1.0, -2.0, 3.0]}, "expected": 0, "source": "equal vectors: 0"},
+    {"id": "hamming_distance.all", "op": "hamming_distance", "args": {"x": [1.0, 2.0], "y": [2.0, 1.0]}, "expected": 2, "source": "every index differs: 2"},
+    {"id": "hamming_distance.signed_zero", "op": "hamming_distance", "args": {"x": [0.0, 1.0, 2.0], "y": [-0.0, 1.0, 5.0]}, "expected": 1, "source": "0.0 equals -0.0; one other differs: 1"},
+    {"id": "hamming_distance.symbols", "op": "hamming_distance", "args": {"x": [0.0, 1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0], "y": [0.0, 1.0, 3.0, 3.0, 0.0, 2.0, 2.0, 3.0]}, "expected": 2, "source": "8 QPSK symbol indices, 2 in error"},
+    {"id": "hamming_distance.near", "op": "hamming_distance", "args": {"x": [1.0], "y": [1.0000000000000002]}, "expected": 1, "source": "one ulp apart still differs: 1"},
+    {"id": "hamming_distance.random", "op": "hamming_distance", "args": {"x": [2.0, 3.0, 3.0, 2.0, 2.0, 3.0, 3.0, 1.0, 3.0, 0.0, 2.0, 0.0, 2.0, 3.0, 1.0, 3.0, 3.0, 3.0, 2.0, 2.0, 0.0, 0.0, 2.0, 3.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 2.0, 2.0], "y": [2.0, 3.0, 3.0, 2.0, 2.0, 3.0, 3.0, 1.0, 3.0, 0.0, 2.0, 0.0, 2.0, 3.0, 1.0, 0.0, 3.0, 3.0, 2.0, 2.0, 0.0, 0.0, 2.0, 3.0, 1.0, 1.0, 0.0, 1.0, 0.0, 3.0, 2.0, 1.0]}, "expected": 3, "source": "32 symbols from random.Random(421), about a fifth redrawn"},
+    {"id": "hamming_distance.empty", "op": "hamming_distance", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "x needs a value"},
+    {"id": "hamming_distance.lengths", "op": "hamming_distance", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 1.0]}, "error": "invalid_argument", "source": "x and y must match"},
+    {"id": "hamming_distance.nan", "op": "hamming_distance", "args": {"x": [1.0, "nan", 1.0], "y": [2.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "values must be finite"},
+    {"id": "hamming_distance.inf", "op": "hamming_distance", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, "inf", 1.0]}, "error": "invalid_argument", "source": "values must be finite"}
+  ]
+}

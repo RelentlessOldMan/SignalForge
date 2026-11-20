@@ -628,6 +628,10 @@ rule for code not written yet.
 - **Chebyshev distance** ([ADR 0420](adr/0420-chebyshev-distance.md);
   `chebyshev_distance(x, y)`, C# `Measurements.ChebyshevDistance`): `max |xᵢ − yᵢ|`, exact.
   Inputs as for the Minkowski distance. **(implemented)**
+- **Hamming distance** ([ADR 0421](adr/0421-hamming-distance.md); `hamming_distance(x, y)`,
+  C# `Measurements.HammingDistance`): the count of indices with `xᵢ ≠ yᵢ` as doubles (`0.0`
+  equals `−0.0`), an int. `x` and `y` real, finite, of equal length at least 1.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

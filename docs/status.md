@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Hamming distance in `measurements` (two real vectors `x` and `y` of the same
-     length: the number of indices where `xᵢ ≠ yᵢ`, as an int).
+   - The overlap coefficient in `measurements` (two binary records as for the Jaccard index:
+     the items both mark 1 over the smaller of the two counts of 1; an error when either has
+     no 1).
 
 ## Built
 
@@ -3141,6 +3142,10 @@ Updated with every chunk of work. Dates are absolute.
   two vectors.
   Python 8464 passed, 2 skipped; .NET 7598 passed; conformance 5401/5401 in both. Version
   2026.11.19.47.
+- 2026-11-19: The Hamming distance (ADR 0421): `hamming_distance(x, y)` in `measurements`
+  (C# `Measurements.HammingDistance`): the number of positions where two sequences differ.
+  Python 8477 passed, 2 skipped; .NET 7610 passed; conformance 5411/5411 in both. Version
+  2026.11.19.48.
 
 ## Not built
 
