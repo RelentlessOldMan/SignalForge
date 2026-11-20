@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The frequency bias in `measurements` (`frequency_bias`; two binary records as for the
-     Jaccard index: the decision's 1s over the truth's, `|B| / |A|`, at least 0; an error
-     when truth has no 1).
+   - The extreme dependency score in `measurements` (`extreme_dependency_score`; two binary
+     records as for the Jaccard index: `2·ln(|A| / n) / ln(TP / n) − 1`, from −1 to 1; an
+     error when TP = 0 or TP = n).
 
 ## Built
 
@@ -3493,6 +3493,10 @@ Updated with every chunk of work. Dates are absolute.
   binary test's positive predictive value falls away fastest.
   Python 9462 passed, 2 skipped; .NET 8544 passed; conformance 6213/6213 in both. Version
   2026.11.20.33.
+- 2026-11-20: The frequency bias (ADR 0488): `frequency_bias(truth, decision)` in
+  `measurements` (C# `Measurements.FrequencyBias`): the decision's 1s over the truth's.
+  Python 9476 passed, 2 skipped; .NET 8558 passed; conformance 6225/6225 in both. Version
+  2026.11.20.34.
 
 ## Not built
 

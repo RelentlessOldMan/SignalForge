@@ -941,6 +941,10 @@ rule for code not written yet.
   `a·b` each converted to a double once and multiplied before the square root, `FP·a` and
   `TP·b − FP·a` each converted once. Records as for the Jaccard index; a constant truth, or
   `TP·b = FP·a`, is an error. **(implemented)**
+- **Frequency bias** ([ADR 0488](adr/0488-frequency-bias.md);
+  `frequency_bias(truth, decision)`, C# `Measurements.FrequencyBias`): `|B| / |A|`, the
+  two exact counts each converted to a double once, then one division. Records as for the
+  Jaccard index; truth with no 1 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

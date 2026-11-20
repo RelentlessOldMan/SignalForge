@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "frequency_bias",
+  "description": "The frequency bias (conventions: the frequency bias; ADR 0488).",
+  "cases": [
+    {"id": "frequency_bias.identical", "op": "frequency_bias", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|B| 2, |A| 2: 1"},
+    {"id": "frequency_bias.opposite", "op": "frequency_bias", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|B| 2, |A| 2: 1, with no 1 in common"},
+    {"id": "frequency_bias.none_flagged", "op": "frequency_bias", "args": {"truth": [1.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|B| 0, |A| 1: 0, the least value"},
+    {"id": "frequency_bias.uneven", "op": "frequency_bias", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 1.6666666666666667, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|B| 5, |A| 3: 5/3"},
+    {"id": "frequency_bias.skew", "op": "frequency_bias", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|B| 4, |A| 4: 1"},
+    {"id": "frequency_bias.under", "op": "frequency_bias", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|B| 1, |A| 4: 1/4"},
+    {"id": "frequency_bias.all_flagged", "op": "frequency_bias", "args": {"truth": [1.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0]}, "expected": 3.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|B| 3, |A| 1: 3"},
+    {"id": "frequency_bias.random", "op": "frequency_bias", "args": {"truth": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.8421052631578947, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(488), about three in ten flipped"},
+    {"id": "frequency_bias.empty", "op": "frequency_bias", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "frequency_bias.lengths", "op": "frequency_bias", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "frequency_bias.not_binary", "op": "frequency_bias", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "frequency_bias.truth_all_zero", "op": "frequency_bias", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth has no 1: |A| = 0"}
+  ]
+}
