@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "population_attributable_fraction",
+  "description": "The population attributable fraction (conventions: the population attributable fraction; ADR 0486).",
+  "cases": [
+    {"id": "population_attributable_fraction.independent", "op": "population_attributable_fraction", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, |A| 2, FN 1, FN + TN 2: 1 - 4/4 = 0"},
+    {"id": "population_attributable_fraction.identical", "op": "population_attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 0: 1, the greatest value"},
+    {"id": "population_attributable_fraction.square", "op": "population_attributable_fraction", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.6, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 10, |A| 5, FN 1, FN + TN 5: 1 - 10/25 = 3/5"},
+    {"id": "population_attributable_fraction.uneven", "op": "population_attributable_fraction", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -0.16666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 7, |A| 3, FN 1, FN + TN 2: 1 - 7/6 = -1/6"},
+    {"id": "population_attributable_fraction.skew", "op": "population_attributable_fraction", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.4166666666666667, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 7, |A| 4, FN 1, FN + TN 3: 1 - 7/12 = 5/12"},
+    {"id": "population_attributable_fraction.opposite", "op": "population_attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, |A| 2, FN 2, FN + TN 2: 1 - 8/4 = -1, no error for TP = 0"},
+    {"id": "population_attributable_fraction.truth_all_one", "op": "population_attributable_fraction", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 3, |A| 3, FN 1, FN + TN 1: 1 - 3/3 = 0"},
+    {"id": "population_attributable_fraction.random", "op": "population_attributable_fraction", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]}, "expected": 0.4444444444444444, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(486), about three in ten flipped"},
+    {"id": "population_attributable_fraction.empty", "op": "population_attributable_fraction", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "population_attributable_fraction.lengths", "op": "population_attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "population_attributable_fraction.not_binary", "op": "population_attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "population_attributable_fraction.no_truth_one", "op": "population_attributable_fraction", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth has no 1: |A| = 0"},
+    {"id": "population_attributable_fraction.decision_all_one", "op": "population_attributable_fraction", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the decision has no 0: FN + TN = 0"}
+  ]
+}

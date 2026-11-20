@@ -386,6 +386,7 @@ from .measurements import (
     pettitt,
     phase_noise_spurs,
     phase_noise_ssb,
+    population_attributable_fraction,
     positive_likelihood_ratio,
     power_ccdf,
     power_ccdf_level,
@@ -665,7 +666,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.31"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.32"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1124,6 +1125,7 @@ __all__ = [
     "polyblep_sawtooth",
     "polyblep_square",
     "polyblep_triangle",
+    "population_attributable_fraction",
     "positive_likelihood_ratio",
     "power_ccdf",
     "power_ccdf_level",

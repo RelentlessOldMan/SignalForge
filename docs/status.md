@@ -6,11 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The population attributable fraction in `measurements`
-     (`population_attributable_fraction`; two binary records as for the Jaccard index, the
-     decision as the exposure: the share of truth 1s that would go if the exposed had the
-     risk of the unexposed, `1 − n·FN / (|A|·(FN + TN))`, at most 1; an error when truth has
-     no 1 or the decision has no 0).
+   - The prevalence threshold in `measurements` (`prevalence_threshold`; two binary records
+     as for the Jaccard index: `(sqrt(TPR·FPR) − FPR) / (TPR − FPR)` with TPR = TP/|A| and
+     FPR = FP/(n − |A|); an error when truth is constant or TPR = FPR).
 
 ## Built
 
@@ -3484,6 +3482,12 @@ Updated with every chunk of work. Dates are absolute.
   exposed, the decision as the exposure.
   Python 9432 passed, 2 skipped; .NET 8514 passed; conformance 6187/6187 in both. Version
   2026.11.20.31.
+- 2026-11-20: The population attributable fraction (ADR 0486):
+  `population_attributable_fraction(truth, decision)` in `measurements` (C#
+  `Measurements.PopulationAttributableFraction`): the share of truth 1s owed to the
+  exposure, the decision as the exposure.
+  Python 9447 passed, 2 skipped; .NET 8529 passed; conformance 6200/6200 in both. Version
+  2026.11.20.32.
 
 ## Not built
 

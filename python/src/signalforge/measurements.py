@@ -5066,6 +5066,38 @@ def attributable_fraction(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(tp * (fn + tn) - fn * (tp + fp)) / float(tp * (fn + tn))
 
 
+def population_attributable_fraction(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The population attributable fraction of two binary records of 0 and 1, the decision
+    as the exposure: the share of truth 1s that would go if the exposed had the risk of the
+    unexposed, at most 1 (conventions: the population attributable fraction; ADR 0486)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    if tp + fn == 0:
+        raise ValueError("truth must hold a 1")
+    if fn + tn == 0:
+        raise ValueError("decision must hold a 0")
+    u = (tp + fn) * (fn + tn)
+    return float(u - int(t.size) * fn) / float(u)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
