@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Forbes coefficient in `measurements` (two binary records as for the Jaccard index:
-     `n·TP / ((TP + FN)·(TP + FP))`, the observed shared 1s over those expected by chance; an
-     error when either record holds no 1).
+   - The McConnaughey coefficient in `measurements` (two binary records as for the Jaccard
+     index: `(TP² − FN·FP) / ((TP + FN)·(TP + FP))`, from −1 to 1; an error when either
+     record holds no 1).
 
 ## Built
 
@@ -3218,6 +3218,12 @@ Updated with every chunk of work. Dates are absolute.
   square of the Ochiai coefficient.
   Python 8648 passed, 2 skipped; .NET 7767 passed; conformance 5542/5542 in both. Version
   2026.11.19.61.
+- 2026-11-19: The Forbes coefficient (ADR 0435):
+  `forbes_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.ForbesCoefficient`): the shared 1s of two binary records over those expected
+  by chance.
+  Python 8663 passed, 2 skipped; .NET 7781 passed; conformance 5554/5554 in both. Version
+  2026.11.19.62.
 
 ## Not built
 

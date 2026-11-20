@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "forbes_coefficient",
+  "description": "The Forbes coefficient (conventions: Forbes coefficient; ADR 0435).",
+  "cases": [
+    {"id": "forbes_coefficient.identical", "op": "forbes_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, the same 2: 8/4 = 2"},
+    {"id": "forbes_coefficient.subset", "op": "forbes_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 0.0]}, "expected": 1.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, |A| 3, |B| 1, TP 1: 4/3"},
+    {"id": "forbes_coefficient.disjoint", "op": "forbes_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no shared item: 0"},
+    {"id": "forbes_coefficient.partial", "op": "forbes_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.8333333333333334, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 5, A = {0, 1, 2}, B = {1, 2, 3, 4}: 10/12 = 5/6"},
+    {"id": "forbes_coefficient.square", "op": "forbes_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 1.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 5, |A| 4, |B| 2, TP 2: 10/8 = 5/4"},
+    {"id": "forbes_coefficient.thirds", "op": "forbes_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0, 0.0, 0.0]}, "expected": 1.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 6, |A| 3, |B| 3, TP 2: 12/9 = 4/3"},
+    {"id": "forbes_coefficient.independent", "op": "forbes_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, |A| 2, |B| 2, TP 1, as chance expects: 4/4 = 1"},
+    {"id": "forbes_coefficient.random", "op": "forbes_coefficient", "args": {"truth": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "decision": [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0]}, "expected": 0.4678362573099415, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 items each from random.Random(435)"},
+    {"id": "forbes_coefficient.empty", "op": "forbes_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "forbes_coefficient.lengths", "op": "forbes_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "forbes_coefficient.not_binary", "op": "forbes_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "forbes_coefficient.no_one", "op": "forbes_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision holds no 1"}
+  ]
+}
