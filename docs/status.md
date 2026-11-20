@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Baroni-Urbani-Buser coefficient in `measurements` (two binary records as for the
-     Jaccard index: `(√(TP·TN) + TP) / (√(TP·TN) + TP + FN + FP)`; an error when both
-     records are all 0).
+   - The Sorgenfrei coefficient in `measurements` (two binary records as for the Jaccard
+     index: `TP² / ((TP + FN)·(TP + FP))`, the product of recall and precision; an error when
+     either record holds no 1).
 
 ## Built
 
@@ -3206,6 +3206,12 @@ Updated with every chunk of work. Dates are absolute.
   records over the length.
   Python 8619 passed, 2 skipped; .NET 7740 passed; conformance 5519/5519 in both. Version
   2026.11.19.59.
+- 2026-11-19: The Baroni-Urbani-Buser coefficient (ADR 0433):
+  `baroni_urbani_buser_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.BaroniUrbaniBuserCoefficient`): the Jaccard index of two binary records with
+  shared absences let in through `√(TP·TN)`.
+  Python 8634 passed, 2 skipped; .NET 7754 passed; conformance 5531/5531 in both. Version
+  2026.11.19.60.
 
 ## Not built
 

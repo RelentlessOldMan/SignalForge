@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "baroni_urbani_buser_coefficient",
+  "description": "The Baroni-Urbani-Buser coefficient (conventions: Baroni-Urbani-Buser coefficient; ADR 0433).",
+  "cases": [
+    {"id": "baroni_urbani_buser_coefficient.identical", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 2, TN 2, no mismatch: (2 + 2)/(2 + 2) = 1"},
+    {"id": "baroni_urbani_buser_coefficient.opposite", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "FN 2, FP 2, TP 0, TN 0: 0/4 = 0"},
+    {"id": "baroni_urbani_buser_coefficient.independent", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one of each cell: (1 + 1)/(1 + 3) = 1/2"},
+    {"id": "baroni_urbani_buser_coefficient.uneven", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.5469181606780271, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 1, FN 1, FP 1, TN 2: (sqrt 2 + 1)/(sqrt 2 + 3)"},
+    {"id": "baroni_urbani_buser_coefficient.square", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.8, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 4, TN 4, FN 1, FP 1: (4 + 4)/(4 + 6) = 4/5"},
+    {"id": "baroni_urbani_buser_coefficient.subset", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.5469181606780271, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 1, FN 2, FP 0, TN 2: (sqrt 2 + 1)/(sqrt 2 + 3)"},
+    {"id": "baroni_urbani_buser_coefficient.no_shared_zero", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TN 0: the Jaccard index, 1/3"},
+    {"id": "baroni_urbani_buser_coefficient.random", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0], "decision": [1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0]}, "expected": 0.7721053585222233, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "40 bits from random.Random(433), about three in ten flipped"},
+    {"id": "baroni_urbani_buser_coefficient.empty", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "baroni_urbani_buser_coefficient.lengths", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "baroni_urbani_buser_coefficient.not_binary", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "baroni_urbani_buser_coefficient.all_zero", "op": "baroni_urbani_buser_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "neither record holds a 1"}
+  ]
+}

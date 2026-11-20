@@ -3493,6 +3493,37 @@ def hamann_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
     return (n - 2 * u) / n
 
 
+def baroni_urbani_buser_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Baroni-Urbani-Buser coefficient of two binary records of 0 and 1: the Jaccard
+    index with shared absences let in through ``sqrt(TP*TN)`` (conventions:
+    Baroni-Urbani-Buser coefficient; ADR 0433)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    k = tp + fn + fp
+    if k == 0:
+        raise ValueError("truth or decision must hold at least one 1")
+    root = math.sqrt(float(tp * tn))
+    return (root + tp) / (root + k)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

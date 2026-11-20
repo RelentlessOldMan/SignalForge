@@ -674,6 +674,11 @@ rule for code not written yet.
   `hamann_coefficient(truth, decision)`, C# `Measurements.HamannCoefficient`):
   `(agreements − disagreements) / n`, an exact integer over the length. Records as for the
   Jaccard index. **(implemented)**
+- **Baroni-Urbani-Buser coefficient** ([ADR 0433](adr/0433-baroni-urbani-buser-coefficient.md);
+  `baroni_urbani_buser_coefficient(truth, decision)`, C#
+  `Measurements.BaroniUrbaniBuserCoefficient`): `(r + TP) / (r + k)` with `r = √(TP·TN)`,
+  the integer product converted to a double once and rooted once, and `k = TP + FN + FP`.
+  Records as for the Jaccard index; both all 0 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
