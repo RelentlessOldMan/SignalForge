@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The mutual information of two binary records in `measurements`
-     (`binary_mutual_information`; records as for the Jaccard index: the mutual information
-     of the 2x2 table in nats, `Σ (cell/n)·ln(n·cell / (row·column))` over the nonzero
-     cells, from 0; no error beyond the record rules).
+   - The Benini coefficient in `measurements` (`benini_coefficient`; two binary records as
+     for the Jaccard index: `(n·TP − |A|·|B|) / (n·min(|A|, |B|) − |A|·|B|)`, the excess of
+     shared 1s over chance scaled by its most, at most 1; an error when the denominator
+     is 0).
 
 ## Built
 
@@ -3373,6 +3373,11 @@ Updated with every chunk of work. Dates are absolute.
   lift of the shared 1s of two binary records.
   Python 9112 passed, 2 skipped; .NET 8202 passed; conformance 5919/5919 in both. Version
   2026.11.20.9.
+- 2026-11-20: Binary mutual information (ADR 0464): `binary_mutual_information(truth,
+  decision)` in `measurements` (C# `Measurements.BinaryMutualInformation`): the mutual
+  information of the 2x2 table of two binary records, in nats.
+  Python 9126 passed, 2 skipped; .NET 8215 passed; conformance 5930/5930 in both. Version
+  2026.11.20.10.
 
 ## Not built
 

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "binary_mutual_information",
+  "description": "Binary mutual information (conventions: binary mutual information; ADR 0464).",
+  "cases": [
+    {"id": "binary_mutual_information.identical", "op": "binary_mutual_information", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "n 4, TP 2, TN 2, all margins 2: 2 (1/2) ln 2 = ln 2, the entropy of either"},
+    {"id": "binary_mutual_information.independent", "op": "binary_mutual_information", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "one of each cell, all margins 2: every log ln 1, 0"},
+    {"id": "binary_mutual_information.opposite", "op": "binary_mutual_information", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "n 4, FN 2, FP 2, all margins 2: ln 2, as for identical records"},
+    {"id": "binary_mutual_information.square", "op": "binary_mutual_information", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.19274475702175742, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "n 10, TP = TN = 4, FN = FP = 1, margins 5: 0.8 ln(8/5) + 0.2 ln(2/5) = 2.6 ln 2 - ln 5"},
+    {"id": "binary_mutual_information.subset", "op": "binary_mutual_information", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0]}, "expected": 0.2157615543388357, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "n 4, TP 1, FN 1, TN 2, |A| 2, |B| 1: (1/4) ln 2 + (1/4) ln(2/3) + (1/2) ln(4/3) = 1.5 ln 2 - 0.75 ln 3"},
+    {"id": "binary_mutual_information.constant", "op": "binary_mutual_information", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "truth all 1: every log ln 1, 0, no error"},
+    {"id": "binary_mutual_information.all_zero", "op": "binary_mutual_information", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "both all 0: TN 3, ln(9/9) = 0, no error"},
+    {"id": "binary_mutual_information.random", "op": "binary_mutual_information", "args": {"truth": [1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.1927848309449125, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "40 bits from random.Random(464), about three in ten flipped"},
+    {"id": "binary_mutual_information.empty", "op": "binary_mutual_information", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "binary_mutual_information.lengths", "op": "binary_mutual_information", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "binary_mutual_information.not_binary", "op": "binary_mutual_information", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}

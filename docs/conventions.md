@@ -822,6 +822,12 @@ rule for code not written yet.
   `ln(n·TP / (|A|·|B|))`, the exact integers `n·TP` and `|A|·|B|` converted to doubles once,
   one division, then the platform's natural `log`. Records as for the Jaccard index;
   `TP = 0` is an error. **(implemented)**
+- **Binary mutual information** ([ADR 0464](adr/0464-binary-mutual-information.md);
+  `binary_mutual_information(truth, decision)`, C# `Measurements.BinaryMutualInformation`):
+  in nats, the terms `(c/n)·ln(n·c / (r·k))` for the nonzero cells in the order TP, FN, FP,
+  TN, each with its truth margin `r` and decision margin `k`, every exact integer converted
+  to a double once and the platform's natural `log` used; summed in that order from 0.
+  Records as for the Jaccard index; no other error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
