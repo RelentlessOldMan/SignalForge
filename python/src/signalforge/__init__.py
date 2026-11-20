@@ -255,6 +255,7 @@ from .measurements import (
     baroni_urbani_buser_coefficient,
     bartels_rank_test,
     bass_ratio,
+    benini_coefficient,
     bhattacharyya_distance,
     binary_mutual_information,
     biweight_midcorrelation,
@@ -644,7 +645,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.10"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.11"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -773,6 +774,7 @@ __all__ = [
     "bartels_rank_test",
     "bass_enhancer",
     "bass_ratio",
+    "benini_coefficient",
     "bessel_bandpass",
     "bessel_bandstop",
     "bessel_highpass",

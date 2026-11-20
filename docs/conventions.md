@@ -828,6 +828,11 @@ rule for code not written yet.
   TN, each with its truth margin `r` and decision margin `k`, every exact integer converted
   to a double once and the platform's natural `log` used; summed in that order from 0.
   Records as for the Jaccard index; no other error. **(implemented)**
+- **Benini coefficient** ([ADR 0465](adr/0465-benini-coefficient.md);
+  `benini_coefficient(truth, decision)`, C# `Measurements.BeniniCoefficient`):
+  `(n·TP − |A|·|B|) / (n·min(|A|, |B|) − |A|·|B|)`, both exact integers converted to
+  doubles once, then one division. Records as for the Jaccard index; a denominator of 0
+  (a record with no 1, or all 1) is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Benini coefficient in `measurements` (`benini_coefficient`; two binary records as
-     for the Jaccard index: `(n·TP − |A|·|B|) / (n·min(|A|, |B|) − |A|·|B|)`, the excess of
-     shared 1s over chance scaled by its most, at most 1; an error when the denominator
-     is 0).
+   - The Doolittle coefficient in `measurements` (`doolittle_coefficient`; two binary
+     records as for the Jaccard index: `(n·TP − |A|·|B|)² / (|A|·|B|·(n − |A|)·(n − |B|))`,
+     the square of the phi coefficient from exact integers, from 0 to 1; a constant record
+     is an error).
 
 ## Built
 
@@ -3378,6 +3378,11 @@ Updated with every chunk of work. Dates are absolute.
   information of the 2x2 table of two binary records, in nats.
   Python 9126 passed, 2 skipped; .NET 8215 passed; conformance 5930/5930 in both. Version
   2026.11.20.10.
+- 2026-11-20: The Benini coefficient (ADR 0465): `benini_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.BeniniCoefficient`): the excess of shared 1s of two
+  binary records over chance as a share of its most.
+  Python 9142 passed, 2 skipped; .NET 8230 passed; conformance 5943/5943 in both. Version
+  2026.11.20.11.
 
 ## Not built
 
