@@ -244,6 +244,7 @@ from .measurements import (
     aggregated_variance,
     allan_deviation,
     am_am_pm,
+    anderberg_d,
     approximate_entropy,
     attention_entropy,
     auto_mutual_information,
@@ -625,7 +626,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.72"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.73"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -727,6 +728,7 @@ __all__ = [
     "am_am_pm",
     "amp_to_db",
     "analytic_signal",
+    "anderberg_d",
     "approximate_entropy",
     "ar_order_selection",
     "ar_psd",

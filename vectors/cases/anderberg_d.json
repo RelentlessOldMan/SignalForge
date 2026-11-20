@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "anderberg_d",
+  "description": "Anderberg's D (conventions: Anderberg's D; ADR 0446).",
+  "cases": [
+    {"id": "anderberg_d.identical", "op": "anderberg_d", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2: sigma 8, sigma' 4: (8 - 4)/8 = 1/2, the most"},
+    {"id": "anderberg_d.opposite", "op": "anderberg_d", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2: sigma 8, sigma' 4: 1/2, disagreement predicts as well"},
+    {"id": "anderberg_d.independent", "op": "anderberg_d", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: sigma 4, sigma' 4: 0"},
+    {"id": "anderberg_d.uneven", "op": "anderberg_d", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2: sigma 6, sigma' 3 + 3: 0, associated but no gain"},
+    {"id": "anderberg_d.square", "op": "anderberg_d", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.3, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: sigma 16, sigma' 10: 6/20 = 3/10"},
+    {"id": "anderberg_d.subset", "op": "anderberg_d", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 0, TN 3: sigma 2 + 3 + 2 + 3 = 10, sigma' 3 + 4: 3/12 = 1/4"},
+    {"id": "anderberg_d.far_below", "op": "anderberg_d", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 1, FP 3, TN 0: sigma 1 + 3 + 3 + 1 = 8, sigma' 3 + 3: 2/8 = 1/4"},
+    {"id": "anderberg_d.constant", "op": "anderberg_d", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, TP 2, FN 1: sigma 5, sigma' 3 + 2: 0, no error"},
+    {"id": "anderberg_d.random", "op": "anderberg_d", "args": {"truth": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0]}, "expected": 0.0875, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(446), about three in ten flipped"},
+    {"id": "anderberg_d.empty", "op": "anderberg_d", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "anderberg_d.lengths", "op": "anderberg_d", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "anderberg_d.not_binary", "op": "anderberg_d", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}

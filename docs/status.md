@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Anderberg's D in `measurements` (two binary records as for the Jaccard index:
-     `(σ − σ') / (2n)` with `σ = max(TP, FN) + max(FP, TN) + max(TP, FP) + max(FN, TN)` and
-     `σ' = max(|A|, n − |A|) + max(|B|, n − |B|)`, the gain in predicting one record from the
-     other; never an error once the records are valid).
+   - Goodman and Kruskal's lambda in `measurements` (two binary records as for the Jaccard
+     index: the symmetric lambda `(σ − σ') / (2n − σ')`, `σ` and `σ'` as for Anderberg's D,
+     the share of prediction errors removed by knowing the other record; an error when
+     `σ' = 2n`, both records constant).
 
 ## Built
 
@@ -3281,6 +3281,11 @@ Updated with every chunk of work. Dates are absolute.
   binary records over the extreme the counts of 1 allow on its side.
   Python 8814 passed, 2 skipped; .NET 7922 passed; conformance 5675/5675 in both. Version
   2026.11.19.72.
+- 2026-11-19: Anderberg's D (ADR 0446): `anderberg_d(truth, decision)` in `measurements`
+  (C# `Measurements.AnderbergD`): the gain in predicting each of two binary records from the
+  other.
+  Python 8829 passed, 2 skipped; .NET 7936 passed; conformance 5687/5687 in both. Version
+  2026.11.19.73.
 
 ## Not built
 

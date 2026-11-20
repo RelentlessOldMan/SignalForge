@@ -733,6 +733,11 @@ rule for code not written yet.
   `|A|·|B| − n·max(0, |A| + |B| − n)`; both exact integers converted to doubles once, then
   one division. Records as for the Jaccard index; a constant record is an error.
   **(implemented)**
+- **Anderberg's D** ([ADR 0446](adr/0446-anderberg-d.md); `anderberg_d(truth, decision)`,
+  C# `Measurements.AnderbergD`): `(σ − σ') / (2n)` with `σ = max(TP, FN) + max(FP, TN) +
+  max(TP, FP) + max(FN, TN)` and `σ' = max(|A|, n − |A|) + max(|B|, n − |B|)`; both exact
+  integers converted to doubles once, then one division. Records as for the Jaccard index;
+  no other error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
