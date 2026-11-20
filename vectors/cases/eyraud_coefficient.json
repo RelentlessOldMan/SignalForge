@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "eyraud_coefficient",
+  "description": "Eyraud's coefficient (conventions: Eyraud's coefficient; ADR 0450).",
+  "cases": [
+    {"id": "eyraud_coefficient.identical", "op": "eyraud_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 4.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, TP 2, |A| = |B| = 2: 16 (8 - 4)/(4 4) = 4"},
+    {"id": "eyraud_coefficient.opposite", "op": "eyraud_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -4.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, TP 0, |A| = |B| = 2: 16 (0 - 4)/(4 4) = -4"},
+    {"id": "eyraud_coefficient.independent", "op": "eyraud_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, TP 1, |A| = |B| = 2: 16 (4 - 4)/16 = 0"},
+    {"id": "eyraud_coefficient.uneven", "op": "eyraud_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.6944444444444444, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 5, TP 1, |A| = |B| = 2: 25 (5 - 4)/(4 9) = 25/36"},
+    {"id": "eyraud_coefficient.square", "op": "eyraud_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 2.4, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 10, TP 4, |A| = |B| = 5: 100 (40 - 25)/(25 25) = 12/5"},
+    {"id": "eyraud_coefficient.subset", "op": "eyraud_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 3.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 6, TP 2, |A| 3, |B| 2: 36 (12 - 6)/(6 12) = 3"},
+    {"id": "eyraud_coefficient.far_below", "op": "eyraud_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": -5.333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, TP 0, |A| 1, |B| 3: 16 (0 - 3)/(3 3) = -16/3"},
+    {"id": "eyraud_coefficient.random", "op": "eyraud_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0]}, "expected": 1.6161616161616161, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(450), about three in ten flipped"},
+    {"id": "eyraud_coefficient.empty", "op": "eyraud_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "eyraud_coefficient.lengths", "op": "eyraud_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "eyraud_coefficient.not_binary", "op": "eyraud_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "eyraud_coefficient.no_decision_one", "op": "eyraud_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "decision all 0: |B| = 0"},
+    {"id": "eyraud_coefficient.all_one", "op": "eyraud_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "truth all 1: n - |A| = 0"}
+  ]
+}

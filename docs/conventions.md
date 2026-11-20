@@ -753,6 +753,11 @@ rule for code not written yet.
   `n·(2·TP − 1)² / (4·|A|·|B|)`, both exact integers converted to doubles once, then one
   division. Records as for the Jaccard index; a record with no 1 is an error.
   **(implemented)**
+- **Eyraud's coefficient** ([ADR 0450](adr/0450-eyraud-coefficient.md);
+  `eyraud_coefficient(truth, decision)`, C# `Measurements.EyraudCoefficient`):
+  `c · n² / (u · v)` with `c = n·TP − |A|·|B|`, `u = |A|·|B|`, `v = (n − |A|)·(n − |B|)`,
+  each exact integer converted to a double once, the operations in that order. Records as
+  for the Jaccard index; a constant record is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

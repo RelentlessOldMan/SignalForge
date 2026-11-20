@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Eyraud's coefficient in `measurements` (two binary records as for the Jaccard index:
-     `n²·(n·TP − |A|·|B|) / (|A|·|B|·(n − |A|)·(n − |B|))`, the covariance over the product
-     of the four margins; an error when a record is constant).
+   - Stiles' coefficient in `measurements` (two binary records as for the Jaccard index:
+     `log10(n·(|n·TP − |A|·|B|| − n/2)² / (|A|·|B|·(n − |A|)·(n − |B|)))`, the logarithm of a
+     continuity-corrected chi-square over n; an error when a record is constant or when
+     `|n·TP − |A|·|B|| = n/2`).
 
 ## Built
 
@@ -3300,6 +3301,11 @@ Updated with every chunk of work. Dates are absolute.
   binary records.
   Python 8877 passed, 2 skipped; .NET 7981 passed; conformance 5726/5726 in both. Version
   2026.11.19.76.
+- 2026-11-19: Eyraud's coefficient (ADR 0450): `eyraud_coefficient(truth, decision)` in
+  `measurements` (C# `Measurements.EyraudCoefficient`): the covariance of two binary records
+  over the product of the four margins.
+  Python 8893 passed, 2 skipped; .NET 7996 passed; conformance 5739/5739 in both. Version
+  2026.11.19.77.
 
 ## Not built
 
