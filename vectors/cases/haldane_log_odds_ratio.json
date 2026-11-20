@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "haldane_log_odds_ratio",
+  "description": "The Haldane log odds ratio (conventions: the Haldane log odds ratio; ADR 0494).",
+  "cases": [
+    {"id": "haldane_log_odds_ratio.independent", "op": "haldane_log_odds_ratio", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one of each cell: ln(9/9) = 0"},
+    {"id": "haldane_log_odds_ratio.identical", "op": "haldane_log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 3.2188758248682006, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, TN 2, FN = FP = 0: ln(5 5/(1 1)) = ln 25"},
+    {"id": "haldane_log_odds_ratio.opposite", "op": "haldane_log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -3.2188758248682006, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "FN 2, FP 2, TP = TN = 0: ln(1/25) = -ln 25"},
+    {"id": "haldane_log_odds_ratio.square", "op": "haldane_log_odds_ratio", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 2.1972245773362196, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 4, FN 1, FP 1, TN 4: ln(9 9/(3 3)) = ln 9"},
+    {"id": "haldane_log_odds_ratio.uneven", "op": "haldane_log_odds_ratio", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -0.33647223662121295, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 3, TN 1: ln(5 3/(3 7)) = ln(5/7)"},
+    {"id": "haldane_log_odds_ratio.single", "op": "haldane_log_odds_ratio", "args": {"truth": [1.0], "decision": [1.0]}, "expected": 1.0986122886681098, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 1 only: ln(3 1/(1 1)) = ln 3"},
+    {"id": "haldane_log_odds_ratio.random", "op": "haldane_log_odds_ratio", "args": {"truth": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0], "decision": [0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0]}, "expected": 1.188008953336922, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "40 bits from random.Random(494), about three in ten flipped"},
+    {"id": "haldane_log_odds_ratio.empty", "op": "haldane_log_odds_ratio", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "haldane_log_odds_ratio.lengths", "op": "haldane_log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "haldane_log_odds_ratio.not_binary", "op": "haldane_log_odds_ratio", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}

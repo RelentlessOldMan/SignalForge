@@ -977,6 +977,11 @@ rule for code not written yet.
   formed as one exact rational whose numerator and denominator are each converted to a
   double once, then one division and the square root. Records as for the Jaccard index;
   any cell equal to 0 is an error. **(implemented)**
+- **Haldane log odds ratio** ([ADR 0494](adr/0494-haldane-log-odds-ratio.md);
+  `haldane_log_odds_ratio(truth, decision)`, C# `Measurements.HaldaneLogOddsRatio`):
+  `ln((2·TP + 1)(2·TN + 1) / ((2·FN + 1)(2·FP + 1)))`, a half added to every cell; the two
+  exact integers each converted to a double once, then one division and the logarithm.
+  Records as for the Jaccard index; no other errors. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

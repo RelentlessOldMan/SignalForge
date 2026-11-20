@@ -328,6 +328,7 @@ from .measurements import (
     gower_coefficient,
     gower_legendre_coefficient,
     hadamard_deviation,
+    haldane_log_odds_ratio,
     hamann_coefficient,
     hamming_distance,
     hawkins_dotson_coefficient,
@@ -673,7 +674,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.39"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.40"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -986,6 +987,7 @@ __all__ = [
     "gower_legendre_coefficient",
     "haas",
     "hadamard_deviation",
+    "haldane_log_odds_ratio",
     "hamann_coefficient",
     "hamming_distance",
     "hampel_filter",
