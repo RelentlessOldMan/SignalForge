@@ -291,6 +291,7 @@ from .measurements import (
     detrended_fluctuation,
     diagnostic_odds_ratio,
     digby_h,
+    dispersion_coefficient,
     dispersion_entropy,
     distance_correlation,
     distribution_entropy,
@@ -650,7 +651,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.16"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.17"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -881,6 +882,7 @@ __all__ = [
     "dfe_least_squares",
     "diagnostic_odds_ratio",
     "digby_h",
+    "dispersion_coefficient",
     "dispersion_entropy",
     "distance_correlation",
     "distribution_entropy",

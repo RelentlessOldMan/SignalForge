@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "dispersion_coefficient",
+  "description": "The dispersion coefficient (conventions: the dispersion coefficient; ADR 0471).",
+  "cases": [
+    {"id": "dispersion_coefficient.identical", "op": "dispersion_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2, n 4: 4/16 = 1/4, the greatest value"},
+    {"id": "dispersion_coefficient.opposite", "op": "dispersion_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2, n 4: -4/16 = -1/4, the least value"},
+    {"id": "dispersion_coefficient.independent", "op": "dispersion_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: (1 - 1)/16 = 0"},
+    {"id": "dispersion_coefficient.square", "op": "dispersion_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.15, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1, n 10: 15/100 = 3/20"},
+    {"id": "dispersion_coefficient.subset", "op": "dispersion_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.16666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, TN 3, n 6: 6/36 = 1/6"},
+    {"id": "dispersion_coefficient.uneven", "op": "dispersion_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -0.02040816326530612, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 3, TN 1, n 7: (2 - 3)/49 = -1/49"},
+    {"id": "dispersion_coefficient.all_one", "op": "dispersion_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "both all 1: TN 0, FN\u00b7FP 0: 0, no error"},
+    {"id": "dispersion_coefficient.random", "op": "dispersion_coefficient", "args": {"truth": [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.12625, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(471), about three in ten flipped"},
+    {"id": "dispersion_coefficient.empty", "op": "dispersion_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "dispersion_coefficient.lengths", "op": "dispersion_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "dispersion_coefficient.not_binary", "op": "dispersion_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}

@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The dispersion coefficient in `measurements` (`dispersion_coefficient`; two binary
-     records as for the Jaccard index: `(TP·TN − FN·FP) / n²`, the covariance of the two
-     records, from −1/4 to 1/4).
+   - The size difference in `measurements` (`size_difference`; two binary records as for
+     the Jaccard index: `(FN + FP)² / n²`, the squared share of disagreements, from 0 to 1).
 
 ## Built
 
@@ -3407,6 +3406,11 @@ Updated with every chunk of work. Dates are absolute.
   binary record's 1s that the other shares.
   Python 9220 passed, 2 skipped; .NET 8304 passed; conformance 6007/6007 in both. Version
   2026.11.20.16.
+- 2026-11-20: The dispersion coefficient (ADR 0471): `dispersion_coefficient(truth,
+  decision)` in `measurements` (C# `Measurements.DispersionCoefficient`): the covariance of
+  two binary records as 0/1 values.
+  Python 9234 passed, 2 skipped; .NET 8317 passed; conformance 6018/6018 in both. Version
+  2026.11.20.17.
 
 ## Not built
 

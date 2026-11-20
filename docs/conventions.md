@@ -858,6 +858,10 @@ rule for code not written yet.
   `TP/|A| + TP/|B|`, each quotient of exact integers converted to doubles once, added in
   that order. Records as for the Jaccard index; a record with no 1 is an error.
   **(implemented)**
+- **Dispersion coefficient** ([ADR 0471](adr/0471-dispersion-coefficient.md);
+  `dispersion_coefficient(truth, decision)`, C# `Measurements.DispersionCoefficient`):
+  `(TP·TN − FN·FP) / n²`, the two exact integers each converted to a double once. Records
+  as for the Jaccard index; constant records give 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
