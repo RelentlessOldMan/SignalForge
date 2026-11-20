@@ -458,6 +458,7 @@ from .measurements import (
     yule_q,
     yule_q_standard_error,
     yule_y,
+    yule_y_standard_error,
     zero_crossing_rate,
 )
 from .metrics import (
@@ -675,7 +676,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.41"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.42"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1332,6 +1333,7 @@ __all__ = [
     "yule_q_standard_error",
     "yule_walker_psd",
     "yule_y",
+    "yule_y_standard_error",
     "zero_crossing_rate",
     "zero_phase_filter",
 ]

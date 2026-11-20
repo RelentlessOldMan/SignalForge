@@ -988,6 +988,12 @@ rule for code not written yet.
   `x = TP·TN`, `y = FN·FP`, `N` the numerator of the reciprocal sum; `xy`, `N` and `x + y`
   each converted to a double once. Records as for the Jaccard index; any cell equal to 0
   is an error. **(implemented)**
+- **Standard error of Yule's Y** ([ADR 0496](adr/0496-yule-y-standard-error.md);
+  `yule_y_standard_error(truth, decision)`, C# `Measurements.YuleYStandardError`):
+  `¼·(1 − Y²)·sqrt(1/TP + 1/FN + 1/FP + 1/TN)`, formed as `√N / (√x + √y)²` with
+  `x = TP·TN`, `y = FN·FP`, `N` the numerator of the reciprocal sum; `N`, `x` and `y` each
+  converted to a double once. Records as for the Jaccard index; any cell equal to 0 is an
+  error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

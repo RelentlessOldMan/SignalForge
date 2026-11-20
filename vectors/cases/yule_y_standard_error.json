@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "yule_y_standard_error",
+  "description": "The standard error of Yule's Y (conventions: the standard error of Yule's Y; ADR 0496).",
+  "cases": [
+    {"id": "yule_y_standard_error.independent", "op": "yule_y_standard_error", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one of each cell: N 4, sqrt 4/(1 + 1)^2 = 1/2"},
+    {"id": "yule_y_standard_error.square", "op": "yule_y_standard_error", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.25298221281347033, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 4, FN 1, FP 1, TN 4: N 40, sqrt 40/(4 + 1)^2 = 2 sqrt 10/25"},
+    {"id": "yule_y_standard_error.third", "op": "yule_y_standard_error", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.3849001794597505, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 1, TN 2: N 12, sqrt 12/(2 + 1)^2 = 2 sqrt 3/9"},
+    {"id": "yule_y_standard_error.fours", "op": "yule_y_standard_error", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.25, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "four of each cell: N 256, sqrt 256/(4 + 4)^2 = 1/4"},
+    {"id": "yule_y_standard_error.uneven", "op": "yule_y_standard_error", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.41651825136414683, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 3, TN 1: N 17, sqrt 17/(sqrt 2 + sqrt 3)^2 = sqrt 17/(5 + 2 sqrt 6)"},
+    {"id": "yule_y_standard_error.random", "op": "yule_y_standard_error", "args": {"truth": [0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0], "decision": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.15112223336352862, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "40 bits from random.Random(496), about three in ten flipped"},
+    {"id": "yule_y_standard_error.empty", "op": "yule_y_standard_error", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "yule_y_standard_error.lengths", "op": "yule_y_standard_error", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "yule_y_standard_error.not_binary", "op": "yule_y_standard_error", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "yule_y_standard_error.no_tp", "op": "yule_y_standard_error", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "opposite records: TP = 0"},
+    {"id": "yule_y_standard_error.no_fp", "op": "yule_y_standard_error", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "equal records: FP = 0"},
+    {"id": "yule_y_standard_error.no_fn", "op": "yule_y_standard_error", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "every truth 1 caught: FN = 0"},
+    {"id": "yule_y_standard_error.decision_all_one", "op": "yule_y_standard_error", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the decision has no 0: TN = 0"}
+  ]
+}

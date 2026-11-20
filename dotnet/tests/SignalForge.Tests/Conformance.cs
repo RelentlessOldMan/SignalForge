@@ -425,6 +425,7 @@ public static class Conformance
             "log_odds_ratio_standard_error" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.LogOddsRatioStandardError(t.Item1, t.Item2)),
             "haldane_log_odds_ratio" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.HaldaneLogOddsRatio(t.Item1, t.Item2)),
             "yule_q_standard_error" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.YuleQStandardError(t.Item1, t.Item2)),
+            "yule_y_standard_error" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.YuleYStandardError(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
