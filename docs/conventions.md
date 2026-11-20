@@ -950,6 +950,12 @@ rule for code not written yet.
   `2·ln(|A| / n) / ln(TP / n) − 1`, the counts each converted to a double once and each
   logarithm taken of one division. Records as for the Jaccard index; `TP = 0`, or
   `TP = n`, is an error. **(implemented)**
+- **Extremal dependence index** ([ADR 0490](adr/0490-extremal-dependence-index.md);
+  `extremal_dependence_index(truth, decision)`, C# `Measurements.ExtremalDependenceIndex`):
+  `(ln F − ln H) / (ln F + ln H)` with `H = TP / |A|`, `F = FP / (n − |A|)`, the counts each
+  converted to a double once and each logarithm taken of one division. Records as for the
+  Jaccard index; a constant truth, `TP = 0`, `FP = 0`, or a decision of all 1 is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

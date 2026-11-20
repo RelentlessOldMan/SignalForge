@@ -419,6 +419,7 @@ public static class Conformance
             "prevalence_threshold" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.PrevalenceThreshold(t.Item1, t.Item2)),
             "frequency_bias" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.FrequencyBias(t.Item1, t.Item2)),
             "extreme_dependency_score" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.ExtremeDependencyScore(t.Item1, t.Item2)),
+            "extremal_dependence_index" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.ExtremalDependenceIndex(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
