@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Goodman and Kruskal's lambda in `measurements` (two binary records as for the Jaccard
-     index: the symmetric lambda `(σ − σ') / (2n − σ')`, `σ` and `σ'` as for Anderberg's D,
-     the share of prediction errors removed by knowing the other record; an error when
-     `σ' = 2n`, both records constant).
+   - The Austin-Colwell coefficient in `measurements` (two binary records as for the Jaccard
+     index: `(2/π)·asin(√((TP + TN)/n))`, the arcsine-transformed simple matching
+     coefficient, from 0 to 1; never an error once the records are valid).
 
 ## Built
 
@@ -3286,6 +3285,11 @@ Updated with every chunk of work. Dates are absolute.
   other.
   Python 8829 passed, 2 skipped; .NET 7936 passed; conformance 5687/5687 in both. Version
   2026.11.19.73.
+- 2026-11-19: Goodman and Kruskal's lambda (ADR 0447): `goodman_kruskal_lambda(truth,
+  decision)` in `measurements` (C# `Measurements.GoodmanKruskalLambda`): the symmetric lambda
+  of two binary records, the share of prediction errors removed.
+  Python 8846 passed, 2 skipped; .NET 7952 passed; conformance 5701/5701 in both. Version
+  2026.11.19.74.
 
 ## Not built
 

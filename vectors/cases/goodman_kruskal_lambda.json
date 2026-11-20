@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "goodman_kruskal_lambda",
+  "description": "Goodman and Kruskal's lambda (conventions: Goodman and Kruskal's lambda; ADR 0447).",
+  "cases": [
+    {"id": "goodman_kruskal_lambda.identical", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2: sigma 8, sigma' 4: (8 - 4)/(8 - 4) = 1, the most"},
+    {"id": "goodman_kruskal_lambda.opposite", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2: sigma 8, sigma' 4: 1, disagreement predicts as well"},
+    {"id": "goodman_kruskal_lambda.independent", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: sigma 4, sigma' 4: 0"},
+    {"id": "goodman_kruskal_lambda.uneven", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2: sigma 6, sigma' 3 + 3: 0, associated but no gain"},
+    {"id": "goodman_kruskal_lambda.square", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.6, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: sigma 16, sigma' 10: 6/(20 - 10) = 3/5"},
+    {"id": "goodman_kruskal_lambda.subset", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.6, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 0, TN 3: sigma 2 + 3 + 2 + 3 = 10, sigma' 3 + 4: 3/(12 - 7) = 3/5"},
+    {"id": "goodman_kruskal_lambda.far_below", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 1, FP 3, TN 0: sigma 1 + 3 + 3 + 1 = 8, sigma' 3 + 3: 2/(8 - 6) = 1"},
+    {"id": "goodman_kruskal_lambda.constant", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, TP 2, FN 1: sigma 5, sigma' 3 + 2: 0/(6 - 5) = 0, no error"},
+    {"id": "goodman_kruskal_lambda.random", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0], "decision": [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0]}, "expected": 0.47368421052631576, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(447), about three in ten flipped"},
+    {"id": "goodman_kruskal_lambda.empty", "op": "goodman_kruskal_lambda", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "goodman_kruskal_lambda.lengths", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "goodman_kruskal_lambda.not_binary", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "goodman_kruskal_lambda.both_constant", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 1.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "truth all 1, decision all 0: sigma' = 2n, no error to remove"},
+    {"id": "goodman_kruskal_lambda.both_equal_constant", "op": "goodman_kruskal_lambda", "args": {"truth": [1.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "both all 1: sigma' = 2n"}
+  ]
+}
