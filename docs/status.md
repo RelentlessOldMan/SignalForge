@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The negative likelihood ratio in `measurements` (`negative_likelihood_ratio`; two
-     binary records as for the Jaccard index: the false negative rate over the true negative
-     rate, `FN·(FP + TN) / (|A|·TN)`, at least 0; an error when truth has no 1 or TN = 0).
+   - The relative risk in `measurements` (`relative_risk`; two binary records as for the
+     Jaccard index, the decision as the exposure: the share of truth 1s where the decision
+     is 1 over the share where it is 0, `TP·(FN + TN) / ((TP + FP)·FN)`, at least 0; an
+     error when the decision has no 1 or FN = 0).
 
 ## Built
 
@@ -3467,6 +3468,11 @@ Updated with every chunk of work. Dates are absolute.
   positive rate over the false positive rate.
   Python 9387 passed, 2 skipped; .NET 8469 passed; conformance 6148/6148 in both. Version
   2026.11.20.28.
+- 2026-11-20: The negative likelihood ratio (ADR 0483): `negative_likelihood_ratio(truth,
+  decision)` in `measurements` (C# `Measurements.NegativeLikelihoodRatio`): the false
+  negative rate over the true negative rate.
+  Python 9402 passed, 2 skipped; .NET 8484 passed; conformance 6161/6161 in both. Version
+  2026.11.20.29.
 
 ## Not built
 

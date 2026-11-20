@@ -913,6 +913,11 @@ rule for code not written yet.
   `TP·(FP + TN) / (|A|·FP)`, the two exact integers each converted to a double once, then
   one division. Records as for the Jaccard index; truth with no 1, or `FP = 0`, is an
   error. **(implemented)**
+- **Negative likelihood ratio** ([ADR 0483](adr/0483-negative-likelihood-ratio.md);
+  `negative_likelihood_ratio(truth, decision)`, C# `Measurements.NegativeLikelihoodRatio`):
+  `FN·(FP + TN) / (|A|·TN)`, the two exact integers each converted to a double once, then
+  one division. Records as for the Jaccard index; truth with no 1, or `TN = 0`, is an
+  error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

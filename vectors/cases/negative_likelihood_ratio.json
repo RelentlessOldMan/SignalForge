@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "negative_likelihood_ratio",
+  "description": "The negative likelihood ratio (conventions: the negative likelihood ratio; ADR 0483).",
+  "cases": [
+    {"id": "negative_likelihood_ratio.independent", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 1 2/(2 1) = 1"},
+    {"id": "negative_likelihood_ratio.identical", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 0, TN 2: 0, the least value"},
+    {"id": "negative_likelihood_ratio.square", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: 1 5/(5 4) = 1/4"},
+    {"id": "negative_likelihood_ratio.uneven", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 1.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 3, TN 1: 1 4/(3 1) = 4/3"},
+    {"id": "negative_likelihood_ratio.skew", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.375, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 3, FN 1, FP 1, TN 2: 1 3/(4 2) = 3/8"},
+    {"id": "negative_likelihood_ratio.none_flagged", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 0, TN 2, |A| 1: 1 2/(1 2) = 1"},
+    {"id": "negative_likelihood_ratio.random", "op": "negative_likelihood_ratio", "args": {"truth": [0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0], "decision": [0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0]}, "expected": 0.4222222222222222, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(483), about three in ten flipped"},
+    {"id": "negative_likelihood_ratio.empty", "op": "negative_likelihood_ratio", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "negative_likelihood_ratio.lengths", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "negative_likelihood_ratio.not_binary", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "negative_likelihood_ratio.no_truth_one", "op": "negative_likelihood_ratio", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth has no 1: |A| = 0"},
+    {"id": "negative_likelihood_ratio.no_tn", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "opposite records: TN = 0"},
+    {"id": "negative_likelihood_ratio.truth_all_one", "op": "negative_likelihood_ratio", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth has no 0: TN = 0"}
+  ]
+}

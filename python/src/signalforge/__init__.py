@@ -370,6 +370,7 @@ from .measurements import (
     mountford_coefficient,
     mtie,
     multiscale_entropy,
+    negative_likelihood_ratio,
     noise_compensated_decay,
     noise_figure_cascade,
     noise_figure_y_factor,
@@ -662,7 +663,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.28"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.29"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1080,6 +1081,7 @@ __all__ = [
     "multitaper_line_removal",
     "multitaper_psd",
     "multitone",
+    "negative_likelihood_ratio",
     "newman_phases",
     "noise_compensated_decay",
     "noise_figure_cascade",
