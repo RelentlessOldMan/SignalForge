@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Doolittle coefficient in `measurements` (`doolittle_coefficient`; two binary
-     records as for the Jaccard index: `(n·TP − |A|·|B|)² / (|A|·|B|·(n − |A|)·(n − |B|))`,
-     the square of the phi coefficient from exact integers, from 0 to 1; a constant record
-     is an error).
+   - The Rogot-Goldberg coefficient in `measurements` (`rogot_goldberg_coefficient`; two
+     binary records as for the Jaccard index: `TP/(2·TP + FN + FP) + TN/(2·TN + FN + FP)`,
+     the mean of the Dice coefficients of the 1s and of the 0s, from 0 to 1; an error when
+     both records are all 0 or both are all 1).
 
 ## Built
 
@@ -3383,6 +3383,11 @@ Updated with every chunk of work. Dates are absolute.
   binary records over chance as a share of its most.
   Python 9142 passed, 2 skipped; .NET 8230 passed; conformance 5943/5943 in both. Version
   2026.11.20.11.
+- 2026-11-20: The Doolittle coefficient (ADR 0466): `doolittle_coefficient(truth, decision)`
+  in `measurements` (C# `Measurements.DoolittleCoefficient`): the square of the phi
+  coefficient of two binary records.
+  Python 9158 passed, 2 skipped; .NET 8245 passed; conformance 5956/5956 in both. Version
+  2026.11.20.12.
 
 ## Not built
 

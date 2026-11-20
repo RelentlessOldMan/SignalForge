@@ -293,6 +293,7 @@ from .measurements import (
     dispersion_entropy,
     distance_correlation,
     distribution_entropy,
+    doolittle_coefficient,
     early_decay_time,
     energy_distance,
     energy_separation,
@@ -645,7 +646,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.11"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.12"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -878,6 +879,7 @@ __all__ = [
     "dispersion_entropy",
     "distance_correlation",
     "distribution_entropy",
+    "doolittle_coefficient",
     "dpss_tapers",
     "dpw_sawtooth",
     "duck",

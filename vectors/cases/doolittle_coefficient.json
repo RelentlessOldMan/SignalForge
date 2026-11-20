@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "doolittle_coefficient",
+  "description": "The Doolittle coefficient (conventions: the Doolittle coefficient; ADR 0466).",
+  "cases": [
+    {"id": "doolittle_coefficient.identical", "op": "doolittle_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, TP 2, all margins 2: (8 - 4)^2/(4 4) = 1"},
+    {"id": "doolittle_coefficient.independent", "op": "doolittle_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, TP 1, all margins 2: 0"},
+    {"id": "doolittle_coefficient.opposite", "op": "doolittle_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, TP 0, all margins 2: (-4)^2/16 = 1"},
+    {"id": "doolittle_coefficient.far_below", "op": "doolittle_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, TP 0, |A| 1, |B| 3: (-3)^2/(3 3) = 1, one record the other flipped"},
+    {"id": "doolittle_coefficient.subset", "op": "doolittle_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 6, TP 2, |A| 3, |B| 2: 6^2/(6 12) = 1/2"},
+    {"id": "doolittle_coefficient.square", "op": "doolittle_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.36, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 10, TP 4, all margins 5: 15^2/(25 25) = 9/25"},
+    {"id": "doolittle_coefficient.uneven", "op": "doolittle_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.027777777777777776, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 5, TP 1, |A| = |B| = 2: 1^2/(4 9) = 1/36"},
+    {"id": "doolittle_coefficient.random", "op": "doolittle_coefficient", "args": {"truth": [0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0]}, "expected": 0.12052859421280473, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "40 bits from random.Random(466), about three in ten flipped"},
+    {"id": "doolittle_coefficient.empty", "op": "doolittle_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "doolittle_coefficient.lengths", "op": "doolittle_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "doolittle_coefficient.not_binary", "op": "doolittle_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "doolittle_coefficient.all_one", "op": "doolittle_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth all 1: n - |A| is 0"},
+    {"id": "doolittle_coefficient.no_one", "op": "doolittle_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "decision has no 1: |B| is 0"}
+  ]
+}
