@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Tversky index in `measurements` (two binary records as for the Jaccard index, and
-     weights `alpha` and `beta` at least 0: `TP/(TP + α·FN + β·FP)`, Jaccard at `α = β = 1`;
-     an error when the denominator is zero).
+   - The simple matching coefficient in `measurements` (two binary records as for the
+     Jaccard index: the items where they agree, 1s and 0s alike, over the length).
 
 ## Built
 
@@ -3151,6 +3150,11 @@ Updated with every chunk of work. Dates are absolute.
   records over the smaller set.
   Python 8489 passed, 2 skipped; .NET 7621 passed; conformance 5420/5420 in both. Version
   2026.11.19.49.
+- 2026-11-19: The Tversky index (ADR 0423): `tversky_index(truth, decision, alpha, beta)` in
+  `measurements` (C# `Measurements.TverskyIndex`): two binary records' overlap with the
+  misses and false alarms weighted apart; Jaccard and Dice as special cases.
+  Python 8509 passed, 2 skipped; .NET 7639 passed; conformance 5436/5436 in both. Version
+  2026.11.19.50.
 
 ## Not built
 

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "suite": "tversky_index",
+  "description": "The Tversky index (conventions: Tversky index; ADR 0423).",
+  "cases": [
+    {"id": "tversky_index.jaccard", "op": "tversky_index", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0, 1.0, 1.0, 0.0], "alpha": 1.0, "beta": 1.0}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "alpha = beta = 1 is Jaccard: 2/(2 + 2 + 2) = 1/3"},
+    {"id": "tversky_index.dice", "op": "tversky_index", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0, 1.0, 1.0, 0.0], "alpha": 0.5, "beta": 0.5}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "alpha = beta = 1/2 is Dice: 2/(2 + 1 + 1) = 1/2"},
+    {"id": "tversky_index.misses_only", "op": "tversky_index", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0, 1.0, 1.0, 0.0], "alpha": 1.0, "beta": 0.0}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FP ignored: 2/(2 + 2) = 1/2, the recall"},
+    {"id": "tversky_index.uneven", "op": "tversky_index", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0], "alpha": 0.25, "beta": 2.0}, "expected": 0.26666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 3, FP 1: 1/(1 + 3/4 + 2) = 4/15"},
+    {"id": "tversky_index.no_hit", "op": "tversky_index", "args": {"truth": [1.0, 0.0], "decision": [0.0, 1.0], "alpha": 1.0, "beta": 1.0}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no shared item: 0"},
+    {"id": "tversky_index.zero_weights", "op": "tversky_index", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0], "alpha": 0.0, "beta": 0.0}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "both weights 0 and TP 1: 1/1 = 1"},
+    {"id": "tversky_index.random", "op": "tversky_index", "args": {"truth": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0], "alpha": 0.3, "beta": 0.7}, "expected": 0.30303030303030304, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 items each from random.Random(423), alpha 0.3, beta 0.7"},
+    {"id": "tversky_index.empty", "op": "tversky_index", "args": {"truth": [], "decision": [], "alpha": 1.0, "beta": 1.0}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "tversky_index.lengths", "op": "tversky_index", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0], "alpha": 1.0, "beta": 1.0}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "tversky_index.not_binary", "op": "tversky_index", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0], "alpha": 1.0, "beta": 1.0}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "tversky_index.negative_alpha", "op": "tversky_index", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0], "alpha": -0.5, "beta": 1.0}, "error": "invalid_argument", "source": "alpha must be at least 0"},
+    {"id": "tversky_index.negative_beta", "op": "tversky_index", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0], "alpha": 1.0, "beta": -1.0}, "error": "invalid_argument", "source": "beta must be at least 0"},
+    {"id": "tversky_index.infinite_alpha", "op": "tversky_index", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0], "alpha": "inf", "beta": 1.0}, "error": "invalid_argument", "source": "alpha must be finite"},
+    {"id": "tversky_index.nan_beta", "op": "tversky_index", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 0.0], "alpha": 1.0, "beta": "nan"}, "error": "invalid_argument", "source": "beta must be finite"},
+    {"id": "tversky_index.no_ones", "op": "tversky_index", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0], "alpha": 1.0, "beta": 1.0}, "error": "invalid_argument", "source": "no 1 in either record: the denominator is 0"},
+    {"id": "tversky_index.zero_denominator", "op": "tversky_index", "args": {"truth": [1.0, 0.0], "decision": [0.0, 1.0], "alpha": 0.0, "beta": 0.0}, "error": "invalid_argument", "source": "TP 0 and both weights 0: the denominator is 0"}
+  ]
+}

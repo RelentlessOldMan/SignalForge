@@ -636,6 +636,11 @@ rule for code not written yet.
   `overlap_coefficient(truth, decision)`, C# `Measurements.OverlapCoefficient`):
   `|A ∩ B| / min(|A|, |B|)` from integer counts. Records as for the Jaccard index; either
   with no 1 is an error. **(implemented)**
+- **Tversky index** ([ADR 0423](adr/0423-tversky-index.md);
+  `tversky_index(truth, decision, alpha, beta)`, C# `Measurements.TverskyIndex`):
+  `TP / ((TP + α·FN) + β·FP)`, the denominator summed in that order. Records as for the
+  Jaccard index; `alpha` and `beta` finite and at least 0; a zero denominator is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

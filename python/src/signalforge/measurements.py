@@ -3219,6 +3219,41 @@ def overlap_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
     return both / smaller
 
 
+def tversky_index(truth: ArrayLike, decision: ArrayLike, alpha: float, beta: float) -> float:
+    """The Tversky index of two binary records of 0 and 1: the items both mark 1 over those
+    plus ``alpha`` times the items only ``truth`` marks and ``beta`` times the items only
+    ``decision`` marks (conventions: Tversky index; ADR 0423)."""
+    al = real(alpha, "alpha")
+    be = real(beta, "beta")
+    if al < 0:
+        raise ValueError("alpha must be at least 0")
+    if be < 0:
+        raise ValueError("beta must be at least 0")
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = float(np.count_nonzero(t & d))
+    fn = float(np.count_nonzero(t & ~d))
+    fp = float(np.count_nonzero(~t & d))
+    den = (tp + al * fn) + be * fp
+    if den == 0:
+        raise ValueError("the denominator TP + alpha*FN + beta*FP is zero")
+    return tp / den
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
