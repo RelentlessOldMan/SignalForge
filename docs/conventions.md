@@ -964,6 +964,12 @@ rule for code not written yet.
   `H = TP / |A|`, `F = FP / (n − |A|)`; each logarithm taken of one division of two counts,
   each converted to a double once, the sums left to right. Records as for the Jaccard
   index; any cell equal to 0 is an error. **(implemented)**
+- **Tetrachoric approximation** ([ADR 0492](adr/0492-tetrachoric-approximation.md);
+  `tetrachoric_approximation(truth, decision)`, C#
+  `Measurements.TetrachoricApproximation`): Pearson's `cos(π / (1 + sqrt(TP·TN / (FN·FP))))`;
+  `TP·TN` and `FN·FP` each converted to a double once, then the division, the square root,
+  `1 +`, π divided by the sum, and the cosine. Records as for the Jaccard index;
+  `FN·FP = 0` is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

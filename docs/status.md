@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The tetrachoric approximation in `measurements` (`tetrachoric_approximation`; two
-     binary records as for the Jaccard index: Pearson's `cos(π / (1 + sqrt(TP·TN / (FN·FP))))`,
-     from −1 to 1; an error when FN·FP = 0).
+   - The standard error of the log odds ratio in `measurements`
+     (`log_odds_ratio_standard_error`; two binary records as for the Jaccard index: Woolf's
+     `sqrt(1/TP + 1/FN + 1/FP + 1/TN)`, above 0; an error when any cell is 0).
 
 ## Built
 
@@ -3513,6 +3513,11 @@ Updated with every chunk of work. Dates are absolute.
   symmetric under complementing both records.
   Python 9526 passed, 2 skipped; .NET 8608 passed; conformance 6269/6269 in both. Version
   2026.11.20.37.
+- 2026-11-20: The tetrachoric approximation (ADR 0492): `tetrachoric_approximation(truth,
+  decision)` in `measurements` (C# `Measurements.TetrachoricApproximation`): Pearson's
+  cosine approximation to the tetrachoric correlation.
+  Python 9541 passed, 2 skipped; .NET 8623 passed; conformance 6282/6282 in both. Version
+  2026.11.20.38.
 
 ## Not built
 

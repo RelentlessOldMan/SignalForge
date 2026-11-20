@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "tetrachoric_approximation",
+  "description": "The tetrachoric approximation (conventions: the tetrachoric approximation; ADR 0492).",
+  "cases": [
+    {"id": "tetrachoric_approximation.square", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.8090169943749475, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "OR 16: cos(pi/5) = (1 + sqrt 5)/4"},
+    {"id": "tetrachoric_approximation.independent", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "OR 1: cos(pi/2) = 0"},
+    {"id": "tetrachoric_approximation.third", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "TP 2, FN 1, FP 1, TN 2: OR 4, cos(pi/3) = 1/2"},
+    {"id": "tetrachoric_approximation.opposite_lean", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 1.0, 1.0, 0.0]}, "expected": -0.5, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "TP 1, FN 2, FP 2, TN 1: OR 1/4, cos(2 pi/3) = -1/2"},
+    {"id": "tetrachoric_approximation.opposite", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "OR 0: cos(pi) = -1, the least value"},
+    {"id": "tetrachoric_approximation.uneven", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -0.15801754785294836, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "TP 2, FN 1, FP 3, TN 1: OR 2/3, cos(pi/(1 + sqrt(2/3)))"},
+    {"id": "tetrachoric_approximation.random", "op": "tetrachoric_approximation", "args": {"truth": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0], "decision": [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0]}, "expected": 0.596429400373702, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "40 bits from random.Random(492), about three in ten flipped"},
+    {"id": "tetrachoric_approximation.empty", "op": "tetrachoric_approximation", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "tetrachoric_approximation.lengths", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "tetrachoric_approximation.not_binary", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "tetrachoric_approximation.no_fp", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "equal records: FP = 0"},
+    {"id": "tetrachoric_approximation.no_fn", "op": "tetrachoric_approximation", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "every truth 1 caught: FN = 0"},
+    {"id": "tetrachoric_approximation.truth_all_zero", "op": "tetrachoric_approximation", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth has no 1: FN = 0"}
+  ]
+}
