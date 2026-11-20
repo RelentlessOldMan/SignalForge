@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "gilbert_skill_score",
+  "description": "The Gilbert skill score (conventions: Gilbert skill score; ADR 0439).",
+  "cases": [
+    {"id": "gilbert_skill_score.identical", "op": "gilbert_skill_score", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2, R 1: (2 - 1)/(2 - 1) = 1"},
+    {"id": "gilbert_skill_score.opposite", "op": "gilbert_skill_score", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2, R 1: (0 - 1)/(4 - 1) = -1/3, the least value"},
+    {"id": "gilbert_skill_score.independent", "op": "gilbert_skill_score", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell, R 1: (1 - 1)/(3 - 1) = 0"},
+    {"id": "gilbert_skill_score.uneven", "op": "gilbert_skill_score", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.09090909090909091, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2, R 4/5: (1/5)/(11/5) = 1/11"},
+    {"id": "gilbert_skill_score.square", "op": "gilbert_skill_score", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.42857142857142855, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1, R 5/2: (3/2)/(7/2) = 3/7"},
+    {"id": "gilbert_skill_score.subset", "op": "gilbert_skill_score", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.16666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 2, FP 0, TN 2, R 3/5: (2/5)/(12/5) = 1/6"},
+    {"id": "gilbert_skill_score.random", "op": "gilbert_skill_score", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0]}, "expected": 0.601593625498008, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(439), about three in ten flipped"},
+    {"id": "gilbert_skill_score.empty", "op": "gilbert_skill_score", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "gilbert_skill_score.lengths", "op": "gilbert_skill_score", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "gilbert_skill_score.not_binary", "op": "gilbert_skill_score", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "gilbert_skill_score.all_one", "op": "gilbert_skill_score", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "both all 1: R = n = TP, so the denominator is 0"},
+    {"id": "gilbert_skill_score.all_zero", "op": "gilbert_skill_score", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "both all 0: TP, FN, FP and R are 0"}
+  ]
+}

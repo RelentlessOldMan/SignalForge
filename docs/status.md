@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Gilbert skill score in `measurements` (two binary records as for the Jaccard index:
-     `(TP − R) / (TP + FN + FP − R)` with `R = |A|·|B| / n` the hits chance expects, the
-     equitable threat score; an error when the denominator is zero).
+   - The Heidke skill score in `measurements` (two binary records as for the Jaccard index:
+     `2·(TP·TN − FN·FP) / ((TP + FN)·(FN + TN) + (TP + FP)·(FP + TN))`, the agreement beyond
+     chance; an error when the denominator is zero).
 
 ## Built
 
@@ -3242,6 +3242,12 @@ Updated with every chunk of work. Dates are absolute.
   a small-sample correction.
   Python 8705 passed, 2 skipped; .NET 7820 passed; conformance 5587/5587 in both. Version
   2026.11.19.65.
+- 2026-11-19: The Gilbert skill score (ADR 0439):
+  `gilbert_skill_score(truth, decision)` in `measurements` (C#
+  `Measurements.GilbertSkillScore`): the equitable threat score, the threat score of a binary
+  decision with the hits chance expects taken out.
+  Python 8720 passed, 2 skipped; .NET 7834 passed; conformance 5599/5599 in both. Version
+  2026.11.19.66.
 
 ## Not built
 
