@@ -330,6 +330,7 @@ from .measurements import (
     lateral_fraction,
     lempel_ziv_complexity,
     ljung_box,
+    loevinger_h,
     log_loss,
     mann_kendall,
     markedness,
@@ -620,7 +621,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.67"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.68"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -968,6 +969,7 @@ __all__ = [
     "linkwitz_riley",
     "ljung_box",
     "lms_equalizer",
+    "loevinger_h",
     "log_loss",
     "lomb_scargle",
     "lomb_scargle_bootstrap",

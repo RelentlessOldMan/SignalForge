@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "loevinger_h",
+  "description": "Loevinger's H (conventions: Loevinger's H; ADR 0441).",
+  "cases": [
+    {"id": "loevinger_h.identical", "op": "loevinger_h", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, |A| = |B| = TP = 2: (1/2 - 1/4)/(1/2 - 1/4) = 1"},
+    {"id": "loevinger_h.opposite", "op": "loevinger_h", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, |A| = |B| = 2, TP 0: (0 - 1/4)/(1/4) = -1"},
+    {"id": "loevinger_h.independent", "op": "loevinger_h", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: TP/n = pA pB = 1/4, 0"},
+    {"id": "loevinger_h.uneven", "op": "loevinger_h", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.16666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 5, |A| = |B| = 2, TP 1: (1/5 - 4/25)/(2/5 - 4/25) = 1/6"},
+    {"id": "loevinger_h.square", "op": "loevinger_h", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.6, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 10, |A| = |B| = 5, TP 4: (2/5 - 1/4)/(1/2 - 1/4) = 3/5"},
+    {"id": "loevinger_h.subset", "op": "loevinger_h", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "B inside A, n 5, |A| 3, |B| 1, TP 1: (1/5 - 3/25)/(1/5 - 3/25) = 1"},
+    {"id": "loevinger_h.far_below", "op": "loevinger_h", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": -3.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "n 4, |A| 1, |B| 3, TP 0: (0 - 3/16)/(1/4 - 3/16) = -3, below -1"},
+    {"id": "loevinger_h.random", "op": "loevinger_h", "args": {"truth": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]}, "expected": 0.43977591036414565, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(441), about three in ten flipped"},
+    {"id": "loevinger_h.empty", "op": "loevinger_h", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "loevinger_h.lengths", "op": "loevinger_h", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "loevinger_h.not_binary", "op": "loevinger_h", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "loevinger_h.all_one", "op": "loevinger_h", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth all 1: pA = 1, so min(pA, pB) = pA pB"},
+    {"id": "loevinger_h.all_zero", "op": "loevinger_h", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "decision all 0: pB = 0, so the denominator is 0"}
+  ]
+}

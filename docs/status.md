@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Loevinger's H in `measurements` (two binary records as for the Jaccard index:
-     `(n·TP − |A|·|B|) / (n·min(|A|, |B|) − |A|·|B|)`, the covariance over the largest it can
-     be for those counts; an error when the denominator is zero).
+   - Michael's coefficient in `measurements` (two binary records as for the Jaccard index:
+     `4·(TP·TN − FN·FP) / ((TP + TN)² + (FN + FP)²)`; never an error once the records are
+     valid, since the denominator is at least `n²/2`).
 
 ## Built
 
@@ -3254,6 +3254,11 @@ Updated with every chunk of work. Dates are absolute.
   larger count of 1.
   Python 8735 passed, 2 skipped; .NET 7848 passed; conformance 5611/5611 in both. Version
   2026.11.19.67.
+- 2026-11-19: Loevinger's H (ADR 0441): `loevinger_h(truth, decision)` in `measurements`
+  (C# `Measurements.LoevingerH`): the covariance of two binary records over the largest the
+  counts of 1 allow.
+  Python 8751 passed, 2 skipped; .NET 7863 passed; conformance 5624/5624 in both. Version
+  2026.11.19.68.
 
 ## Not built
 
