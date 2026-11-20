@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Austin-Colwell coefficient in `measurements` (two binary records as for the Jaccard
-     index: `(2/π)·asin(√((TP + TN)/n))`, the arcsine-transformed simple matching
-     coefficient, from 0 to 1; never an error once the records are valid).
+   - Fossum's coefficient in `measurements` (two binary records as for the Jaccard index:
+     `n·(TP − 1/2)² / (|A|·|B|)`, a similarity that rewards shared 1s; an error when either
+     record has no 1).
 
 ## Built
 
@@ -3290,6 +3290,11 @@ Updated with every chunk of work. Dates are absolute.
   of two binary records, the share of prediction errors removed.
   Python 8846 passed, 2 skipped; .NET 7952 passed; conformance 5701/5701 in both. Version
   2026.11.19.74.
+- 2026-11-19: The Austin-Colwell coefficient (ADR 0448): `austin_colwell_coefficient(truth,
+  decision)` in `measurements` (C# `Measurements.AustinColwellCoefficient`): the
+  arcsine-transformed simple matching coefficient of two binary records.
+  Python 8860 passed, 2 skipped; .NET 7965 passed; conformance 5712/5712 in both. Version
+  2026.11.19.75.
 
 ## Not built
 
