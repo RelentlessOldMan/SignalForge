@@ -392,6 +392,7 @@ from .measurements import (
     wasserstein_distance,
     weighted_permutation_entropy,
     youden_j,
+    yule_q,
     zero_crossing_rate,
 )
 from .metrics import (
@@ -609,7 +610,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.56"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.57"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1199,6 +1200,7 @@ __all__ = [
     "write_sigmf_channels",
     "write_wav",
     "youden_j",
+    "yule_q",
     "yule_walker_psd",
     "zero_crossing_rate",
     "zero_phase_filter",

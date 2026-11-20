@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Yule's Q in `measurements` (two binary records as for the Jaccard index:
-     `(TP·TN − FN·FP) / (TP·TN + FN·FP)`, from −1 to 1; an error when the denominator is
-     zero).
+   - Yule's Y in `measurements` (two binary records as for the Jaccard index:
+     `(√(TP·TN) − √(FN·FP)) / (√(TP·TN) + √(FN·FP))`, the coefficient of colligation; an
+     error when both products are zero).
 
 ## Built
 
@@ -3190,6 +3190,11 @@ Updated with every chunk of work. Dates are absolute.
   of recall and precision.
   Python 8579 passed, 2 skipped; .NET 7703 passed; conformance 5488/5488 in both. Version
   2026.11.19.56.
+- 2026-11-19: Yule's Q (ADR 0430): `yule_q(truth, decision)` in `measurements` (C#
+  `Measurements.YuleQ`): the association of two binary records from their 2×2 table, from
+  −1 to 1.
+  Python 8592 passed, 2 skipped; .NET 7715 passed; conformance 5498/5498 in both. Version
+  2026.11.19.57.
 
 ## Not built
 

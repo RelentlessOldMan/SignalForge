@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "yule_q",
+  "description": "Yule's Q (conventions: Yule's Q; ADR 0430).",
+  "cases": [
+    {"id": "yule_q.identical", "op": "yule_q", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2, no mismatch: (4 - 0)/(4 + 0) = 1"},
+    {"id": "yule_q.opposite", "op": "yule_q", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2, no match: (0 - 4)/(0 + 4) = -1"},
+    {"id": "yule_q.independent", "op": "yule_q", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: (1 - 1)/(1 + 1) = 0"},
+    {"id": "yule_q.uneven", "op": "yule_q", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2: (2 - 1)/(2 + 1) = 1/3"},
+    {"id": "yule_q.subset", "op": "yule_q", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 2, FP 0, TN 2: FP empty gives (2 - 0)/(2 + 0) = 1"},
+    {"id": "yule_q.random", "op": "yule_q", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]}, "expected": 0.7991967871485943, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(430), about three in ten flipped"},
+    {"id": "yule_q.empty", "op": "yule_q", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "yule_q.lengths", "op": "yule_q", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "yule_q.not_binary", "op": "yule_q", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "yule_q.constant", "op": "yule_q", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth all 1: TN and FP are 0, so both products are 0"}
+  ]
+}

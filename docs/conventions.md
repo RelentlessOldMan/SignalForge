@@ -663,6 +663,10 @@ rule for code not written yet.
   `ochiai_coefficient(truth, decision)`, C# `Measurements.OchiaiCoefficient`):
   `TP / √(|A|·|B|)`, the integer product rooted once. Records as for the Jaccard index;
   either with no 1 is an error. **(implemented)**
+- **Yule's Q** ([ADR 0430](adr/0430-yule-q.md); `yule_q(truth, decision)`, C#
+  `Measurements.YuleQ`): `(x − y) / (x + y)` with `x = TP·TN` and `y = FN·FP` as exact
+  integers, each converted to a double once. Records as for the Jaccard index; `x + y = 0`
+  is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
