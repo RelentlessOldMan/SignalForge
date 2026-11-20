@@ -800,6 +800,11 @@ rule for code not written yet.
   `Measurements.MaxwellPillinerCoefficient`): `2·(TP·TN − FN·FP) / (|A|·(n − |A|) +
   |B|·(n − |B|))`, both exact integers converted to doubles once, then one division.
   Records as for the Jaccard index; both records constant is an error. **(implemented)**
+- **The fourth Sokal-Sneath coefficient** ([ADR 0459](adr/0459-sokal-sneath-iv.md);
+  `sokal_sneath_iv(truth, decision)`, C# `Measurements.SokalSneathIV`): the mean of
+  `TP/|A|`, `TP/|B|`, `TN/(n − |A|)` and `TN/(n − |B|)`, each quotient of exact integers
+  converted to doubles once, summed in that order, then divided by 4. Records as for the
+  Jaccard index; a constant record is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

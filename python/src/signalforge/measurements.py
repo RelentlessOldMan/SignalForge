@@ -4271,6 +4271,42 @@ def maxwell_pilliner_coefficient(truth: ArrayLike, decision: ArrayLike) -> float
     return float(2 * (tp * tn - fn * fp)) / float(den)
 
 
+def sokal_sneath_iv(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The fourth Sokal-Sneath coefficient of two binary records of 0 and 1: the mean of the
+    four conditional probabilities of agreement, from 0 to 1 (conventions: the fourth
+    Sokal-Sneath coefficient; ADR 0459)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    n = int(t.size)
+    nt, nd = tp + fn, tp + fp
+    if nt in (0, n) or nd in (0, n):
+        raise ValueError("truth and decision must not be constant")
+    tn = n - nt - nd + tp
+    return (
+        float(tp) / float(nt)
+        + float(tp) / float(nd)
+        + float(tn) / float(n - nt)
+        + float(tn) / float(n - nd)
+    ) / 4.0
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

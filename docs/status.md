@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The fourth Sokal-Sneath coefficient in `measurements` (`sokal_sneath_iv`; two binary
-     records as for the Jaccard index: the mean of `TP/|A|`, `TP/|B|`, `TN/(n − |A|)` and
-     `TN/(n − |B|)`, from 0 to 1; a constant record is an error).
+   - The fifth Sokal-Sneath coefficient in `measurements` (`sokal_sneath_v`; two binary
+     records as for the Jaccard index: `TP·TN / sqrt(|A|·|B|·(n − |A|)·(n − |B|))`, from 0
+     to 1; a constant record is an error).
 
 ## Built
 
@@ -3347,6 +3347,11 @@ Updated with every chunk of work. Dates are absolute.
   records over the sum of their variances.
   Python 9031 passed, 2 skipped; .NET 8126 passed; conformance 5853/5853 in both. Version
   2026.11.20.4.
+- 2026-11-20: The fourth Sokal-Sneath coefficient (ADR 0459): `sokal_sneath_iv(truth,
+  decision)` in `measurements` (C# `Measurements.SokalSneathIV`): the mean of the four
+  conditional probabilities of agreement of two binary records.
+  Python 9048 passed, 2 skipped; .NET 8142 passed; conformance 5867/5867 in both. Version
+  2026.11.20.5.
 
 ## Not built
 
