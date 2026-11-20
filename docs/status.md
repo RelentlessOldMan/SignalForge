@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Kulczynski coefficient in `measurements` (two binary records as for the Jaccard
-     index: the mean of `TP/(TP + FN)` and `TP/(TP + FP)`, recall and precision; an error
-     when either record holds no 1).
+   - The Ochiai coefficient in `measurements` (two binary records as for the Jaccard index:
+     `TP / √(|A|·|B|)`, the geometric mean of recall and precision; an error when either
+     record holds no 1).
 
 ## Built
 
@@ -3178,6 +3178,12 @@ Updated with every chunk of work. Dates are absolute.
   mismatches weighed double.
   Python 8554 passed, 2 skipped; .NET 7680 passed; conformance 5469/5469 in both. Version
   2026.11.19.54.
+- 2026-11-19: The Kulczynski coefficient (ADR 0428):
+  `kulczynski_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.KulczynskiCoefficient`): the mean of recall and precision of two binary
+  records.
+  Python 8566 passed, 2 skipped; .NET 7691 passed; conformance 5478/5478 in both. Version
+  2026.11.19.55.
 
 ## Not built
 

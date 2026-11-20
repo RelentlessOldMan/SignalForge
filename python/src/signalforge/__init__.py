@@ -318,6 +318,7 @@ from .measurements import (
     kendall_w,
     kl_divergence,
     kolmogorov_smirnov,
+    kulczynski_coefficient,
     largest_lyapunov,
     lateral_fraction,
     lempel_ziv_complexity,
@@ -607,7 +608,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.54"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.55"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -933,6 +934,7 @@ __all__ = [
     "kendall_w",
     "kl_divergence",
     "kolmogorov_smirnov",
+    "kulczynski_coefficient",
     "lagrange_fir",
     "lar_to_reflection",
     "largest_lyapunov",

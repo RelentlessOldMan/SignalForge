@@ -655,6 +655,10 @@ rule for code not written yet.
   `sokal_sneath_coefficient(truth, decision)`, C# `Measurements.SokalSneathCoefficient`):
   `TP / (TP + 2·(FN + FP))` from integer counts. Records as for the Jaccard index; neither
   holding a 1 is an error. **(implemented)**
+- **Kulczynski coefficient** ([ADR 0428](adr/0428-kulczynski-coefficient.md);
+  `kulczynski_coefficient(truth, decision)`, C# `Measurements.KulczynskiCoefficient`):
+  `(TP/|A| + TP/|B|) / 2`, evaluated in that order from integer counts. Records as for the
+  Jaccard index; either with no 1 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
