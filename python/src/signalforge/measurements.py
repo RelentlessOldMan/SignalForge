@@ -5098,6 +5098,39 @@ def population_attributable_fraction(truth: ArrayLike, decision: ArrayLike) -> f
     return float(u - int(t.size) * fn) / float(u)
 
 
+def prevalence_threshold(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The prevalence threshold of a binary decision against a binary truth, records of 0
+    and 1: (sqrt(TPR FPR) - FPR) / (TPR - FPR), from 0 to 1 (conventions: the prevalence
+    threshold; ADR 0487)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    a = tp + fn
+    b = int(t.size) - a
+    if a == 0 or b == 0:
+        raise ValueError("truth must hold both 0 and 1")
+    den = tp * b - fp * a
+    if den == 0:
+        raise ValueError("the true and false positive rates must differ")
+    return (math.sqrt(float(tp * fp) * float(a * b)) - float(fp * a)) / float(den)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

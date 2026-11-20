@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The prevalence threshold in `measurements` (`prevalence_threshold`; two binary records
-     as for the Jaccard index: `(sqrt(TPR·FPR) − FPR) / (TPR − FPR)` with TPR = TP/|A| and
-     FPR = FP/(n − |A|); an error when truth is constant or TPR = FPR).
+   - The frequency bias in `measurements` (`frequency_bias`; two binary records as for the
+     Jaccard index: the decision's 1s over the truth's, `|B| / |A|`, at least 0; an error
+     when truth has no 1).
 
 ## Built
 
@@ -3488,6 +3488,11 @@ Updated with every chunk of work. Dates are absolute.
   exposure, the decision as the exposure.
   Python 9447 passed, 2 skipped; .NET 8529 passed; conformance 6200/6200 in both. Version
   2026.11.20.32.
+- 2026-11-20: The prevalence threshold (ADR 0487): `prevalence_threshold(truth, decision)`
+  in `measurements` (C# `Measurements.PrevalenceThreshold`): the prevalence below which a
+  binary test's positive predictive value falls away fastest.
+  Python 9462 passed, 2 skipped; .NET 8544 passed; conformance 6213/6213 in both. Version
+  2026.11.20.33.
 
 ## Not built
 

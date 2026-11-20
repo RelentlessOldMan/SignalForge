@@ -935,6 +935,12 @@ rule for code not written yet.
   `(u − n·FN) / u` with `u = |A|·(FN + TN)`, the two exact integers each converted to a
   double once, then one division. Records as for the Jaccard index; truth with no 1, or a
   decision with no 0, is an error. **(implemented)**
+- **Prevalence threshold** ([ADR 0487](adr/0487-prevalence-threshold.md);
+  `prevalence_threshold(truth, decision)`, C# `Measurements.PrevalenceThreshold`):
+  `(sqrt(TP·FP·a·b) − FP·a) / (TP·b − FP·a)` with `a = |A|`, `b = n − |A|`; `TP·FP` and
+  `a·b` each converted to a double once and multiplied before the square root, `FP·a` and
+  `TP·b − FP·a` each converted once. Records as for the Jaccard index; a constant truth, or
+  `TP·b = FP·a`, is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "prevalence_threshold",
+  "description": "The prevalence threshold (conventions: the prevalence threshold; ADR 0487).",
+  "cases": [
+    {"id": "prevalence_threshold.square", "op": "prevalence_threshold", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 4, FP 1, a 5, b 5: (sqrt 100 - 5)/(20 - 5) = 1/3"},
+    {"id": "prevalence_threshold.identical", "op": "prevalence_threshold", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "FP 0: 0/4 = 0, the least value"},
+    {"id": "prevalence_threshold.opposite", "op": "prevalence_threshold", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 0, FP 2, a 2, b 2: (0 - 4)/(0 - 4) = 1, the greatest value"},
+    {"id": "prevalence_threshold.uneven", "op": "prevalence_threshold", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.5147186257614297, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FP 3, a 3, b 4: (sqrt 72 - 9)/(8 - 9) = 9 - 6 sqrt 2"},
+    {"id": "prevalence_threshold.skew", "op": "prevalence_threshold", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.4, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 3, FP 1, a 4, b 3: (sqrt 36 - 4)/(9 - 4) = 2/5"},
+    {"id": "prevalence_threshold.lone", "op": "prevalence_threshold", "args": {"truth": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.25, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TPR 1, FPR 1/9: TP 1, FP 1, a 1, b 9: (sqrt 9 - 1)/(9 - 1) = 1/4"},
+    {"id": "prevalence_threshold.random", "op": "prevalence_threshold", "args": {"truth": [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0]}, "expected": 0.4119892048569781, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "40 bits from random.Random(487), about three in ten flipped"},
+    {"id": "prevalence_threshold.empty", "op": "prevalence_threshold", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "prevalence_threshold.lengths", "op": "prevalence_threshold", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "prevalence_threshold.not_binary", "op": "prevalence_threshold", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "prevalence_threshold.truth_all_zero", "op": "prevalence_threshold", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth has no 1: a = 0"},
+    {"id": "prevalence_threshold.truth_all_one", "op": "prevalence_threshold", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "truth has no 0: b = 0"},
+    {"id": "prevalence_threshold.equal_rates", "op": "prevalence_threshold", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "one of each cell: TPR = FPR = 1/2"}
+  ]
+}

@@ -391,6 +391,7 @@ from .measurements import (
     power_ccdf,
     power_ccdf_level,
     power_stats,
+    prevalence_threshold,
     recurrence_quantification,
     relative_risk,
     renyi_divergence,
@@ -666,7 +667,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.32"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.33"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1132,6 +1133,7 @@ __all__ = [
     "power_frequency_offset",
     "power_stats",
     "prbs",
+    "prevalence_threshold",
     "psd_confidence_interval",
     "psk8_ber_theory",
     "psk8_block_phases",
