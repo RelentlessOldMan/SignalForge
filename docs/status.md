@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Ochiai coefficient in `measurements` (two binary records as for the Jaccard index:
-     `TP / √(|A|·|B|)`, the geometric mean of recall and precision; an error when either
-     record holds no 1).
+   - Yule's Q in `measurements` (two binary records as for the Jaccard index:
+     `(TP·TN − FN·FP) / (TP·TN + FN·FP)`, from −1 to 1; an error when the denominator is
+     zero).
 
 ## Built
 
@@ -3184,6 +3184,12 @@ Updated with every chunk of work. Dates are absolute.
   records.
   Python 8566 passed, 2 skipped; .NET 7691 passed; conformance 5478/5478 in both. Version
   2026.11.19.55.
+- 2026-11-19: The Ochiai coefficient (ADR 0429):
+  `ochiai_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.OchiaiCoefficient`): the cosine of two binary records, the geometric mean
+  of recall and precision.
+  Python 8579 passed, 2 skipped; .NET 7703 passed; conformance 5488/5488 in both. Version
+  2026.11.19.56.
 
 ## Not built
 

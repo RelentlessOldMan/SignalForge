@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "ochiai_coefficient",
+  "description": "The Ochiai coefficient (conventions: Ochiai coefficient; ADR 0429).",
+  "cases": [
+    {"id": "ochiai_coefficient.identical", "op": "ochiai_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same set: 1"},
+    {"id": "ochiai_coefficient.subset", "op": "ochiai_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 0.0]}, "expected": 0.5773502691896257, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 3, |B| 1, TP 1: 1/sqrt(3)"},
+    {"id": "ochiai_coefficient.disjoint", "op": "ochiai_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no shared item: 0"},
+    {"id": "ochiai_coefficient.partial", "op": "ochiai_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.5773502691896257, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "A = {0, 1, 2}, B = {1, 2, 3, 4}: 2/sqrt(12) = 1/sqrt(3)"},
+    {"id": "ochiai_coefficient.square", "op": "ochiai_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.7071067811865476, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 4, |B| 2, TP 2: 2/sqrt(8) = 1/sqrt(2)"},
+    {"id": "ochiai_coefficient.random", "op": "ochiai_coefficient", "args": {"truth": [0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0]}, "expected": 0.4146442144313647, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 items each from random.Random(429)"},
+    {"id": "ochiai_coefficient.empty", "op": "ochiai_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "ochiai_coefficient.lengths", "op": "ochiai_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "ochiai_coefficient.not_binary", "op": "ochiai_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "ochiai_coefficient.no_one", "op": "ochiai_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision holds no 1"}
+  ]
+}

@@ -358,6 +358,7 @@ public static class Conformance
             "russell_rao_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.RussellRaoCoefficient(t.Item1, t.Item2)),
             "sokal_sneath_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.SokalSneathCoefficient(t.Item1, t.Item2)),
             "kulczynski_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.KulczynskiCoefficient(t.Item1, t.Item2)),
+            "ochiai_coefficient" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.OchiaiCoefficient(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

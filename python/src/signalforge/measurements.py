@@ -3379,6 +3379,34 @@ def kulczynski_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
     return (both / nt + both / nd) / 2
 
 
+def ochiai_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Ochiai coefficient of two binary records of 0 and 1: the items both mark 1 over
+    the geometric mean of the two counts of 1 (conventions: Ochiai coefficient;
+    ADR 0429)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    both = int(np.count_nonzero(t & d))
+    nt = int(np.count_nonzero(t))
+    nd = int(np.count_nonzero(d))
+    if nt == 0 or nd == 0:
+        raise ValueError("truth and decision must each hold at least one 1")
+    return both / math.sqrt(nt * nd)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
