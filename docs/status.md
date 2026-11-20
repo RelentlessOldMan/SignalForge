@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Consonni-Todeschini coefficient in `measurements` (two binary records as for the
-     Jaccard index: `ln(1 + TP + TN) / ln(1 + n)`, matching on a log scale, from 0 to 1;
-     never an error once the records are valid).
+   - The Maxwell-Pilliner coefficient in `measurements` (two binary records as for the
+     Jaccard index: `2·(TP·TN − FN·FP) / ((TP + FN)·(FP + TN) + (TP + FP)·(FN + TN))`, an
+     agreement from −1 to 1; an error when the denominator is zero).
 
 ## Built
 
@@ -3335,6 +3335,12 @@ Updated with every chunk of work. Dates are absolute.
   plus half the shared 0s, over the length.
   Python 8996 passed, 2 skipped; .NET 8093 passed; conformance 5824/5824 in both. Version
   2026.11.20.2.
+- 2026-11-20: The Consonni-Todeschini coefficient (ADR 0457):
+  `consonni_todeschini_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.ConsonniTodeschiniCoefficient`): the matches of two binary records on a log
+  scale, `ln(1 + TP + TN) / ln(1 + n)`.
+  Python 9014 passed, 2 skipped; .NET 8110 passed; conformance 5839/5839 in both. Version
+  2026.11.20.3.
 
 ## Not built
 

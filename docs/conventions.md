@@ -788,6 +788,12 @@ rule for code not written yet.
   `faith_coefficient(truth, decision)`, C# `Measurements.FaithCoefficient`):
   `(2·TP + TN) / (2·n)`, both exact integers converted to doubles once, then one division.
   Records as for the Jaccard index; no other error. **(implemented)**
+- **The Consonni-Todeschini coefficient**
+  ([ADR 0457](adr/0457-consonni-todeschini-coefficient.md);
+  `consonni_todeschini_coefficient(truth, decision)`, C#
+  `Measurements.ConsonniTodeschiniCoefficient`): `ln(1 + TP + TN) / ln(1 + n)`, both exact
+  integers converted to doubles once, the platform's natural `log` of each, then one
+  division. Records as for the Jaccard index; no other error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

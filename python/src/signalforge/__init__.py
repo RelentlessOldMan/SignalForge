@@ -275,6 +275,7 @@ from .measurements import (
     cohen_d,
     cohen_kappa,
     cole_coefficient,
+    consonni_todeschini_coefficient,
     correlation_sum,
     cosine_similarity_entropy,
     cramer_von_mises,
@@ -636,7 +637,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.2"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.3"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -831,6 +832,7 @@ __all__ = [
     "comb_filter",
     "compress",
     "compressor_gain",
+    "consonni_todeschini_coefficient",
     "convolve",
     "correlation_sum",
     "cosine_similarity_entropy",

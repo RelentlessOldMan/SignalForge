@@ -4213,6 +4213,33 @@ def faith_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(2 * tp + tn) / float(2 * (tp + fn + fp + tn))
 
 
+def consonni_todeschini_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Consonni-Todeschini coefficient of two binary records of 0 and 1: the matches on
+    a log scale, ln(1 + TP + TN) / ln(1 + n), from 0 to 1 (conventions: the
+    Consonni-Todeschini coefficient; ADR 0457)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    return math.log(float(1 + tp + tn)) / math.log(float(1 + tp + fn + fp + tn))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
