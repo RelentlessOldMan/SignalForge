@@ -3580,6 +3580,34 @@ def forbes_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(int(t.size) * both) / float(nt * nd)
 
 
+def mcconnaughey_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The McConnaughey coefficient of two binary records of 0 and 1: ``(TP**2 - FN*FP)``
+    over the product of the two counts of 1, from -1 to 1 (conventions: McConnaughey
+    coefficient; ADR 0436)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    both = int(np.count_nonzero(t & d))
+    nt = int(np.count_nonzero(t))
+    nd = int(np.count_nonzero(d))
+    if nt == 0 or nd == 0:
+        raise ValueError("truth and decision must each hold at least one 1")
+    return float(both * both - (nt - both) * (nd - both)) / float(nt * nd)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

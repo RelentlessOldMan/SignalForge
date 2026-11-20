@@ -687,6 +687,10 @@ rule for code not written yet.
   `forbes_coefficient(truth, decision)`, C# `Measurements.ForbesCoefficient`):
   `n·TP / (|A|·|B|)`, both integers converted to doubles once, then one division. Records as
   for the Jaccard index; either with no 1 is an error. **(implemented)**
+- **McConnaughey coefficient** ([ADR 0436](adr/0436-mcconnaughey-coefficient.md);
+  `mcconnaughey_coefficient(truth, decision)`, C# `Measurements.McConnaugheyCoefficient`):
+  `(TP² − FN·FP) / (|A|·|B|)`, both integers converted to doubles once, then one division.
+  Records as for the Jaccard index; either with no 1 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

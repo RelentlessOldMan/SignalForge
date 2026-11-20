@@ -330,6 +330,7 @@ from .measurements import (
     mann_kendall,
     markedness,
     matthews_correlation,
+    mcconnaughey_coefficient,
     minkowski_distance,
     modified_allan_deviation,
     modulation_transfer,
@@ -615,7 +616,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.62"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.63"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -977,6 +978,7 @@ __all__ = [
     "mann_kendall",
     "markedness",
     "matthews_correlation",
+    "mcconnaughey_coefficient",
     "median_filter",
     "mel_filterbank",
     "mel_to_hz",

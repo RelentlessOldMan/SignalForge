@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The McConnaughey coefficient in `measurements` (two binary records as for the Jaccard
-     index: `(TP² − FN·FP) / ((TP + FN)·(TP + FP))`, from −1 to 1; an error when either
-     record holds no 1).
+   - The Dennis coefficient in `measurements` (two binary records as for the Jaccard index:
+     `(TP·TN − FN·FP) / √(n·(TP + FN)·(TP + FP))`; an error when either record holds no 1).
 
 ## Built
 
@@ -3224,6 +3223,12 @@ Updated with every chunk of work. Dates are absolute.
   by chance.
   Python 8663 passed, 2 skipped; .NET 7781 passed; conformance 5554/5554 in both. Version
   2026.11.19.62.
+- 2026-11-19: The McConnaughey coefficient (ADR 0436):
+  `mcconnaughey_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.McConnaugheyCoefficient`): recall plus precision less one of two binary
+  records, from −1 to 1.
+  Python 8677 passed, 2 skipped; .NET 7794 passed; conformance 5565/5565 in both. Version
+  2026.11.19.63.
 
 ## Not built
 
