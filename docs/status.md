@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Fager-McGowan coefficient in `measurements` (two binary records as for the Jaccard
-     index: the Ochiai coefficient less `1 / (2·√max(|A|, |B|))`; an error when either
-     record holds no 1).
+   - The Gilbert skill score in `measurements` (two binary records as for the Jaccard index:
+     `(TP − R) / (TP + FN + FP − R)` with `R = |A|·|B| / n` the hits chance expects, the
+     equitable threat score; an error when the denominator is zero).
 
 ## Built
 
@@ -3236,6 +3236,12 @@ Updated with every chunk of work. Dates are absolute.
   chance, in units of its square root.
   Python 8691 passed, 2 skipped; .NET 7807 passed; conformance 5576/5576 in both. Version
   2026.11.19.64.
+- 2026-11-19: The Fager-McGowan coefficient (ADR 0438):
+  `fager_mcgowan_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.FagerMcGowanCoefficient`): the Ochiai coefficient of two binary records less
+  a small-sample correction.
+  Python 8705 passed, 2 skipped; .NET 7820 passed; conformance 5587/5587 in both. Version
+  2026.11.19.65.
 
 ## Not built
 

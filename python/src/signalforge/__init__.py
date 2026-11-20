@@ -291,6 +291,7 @@ from .measurements import (
     energy_time_curve,
     exceedance_levels,
     f1_score,
+    fager_mcgowan_coefficient,
     fisher_information,
     fleiss_kappa,
     forbes_coefficient,
@@ -617,7 +618,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.19.64"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.19.65"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -865,6 +866,7 @@ __all__ = [
     "expander_gain",
     "f1_score",
     "fade",
+    "fager_mcgowan_coefficient",
     "farrow_delay",
     "farrow_resample",
     "feedback_fm",

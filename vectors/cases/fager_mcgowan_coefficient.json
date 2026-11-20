@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "fager_mcgowan_coefficient",
+  "description": "The Fager-McGowan coefficient (conventions: Fager-McGowan coefficient; ADR 0438).",
+  "cases": [
+    {"id": "fager_mcgowan_coefficient.identical", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.6464466094067263, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "|A| = |B| = TP = 2: 1 - 1/(2 sqrt 2)"},
+    {"id": "fager_mcgowan_coefficient.subset", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 0.0]}, "expected": 0.28867513459481287, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "|A| 3, |B| 1, TP 1: 1/sqrt 3 - 1/(2 sqrt 3) = 1/(2 sqrt 3)"},
+    {"id": "fager_mcgowan_coefficient.disjoint", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 1.0, 0.0]}, "expected": -0.3535533905932738, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "|A| 2, |B| 1, TP 0: -1/(2 sqrt 2)"},
+    {"id": "fager_mcgowan_coefficient.partial", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.3273502691896258, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "A = {0, 1, 2}, B = {1, 2, 3, 4}: 2/sqrt 12 - 1/(2 sqrt 4) = 1/sqrt 3 - 1/4"},
+    {"id": "fager_mcgowan_coefficient.square", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.4571067811865475, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "|A| 4, |B| 2, TP 2: 2/sqrt 8 - 1/(2 sqrt 4) = 1/sqrt 2 - 1/4"},
+    {"id": "fager_mcgowan_coefficient.singles", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 0.0], "decision": [0.0, 1.0]}, "expected": -0.5, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "|A| = |B| = 1, TP 0: -1/2, the least value"},
+    {"id": "fager_mcgowan_coefficient.random", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]}, "expected": 0.2537131856962981, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "40 items each from random.Random(438)"},
+    {"id": "fager_mcgowan_coefficient.empty", "op": "fager_mcgowan_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "fager_mcgowan_coefficient.lengths", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "fager_mcgowan_coefficient.not_binary", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "fager_mcgowan_coefficient.no_one", "op": "fager_mcgowan_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision holds no 1"}
+  ]
+}

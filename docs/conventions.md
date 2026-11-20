@@ -696,6 +696,10 @@ rule for code not written yet.
   `(TP·TN − FN·FP) / √(n·|A|·|B|)`, both integers converted to doubles once, the
   denominator rooted once, then one division. Records as for the Jaccard index; either with
   no 1 is an error. **(implemented)**
+- **Fager-McGowan coefficient** ([ADR 0438](adr/0438-fager-mcgowan-coefficient.md);
+  `fager_mcgowan_coefficient(truth, decision)`, C# `Measurements.FagerMcGowanCoefficient`):
+  `TP / √(|A|·|B|) − 1 / (2·√max(|A|, |B|))`, each root taken once, evaluated in that
+  order. Records as for the Jaccard index; either with no 1 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
