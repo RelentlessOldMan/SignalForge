@@ -383,6 +383,7 @@ from .measurements import (
     reverberation_time,
     roc_auc,
     rogers_tanimoto_coefficient,
+    rogot_goldberg_coefficient,
     runs_test,
     russell_rao_coefficient,
     sample_entropy,
@@ -646,7 +647,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.12"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.13"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1161,6 +1162,7 @@ __all__ = [
     "rls_equalizer",
     "roc_auc",
     "rogers_tanimoto_coefficient",
+    "rogot_goldberg_coefficient",
     "rotary",
     "rrc_taps",
     "runs_test",

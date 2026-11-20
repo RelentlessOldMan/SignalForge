@@ -838,6 +838,11 @@ rule for code not written yet.
   `(x·x) / (u·v)` in doubles, with the exact integers `x = n·TP − |A|·|B|`,
   `u = |A|·|B|` and `v = (n − |A|)·(n − |B|)` each converted to a double once. Records as
   for the Jaccard index; a constant record is an error. **(implemented)**
+- **Rogot-Goldberg coefficient** ([ADR 0467](adr/0467-rogot-goldberg-coefficient.md);
+  `rogot_goldberg_coefficient(truth, decision)`, C# `Measurements.RogotGoldbergCoefficient`):
+  `TP/(2·TP + FN + FP) + TN/(2·TN + FN + FP)`, each quotient of exact integers converted to
+  doubles once, added in that order. Records as for the Jaccard index; both records all 0
+  or both all 1 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

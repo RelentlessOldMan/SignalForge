@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Rogot-Goldberg coefficient in `measurements` (`rogot_goldberg_coefficient`; two
-     binary records as for the Jaccard index: `TP/(2·TP + FN + FP) + TN/(2·TN + FN + FP)`,
-     the mean of the Dice coefficients of the 1s and of the 0s, from 0 to 1; an error when
-     both records are all 0 or both are all 1).
+   - The second Baroni-Urbani-Buser coefficient in `measurements`
+     (`baroni_urbani_buser_ii`; two binary records as for the Jaccard index:
+     `(sqrt(TP·TN) + TP − FN − FP) / (sqrt(TP·TN) + TP + FN + FP)`, from −1 to 1; an error
+     when both records are all 0).
 
 ## Built
 
@@ -3388,6 +3388,11 @@ Updated with every chunk of work. Dates are absolute.
   coefficient of two binary records.
   Python 9158 passed, 2 skipped; .NET 8245 passed; conformance 5956/5956 in both. Version
   2026.11.20.12.
+- 2026-11-20: The Rogot-Goldberg coefficient (ADR 0467): `rogot_goldberg_coefficient(truth,
+  decision)` in `measurements` (C# `Measurements.RogotGoldbergCoefficient`): the mean of the
+  Dice coefficients of the 1s and of the 0s of two binary records.
+  Python 9174 passed, 2 skipped; .NET 8260 passed; conformance 5969/5969 in both. Version
+  2026.11.20.13.
 
 ## Not built
 

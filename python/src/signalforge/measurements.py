@@ -4518,6 +4518,35 @@ def doolittle_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
     return x * x / (float(u) * float(v))
 
 
+def rogot_goldberg_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Rogot-Goldberg coefficient of two binary records of 0 and 1: the mean of the
+    Dice coefficients of the 1s and of the 0s, from 0 to 1 (conventions: the
+    Rogot-Goldberg coefficient; ADR 0467)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    if 2 * tp + fn + fp == 0 or 2 * tn + fn + fp == 0:
+        raise ValueError("truth and decision must not both be all 0 or both all 1")
+    return float(tp) / float(2 * tp + fn + fp) + float(tn) / float(2 * tn + fn + fp)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

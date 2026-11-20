@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "rogot_goldberg_coefficient",
+  "description": "The Rogot-Goldberg coefficient (conventions: the Rogot-Goldberg coefficient; ADR 0467).",
+  "cases": [
+    {"id": "rogot_goldberg_coefficient.identical", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2: 2/4 + 2/4 = 1"},
+    {"id": "rogot_goldberg_coefficient.opposite", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, TN 0, FN 2, FP 2: 0/4 + 0/4 = 0"},
+    {"id": "rogot_goldberg_coefficient.independent", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 1/4 + 1/4 = 1/2"},
+    {"id": "rogot_goldberg_coefficient.square", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.8, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: 4/10 + 4/10 = 4/5"},
+    {"id": "rogot_goldberg_coefficient.subset", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.8285714285714286, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, TN 3: 2/5 + 3/7 = 29/35"},
+    {"id": "rogot_goldberg_coefficient.uneven", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.5833333333333334, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2: 1/4 + 2/6 = 7/12"},
+    {"id": "rogot_goldberg_coefficient.constant", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.4, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, TP 2, FN 1, TN 0: 2/5 + 0/1 = 2/5, no error"},
+    {"id": "rogot_goldberg_coefficient.random", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0], "decision": [0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0]}, "expected": 0.7737272155876807, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(467), about three in ten flipped"},
+    {"id": "rogot_goldberg_coefficient.empty", "op": "rogot_goldberg_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "rogot_goldberg_coefficient.lengths", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "rogot_goldberg_coefficient.not_binary", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "rogot_goldberg_coefficient.all_one", "op": "rogot_goldberg_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "both all 1: 2 TN + FN + FP = 0"},
+    {"id": "rogot_goldberg_coefficient.all_zero", "op": "rogot_goldberg_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "both all 0: 2 TP + FN + FP = 0"}
+  ]
+}
