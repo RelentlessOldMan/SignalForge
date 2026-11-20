@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "sorgenfrei_coefficient",
+  "description": "The Sorgenfrei coefficient (conventions: Sorgenfrei coefficient; ADR 0434).",
+  "cases": [
+    {"id": "sorgenfrei_coefficient.identical", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same set: 1"},
+    {"id": "sorgenfrei_coefficient.subset", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 0.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 3, |B| 1, TP 1: 1/3"},
+    {"id": "sorgenfrei_coefficient.disjoint", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [0.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no shared item: 0"},
+    {"id": "sorgenfrei_coefficient.partial", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "A = {0, 1, 2}, B = {1, 2, 3, 4}: 4/12 = 1/3"},
+    {"id": "sorgenfrei_coefficient.square", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 4, |B| 2, TP 2: 4/8 = 1/2"},
+    {"id": "sorgenfrei_coefficient.thirds", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0, 0.0, 0.0]}, "expected": 0.4444444444444444, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "|A| 3, |B| 3, TP 2: 4/9"},
+    {"id": "sorgenfrei_coefficient.random", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.125, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 items each from random.Random(434)"},
+    {"id": "sorgenfrei_coefficient.empty", "op": "sorgenfrei_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "sorgenfrei_coefficient.lengths", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "sorgenfrei_coefficient.not_binary", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "sorgenfrei_coefficient.no_one", "op": "sorgenfrei_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision holds no 1"}
+  ]
+}

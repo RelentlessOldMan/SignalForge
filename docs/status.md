@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Sorgenfrei coefficient in `measurements` (two binary records as for the Jaccard
-     index: `TP² / ((TP + FN)·(TP + FP))`, the product of recall and precision; an error when
-     either record holds no 1).
+   - The Forbes coefficient in `measurements` (two binary records as for the Jaccard index:
+     `n·TP / ((TP + FN)·(TP + FP))`, the observed shared 1s over those expected by chance; an
+     error when either record holds no 1).
 
 ## Built
 
@@ -3212,6 +3212,12 @@ Updated with every chunk of work. Dates are absolute.
   shared absences let in through `√(TP·TN)`.
   Python 8634 passed, 2 skipped; .NET 7754 passed; conformance 5531/5531 in both. Version
   2026.11.19.60.
+- 2026-11-19: The Sorgenfrei coefficient (ADR 0434):
+  `sorgenfrei_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.SorgenfreiCoefficient`): recall times precision of two binary records, the
+  square of the Ochiai coefficient.
+  Python 8648 passed, 2 skipped; .NET 7767 passed; conformance 5542/5542 in both. Version
+  2026.11.19.61.
 
 ## Not built
 
