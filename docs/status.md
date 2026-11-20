@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The first Kulczynski coefficient in `measurements` (`kulczynski_i`; two binary records
-     as for the Jaccard index: `TP / (FN + FP)`, shared 1s per mismatch, from 0 with no
-     upper end; an error when the records agree everywhere).
+   - The Gilbert-Wells coefficient in `measurements` (`gilbert_wells_coefficient`; two
+     binary records as for the Jaccard index: `ln(n·TP / (|A|·|B|))`, the log of the lift of
+     the shared 1s; an error when TP = 0).
 
 ## Built
 
@@ -3362,6 +3362,11 @@ Updated with every chunk of work. Dates are absolute.
   records per mismatch.
   Python 9081 passed, 2 skipped; .NET 8173 passed; conformance 5894/5894 in both. Version
   2026.11.20.7.
+- 2026-11-20: The first Kulczynski coefficient (ADR 0462): `kulczynski_i(truth, decision)`
+  in `measurements` (C# `Measurements.KulczynskiI`): the shared 1s of two binary records per
+  mismatch.
+  Python 9096 passed, 2 skipped; .NET 8187 passed; conformance 5906/5906 in both. Version
+  2026.11.20.8.
 
 ## Not built
 

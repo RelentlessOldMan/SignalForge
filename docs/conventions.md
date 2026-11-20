@@ -813,6 +813,10 @@ rule for code not written yet.
   `sokal_sneath_iii(truth, decision)`, C# `Measurements.SokalSneathIII`):
   `(TP + TN) / (FN + FP)`, both exact integers converted to doubles once, then one
   division. Records as for the Jaccard index; `FN + FP = 0` is an error. **(implemented)**
+- **The first Kulczynski coefficient** ([ADR 0462](adr/0462-kulczynski-i.md);
+  `kulczynski_i(truth, decision)`, C# `Measurements.KulczynskiI`):
+  `TP / (FN + FP)`, both exact integers converted to doubles once, then one
+  division. Records as for the Jaccard index; `FN + FP = 0` is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

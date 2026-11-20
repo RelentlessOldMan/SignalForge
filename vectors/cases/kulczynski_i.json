@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "kulczynski_i",
+  "description": "The first Kulczynski coefficient (conventions: the first Kulczynski coefficient; ADR 0462).",
+  "cases": [
+    {"id": "kulczynski_i.opposite", "op": "kulczynski_i", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 2, FP 2: 0/4 = 0, the least value"},
+    {"id": "kulczynski_i.independent", "op": "kulczynski_i", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 1/2"},
+    {"id": "kulczynski_i.square", "op": "kulczynski_i", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: 4/2 = 2"},
+    {"id": "kulczynski_i.subset", "op": "kulczynski_i", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 0.0]}, "expected": 3.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 3, FN 1, FP 0, TN 1: 3/1 = 3"},
+    {"id": "kulczynski_i.far_below", "op": "kulczynski_i", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 1, FP 3, TN 0: 0/4 = 0"},
+    {"id": "kulczynski_i.shared_zeros", "op": "kulczynski_i", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 2, TN 3: 1/3; shared 0s do not count"},
+    {"id": "kulczynski_i.constant", "op": "kulczynski_i", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, TP 2, FN 1: 2/1 = 2, no error"},
+    {"id": "kulczynski_i.random", "op": "kulczynski_i", "args": {"truth": [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}, "expected": 1.7777777777777777, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(462), about three in ten flipped"},
+    {"id": "kulczynski_i.empty", "op": "kulczynski_i", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "kulczynski_i.lengths", "op": "kulczynski_i", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "kulczynski_i.not_binary", "op": "kulczynski_i", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "kulczynski_i.identical", "op": "kulczynski_i", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "FN + FP = 0: the records agree everywhere"}
+  ]
+}

@@ -391,6 +391,7 @@ public static class Conformance
             "sokal_sneath_iv" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.SokalSneathIV(t.Item1, t.Item2)),
             "sokal_sneath_v" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.SokalSneathV(t.Item1, t.Item2)),
             "sokal_sneath_iii" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.SokalSneathIII(t.Item1, t.Item2)),
+            "kulczynski_i" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.KulczynskiI(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
