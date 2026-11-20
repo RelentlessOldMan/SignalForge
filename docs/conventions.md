@@ -805,6 +805,10 @@ rule for code not written yet.
   `TP/|A|`, `TP/|B|`, `TN/(n − |A|)` and `TN/(n − |B|)`, each quotient of exact integers
   converted to doubles once, summed in that order, then divided by 4. Records as for the
   Jaccard index; a constant record is an error. **(implemented)**
+- **The fifth Sokal-Sneath coefficient** ([ADR 0460](adr/0460-sokal-sneath-v.md);
+  `sokal_sneath_v(truth, decision)`, C# `Measurements.SokalSneathV`): `TP·TN / sqrt(u · v)`
+  with `u = |A|·|B|` and `v = (n − |A|)·(n − |B|)`, each exact integer converted to a double
+  once. Records as for the Jaccard index; a constant record is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

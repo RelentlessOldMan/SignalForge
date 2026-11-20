@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "sokal_sneath_v",
+  "description": "The fifth Sokal-Sneath coefficient (conventions: the fifth Sokal-Sneath coefficient; ADR 0460).",
+  "cases": [
+    {"id": "sokal_sneath_v.identical", "op": "sokal_sneath_v", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 2, TN 2, all margins 2: 4/sqrt(16) = 1"},
+    {"id": "sokal_sneath_v.opposite", "op": "sokal_sneath_v", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 0, TN 0: 0, the least value"},
+    {"id": "sokal_sneath_v.independent", "op": "sokal_sneath_v", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one of each cell, all margins 2: 1/sqrt(16) = 1/4"},
+    {"id": "sokal_sneath_v.uneven", "op": "sokal_sneath_v", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 1, TN 2, |A| = |B| = 2: 2/sqrt(4 9) = 1/3"},
+    {"id": "sokal_sneath_v.square", "op": "sokal_sneath_v", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.64, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 4, TN 4, all margins 5: 16/25"},
+    {"id": "sokal_sneath_v.subset", "op": "sokal_sneath_v", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.7071067811865476, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 2, TN 3, |A| 3, |B| 2: 6/sqrt(6 12) = 1/sqrt 2"},
+    {"id": "sokal_sneath_v.far_below", "op": "sokal_sneath_v", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 0, TN 0, |A| 1, |B| 3: 0"},
+    {"id": "sokal_sneath_v.one_sided", "op": "sokal_sneath_v", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.408248290463863, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "TP 2, TN 1, |A| 2, |B| 4: 2/sqrt(8 3) = 1/sqrt 6"},
+    {"id": "sokal_sneath_v.random", "op": "sokal_sneath_v", "args": {"truth": [1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0]}, "expected": 0.49122807017543857, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "40 bits from random.Random(460), about three in ten flipped"},
+    {"id": "sokal_sneath_v.empty", "op": "sokal_sneath_v", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "sokal_sneath_v.lengths", "op": "sokal_sneath_v", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "sokal_sneath_v.not_binary", "op": "sokal_sneath_v", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "sokal_sneath_v.no_decision_one", "op": "sokal_sneath_v", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "decision all 0: |B| = 0"},
+    {"id": "sokal_sneath_v.all_one", "op": "sokal_sneath_v", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "truth all 1: n - |A| = 0"}
+  ]
+}
