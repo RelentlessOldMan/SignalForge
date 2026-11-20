@@ -4240,6 +4240,37 @@ def consonni_todeschini_coefficient(truth: ArrayLike, decision: ArrayLike) -> fl
     return math.log(float(1 + tp + tn)) / math.log(float(1 + tp + fn + fp + tn))
 
 
+def maxwell_pilliner_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Maxwell-Pilliner coefficient of two binary records of 0 and 1: the cross-product
+    difference over the sum of the two records' variances, from -1 to 1 (conventions: the
+    Maxwell-Pilliner coefficient; ADR 0458)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    n, nt, nd = tp + fn + fp + tn, tp + fn, tp + fp
+    den = nt * (n - nt) + nd * (n - nd)
+    if den == 0:
+        raise ValueError("truth and decision must not both be constant")
+    return float(2 * (tp * tn - fn * fp)) / float(den)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Maxwell-Pilliner coefficient in `measurements` (two binary records as for the
-     Jaccard index: `2·(TP·TN − FN·FP) / ((TP + FN)·(FP + TN) + (TP + FP)·(FN + TN))`, an
-     agreement from −1 to 1; an error when the denominator is zero).
+   - The fourth Sokal-Sneath coefficient in `measurements` (`sokal_sneath_iv`; two binary
+     records as for the Jaccard index: the mean of `TP/|A|`, `TP/|B|`, `TN/(n − |A|)` and
+     `TN/(n − |B|)`, from 0 to 1; a constant record is an error).
 
 ## Built
 
@@ -3341,6 +3341,12 @@ Updated with every chunk of work. Dates are absolute.
   scale, `ln(1 + TP + TN) / ln(1 + n)`.
   Python 9014 passed, 2 skipped; .NET 8110 passed; conformance 5839/5839 in both. Version
   2026.11.20.3.
+- 2026-11-20: The Maxwell-Pilliner coefficient (ADR 0458):
+  `maxwell_pilliner_coefficient(truth, decision)` in `measurements` (C#
+  `Measurements.MaxwellPillinerCoefficient`): the cross-product difference of two binary
+  records over the sum of their variances.
+  Python 9031 passed, 2 skipped; .NET 8126 passed; conformance 5853/5853 in both. Version
+  2026.11.20.4.
 
 ## Not built
 

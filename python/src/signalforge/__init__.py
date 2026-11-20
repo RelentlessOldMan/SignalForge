@@ -346,6 +346,7 @@ from .measurements import (
     mann_kendall,
     markedness,
     matthews_correlation,
+    maxwell_pilliner_coefficient,
     mcconnaughey_coefficient,
     michael_coefficient,
     minkowski_distance,
@@ -637,7 +638,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.3"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.4"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1015,6 +1016,7 @@ __all__ = [
     "mann_kendall",
     "markedness",
     "matthews_correlation",
+    "maxwell_pilliner_coefficient",
     "mcconnaughey_coefficient",
     "median_filter",
     "mel_filterbank",
