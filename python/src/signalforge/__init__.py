@@ -456,6 +456,7 @@ from .measurements import (
     weighted_permutation_entropy,
     youden_j,
     yule_q,
+    yule_q_standard_error,
     yule_y,
     zero_crossing_rate,
 )
@@ -674,7 +675,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.40"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.41"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1328,6 +1329,7 @@ __all__ = [
     "write_wav",
     "youden_j",
     "yule_q",
+    "yule_q_standard_error",
     "yule_walker_psd",
     "yule_y",
     "zero_crossing_rate",

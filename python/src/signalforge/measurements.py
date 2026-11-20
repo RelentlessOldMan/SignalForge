@@ -5349,6 +5349,38 @@ def haldane_log_odds_ratio(truth: ArrayLike, decision: ArrayLike) -> float:
     return math.log(float(num) / float((2 * fn + 1) * (2 * fp + 1)))
 
 
+def yule_q_standard_error(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The large-sample standard error of Yule's Q of two binary records of 0 and 1:
+    (1 - Q^2)/2 times the standard error of the log odds ratio, above 0 (conventions: the
+    standard error of Yule's Q; ADR 0495)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    if min(tp, fn, fp, tn) == 0:
+        raise ValueError("every cell of the table must be nonzero")
+    x, y = tp * tn, fn * fp
+    num = fn * fp * tn + tp * fp * tn + tp * fn * tn + tp * fn * fp
+    w = float(x + y)
+    return 2.0 * math.sqrt(float(x * y) * float(num)) / (w * w)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

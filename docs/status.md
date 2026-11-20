@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The standard error of Yule's Q in `measurements` (`yule_q_standard_error`; two binary
-     records as for the Jaccard index: `½·(1 − Q²)·sqrt(1/TP + 1/FN + 1/FP + 1/TN)`, the
-     delta-method error of `yule_q`, at least 0; an error when any cell is 0).
+   - The standard error of Yule's Y in `measurements` (`yule_y_standard_error`; two binary
+     records as for the Jaccard index: `¼·(1 − Y²)·sqrt(1/TP + 1/FN + 1/FP + 1/TN)`, the
+     delta-method error of `yule_y`, above 0; an error when any cell is 0).
 
 ## Built
 
@@ -3528,6 +3528,11 @@ Updated with every chunk of work. Dates are absolute.
   with a half added to every cell, defined for every table.
   Python 9568 passed, 2 skipped; .NET 8650 passed; conformance 6305/6305 in both. Version
   2026.11.20.40.
+- 2026-11-20: The standard error of Yule's Q (ADR 0495): `yule_q_standard_error(truth,
+  decision)` in `measurements` (C# `Measurements.YuleQStandardError`): the delta-method
+  standard error of Yule's Q.
+  Python 9583 passed, 2 skipped; .NET 8665 passed; conformance 6318/6318 in both. Version
+  2026.11.20.41.
 
 ## Not built
 

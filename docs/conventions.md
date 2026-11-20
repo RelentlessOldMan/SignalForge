@@ -982,6 +982,12 @@ rule for code not written yet.
   `ln((2·TP + 1)(2·TN + 1) / ((2·FN + 1)(2·FP + 1)))`, a half added to every cell; the two
   exact integers each converted to a double once, then one division and the logarithm.
   Records as for the Jaccard index; no other errors. **(implemented)**
+- **Standard error of Yule's Q** ([ADR 0495](adr/0495-yule-q-standard-error.md);
+  `yule_q_standard_error(truth, decision)`, C# `Measurements.YuleQStandardError`):
+  `½·(1 − Q²)·sqrt(1/TP + 1/FN + 1/FP + 1/TN)`, formed as `2·sqrt(xy·N) / (x + y)²` with
+  `x = TP·TN`, `y = FN·FP`, `N` the numerator of the reciprocal sum; `xy`, `N` and `x + y`
+  each converted to a double once. Records as for the Jaccard index; any cell equal to 0
+  is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
