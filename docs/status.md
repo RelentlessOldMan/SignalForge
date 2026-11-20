@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Gilbert-Wells coefficient in `measurements` (`gilbert_wells_coefficient`; two
-     binary records as for the Jaccard index: `ln(n·TP / (|A|·|B|))`, the log of the lift of
-     the shared 1s; an error when TP = 0).
+   - The mutual information of two binary records in `measurements`
+     (`binary_mutual_information`; records as for the Jaccard index: the mutual information
+     of the 2x2 table in nats, `Σ (cell/n)·ln(n·cell / (row·column))` over the nonzero
+     cells, from 0; no error beyond the record rules).
 
 ## Built
 
@@ -3367,6 +3368,11 @@ Updated with every chunk of work. Dates are absolute.
   mismatch.
   Python 9096 passed, 2 skipped; .NET 8187 passed; conformance 5906/5906 in both. Version
   2026.11.20.8.
+- 2026-11-20: The Gilbert-Wells coefficient (ADR 0463): `gilbert_wells_coefficient(truth,
+  decision)` in `measurements` (C# `Measurements.GilbertWellsCoefficient`): the log of the
+  lift of the shared 1s of two binary records.
+  Python 9112 passed, 2 skipped; .NET 8202 passed; conformance 5919/5919 in both. Version
+  2026.11.20.9.
 
 ## Not built
 

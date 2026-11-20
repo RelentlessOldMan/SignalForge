@@ -4395,6 +4395,35 @@ def kulczynski_i(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(tp) / float(fn + fp)
 
 
+def gilbert_wells_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Gilbert-Wells coefficient of two binary records of 0 and 1: the log of the lift
+    of the shared 1s, ln(n·TP / (|A|·|B|)), 0 at independence (conventions: the
+    Gilbert-Wells coefficient; ADR 0463)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    if tp == 0:
+        raise ValueError("truth and decision must share a 1")
+    n = int(t.size)
+    return math.log(float(n * tp) / float((tp + fn) * (tp + fp)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

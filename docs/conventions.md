@@ -817,6 +817,11 @@ rule for code not written yet.
   `kulczynski_i(truth, decision)`, C# `Measurements.KulczynskiI`):
   `TP / (FN + FP)`, both exact integers converted to doubles once, then one
   division. Records as for the Jaccard index; `FN + FP = 0` is an error. **(implemented)**
+- **Gilbert-Wells coefficient** ([ADR 0463](adr/0463-gilbert-wells-coefficient.md);
+  `gilbert_wells_coefficient(truth, decision)`, C# `Measurements.GilbertWellsCoefficient`):
+  `ln(n·TP / (|A|·|B|))`, the exact integers `n·TP` and `|A|·|B|` converted to doubles once,
+  one division, then the platform's natural `log`. Records as for the Jaccard index;
+  `TP = 0` is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

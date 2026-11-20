@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "gilbert_wells_coefficient",
+  "description": "The Gilbert-Wells coefficient (conventions: the Gilbert-Wells coefficient; ADR 0463).",
+  "cases": [
+    {"id": "gilbert_wells_coefficient.identical", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, TP 2, |A| = |B| = 2: ln(8/4) = ln 2"},
+    {"id": "gilbert_wells_coefficient.independent", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, TP 1, |A| = |B| = 2: ln(4/4) = 0, independence"},
+    {"id": "gilbert_wells_coefficient.square", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.4700036292457356, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 10, TP 4, |A| = |B| = 5: ln(40/25) = ln(8/5)"},
+    {"id": "gilbert_wells_coefficient.subset", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 6, TP 2, |A| 3, |B| 2: ln(12/6) = ln 2"},
+    {"id": "gilbert_wells_coefficient.lone", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0]}, "expected": 1.3862943611198906, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, TP 1, |A| = |B| = 1: ln 4 = 2 ln 2, the most for n 4"},
+    {"id": "gilbert_wells_coefficient.below", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0]}, "expected": -0.4054651081081644, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "n 4, TP 1, |A| 2, |B| 3: ln(4/6) = ln(2/3), below independence"},
+    {"id": "gilbert_wells_coefficient.constant", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "truth all 1, n 3, TP 2, |B| 2: ln(6/6) = 0, no error"},
+    {"id": "gilbert_wells_coefficient.random", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0], "decision": [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.39613378067928007, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "40 bits from random.Random(463), about three in ten flipped"},
+    {"id": "gilbert_wells_coefficient.empty", "op": "gilbert_wells_coefficient", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "gilbert_wells_coefficient.lengths", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "gilbert_wells_coefficient.not_binary", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "gilbert_wells_coefficient.no_shared_one", "op": "gilbert_wells_coefficient", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "TP = 0: the log of 0"},
+    {"id": "gilbert_wells_coefficient.all_zero", "op": "gilbert_wells_coefficient", "args": {"truth": [0.0, 0.0, 0.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "no 1 in either record: TP = 0"}
+  ]
+}
