@@ -389,6 +389,7 @@ from .measurements import (
     slope_entropy,
     snht,
     sokal_sneath_coefficient,
+    sokal_sneath_iii,
     sokal_sneath_iv,
     sokal_sneath_v,
     somers_d,
@@ -640,7 +641,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.6"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.7"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1177,6 +1178,7 @@ __all__ = [
     "snht",
     "soft_clip",
     "sokal_sneath_coefficient",
+    "sokal_sneath_iii",
     "sokal_sneath_iv",
     "sokal_sneath_v",
     "somers_d",

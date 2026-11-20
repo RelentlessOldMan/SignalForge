@@ -4338,6 +4338,35 @@ def sokal_sneath_v(truth: ArrayLike, decision: ArrayLike) -> float:
     return float(tp * tn) / math.sqrt(float(nt * nd) * float((n - nt) * (n - nd)))
 
 
+def sokal_sneath_iii(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The third Sokal-Sneath coefficient of two binary records of 0 and 1: the matches
+    per mismatch, at least 0 (conventions: the third Sokal-Sneath coefficient;
+    ADR 0461)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    if fn + fp == 0:
+        raise ValueError("truth and decision must differ somewhere")
+    return float(tp + tn) / float(fn + fp)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -809,6 +809,10 @@ rule for code not written yet.
   `sokal_sneath_v(truth, decision)`, C# `Measurements.SokalSneathV`): `TP·TN / sqrt(u · v)`
   with `u = |A|·|B|` and `v = (n − |A|)·(n − |B|)`, each exact integer converted to a double
   once. Records as for the Jaccard index; a constant record is an error. **(implemented)**
+- **The third Sokal-Sneath coefficient** ([ADR 0461](adr/0461-sokal-sneath-iii.md);
+  `sokal_sneath_iii(truth, decision)`, C# `Measurements.SokalSneathIII`):
+  `(TP + TN) / (FN + FP)`, both exact integers converted to doubles once, then one
+  division. Records as for the Jaccard index; `FN + FP = 0` is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

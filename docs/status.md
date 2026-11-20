@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The third Sokal-Sneath coefficient in `measurements` (`sokal_sneath_iii`; two binary
-     records as for the Jaccard index: `(TP + TN) / (FN + FP)`, matches per mismatch, from 0
-     with no upper end; an error when the records agree everywhere).
+   - The first Kulczynski coefficient in `measurements` (`kulczynski_i`; two binary records
+     as for the Jaccard index: `TP / (FN + FP)`, shared 1s per mismatch, from 0 with no
+     upper end; an error when the records agree everywhere).
 
 ## Built
 
@@ -3357,6 +3357,11 @@ Updated with every chunk of work. Dates are absolute.
   four conditional probabilities of agreement of two binary records.
   Python 9065 passed, 2 skipped; .NET 8158 passed; conformance 5881/5881 in both. Version
   2026.11.20.6.
+- 2026-11-20: The third Sokal-Sneath coefficient (ADR 0461): `sokal_sneath_iii(truth,
+  decision)` in `measurements` (C# `Measurements.SokalSneathIII`): the matches of two binary
+  records per mismatch.
+  Python 9081 passed, 2 skipped; .NET 8173 passed; conformance 5894/5894 in both. Version
+  2026.11.20.7.
 
 ## Not built
 

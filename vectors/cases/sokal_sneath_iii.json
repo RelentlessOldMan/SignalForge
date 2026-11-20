@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "sokal_sneath_iii",
+  "description": "The third Sokal-Sneath coefficient (conventions: the third Sokal-Sneath coefficient; ADR 0461).",
+  "cases": [
+    {"id": "sokal_sneath_iii.opposite", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2: 0/4 = 0, the least value"},
+    {"id": "sokal_sneath_iii.independent", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 2/2 = 1"},
+    {"id": "sokal_sneath_iii.uneven", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 1.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 1, FP 1, TN 2: 3/2"},
+    {"id": "sokal_sneath_iii.square", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 4.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, TN 4, FN 1, FP 1: 8/2 = 4"},
+    {"id": "sokal_sneath_iii.subset", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 1.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1, FN 2, FP 0, TN 2: 3/2"},
+    {"id": "sokal_sneath_iii.far_below", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [0.0, 1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 0, FN 1, FP 3, TN 0: 0/4 = 0"},
+    {"id": "sokal_sneath_iii.one_off", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 9.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 5, TN 4, FP 1: 9/1 = 9, above 1"},
+    {"id": "sokal_sneath_iii.constant", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "truth all 1, TP 2, FN 1: 2/1 = 2, no error"},
+    {"id": "sokal_sneath_iii.random", "op": "sokal_sneath_iii", "args": {"truth": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0], "decision": [0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 1.8571428571428572, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(461), about three in ten flipped"},
+    {"id": "sokal_sneath_iii.empty", "op": "sokal_sneath_iii", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "sokal_sneath_iii.lengths", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "sokal_sneath_iii.not_binary", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "sokal_sneath_iii.identical", "op": "sokal_sneath_iii", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "FN + FP = 0: the records agree everywhere"}
+  ]
+}
