@@ -431,6 +431,7 @@ from .measurements import (
     two_tone_ip2,
     two_tone_ip5,
     vargha_delaney_a,
+    variance_dissimilarity,
     von_neumann_ratio,
     wasserstein_distance,
     weighted_permutation_entropy,
@@ -654,7 +655,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.20"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.21"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1267,6 +1268,7 @@ __all__ = [
     "two_tone_ip5",
     "upsample",
     "vargha_delaney_a",
+    "variance_dissimilarity",
     "vibrato",
     "vocoder",
     "von_neumann_ratio",

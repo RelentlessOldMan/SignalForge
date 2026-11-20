@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The variance dissimilarity in `measurements` (`variance_dissimilarity`; two binary
-     records as for the Jaccard index: `(FN + FP) / (4·n)`, from 0 to 1/4).
+   - The Lance-Williams distance in `measurements` (`lance_williams_distance`; two binary
+     records as for the Jaccard index: `(FN + FP) / (2·TP + FN + FP)`, from 0 to 1; an
+     error when both records are all 0).
 
 ## Built
 
@@ -3426,6 +3427,11 @@ Updated with every chunk of work. Dates are absolute.
   shares of the two kinds of disagreement between two binary records.
   Python 9273 passed, 2 skipped; .NET 8356 passed; conformance 6051/6051 in both. Version
   2026.11.20.20.
+- 2026-11-20: The variance dissimilarity (ADR 0475): `variance_dissimilarity(truth,
+  decision)` in `measurements` (C# `Measurements.VarianceDissimilarity`): a quarter of the
+  share of items where two binary records disagree.
+  Python 9286 passed, 2 skipped; .NET 8369 passed; conformance 6062/6062 in both. Version
+  2026.11.20.21.
 
 ## Not built
 

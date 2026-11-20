@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "variance_dissimilarity",
+  "description": "The variance dissimilarity (conventions: the variance dissimilarity; ADR 0475).",
+  "cases": [
+    {"id": "variance_dissimilarity.identical", "op": "variance_dissimilarity", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 0, FP 0: 0, the least value"},
+    {"id": "variance_dissimilarity.opposite", "op": "variance_dissimilarity", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN + FP 4, n 4: 4/16 = 1/4, the greatest value"},
+    {"id": "variance_dissimilarity.independent", "op": "variance_dissimilarity", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.125, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 2/16 = 1/8"},
+    {"id": "variance_dissimilarity.square", "op": "variance_dissimilarity", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.05, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 1, n 10: 2/40 = 1/20"},
+    {"id": "variance_dissimilarity.subset", "op": "variance_dissimilarity", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.041666666666666664, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, n 6: 1/24"},
+    {"id": "variance_dissimilarity.uneven", "op": "variance_dissimilarity", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.14285714285714285, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 1, FP 3, n 7: 4/28 = 1/7"},
+    {"id": "variance_dissimilarity.one_way", "op": "variance_dissimilarity", "args": {"truth": [0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FP 3, n 3: 3/12 = 1/4"},
+    {"id": "variance_dissimilarity.random", "op": "variance_dissimilarity", "args": {"truth": [0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0]}, "expected": 0.06875, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(475), about three in ten flipped"},
+    {"id": "variance_dissimilarity.empty", "op": "variance_dissimilarity", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "variance_dissimilarity.lengths", "op": "variance_dissimilarity", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "variance_dissimilarity.not_binary", "op": "variance_dissimilarity", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}
