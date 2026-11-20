@@ -258,6 +258,7 @@ from .measurements import (
     bass_ratio,
     benini_coefficient,
     bhattacharyya_distance,
+    binary_chi_square,
     binary_mutual_information,
     biweight_midcorrelation,
     block_leq,
@@ -657,7 +658,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.23"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.24"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -793,6 +794,7 @@ __all__ = [
     "bessel_highpass",
     "bessel_lowpass",
     "bhattacharyya_distance",
+    "binary_chi_square",
     "binary_mutual_information",
     "bit_errors",
     "bitcrush",

@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The chi-square statistic of two binary records in `measurements`
-     (`binary_chi_square`; two binary records as for the Jaccard index:
-     `n·(TP·TN − FN·FP)² / (|A|·|B|·(n − |A|)·(n − |B|))`, from 0 to n; a constant record
-     is an error).
+   - McNemar's statistic in `measurements` (`mcnemar_statistic`; two binary records as for
+     the Jaccard index: `(FN − FP)² / (FN + FP)`, at least 0; an error when the records
+     agree everywhere).
 
 ## Built
 
@@ -3443,6 +3442,11 @@ Updated with every chunk of work. Dates are absolute.
   the Ochiai coefficient.
   Python 9315 passed, 2 skipped; .NET 8398 passed; conformance 6087/6087 in both. Version
   2026.11.20.23.
+- 2026-11-20: The chi-square statistic of two binary records (ADR 0478):
+  `binary_chi_square(truth, decision)` in `measurements` (C# `Measurements.BinaryChiSquare`):
+  Pearson's statistic of the 2x2 table, no continuity correction.
+  Python 9331 passed, 2 skipped; .NET 8413 passed; conformance 6100/6100 in both. Version
+  2026.11.20.24.
 
 ## Not built
 

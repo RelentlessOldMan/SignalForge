@@ -887,6 +887,11 @@ rule for code not written yet.
   with `o = TP / sqrt(|A|·|B|)`, `TP` and `|A|·|B|` exact integers each converted to a
   double once. Records as for the Jaccard index; a record with no 1 is an error.
   **(implemented)**
+- **Chi-square statistic of two binary records** ([ADR 0478](adr/0478-binary-chi-square.md);
+  `binary_chi_square(truth, decision)`, C# `Measurements.BinaryChiSquare`): `n · phi · phi`
+  with `phi = (TP·TN − FN·FP) / sqrt(u · v)`, `u = |A|·|B|`, `v = (n − |A|)·(n − |B|)`, each
+  exact integer converted to a double once. No continuity correction. Records as for the
+  Jaccard index; a constant record is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

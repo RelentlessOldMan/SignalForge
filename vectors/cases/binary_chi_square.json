@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "binary_chi_square",
+  "description": "The chi-square statistic of two binary records (conventions: the chi-square statistic of two binary records; ADR 0478).",
+  "cases": [
+    {"id": "binary_chi_square.identical", "op": "binary_chi_square", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 4.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "n 4, TP 2, TN 2, all margins 2: 4 16/16 = 4 = n"},
+    {"id": "binary_chi_square.opposite", "op": "binary_chi_square", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": 4.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "FN 2, FP 2: 4 16/16 = 4 = n"},
+    {"id": "binary_chi_square.independent", "op": "binary_chi_square", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one of each cell: k 0, 0"},
+    {"id": "binary_chi_square.square", "op": "binary_chi_square", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 3.6, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 4, TN 4, FN 1, FP 1, all margins 5: 10 15^2/625 = 18/5"},
+    {"id": "binary_chi_square.subset", "op": "binary_chi_square", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 3.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, TN 3, |A| 3, |B| 2: 6 36/(6 12) = 3"},
+    {"id": "binary_chi_square.uneven", "op": "binary_chi_square", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.058333333333333334, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 3, TN 1, |A| 3, |B| 5: 7 1/(15 8) = 7/120"},
+    {"id": "binary_chi_square.lone", "op": "binary_chi_square", "args": {"truth": [1.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0]}, "expected": 4.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "n 4, TP 1, TN 3, |A| = |B| = 1: 4 9/9 = 4"},
+    {"id": "binary_chi_square.random", "op": "binary_chi_square", "args": {"truth": [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 3.6363636363636362, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "40 bits from random.Random(478), about three in ten flipped"},
+    {"id": "binary_chi_square.empty", "op": "binary_chi_square", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "binary_chi_square.lengths", "op": "binary_chi_square", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "binary_chi_square.not_binary", "op": "binary_chi_square", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "binary_chi_square.no_decision_one", "op": "binary_chi_square", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "decision all 0: |B| = 0"},
+    {"id": "binary_chi_square.all_one", "op": "binary_chi_square", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "truth all 1: n - |A| = 0"}
+  ]
+}
