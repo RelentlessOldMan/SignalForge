@@ -273,6 +273,7 @@ from .measurements import (
     brier_score,
     bubble_entropy,
     buishand_range,
+    camargo_evenness,
     canberra_distance,
     centre_time,
     cepstrum_pitch,
@@ -712,7 +713,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.9"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.10"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -874,6 +875,7 @@ __all__ = [
     "butterworth_lowpass",
     "c_weighting",
     "c_weighting_sos",
+    "camargo_evenness",
     "canberra_distance",
     "centre_time",
     "cepstral_distance",

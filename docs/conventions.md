@@ -1178,6 +1178,11 @@ rule for code not written yet.
   `simpson_evenness(samples)`, C# `Measurements.SimpsonEvenness`): `1/(n·Σᵢ sᵢ²)`, `n` the
   record length with zero shares counted; squares in record order. Records as for the
   Gini coefficient. **(implemented)**
+- **Camargo's evenness** ([ADR 0533](adr/0533-camargo-evenness.md);
+  `camargo_evenness(samples)`, C# `Measurements.CamargoEvenness`):
+  `1 − Σ_{i<j} |sᵢ − sⱼ| / n`, `n` the record length with zero shares counted; gaps over
+  `i` in record order then `j > i`, every pair directly. Records as for the Gini
+  coefficient. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

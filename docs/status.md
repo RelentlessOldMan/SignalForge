@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Camargo's evenness in `measurements` (`camargo_evenness(samples)`; a real record of
-     values at least 0, not all 0: `1 − Σ_{i<j} |sᵢ − sⱼ|/n` over the pairs of shares; from
-     `1/n` to 1).
+   - The Smith–Wilson evenness in `measurements` (`smith_wilson_evenness(samples)`; a real
+     record of values above 0: `1 − (2/π)·arctan(Σ (ln xᵢ − m)²/n)`, `m` the mean of the
+     `ln xᵢ`; from 0 to 1).
 
 ## Built
 
@@ -3715,6 +3715,11 @@ Updated with every chunk of work. Dates are absolute.
   squared shares.
   Python 10187 passed, 2 skipped; .NET 9187 passed; conformance 6740/6740 in both. Version
   2026.11.21.9.
+- 2026-11-21: Camargo's evenness (ADR 0533): `camargo_evenness(samples)` in
+  `measurements` (C# `Measurements.CamargoEvenness`): one less the sum of the gaps between
+  every pair of shares over `n`.
+  Python 10204 passed, 2 skipped; .NET 9201 passed; conformance 6751/6751 in both. Version
+  2026.11.21.10.
 
 ## Not built
 
