@@ -1052,6 +1052,11 @@ rule for code not written yet.
   `(FN·FP − TP·TN) / ((TP + FP)·FN)` with the two exact integers each converted to a
   double once. Records as for the Jaccard index; a decision with no 1, or `FN = 0`, is an
   error. **(implemented)**
+- **Cohen's h** ([ADR 0506](adr/0506-cohen-h.md); `cohen_h(truth, decision)`, C#
+  `Measurements.CohenH`), the decision as the exposure:
+  `2·asin(√(TP/(TP + FP))) − 2·asin(√(FN/(FN + TN)))`, formed as
+  `2·(atan2(√TP, √FP) − atan2(√FN, √TN))`; from −π to π. Records as for the Jaccard
+  index; a decision with no 1 or no 0 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

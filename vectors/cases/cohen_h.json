@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "cohen_h",
+  "description": "Cohen's h (conventions: Cohen's h; ADR 0506).",
+  "cases": [
+    {"id": "cohen_h.independent", "op": "cohen_h", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one of each cell: equal shares, 0"},
+    {"id": "cohen_h.identical", "op": "cohen_h", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 3.141592653589793, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, TN 2: 2 asin 1 - 2 asin 0 = pi"},
+    {"id": "cohen_h.opposite", "op": "cohen_h", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -3.141592653589793, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "FN 2, FP 2: 2 asin 0 - 2 asin 1 = -pi"},
+    {"id": "cohen_h.quarter", "op": "cohen_h", "args": {"truth": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0]}, "expected": -0.5235987755982989, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 1, FP 3, FN 1, TN 1: 2 asin(1/2) - 2 asin(sqrt(1/2)) = pi/3 - pi/2 = -pi/6"},
+    {"id": "cohen_h.three_quarters", "op": "cohen_h", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 1.0471975511965979, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 3, FP 1, FN 1, TN 3: 2 asin(sqrt 3/2) - 2 asin(1/2) = 2 pi/3 - pi/3 = pi/3"},
+    {"id": "cohen_h.all_truth_one", "op": "cohen_h", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1: pi - pi = 0"},
+    {"id": "cohen_h.random", "op": "cohen_h", "args": {"truth": [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 1.1964316606733507, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "40 bits from random.Random(506), about three in ten flipped"},
+    {"id": "cohen_h.empty", "op": "cohen_h", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "cohen_h.lengths", "op": "cohen_h", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "cohen_h.not_binary", "op": "cohen_h", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "cohen_h.decision_all_one", "op": "cohen_h", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the decision has no 0"},
+    {"id": "cohen_h.decision_all_zero", "op": "cohen_h", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision has no 1"}
+  ]
+}

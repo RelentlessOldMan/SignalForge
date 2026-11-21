@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Cohen's h in `measurements` (`cohen_h`; two binary records as for the Jaccard index,
-     the decision as the exposure: `2·asin(√(TP/(TP + FP))) − 2·asin(√(FN/(FN + TN)))`,
-     from −π to π; an error when the decision has no 1 or no 0).
+   - The standard error of Cohen's h in `measurements` (`cohen_h_standard_error`; two
+     binary records as for the Jaccard index, the decision as the exposure:
+     `√(1/(TP + FP) + 1/(FN + TN))`; an error when the decision has no 1 or no 0).
 
 ## Built
 
@@ -3586,6 +3586,11 @@ Updated with every chunk of work. Dates are absolute.
   relative risk.
   Python 9720 passed, 2 skipped; .NET 8802 passed; conformance 6435/6435 in both. Version
   2026.11.20.51.
+- 2026-11-20: Cohen's h (ADR 0506): `cohen_h(truth, decision)` in `measurements` (C#
+  `Measurements.CohenH`): the difference of the arcsine square root transforms of the
+  two shares.
+  Python 9734 passed, 2 skipped; .NET 8816 passed; conformance 6447/6447 in both. Version
+  2026.11.20.52.
 
 ## Not built
 
