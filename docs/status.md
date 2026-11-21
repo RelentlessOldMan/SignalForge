@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Kwoka dominance index in `measurements` (`kwoka_dominance_index(samples)`; a real
-     record of values at least 0, not all 0: `Σ_r (s₍ᵣ₎ − s₍ᵣ₊₁₎)²`, `s₍ᵣ₎` the shares
-     ranked from the largest, over the `n − 1` neighbouring pairs; 0 for a single value).
+   - The Hannah–Kay index in `measurements` (`hannah_kay_index(samples, alpha)`; a real
+     record of values at least 0, not all 0, and `alpha > 0`: the numbers equivalent
+     `(Σ sᵢ^α)^(1/(1 − α))` of the shares, `exp(−Σ sᵢ ln sᵢ)` at `alpha = 1`; from 1 to `n`).
 
 ## Built
 
@@ -3682,6 +3682,11 @@ Updated with every chunk of work. Dates are absolute.
   of the shares ranked from the largest, less 1.
   Python 10054 passed, 2 skipped; .NET 9081 passed; conformance 6655/6655 in both. Version
   2026.11.21.2.
+- 2026-11-21: The Kwoka dominance index (ADR 0526): `kwoka_dominance_index(samples)` in
+  `measurements` (C# `Measurements.KwokaDominanceIndex`): the sum of the squared gaps
+  between neighbouring shares ranked from the largest.
+  Python 10071 passed, 2 skipped; .NET 9095 passed; conformance 6666/6666 in both. Version
+  2026.11.21.3.
 
 ## Not built
 

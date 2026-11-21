@@ -367,6 +367,7 @@ from .measurements import (
     kolmogorov_smirnov,
     kulczynski_coefficient,
     kulczynski_i,
+    kwoka_dominance_index,
     lance_williams_distance,
     largest_lyapunov,
     lateral_fraction,
@@ -705,7 +706,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.2"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.3"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1080,6 +1081,7 @@ __all__ = [
     "kolmogorov_smirnov",
     "kulczynski_coefficient",
     "kulczynski_i",
+    "kwoka_dominance_index",
     "lagrange_fir",
     "lance_williams_distance",
     "lar_to_reflection",

@@ -1148,6 +1148,11 @@ rule for code not written yet.
   `1/(2·Σ_r r·s₍ᵣ₎ − 1)`, shares ranked from the largest, `r` from 1; formed as
   `S/(2·A − S)`, `A = Σ_r r·x₍ᵣ₎` from the largest down, `S` in record order. Records as for
   the Gini coefficient. **(implemented)**
+- **Kwoka dominance index** ([ADR 0526](adr/0526-kwoka-dominance-index.md);
+  `kwoka_dominance_index(samples)`, C# `Measurements.KwokaDominanceIndex`):
+  `Σ_{r=1}^{n−1} (s₍ᵣ₎ − s₍ᵣ₊₁₎)²`, shares ranked from the largest, every neighbouring pair;
+  each gap `(x₍ᵣ₎ − x₍ᵣ₊₁₎)/S`, the squares added from the largest pair down. Records as for
+  the Gini coefficient. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
