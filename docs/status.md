@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Zenga index in `measurements` (`zenga_index(samples)`; a real record of at least 2
-     values at least 0, not all 0: `(1/(n − 1))·Σ_{k<n} (m⁺ₖ − m⁻ₖ)/m⁺ₖ`, `m⁻ₖ` the mean of
-     the `k` smallest and `m⁺ₖ` the mean of the other `n − k`; from 0 to 1).
+   - The Wolfson polarization index in `measurements` (`wolfson_index(samples)`; a real
+     record of values at least 0 with a median above 0: `2·(μ/m)·(1 − 2·L(1/2) − G)`, `m`
+     the median, `L` the Lorenz curve joined by straight lines and `G` the Gini
+     coefficient).
 
 ## Built
 
@@ -3657,6 +3658,11 @@ Updated with every chunk of work. Dates are absolute.
   the mean of the `k` smallest, `k < n`, over the mean.
   Python 9964 passed, 2 skipped; .NET 9012 passed; conformance 6601/6601 in both. Version
   2026.11.20.66.
+- 2026-11-20: The Zenga index (ADR 0521): `zenga_index(samples)` in `measurements`
+  (C# `Measurements.ZengaIndex`): the mean gap between the means of the larger and the
+  smaller part at each split, over the larger.
+  Python 9982 passed, 2 skipped; .NET 9026 passed; conformance 6612/6612 in both. Version
+  2026.11.20.67.
 
 ## Not built
 

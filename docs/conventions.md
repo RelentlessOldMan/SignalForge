@@ -1125,6 +1125,10 @@ rule for code not written yet.
   `k = n` term left out, so from 0 to 1. Formed as `1 − n·Σ_{k<n} (Sₖ/k)/((n − 1)·Sₙ)`,
   summed from `k = 1`. Real, finite, `n ≥ 2`, every value at least 0, not all 0.
   **(implemented)**
+- **Zenga index** ([ADR 0521](adr/0521-zenga-index.md); `zenga_index(samples)`, C#
+  `Measurements.ZengaIndex`): `(1/(n − 1))·Σ_{k=1}^{n−1} (m⁺ₖ − m⁻ₖ)/m⁺ₖ`, `m⁻ₖ = Sₖ/k`,
+  `m⁺ₖ = (Sₙ − Sₖ)/(n − k)`. Formed as `1 − Σ_{k<n} m⁻ₖ/m⁺ₖ/(n − 1)`, summed from
+  `k = 1`. Records as for the Bonferroni index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
