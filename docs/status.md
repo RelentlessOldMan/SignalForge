@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Wald z of the log relative risk in `measurements` (`log_relative_risk_wald_z`; two
-     binary records as for the Jaccard index, the decision as the exposure: the log of
-     `relative_risk` over `log_relative_risk_standard_error`; an error when TP or FN is 0 or
-     the standard error is 0).
+   - The risk difference in `measurements` (`risk_difference`; two binary records as for
+     the Jaccard index, the decision as the exposure: `TP/(TP + FP) − FN/(FN + TN)`, from −1
+     to 1; an error when the decision has no 1 or no 0).
 
 ## Built
 
@@ -3556,6 +3555,11 @@ Updated with every chunk of work. Dates are absolute.
   of the relative risk.
   Python 9637 passed, 2 skipped; .NET 8719 passed; conformance 6364/6364 in both. Version
   2026.11.20.45.
+- 2026-11-20: The Wald z of the log relative risk (ADR 0500): `log_relative_risk_wald_z(truth,
+  decision)` in `measurements` (C# `Measurements.LogRelativeRiskWaldZ`): the log relative
+  risk over its standard error.
+  Python 9651 passed, 2 skipped; .NET 8733 passed; conformance 6376/6376 in both. Version
+  2026.11.20.46.
 
 ## Not built
 

@@ -1015,6 +1015,12 @@ rule for code not written yet.
   `(FP·FN·(FN + TN) + TN·TP·(TP + FP)) / (TP·(TP + FP)·FN·(FN + TN))` whose numerator and
   denominator are each converted to a double once. Records as for the Jaccard index;
   TP = 0 or FN = 0 is an error. **(implemented)**
+- **Wald z of the log relative risk** ([ADR 0500](adr/0500-log-relative-risk-wald-z.md);
+  `log_relative_risk_wald_z(truth, decision)`, C# `Measurements.LogRelativeRiskWaldZ`):
+  the log relative risk over its standard error, formed as `ln(P/Q)·sqrt(PQ / M)` with
+  `P = TP·(FN + TN)`, `Q = FN·(TP + FP)` and `M = FP·FN·(FN + TN) + TN·TP·(TP + FP)`; each
+  exact integer converted to a double once. Records as for the Jaccard index; TP = 0,
+  FN = 0 or `M = 0` is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
