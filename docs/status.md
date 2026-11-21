@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Hall–Tideman index in `measurements` (`hall_tideman_index(samples)`; a real record
-     of values at least 0, not all 0: `1/(2·Σ_r r·s₍ᵣ₎ − 1)`, `s₍ᵣ₎` the shares ranked from
-     the largest, `r` from 1; from `1/n` to 1).
+   - The Kwoka dominance index in `measurements` (`kwoka_dominance_index(samples)`; a real
+     record of values at least 0, not all 0: `Σ_r (s₍ᵣ₎ − s₍ᵣ₊₁₎)²`, `s₍ᵣ₎` the shares
+     ranked from the largest, over the `n − 1` neighbouring pairs; 0 for a single value).
 
 ## Built
 
@@ -3677,6 +3677,11 @@ Updated with every chunk of work. Dates are absolute.
   `k` largest values.
   Python 10038 passed, 2 skipped; .NET 9068 passed; conformance 6645/6645 in both. Version
   2026.11.21.1.
+- 2026-11-21: The Hall–Tideman index (ADR 0525): `hall_tideman_index(samples)` in
+  `measurements` (C# `Measurements.HallTidemanIndex`): one over twice the rank-weighted sum
+  of the shares ranked from the largest, less 1.
+  Python 10054 passed, 2 skipped; .NET 9081 passed; conformance 6655/6655 in both. Version
+  2026.11.21.2.
 
 ## Not built
 

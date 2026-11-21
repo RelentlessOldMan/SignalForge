@@ -339,6 +339,7 @@ from .measurements import (
     hadamard_deviation,
     haldane_log_odds_ratio,
     haldane_log_odds_ratio_standard_error,
+    hall_tideman_index,
     hamann_coefficient,
     hamming_distance,
     hawkins_dotson_coefficient,
@@ -704,7 +705,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.1"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.2"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1028,6 +1029,7 @@ __all__ = [
     "hadamard_deviation",
     "haldane_log_odds_ratio",
     "haldane_log_odds_ratio_standard_error",
+    "hall_tideman_index",
     "hamann_coefficient",
     "hamming_distance",
     "hampel_filter",
