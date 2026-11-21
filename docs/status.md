@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Simpson's evenness in `measurements` (`simpson_evenness(samples)`; a real record of
-     values at least 0, not all 0: `1/(n·Σ sᵢ²)`, the inverse Simpson index over `n`; from
+   - Camargo's evenness in `measurements` (`camargo_evenness(samples)`; a real record of
+     values at least 0, not all 0: `1 − Σ_{i<j} |sᵢ − sⱼ|/n` over the pairs of shares; from
      `1/n` to 1).
 
 ## Built
@@ -3710,6 +3710,11 @@ Updated with every chunk of work. Dates are absolute.
   less 1, over `n − 1`.
   Python 10170 passed, 2 skipped; .NET 9173 passed; conformance 6729/6729 in both. Version
   2026.11.21.8.
+- 2026-11-21: Simpson's evenness (ADR 0532): `simpson_evenness(samples)` in
+  `measurements` (C# `Measurements.SimpsonEvenness`): one over `n` times the sum of the
+  squared shares.
+  Python 10187 passed, 2 skipped; .NET 9187 passed; conformance 6740/6740 in both. Version
+  2026.11.21.9.
 
 ## Not built
 
