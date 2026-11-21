@@ -380,6 +380,7 @@ from .measurements import (
     maxwell_pilliner_coefficient,
     mcconnaughey_coefficient,
     mcnemar_statistic,
+    mean_log_deviation,
     michael_coefficient,
     minkowski_distance,
     modified_allan_deviation,
@@ -693,7 +694,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.59"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.60"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1105,6 +1106,7 @@ __all__ = [
     "maxwell_pilliner_coefficient",
     "mcconnaughey_coefficient",
     "mcnemar_statistic",
+    "mean_log_deviation",
     "median_filter",
     "mel_filterbank",
     "mel_to_hz",

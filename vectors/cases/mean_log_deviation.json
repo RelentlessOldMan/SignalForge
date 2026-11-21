@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "mean_log_deviation",
+  "description": "The mean log deviation (conventions: the mean log deviation; ADR 0514).",
+  "cases": [
+    {"id": "mean_log_deviation.equal", "op": "mean_log_deviation", "args": {"samples": [2.0, 2.0, 2.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "every value equal: 0"},
+    {"id": "mean_log_deviation.single", "op": "mean_log_deviation", "args": {"samples": [5.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one value: 0"},
+    {"id": "mean_log_deviation.two", "op": "mean_log_deviation", "args": {"samples": [1.0, 3.0]}, "expected": 0.14384103622589045, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 2: (ln 2 + ln(2/3))/2 = (2 ln 2 - ln 3)/2"},
+    {"id": "mean_log_deviation.ramp", "op": "mean_log_deviation", "args": {"samples": [1.0, 2.0, 3.0, 4.0]}, "expected": 0.12177727428716865, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 5/2: (4 ln(5/2) - ln 24)/4"},
+    {"id": "mean_log_deviation.halves", "op": "mean_log_deviation", "args": {"samples": [0.5, 0.25, 0.25, 1.0]}, "expected": 0.17328679513998632, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 1/2: (0 + ln 2 + ln 2 - ln 2)/4 = ln 2/4"},
+    {"id": "mean_log_deviation.powers", "op": "mean_log_deviation", "args": {"samples": [1.0, 4.0, 16.0, 0.25]}, "expected": 0.9769153536905899, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 85/16: ln(85/16) less the mean of the logs, (0 + 2 + 4 - 2) ln 2/4 = ln 2"},
+    {"id": "mean_log_deviation.random", "op": "mean_log_deviation", "args": {"samples": [5.75, 1.875, 3.375, 2.5, 6.625, 6.75, 5.875, 7.0, 4.375, 5.125, 5.125, 5.25, 7.75, 4.25, 0.25, 1.875, 1.75, 5.875, 4.625, 6.125, 3.375, 3.25, 6.625, 6.25, 1.75, 2.25, 2.875, 3.375, 4.125, 1.5]}, "expected": 0.1660853266161059, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "30 values k/8, k from random.Random(514).randint(1, 64)"},
+    {"id": "mean_log_deviation.empty", "op": "mean_log_deviation", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "mean_log_deviation.zero", "op": "mean_log_deviation", "args": {"samples": [1.0, 0.0, 2.0]}, "error": "invalid_argument", "source": "a value of 0 makes it infinite"},
+    {"id": "mean_log_deviation.negative", "op": "mean_log_deviation", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be greater than 0"}
+  ]
+}

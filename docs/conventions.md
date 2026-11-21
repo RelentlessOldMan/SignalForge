@@ -1090,6 +1090,10 @@ rule for code not written yet.
   `coefficient_of_variation(samples)`, C# `Measurements.CoefficientOfVariation`): `σ/μ`,
   `σ` the population standard deviation, over `n`, `μ` the mean. Real, finite, `n ≥ 1`,
   the mean greater than 0; values below 0 allowed. **(implemented)**
+- **Mean log deviation** ([ADR 0514](adr/0514-mean-log-deviation.md);
+  `mean_log_deviation(samples)`, C# `Measurements.MeanLogDeviation`):
+  `(1/n)·Σ ln(μ/xᵢ)`, `μ` the mean, each term the log of the ratio. At least 0. Real,
+  finite, `n ≥ 1`, every value greater than 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -5906,6 +5906,26 @@ def coefficient_of_variation(samples: ArrayLike) -> float:
     return math.sqrt(float(np.dot(d, d)) / float(n)) / mean
 
 
+def mean_log_deviation(samples: ArrayLike) -> float:
+    """The mean log deviation of a record of positive values: the mean of ln(mean/x), the
+    Theil L index, at least 0 (conventions: the mean log deviation; ADR 0514)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if not np.all(x > 0):
+        raise ValueError("samples must be greater than 0")
+    mean = float(np.sum(x)) / float(n)
+    return float(np.sum(np.log(mean / x))) / float(n)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

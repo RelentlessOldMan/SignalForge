@@ -6,8 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The mean log deviation in `measurements` (`mean_log_deviation(samples)`; a real record
-     of positive values: `(1/n)·Σ ln(μ/x)`, the Theil L index; at least 0).
+   - The Atkinson index in `measurements` (`atkinson_index(samples, epsilon)`; a real
+     record of positive values and an inequality aversion `ε ≥ 0`:
+     `1 − (mean of x^(1−ε))^(1/(1−ε))/μ`, and `1 − (geometric mean)/μ` at `ε = 1`; from 0
+     to below 1).
 
 ## Built
 
@@ -3622,6 +3624,11 @@ Updated with every chunk of work. Dates are absolute.
   deviation over the mean.
   Python 9842 passed, 2 skipped; .NET 8915 passed; conformance 6525/6525 in both. Version
   2026.11.20.59.
+- 2026-11-20: The mean log deviation (ADR 0514): `mean_log_deviation(samples)` in
+  `measurements` (C# `Measurements.MeanLogDeviation`): `(1/n)·Σ ln(μ/x)`, the Theil L
+  index.
+  Python 9858 passed, 2 skipped; .NET 8928 passed; conformance 6535/6535 in both. Version
+  2026.11.20.60.
 
 ## Not built
 
