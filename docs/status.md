@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The log relative risk in `measurements` (`log_relative_risk`; two binary records as
-     for the Jaccard index, the decision as the exposure: `ln(TP·(FN + TN)/((TP + FP)·FN))`;
-     an error when the decision has no 1, or TP or FN is 0).
+   - The Gini coefficient in `measurements` (`gini_coefficient(x)`; a real record of values
+     at least 0, not all 0: the mean absolute difference over all ordered pairs, the pair of
+     an item with itself included, over twice the mean; from 0 to `1 − 1/n`).
 
 ## Built
 
@@ -3600,6 +3600,11 @@ Updated with every chunk of work. Dates are absolute.
   `measurements` (C# `Measurements.CohenHWaldZ`): Cohen's h over its standard error.
   Python 9761 passed, 2 skipped; .NET 8843 passed; conformance 6470/6470 in both. Version
   2026.11.20.54.
+- 2026-11-20: The log relative risk (ADR 0509): `log_relative_risk(truth, decision)` in
+  `measurements` (C# `Measurements.LogRelativeRisk`): the natural logarithm of the relative
+  risk.
+  Python 9775 passed, 2 skipped; .NET 8857 passed; conformance 6482/6482 in both. Version
+  2026.11.20.55.
 
 ## Not built
 

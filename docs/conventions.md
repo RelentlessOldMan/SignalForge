@@ -1068,6 +1068,11 @@ rule for code not written yet.
   exposure: Cohen's h, formed as for ADR 0506, over the square root of its squared
   standard error, formed as for ADR 0507. Records as for the Jaccard index; a decision
   with no 1 or no 0 is an error. **(implemented)**
+- **Log relative risk** ([ADR 0509](adr/0509-log-relative-risk.md);
+  `log_relative_risk(truth, decision)`, C# `Measurements.LogRelativeRisk`): the decision as the
+  exposure, `ln(P/Q)` with `P = TP·(FN + TN)` and `Q = FN·(TP + FP)`, each exact integer
+  converted to a double once. Records as for the Jaccard index; TP = 0 or FN = 0 is an
+  error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
