@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "pielou_evenness",
+  "description": "Pielou's evenness (conventions: Pielou's evenness; ADR 0528).",
+  "cases": [
+    {"id": "pielou_evenness.equal", "op": "pielou_evenness", "args": {"samples": [2.0, 2.0, 2.0, 2.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "four equal shares: ln 4/ln 4 = 1"},
+    {"id": "pielou_evenness.one_holds_all", "op": "pielou_evenness", "args": {"samples": [0.0, 0.0, 0.0, 4.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one share of 1: 0"},
+    {"id": "pielou_evenness.halves", "op": "pielou_evenness", "args": {"samples": [0.5, 0.25, 0.25, 1.0]}, "expected": 0.875, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "shares 1/4, 1/8, 1/8, 1/2: (7/4) ln 2/ln 4 = 7/8"},
+    {"id": "pielou_evenness.one_zero", "op": "pielou_evenness", "args": {"samples": [0.0, 2.0, 2.0, 2.0, 2.0]}, "expected": 0.8613531161467861, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "four equal shares of five: ln 4/ln 5"},
+    {"id": "pielou_evenness.two", "op": "pielou_evenness", "args": {"samples": [3.0, 1.0]}, "expected": 0.8112781244591328, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "shares 3/4, 1/4: -(3/4 ln 3/4 + 1/4 ln 1/4)/ln 2"},
+    {"id": "pielou_evenness.ramp", "op": "pielou_evenness", "args": {"samples": [4.0, 1.0, 3.0, 2.0]}, "expected": 0.9232196723355077, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "shares 4, 1, 3, 2 tenths"},
+    {"id": "pielou_evenness.three", "op": "pielou_evenness", "args": {"samples": [3.0, 0.0, 1.0]}, "expected": 0.5118595071429148, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "shares 3/4, 0, 1/4 over ln 3"},
+    {"id": "pielou_evenness.random", "op": "pielou_evenness", "args": {"samples": [0.875, 4.875, 1.5, 7.5, 7.75, 2.75, 3.875, 2.75, 6.25, 3.625, 3.0, 2.25, 2.125, 5.875, 0.25, 6.0, 1.25, 4.625, 3.25, 0.0, 6.75, 6.25, 3.625, 4.625, 4.875, 0.375, 7.125, 0.125, 2.875, 6.0]}, "expected": 0.9324569672668624, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "30 values k/8, k from random.Random(528).randint(0, 64)"},
+    {"id": "pielou_evenness.empty", "op": "pielou_evenness", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs at least 2 values"},
+    {"id": "pielou_evenness.single", "op": "pielou_evenness", "args": {"samples": [5.0]}, "error": "invalid_argument", "source": "the record needs at least 2 values"},
+    {"id": "pielou_evenness.negative", "op": "pielou_evenness", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "pielou_evenness.all_zero", "op": "pielou_evenness", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"}
+  ]
+}

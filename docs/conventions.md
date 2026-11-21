@@ -1158,6 +1158,10 @@ rule for code not written yet.
   equivalent `(Σᵢ sᵢ^α)^(1/(1 − α))`, `exp(−Σᵢ sᵢ ln sᵢ)` at `α = 1` exactly, `0·ln 0 = 0`;
   shares over the total added in record order, the platform `pow`. Records as for the Gini
   coefficient; `α` finite, above 0. **(implemented)**
+- **Pielou's evenness** ([ADR 0528](adr/0528-pielou-evenness.md);
+  `pielou_evenness(samples)`, C# `Measurements.PielouEvenness`): `−Σᵢ sᵢ ln sᵢ / ln n`,
+  `0·ln 0 = 0`, `n` the record length with zero shares counted; terms in record order.
+  Real, finite, `n ≥ 2`, every value at least 0, not all 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

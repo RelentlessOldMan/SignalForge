@@ -414,6 +414,7 @@ from .measurements import (
     pettitt,
     phase_noise_spurs,
     phase_noise_ssb,
+    pielou_evenness,
     population_attributable_fraction,
     positive_likelihood_ratio,
     power_ccdf,
@@ -707,7 +708,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.4"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.5"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1188,6 +1189,7 @@ __all__ = [
     "phase_noise_ssb",
     "phaser",
     "pi_loop_gains",
+    "pielou_evenness",
     "ping_pong_delay",
     "pitch_shift",
     "polyblep_pwm",

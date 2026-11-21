@@ -457,6 +457,7 @@ public static class Conformance
             "hall_tideman_index" => Bind(Reals(a.Get("samples")), x => Measurements.HallTidemanIndex(x)),
             "kwoka_dominance_index" => Bind(Reals(a.Get("samples")), x => Measurements.KwokaDominanceIndex(x)),
             "hannah_kay_index" => Bind((Reals(a.Get("samples")), a.D("alpha")), t => Measurements.HannahKayIndex(t.Item1, t.Item2)),
+            "pielou_evenness" => Bind(Reals(a.Get("samples")), x => Measurements.PielouEvenness(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

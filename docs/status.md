@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Pielou's evenness in `measurements` (`pielou_evenness(samples)`; a real record of at
-     least 2 values at least 0, not all 0: `−Σ sᵢ ln sᵢ / ln n`, the Shannon entropy of the
-     shares over its largest value, with `0·ln 0 = 0`; from 0 to 1).
+   - The Gini–Simpson index in `measurements` (`simpson_diversity(samples)`; a real record
+     of values at least 0, not all 0: `1 − Σ sᵢ²`, the chance that two holders drawn with
+     replacement, weighted by share, differ; from 0 to `1 − 1/n`).
 
 ## Built
 
@@ -3692,6 +3692,10 @@ Updated with every chunk of work. Dates are absolute.
   `(Σ sᵢ^α)^(1/(1 − α))`, `exp(−Σ sᵢ ln sᵢ)` at `α = 1`.
   Python 10097 passed, 2 skipped; .NET 9114 passed; conformance 6682/6682 in both. Version
   2026.11.21.4.
+- 2026-11-21: Pielou's evenness (ADR 0528): `pielou_evenness(samples)` in `measurements`
+  (C# `Measurements.PielouEvenness`): the Shannon entropy of the shares over `ln n`.
+  Python 10116 passed, 2 skipped; .NET 9129 passed; conformance 6694/6694 in both. Version
+  2026.11.21.5.
 
 ## Not built
 
