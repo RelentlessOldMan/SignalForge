@@ -1170,6 +1170,10 @@ rule for code not written yet.
   `berger_parker_index(samples)`, C# `Measurements.BergerParkerIndex`): `max xᵢ / S`, the
   share not its reciprocal, `S` in record order. Records as for the Gini coefficient.
   **(implemented)**
+- **Heip's evenness** ([ADR 0531](adr/0531-heip-evenness.md);
+  `heip_evenness(samples)`, C# `Measurements.HeipEvenness`):
+  `(exp(−Σᵢ sᵢ ln sᵢ) − 1)/(n − 1)`, `0·ln 0 = 0`, `n` the record length with zero shares
+  counted; terms in record order. Records as for Pielou's evenness. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Heip's evenness in `measurements` (`heip_evenness(samples)`; a real record of at
-     least 2 values at least 0, not all 0: `(exp(−Σ sᵢ ln sᵢ) − 1)/(n − 1)`, `0·ln 0 = 0`;
-     from 0 to 1).
+   - Simpson's evenness in `measurements` (`simpson_evenness(samples)`; a real record of
+     values at least 0, not all 0: `1/(n·Σ sᵢ²)`, the inverse Simpson index over `n`; from
+     `1/n` to 1).
 
 ## Built
 
@@ -3705,6 +3705,11 @@ Updated with every chunk of work. Dates are absolute.
   `measurements` (C# `Measurements.BergerParkerIndex`): the largest share of the total.
   Python 10151 passed, 2 skipped; .NET 9158 passed; conformance 6717/6717 in both. Version
   2026.11.21.7.
+- 2026-11-21: Heip's evenness (ADR 0531): `heip_evenness(samples)` in `measurements`
+  (C# `Measurements.HeipEvenness`): the exponential of the Shannon entropy of the shares,
+  less 1, over `n − 1`.
+  Python 10170 passed, 2 skipped; .NET 9173 passed; conformance 6729/6729 in both. Version
+  2026.11.21.8.
 
 ## Not built
 

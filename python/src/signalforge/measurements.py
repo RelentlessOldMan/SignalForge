@@ -6402,6 +6402,37 @@ def berger_parker_index(samples: ArrayLike) -> float:
     return max(vals) / total
 
 
+def heip_evenness(samples: ArrayLike) -> float:
+    """Heip's evenness of a record of at least 2 values at least 0, not all 0: the
+    exponential of the Shannon entropy of the shares, less 1, over ``n - 1``; from 0 to 1
+    (conventions: Heip's evenness; ADR 0531)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 2:
+        raise ValueError("samples must have at least 2 values")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    acc = 0.0
+    for value in vals:
+        share = value / total
+        if share > 0:
+            acc += share * math.log(share)
+    return (math.exp(-acc) - 1.0) / (n - 1)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

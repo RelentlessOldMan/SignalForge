@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "heip_evenness",
+  "description": "Heip's evenness (conventions: Heip's evenness; ADR 0531).",
+  "cases": [
+    {"id": "heip_evenness.equal", "op": "heip_evenness", "args": {"samples": [2.0, 2.0, 2.0, 2.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "four equal shares: (exp(ln 4) - 1)/3 = 1"},
+    {"id": "heip_evenness.one_holds_all", "op": "heip_evenness", "args": {"samples": [0.0, 0.0, 0.0, 4.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "one share of 1: (1 - 1)/3 = 0"},
+    {"id": "heip_evenness.halves", "op": "heip_evenness", "args": {"samples": [0.5, 0.25, 0.25, 1.0]}, "expected": 0.7878618870049527, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "shares 1/4, 1/8, 1/8, 1/2: (2^(7/4) - 1)/3"},
+    {"id": "heip_evenness.one_zero", "op": "heip_evenness", "args": {"samples": [0.0, 2.0, 2.0, 2.0, 2.0]}, "expected": 0.75, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "four equal shares of five: (4 - 1)/4 = 3/4"},
+    {"id": "heip_evenness.two", "op": "heip_evenness", "args": {"samples": [3.0, 1.0]}, "expected": 0.7547653506033233, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "shares 3/4, 1/4: 4/3^(3/4) - 1"},
+    {"id": "heip_evenness.ramp", "op": "heip_evenness", "args": {"samples": [4.0, 1.0, 3.0, 2.0]}, "expected": 0.8653718222081073, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "shares 4, 1, 3, 2 tenths"},
+    {"id": "heip_evenness.three", "op": "heip_evenness", "args": {"samples": [3.0, 0.0, 1.0]}, "expected": 0.37738267530166164, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "shares 3/4, 0, 1/4 over 2"},
+    {"id": "heip_evenness.random", "op": "heip_evenness", "args": {"samples": [2.0, 7.0, 5.5, 6.875, 1.375, 0.75, 7.375, 1.875, 4.5, 3.75, 3.125, 2.5, 1.375, 2.25, 3.625, 0.625, 0.875, 3.5, 6.125, 6.25, 7.875, 4.0, 2.0, 4.875, 3.0, 2.75, 4.125, 6.5, 5.625, 0.625]}, "expected": 0.8298381412709412, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 values k/8, k from random.Random(531).randint(0, 64)"},
+    {"id": "heip_evenness.empty", "op": "heip_evenness", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs at least 2 values"},
+    {"id": "heip_evenness.single", "op": "heip_evenness", "args": {"samples": [5.0]}, "error": "invalid_argument", "source": "the record needs at least 2 values"},
+    {"id": "heip_evenness.negative", "op": "heip_evenness", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "heip_evenness.all_zero", "op": "heip_evenness", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"}
+  ]
+}
