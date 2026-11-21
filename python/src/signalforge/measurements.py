@@ -6064,6 +6064,33 @@ def quintile_share_ratio(samples: ArrayLike) -> float:
     return (float(c[n]) - upto) / low
 
 
+def bonferroni_index(samples: ArrayLike) -> float:
+    """The Bonferroni index of a record of at least 2 values at least 0, not all 0: the mean
+    over ``k < n`` of the gap between the mean and the mean of the ``k`` smallest, over the
+    mean, from 0 to 1 (conventions: the Bonferroni index; ADR 0520)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 2:
+        raise ValueError("samples must have at least 2 values")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    c = np.cumsum(np.sort(x))
+    total = float(c[-1])
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    acc = 0.0
+    for k in range(1, n):
+        acc += float(c[k - 1]) / k
+    return 1.0 - n * acc / ((n - 1) * total)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

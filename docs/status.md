@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Bonferroni index in `measurements` (`bonferroni_index(samples)`; a real record of
-     at least 2 values at least 0, not all 0: `(1/(n − 1))·Σ_{k<n} (μ − mₖ)/μ`, `mₖ` the
-     mean of the `k` smallest; from 0 to 1).
+   - The Zenga index in `measurements` (`zenga_index(samples)`; a real record of at least 2
+     values at least 0, not all 0: `(1/(n − 1))·Σ_{k<n} (m⁺ₖ − m⁻ₖ)/m⁺ₖ`, `m⁻ₖ` the mean of
+     the `k` smallest and `m⁺ₖ` the mean of the other `n − k`; from 0 to 1).
 
 ## Built
 
@@ -3652,6 +3652,11 @@ Updated with every chunk of work. Dates are absolute.
   the share of the smallest 20%, from the Lorenz curve joined by straight lines.
   Python 9946 passed, 2 skipped; .NET 8998 passed; conformance 6590/6590 in both. Version
   2026.11.20.65.
+- 2026-11-20: The Bonferroni index (ADR 0520): `bonferroni_index(samples)` in
+  `measurements` (C# `Measurements.BonferroniIndex`): the mean gap between the mean and
+  the mean of the `k` smallest, `k < n`, over the mean.
+  Python 9964 passed, 2 skipped; .NET 9012 passed; conformance 6601/6601 in both. Version
+  2026.11.20.66.
 
 ## Not built
 

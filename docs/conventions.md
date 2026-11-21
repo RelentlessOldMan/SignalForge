@@ -1119,6 +1119,12 @@ rule for code not written yet.
   `n = 5j₂ + r₂`, `low = S_{j₂} + (r₂/5)·x₍j₂₎`; `4n = 5j₈ + r₈`,
   `upto = S_{j₈} + (r₈/5)·x₍j₈₎`. Real, finite, `n ≥ 1`, every value at least 0,
   `low > 0`. **(implemented)**
+- **Bonferroni index** ([ADR 0520](adr/0520-bonferroni-index.md);
+  `bonferroni_index(samples)`, C# `Measurements.BonferroniIndex`):
+  `(1/(n − 1))·Σ_{k=1}^{n−1} (μ − mₖ)/μ`, `mₖ = Sₖ/k` the mean of the `k` smallest; the
+  `k = n` term left out, so from 0 to 1. Formed as `1 − n·Σ_{k<n} (Sₖ/k)/((n − 1)·Sₙ)`,
+  summed from `k = 1`. Real, finite, `n ≥ 2`, every value at least 0, not all 0.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
