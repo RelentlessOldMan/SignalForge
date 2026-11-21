@@ -5835,6 +5835,31 @@ def gini_coefficient(samples: ArrayLike) -> float:
     return num / (float(n) * total)
 
 
+def theil_index(samples: ArrayLike) -> float:
+    """The Theil index of a record of values at least 0, not all 0: the mean of
+    (x/mean) ln(x/mean), 0 for a value of 0, from 0 to ln n (conventions: the Theil index;
+    ADR 0511)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    total = float(np.sum(x))
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    r = x / (total / n)
+    pos = r[r > 0]
+    return float(np.sum(pos * np.log(pos))) / float(n)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

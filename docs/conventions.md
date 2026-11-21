@@ -1078,6 +1078,10 @@ rule for code not written yet.
   `Σᵢ Σⱼ |xᵢ − xⱼ| / (2·n²·μ)` over all `n²` ordered pairs, computed on the sorted values
   as `Σₖ (2k − n + 1)·x₍ₖ₎ / (n·Σ x)`, `k` from 0. From 0 to `1 − 1/n`. Real, finite,
   `n ≥ 1`, every value at least 0, not all 0. **(implemented)**
+- **Theil index** ([ADR 0511](adr/0511-theil-index.md); `theil_index(samples)`, C#
+  `Measurements.TheilIndex`): `(1/n)·Σ (xᵢ/μ)·ln(xᵢ/μ)`, `μ` the mean, a term with
+  `xᵢ = 0` taken as 0. From 0 to `ln n`. Records as for the Gini coefficient: real,
+  finite, `n ≥ 1`, every value at least 0, not all 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

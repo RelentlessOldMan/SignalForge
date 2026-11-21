@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "theil_index",
+  "description": "The Theil index (conventions: the Theil index; ADR 0511).",
+  "cases": [
+    {"id": "theil_index.equal", "op": "theil_index", "args": {"samples": [2.0, 2.0, 2.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "every value equal: 0"},
+    {"id": "theil_index.single", "op": "theil_index", "args": {"samples": [5.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one value: ln 1 = 0"},
+    {"id": "theil_index.one_holds_all", "op": "theil_index", "args": {"samples": [0.0, 0.0, 0.0, 4.0]}, "expected": 1.3862943611198906, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one of four holds the total: ln 4"},
+    {"id": "theil_index.two", "op": "theil_index", "args": {"samples": [1.0, 3.0]}, "expected": 0.13081203594113697, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "shares 1/2 and 3/2: (3/2 ln(3/2) - 1/2 ln 2)/2"},
+    {"id": "theil_index.halves", "op": "theil_index", "args": {"samples": [0.0, 2.0, 2.0, 0.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "two of four hold the total equally: ln 2"},
+    {"id": "theil_index.unsorted", "op": "theil_index", "args": {"samples": [3.0, 0.0, 1.0, 0.0]}, "expected": 0.8239592165010823, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 1: (3 ln 3 + 0 + 1 ln 1 + 0)/4 = 3 ln 3/4"},
+    {"id": "theil_index.random", "op": "theil_index", "args": {"samples": [1.625, 7.25, 1.875, 2.25, 3.875, 7.625, 3.375, 4.375, 2.125, 2.0, 0.375, 4.875, 1.25, 1.875, 1.125, 6.5, 1.5, 5.625, 0.5, 2.875, 3.25, 2.125, 6.0, 1.375, 1.125, 1.125, 4.5, 3.25, 6.125, 3.875]}, "expected": 0.20445377686194233, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "30 values k/8, k from random.Random(511).randint(0, 64)"},
+    {"id": "theil_index.empty", "op": "theil_index", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "theil_index.negative", "op": "theil_index", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "theil_index.all_zero", "op": "theil_index", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"}
+  ]
+}

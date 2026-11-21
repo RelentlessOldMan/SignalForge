@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Theil index in `measurements` (`theil_index(samples)`; a real record of values at
-     least 0, not all 0: `(1/n)·Σ (x/μ)·ln(x/μ)` with `0·ln 0 = 0`; from 0 to `ln n`).
+   - The Hoover index in `measurements` (`hoover_index(samples)`; a real record of values
+     at least 0, not all 0: `Σ |x − μ| / (2·Σ x)`, the share of the total that would have to
+     move to make every value equal; from 0 to `1 − 1/n`).
 
 ## Built
 
@@ -3609,6 +3610,10 @@ Updated with every chunk of work. Dates are absolute.
   all ordered pairs over twice the mean.
   Python 9792 passed, 2 skipped; .NET 8872 passed; conformance 6493/6493 in both. Version
   2026.11.20.56.
+- 2026-11-20: The Theil index (ADR 0511): `theil_index(samples)` in `measurements`
+  (C# `Measurements.TheilIndex`): `(1/n)·Σ (x/μ)·ln(x/μ)`, from 0 to `ln n`.
+  Python 9808 passed, 2 skipped; .NET 8886 passed; conformance 6503/6503 in both. Version
+  2026.11.20.57.
 
 ## Not built
 
