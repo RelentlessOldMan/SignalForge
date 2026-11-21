@@ -1166,6 +1166,10 @@ rule for code not written yet.
   `simpson_diversity(samples)`, C# `Measurements.SimpsonDiversity`): `1 − Σᵢ sᵢ²`, draws
   with replacement, the complement not the reciprocal; squares in record order, taken from
   1 last. Records as for the Gini coefficient. **(implemented)**
+- **Berger–Parker index** ([ADR 0530](adr/0530-berger-parker-index.md);
+  `berger_parker_index(samples)`, C# `Measurements.BergerParkerIndex`): `max xᵢ / S`, the
+  share not its reciprocal, `S` in record order. Records as for the Gini coefficient.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

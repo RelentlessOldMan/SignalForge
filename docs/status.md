@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Berger–Parker index in `measurements` (`berger_parker_index(samples)`; a real
-     record of values at least 0, not all 0: `max xᵢ / Σ xᵢ`, the largest share; from `1/n`
-     to 1).
+   - Heip's evenness in `measurements` (`heip_evenness(samples)`; a real record of at
+     least 2 values at least 0, not all 0: `(exp(−Σ sᵢ ln sᵢ) − 1)/(n − 1)`, `0·ln 0 = 0`;
+     from 0 to 1).
 
 ## Built
 
@@ -3701,6 +3701,10 @@ Updated with every chunk of work. Dates are absolute.
   shares.
   Python 10133 passed, 2 skipped; .NET 9143 passed; conformance 6705/6705 in both. Version
   2026.11.21.6.
+- 2026-11-21: The Berger–Parker index (ADR 0530): `berger_parker_index(samples)` in
+  `measurements` (C# `Measurements.BergerParkerIndex`): the largest share of the total.
+  Python 10151 passed, 2 skipped; .NET 9158 passed; conformance 6717/6717 in both. Version
+  2026.11.21.7.
 
 ## Not built
 

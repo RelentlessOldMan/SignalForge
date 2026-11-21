@@ -259,6 +259,7 @@ from .measurements import (
     bartels_rank_test,
     bass_ratio,
     benini_coefficient,
+    berger_parker_index,
     bhattacharyya_distance,
     binary_chi_square,
     binary_g_statistic,
@@ -709,7 +710,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.6"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.7"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -842,6 +843,7 @@ __all__ = [
     "bass_enhancer",
     "bass_ratio",
     "benini_coefficient",
+    "berger_parker_index",
     "bessel_bandpass",
     "bessel_bandstop",
     "bessel_highpass",
