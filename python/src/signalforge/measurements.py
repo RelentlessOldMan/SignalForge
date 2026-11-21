@@ -5860,6 +5860,30 @@ def theil_index(samples: ArrayLike) -> float:
     return float(np.sum(pos * np.log(pos))) / float(n)
 
 
+def hoover_index(samples: ArrayLike) -> float:
+    """The Hoover index of a record of values at least 0, not all 0: the sum of the
+    absolute deviations from the mean over twice the total, from 0 to 1 - 1/n (conventions:
+    the Hoover index; ADR 0512)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    total = float(np.sum(x))
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    dev = float(np.sum(np.abs(x - total / float(n))))
+    return dev / (2.0 * total)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

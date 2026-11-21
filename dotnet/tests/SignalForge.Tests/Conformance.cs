@@ -441,6 +441,7 @@ public static class Conformance
             "log_relative_risk" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.LogRelativeRisk(t.Item1, t.Item2)),
             "gini_coefficient" => Bind(Reals(a.Get("samples")), x => Measurements.GiniCoefficient(x)),
             "theil_index" => Bind(Reals(a.Get("samples")), x => Measurements.TheilIndex(x)),
+            "hoover_index" => Bind(Reals(a.Get("samples")), x => Measurements.HooverIndex(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

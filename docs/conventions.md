@@ -1082,6 +1082,10 @@ rule for code not written yet.
   `Measurements.TheilIndex`): `(1/n)·Σ (xᵢ/μ)·ln(xᵢ/μ)`, `μ` the mean, a term with
   `xᵢ = 0` taken as 0. From 0 to `ln n`. Records as for the Gini coefficient: real,
   finite, `n ≥ 1`, every value at least 0, not all 0. **(implemented)**
+- **Hoover index** ([ADR 0512](adr/0512-hoover-index.md); `hoover_index(samples)`, C#
+  `Measurements.HooverIndex`): `Σ |xᵢ − μ| / (2·Σ xᵢ)`, `μ` the mean. From 0 to
+  `1 − 1/n`. Records as for the Gini coefficient: real, finite, `n ≥ 1`, every value at
+  least 0, not all 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

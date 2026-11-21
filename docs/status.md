@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Hoover index in `measurements` (`hoover_index(samples)`; a real record of values
-     at least 0, not all 0: `Σ |x − μ| / (2·Σ x)`, the share of the total that would have to
-     move to make every value equal; from 0 to `1 − 1/n`).
+   - The coefficient of variation in `measurements` (`coefficient_of_variation(samples)`; a
+     real record with a positive mean: the population standard deviation, over `n`, over the
+     mean).
 
 ## Built
 
@@ -3614,6 +3614,10 @@ Updated with every chunk of work. Dates are absolute.
   (C# `Measurements.TheilIndex`): `(1/n)·Σ (x/μ)·ln(x/μ)`, from 0 to `ln n`.
   Python 9808 passed, 2 skipped; .NET 8886 passed; conformance 6503/6503 in both. Version
   2026.11.20.57.
+- 2026-11-20: The Hoover index (ADR 0512): `hoover_index(samples)` in `measurements`
+  (C# `Measurements.HooverIndex`): `Σ |x − μ| / (2·Σ x)`, from 0 to `1 − 1/n`.
+  Python 9825 passed, 2 skipped; .NET 8901 passed; conformance 6514/6514 in both. Version
+  2026.11.20.58.
 
 ## Not built
 
