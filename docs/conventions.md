@@ -1057,6 +1057,12 @@ rule for code not written yet.
   `2·asin(√(TP/(TP + FP))) − 2·asin(√(FN/(FN + TN)))`, formed as
   `2·(atan2(√TP, √FP) − atan2(√FN, √TN))`; from −π to π. Records as for the Jaccard
   index; a decision with no 1 or no 0 is an error. **(implemented)**
+- **Standard error of Cohen's h** ([ADR 0507](adr/0507-cohen-h-standard-error.md);
+  `cohen_h_standard_error(truth, decision)`, C# `Measurements.CohenHStandardError`), the
+  decision as the exposure: `√(1/(TP + FP) + 1/(FN + TN))`, formed as the exact integer
+  `N` over the exact integer `(TP + FP)·(FN + TN)`, each converted to a double once.
+  Records as for the Jaccard index; a decision with no 1 or no 0 is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

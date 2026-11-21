@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "cohen_h_standard_error",
+  "description": "The standard error of Cohen's h (conventions: the standard error of Cohen's h; ADR 0507).",
+  "cases": [
+    {"id": "cohen_h_standard_error.independent", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "two 1s, two 0s: sqrt(1/2 + 1/2) = 1"},
+    {"id": "cohen_h_standard_error.identical", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "two 1s, two 0s: 1, whatever the truth"},
+    {"id": "cohen_h_standard_error.square", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.6324555320336759, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "five 1s, five 0s: sqrt(2/5)"},
+    {"id": "cohen_h_standard_error.uneven", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.8366600265340756, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "five 1s, two 0s: sqrt(1/5 + 1/2) = sqrt(7/10)"},
+    {"id": "cohen_h_standard_error.single_one", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 0.0], "decision": [1.0, 0.0]}, "expected": 1.4142135623730951, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one 1, one 0: sqrt 2, the largest"},
+    {"id": "cohen_h_standard_error.random", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0], "decision": [1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.32659863237109044, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(507), about three in ten flipped"},
+    {"id": "cohen_h_standard_error.empty", "op": "cohen_h_standard_error", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "cohen_h_standard_error.lengths", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "cohen_h_standard_error.not_binary", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "cohen_h_standard_error.decision_all_one", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the decision has no 0"},
+    {"id": "cohen_h_standard_error.decision_all_zero", "op": "cohen_h_standard_error", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision has no 1"}
+  ]
+}

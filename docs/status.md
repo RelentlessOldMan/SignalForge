@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The standard error of Cohen's h in `measurements` (`cohen_h_standard_error`; two
-     binary records as for the Jaccard index, the decision as the exposure:
-     `√(1/(TP + FP) + 1/(FN + TN))`; an error when the decision has no 1 or no 0).
+   - The Wald z of Cohen's h in `measurements` (`cohen_h_wald_z`; two binary records as
+     for the Jaccard index, the decision as the exposure: `cohen_h` over
+     `cohen_h_standard_error`; an error when the decision has no 1 or no 0).
 
 ## Built
 
@@ -3591,6 +3591,11 @@ Updated with every chunk of work. Dates are absolute.
   two shares.
   Python 9734 passed, 2 skipped; .NET 8816 passed; conformance 6447/6447 in both. Version
   2026.11.20.52.
+- 2026-11-20: The standard error of Cohen's h (ADR 0507): `cohen_h_standard_error(truth,
+  decision)` in `measurements` (C# `Measurements.CohenHStandardError`):
+  `√(1/(TP + FP) + 1/(FN + TN))`.
+  Python 9747 passed, 2 skipped; .NET 8829 passed; conformance 6458/6458 in both. Version
+  2026.11.20.53.
 
 ## Not built
 

@@ -281,6 +281,7 @@ from .measurements import (
     cliff_delta,
     cohen_d,
     cohen_h,
+    cohen_h_standard_error,
     cohen_kappa,
     cole_coefficient,
     consonni_todeschini_coefficient,
@@ -686,7 +687,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.52"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.53"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -879,6 +880,7 @@ __all__ = [
     "cma_equalizer",
     "cohen_d",
     "cohen_h",
+    "cohen_h_standard_error",
     "cohen_kappa",
     "coherence",
     "coherence_confidence_interval",
