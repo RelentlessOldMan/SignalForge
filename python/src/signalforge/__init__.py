@@ -407,6 +407,7 @@ from .measurements import (
     renyi_entropy,
     rescaled_range,
     reverberation_time,
+    risk_difference,
     roc_auc,
     rogers_tanimoto_coefficient,
     rogot_goldberg_coefficient,
@@ -680,7 +681,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.46"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.47"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1218,6 +1219,7 @@ __all__ = [
     "reverse_delay",
     "rician_fading",
     "ring_modulate",
+    "risk_difference",
     "rls_equalizer",
     "roc_auc",
     "rogers_tanimoto_coefficient",

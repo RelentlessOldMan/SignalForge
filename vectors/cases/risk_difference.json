@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "risk_difference",
+  "description": "The risk difference (conventions: the risk difference; ADR 0501).",
+  "cases": [
+    {"id": "risk_difference.independent", "op": "risk_difference", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 1/2 - 1/2 = 0"},
+    {"id": "risk_difference.identical", "op": "risk_difference", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2: 2/2 - 0/2 = 1"},
+    {"id": "risk_difference.opposite", "op": "risk_difference", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "expected": -1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "FN 2, FP 2: 0/2 - 2/2 = -1"},
+    {"id": "risk_difference.square", "op": "risk_difference", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 0.6, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, FN 1, FP 1, TN 4: 4/5 - 1/5 = 3/5"},
+    {"id": "risk_difference.uneven", "op": "risk_difference", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -0.1, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 3, TN 1: 2/5 - 1/2 = -1/10"},
+    {"id": "risk_difference.all_truth_one", "op": "risk_difference", "args": {"truth": [1.0, 1.0, 1.0], "decision": [1.0, 0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1: 2/2 - 1/1 = 0"},
+    {"id": "risk_difference.random", "op": "risk_difference", "args": {"truth": [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, "expected": 0.35858585858585856, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(501), about three in ten flipped"},
+    {"id": "risk_difference.empty", "op": "risk_difference", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "risk_difference.lengths", "op": "risk_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "risk_difference.not_binary", "op": "risk_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "risk_difference.decision_all_one", "op": "risk_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the decision has no 0"},
+    {"id": "risk_difference.decision_all_zero", "op": "risk_difference", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision has no 1"}
+  ]
+}
