@@ -453,6 +453,7 @@ public static class Conformance
             "zenga_index" => Bind(Reals(a.Get("samples")), x => Measurements.ZengaIndex(x)),
             "wolfson_index" => Bind(Reals(a.Get("samples")), x => Measurements.WolfsonIndex(x)),
             "herfindahl_index" => Bind(Reals(a.Get("samples")), x => Measurements.HerfindahlIndex(x)),
+            "concentration_ratio" => Bind((Reals(a.Get("samples")), a.I("k")), t => Measurements.ConcentrationRatio(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

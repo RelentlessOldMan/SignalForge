@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The concentration ratio in `measurements` (`concentration_ratio(samples, count)`; a
-     real record of values at least 0, not all 0, and a whole `count` from 1 to `n`: the
-     share of the total held by the `count` largest values).
+   - The Hall–Tideman index in `measurements` (`hall_tideman_index(samples)`; a real record
+     of values at least 0, not all 0: `1/(2·Σ_r r·s₍ᵣ₎ − 1)`, `s₍ᵣ₎` the shares ranked from
+     the largest, `r` from 1; from `1/n` to 1).
 
 ## Built
 
@@ -3672,6 +3672,11 @@ Updated with every chunk of work. Dates are absolute.
   total.
   Python 10016 passed, 2 skipped; .NET 9053 passed; conformance 6633/6633 in both. Version
   2026.11.21.0.
+- 2026-11-21: The concentration ratio (ADR 0524): `concentration_ratio(samples, k)` in
+  `measurements` (C# `Measurements.ConcentrationRatio`): the share of the total held by the
+  `k` largest values.
+  Python 10038 passed, 2 skipped; .NET 9068 passed; conformance 6645/6645 in both. Version
+  2026.11.21.1.
 
 ## Not built
 

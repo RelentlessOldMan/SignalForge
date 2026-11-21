@@ -6185,6 +6185,38 @@ def herfindahl_index(samples: ArrayLike) -> float:
     return acc
 
 
+def concentration_ratio(samples: ArrayLike, k: int) -> float:
+    """The concentration ratio of a record of values at least 0, not all 0: the share of the
+    total held by the ``k`` largest values, from k/n to 1 (conventions: the concentration
+    ratio; ADR 0524)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    kk = count(k, "k")
+    if not 1 <= kk <= n:
+        raise ValueError("k must be from 1 to the number of samples")
+    total = 0.0
+    for a in x:
+        total += float(a)
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    v = np.sort(x)
+    top = 0.0
+    for i in range(kk):
+        top += float(v[n - 1 - i])
+    return top / total
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

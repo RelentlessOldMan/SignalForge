@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "concentration_ratio",
+  "description": "The concentration ratio (conventions: the concentration ratio; ADR 0524).",
+  "cases": [
+    {"id": "concentration_ratio.equal", "op": "concentration_ratio", "args": {"samples": [2.0, 2.0, 2.0, 2.0], "k": 1}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one of four equal values: 1/4"},
+    {"id": "concentration_ratio.all", "op": "concentration_ratio", "args": {"samples": [1.0, 2.0, 3.0], "k": 3}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "k = n: 1"},
+    {"id": "concentration_ratio.one_holds_all", "op": "concentration_ratio", "args": {"samples": [0.0, 0.0, 0.0, 4.0], "k": 1}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "the largest holds the total: 1"},
+    {"id": "concentration_ratio.ramp", "op": "concentration_ratio", "args": {"samples": [4.0, 1.0, 3.0, 2.0], "k": 2}, "expected": 0.7, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "(4 + 3)/10 = 7/10"},
+    {"id": "concentration_ratio.three", "op": "concentration_ratio", "args": {"samples": [3.0, 0.0, 1.0], "k": 1}, "expected": 0.75, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "3/4"},
+    {"id": "concentration_ratio.halves", "op": "concentration_ratio", "args": {"samples": [0.5, 0.25, 0.25, 1.0], "k": 3}, "expected": 0.875, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "(1 + 1/2 + 1/4)/2 = 7/8"},
+    {"id": "concentration_ratio.random", "op": "concentration_ratio", "args": {"samples": [3.5, 0.125, 4.25, 7.75, 5.375, 1.25, 4.875, 3.75, 2.5, 1.375, 1.125, 2.125, 3.75, 5.0, 0.0, 4.625, 4.25, 6.5, 2.0, 6.75, 7.75, 2.75, 5.625, 7.75, 3.875, 1.0, 6.0, 5.625, 2.0, 0.375], "k": 6}, "expected": 0.37403740374037403, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "30 values k/8, k from random.Random(524).randint(0, 64); the 6 largest"},
+    {"id": "concentration_ratio.empty", "op": "concentration_ratio", "args": {"samples": [], "k": 1}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "concentration_ratio.negative", "op": "concentration_ratio", "args": {"samples": [1.0, -0.5, 2.0], "k": 1}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "concentration_ratio.all_zero", "op": "concentration_ratio", "args": {"samples": [0.0, 0.0, 0.0], "k": 1}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "concentration_ratio.k_zero", "op": "concentration_ratio", "args": {"samples": [1.0, 2.0, 3.0], "k": 0}, "error": "invalid_argument", "source": "k must be at least 1"},
+    {"id": "concentration_ratio.k_too_big", "op": "concentration_ratio", "args": {"samples": [1.0, 2.0, 3.0], "k": 4}, "error": "invalid_argument", "source": "k must be at most n"}
+  ]
+}

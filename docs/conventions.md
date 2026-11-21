@@ -1139,6 +1139,10 @@ rule for code not written yet.
   `herfindahl_index(samples)`, C# `Measurements.HerfindahlIndex`): `Σᵢ (xᵢ/S)²`, shares as
   fractions, `S` and the squares added in record order; from `1/n` to 1, not normalized.
   Records as for the Gini coefficient. **(implemented)**
+- **Concentration ratio** ([ADR 0524](adr/0524-concentration-ratio.md);
+  `concentration_ratio(samples, k)`, C# `Measurements.ConcentrationRatio`): the `k` largest
+  added from the largest down, over the total added in record order; a fraction. Records
+  as for the Gini coefficient; `k` whole, from 1 to `n`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
