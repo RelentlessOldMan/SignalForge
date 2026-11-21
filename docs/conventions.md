@@ -1073,6 +1073,11 @@ rule for code not written yet.
   exposure, `ln(P/Q)` with `P = TP·(FN + TN)` and `Q = FN·(TP + FP)`, each exact integer
   converted to a double once. Records as for the Jaccard index; TP = 0 or FN = 0 is an
   error. **(implemented)**
+- **Gini coefficient** ([ADR 0510](adr/0510-gini-coefficient.md);
+  `gini_coefficient(samples)`, C# `Measurements.GiniCoefficient`): the population form
+  `Σᵢ Σⱼ |xᵢ − xⱼ| / (2·n²·μ)` over all `n²` ordered pairs, computed on the sorted values
+  as `Σₖ (2k − n + 1)·x₍ₖ₎ / (n·Σ x)`, `k` from 0. From 0 to `1 − 1/n`. Real, finite,
+  `n ≥ 1`, every value at least 0, not all 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

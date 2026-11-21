@@ -325,6 +325,7 @@ from .measurements import (
     gcc_phat,
     gilbert_skill_score,
     gilbert_wells_coefficient,
+    gini_coefficient,
     glass_delta,
     goodman_kruskal_gamma,
     goodman_kruskal_lambda,
@@ -689,7 +690,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.55"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.56"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -997,6 +998,7 @@ __all__ = [
     "generalized_lomb_scargle",
     "gilbert_skill_score",
     "gilbert_wells_coefficient",
+    "gini_coefficient",
     "glass_delta",
     "goertzel",
     "goodman_kruskal_gamma",

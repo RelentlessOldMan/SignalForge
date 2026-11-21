@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Gini coefficient in `measurements` (`gini_coefficient(x)`; a real record of values
-     at least 0, not all 0: the mean absolute difference over all ordered pairs, the pair of
-     an item with itself included, over twice the mean; from 0 to `1 − 1/n`).
+   - The Theil index in `measurements` (`theil_index(samples)`; a real record of values at
+     least 0, not all 0: `(1/n)·Σ (x/μ)·ln(x/μ)` with `0·ln 0 = 0`; from 0 to `ln n`).
 
 ## Built
 
@@ -3605,6 +3604,11 @@ Updated with every chunk of work. Dates are absolute.
   risk.
   Python 9775 passed, 2 skipped; .NET 8857 passed; conformance 6482/6482 in both. Version
   2026.11.20.55.
+- 2026-11-20: The Gini coefficient (ADR 0510): `gini_coefficient(samples)` in
+  `measurements` (C# `Measurements.GiniCoefficient`): the mean absolute difference over
+  all ordered pairs over twice the mean.
+  Python 9792 passed, 2 skipped; .NET 8872 passed; conformance 6493/6493 in both. Version
+  2026.11.20.56.
 
 ## Not built
 

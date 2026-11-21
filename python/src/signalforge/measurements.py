@@ -5810,6 +5810,31 @@ def log_relative_risk(truth: ArrayLike, decision: ArrayLike) -> float:
     return math.log(float(tp * (fn + tn)) / float(fn * (tp + fp)))
 
 
+def gini_coefficient(samples: ArrayLike) -> float:
+    """The Gini coefficient of a record of values at least 0, not all 0: the mean absolute
+    difference over all ordered pairs over twice the mean, from 0 to 1 - 1/n (conventions:
+    the Gini coefficient; ADR 0510)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    total = float(np.sum(x))
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    k = np.arange(n, dtype=np.float64)
+    num = float(np.dot(2 * k - n + 1, np.sort(x)))
+    return num / (float(n) * total)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
