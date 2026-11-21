@@ -376,6 +376,7 @@ from .measurements import (
     log_relative_risk,
     log_relative_risk_standard_error,
     log_relative_risk_wald_z,
+    lorenz_curve,
     mann_kendall,
     markedness,
     matthews_correlation,
@@ -696,7 +697,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.62"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.63"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1098,6 +1099,7 @@ __all__ = [
     "lomb_scargle_false_alarm_level_baluev",
     "lomb_scargle_frequencies",
     "lomb_scargle_multiterm",
+    "lorenz_curve",
     "low_shelf",
     "lowpass_feedback_comb",
     "lpc_cepstrum",

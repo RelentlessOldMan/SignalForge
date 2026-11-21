@@ -446,6 +446,7 @@ public static class Conformance
             "mean_log_deviation" => Bind(Reals(a.Get("samples")), x => Measurements.MeanLogDeviation(x)),
             "atkinson_index" => Bind((Reals(a.Get("samples")), a.D("epsilon")), t => Measurements.AtkinsonIndex(t.Item1, t.Item2)),
             "generalized_entropy_index" => Bind((Reals(a.Get("samples")), a.D("alpha")), t => Measurements.GeneralizedEntropyIndex(t.Item1, t.Item2)),
+            "lorenz_curve" => Bind(Reals(a.Get("samples")), x => Measurements.LorenzCurve(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

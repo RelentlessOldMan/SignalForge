@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Lorenz curve in `measurements` (`lorenz_curve(samples)`; a real record of values
-     at least 0, not all 0: the `n + 1` cumulative shares of the total held by the smallest
-     `k` values, `k` from 0 to `n`, from 0 to 1).
+   - The Palma ratio in `measurements` (`palma_ratio(samples)`; a real record of values at
+     least 0 whose smallest 40% hold some of the total: the share of the largest 10% over
+     the share of the smallest 40%, read from the Lorenz curve joined by straight lines).
 
 ## Built
 
@@ -3638,6 +3638,10 @@ Updated with every chunk of work. Dates are absolute.
   deviation at `α = 0`, the Theil index at `α = 1`.
   Python 9894 passed, 2 skipped; .NET 8957 passed; conformance 6558/6558 in both. Version
   2026.11.20.62.
+- 2026-11-20: The Lorenz curve (ADR 0517): `lorenz_curve(samples)` in `measurements`
+  (C# `Measurements.LorenzCurve`): the `n + 1` running shares of the sorted values.
+  Python 9910 passed, 2 skipped; .NET 8970 passed; conformance 6568/6568 in both. Version
+  2026.11.20.63.
 
 ## Not built
 

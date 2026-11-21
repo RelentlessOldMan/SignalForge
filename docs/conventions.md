@@ -1104,6 +1104,10 @@ rule for code not written yet.
   with `rᵢ = xᵢ/μ`, `(1/(n·α(α − 1)))·Σ (rᵢ^α − 1)`; at exactly `α = 0`,
   `−(1/n)·Σ ln rᵢ`, and at exactly `α = 1`, `(1/n)·Σ rᵢ·ln rᵢ`. At least 0. Real, finite,
   `n ≥ 1`, every value greater than 0; `α` finite. **(implemented)**
+- **Lorenz curve** ([ADR 0517](adr/0517-lorenz-curve.md); `lorenz_curve(samples)`, C#
+  `Measurements.LorenzCurve`): `n + 1` shares, `L₀ = 0`, `Lₖ = Sₖ/Sₙ`, `Sₖ` the running
+  sum of the `k` smallest values added from the smallest; the last share is exactly 1.
+  Records as for the Gini coefficient. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

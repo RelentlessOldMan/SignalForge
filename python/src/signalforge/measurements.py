@@ -5979,6 +5979,33 @@ def generalized_entropy_index(samples: ArrayLike, alpha: float) -> float:
     return float(np.mean(ratio**a - 1.0)) / (a * (a - 1.0))
 
 
+def lorenz_curve(samples: ArrayLike) -> NDArray[np.float64]:
+    """The Lorenz curve of a record of values at least 0, not all 0: the ``n + 1`` shares of
+    the total held by the smallest ``k`` values, from 0 to exactly 1 (conventions: the
+    Lorenz curve; ADR 0517)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    c = np.cumsum(np.sort(x))
+    total = float(c[-1])
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    out = np.empty(n + 1, dtype=np.float64)
+    out[0] = 0.0
+    out[1:] = c / total
+    return out
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

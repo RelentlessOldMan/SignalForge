@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "suite": "lorenz_curve",
+  "description": "The Lorenz curve (conventions: the Lorenz curve; ADR 0517).",
+  "cases": [
+    {"id": "lorenz_curve.equal", "op": "lorenz_curve", "args": {"samples": [2.0, 2.0, 2.0]}, "expected": [0.0, 0.3333333333333333, 0.6666666666666666, 1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "every value equal: k/n"},
+    {"id": "lorenz_curve.single", "op": "lorenz_curve", "args": {"samples": [5.0]}, "expected": [0.0, 1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one value: 0 and 1"},
+    {"id": "lorenz_curve.one_holds_all", "op": "lorenz_curve", "args": {"samples": [0.0, 0.0, 0.0, 4.0]}, "expected": [0.0, 0.0, 0.0, 0.0, 1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "one of four holds the total"},
+    {"id": "lorenz_curve.unsorted", "op": "lorenz_curve", "args": {"samples": [3.0, 0.0, 1.0]}, "expected": [0.0, 0.0, 0.25, 1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "sorted 0, 1, 3 of 4: 0, 0, 1/4, 1"},
+    {"id": "lorenz_curve.ramp", "op": "lorenz_curve", "args": {"samples": [4.0, 1.0, 3.0, 2.0]}, "expected": [0.0, 0.1, 0.3, 0.6, 1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "sorted 1, 2, 3, 4 of 10: 0, 1/10, 3/10, 6/10, 1"},
+    {"id": "lorenz_curve.halves", "op": "lorenz_curve", "args": {"samples": [0.5, 0.25, 0.25, 1.0]}, "expected": [0.0, 0.125, 0.25, 0.5, 1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "sorted 1/4, 1/4, 1/2, 1 of 2: 0, 1/8, 1/4, 1/2, 1"},
+    {"id": "lorenz_curve.random", "op": "lorenz_curve", "args": {"samples": [6.875, 6.375, 3.125, 6.875, 2.75, 7.875, 4.875, 2.0, 2.375, 0.875, 1.25, 6.375, 7.125, 5.0, 0.125, 8.0, 4.125, 0.125, 6.625, 3.875, 0.25, 3.25, 6.75, 4.75, 6.875, 4.0, 1.25, 7.125, 3.5, 1.0]}, "expected": [0.0, 0.0009970089730807576, 0.0019940179461615153, 0.003988035892323031, 0.010967098703888335, 0.018943170488534396, 0.028913260219341975, 0.038883349950149554, 0.054835493519441676, 0.07377866400797607, 0.09571286141575275, 0.12063808574277168, 0.1465603190428714, 0.1744765702891326, 0.2053838484546361, 0.23728813559322035, 0.27018943170488535, 0.30807577268195413, 0.3469591226321037, 0.386839481555334, 0.43768693918245266, 0.4885343968095713, 0.5413758723828515, 0.5952143569292123, 0.650049850448654, 0.7048853439680958, 0.7597208374875374, 0.8165503489531406, 0.8733798604187437, 0.9361914257228315, 1.0], "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "30 values k/8, k from random.Random(517).randint(0, 64)"},
+    {"id": "lorenz_curve.empty", "op": "lorenz_curve", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "lorenz_curve.negative", "op": "lorenz_curve", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "lorenz_curve.all_zero", "op": "lorenz_curve", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"}
+  ]
+}
