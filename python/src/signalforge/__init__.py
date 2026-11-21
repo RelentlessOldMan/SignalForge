@@ -408,6 +408,7 @@ from .measurements import (
     rescaled_range,
     reverberation_time,
     risk_difference,
+    risk_difference_standard_error,
     roc_auc,
     rogers_tanimoto_coefficient,
     rogot_goldberg_coefficient,
@@ -681,7 +682,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.47"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.48"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1220,6 +1221,7 @@ __all__ = [
     "rician_fading",
     "ring_modulate",
     "risk_difference",
+    "risk_difference_standard_error",
     "rls_equalizer",
     "roc_auc",
     "rogers_tanimoto_coefficient",

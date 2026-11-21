@@ -1027,6 +1027,13 @@ rule for code not written yet.
   `(TP·TN − FN·FP) / ((TP + FP)·(FN + TN))` with the two exact integers each converted to
   a double once. Records as for the Jaccard index; a decision with no 1 or no 0 is an
   error. **(implemented)**
+- **Standard error of the risk difference**
+  ([ADR 0502](adr/0502-risk-difference-standard-error.md);
+  `risk_difference_standard_error(truth, decision)`, C#
+  `Measurements.RiskDifferenceStandardError`), the decision as the exposure:
+  `sqrt(TP·FP/(TP + FP)³ + FN·TN/(FN + TN)³)`, each term an exact integer over an exact
+  integer, each converted to a double once. Records as for the Jaccard index; a decision
+  with no 1 or no 0 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -431,6 +431,7 @@ public static class Conformance
             "log_relative_risk_standard_error" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.LogRelativeRiskStandardError(t.Item1, t.Item2)),
             "log_relative_risk_wald_z" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.LogRelativeRiskWaldZ(t.Item1, t.Item2)),
             "risk_difference" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.RiskDifference(t.Item1, t.Item2)),
+            "risk_difference_standard_error" => Bind((Reals(a.Get("truth")), Reals(a.Get("decision"))), t => Measurements.RiskDifferenceStandardError(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
