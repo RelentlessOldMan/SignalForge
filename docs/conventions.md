@@ -1094,6 +1094,11 @@ rule for code not written yet.
   `mean_log_deviation(samples)`, C# `Measurements.MeanLogDeviation`):
   `(1/n)·Σ ln(μ/xᵢ)`, `μ` the mean, each term the log of the ratio. At least 0. Real,
   finite, `n ≥ 1`, every value greater than 0. **(implemented)**
+- **Atkinson index** ([ADR 0515](adr/0515-atkinson-index.md);
+  `atkinson_index(samples, epsilon)`, C# `Measurements.AtkinsonIndex`): with `rᵢ = xᵢ/μ`,
+  `1 − ((1/n)·Σ rᵢ^(1−ε))^(1/(1−ε))` for `ε ≠ 1`, `1 − exp((1/n)·Σ ln rᵢ)` at `ε = 1`.
+  From 0 to below 1. Real, finite, `n ≥ 1`, every value greater than 0; `ε` finite, at
+  least 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

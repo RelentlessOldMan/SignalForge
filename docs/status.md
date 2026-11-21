@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Atkinson index in `measurements` (`atkinson_index(samples, epsilon)`; a real
-     record of positive values and an inequality aversion `ε ≥ 0`:
-     `1 − (mean of x^(1−ε))^(1/(1−ε))/μ`, and `1 − (geometric mean)/μ` at `ε = 1`; from 0
-     to below 1).
+   - The generalized entropy index in `measurements` (`generalized_entropy_index(samples,
+     alpha)`; a real record of positive values and any real `α`:
+     `(1/(n·α(α − 1)))·Σ ((x/μ)^α − 1)`, the mean log deviation at `α = 0` and the Theil
+     index at `α = 1`; at least 0).
 
 ## Built
 
@@ -3629,6 +3629,11 @@ Updated with every chunk of work. Dates are absolute.
   index.
   Python 9858 passed, 2 skipped; .NET 8928 passed; conformance 6535/6535 in both. Version
   2026.11.20.60.
+- 2026-11-20: The Atkinson index (ADR 0515): `atkinson_index(samples, epsilon)` in
+  `measurements` (C# `Measurements.AtkinsonIndex`): one less the power mean of order
+  `1 − ε` over the mean.
+  Python 9877 passed, 2 skipped; .NET 8943 passed; conformance 6547/6547 in both. Version
+  2026.11.20.61.
 
 ## Not built
 

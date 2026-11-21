@@ -246,6 +246,7 @@ from .measurements import (
     am_am_pm,
     anderberg_d,
     approximate_entropy,
+    atkinson_index,
     attention_entropy,
     attributable_fraction,
     austin_colwell_coefficient,
@@ -694,7 +695,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.60"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.61"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -802,6 +803,7 @@ __all__ = [
     "ar_psd",
     "ar_spectral_flatness",
     "arcsine_to_reflection",
+    "atkinson_index",
     "attention_entropy",
     "attributable_fraction",
     "austin_colwell_coefficient",

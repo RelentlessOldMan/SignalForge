@@ -5926,6 +5926,33 @@ def mean_log_deviation(samples: ArrayLike) -> float:
     return float(np.sum(np.log(mean / x))) / float(n)
 
 
+def atkinson_index(samples: ArrayLike, epsilon: float) -> float:
+    """The Atkinson index of a record of positive values with inequality aversion
+    ``epsilon`` at least 0: one less the power mean of order ``1 - epsilon`` over the mean,
+    from 0 to below 1 (conventions: the Atkinson index; ADR 0515)."""
+    e = real(epsilon, "epsilon")
+    if not e >= 0:
+        raise ValueError("epsilon must be at least 0")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if not np.all(x > 0):
+        raise ValueError("samples must be greater than 0")
+    ratio = x / (float(np.sum(x)) / float(n))
+    if e == 1:
+        return 1.0 - math.exp(float(np.mean(np.log(ratio))))
+    p = 1.0 - e
+    return 1.0 - math.pow(float(np.mean(ratio**p)), 1.0 / p)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
