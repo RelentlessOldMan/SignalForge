@@ -342,6 +342,7 @@ from .measurements import (
     hall_tideman_index,
     hamann_coefficient,
     hamming_distance,
+    hannah_kay_index,
     hawkins_dotson_coefficient,
     hedges_g,
     hellinger_distance,
@@ -706,7 +707,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.3"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.4"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1034,6 +1035,7 @@ __all__ = [
     "hamann_coefficient",
     "hamming_distance",
     "hampel_filter",
+    "hannah_kay_index",
     "hard_clip",
     "hard_sync_sawtooth",
     "harmonic_centroid",

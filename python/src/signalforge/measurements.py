@@ -6278,6 +6278,44 @@ def kwoka_dominance_index(samples: ArrayLike) -> float:
     return acc
 
 
+def hannah_kay_index(samples: ArrayLike, alpha: float) -> float:
+    """The Hannah-Kay index of a record of values at least 0, not all 0: the numbers
+    equivalent ``(sum s**alpha)**(1/(1 - alpha))`` of the shares, ``exp(-sum s ln s)`` at
+    ``alpha = 1``; from 1 to n (conventions: the Hannah-Kay index; ADR 0527)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    a = real(alpha, "alpha")
+    if not a > 0:
+        raise ValueError("alpha must be above 0")
+    acc = 0.0
+    if a == 1:
+        for value in vals:
+            share = value / total
+            if share > 0:
+                acc += share * math.log(share)
+        return math.exp(-acc)
+    for value in vals:
+        acc += math.pow(value / total, a)
+    return math.pow(acc, 1.0 / (1.0 - a))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

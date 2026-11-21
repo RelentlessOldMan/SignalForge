@@ -1153,6 +1153,11 @@ rule for code not written yet.
   `Σ_{r=1}^{n−1} (s₍ᵣ₎ − s₍ᵣ₊₁₎)²`, shares ranked from the largest, every neighbouring pair;
   each gap `(x₍ᵣ₎ − x₍ᵣ₊₁₎)/S`, the squares added from the largest pair down. Records as for
   the Gini coefficient. **(implemented)**
+- **Hannah–Kay index** ([ADR 0527](adr/0527-hannah-kay-index.md);
+  `hannah_kay_index(samples, alpha)`, C# `Measurements.HannahKayIndex`): the numbers
+  equivalent `(Σᵢ sᵢ^α)^(1/(1 − α))`, `exp(−Σᵢ sᵢ ln sᵢ)` at `α = 1` exactly, `0·ln 0 = 0`;
+  shares over the total added in record order, the platform `pow`. Records as for the Gini
+  coefficient; `α` finite, above 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
