@@ -5750,6 +5750,37 @@ def cohen_h_standard_error(truth: ArrayLike, decision: ArrayLike) -> float:
     return math.sqrt(float(int(t.size)) / float((tp + fp) * (fn + tn)))
 
 
+def cohen_h_wald_z(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Wald z of Cohen's h of two binary records of 0 and 1, the decision as the
+    exposure: Cohen's h over its standard error, any real value (conventions: the Wald z of
+    Cohen's h; ADR 0508)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    if tp + fp == 0 or fn + tn == 0:
+        raise ValueError("the decision must hold both 0 and 1")
+    a = math.atan2(math.sqrt(tp), math.sqrt(fp))
+    b = math.atan2(math.sqrt(fn), math.sqrt(tn))
+    return 2.0 * (a - b) / math.sqrt(float(int(t.size)) / float((tp + fp) * (fn + tn)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

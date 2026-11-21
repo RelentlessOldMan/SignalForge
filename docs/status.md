@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Wald z of Cohen's h in `measurements` (`cohen_h_wald_z`; two binary records as
-     for the Jaccard index, the decision as the exposure: `cohen_h` over
-     `cohen_h_standard_error`; an error when the decision has no 1 or no 0).
+   - The log relative risk in `measurements` (`log_relative_risk`; two binary records as
+     for the Jaccard index, the decision as the exposure: `ln(TP·(FN + TN)/((TP + FP)·FN))`;
+     an error when the decision has no 1, or TP or FN is 0).
 
 ## Built
 
@@ -3596,6 +3596,10 @@ Updated with every chunk of work. Dates are absolute.
   `√(1/(TP + FP) + 1/(FN + TN))`.
   Python 9747 passed, 2 skipped; .NET 8829 passed; conformance 6458/6458 in both. Version
   2026.11.20.53.
+- 2026-11-20: The Wald z of Cohen's h (ADR 0508): `cohen_h_wald_z(truth, decision)` in
+  `measurements` (C# `Measurements.CohenHWaldZ`): Cohen's h over its standard error.
+  Python 9761 passed, 2 skipped; .NET 8843 passed; conformance 6470/6470 in both. Version
+  2026.11.20.54.
 
 ## Not built
 
