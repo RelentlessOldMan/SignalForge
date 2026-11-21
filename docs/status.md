@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Wald z of the risk difference in `measurements` (`risk_difference_wald_z`; two
-     binary records as for the Jaccard index, the decision as the exposure:
-     `risk_difference` over `risk_difference_standard_error`; an error when the decision
-     has no 1 or no 0, or the standard error is 0).
+   - The number needed to treat in `measurements` (`number_needed_to_treat`; two binary
+     records as for the Jaccard index, the decision as the exposure: `1 / risk_difference`,
+     any real value of size at least 1; an error when the decision has no 1 or no 0, or the
+     risk difference is 0).
 
 ## Built
 
@@ -3572,6 +3572,11 @@ Updated with every chunk of work. Dates are absolute.
   difference.
   Python 9678 passed, 2 skipped; .NET 8760 passed; conformance 6399/6399 in both. Version
   2026.11.20.48.
+- 2026-11-20: The Wald z of the risk difference (ADR 0503): `risk_difference_wald_z(truth,
+  decision)` in `measurements` (C# `Measurements.RiskDifferenceWaldZ`): the risk difference
+  over its standard error.
+  Python 9692 passed, 2 skipped; .NET 8774 passed; conformance 6411/6411 in both. Version
+  2026.11.20.49.
 
 ## Not built
 

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "risk_difference_wald_z",
+  "description": "The Wald z of the risk difference (conventions: the Wald z of the risk difference; ADR 0503).",
+  "cases": [
+    {"id": "risk_difference_wald_z.independent", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one of each cell: risk difference 0"},
+    {"id": "risk_difference_wald_z.square", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 2.3717082451262845, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 4, FN 1, FP 1, TN 4: (3/5)/(2 sqrt 10/25) = 3 sqrt 10/4"},
+    {"id": "risk_difference_wald_z.third", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.8660254037844386, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 1, TN 2: (1/3)/(2/(3 sqrt 3)) = sqrt 3/2"},
+    {"id": "risk_difference_wald_z.uneven", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -0.2404235184171725, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 3, TN 1: (-1/10)/sqrt(173/1000) = -sqrt(10/173)"},
+    {"id": "risk_difference_wald_z.one_term", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 1.0, 1.0, 0.0], "decision": [1.0, 1.0, 0.0, 0.0]}, "expected": 1.4142135623730951, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 0, TN 1: (1 - 1/2)/sqrt(0 + 1/8) = sqrt 2"},
+    {"id": "risk_difference_wald_z.random", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0], "decision": [1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]}, "expected": 1.3668700084607608, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "40 bits from random.Random(503), about three in ten flipped"},
+    {"id": "risk_difference_wald_z.empty", "op": "risk_difference_wald_z", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "risk_difference_wald_z.lengths", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "risk_difference_wald_z.not_binary", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "risk_difference_wald_z.decision_all_one", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the decision has no 0"},
+    {"id": "risk_difference_wald_z.decision_all_zero", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 0.0, 1.0], "decision": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the decision has no 1"},
+    {"id": "risk_difference_wald_z.no_spread", "op": "risk_difference_wald_z", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "equal records: TP FP = FN TN = 0, the standard error is 0"}
+  ]
+}

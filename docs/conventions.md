@@ -1034,6 +1034,12 @@ rule for code not written yet.
   `sqrt(TP·FP/(TP + FP)³ + FN·TN/(FN + TN)³)`, each term an exact integer over an exact
   integer, each converted to a double once. Records as for the Jaccard index; a decision
   with no 1 or no 0 is an error. **(implemented)**
+- **Wald z of the risk difference** ([ADR 0503](adr/0503-risk-difference-wald-z.md);
+  `risk_difference_wald_z(truth, decision)`, C# `Measurements.RiskDifferenceWaldZ`), the
+  decision as the exposure: the risk difference, formed as for ADR 0501, over the square
+  root of its squared standard error, formed as for ADR 0502. Records as for the Jaccard
+  index; a decision with no 1 or no 0, or a standard error of 0, is an error.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
