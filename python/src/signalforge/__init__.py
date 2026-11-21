@@ -365,6 +365,7 @@ from .measurements import (
     log_odds_ratio,
     log_odds_ratio_standard_error,
     log_odds_ratio_wald_z,
+    log_relative_risk_standard_error,
     mann_kendall,
     markedness,
     matthews_correlation,
@@ -678,7 +679,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.44"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.45"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1061,6 +1062,7 @@ __all__ = [
     "log_odds_ratio",
     "log_odds_ratio_standard_error",
     "log_odds_ratio_wald_z",
+    "log_relative_risk_standard_error",
     "lomb_scargle",
     "lomb_scargle_bootstrap",
     "lomb_scargle_false_alarm",

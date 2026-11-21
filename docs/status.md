@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The standard error of the log relative risk in `measurements`
-     (`log_relative_risk_standard_error`; two binary records as for the Jaccard index, the
-     decision as the exposure: `sqrt(1/TP − 1/(TP + FP) + 1/FN − 1/(FN + TN))`, at least 0;
-     an error when TP or FN is 0).
+   - The Wald z of the log relative risk in `measurements` (`log_relative_risk_wald_z`; two
+     binary records as for the Jaccard index, the decision as the exposure: the log of
+     `relative_risk` over `log_relative_risk_standard_error`; an error when TP or FN is 0 or
+     the standard error is 0).
 
 ## Built
 
@@ -3550,6 +3550,12 @@ Updated with every chunk of work. Dates are absolute.
   over its standard error.
   Python 9624 passed, 2 skipped; .NET 8706 passed; conformance 6353/6353 in both. Version
   2026.11.20.44.
+- 2026-11-20: The standard error of the log relative risk (ADR 0499):
+  `log_relative_risk_standard_error(truth, decision)` in `measurements` (C#
+  `Measurements.LogRelativeRiskStandardError`): the delta-method standard error of the log
+  of the relative risk.
+  Python 9637 passed, 2 skipped; .NET 8719 passed; conformance 6364/6364 in both. Version
+  2026.11.20.45.
 
 ## Not built
 

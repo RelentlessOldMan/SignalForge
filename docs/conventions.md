@@ -1007,6 +1007,14 @@ rule for code not written yet.
   `y = FN·FP`, `N` the numerator of the reciprocal sum; `x`, `y`, `xy` and `N` each
   converted to a double once. Records as for the Jaccard index; any cell equal to 0 is an
   error. **(implemented)**
+- **Standard error of the log relative risk**
+  ([ADR 0499](adr/0499-log-relative-risk-standard-error.md);
+  `log_relative_risk_standard_error(truth, decision)`, C#
+  `Measurements.LogRelativeRiskStandardError`): `sqrt(1/TP − 1/(TP + FP) + 1/FN −
+  1/(FN + TN))`, formed as the exact rational
+  `(FP·FN·(FN + TN) + TN·TP·(TP + FP)) / (TP·(TP + FP)·FN·(FN + TN))` whose numerator and
+  denominator are each converted to a double once. Records as for the Jaccard index;
+  TP = 0 or FN = 0 is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

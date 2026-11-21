@@ -5472,6 +5472,36 @@ def log_odds_ratio_wald_z(truth: ArrayLike, decision: ArrayLike) -> float:
     return math.log(float(x) / float(y)) * math.sqrt(float(x * y) / float(num))
 
 
+def log_relative_risk_standard_error(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The large-sample standard error of the log relative risk of two binary records of 0
+    and 1, the decision as the exposure: sqrt(1/TP - 1/(TP + FP) + 1/FN - 1/(FN + TN)), at
+    least 0 (conventions: the standard error of the log relative risk; ADR 0499)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    if tp == 0 or fn == 0:
+        raise ValueError("TP and FN must be nonzero")
+    num = fp * fn * (fn + tn) + tn * tp * (tp + fp)
+    return math.sqrt(float(num) / float(tp * (tp + fp) * fn * (fn + tn)))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
