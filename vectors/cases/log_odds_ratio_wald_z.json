@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "log_odds_ratio_wald_z",
+  "description": "The Wald z of the log odds ratio (conventions: the Wald z of the log odds ratio; ADR 0498).",
+  "cases": [
+    {"id": "log_odds_ratio_wald_z.independent", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one of each cell: x = y = 1, ln 1 = 0"},
+    {"id": "log_odds_ratio_wald_z.square", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 1.7535390754347304, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 4, FN 1, FP 1, TN 4: x 16, y 1, N 40: ln 16 sqrt(2/5)"},
+    {"id": "log_odds_ratio_wald_z.flipped", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -1.7535390754347304, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 1, FN 4, FP 4, TN 1: x 1, y 16, N 40: -ln 16 sqrt(2/5)"},
+    {"id": "log_odds_ratio_wald_z.third", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0], "decision": [1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.8003774225686291, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 1, TN 2: x 4, y 1, N 12: ln 4/sqrt 3"},
+    {"id": "log_odds_ratio_wald_z.uneven", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": -0.24088216833364234, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "TP 2, FN 1, FP 3, TN 1: x 2, y 3, N 17: ln(2/3) sqrt(6/17)"},
+    {"id": "log_odds_ratio_wald_z.random", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0], "decision": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0]}, "expected": 2.6343511885170763, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "40 bits from random.Random(498), about three in ten flipped"},
+    {"id": "log_odds_ratio_wald_z.empty", "op": "log_odds_ratio_wald_z", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "log_odds_ratio_wald_z.lengths", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "log_odds_ratio_wald_z.not_binary", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"},
+    {"id": "log_odds_ratio_wald_z.no_tp", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [0.0, 1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "opposite records: TP = 0"},
+    {"id": "log_odds_ratio_wald_z.no_fp", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "equal records: FP = 0"},
+    {"id": "log_odds_ratio_wald_z.no_fn", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 0.0]}, "error": "invalid_argument", "source": "every truth 1 caught: FN = 0"},
+    {"id": "log_odds_ratio_wald_z.decision_all_one", "op": "log_odds_ratio_wald_z", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the decision has no 0: TN = 0"}
+  ]
+}

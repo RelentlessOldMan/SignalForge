@@ -1001,6 +1001,12 @@ rule for code not written yet.
   `a..d = 2·cell + 1` as the exact rational `2·(bcd + acd + abd + abc) / (abcd)` whose
   numerator and denominator are each converted to a double once. Records as for the
   Jaccard index; no other errors. **(implemented)**
+- **Wald z of the log odds ratio** ([ADR 0498](adr/0498-log-odds-ratio-wald-z.md);
+  `log_odds_ratio_wald_z(truth, decision)`, C# `Measurements.LogOddsRatioWaldZ`): the log
+  odds ratio over its standard error, formed as `ln(x/y)·sqrt(xy / N)` with `x = TP·TN`,
+  `y = FN·FP`, `N` the numerator of the reciprocal sum; `x`, `y`, `xy` and `N` each
+  converted to a double once. Records as for the Jaccard index; any cell equal to 0 is an
+  error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

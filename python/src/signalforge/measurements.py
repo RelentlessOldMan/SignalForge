@@ -5442,6 +5442,36 @@ def haldane_log_odds_ratio_standard_error(truth: ArrayLike, decision: ArrayLike)
     return math.sqrt(float(num) / float(a * b * c * d))
 
 
+def log_odds_ratio_wald_z(truth: ArrayLike, decision: ArrayLike) -> float:
+    """The Wald z of two binary records of 0 and 1: the log odds ratio over its standard
+    error, any real value (conventions: the Wald z of the log odds ratio; ADR 0498)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    if min(tp, fn, fp, tn) == 0:
+        raise ValueError("every cell of the table must be nonzero")
+    x, y = tp * tn, fn * fp
+    num = fn * fp * tn + tp * fp * tn + tp * fn * tn + tp * fn * fp
+    return math.log(float(x) / float(y)) * math.sqrt(float(x * y) / float(num))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

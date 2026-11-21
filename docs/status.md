@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Wald z of the log odds ratio in `measurements` (`log_odds_ratio_wald_z`; two
-     binary records as for the Jaccard index: `ln(TP·TN/(FN·FP)) / sqrt(1/TP + 1/FN + 1/FP
-     + 1/TN)`, the log odds ratio over its standard error; an error when any cell is 0).
+   - The standard error of the log relative risk in `measurements`
+     (`log_relative_risk_standard_error`; two binary records as for the Jaccard index, the
+     decision as the exposure: `sqrt(1/TP − 1/(TP + FP) + 1/FN − 1/(FN + TN))`, at least 0;
+     an error when TP or FN is 0).
 
 ## Built
 
@@ -3544,6 +3545,11 @@ Updated with every chunk of work. Dates are absolute.
   with a half added, defined for every table.
   Python 9609 passed, 2 skipped; .NET 8691 passed; conformance 6340/6340 in both. Version
   2026.11.20.43.
+- 2026-11-20: The Wald z of the log odds ratio (ADR 0498): `log_odds_ratio_wald_z(truth,
+  decision)` in `measurements` (C# `Measurements.LogOddsRatioWaldZ`): the log odds ratio
+  over its standard error.
+  Python 9624 passed, 2 skipped; .NET 8706 passed; conformance 6353/6353 in both. Version
+  2026.11.20.44.
 
 ## Not built
 
