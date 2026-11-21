@@ -478,6 +478,7 @@ from .measurements import (
     von_neumann_ratio,
     wasserstein_distance,
     weighted_permutation_entropy,
+    wolfson_index,
     youden_j,
     yule_q,
     yule_q_standard_error,
@@ -701,7 +702,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.67"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.68"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1371,6 +1372,7 @@ __all__ = [
     "welch_psd",
     "window",
     "window_stats",
+    "wolfson_index",
     "write_npy",
     "write_npz",
     "write_sigmf",

@@ -6119,6 +6119,42 @@ def zenga_index(samples: ArrayLike) -> float:
     return 1.0 - acc / (n - 1)
 
 
+def wolfson_index(samples: ArrayLike) -> float:
+    """The Wolfson polarization index of a record of values at least 0 with a median above 0:
+    ``2 (mean/median) (1 - 2 L(1/2) - G)``, from the Lorenz curve joined by straight lines
+    and the Gini coefficient; at least 0 (conventions: the Wolfson polarization index;
+    ADR 0522)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    v = np.sort(x)
+    j, rem = divmod(n, 2)
+    med = float(v[j]) if rem == 1 else (float(v[j - 1]) + float(v[j])) / 2
+    if not med > 0:
+        raise ValueError("the median of samples must be above 0")
+    total = 0.0
+    g = 0.0
+    half = 0.0
+    for k in range(n):
+        if k == j:
+            half = total
+        a = float(v[k])
+        total += a
+        g += (2 * k - n + 1) * a
+    half += (rem / 2) * float(v[j])
+    return 2.0 * (total - 2.0 * half - g / n) / (n * med)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -451,6 +451,7 @@ public static class Conformance
             "quintile_share_ratio" => Bind(Reals(a.Get("samples")), x => Measurements.QuintileShareRatio(x)),
             "bonferroni_index" => Bind(Reals(a.Get("samples")), x => Measurements.BonferroniIndex(x)),
             "zenga_index" => Bind(Reals(a.Get("samples")), x => Measurements.ZengaIndex(x)),
+            "wolfson_index" => Bind(Reals(a.Get("samples")), x => Measurements.WolfsonIndex(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

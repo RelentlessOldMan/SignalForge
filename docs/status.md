@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Wolfson polarization index in `measurements` (`wolfson_index(samples)`; a real
-     record of values at least 0 with a median above 0: `2·(μ/m)·(1 − 2·L(1/2) − G)`, `m`
-     the median, `L` the Lorenz curve joined by straight lines and `G` the Gini
-     coefficient).
+   - The Herfindahl index in `measurements` (`herfindahl_index(samples)`; a real record of
+     values at least 0, not all 0: `Σ (xᵢ/Σx)²`, the sum of the squared shares, from `1/n`
+     to 1).
 
 ## Built
 
@@ -3663,6 +3662,11 @@ Updated with every chunk of work. Dates are absolute.
   smaller part at each split, over the larger.
   Python 9982 passed, 2 skipped; .NET 9026 passed; conformance 6612/6612 in both. Version
   2026.11.20.67.
+- 2026-11-20: The Wolfson polarization index (ADR 0522): `wolfson_index(samples)` in
+  `measurements` (C# `Measurements.WolfsonIndex`): `2·(μ/m)·(1 − 2·L(1/2) − G)` from the
+  median, the Lorenz curve joined by straight lines and the Gini coefficient.
+  Python 10000 passed, 2 skipped; .NET 9040 passed; conformance 6623/6623 in both. Version
+  2026.11.20.68.
 
 ## Not built
 

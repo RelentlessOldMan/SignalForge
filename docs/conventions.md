@@ -1129,6 +1129,12 @@ rule for code not written yet.
   `Measurements.ZengaIndex`): `(1/(n − 1))·Σ_{k=1}^{n−1} (m⁺ₖ − m⁻ₖ)/m⁺ₖ`, `m⁻ₖ = Sₖ/k`,
   `m⁺ₖ = (Sₙ − Sₖ)/(n − k)`. Formed as `1 − Σ_{k<n} m⁻ₖ/m⁺ₖ/(n − 1)`, summed from
   `k = 1`. Records as for the Bonferroni index. **(implemented)**
+- **Wolfson polarization index** ([ADR 0522](adr/0522-wolfson-index.md);
+  `wolfson_index(samples)`, C# `Measurements.WolfsonIndex`): `2·(μ/m)·(1 − 2·L(1/2) − G)`,
+  `m` the median (`(a + b)/2` for an even count), `L(1/2) = (S_j + (r/2)·x₍ⱼ₎)/Sₙ` for
+  `n = 2j + r`, `G` the Gini coefficient. Formed as
+  `2·(Sₙ − 2·(S_j + (r/2)·x₍ⱼ₎) − g/n)/(n·m)`, `g = Σₖ (2k − n + 1)·x₍ₖ₎` from `k = 0`.
+  Real, finite, `n ≥ 1`, every value at least 0, median above 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
