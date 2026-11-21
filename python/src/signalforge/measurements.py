@@ -6493,6 +6493,35 @@ def camargo_evenness(samples: ArrayLike) -> float:
     return 1.0 - acc / n
 
 
+def smith_wilson_evenness(samples: ArrayLike) -> float:
+    """The Smith-Wilson evenness of a record of values above 0: one less 2/pi times the
+    arctangent of the variance of the logarithms, from 0 to 1 (conventions: the
+    Smith-Wilson evenness; ADR 0534)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x <= 0):
+        raise ValueError("samples must be above 0")
+    logs = [math.log(float(a)) for a in x]
+    mean = 0.0
+    for value in logs:
+        mean += value
+    mean /= n
+    acc = 0.0
+    for value in logs:
+        d = value - mean
+        acc += d * d
+    return 1.0 - 2.0 / math.pi * math.atan(acc / n)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

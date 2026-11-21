@@ -1183,6 +1183,10 @@ rule for code not written yet.
   `1 − Σ_{i<j} |sᵢ − sⱼ| / n`, `n` the record length with zero shares counted; gaps over
   `i` in record order then `j > i`, every pair directly. Records as for the Gini
   coefficient. **(implemented)**
+- **Smith–Wilson evenness** ([ADR 0534](adr/0534-smith-wilson-evenness.md);
+  `smith_wilson_evenness(samples)`, C# `Measurements.SmithWilsonEvenness`):
+  `1 − (2/π)·atan(Σᵢ (ln xᵢ − m)²/n)`, `m` the mean of the `ln xᵢ`, divisor `n`; sums in
+  record order. Real, finite, at least 1 value, every value above 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

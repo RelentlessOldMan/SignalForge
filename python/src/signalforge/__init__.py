@@ -451,6 +451,7 @@ from .measurements import (
     simpson_evenness,
     size_difference,
     slope_entropy,
+    smith_wilson_evenness,
     snht,
     sokal_sneath_coefficient,
     sokal_sneath_iii,
@@ -713,7 +714,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.10"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.11"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1311,6 +1312,7 @@ __all__ = [
     "slicer",
     "sliding_dft",
     "slope_entropy",
+    "smith_wilson_evenness",
     "snht",
     "soft_clip",
     "sokal_sneath_coefficient",

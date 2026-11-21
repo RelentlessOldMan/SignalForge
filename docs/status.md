@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Smith–Wilson evenness in `measurements` (`smith_wilson_evenness(samples)`; a real
-     record of values above 0: `1 − (2/π)·arctan(Σ (ln xᵢ − m)²/n)`, `m` the mean of the
-     `ln xᵢ`; from 0 to 1).
+   - Bulla's evenness in `measurements` (`bulla_evenness(samples)`; a real record of at
+     least 2 values at least 0, not all 0: `(O − 1/n)/(1 − 1/n)`, `O = Σ min(sᵢ, 1/n)` the
+     overlap of the shares with equal shares; from 0 to 1).
 
 ## Built
 
@@ -3720,6 +3720,11 @@ Updated with every chunk of work. Dates are absolute.
   every pair of shares over `n`.
   Python 10204 passed, 2 skipped; .NET 9201 passed; conformance 6751/6751 in both. Version
   2026.11.21.10.
+- 2026-11-21: The Smith–Wilson evenness (ADR 0534): `smith_wilson_evenness(samples)` in
+  `measurements` (C# `Measurements.SmithWilsonEvenness`): `E_var`, one less `2/π` times
+  the arctangent of the variance of the logarithms.
+  Python 10220 passed, 2 skipped; .NET 9214 passed; conformance 6761/6761 in both. Version
+  2026.11.21.11.
 
 ## Not built
 
