@@ -1108,6 +1108,11 @@ rule for code not written yet.
   `Measurements.LorenzCurve`): `n + 1` shares, `L₀ = 0`, `Lₖ = Sₖ/Sₙ`, `Sₖ` the running
   sum of the `k` smallest values added from the smallest; the last share is exactly 1.
   Records as for the Gini coefficient. **(implemented)**
+- **Palma ratio** ([ADR 0518](adr/0518-palma-ratio.md); `palma_ratio(samples)`, C#
+  `Measurements.PalmaRatio`): `(Sₙ − upto)/low` from the Lorenz curve joined by straight
+  lines, `x₍ₖ₎` sorted, `Sₖ` the running sum of the `k` smallest; `2n = 5j₄ + r₄`,
+  `low = S_{j₄} + (r₄/5)·x₍j₄₎`; `9n = 10j₉ + r₉`, `upto = S_{j₉} + (r₉/10)·x₍j₉₎`. Real,
+  finite, `n ≥ 1`, every value at least 0, `low > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

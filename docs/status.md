@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Palma ratio in `measurements` (`palma_ratio(samples)`; a real record of values at
-     least 0 whose smallest 40% hold some of the total: the share of the largest 10% over
-     the share of the smallest 40%, read from the Lorenz curve joined by straight lines).
+   - The quintile share ratio in `measurements` (`quintile_share_ratio(samples)`; a real
+     record of values at least 0 whose smallest 20% hold some of the total: the share of
+     the largest 20% over the share of the smallest 20%, read from the Lorenz curve joined
+     by straight lines, as for the Palma ratio).
 
 ## Built
 
@@ -3642,6 +3643,11 @@ Updated with every chunk of work. Dates are absolute.
   (C# `Measurements.LorenzCurve`): the `n + 1` running shares of the sorted values.
   Python 9910 passed, 2 skipped; .NET 8970 passed; conformance 6568/6568 in both. Version
   2026.11.20.63.
+- 2026-11-20: The Palma ratio (ADR 0518): `palma_ratio(samples)` in `measurements`
+  (C# `Measurements.PalmaRatio`): the share of the largest 10% over the share of the
+  smallest 40%, from the Lorenz curve joined by straight lines.
+  Python 9928 passed, 2 skipped; .NET 8984 passed; conformance 6579/6579 in both. Version
+  2026.11.20.64.
 
 ## Not built
 
