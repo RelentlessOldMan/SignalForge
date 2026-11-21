@@ -5953,6 +5953,32 @@ def atkinson_index(samples: ArrayLike, epsilon: float) -> float:
     return 1.0 - math.pow(float(np.mean(ratio**p)), 1.0 / p)
 
 
+def generalized_entropy_index(samples: ArrayLike, alpha: float) -> float:
+    """The generalized entropy index of order ``alpha`` of a record of positive values: the
+    mean log deviation at 0, the Theil index at 1, at least 0 (conventions: the generalized
+    entropy index; ADR 0516)."""
+    a = real(alpha, "alpha")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if not np.all(x > 0):
+        raise ValueError("samples must be greater than 0")
+    ratio = x / (float(np.sum(x)) / float(n))
+    if a == 0:
+        return -float(np.mean(np.log(ratio)))
+    if a == 1:
+        return float(np.mean(ratio * np.log(ratio)))
+    return float(np.mean(ratio**a - 1.0)) / (a * (a - 1.0))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

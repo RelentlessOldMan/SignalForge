@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "generalized_entropy_index",
+  "description": "The generalized entropy index (conventions: the generalized entropy index; ADR 0516).",
+  "cases": [
+    {"id": "generalized_entropy_index.equal", "op": "generalized_entropy_index", "args": {"samples": [2.0, 2.0, 2.0], "alpha": 2.0}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "every value equal: 0"},
+    {"id": "generalized_entropy_index.half_cv_squared", "op": "generalized_entropy_index", "args": {"samples": [1.0, 3.0], "alpha": 2.0}, "expected": 0.125, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "half the squared CV, (1/2)^2/2 = 1/8"},
+    {"id": "generalized_entropy_index.mld", "op": "generalized_entropy_index", "args": {"samples": [1.0, 3.0], "alpha": 0.0}, "expected": 0.14384103622589045, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "the mean log deviation: (2 ln 2 - ln 3)/2"},
+    {"id": "generalized_entropy_index.theil", "op": "generalized_entropy_index", "args": {"samples": [1.0, 3.0], "alpha": 1.0}, "expected": 0.13081203594113697, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "the Theil index: (3/2 ln(3/2) - 1/2 ln 2)/2"},
+    {"id": "generalized_entropy_index.minus_one", "op": "generalized_entropy_index", "args": {"samples": [1.0, 3.0], "alpha": -1.0}, "expected": 0.16666666666666666, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "(1/(2 2))(2/1 + 2/3 - 2) = 1/6"},
+    {"id": "generalized_entropy_index.half", "op": "generalized_entropy_index", "args": {"samples": [1.0, 4.0], "alpha": 0.5}, "expected": 0.2052668077979448, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "ratios 2/5, 8/5: (1/(2 (-1/4)))(3 sqrt(2/5) - 2) = 4 - 6 sqrt(2/5)"},
+    {"id": "generalized_entropy_index.three", "op": "generalized_entropy_index", "args": {"samples": [1.0, 2.0, 4.0], "alpha": 3.0}, "expected": 0.15257531584062195, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "mean 7/3: (1/(3 6))((27/343)(1 + 8 + 64) - 3) = (1971/343 - 3)/18 = 157/1029"},
+    {"id": "generalized_entropy_index.random", "op": "generalized_entropy_index", "args": {"samples": [3.875, 0.375, 2.75, 5.75, 1.0, 4.5, 0.375, 2.5, 5.875, 4.25, 4.75, 7.125, 2.25, 7.625, 2.375, 1.0, 6.75, 1.5, 7.25, 4.875, 1.5, 3.875, 7.875, 0.625, 6.875, 6.875, 0.25, 4.625, 7.25, 6.5], "alpha": 1.5}, "expected": 0.1995587113807982, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 values k/8, k from random.Random(516).randint(1, 64); alpha 3/2"},
+    {"id": "generalized_entropy_index.empty", "op": "generalized_entropy_index", "args": {"samples": [], "alpha": 2.0}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "generalized_entropy_index.zero", "op": "generalized_entropy_index", "args": {"samples": [1.0, 0.0, 2.0], "alpha": 2.0}, "error": "invalid_argument", "source": "values must be greater than 0"},
+    {"id": "generalized_entropy_index.negative", "op": "generalized_entropy_index", "args": {"samples": [1.0, -0.5, 2.0], "alpha": 2.0}, "error": "invalid_argument", "source": "values must be greater than 0"}
+  ]
+}

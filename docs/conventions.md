@@ -1099,6 +1099,11 @@ rule for code not written yet.
   `1 − ((1/n)·Σ rᵢ^(1−ε))^(1/(1−ε))` for `ε ≠ 1`, `1 − exp((1/n)·Σ ln rᵢ)` at `ε = 1`.
   From 0 to below 1. Real, finite, `n ≥ 1`, every value greater than 0; `ε` finite, at
   least 0. **(implemented)**
+- **Generalized entropy index** ([ADR 0516](adr/0516-generalized-entropy-index.md);
+  `generalized_entropy_index(samples, alpha)`, C# `Measurements.GeneralizedEntropyIndex`):
+  with `rᵢ = xᵢ/μ`, `(1/(n·α(α − 1)))·Σ (rᵢ^α − 1)`; at exactly `α = 0`,
+  `−(1/n)·Σ ln rᵢ`, and at exactly `α = 1`, `(1/n)·Σ rᵢ·ln rᵢ`. At least 0. Real, finite,
+  `n ≥ 1`, every value greater than 0; `α` finite. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

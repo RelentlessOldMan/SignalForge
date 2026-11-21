@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The generalized entropy index in `measurements` (`generalized_entropy_index(samples,
-     alpha)`; a real record of positive values and any real `α`:
-     `(1/(n·α(α − 1)))·Σ ((x/μ)^α − 1)`, the mean log deviation at `α = 0` and the Theil
-     index at `α = 1`; at least 0).
+   - The Lorenz curve in `measurements` (`lorenz_curve(samples)`; a real record of values
+     at least 0, not all 0: the `n + 1` cumulative shares of the total held by the smallest
+     `k` values, `k` from 0 to `n`, from 0 to 1).
 
 ## Built
 
@@ -3634,6 +3633,11 @@ Updated with every chunk of work. Dates are absolute.
   `1 − ε` over the mean.
   Python 9877 passed, 2 skipped; .NET 8943 passed; conformance 6547/6547 in both. Version
   2026.11.20.61.
+- 2026-11-20: The generalized entropy index (ADR 0516): `generalized_entropy_index(samples,
+  alpha)` in `measurements` (C# `Measurements.GeneralizedEntropyIndex`): the mean log
+  deviation at `α = 0`, the Theil index at `α = 1`.
+  Python 9894 passed, 2 skipped; .NET 8957 passed; conformance 6558/6558 in both. Version
+  2026.11.20.62.
 
 ## Not built
 
