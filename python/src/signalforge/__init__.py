@@ -444,6 +444,7 @@ from .measurements import (
     sfdr,
     shape_difference,
     simple_matching_coefficient,
+    simpson_diversity,
     size_difference,
     slope_entropy,
     snht,
@@ -708,7 +709,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.5"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.6"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1295,6 +1296,7 @@ __all__ = [
     "sfdr",
     "shape_difference",
     "simple_matching_coefficient",
+    "simpson_diversity",
     "sine_fold",
     "size_difference",
     "slew_limiter",

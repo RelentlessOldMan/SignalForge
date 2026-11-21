@@ -91,6 +91,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "hjorth_parameters": measurements.hjorth_parameters,
     "permutation_entropy": measurements.permutation_entropy,
     "sample_entropy": measurements.sample_entropy,
+    "simpson_diversity": measurements.simpson_diversity,
     "pielou_evenness": measurements.pielou_evenness,
     "hannah_kay_index": measurements.hannah_kay_index,
     "kwoka_dominance_index": measurements.kwoka_dominance_index,

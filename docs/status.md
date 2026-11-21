@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Gini–Simpson index in `measurements` (`simpson_diversity(samples)`; a real record
-     of values at least 0, not all 0: `1 − Σ sᵢ²`, the chance that two holders drawn with
-     replacement, weighted by share, differ; from 0 to `1 − 1/n`).
+   - The Berger–Parker index in `measurements` (`berger_parker_index(samples)`; a real
+     record of values at least 0, not all 0: `max xᵢ / Σ xᵢ`, the largest share; from `1/n`
+     to 1).
 
 ## Built
 
@@ -3696,6 +3696,11 @@ Updated with every chunk of work. Dates are absolute.
   (C# `Measurements.PielouEvenness`): the Shannon entropy of the shares over `ln n`.
   Python 10116 passed, 2 skipped; .NET 9129 passed; conformance 6694/6694 in both. Version
   2026.11.21.5.
+- 2026-11-21: The Gini–Simpson index (ADR 0529): `simpson_diversity(samples)` in
+  `measurements` (C# `Measurements.SimpsonDiversity`): one less the sum of the squared
+  shares.
+  Python 10133 passed, 2 skipped; .NET 9143 passed; conformance 6705/6705 in both. Version
+  2026.11.21.6.
 
 ## Not built
 

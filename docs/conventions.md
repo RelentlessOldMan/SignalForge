@@ -1162,6 +1162,10 @@ rule for code not written yet.
   `pielou_evenness(samples)`, C# `Measurements.PielouEvenness`): `−Σᵢ sᵢ ln sᵢ / ln n`,
   `0·ln 0 = 0`, `n` the record length with zero shares counted; terms in record order.
   Real, finite, `n ≥ 2`, every value at least 0, not all 0. **(implemented)**
+- **Gini–Simpson index** ([ADR 0529](adr/0529-simpson-diversity.md);
+  `simpson_diversity(samples)`, C# `Measurements.SimpsonDiversity`): `1 − Σᵢ sᵢ²`, draws
+  with replacement, the complement not the reciprocal; squares in record order, taken from
+  1 last. Records as for the Gini coefficient. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
