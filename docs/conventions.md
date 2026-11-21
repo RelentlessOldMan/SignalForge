@@ -994,6 +994,13 @@ rule for code not written yet.
   `x = TP·TN`, `y = FN·FP`, `N` the numerator of the reciprocal sum; `N`, `x` and `y` each
   converted to a double once. Records as for the Jaccard index; any cell equal to 0 is an
   error. **(implemented)**
+- **Standard error of the Haldane log odds ratio**
+  ([ADR 0497](adr/0497-haldane-log-odds-ratio-standard-error.md);
+  `haldane_log_odds_ratio_standard_error(truth, decision)`, C#
+  `Measurements.HaldaneLogOddsRatioStandardError`): `sqrt(Σ 1/(cell + ½))`, formed with
+  `a..d = 2·cell + 1` as the exact rational `2·(bcd + acd + abd + abc) / (abcd)` whose
+  numerator and denominator are each converted to a double once. Records as for the
+  Jaccard index; no other errors. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "suite": "haldane_log_odds_ratio_standard_error",
+  "description": "The standard error of the Haldane log odds ratio (conventions: the standard error of the Haldane log odds ratio; ADR 0497).",
+  "cases": [
+    {"id": "haldane_log_odds_ratio_standard_error.independent", "op": "haldane_log_odds_ratio_standard_error", "args": {"truth": [1.0, 1.0, 0.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 1.632993161855452, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one of each cell: 4 (2/3) = 8/3, sqrt(8/3)"},
+    {"id": "haldane_log_odds_ratio_standard_error.identical", "op": "haldane_log_odds_ratio_standard_error", "args": {"truth": [1.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 0.0]}, "expected": 2.1908902300206643, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, TN 2, FN = FP = 0: 2/5 + 2/5 + 2 + 2 = 24/5, sqrt(24/5)"},
+    {"id": "haldane_log_odds_ratio_standard_error.square", "op": "haldane_log_odds_ratio_standard_error", "args": {"truth": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}, "expected": 1.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 4, FN 1, FP 1, TN 4: 2/9 + 2/3 + 2/3 + 2/9 = 16/9, sqrt = 4/3"},
+    {"id": "haldane_log_odds_ratio_standard_error.uneven", "op": "haldane_log_odds_ratio_standard_error", "args": {"truth": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0], "decision": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 1.4209319544044392, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 2, FN 1, FP 3, TN 1: 2/5 + 2/3 + 2/7 + 2/3 = 212/105, sqrt(212/105)"},
+    {"id": "haldane_log_odds_ratio_standard_error.single", "op": "haldane_log_odds_ratio_standard_error", "args": {"truth": [1.0], "decision": [1.0]}, "expected": 2.581988897471611, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "TP 1 only: 2/3 + 2 + 2 + 2 = 20/3, sqrt(20/3)"},
+    {"id": "haldane_log_odds_ratio_standard_error.random", "op": "haldane_log_odds_ratio_standard_error", "args": {"truth": [1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0], "decision": [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.6849423201540208, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "40 bits from random.Random(497), about three in ten flipped"},
+    {"id": "haldane_log_odds_ratio_standard_error.empty", "op": "haldane_log_odds_ratio_standard_error", "args": {"truth": [], "decision": []}, "error": "invalid_argument", "source": "the records need an item"},
+    {"id": "haldane_log_odds_ratio_standard_error.lengths", "op": "haldane_log_odds_ratio_standard_error", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 1.0]}, "error": "invalid_argument", "source": "the records must match"},
+    {"id": "haldane_log_odds_ratio_standard_error.not_binary", "op": "haldane_log_odds_ratio_standard_error", "args": {"truth": [1.0, 0.0, 1.0], "decision": [1.0, 0.5, 0.0]}, "error": "invalid_argument", "source": "values must be 0 or 1"}
+  ]
+}

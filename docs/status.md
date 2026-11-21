@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The standard error of the Haldane log odds ratio in `measurements`
-     (`haldane_log_odds_ratio_standard_error`; two binary records as for the Jaccard index:
-     `sqrt(Σ 1/(cell + ½))` over the four cells, defined for every table, above 0).
+   - The Wald z of the log odds ratio in `measurements` (`log_odds_ratio_wald_z`; two
+     binary records as for the Jaccard index: `ln(TP·TN/(FN·FP)) / sqrt(1/TP + 1/FN + 1/FP
+     + 1/TN)`, the log odds ratio over its standard error; an error when any cell is 0).
 
 ## Built
 
@@ -3538,6 +3538,12 @@ Updated with every chunk of work. Dates are absolute.
   standard error of Yule's Y.
   Python 9598 passed, 2 skipped; .NET 8680 passed; conformance 6331/6331 in both. Version
   2026.11.20.42.
+- 2026-11-20: The standard error of the Haldane log odds ratio (ADR 0497):
+  `haldane_log_odds_ratio_standard_error(truth, decision)` in `measurements` (C#
+  `Measurements.HaldaneLogOddsRatioStandardError`): Woolf's standard error on the cells
+  with a half added, defined for every table.
+  Python 9609 passed, 2 skipped; .NET 8691 passed; conformance 6340/6340 in both. Version
+  2026.11.20.43.
 
 ## Not built
 

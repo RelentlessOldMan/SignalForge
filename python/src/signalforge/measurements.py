@@ -5413,6 +5413,35 @@ def yule_y_standard_error(truth: ArrayLike, decision: ArrayLike) -> float:
     return math.sqrt(float(num)) / (w * w)
 
 
+def haldane_log_odds_ratio_standard_error(truth: ArrayLike, decision: ArrayLike) -> float:
+    """Woolf's standard error of the Haldane log odds ratio of two binary records of 0 and
+    1: sqrt of the sum of 1/(cell + 1/2) over the four cells, defined for every table
+    (conventions: the standard error of the Haldane log odds ratio; ADR 0497)."""
+    pair = []
+    for name, v in (("truth", truth), ("decision", decision)):
+        r = np.asarray(v)
+        if r.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(r):
+            raise ValueError(f"{name} must be real")
+        r = r.astype(np.float64, copy=False)
+        if not np.all((r == 0) | (r == 1)):
+            raise ValueError(f"{name} must hold only 0 and 1")
+        pair.append(r == 1)
+    t, d = pair
+    if t.size != d.size:
+        raise ValueError("truth and decision must be the same length")
+    if t.size < 1:
+        raise ValueError("truth and decision must not be empty")
+    tp = int(np.count_nonzero(t & d))
+    fn = int(np.count_nonzero(t & ~d))
+    fp = int(np.count_nonzero(~t & d))
+    tn = int(t.size) - tp - fn - fp
+    a, b, c, d = 2 * tp + 1, 2 * fn + 1, 2 * fp + 1, 2 * tn + 1
+    num = 2 * (b * c * d + a * c * d + a * b * d + a * b * c)
+    return math.sqrt(float(num) / float(a * b * c * d))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
