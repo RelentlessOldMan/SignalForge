@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Herfindahl index in `measurements` (`herfindahl_index(samples)`; a real record of
-     values at least 0, not all 0: `Σ (xᵢ/Σx)²`, the sum of the squared shares, from `1/n`
-     to 1).
+   - The concentration ratio in `measurements` (`concentration_ratio(samples, count)`; a
+     real record of values at least 0, not all 0, and a whole `count` from 1 to `n`: the
+     share of the total held by the `count` largest values).
 
 ## Built
 
@@ -3667,6 +3667,11 @@ Updated with every chunk of work. Dates are absolute.
   median, the Lorenz curve joined by straight lines and the Gini coefficient.
   Python 10000 passed, 2 skipped; .NET 9040 passed; conformance 6623/6623 in both. Version
   2026.11.20.68.
+- 2026-11-21: The Herfindahl index (ADR 0523): `herfindahl_index(samples)` in
+  `measurements` (C# `Measurements.HerfindahlIndex`): the sum of the squared shares of the
+  total.
+  Python 10016 passed, 2 skipped; .NET 9053 passed; conformance 6633/6633 in both. Version
+  2026.11.21.0.
 
 ## Not built
 

@@ -1135,6 +1135,10 @@ rule for code not written yet.
   `n = 2j + r`, `G` the Gini coefficient. Formed as
   `2·(Sₙ − 2·(S_j + (r/2)·x₍ⱼ₎) − g/n)/(n·m)`, `g = Σₖ (2k − n + 1)·x₍ₖ₎` from `k = 0`.
   Real, finite, `n ≥ 1`, every value at least 0, median above 0. **(implemented)**
+- **Herfindahl index** ([ADR 0523](adr/0523-herfindahl-index.md);
+  `herfindahl_index(samples)`, C# `Measurements.HerfindahlIndex`): `Σᵢ (xᵢ/S)²`, shares as
+  fractions, `S` and the squares added in record order; from `1/n` to 1, not normalized.
+  Records as for the Gini coefficient. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

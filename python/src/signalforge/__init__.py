@@ -343,6 +343,7 @@ from .measurements import (
     hawkins_dotson_coefficient,
     hedges_g,
     hellinger_distance,
+    herfindahl_index,
     higuchi_dimension,
     hjorth_parameters,
     hodges_lehmann,
@@ -702,7 +703,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.68"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.0"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1038,6 +1039,7 @@ __all__ = [
     "hawkins_dotson_coefficient",
     "hedges_g",
     "hellinger_distance",
+    "herfindahl_index",
     "high_shelf",
     "higuchi_dimension",
     "hjorth_parameters",
