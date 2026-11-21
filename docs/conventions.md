@@ -1040,6 +1040,12 @@ rule for code not written yet.
   root of its squared standard error, formed as for ADR 0502. Records as for the Jaccard
   index; a decision with no 1 or no 0, or a standard error of 0, is an error.
   **(implemented)**
+- **Number needed to treat** ([ADR 0504](adr/0504-number-needed-to-treat.md);
+  `number_needed_to_treat(truth, decision)`, C# `Measurements.NumberNeededToTreat`), the
+  decision as the exposure: the reciprocal of the risk difference, formed as
+  `(TP + FP)·(FN + TN) / (TP·TN − FN·FP)` with the two exact integers each converted to a
+  double once. Records as for the Jaccard index; a decision with no 1 or no 0, or a risk
+  difference of 0, is an error. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

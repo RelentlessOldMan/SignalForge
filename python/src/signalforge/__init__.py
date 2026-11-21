@@ -384,6 +384,7 @@ from .measurements import (
     noise_compensated_decay,
     noise_figure_cascade,
     noise_figure_y_factor,
+    number_needed_to_treat,
     ochiai_coefficient,
     octave_band_levels,
     overlap_coefficient,
@@ -683,7 +684,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.49"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.50"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1119,6 +1120,7 @@ __all__ = [
     "noise_gate",
     "noise_power_ratio",
     "normalize_peak",
+    "number_needed_to_treat",
     "occupied_bandwidth",
     "ochiai_coefficient",
     "octave_band_levels",

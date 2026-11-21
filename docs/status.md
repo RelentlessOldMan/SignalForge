@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The number needed to treat in `measurements` (`number_needed_to_treat`; two binary
-     records as for the Jaccard index, the decision as the exposure: `1 / risk_difference`,
-     any real value of size at least 1; an error when the decision has no 1 or no 0, or the
-     risk difference is 0).
+   - The relative risk reduction in `measurements` (`relative_risk_reduction`; two binary
+     records as for the Jaccard index, the decision as the exposure: `1 − relative_risk`,
+     at most 1; errors as for `relative_risk`).
 
 ## Built
 
@@ -3577,6 +3576,11 @@ Updated with every chunk of work. Dates are absolute.
   over its standard error.
   Python 9692 passed, 2 skipped; .NET 8774 passed; conformance 6411/6411 in both. Version
   2026.11.20.49.
+- 2026-11-20: The number needed to treat (ADR 0504): `number_needed_to_treat(truth,
+  decision)` in `measurements` (C# `Measurements.NumberNeededToTreat`): the reciprocal of
+  the risk difference.
+  Python 9706 passed, 2 skipped; .NET 8788 passed; conformance 6423/6423 in both. Version
+  2026.11.20.50.
 
 ## Not built
 
