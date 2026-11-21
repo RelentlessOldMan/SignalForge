@@ -1113,6 +1113,12 @@ rule for code not written yet.
   lines, `x₍ₖ₎` sorted, `Sₖ` the running sum of the `k` smallest; `2n = 5j₄ + r₄`,
   `low = S_{j₄} + (r₄/5)·x₍j₄₎`; `9n = 10j₉ + r₉`, `upto = S_{j₉} + (r₉/10)·x₍j₉₎`. Real,
   finite, `n ≥ 1`, every value at least 0, `low > 0`. **(implemented)**
+- **Quintile share ratio** ([ADR 0519](adr/0519-quintile-share-ratio.md);
+  `quintile_share_ratio(samples)`, C# `Measurements.QuintileShareRatio`): `(Sₙ − upto)/low`
+  from the Lorenz curve joined by straight lines, as for the Palma ratio;
+  `n = 5j₂ + r₂`, `low = S_{j₂} + (r₂/5)·x₍j₂₎`; `4n = 5j₈ + r₈`,
+  `upto = S_{j₈} + (r₈/5)·x₍j₈₎`. Real, finite, `n ≥ 1`, every value at least 0,
+  `low > 0`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

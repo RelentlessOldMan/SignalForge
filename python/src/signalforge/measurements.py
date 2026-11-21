@@ -6035,6 +6035,35 @@ def palma_ratio(samples: ArrayLike) -> float:
     return (float(c[n]) - upto) / low
 
 
+def quintile_share_ratio(samples: ArrayLike) -> float:
+    """The quintile share ratio of a record of values at least 0: the share of the largest
+    20% over the share of the smallest 20%, from the Lorenz curve joined by straight lines
+    (conventions: the quintile share ratio; ADR 0519)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    v = np.sort(x)
+    c = np.zeros(n + 1, dtype=np.float64)
+    c[1:] = np.cumsum(v)
+    j2, r2 = divmod(n, 5)
+    low = float(c[j2]) + (r2 / 5) * float(v[j2])
+    if not low > 0:
+        raise ValueError("the smallest 20% of samples must hold some of the total")
+    j8, r8 = divmod(4 * n, 5)
+    upto = float(c[j8]) + (r8 / 5) * float(v[j8])
+    return (float(c[n]) - upto) / low
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

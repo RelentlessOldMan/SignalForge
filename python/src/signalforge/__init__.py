@@ -414,6 +414,7 @@ from .measurements import (
     power_ccdf_level,
     power_stats,
     prevalence_threshold,
+    quintile_share_ratio,
     recurrence_quantification,
     relative_risk,
     relative_risk_reduction,
@@ -698,7 +699,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.64"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.65"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1222,6 +1223,7 @@ __all__ = [
     "qpsk_map",
     "qpsk_phase_offset",
     "quantize",
+    "quintile_share_ratio",
     "rapp_amplifier",
     "read_npy",
     "read_npy_2d",

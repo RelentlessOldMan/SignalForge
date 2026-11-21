@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The quintile share ratio in `measurements` (`quintile_share_ratio(samples)`; a real
-     record of values at least 0 whose smallest 20% hold some of the total: the share of
-     the largest 20% over the share of the smallest 20%, read from the Lorenz curve joined
-     by straight lines, as for the Palma ratio).
+   - The Bonferroni index in `measurements` (`bonferroni_index(samples)`; a real record of
+     at least 2 values at least 0, not all 0: `(1/(n − 1))·Σ_{k<n} (μ − mₖ)/μ`, `mₖ` the
+     mean of the `k` smallest; from 0 to 1).
 
 ## Built
 
@@ -3648,6 +3647,11 @@ Updated with every chunk of work. Dates are absolute.
   smallest 40%, from the Lorenz curve joined by straight lines.
   Python 9928 passed, 2 skipped; .NET 8984 passed; conformance 6579/6579 in both. Version
   2026.11.20.64.
+- 2026-11-20: The quintile share ratio (ADR 0519): `quintile_share_ratio(samples)` in
+  `measurements` (C# `Measurements.QuintileShareRatio`): the share of the largest 20% over
+  the share of the smallest 20%, from the Lorenz curve joined by straight lines.
+  Python 9946 passed, 2 skipped; .NET 8998 passed; conformance 6590/6590 in both. Version
+  2026.11.20.65.
 
 ## Not built
 
