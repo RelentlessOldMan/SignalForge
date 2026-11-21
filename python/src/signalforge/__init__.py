@@ -404,6 +404,7 @@ from .measurements import (
     prevalence_threshold,
     recurrence_quantification,
     relative_risk,
+    relative_risk_reduction,
     renyi_divergence,
     renyi_entropy,
     rescaled_range,
@@ -684,7 +685,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.50"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.51"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1214,6 +1215,7 @@ __all__ = [
     "reflection_to_lar",
     "reflection_to_lpc",
     "relative_risk",
+    "relative_risk_reduction",
     "renyi_divergence",
     "renyi_entropy",
     "resample",

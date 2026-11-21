@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The relative risk reduction in `measurements` (`relative_risk_reduction`; two binary
-     records as for the Jaccard index, the decision as the exposure: `1 − relative_risk`,
-     at most 1; errors as for `relative_risk`).
+   - Cohen's h in `measurements` (`cohen_h`; two binary records as for the Jaccard index,
+     the decision as the exposure: `2·asin(√(TP/(TP + FP))) − 2·asin(√(FN/(FN + TN)))`,
+     from −π to π; an error when the decision has no 1 or no 0).
 
 ## Built
 
@@ -3581,6 +3581,11 @@ Updated with every chunk of work. Dates are absolute.
   the risk difference.
   Python 9706 passed, 2 skipped; .NET 8788 passed; conformance 6423/6423 in both. Version
   2026.11.20.50.
+- 2026-11-20: The relative risk reduction (ADR 0505): `relative_risk_reduction(truth,
+  decision)` in `measurements` (C# `Measurements.RelativeRiskReduction`): one minus the
+  relative risk.
+  Python 9720 passed, 2 skipped; .NET 8802 passed; conformance 6435/6435 in both. Version
+  2026.11.20.51.
 
 ## Not built
 
