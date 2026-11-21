@@ -1086,6 +1086,10 @@ rule for code not written yet.
   `Measurements.HooverIndex`): `Σ |xᵢ − μ| / (2·Σ xᵢ)`, `μ` the mean. From 0 to
   `1 − 1/n`. Records as for the Gini coefficient: real, finite, `n ≥ 1`, every value at
   least 0, not all 0. **(implemented)**
+- **Coefficient of variation** ([ADR 0513](adr/0513-coefficient-of-variation.md);
+  `coefficient_of_variation(samples)`, C# `Measurements.CoefficientOfVariation`): `σ/μ`,
+  `σ` the population standard deviation, over `n`, `μ` the mean. Real, finite, `n ≥ 1`,
+  the mean greater than 0; values below 0 allowed. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

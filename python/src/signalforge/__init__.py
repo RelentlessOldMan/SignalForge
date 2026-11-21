@@ -279,6 +279,7 @@ from .measurements import (
     chord_distance,
     clarity,
     cliff_delta,
+    coefficient_of_variation,
     cohen_d,
     cohen_h,
     cohen_h_standard_error,
@@ -692,7 +693,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.20.58"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.20.59"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -883,6 +884,7 @@ __all__ = [
     "clock_jitter",
     "clock_offset",
     "cma_equalizer",
+    "coefficient_of_variation",
     "cohen_d",
     "cohen_h",
     "cohen_h_standard_error",

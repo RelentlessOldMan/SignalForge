@@ -5884,6 +5884,28 @@ def hoover_index(samples: ArrayLike) -> float:
     return dev / (2.0 * total)
 
 
+def coefficient_of_variation(samples: ArrayLike) -> float:
+    """The coefficient of variation of a record with a positive mean: the population
+    standard deviation, over n, over the mean (conventions: the coefficient of variation;
+    ADR 0513)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = x.shape[0]
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    mean = float(np.sum(x)) / float(n)
+    if not mean > 0:
+        raise ValueError("samples must have a mean greater than 0")
+    d = x - mean
+    return math.sqrt(float(np.dot(d, d)) / float(n)) / mean
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

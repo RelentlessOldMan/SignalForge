@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "suite": "coefficient_of_variation",
+  "description": "The coefficient of variation (conventions: the coefficient of variation; ADR 0513).",
+  "cases": [
+    {"id": "coefficient_of_variation.equal", "op": "coefficient_of_variation", "args": {"samples": [2.0, 2.0, 2.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "every value equal: 0"},
+    {"id": "coefficient_of_variation.single", "op": "coefficient_of_variation", "args": {"samples": [5.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one value: 0"},
+    {"id": "coefficient_of_variation.one_holds_all", "op": "coefficient_of_variation", "args": {"samples": [0.0, 0.0, 0.0, 4.0]}, "expected": 1.7320508075688772, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 1, variance (1 + 1 + 1 + 9)/4 = 3: sqrt 3"},
+    {"id": "coefficient_of_variation.two", "op": "coefficient_of_variation", "args": {"samples": [1.0, 3.0]}, "expected": 0.5, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 2, variance 1: 1/2"},
+    {"id": "coefficient_of_variation.ramp", "op": "coefficient_of_variation", "args": {"samples": [1.0, 2.0, 3.0, 4.0]}, "expected": 0.4472135954999579, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 5/2, variance 5/4: sqrt 5/5"},
+    {"id": "coefficient_of_variation.negative_value", "op": "coefficient_of_variation", "args": {"samples": [-1.0, 2.0, 5.0]}, "expected": 1.224744871391589, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 2, variance (9 + 0 + 9)/3 = 6: sqrt 6/2"},
+    {"id": "coefficient_of_variation.halves", "op": "coefficient_of_variation", "args": {"samples": [0.5, 0.25, 0.25, 1.0]}, "expected": 0.6123724356957945, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 1/2, variance (0 + 1/16 + 1/16 + 1/4)/4 = 3/32: sqrt(3/8)"},
+    {"id": "coefficient_of_variation.random", "op": "coefficient_of_variation", "args": {"samples": [-1.75, 1.25, 0.0, 7.875, 0.875, 4.875, 7.375, 2.5, 3.125, 4.5, -2.0, 0.875, 2.625, 4.875, -2.0, 6.75, 0.25, 6.0, -0.375, 3.75, 0.25, 0.875, -1.25, 7.125, -1.0, 1.5, -1.0, 1.0, 1.875, 5.75]}, "expected": 1.3399183969253143, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "30 values k/8, k from random.Random(513).randint(-16, 64)"},
+    {"id": "coefficient_of_variation.empty", "op": "coefficient_of_variation", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "coefficient_of_variation.zero_mean", "op": "coefficient_of_variation", "args": {"samples": [1.0, -1.0]}, "error": "invalid_argument", "source": "the mean must be greater than 0"},
+    {"id": "coefficient_of_variation.negative_mean", "op": "coefficient_of_variation", "args": {"samples": [-1.0, -2.0, 0.5]}, "error": "invalid_argument", "source": "the mean must be greater than 0"}
+  ]
+}

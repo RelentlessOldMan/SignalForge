@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The coefficient of variation in `measurements` (`coefficient_of_variation(samples)`; a
-     real record with a positive mean: the population standard deviation, over `n`, over the
-     mean).
+   - The mean log deviation in `measurements` (`mean_log_deviation(samples)`; a real record
+     of positive values: `(1/n)·Σ ln(μ/x)`, the Theil L index; at least 0).
 
 ## Built
 
@@ -3618,6 +3617,11 @@ Updated with every chunk of work. Dates are absolute.
   (C# `Measurements.HooverIndex`): `Σ |x − μ| / (2·Σ x)`, from 0 to `1 − 1/n`.
   Python 9825 passed, 2 skipped; .NET 8901 passed; conformance 6514/6514 in both. Version
   2026.11.20.58.
+- 2026-11-20: The coefficient of variation (ADR 0513): `coefficient_of_variation(samples)`
+  in `measurements` (C# `Measurements.CoefficientOfVariation`): the population standard
+  deviation over the mean.
+  Python 9842 passed, 2 skipped; .NET 8915 passed; conformance 6525/6525 in both. Version
+  2026.11.20.59.
 
 ## Not built
 
