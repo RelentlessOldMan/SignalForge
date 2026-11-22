@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "goods_coverage",
+  "description": "Good's coverage (conventions: Good's coverage; ADR 0544).",
+  "cases": [
+    {"id": "goods_coverage.all_ones", "op": "goods_coverage", "args": {"samples": [1.0, 1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "F1 = N = 4: 0"},
+    {"id": "goods_coverage.no_ones", "op": "goods_coverage", "args": {"samples": [2.0, 2.0, 2.0, 2.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "F1 = 0: 1"},
+    {"id": "goods_coverage.two", "op": "goods_coverage", "args": {"samples": [3.0, 1.0]}, "expected": 0.75, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "F1 = 1, N = 4: 3/4"},
+    {"id": "goods_coverage.mixed", "op": "goods_coverage", "args": {"samples": [5.0, 1.0, 1.0, 0.0, 2.0]}, "expected": 0.7777777777777778, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "F1 = 2, N = 9: 7/9"},
+    {"id": "goods_coverage.halves", "op": "goods_coverage", "args": {"samples": [0.5, 0.5]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "F1 = 0, N = 1: 1"},
+    {"id": "goods_coverage.single_one", "op": "goods_coverage", "args": {"samples": [1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "F1 = N = 1: 0"},
+    {"id": "goods_coverage.ramp", "op": "goods_coverage", "args": {"samples": [4.0, 1.0, 3.0, 2.0]}, "expected": 0.9, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "F1 = 1, N = 10: 9/10"},
+    {"id": "goods_coverage.below_one", "op": "goods_coverage", "args": {"samples": [0.25, 1.0, 0.25]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "F1 = 1, N = 3/2: 1/3"},
+    {"id": "goods_coverage.random", "op": "goods_coverage", "args": {"samples": [2.0, 0.0, 2.0, 4.0, 4.0, 2.0, 0.0, 0.0, 3.0, 3.0, 3.0, 0.0, 3.0, 2.0, 1.0, 4.0, 0.0, 0.0, 1.0, 2.0, 3.0, 0.0, 3.0, 4.0, 0.0, 3.0, 3.0, 0.0, 4.0, 1.0]}, "expected": 0.9473684210526315, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "30 whole values from random.Random(544).randint(0, 4)"},
+    {"id": "goods_coverage.empty", "op": "goods_coverage", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "goods_coverage.negative", "op": "goods_coverage", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "goods_coverage.all_zero", "op": "goods_coverage", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"}
+  ]
+}

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Good's coverage in `measurements` (`goods_coverage(samples)`; a real record of values at
-     least 0, not all 0: `1 − F₁/N`, `F₁` the count of values equal to 1 and `N = Σ xᵢ`; from
-     0 to 1 for whole-number counts).
+   - The bias-corrected Chao1 richness in `measurements` (`chao1_richness(samples)`; a real
+     record of values at least 0: `k + F₁(F₁ − 1)/(2(F₂ + 1))`, `k` the count of values
+     above 0, `F₁` and `F₂` the counts of values equal to 1 and to 2).
 
 ## Built
 
@@ -3770,6 +3770,11 @@ Updated with every chunk of work. Dates are absolute.
   total.
   Python 10399 passed, 2 skipped; .NET 9357 passed; conformance 6877/6877 in both. Version
   2026.11.21.20.
+- 2026-11-21: Good's coverage (ADR 0544): `goods_coverage(samples)` in `measurements`
+  (C# `Measurements.GoodsCoverage`): one less the count of values equal to 1 over the
+  total.
+  Python 10417 passed, 2 skipped; .NET 9372 passed; conformance 6889/6889 in both. Version
+  2026.11.21.21.
 
 ## Not built
 

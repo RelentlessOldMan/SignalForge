@@ -339,6 +339,7 @@ from .measurements import (
     gleason_index,
     goodman_kruskal_gamma,
     goodman_kruskal_lambda,
+    goods_coverage,
     gower_coefficient,
     gower_legendre_coefficient,
     hadamard_deviation,
@@ -723,7 +724,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.20"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.21"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1046,6 +1047,7 @@ __all__ = [
     "goertzel",
     "goodman_kruskal_gamma",
     "goodman_kruskal_lambda",
+    "goods_coverage",
     "gower_coefficient",
     "gower_legendre_coefficient",
     "haas",

@@ -473,6 +473,7 @@ public static class Conformance
             "menhinick_index" => Bind(Reals(a.Get("samples")), x => Measurements.MenhinickIndex(x)),
             "margalef_index" => Bind(Reals(a.Get("samples")), x => Measurements.MargalefIndex(x)),
             "gleason_index" => Bind(Reals(a.Get("samples")), x => Measurements.GleasonIndex(x)),
+            "goods_coverage" => Bind(Reals(a.Get("samples")), x => Measurements.GoodsCoverage(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

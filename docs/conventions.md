@@ -1224,6 +1224,10 @@ rule for code not written yet.
   `gleason_index(samples)`, C# `Measurements.GleasonIndex`): `k/ln N`, `k` the count of
   values above 0, `N = Σᵢ xᵢ` in record order. Real, finite, every value at least 0,
   `N > 1`. **(implemented)**
+- **Good's coverage** ([ADR 0544](adr/0544-goods-coverage.md);
+  `goods_coverage(samples)`, C# `Measurements.GoodsCoverage`): `1 − F₁/N`, `F₁` the count
+  of values exactly equal to 1, `N = Σᵢ xᵢ` in record order. Records as for the Gini
+  coefficient. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
