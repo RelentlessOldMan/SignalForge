@@ -1208,6 +1208,10 @@ rule for code not written yet.
   `mcintosh_dominance(samples)`, C# `Measurements.McIntoshDominance`):
   `(N − U)/(N − √N)`, `N = Σᵢ xᵢ`, `U = √(Σᵢ xᵢ²)`, both sums in record order; depends on
   the scale of the values. Real, finite, every value at least 0, `N > 1`. **(implemented)**
+- **McIntosh evenness** ([ADR 0540](adr/0540-mcintosh-evenness.md);
+  `mcintosh_evenness(samples)`, C# `Measurements.McIntoshEvenness`):
+  `(N − U)/(N − N/√n)`, `N = Σᵢ xᵢ`, `U = √(Σᵢ xᵢ²)`, both sums in record order, `n` the
+  record length. At least 2 values, every value at least 0, not all 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

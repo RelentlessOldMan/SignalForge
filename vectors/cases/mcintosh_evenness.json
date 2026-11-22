@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "mcintosh_evenness",
+  "description": "The McIntosh evenness (conventions: the McIntosh evenness; ADR 0540).",
+  "cases": [
+    {"id": "mcintosh_evenness.one_holds_all", "op": "mcintosh_evenness", "args": {"samples": [0.0, 0.0, 0.0, 4.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "U = N = 4: 0"},
+    {"id": "mcintosh_evenness.equal", "op": "mcintosh_evenness", "args": {"samples": [2.0, 2.0, 2.0, 2.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 8, U = 4 = N/sqrt 4: 1"},
+    {"id": "mcintosh_evenness.equal_small", "op": "mcintosh_evenness", "args": {"samples": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "every value equal: 1"},
+    {"id": "mcintosh_evenness.two", "op": "mcintosh_evenness", "args": {"samples": [3.0, 1.0]}, "expected": 0.7150407435390105, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 4, U = sqrt 10: (4 - sqrt 10)/(4 - 4/sqrt 2)"},
+    {"id": "mcintosh_evenness.halves", "op": "mcintosh_evenness", "args": {"samples": [0.5, 0.25, 0.25, 1.0]}, "expected": 0.8273960600441426, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 2, sum of squares 11/8: (2 - sqrt(11/8))/(2 - 1)"},
+    {"id": "mcintosh_evenness.one_zero", "op": "mcintosh_evenness", "args": {"samples": [0.0, 2.0, 2.0, 2.0]}, "expected": 0.8452994616207484, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 6, U = sqrt 12: (6 - 2 sqrt 3)/(6 - 3)"},
+    {"id": "mcintosh_evenness.ramp", "op": "mcintosh_evenness", "args": {"samples": [4.0, 1.0, 3.0, 2.0]}, "expected": 0.9045548849896677, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 10, sum of squares 30"},
+    {"id": "mcintosh_evenness.dominant", "op": "mcintosh_evenness", "args": {"samples": [100.0, 1.0, 1.0]}, "expected": 0.04616070329828871, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 102, sum of squares 10002"},
+    {"id": "mcintosh_evenness.random", "op": "mcintosh_evenness", "args": {"samples": [5.875, 0.375, 7.375, 5.0, 7.25, 6.375, 1.375, 4.125, 6.125, 0.875, 6.0, 0.125, 3.625, 7.75, 3.875, 2.375, 6.375, 0.625, 4.125, 4.125, 0.75, 1.75, 5.0, 1.125, 7.125, 1.75, 4.0, 1.25, 3.875, 5.625]}, "expected": 0.9613255135798313, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 values k/8, k from random.Random(540).randint(0, 64)"},
+    {"id": "mcintosh_evenness.empty", "op": "mcintosh_evenness", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs at least 2 values"},
+    {"id": "mcintosh_evenness.single", "op": "mcintosh_evenness", "args": {"samples": [5.0]}, "error": "invalid_argument", "source": "the record needs at least 2 values"},
+    {"id": "mcintosh_evenness.negative", "op": "mcintosh_evenness", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "mcintosh_evenness.all_zero", "op": "mcintosh_evenness", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"}
+  ]
+}

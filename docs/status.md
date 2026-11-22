@@ -6,9 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The McIntosh evenness in `measurements` (`mcintosh_evenness(samples)`; a real record of
-     at least 2 values at least 0, not all 0: `(N − U)/(N − N/√n)`, `N = Σ xᵢ`,
-     `U = √(Σ xᵢ²)`; from 0 to 1).
+   - Menhinick's index in `measurements` (`menhinick_index(samples)`; a real record of
+     values at least 0, not all 0: `k/√N`, `k` the count of values above 0 and `N = Σ xᵢ`).
 
 ## Built
 
@@ -3750,6 +3749,11 @@ Updated with every chunk of work. Dates are absolute.
   and the Euclidean length of the record.
   Python 10315 passed, 2 skipped; .NET 9290 passed; conformance 6822/6822 in both. Version
   2026.11.21.16.
+- 2026-11-21: The McIntosh evenness (ADR 0540): `mcintosh_evenness(samples)` in
+  `measurements` (C# `Measurements.McIntoshEvenness`): `(N − U)/(N − N/√n)`, the McIntosh
+  numerator over its largest value.
+  Python 10335 passed, 2 skipped; .NET 9306 passed; conformance 6835/6835 in both. Version
+  2026.11.21.17.
 
 ## Not built
 
