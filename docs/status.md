@@ -6,10 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Zhang's entropy in `measurements` (`zhang_entropy(samples)`; whole numbers at least 0,
-     totalling more than 1 and at most 100 000:
-     `Σ_{v=1}^{N−1} (1/v) Σᵢ pᵢ Π_{j=0}^{v−1}(1 − (xᵢ − 1)/(N − 1 − j))`; Zhang's 2012
-     estimator, its bias falling faster than any power of `1/N`).
+   - The Chao–Wang–Jost entropy in `measurements` (`chao_wang_jost_entropy(samples)`; whole
+     numbers at least 0, totalling more than 1:
+     `Σ_{xᵢ<N} (xᵢ/N)(h(N − 1) − h(xᵢ − 1)) + (F₁/N)(1 − A)^{1−N}(−ln A − Σ_{r=1}^{N−1} (1 − A)^r/r)`,
+     `h` the harmonic numbers, `A = 2F₂/((N − 1)F₁ + 2F₂)` (or `2/((N − 1)(F₁ − 1) + 2)` with
+     no doubletons, 1 with no singletons); Chao, Wang and Jost 2013).
 
 ## Built
 
@@ -3855,6 +3856,10 @@ Updated with every chunk of work. Dates are absolute.
   estimate of Bonachela, Hinrichsen and Muñoz, in nats.
   Python 10758 passed, 2 skipped; .NET 9638 passed; conformance 7107/7107 in both. Version
   2026.11.21.37.
+- 2026-11-21: Zhang's entropy (ADR 0561): `zhang_entropy(samples)` in `measurements` (C#
+  `Measurements.ZhangEntropy`): Zhang's 2012 estimate of the Shannon entropy, in nats.
+  Python 10781 passed, 2 skipped; .NET 9655 passed; conformance 7121/7121 in both. Version
+  2026.11.21.38.
 
 ## Not built
 

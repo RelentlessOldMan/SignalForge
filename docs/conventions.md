@@ -1304,6 +1304,11 @@ rule for code not written yet.
   harmonic numbers over ascending `j` up to `N + 2`, `A = Σ (xᵢ + 1)(h(N + 2) − h(xᵢ + 1))`
   over values above 0 in record order, and `A/(N + 2)`. Whole numbers as for the
   Brillouin index. **(implemented)**
+- **Zhang's entropy** ([ADR 0561](adr/0561-zhang-entropy.md);
+  `zhang_entropy(samples)`, C# `Measurements.ZhangEntropy`): nats; for a value `x`,
+  `P ← P · (1 − (x − 1)/(N − v))`, `T ← T + P/v` for `v = 1, …, N − x` from `P = 1`,
+  `T = 0`, and `Σ (xᵢ/N) · T(xᵢ)` over values above 0 in record order. Whole numbers
+  totalling more than 1 and at most 10 000. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

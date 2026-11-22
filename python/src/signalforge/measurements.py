@@ -7493,6 +7493,50 @@ def bonachela_entropy(samples: ArrayLike) -> float:
     return acc / (total + 2.0)
 
 
+def zhang_entropy(samples: ArrayLike) -> float:
+    """Zhang's entropy of a record of whole numbers at least 0 totalling more than 1 and at
+    most 10 000, in nats: Zhang's 2012 estimate of the Shannon entropy
+    (conventions: Zhang's entropy; ADR 0561)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    if np.any(x != np.floor(x)):
+        raise ValueError("samples must be whole numbers")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    if total > 10_000:
+        raise ValueError("samples must total at most 10 000")
+    if not total > 1:
+        raise ValueError("samples must total more than 1")
+    inner: dict[float, float] = {}
+    acc = 0.0
+    for value in vals:
+        if value > 0:
+            if value not in inner:
+                prod = 1.0
+                part = 0.0
+                for step in range(1, int(total - value) + 1):
+                    prod *= 1.0 - (value - 1.0) / (total - step)
+                    part += prod / step
+                inner[value] = part
+            acc += value / total * inner[value]
+    return acc
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

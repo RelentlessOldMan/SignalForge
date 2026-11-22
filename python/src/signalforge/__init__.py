@@ -524,6 +524,7 @@ from .measurements import (
     yule_y_standard_error,
     zenga_index,
     zero_crossing_rate,
+    zhang_entropy,
 )
 from .metrics import (
     ErrorCount,
@@ -740,7 +741,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.37"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.38"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1464,4 +1465,5 @@ __all__ = [
     "zenga_index",
     "zero_crossing_rate",
     "zero_phase_filter",
+    "zhang_entropy",
 ]
