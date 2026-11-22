@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "suite": "tsallis_evenness",
+  "description": "Tsallis evenness (conventions: Tsallis evenness; ADR 0569).",
+  "cases": [
+    {"id": "tsallis_evenness.even_pair", "op": "tsallis_evenness", "args": {"samples": [1.0, 1.0], "order": 2.0}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "two equal shares: 1 at any order"},
+    {"id": "tsallis_evenness.richness", "op": "tsallis_evenness", "args": {"samples": [0.0, 3.0, 5.0], "order": 0.0}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0: (K - 1)/(K - 1) = 1"},
+    {"id": "tsallis_evenness.simpson", "op": "tsallis_evenness", "args": {"samples": [1.0, 1.0, 2.0], "order": 2.0}, "expected": 0.9375, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "(5/8)/(2/3) = 15/16"},
+    {"id": "tsallis_evenness.shannon", "op": "tsallis_evenness", "args": {"samples": [1.0, 1.0, 2.0], "order": 1.0}, "expected": 0.9463946303571862, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "(3/2) ln 2/ln 3"},
+    {"id": "tsallis_evenness.half", "op": "tsallis_evenness", "args": {"samples": [1.0, 3.0], "order": 0.5}, "expected": 0.8836634939894802, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "(sqrt 3 - 1)/(2 (sqrt 2 - 1))"},
+    {"id": "tsallis_evenness.near_one", "op": "tsallis_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 1.000001}, "expected": 0.8569674899424237, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q just above 1"},
+    {"id": "tsallis_evenness.edge", "op": "tsallis_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 1.5}, "expected": 0.8548790468326963, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 1.5"},
+    {"id": "tsallis_evenness.large", "op": "tsallis_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0, 0.0], "order": 250.0}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 250"},
+    {"id": "tsallis_evenness.small_order", "op": "tsallis_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0, 0.0], "order": 0.1}, "expected": 0.9717179292167303, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0.1, a zero value left out of K"},
+    {"id": "tsallis_evenness.random", "op": "tsallis_evenness", "args": {"samples": [3.096, 4.616, 0.294, 0.302, 1.319, 3.335, 2.828, 3.316, 2.873, 2.491, 0.874, 3.922, 3.988, 0.113, 0.681, 3.159, 4.487, 0.375, 2.266, 0.133, 1.757, 0.912, 1.029, 0.478, 2.494, 2.19, 1.166, 0.71, 4.188, 0.548], "order": 2.5}, "expected": 0.994009962662981, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "30 values from random.Random(569).uniform(0, 5), 3 places, q = 2.5"},
+    {"id": "tsallis_evenness.empty", "op": "tsallis_evenness", "args": {"samples": [], "order": 2.0}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "tsallis_evenness.negative", "op": "tsallis_evenness", "args": {"samples": [1.0, -0.5, 2.0], "order": 2.0}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "tsallis_evenness.all_zero", "op": "tsallis_evenness", "args": {"samples": [0.0, 0.0, 0.0], "order": 2.0}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "tsallis_evenness.negative_order", "op": "tsallis_evenness", "args": {"samples": [1.0, 2.0, 3.0], "order": -0.5}, "error": "invalid_argument", "source": "the order must be at least 0"},
+    {"id": "tsallis_evenness.one_kind", "op": "tsallis_evenness", "args": {"samples": [0.0, 4.0, 0.0], "order": 2.0}, "error": "invalid_argument", "source": "the maximum is 0 with one kind"}
+  ]
+}

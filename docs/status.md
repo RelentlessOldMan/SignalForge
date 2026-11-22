@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Tsallis evenness in `measurements` (`tsallis_evenness(samples, order)`; values and
-     order as for the Hill number, at least two values above 0: the Tsallis diversity of
-     counts over its value for `K` equal shares, `(1 − K^{1−q})/(q − 1)`, `ln K` at `q = 1`).
+   - The Sharma–Mittal diversity of counts in `measurements`
+     (`sharma_mittal_diversity(samples, order, degree)`; values and order as for the Hill
+     number, `degree` finite: `((Σ pᵢ^q)^{(1−r)/(1−q)} − 1)/(1 − r)`, the Rényi diversity at
+     `r = 1`, the Tsallis diversity at `r = q`; Sharma and Mittal 1975).
 
 ## Built
 
@@ -3893,6 +3894,11 @@ Updated with every chunk of work. Dates are absolute.
   abundances, the Shannon entropy at `q = 1`, without cancellation near 1.
   Python 10942 passed, 2 skipped; .NET 9785 passed; conformance 7229/7229 in both. Version
   2026.11.22.1.
+- 2026-11-22: Tsallis evenness (ADR 0569): `tsallis_evenness(samples, order)` in
+  `measurements` (C# `Measurements.TsallisEvenness`): the Tsallis diversity of counts over its
+  value for `K` equal shares.
+  Python 10963 passed, 2 skipped; .NET 9803 passed; conformance 7244/7244 in both. Version
+  2026.11.22.2.
 
 ## Not built
 

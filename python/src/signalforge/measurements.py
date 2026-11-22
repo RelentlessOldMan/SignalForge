@@ -7801,6 +7801,20 @@ def tsallis_diversity(samples: ArrayLike, order: float) -> float:
     return -acc / b
 
 
+def tsallis_evenness(samples: ArrayLike, order: float) -> float:
+    """Tsallis evenness of order ``order`` of a record of values at least 0, at least two
+    of them above 0: the Tsallis diversity of counts over its value for K equal shares,
+    from 0 to 1 (conventions: Tsallis evenness; ADR 0569)."""
+    d = tsallis_diversity(samples, order)
+    k = int(np.count_nonzero(np.asarray(samples, dtype=np.float64) > 0))
+    if k < 2:
+        raise ValueError("samples must have at least two values above 0")
+    q = float(order)
+    if q == 1:
+        return d / math.log(k)
+    return d / (-math.expm1((1.0 - q) * math.log(k)) / (q - 1.0))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

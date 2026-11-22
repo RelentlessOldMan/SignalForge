@@ -1343,6 +1343,11 @@ rule for code not written yet.
   `pᵢ = xᵢ/S` over values above 0; `−Σ pᵢ ln pᵢ` at `q = 1`, else
   `−(Σ pᵢ·expm1((q − 1) ln pᵢ))/(q − 1)`, sums in record order. Arguments as for the Hill
   number. **(implemented)**
+- **Tsallis evenness** ([ADR 0569](adr/0569-tsallis-evenness.md);
+  `tsallis_evenness(samples, order)`, C# `Measurements.TsallisEvenness`): the Tsallis
+  diversity of counts of order `q` over its maximum, `ln K` at `q = 1`, else
+  `−expm1((1 − q) ln K)/(q − 1)`, `K` the count of values above 0; from 0 to 1, 1 at
+  `q = 0`. Arguments as for the Hill number, with `K ≥ 2`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

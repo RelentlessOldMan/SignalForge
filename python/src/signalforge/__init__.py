@@ -513,6 +513,7 @@ from .measurements import (
     triangular_discrimination,
     tsallis_diversity,
     tsallis_entropy,
+    tsallis_evenness,
     turning_points,
     tversky_index,
     two_tone_imd,
@@ -748,7 +749,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.22.1"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.22.2"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1441,6 +1442,7 @@ __all__ = [
     "tristimulus",
     "tsallis_diversity",
     "tsallis_entropy",
+    "tsallis_evenness",
     "turning_points",
     "tversky_index",
     "two_band_compress",
