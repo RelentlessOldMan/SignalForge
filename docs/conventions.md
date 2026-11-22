@@ -1191,6 +1191,10 @@ rule for code not written yet.
   `bulla_evenness(samples)`, C# `Measurements.BullaEvenness`): `(O − 1/n)/(1 − 1/n)`,
   `O = Σᵢ min(sᵢ, 1/n)`, the rescaled value not `O`; `n` the record length with zero shares
   counted; minima in record order. Records as for Pielou's evenness. **(implemented)**
+- **Hill ratio evenness** ([ADR 0536](adr/0536-hill-ratio-evenness.md);
+  `hill_ratio_evenness(samples)`, C# `Measurements.HillRatioEvenness`): `E₂,₁ = N₂/N₁`,
+  formed as `(1/Σᵢ sᵢ²)/exp(−Σᵢ sᵢ ln sᵢ)`, `0·ln 0 = 0`; both sums in one pass in record
+  order. Records as for the Gini coefficient. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

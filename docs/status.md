@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Hill ratio evenness in `measurements` (`hill_ratio_evenness(samples)`; a real
-     record of values at least 0, not all 0: `(1/Σ sᵢ²)/exp(−Σ sᵢ ln sᵢ)`, the Hill
-     numbers of order 2 over order 1, `0·ln 0 = 0`; above 0, at most 1).
+   - Alatalo's evenness in `measurements` (`alatalo_evenness(samples)`; a real record of
+     values at least 0 with at least 2 above 0: `(N₂ − 1)/(N₁ − 1)`, `N₂ = 1/Σ sᵢ²` and
+     `N₁ = exp(−Σ sᵢ ln sᵢ)` the Hill numbers; above 0, at most 1).
 
 ## Built
 
@@ -3730,6 +3730,11 @@ Updated with every chunk of work. Dates are absolute.
   rescaled from 0 to 1.
   Python 10239 passed, 2 skipped; .NET 9229 passed; conformance 6773/6773 in both. Version
   2026.11.21.12.
+- 2026-11-21: The Hill ratio evenness (ADR 0536): `hill_ratio_evenness(samples)` in
+  `measurements` (C# `Measurements.HillRatioEvenness`): `E₂,₁`, the Hill number of order 2
+  over that of order 1.
+  Python 10256 passed, 2 skipped; .NET 9243 passed; conformance 6784/6784 in both. Version
+  2026.11.21.13.
 
 ## Not built
 
