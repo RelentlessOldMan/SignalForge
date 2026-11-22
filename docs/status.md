@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Ružička similarity of two records in `measurements` (`ruzicka_similarity(x, y)`;
-     records as for `pianka_overlap`: `Σ min(x, y)/Σ max(x, y)`, the quantitative Jaccard,
-     from 0 to 1; Ružička 1958).
+   - Morisita's overlap of two count records in `measurements` (`morisita_overlap(x, y)`:
+     `2 Σ x y/((λ_x + λ_y) X Y)` with `λ = Σ n(n − 1)/(N(N − 1))`; counts whole, at least 0,
+     each record totalling at least 2; Morisita 1959).
 
 ## Built
 
@@ -3949,6 +3949,11 @@ Updated with every chunk of work. Dates are absolute.
   Jaccard dissimilarity less its turnover part, as one division of exact integers.
   Python 11174 passed, 2 skipped; .NET 9968 passed; conformance 7375/7375 in both. Version
   2026.11.22.12.
+- 2026-11-22: The Ružička similarity of two records (ADR 0580):
+  `ruzicka_similarity(x, y)` in `measurements` (C# `Measurements.RuzickaSimilarity`):
+  `Σ min/Σ max` on the raw values, scaled first so no sum overflows.
+  Python 11195 passed, 2 skipped; .NET 9985 passed; conformance 7388/7388 in both. Version
+  2026.11.22.13.
 
 ## Not built
 

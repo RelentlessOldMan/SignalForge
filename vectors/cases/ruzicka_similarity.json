@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "ruzicka_similarity",
+  "description": "The Ruzicka similarity of two records (conventions: Ruzicka similarity of two records; ADR 0580).",
+  "cases": [
+    {"id": "ruzicka_similarity.same", "op": "ruzicka_similarity", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0, 3.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "identical records: 1"},
+    {"id": "ruzicka_similarity.disjoint", "op": "ruzicka_similarity", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "no shared kind: 0"},
+    {"id": "ruzicka_similarity.double", "op": "ruzicka_similarity", "args": {"x": [1.0, 2.0, 3.0], "y": [2.0, 4.0, 6.0]}, "expected": 0.5, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "a record and its double: 6/12"},
+    {"id": "ruzicka_similarity.crossed", "op": "ruzicka_similarity", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.23076923076923078, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "min 0+2+0+1, max 1+3+5+4: 3/13"},
+    {"id": "ruzicka_similarity.nested", "op": "ruzicka_similarity", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "presence records: Jaccard 1/3"},
+    {"id": "ruzicka_similarity.huge", "op": "ruzicka_similarity", "args": {"x": [1.5e+308, 1.5e+308], "y": [1.5e+308, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "sums past the largest double: 1/2"},
+    {"id": "ruzicka_similarity.tiny", "op": "ruzicka_similarity", "args": {"x": [5e-324, 0.0], "y": [1e-323, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "subnormal values: 5e-324/1e-323 = 1/2"},
+    {"id": "ruzicka_similarity.uneven", "op": "ruzicka_similarity", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.16666666666666666, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "presence records, a = 1, b = 4, c = 1: 1/6"},
+    {"id": "ruzicka_similarity.random", "op": "ruzicka_similarity", "args": {"x": [1.0, 0.0, 1.0, 0.0, 2.5, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.5, 1.0, 0.0, 2.5, 1.0, 1.0, 2.5, 1.0, 2.5, 0.0, 0.0, 0.0, 1.0], "y": [1.0, 2.5, 1.0, 0.0, 2.5, 1.0, 2.5, 0.0, 1.0, 0.0, 0.0, 2.5, 0.0, 2.5, 0.0, 0.0, 0.0, 2.5, 2.5, 2.5, 1.0, 2.5, 1.0, 2.5, 1.0]}, "expected": 0.3614457831325301, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "x then y, 25 values each from random.Random(580).choice([0, 0, 1, 2.5])"},
+    {"id": "ruzicka_similarity.empty", "op": "ruzicka_similarity", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "ruzicka_similarity.negative", "op": "ruzicka_similarity", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "ruzicka_similarity.all_zero", "op": "ruzicka_similarity", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "ruzicka_similarity.lengths", "op": "ruzicka_similarity", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

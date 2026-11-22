@@ -8155,6 +8155,38 @@ def jaccard_nestedness(x: ArrayLike, y: ArrayLike) -> float:
     return num / ((both + only_x + only_y) * (both + least))
 
 
+def ruzicka_similarity(x: ArrayLike, y: ArrayLike) -> float:
+    """The Ruzicka similarity of the records ``x`` and ``y`` of values at least 0, each with a
+    value above 0: sum(min(x, y))/sum(max(x, y)), from 0 to 1 (conventions: Ruzicka
+    similarity of two records; ADR 0580)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        pair.append([float(b) for b in a])
+    xv, yv = pair
+    if len(xv) != len(yv):
+        raise ValueError("x and y must have the same length")
+    m = max(max(xv), max(yv))
+    low = 0.0
+    high = 0.0
+    for a_, b_ in zip(xv, yv, strict=True):
+        low += min(a_, b_) / m
+        high += max(a_, b_) / m
+    return low / high
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

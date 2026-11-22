@@ -1395,6 +1395,11 @@ rule for code not written yet.
   `Measurements.JaccardNestedness`): with `a` the kinds above 0 in both records and `b`, `c`
   those above 0 in one only, `|b − c|·a/((a + b + c)(a + 2 min(b, c)))`, one division of
   exact integers. Records as for Pianka's niche overlap. **(implemented)**
+- **Ružička similarity of two records**
+  ([ADR 0580](adr/0580-ruzicka-similarity.md); `ruzicka_similarity(x, y)`, C#
+  `Measurements.RuzickaSimilarity`): `Σ min(x_i, y_i)/Σ max(x_i, y_i)` on the raw values,
+  both records first divided by the larger of their maxima, sums in index order. Records as
+  for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
