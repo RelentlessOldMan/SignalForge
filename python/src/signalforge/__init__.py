@@ -479,6 +479,7 @@ from .measurements import (
     speech_transmission_index,
     stage_support,
     stiles_coefficient,
+    strong_dominance,
     svd_entropy,
     symmetric_extremal_dependence_index,
     tarwid_coefficient,
@@ -728,7 +729,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.25"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.26"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1373,6 +1374,7 @@ __all__ = [
     "stage_support",
     "stereo_width",
     "stiles_coefficient",
+    "strong_dominance",
     "stutter",
     "supersaw",
     "svd_entropy",

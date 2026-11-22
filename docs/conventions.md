@@ -1245,6 +1245,10 @@ rule for code not written yet.
   `hurlbert_pie(samples)`, C# `Measurements.HurlbertPie`): `N/(N − 1) · (1 − Σᵢ sᵢ²)`,
   `sᵢ = xᵢ/N`, sums in record order. Real, finite, every value at least 0, `N > 1`.
   **(implemented)**
+- **Strong's dominance** ([ADR 0549](adr/0549-strong-dominance.md);
+  `strong_dominance(samples)`, C# `Measurements.StrongDominance`): `maxᵢ (bᵢ/N − i/k)`,
+  `i = 1 … k`, `bᵢ` the running sum of the positive values largest first, the maximum
+  starting at 0. Records as for the Gini coefficient. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

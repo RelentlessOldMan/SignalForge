@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Strong's dominance in `measurements` (`strong_dominance(samples)`; a real record of
-     values at least 0, not all 0: `max over i of (bᵢ/N − i/k)`, `bᵢ` the sum of the `i`
-     largest values and `k` the count of values above 0; from 0 to below 1).
+   - Fisher's alpha in `measurements` (`fisher_alpha(samples)`; a real record of values at
+     least 0 with `k < N`, `k` the count of values above 0 and `N = Σ xᵢ`: the `α > 0` with
+     `k = α ln(1 + N/α)`, found by bisection on `ln α` to a fixed number of steps).
 
 ## Built
 
@@ -3794,6 +3794,11 @@ Updated with every chunk of work. Dates are absolute.
   `N/(N − 1)`.
   Python 10501 passed, 2 skipped; .NET 9438 passed; conformance 6943/6943 in both. Version
   2026.11.21.25.
+- 2026-11-21: Strong's dominance (ADR 0549): `strong_dominance(samples)` in
+  `measurements` (C# `Measurements.StrongDominance`): the largest gap of the
+  largest-first Lorenz curve above the line of equal shares.
+  Python 10519 passed, 2 skipped; .NET 9453 passed; conformance 6955/6955 in both. Version
+  2026.11.21.26.
 
 ## Not built
 

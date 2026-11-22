@@ -478,6 +478,7 @@ public static class Conformance
             "brillouin_index" => Bind(Reals(a.Get("samples")), x => Measurements.BrillouinIndex(x)),
             "brillouin_evenness" => Bind(Reals(a.Get("samples")), x => Measurements.BrillouinEvenness(x)),
             "hurlbert_pie" => Bind(Reals(a.Get("samples")), x => Measurements.HurlbertPie(x)),
+            "strong_dominance" => Bind(Reals(a.Get("samples")), x => Measurements.StrongDominance(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
