@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "bonachela_entropy",
+  "description": "The Bonachela entropy (conventions: the Bonachela entropy; ADR 0560).",
+  "cases": [
+    {"id": "bonachela_entropy.two_ones", "op": "bonachela_entropy", "args": {"samples": [1.0, 1.0]}, "expected": 0.5833333333333334, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "(1/4) 2 (2)(1/3 + 1/4) = 7/12"},
+    {"id": "bonachela_entropy.two_twos", "op": "bonachela_entropy", "args": {"samples": [2.0, 2.0]}, "expected": 0.6166666666666667, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "(1/6) 2 (3)(1/4 + 1/5 + 1/6) = 37/60"},
+    {"id": "bonachela_entropy.one_kind", "op": "bonachela_entropy", "args": {"samples": [0.0, 4.0]}, "expected": 0.1388888888888889, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "(1/6) 5 (1/6) = 5/36"},
+    {"id": "bonachela_entropy.single", "op": "bonachela_entropy", "args": {"samples": [1.0]}, "expected": 0.2222222222222222, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "(1/3) 2 (1/3) = 2/9"},
+    {"id": "bonachela_entropy.ramp", "op": "bonachela_entropy", "args": {"samples": [1.0, 2.0, 3.0]}, "expected": 0.953422619047619, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 6"},
+    {"id": "bonachela_entropy.mixed", "op": "bonachela_entropy", "args": {"samples": [5.0, 1.0, 1.0, 0.0, 2.0]}, "expected": 1.1871277712186803, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 9"},
+    {"id": "bonachela_entropy.large", "op": "bonachela_entropy", "args": {"samples": [100.0, 200.0, 300.0, 400.0]}, "expected": 1.2798251028119616, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 1000"},
+    {"id": "bonachela_entropy.random", "op": "bonachela_entropy", "args": {"samples": [0.0, 7.0, 7.0, 0.0, 9.0, 6.0, 5.0, 3.0, 3.0, 1.0, 6.0, 1.0, 6.0, 3.0, 2.0, 7.0, 2.0, 7.0, 4.0, 1.0, 1.0, 4.0, 9.0, 2.0, 4.0, 7.0, 3.0, 9.0, 1.0, 2.0, 7.0, 9.0, 2.0, 7.0, 5.0, 3.0, 9.0, 6.0, 4.0, 1.0]}, "expected": 3.91291645186357, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "40 whole values from random.Random(560).randint(0, 9)"},
+    {"id": "bonachela_entropy.empty", "op": "bonachela_entropy", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "bonachela_entropy.negative", "op": "bonachela_entropy", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "bonachela_entropy.all_zero", "op": "bonachela_entropy", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "bonachela_entropy.fraction", "op": "bonachela_entropy", "args": {"samples": [1.5, 2.0]}, "error": "invalid_argument", "source": "values must be whole numbers"},
+    {"id": "bonachela_entropy.too_large", "op": "bonachela_entropy", "args": {"samples": [10000000.0, 1.0]}, "error": "invalid_argument", "source": "the total must be at most 10 000 000"}
+  ]
+}

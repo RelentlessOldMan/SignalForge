@@ -1299,6 +1299,11 @@ rule for code not written yet.
   `O(m) = Σ_{j=0}^{m−1} 2/(2j + 1)` over ascending `j`, `A = Σ xᵢ O(⌊xᵢ/2⌋)` over values
   above 0 in record order, and `ln N + γ + ln 2 − A/N`, `γ = 0.5772156649015329`. Whole
   numbers as for the Brillouin index. **(implemented)**
+- **Bonachela entropy** ([ADR 0560](adr/0560-bonachela-entropy.md);
+  `bonachela_entropy(samples)`, C# `Measurements.BonachelaEntropy`): nats; `h(m)` the
+  harmonic numbers over ascending `j` up to `N + 2`, `A = Σ (xᵢ + 1)(h(N + 2) − h(xᵢ + 1))`
+  over values above 0 in record order, and `A/(N + 2)`. Whole numbers as for the
+  Brillouin index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
