@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Chao–Jost coverage in `measurements` (`chao_jost_coverage(samples)`; whole numbers
-     at least 0, not all 0, total `N > 1`: `1 − F₁/N · (N − 1)F₁/((N − 1)F₁ + 2F₂)`, the
-     sample coverage with the doubletons; 1 when there are no singletons).
+   - The Chao–Shen entropy in `measurements` (`chao_shen_entropy(samples)`; whole numbers
+     at least 0, not all 0: `−Σ C pᵢ ln(C pᵢ)/(1 − (1 − C pᵢ)^N)`, `C = 1 − F₁/N` the
+     coverage, with `F₁ = N` taken as `N − 1`; Chao and Shen's Horvitz–Thompson estimate).
 
 ## Built
 
@@ -3814,6 +3814,11 @@ Updated with every chunk of work. Dates are absolute.
   in `size` individuals drawn without replacement.
   Python 10596 passed, 2 skipped; .NET 9509 passed; conformance 7002/7002 in both. Version
   2026.11.21.29.
+- 2026-11-21: The Chao–Jost coverage (ADR 0553): `chao_jost_coverage(samples)` in
+  `measurements` (C# `Measurements.ChaoJostCoverage`): Good's coverage corrected with the
+  doubletons.
+  Python 10617 passed, 2 skipped; .NET 9526 passed; conformance 7016/7016 in both. Version
+  2026.11.21.30.
 
 ## Not built
 

@@ -7161,6 +7161,48 @@ def rarefied_richness(samples: ArrayLike, size: int) -> float:
     return acc
 
 
+def chao_jost_coverage(samples: ArrayLike) -> float:
+    """The Chao-Jost coverage of a record of whole numbers at least 0 totalling more than 1:
+    Good's coverage corrected with the counts of values equal to 1 and to 2
+    (conventions: the Chao-Jost coverage; ADR 0553)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    if np.any(x != np.floor(x)):
+        raise ValueError("samples must be whole numbers")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    if total > 10_000_000:
+        raise ValueError("samples must total at most 10 000 000")
+    if not total > 1:
+        raise ValueError("samples must total more than 1")
+    ones = 0
+    twos = 0
+    for value in vals:
+        if value == 1:
+            ones += 1
+        elif value == 2:
+            twos += 1
+    if ones == 0:
+        return 1.0
+    a = (total - 1.0) * ones
+    return 1.0 - ones / total * (a / (a + 2.0 * twos))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

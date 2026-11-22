@@ -1266,6 +1266,10 @@ rule for code not written yet.
   `Σᵢ (1 − qᵢ)` over the values above 0, `qᵢ = Πⱼ (N − n − j)/(N − j)` for
   `j = 0 … xᵢ − 1`, stopped once it reaches 0. Whole numbers as for the Brillouin index;
   `size` an integer from 1 to `N`. **(implemented)**
+- **Chao–Jost coverage** ([ADR 0553](adr/0553-chao-jost-coverage.md);
+  `chao_jost_coverage(samples)`, C# `Measurements.ChaoJostCoverage`): with
+  `a = (N − 1)F₁`, `1 − F₁/N · (a/(a + 2F₂))`, or 1 when `F₁ = 0`. Whole numbers as for the
+  Brillouin index, with `N > 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
