@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hurlbert's PIE in `measurements` (`hurlbert_pie(samples)`; a real record of values at
-     least 0 with total `N > 1`: `N/(N − 1) · (1 − Σ sᵢ²)`, the chance that two individuals
-     drawn without replacement are of different kinds).
+   - Strong's dominance in `measurements` (`strong_dominance(samples)`; a real record of
+     values at least 0, not all 0: `max over i of (bᵢ/N − i/k)`, `bᵢ` the sum of the `i`
+     largest values and `k` the count of values above 0; from 0 to below 1).
 
 ## Built
 
@@ -3789,6 +3789,11 @@ Updated with every chunk of work. Dates are absolute.
   for the most even whole-number counts.
   Python 10480 passed, 2 skipped; .NET 9422 passed; conformance 6930/6930 in both. Version
   2026.11.21.24.
+- 2026-11-21: Hurlbert's PIE (ADR 0548): `hurlbert_pie(samples)` in `measurements` (C#
+  `Measurements.HurlbertPie`): the Gini–Simpson index with the finite sample correction
+  `N/(N − 1)`.
+  Python 10501 passed, 2 skipped; .NET 9438 passed; conformance 6943/6943 in both. Version
+  2026.11.21.25.
 
 ## Not built
 

@@ -1241,6 +1241,10 @@ rule for code not written yet.
   over its value for `k − r` counts of `c = ⌊N/k⌋` and `r` of `c + 1`, as
   `(ln N! − Σᵢ ln xᵢ!)/(ln N! − (k − r) ln c! − r ln (c + 1)!)`, the log-factorials as for
   the index. Records as for the index, at least 2 values above 0. **(implemented)**
+- **Hurlbert's PIE** ([ADR 0548](adr/0548-hurlbert-pie.md);
+  `hurlbert_pie(samples)`, C# `Measurements.HurlbertPie`): `N/(N − 1) · (1 − Σᵢ sᵢ²)`,
+  `sᵢ = xᵢ/N`, sums in record order. Real, finite, every value at least 0, `N > 1`.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
