@@ -6829,6 +6829,42 @@ def goods_coverage(samples: ArrayLike) -> float:
     return 1.0 - ones / total
 
 
+def chao1_richness(samples: ArrayLike) -> float:
+    """The bias-corrected Chao1 richness of a record of values at least 0, not all 0: the
+    count of values above 0 plus a term in the counts of values equal to 1 and to 2
+    (conventions: the Chao1 richness; ADR 0545)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    k = 0
+    ones = 0
+    twos = 0
+    for value in vals:
+        if value > 0:
+            k += 1
+        if value == 1:
+            ones += 1
+        elif value == 2:
+            twos += 1
+    return k + ones * (ones - 1) / (2.0 * (twos + 1))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

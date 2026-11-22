@@ -1228,6 +1228,10 @@ rule for code not written yet.
   `goods_coverage(samples)`, C# `Measurements.GoodsCoverage`): `1 − F₁/N`, `F₁` the count
   of values exactly equal to 1, `N = Σᵢ xᵢ` in record order. Records as for the Gini
   coefficient. **(implemented)**
+- **Chao1 richness** ([ADR 0545](adr/0545-chao1-richness.md);
+  `chao1_richness(samples)`, C# `Measurements.Chao1Richness`): the bias-corrected
+  `k + F₁(F₁ − 1)/(2(F₂ + 1))`, `k` the count of values above 0, `F₁` and `F₂` the counts
+  of values exactly 1 and 2. Records as for the Gini coefficient. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

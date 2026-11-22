@@ -279,6 +279,7 @@ from .measurements import (
     canberra_distance,
     centre_time,
     cepstrum_pitch,
+    chao1_richness,
     chatterjee_xi,
     chebyshev_distance,
     chi_square_divergence,
@@ -724,7 +725,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.21"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.22"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -896,6 +897,7 @@ __all__ = [
     "cepstrum_pitch",
     "cepstrum_to_lpc",
     "channel_power",
+    "chao1_richness",
     "chatterjee_xi",
     "chebyshev1_bandpass",
     "chebyshev1_bandstop",

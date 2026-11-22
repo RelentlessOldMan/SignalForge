@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The bias-corrected Chao1 richness in `measurements` (`chao1_richness(samples)`; a real
-     record of values at least 0: `k + F₁(F₁ − 1)/(2(F₂ + 1))`, `k` the count of values
-     above 0, `F₁` and `F₂` the counts of values equal to 1 and to 2).
+   - The Brillouin index in `measurements` (`brillouin_index(samples)`; a record of whole
+     numbers at least 0, not all 0: `(ln N! − Σ ln xᵢ!)/N`, `N = Σ xᵢ`; the logarithms of
+     the factorials as sums of `ln j`).
 
 ## Built
 
@@ -3775,6 +3775,10 @@ Updated with every chunk of work. Dates are absolute.
   total.
   Python 10417 passed, 2 skipped; .NET 9372 passed; conformance 6889/6889 in both. Version
   2026.11.21.21.
+- 2026-11-21: The Chao1 richness (ADR 0545): `chao1_richness(samples)` in `measurements`
+  (C# `Measurements.Chao1Richness`): the bias-corrected `k + F₁(F₁ − 1)/(2(F₂ + 1))`.
+  Python 10435 passed, 2 skipped; .NET 9387 passed; conformance 6901/6901 in both. Version
+  2026.11.21.22.
 
 ## Not built
 
