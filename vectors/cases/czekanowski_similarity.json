@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "czekanowski_similarity",
+  "description": "The proportional similarity (conventions: proportional similarity; ADR 0572).",
+  "cases": [
+    {"id": "czekanowski_similarity.same", "op": "czekanowski_similarity", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0, 3.0]}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "identical records: 1"},
+    {"id": "czekanowski_similarity.proportional", "op": "czekanowski_similarity", "args": {"x": [1.0, 2.0, 3.0], "y": [2.0, 4.0, 6.0]}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "proportional records: 1"},
+    {"id": "czekanowski_similarity.disjoint", "op": "czekanowski_similarity", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "no shared resource: 0"},
+    {"id": "czekanowski_similarity.half", "op": "czekanowski_similarity", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "1/2 + 0"},
+    {"id": "czekanowski_similarity.reversed", "op": "czekanowski_similarity", "args": {"x": [1.0, 2.0, 3.0], "y": [3.0, 2.0, 1.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "1/6 + 2/6 + 1/6 = 2/3"},
+    {"id": "czekanowski_similarity.shifted", "op": "czekanowski_similarity", "args": {"x": [1.0, 1.0, 2.0], "y": [2.0, 1.0, 1.0]}, "expected": 0.75, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "1/4 + 1/4 + 1/4 = 3/4"},
+    {"id": "czekanowski_similarity.huge", "op": "czekanowski_similarity", "args": {"x": [1e+300, 2e+300], "y": [1.0, 3.0]}, "expected": 0.9166666666666666, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "1/4 + 2/3 = 11/12: the total would overflow"},
+    {"id": "czekanowski_similarity.tiny", "op": "czekanowski_similarity", "args": {"x": [1e-300, 3e-301, 0.0], "y": [2.0, 5.0, 1.0]}, "expected": 0.4807692307692308, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "values near the bottom of the range"},
+    {"id": "czekanowski_similarity.random", "op": "czekanowski_similarity", "args": {"x": [4.725, 1.986, 1.271, 3.054, 1.298, 2.418, 3.723, 0.712, 3.857, 0.712, 1.149, 4.034, 3.515, 3.05, 1.785, 2.151, 1.154, 2.879, 4.67, 0.714, 1.766, 4.243, 4.956, 1.099, 2.556], "y": [0.529, 3.414, 0.482, 1.645, 4.232, 4.673, 1.436, 4.376, 3.657, 0.69, 1.396, 2.142, 0.346, 0.872, 0.371, 0.355, 2.713, 0.662, 4.921, 4.986, 0.52, 2.812, 2.771, 4.997, 3.275]}, "expected": 0.6081331284855964, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "x then y, 25 values each from random.Random(572).uniform(0, 5), 3 places"},
+    {"id": "czekanowski_similarity.empty", "op": "czekanowski_similarity", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "czekanowski_similarity.negative", "op": "czekanowski_similarity", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "czekanowski_similarity.all_zero", "op": "czekanowski_similarity", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "czekanowski_similarity.lengths", "op": "czekanowski_similarity", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

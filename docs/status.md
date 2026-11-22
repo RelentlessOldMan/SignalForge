@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The proportional similarity in `measurements` (`czekanowski_similarity(x, y)`;
-     records as for `pianka_overlap`: `Σ min(pᵢ, qᵢ)` over the shares of each record, from
-     0 to 1; Czekanowski 1909, Feinsinger et al. 1981).
+   - The Morisita–Horn overlap in `measurements` (`morisita_horn_overlap(x, y)`; records
+     as for `pianka_overlap`: `2 Σ pᵢqᵢ/(Σ pᵢ² + Σ qᵢ²)` over the shares of each record,
+     from 0 to 1; Horn 1966).
 
 ## Built
 
@@ -3909,6 +3909,11 @@ Updated with every chunk of work. Dates are absolute.
   value first so huge values cannot overflow.
   Python 11007 passed, 2 skipped; .NET 9837 passed; conformance 7272/7272 in both. Version
   2026.11.22.4.
+- 2026-11-22: The proportional similarity (ADR 0572): `czekanowski_similarity(x, y)` in
+  `measurements` (C# `Measurements.CzekanowskiSimilarity`): `Σ min(pᵢ, qᵢ)` over the shares of
+  two records, scaled first so huge totals cannot overflow.
+  Python 11028 passed, 2 skipped; .NET 9853 passed; conformance 7285/7285 in both. Version
+  2026.11.22.5.
 
 ## Not built
 

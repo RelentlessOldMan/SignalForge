@@ -1358,6 +1358,10 @@ rule for code not written yet.
   value, then `Σ xᵢyᵢ/√(Σ xᵢ² · Σ yᵢ²)`, sums in record order, capped at 1. Records real,
   finite, at least 0, not empty, each with a value above 0, the same length.
   **(implemented)**
+- **Proportional similarity** ([ADR 0572](adr/0572-czekanowski-similarity.md);
+  `czekanowski_similarity(x, y)`, C# `Measurements.CzekanowskiSimilarity`): each record over
+  its largest value, then over its total, sums in record order; `Σ min(pᵢ, qᵢ)` in record
+  order, capped at 1. Records as for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
