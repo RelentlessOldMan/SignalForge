@@ -336,6 +336,7 @@ from .measurements import (
     gilbert_wells_coefficient,
     gini_coefficient,
     glass_delta,
+    gleason_index,
     goodman_kruskal_gamma,
     goodman_kruskal_lambda,
     gower_coefficient,
@@ -722,7 +723,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.19"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.20"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1041,6 +1042,7 @@ __all__ = [
     "gilbert_wells_coefficient",
     "gini_coefficient",
     "glass_delta",
+    "gleason_index",
     "goertzel",
     "goodman_kruskal_gamma",
     "goodman_kruskal_lambda",

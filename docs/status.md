@@ -6,8 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Gleason's index in `measurements` (`gleason_index(samples)`; a real record of values at
-     least 0 with total `N > 1`: `k/ln N`, `k` the count of values above 0).
+   - Good's coverage in `measurements` (`goods_coverage(samples)`; a real record of values at
+     least 0, not all 0: `1 − F₁/N`, `F₁` the count of values equal to 1 and `N = Σ xᵢ`; from
+     0 to 1 for whole-number counts).
 
 ## Built
 
@@ -3764,6 +3765,11 @@ Updated with every chunk of work. Dates are absolute.
   logarithm of the total.
   Python 10376 passed, 2 skipped; .NET 9339 passed; conformance 6862/6862 in both. Version
   2026.11.21.19.
+- 2026-11-21: Gleason's index (ADR 0543): `gleason_index(samples)` in `measurements`
+  (C# `Measurements.GleasonIndex`): the count of values above 0 over the logarithm of the
+  total.
+  Python 10399 passed, 2 skipped; .NET 9357 passed; conformance 6877/6877 in both. Version
+  2026.11.21.20.
 
 ## Not built
 
