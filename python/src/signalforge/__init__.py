@@ -394,6 +394,7 @@ from .measurements import (
     matthews_correlation,
     maxwell_pilliner_coefficient,
     mcconnaughey_coefficient,
+    mcintosh_dominance,
     mcnemar_statistic,
     mean_log_deviation,
     michael_coefficient,
@@ -718,7 +719,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.15"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.16"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1144,6 +1145,7 @@ __all__ = [
     "matthews_correlation",
     "maxwell_pilliner_coefficient",
     "mcconnaughey_coefficient",
+    "mcintosh_dominance",
     "mcnemar_statistic",
     "mean_log_deviation",
     "median_filter",

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The McIntosh dominance in `measurements` (`mcintosh_dominance(samples)`; a real record
-     of values at least 0 with total `N > 1`: `(N − U)/(N − √N)`, `U = √(Σ xᵢ²)`; 0 when one
-     value holds the total).
+   - The McIntosh evenness in `measurements` (`mcintosh_evenness(samples)`; a real record of
+     at least 2 values at least 0, not all 0: `(N − U)/(N − N/√n)`, `N = Σ xᵢ`,
+     `U = √(Σ xᵢ²)`; from 0 to 1).
 
 ## Built
 
@@ -3745,6 +3745,11 @@ Updated with every chunk of work. Dates are absolute.
   entropy of the shares over `n`.
   Python 10294 passed, 2 skipped; .NET 9273 passed; conformance 6808/6808 in both. Version
   2026.11.21.15.
+- 2026-11-21: The McIntosh dominance (ADR 0539): `mcintosh_dominance(samples)` in
+  `measurements` (C# `Measurements.McIntoshDominance`): `(N − U)/(N − √N)` from the total
+  and the Euclidean length of the record.
+  Python 10315 passed, 2 skipped; .NET 9290 passed; conformance 6822/6822 in both. Version
+  2026.11.21.16.
 
 ## Not built
 

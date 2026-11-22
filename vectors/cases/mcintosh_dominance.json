@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "mcintosh_dominance",
+  "description": "The McIntosh dominance (conventions: the McIntosh dominance; ADR 0539).",
+  "cases": [
+    {"id": "mcintosh_dominance.one_holds_all", "op": "mcintosh_dominance", "args": {"samples": [0.0, 0.0, 0.0, 4.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "U = N = 4: 0"},
+    {"id": "mcintosh_dominance.equal", "op": "mcintosh_dominance", "args": {"samples": [2.0, 2.0, 2.0, 2.0]}, "expected": 0.7734590803390136, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 8, U = 4: 4/(8 - 2 sqrt 2)"},
+    {"id": "mcintosh_dominance.two", "op": "mcintosh_dominance", "args": {"samples": [3.0, 1.0]}, "expected": 0.41886116991581035, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 4, U = sqrt 10: (4 - sqrt 10)/2"},
+    {"id": "mcintosh_dominance.halves", "op": "mcintosh_dominance", "args": {"samples": [0.5, 0.25, 0.25, 1.0]}, "expected": 1.4124534248283878, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 2, sum of squares 11/8: (2 - sqrt(11/8))/(2 - sqrt 2)"},
+    {"id": "mcintosh_dominance.ones", "op": "mcintosh_dominance", "args": {"samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 9, U = 3: (9 - 3)/(9 - 3) = 1"},
+    {"id": "mcintosh_dominance.ramp", "op": "mcintosh_dominance", "args": {"samples": [4.0, 1.0, 3.0, 2.0]}, "expected": 0.6614445863942046, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 10, sum of squares 30"},
+    {"id": "mcintosh_dominance.dominant", "op": "mcintosh_dominance", "args": {"samples": [100.0, 1.0, 1.0]}, "expected": 0.02165386050004744, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 102, sum of squares 10002"},
+    {"id": "mcintosh_dominance.small_values", "op": "mcintosh_dominance", "args": {"samples": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]}, "expected": 1.4000995774953704, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "N = 3 < n = 6, above 1"},
+    {"id": "mcintosh_dominance.random", "op": "mcintosh_dominance", "args": {"samples": [4.625, 3.0, 0.625, 2.25, 5.875, 3.75, 1.0, 1.0, 3.375, 4.875, 1.875, 6.5, 0.25, 0.125, 6.625, 2.25, 0.875, 0.625, 2.75, 0.0, 7.75, 6.875, 8.0, 3.5, 5.25, 7.875, 5.875, 2.125, 6.75, 5.0]}, "expected": 0.8599143270031657, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 values k/8, k from random.Random(539).randint(0, 64)"},
+    {"id": "mcintosh_dominance.empty", "op": "mcintosh_dominance", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "mcintosh_dominance.negative", "op": "mcintosh_dominance", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "mcintosh_dominance.all_zero", "op": "mcintosh_dominance", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be above 1"},
+    {"id": "mcintosh_dominance.total_one", "op": "mcintosh_dominance", "args": {"samples": [0.5, 0.5]}, "error": "invalid_argument", "source": "the total must be above 1"},
+    {"id": "mcintosh_dominance.total_small", "op": "mcintosh_dominance", "args": {"samples": [0.25, 0.5]}, "error": "invalid_argument", "source": "the total must be above 1"}
+  ]
+}

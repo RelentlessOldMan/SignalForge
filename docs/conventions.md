@@ -1204,6 +1204,10 @@ rule for code not written yet.
   `sheldon_evenness(samples)`, C# `Measurements.SheldonEvenness`): `exp(−Σᵢ sᵢ ln sᵢ)/n`,
   `0·ln 0 = 0`, `n` the record length with zero shares counted; terms in record order.
   Records as for the Gini coefficient. **(implemented)**
+- **McIntosh dominance** ([ADR 0539](adr/0539-mcintosh-dominance.md);
+  `mcintosh_dominance(samples)`, C# `Measurements.McIntoshDominance`):
+  `(N − U)/(N − √N)`, `N = Σᵢ xᵢ`, `U = √(Σᵢ xᵢ²)`, both sums in record order; depends on
+  the scale of the values. Real, finite, every value at least 0, `N > 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
