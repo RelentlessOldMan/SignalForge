@@ -1232,6 +1232,10 @@ rule for code not written yet.
   `chao1_richness(samples)`, C# `Measurements.Chao1Richness`): the bias-corrected
   `k + F₁(F₁ − 1)/(2(F₂ + 1))`, `k` the count of values above 0, `F₁` and `F₂` the counts
   of values exactly 1 and 2. Records as for the Gini coefficient. **(implemented)**
+- **Brillouin index** ([ADR 0546](adr/0546-brillouin-index.md);
+  `brillouin_index(samples)`, C# `Measurements.BrillouinIndex`): `(ln N! − Σᵢ ln xᵢ!)/N` in
+  nats, each `ln m!` the sum of `ln j`, `j = 2 … m` in order; values in record order. Whole
+  numbers at least 0, not all 0, `N` at most 10 000 000. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

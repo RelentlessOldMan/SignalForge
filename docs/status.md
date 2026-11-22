@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Brillouin index in `measurements` (`brillouin_index(samples)`; a record of whole
-     numbers at least 0, not all 0: `(ln N! − Σ ln xᵢ!)/N`, `N = Σ xᵢ`; the logarithms of
-     the factorials as sums of `ln j`).
+   - The Brillouin evenness in `measurements` (`brillouin_evenness(samples)`; whole numbers
+     as for the Brillouin index, at least 2 above 0: the index over its largest value for
+     `N` and `k`, the counts spread as evenly as whole numbers allow).
 
 ## Built
 
@@ -3779,6 +3779,11 @@ Updated with every chunk of work. Dates are absolute.
   (C# `Measurements.Chao1Richness`): the bias-corrected `k + F₁(F₁ − 1)/(2(F₂ + 1))`.
   Python 10435 passed, 2 skipped; .NET 9387 passed; conformance 6901/6901 in both. Version
   2026.11.21.22.
+- 2026-11-21: The Brillouin index (ADR 0546): `brillouin_index(samples)` in
+  `measurements` (C# `Measurements.BrillouinIndex`): `(ln N! − Σ ln xᵢ!)/N` for whole-number
+  counts.
+  Python 10457 passed, 2 skipped; .NET 9404 passed; conformance 6915/6915 in both. Version
+  2026.11.21.23.
 
 ## Not built
 

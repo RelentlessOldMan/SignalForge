@@ -6865,6 +6865,43 @@ def chao1_richness(samples: ArrayLike) -> float:
     return k + ones * (ones - 1) / (2.0 * (twos + 1))
 
 
+def brillouin_index(samples: ArrayLike) -> float:
+    """The Brillouin index of a record of whole numbers at least 0, not all 0, in nats: the
+    logarithm of the multinomial coefficient of the counts over their total (conventions:
+    the Brillouin index; ADR 0546)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    if np.any(x != np.floor(x)):
+        raise ValueError("samples must be whole numbers")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    if total > 10_000_000:
+        raise ValueError("samples must total at most 10 000 000")
+    parts = 0.0
+    for value in vals:
+        for j in range(2, int(value) + 1):
+            parts += math.log(j)
+    whole = 0.0
+    for j in range(2, int(total) + 1):
+        whole += math.log(j)
+    return (whole - parts) / total
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
