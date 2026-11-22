@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "grassberger_entropy",
+  "description": "The Grassberger entropy (conventions: the Grassberger entropy; ADR 0559).",
+  "cases": [
+    {"id": "grassberger_entropy.two_ones", "op": "grassberger_entropy", "args": {"samples": [1.0, 1.0]}, "expected": 1.9635100260214235, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "G(1) = -g - ln 2: 2 ln 2 + g"},
+    {"id": "grassberger_entropy.two_twos", "op": "grassberger_entropy", "args": {"samples": [2.0, 2.0]}, "expected": 0.6566572065813688, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "G(2) = 2 - g - ln 2: 3 ln 2 + g - 2"},
+    {"id": "grassberger_entropy.one_kind", "op": "grassberger_entropy", "args": {"samples": [0.0, 4.0]}, "expected": -0.010009460085297878, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "G(4) = 8/3 - g - ln 2: 3 ln 2 + g - 8/3"},
+    {"id": "grassberger_entropy.single", "op": "grassberger_entropy", "args": {"samples": [1.0]}, "expected": 1.2703628454614782, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "N = 1: g + ln 2"},
+    {"id": "grassberger_entropy.ramp", "op": "grassberger_entropy", "args": {"samples": [1.0, 2.0, 3.0]}, "expected": 1.3954556480228666, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "N = 6"},
+    {"id": "grassberger_entropy.mixed", "op": "grassberger_entropy", "args": {"samples": [5.0, 1.0, 1.0, 0.0, 2.0]}, "expected": 1.5416614968717717, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "N = 9"},
+    {"id": "grassberger_entropy.large", "op": "grassberger_entropy", "args": {"samples": [1000.0, 2000.0, 3000.0, 4000.0]}, "expected": 1.279854191111459, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "N = 10000"},
+    {"id": "grassberger_entropy.random", "op": "grassberger_entropy", "args": {"samples": [0.0, 9.0, 6.0, 5.0, 5.0, 8.0, 2.0, 2.0, 8.0, 4.0, 7.0, 5.0, 2.0, 2.0, 0.0, 5.0, 8.0, 6.0, 1.0, 7.0, 8.0, 1.0, 5.0, 5.0, 9.0, 5.0, 1.0, 4.0, 2.0, 4.0, 3.0, 6.0, 6.0, 3.0, 4.0, 0.0, 9.0, 9.0, 4.0, 5.0]}, "expected": 3.590744410565543, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "40 whole values from random.Random(559).randint(0, 9)"},
+    {"id": "grassberger_entropy.empty", "op": "grassberger_entropy", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "grassberger_entropy.negative", "op": "grassberger_entropy", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "grassberger_entropy.all_zero", "op": "grassberger_entropy", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "grassberger_entropy.fraction", "op": "grassberger_entropy", "args": {"samples": [1.5, 2.0]}, "error": "invalid_argument", "source": "values must be whole numbers"},
+    {"id": "grassberger_entropy.too_large", "op": "grassberger_entropy", "args": {"samples": [10000000.0, 1.0]}, "error": "invalid_argument", "source": "the total must be at most 10 000 000"}
+  ]
+}

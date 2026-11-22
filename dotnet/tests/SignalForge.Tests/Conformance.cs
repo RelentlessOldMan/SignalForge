@@ -488,6 +488,7 @@ public static class Conformance
             "hutcheson_variance" => Bind(Reals(a.Get("samples")), x => Measurements.HutchesonVariance(x)),
             "hutcheson_t" => Bind((Reals(a.Get("a")), Reals(a.Get("b"))), t => Measurements.HutchesonT(t.Item1, t.Item2)),
             "jackknife_entropy" => Bind(Reals(a.Get("samples")), x => Measurements.JackknifeEntropy(x)),
+            "grassberger_entropy" => Bind(Reals(a.Get("samples")), x => Measurements.GrassbergerEntropy(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

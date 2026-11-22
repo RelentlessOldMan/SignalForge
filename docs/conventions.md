@@ -1294,6 +1294,11 @@ rule for code not written yet.
   `H₋ᵢ = ln(N − 1) − (S − xᵢ ln xᵢ + (xᵢ − 1) ln(xᵢ − 1))/(N − 1)` (0 for the last product
   when `xᵢ = 1`), and `N·H − (N − 1)/N · Σ xᵢ H₋ᵢ`, the sums over values above 0 in record
   order. Whole numbers as for the Brillouin index, with `N > 1`. **(implemented)**
+- **Grassberger entropy** ([ADR 0559](adr/0559-grassberger-entropy.md);
+  `grassberger_entropy(samples)`, C# `Measurements.GrassbergerEntropy`): nats;
+  `O(m) = Σ_{j=0}^{m−1} 2/(2j + 1)` over ascending `j`, `A = Σ xᵢ O(⌊xᵢ/2⌋)` over values
+  above 0 in record order, and `ln N + γ + ln 2 − A/N`, `γ = 0.5772156649015329`. Whole
+  numbers as for the Brillouin index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

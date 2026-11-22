@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Grassberger entropy in `measurements` (`grassberger_entropy(samples)`; whole
-     numbers at least 0, not all 0: `ln N − (1/N) Σ xᵢ G(xᵢ)`,
-     `G(n) = ψ(n) + ½(−1)ⁿ(ψ((n + 1)/2) − ψ(n/2))`, ψ at whole and half-whole numbers from
-     finite sums; Grassberger's 2003 estimate).
+   - The Bonachela entropy in `measurements` (`bonachela_entropy(samples)`; whole numbers
+     at least 0, not all 0: `(1/(N + 2)) Σᵢ (xᵢ + 1) Σ_{j = xᵢ + 2}^{N + 2} 1/j`, a balanced
+     estimate for small samples; Bonachela, Hinrichsen and Muñoz 2008).
 
 ## Built
 
@@ -3845,6 +3844,11 @@ Updated with every chunk of work. Dates are absolute.
   of the plug-in Shannon entropy, in nats.
   Python 10716 passed, 2 skipped; .NET 9606 passed; conformance 7081/7081 in both. Version
   2026.11.21.35.
+- 2026-11-21: The Grassberger entropy (ADR 0559): `grassberger_entropy(samples)` in
+  `measurements` (C# `Measurements.GrassbergerEntropy`): Grassberger's 2003
+  digamma-based estimate of the Shannon entropy, in nats.
+  Python 10737 passed, 2 skipped; .NET 9622 passed; conformance 7094/7094 in both. Version
+  2026.11.21.36.
 
 ## Not built
 

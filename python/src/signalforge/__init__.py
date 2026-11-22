@@ -349,6 +349,7 @@ from .measurements import (
     goods_coverage,
     gower_coefficient,
     gower_legendre_coefficient,
+    grassberger_entropy,
     hadamard_deviation,
     haldane_log_odds_ratio,
     haldane_log_odds_ratio_standard_error,
@@ -738,7 +739,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.35"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.36"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1071,6 +1072,7 @@ __all__ = [
     "goods_coverage",
     "gower_coefficient",
     "gower_legendre_coefficient",
+    "grassberger_entropy",
     "haas",
     "hadamard_deviation",
     "haldane_log_odds_ratio",
