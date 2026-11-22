@@ -7012,6 +7012,61 @@ def strong_dominance(samples: ArrayLike) -> float:
     return best
 
 
+def fisher_alpha(samples: ArrayLike) -> float:
+    """Fisher's alpha of a record of whole numbers at least 0 totalling more than the count
+    of values above 0: the log-series alpha with k = alpha ln(1 + N/alpha)
+    (conventions: Fisher's alpha; ADR 0550)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    if np.any(x != np.floor(x)):
+        raise ValueError("samples must be whole numbers")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    if total > 10_000_000:
+        raise ValueError("samples must total at most 10 000 000")
+    k = 0
+    for value in vals:
+        if value > 0:
+            k += 1
+    if not k < total:
+        raise ValueError("samples must total more than the count of values above 0")
+
+    def count(alpha: float) -> float:
+        x = total / alpha
+        u = 1.0 + x
+        lp = x if u == 1.0 else math.log(u) * x / (u - 1.0)
+        return alpha * lp
+
+    lo = 1.0
+    while count(lo) >= k:
+        lo /= 2.0
+    hi = 1.0
+    while count(hi) <= k:
+        hi *= 2.0
+    for _ in range(100):
+        mid = math.sqrt(lo) * math.sqrt(hi)
+        if count(mid) < k:
+            lo = mid
+        else:
+            hi = mid
+    return math.sqrt(lo) * math.sqrt(hi)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -1249,6 +1249,12 @@ rule for code not written yet.
   `strong_dominance(samples)`, C# `Measurements.StrongDominance`): `maxᵢ (bᵢ/N − i/k)`,
   `i = 1 … k`, `bᵢ` the running sum of the positive values largest first, the maximum
   starting at 0. Records as for the Gini coefficient. **(implemented)**
+- **Fisher's alpha** ([ADR 0550](adr/0550-fisher-alpha.md);
+  `fisher_alpha(samples)`, C# `Measurements.FisherAlpha`): the `α` with
+  `α · lp(N/α) = k`, `lp(x)` = `x` when `1 + x = 1`, else `ln(1 + x) · x/((1 + x) − 1)`.
+  Search: `lo` halves from 1 while `f(lo) ≥ k`, `hi` doubles from 1 while `f(hi) ≤ k`, then
+  100 steps of `mid = √lo · √hi`; the value is `√lo · √hi`. Whole numbers as for the
+  Brillouin index, with the total above `k`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

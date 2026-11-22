@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Fisher's alpha in `measurements` (`fisher_alpha(samples)`; a real record of values at
-     least 0 with `k < N`, `k` the count of values above 0 and `N = Σ xᵢ`: the `α > 0` with
-     `k = α ln(1 + N/α)`, found by bisection on `ln α` to a fixed number of steps).
+   - The ACE richness in `measurements` (`ace_richness(samples)`; whole numbers at least 0:
+     Chao and Lee's abundance-based coverage estimator, the kinds with counts 1 to 10 as the
+     rare group, its coverage `1 − F₁/N_rare` and squared coefficient of variation).
 
 ## Built
 
@@ -3799,6 +3799,11 @@ Updated with every chunk of work. Dates are absolute.
   largest-first Lorenz curve above the line of equal shares.
   Python 10519 passed, 2 skipped; .NET 9453 passed; conformance 6955/6955 in both. Version
   2026.11.21.26.
+- 2026-11-21: Fisher's alpha (ADR 0550): `fisher_alpha(samples)` in `measurements` (C#
+  `Measurements.FisherAlpha`): the log-series `α` with `k = α ln(1 + N/α)`, by a bracketed
+  geometric bisection run step for step in both languages.
+  Python 10545 passed, 2 skipped; .NET 9472 passed; conformance 6971/6971 in both. Version
+  2026.11.21.27.
 
 ## Not built
 

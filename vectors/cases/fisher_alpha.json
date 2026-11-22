@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "suite": "fisher_alpha",
+  "description": "Fisher's alpha (conventions: Fisher's alpha; ADR 0550).",
+  "cases": [
+    {"id": "fisher_alpha.two", "op": "fisher_alpha", "args": {"samples": [3.0, 1.0]}, "expected": 1.5918101892636662, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = 2, N = 4"},
+    {"id": "fisher_alpha.two_twos", "op": "fisher_alpha", "args": {"samples": [2.0, 2.0]}, "expected": 1.5918101892636662, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = 2, N = 4: as for 3 and 1"},
+    {"id": "fisher_alpha.ramp", "op": "fisher_alpha", "args": {"samples": [1.0, 2.0, 3.0]}, "expected": 2.387715283895499, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = 3, N = 6"},
+    {"id": "fisher_alpha.mixed", "op": "fisher_alpha", "args": {"samples": [5.0, 1.0, 1.0, 0.0, 2.0]}, "expected": 2.7592017483527322, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = 4, N = 9"},
+    {"id": "fisher_alpha.dominant", "op": "fisher_alpha", "args": {"samples": [10.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 2.782379545878107, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = 5, N = 14"},
+    {"id": "fisher_alpha.near_k", "op": "fisher_alpha", "args": {"samples": [1.0, 1.0, 2.0]}, "expected": 5.452555354530851, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = 3, N = 4: a large alpha"},
+    {"id": "fisher_alpha.single", "op": "fisher_alpha", "args": {"samples": [100.0, 0.0]}, "expected": 0.15444968667910644, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = 1, N = 100: a small alpha"},
+    {"id": "fisher_alpha.large", "op": "fisher_alpha", "args": {"samples": [400.0, 250.0, 0.0, 100.0, 1.0, 1.0, 3.0]}, "expected": 0.8895575219998114, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "k = 6, N = 755"},
+    {"id": "fisher_alpha.random", "op": "fisher_alpha", "args": {"samples": [15.0, 15.0, 6.0, 11.0, 1.0, 7.0, 3.0, 13.0, 19.0, 18.0, 3.0, 3.0, 0.0, 16.0, 6.0, 2.0, 16.0, 19.0, 0.0, 15.0, 18.0, 9.0, 2.0, 2.0, 14.0, 19.0, 10.0, 3.0, 6.0, 9.0]}, "expected": 7.745611057399438, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "30 whole values from random.Random(550).randint(0, 20)"},
+    {"id": "fisher_alpha.empty", "op": "fisher_alpha", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "fisher_alpha.negative", "op": "fisher_alpha", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "fisher_alpha.all_zero", "op": "fisher_alpha", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "fisher_alpha.fraction", "op": "fisher_alpha", "args": {"samples": [1.5, 2.0]}, "error": "invalid_argument", "source": "values must be whole numbers"},
+    {"id": "fisher_alpha.too_large", "op": "fisher_alpha", "args": {"samples": [10000000.0, 1.0]}, "error": "invalid_argument", "source": "the total must be at most 10 000 000"},
+    {"id": "fisher_alpha.all_ones", "op": "fisher_alpha", "args": {"samples": [1.0, 1.0]}, "error": "invalid_argument", "source": "the total must be above the count of values above 0"},
+    {"id": "fisher_alpha.single_one", "op": "fisher_alpha", "args": {"samples": [0.0, 1.0]}, "error": "invalid_argument", "source": "the total must be above the count of values above 0"}
+  ]
+}
