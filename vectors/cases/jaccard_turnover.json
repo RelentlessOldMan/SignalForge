@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "jaccard_turnover",
+  "description": "The turnover part of the Jaccard dissimilarity (conventions: turnover part of the Jaccard dissimilarity; ADR 0578).",
+  "cases": [
+    {"id": "jaccard_turnover.same", "op": "jaccard_turnover", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same kinds: 0"},
+    {"id": "jaccard_turnover.disjoint", "op": "jaccard_turnover", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no shared kind: 2/(0 + 2) = 1"},
+    {"id": "jaccard_turnover.subset", "op": "jaccard_turnover", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "y's kinds are in x: 0"},
+    {"id": "jaccard_turnover.crossed", "op": "jaccard_turnover", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 2, b = c = 1: 2/4"},
+    {"id": "jaccard_turnover.nested", "op": "jaccard_turnover", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x's kinds are in y: 0"},
+    {"id": "jaccard_turnover.swap", "op": "jaccard_turnover", "args": {"x": [1.0, 1.0, 1.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.8, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = c = 2: 4/5"},
+    {"id": "jaccard_turnover.uneven", "op": "jaccard_turnover", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 4, c = 1: 2/3"},
+    {"id": "jaccard_turnover.tiny", "op": "jaccard_turnover", "args": {"x": [5e-324, 0.0, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the smallest double counts as present: a = b = c = 1: 2/3"},
+    {"id": "jaccard_turnover.random", "op": "jaccard_turnover", "args": {"x": [1.0, 0.0, 2.5, 1.0, 1.0, 0.0, 0.0, 1.0, 2.5, 0.0, 2.5, 0.0, 1.0, 0.0, 1.0, 0.0, 2.5, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.5], "y": [0.0, 1.0, 2.5, 2.5, 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 2.5, 1.0, 0.0, 2.5, 1.0, 2.5, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0]}, "expected": 0.631578947368421, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x then y, 25 values each from random.Random(578).choice([0, 0, 1, 2.5])"},
+    {"id": "jaccard_turnover.empty", "op": "jaccard_turnover", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "jaccard_turnover.negative", "op": "jaccard_turnover", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "jaccard_turnover.all_zero", "op": "jaccard_turnover", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "jaccard_turnover.lengths", "op": "jaccard_turnover", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

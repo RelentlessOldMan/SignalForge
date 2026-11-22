@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The turnover part of the Jaccard dissimilarity in `measurements`
-     (`jaccard_turnover(x, y)`; records as for `pianka_overlap`:
-     `2 min(b, c)/(a + 2 min(b, c))`, from 0 to 1; Baselga 2012).
+   - The nestedness part of the Jaccard dissimilarity in `measurements`
+     (`jaccard_nestedness(x, y)`; records as for `pianka_overlap`:
+     `(b + c)/(a + b + c) − jaccard_turnover`, as
+     `|b − c|·a/((a + b + c)(a + 2 min(b, c)))`; Baselga 2012).
 
 ## Built
 
@@ -3939,6 +3940,11 @@ Updated with every chunk of work. Dates are absolute.
   beta less Simpson's beta, as one division of exact integers.
   Python 11132 passed, 2 skipped; .NET 9934 passed; conformance 7349/7349 in both. Version
   2026.11.22.10.
+- 2026-11-22: The turnover part of the Jaccard dissimilarity (ADR 0578):
+  `jaccard_turnover(x, y)` in `measurements` (C# `Measurements.JaccardTurnover`):
+  `2 min(b, c)/(a + 2 min(b, c))` on presence, 0 for nested records.
+  Python 11153 passed, 2 skipped; .NET 9951 passed; conformance 7362/7362 in both. Version
+  2026.11.22.11.
 
 ## Not built
 

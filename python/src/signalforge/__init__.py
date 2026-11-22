@@ -382,6 +382,7 @@ from .measurements import (
     increment_entropy,
     integrated_phase_noise,
     jaccard_index,
+    jaccard_turnover,
     jackknife_entropy,
     jeffreys_divergence,
     johnson_coefficient,
@@ -757,7 +758,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.22.10"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.22.11"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1145,6 +1146,7 @@ __all__ = [
     "iq_imbalance",
     "itakura_saito",
     "jaccard_index",
+    "jaccard_turnover",
     "jackknife_entropy",
     "jeffreys_divergence",
     "johnson_coefficient",
