@@ -7537,6 +7537,83 @@ def zhang_entropy(samples: ArrayLike) -> float:
     return acc
 
 
+def chao_wang_jost_entropy(samples: ArrayLike) -> float:
+    """The Chao-Wang-Jost entropy of a record of whole numbers at least 0 totalling more
+    than 1 and at most 10 000, in nats: the seen kinds through Zhang's series and the unseen
+    through the singletons and doubletons (conventions: the Chao-Wang-Jost entropy;
+    ADR 0562)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    if np.any(x != np.floor(x)):
+        raise ValueError("samples must be whole numbers")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    if total > 10_000:
+        raise ValueError("samples must total at most 10 000")
+    if not total > 1:
+        raise ValueError("samples must total more than 1")
+    ones = 0
+    twos = 0
+    need: set[int] = set()
+    for value in vals:
+        if value == 1:
+            ones += 1
+        elif value == 2:
+            twos += 1
+        if 0 < value < total:
+            need.add(int(value) - 1)
+    marks: dict[int, float] = {0: 0.0}
+    harm = 0.0
+    for j in range(1, int(total)):
+        harm += 1.0 / j
+        if j in need:
+            marks[j] = harm
+    acc = 0.0
+    for value in vals:
+        if 0 < value < total:
+            acc += value / total * (harm - marks[int(value) - 1])
+    if ones == 0:
+        return acc
+    if twos > 0:
+        a = 2.0 * twos / ((total - 1.0) * ones + 2.0 * twos)
+    else:
+        a = 2.0 / ((total - 1.0) * (ones - 1) + 2.0)
+    q = 1.0 - a
+    w = 1.0
+    part = 0.0
+    if a * total >= 1.0:
+        m = 0
+        while True:
+            term = w / (total + m)
+            if part + term == part:
+                break
+            part += term
+            w *= q
+            m += 1
+        rest = q * part
+    else:
+        for step in range(1, int(total)):
+            w *= q
+            part += w / step
+        rest = q ** (1.0 - total) * (-math.log(a) - part)
+    return acc + ones / total * rest
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

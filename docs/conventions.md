@@ -1309,6 +1309,12 @@ rule for code not written yet.
   `P ← P · (1 − (x − 1)/(N − v))`, `T ← T + P/v` for `v = 1, …, N − x` from `P = 1`,
   `T = 0`, and `Σ (xᵢ/N) · T(xᵢ)` over values above 0 in record order. Whole numbers
   totalling more than 1 and at most 10 000. **(implemented)**
+- **Chao–Wang–Jost entropy** ([ADR 0562](adr/0562-chao-wang-jost-entropy.md);
+  `chao_wang_jost_entropy(samples)`, C# `Measurements.ChaoWangJostEntropy`): nats;
+  `Σ (xᵢ/N)(h(N − 1) − h(xᵢ − 1))` over values from 1 to `N − 1` in record order, plus
+  `(F₁/N)·B`, `B = q Σ_{m≥0} qᵐ/(N + m)` (until a term leaves the sum unchanged) when
+  `A·N ≥ 1` and `q^{1−N}(−ln A − Σ_{r<N} q^r/r)` otherwise, `q = 1 − A`. Whole numbers
+  totalling more than 1 and at most 10 000. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

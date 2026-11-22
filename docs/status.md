@@ -6,11 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Chao–Wang–Jost entropy in `measurements` (`chao_wang_jost_entropy(samples)`; whole
-     numbers at least 0, totalling more than 1:
-     `Σ_{xᵢ<N} (xᵢ/N)(h(N − 1) − h(xᵢ − 1)) + (F₁/N)(1 − A)^{1−N}(−ln A − Σ_{r=1}^{N−1} (1 − A)^r/r)`,
-     `h` the harmonic numbers, `A = 2F₂/((N − 1)F₁ + 2F₂)` (or `2/((N − 1)(F₁ − 1) + 2)` with
-     no doubletons, 1 with no singletons); Chao, Wang and Jost 2013).
+   - The Hill number in `measurements` (`hill_number(samples, order)`; whole numbers at
+     least 0, not all 0, `order` real and at least 0: `(Σ pᵢ^q)^{1/(1−q)}` over values above
+     0, `exp(−Σ pᵢ ln pᵢ)` at `q = 1`; the effective number of kinds of order `q`).
 
 ## Built
 
@@ -3860,6 +3858,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.ZhangEntropy`): Zhang's 2012 estimate of the Shannon entropy, in nats.
   Python 10781 passed, 2 skipped; .NET 9655 passed; conformance 7121/7121 in both. Version
   2026.11.21.38.
+- 2026-11-21: The Chao–Wang–Jost entropy (ADR 0562): `chao_wang_jost_entropy(samples)` in
+  `measurements` (C# `Measurements.ChaoWangJostEntropy`): the seen kinds through Zhang's
+  series, the unseen through the singletons and doubletons, in nats.
+  Python 10806 passed, 2 skipped; .NET 9674 passed; conformance 7137/7137 in both. Version
+  2026.11.21.39.
 
 ## Not built
 
