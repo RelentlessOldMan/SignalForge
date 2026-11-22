@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Miller–Madow entropy in `measurements` (`miller_madow_entropy(samples)`; whole
-     numbers at least 0, not all 0: the plug-in Shannon entropy in nats plus the bias term
-     `(k − 1)/(2N)`, `k` the count of values above 0).
+   - Hutcheson's variance in `measurements` (`hutcheson_variance(samples)`; whole numbers
+     at least 0, not all 0: the large-sample variance of the plug-in Shannon entropy,
+     `(Σ pᵢ ln² pᵢ − (Σ pᵢ ln pᵢ)²)/N + (k − 1)/(2N²)`).
 
 ## Built
 
@@ -3824,6 +3824,11 @@ Updated with every chunk of work. Dates are absolute.
   Horvitz–Thompson estimate of the Shannon entropy, in nats.
   Python 10638 passed, 2 skipped; .NET 9542 passed; conformance 7029/7029 in both. Version
   2026.11.21.31.
+- 2026-11-21: The Miller–Madow entropy (ADR 0555): `miller_madow_entropy(samples)` in
+  `measurements` (C# `Measurements.MillerMadowEntropy`): the plug-in Shannon entropy in
+  nats plus the bias term `(k − 1)/(2N)`.
+  Python 10658 passed, 2 skipped; .NET 9558 passed; conformance 7042/7042 in both. Version
+  2026.11.21.32.
 
 ## Not built
 

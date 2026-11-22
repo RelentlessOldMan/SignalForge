@@ -1275,6 +1275,10 @@ rule for code not written yet.
   `C = 1 − F₁/N` with `F₁ = N` taken as `N − 1`, `aᵢ = C · (xᵢ/N)`, and `H` is 0 less
   `aᵢ ln(aᵢ)/(1 − (1 − aᵢ)^N)` for each value above 0, in record order. Whole numbers as
   for the Brillouin index. **(implemented)**
+- **Miller–Madow entropy** ([ADR 0555](adr/0555-miller-madow-entropy.md);
+  `miller_madow_entropy(samples)`, C# `Measurements.MillerMadowEntropy`): nats; 0 less
+  `pᵢ ln pᵢ` for each value above 0, in record order, plus `(k − 1)/(2N)`. Whole numbers
+  as for the Brillouin index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

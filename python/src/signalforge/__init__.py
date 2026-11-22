@@ -411,6 +411,7 @@ from .measurements import (
     mean_log_deviation,
     menhinick_index,
     michael_coefficient,
+    miller_madow_entropy,
     minkowski_distance,
     modified_allan_deviation,
     modulation_transfer,
@@ -734,7 +735,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.31"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.32"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1183,6 +1184,7 @@ __all__ = [
     "michael_coefficient",
     "mid_side_decode",
     "mid_side_encode",
+    "miller_madow_entropy",
     "minimum_phase",
     "minkowski_distance",
     "modified_allan_deviation",
