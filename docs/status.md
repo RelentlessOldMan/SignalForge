@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Tsallis diversity of counts in `measurements` (`tsallis_diversity(samples,
-     order)`; values and order as for the Hill number: `(1 − Σ pᵢ^q)/(q − 1)` over values
-     above 0, the Shannon entropy at `q = 1`; Tsallis 1988, on abundances rather than the
-     histogram `tsallis_entropy` bins).
+   - Tsallis evenness in `measurements` (`tsallis_evenness(samples, order)`; values and
+     order as for the Hill number, at least two values above 0: the Tsallis diversity of
+     counts over its value for `K` equal shares, `(1 − K^{1−q})/(q − 1)`, `ln K` at `q = 1`).
 
 ## Built
 
@@ -3889,6 +3888,11 @@ Updated with every chunk of work. Dates are absolute.
   Hill evenness generator, which reseeded its random case with 563 while saying 564.
   Python 10919 passed, 2 skipped; .NET 9767 passed; conformance 7214/7214 in both. Version
   2026.11.22.0.
+- 2026-11-22: The Tsallis diversity of counts (ADR 0568): `tsallis_diversity(samples, order)`
+  in `measurements` (C# `Measurements.TsallisDiversity`): `(1 − Σ pᵢ^q)/(q − 1)` on
+  abundances, the Shannon entropy at `q = 1`, without cancellation near 1.
+  Python 10942 passed, 2 skipped; .NET 9785 passed; conformance 7229/7229 in both. Version
+  2026.11.22.1.
 
 ## Not built
 

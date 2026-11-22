@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "suite": "tsallis_diversity",
+  "description": "The Tsallis diversity of counts (conventions: the Tsallis diversity of counts; ADR 0568).",
+  "cases": [
+    {"id": "tsallis_diversity.simpson", "op": "tsallis_diversity", "args": {"samples": [1.0, 1.0, 2.0], "order": 2.0}, "expected": 0.625, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 2: 1 - 3/8 = 5/8"},
+    {"id": "tsallis_diversity.even_pair", "op": "tsallis_diversity", "args": {"samples": [1.0, 1.0], "order": 2.0}, "expected": 0.5, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "two equal shares, q = 2: 1/2"},
+    {"id": "tsallis_diversity.richness", "op": "tsallis_diversity", "args": {"samples": [0.0, 3.0, 5.0], "order": 0.0}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0: K - 1 = 1"},
+    {"id": "tsallis_diversity.shannon", "op": "tsallis_diversity", "args": {"samples": [1.0, 1.0], "order": 1.0}, "expected": 0.6931471805599453, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 1: ln 2"},
+    {"id": "tsallis_diversity.cubic", "op": "tsallis_diversity", "args": {"samples": [1.0, 1.0, 2.0], "order": 3.0}, "expected": 0.421875, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 3: (1 - 10/64)/2 = 27/64"},
+    {"id": "tsallis_diversity.half", "op": "tsallis_diversity", "args": {"samples": [1.0, 3.0], "order": 0.5}, "expected": 0.7320508075688773, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 1/2: (1 - (1 + sqrt 3)/2)/(-1/2)"},
+    {"id": "tsallis_diversity.one_kind", "op": "tsallis_diversity", "args": {"samples": [0.0, 4.0], "order": 2.0}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "one kind: 0"},
+    {"id": "tsallis_diversity.near_one", "op": "tsallis_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 1.0000001}, "expected": 1.1880091574197866, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q just above 1: the expm1 form"},
+    {"id": "tsallis_diversity.small_order", "op": "tsallis_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 0.1}, "expected": 2.6800004815128236, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0.1"},
+    {"id": "tsallis_diversity.large", "op": "tsallis_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0, 0.0], "order": 41.0}, "expected": 0.02499999999999758, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 41"},
+    {"id": "tsallis_diversity.random", "op": "tsallis_diversity", "args": {"samples": [0.51, 2.687, 4.116, 4.964, 1.362, 1.024, 3.635, 2.204, 2.15, 1.618, 4.14, 0.58, 4.506, 0.032, 0.81, 2.342, 1.212, 1.596, 2.827, 3.403, 0.155, 3.93, 2.737, 3.515, 2.654, 2.476, 3.625, 4.171, 4.306, 4.457], "order": 1.75}, "expected": 1.208137060642469, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "30 values from random.Random(568).uniform(0, 5), 3 places, q = 1.75"},
+    {"id": "tsallis_diversity.empty", "op": "tsallis_diversity", "args": {"samples": [], "order": 2.0}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "tsallis_diversity.negative", "op": "tsallis_diversity", "args": {"samples": [1.0, -0.5, 2.0], "order": 2.0}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "tsallis_diversity.all_zero", "op": "tsallis_diversity", "args": {"samples": [0.0, 0.0, 0.0], "order": 2.0}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "tsallis_diversity.negative_order", "op": "tsallis_diversity", "args": {"samples": [1.0, 2.0, 3.0], "order": -0.5}, "error": "invalid_argument", "source": "the order must be at least 0"}
+  ]
+}

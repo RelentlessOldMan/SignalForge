@@ -1338,6 +1338,11 @@ rule for code not written yet.
   `renyi_evenness(samples, order)`, C# `Measurements.RenyiEvenness`): the Rényi diversity
   of counts of order `q` over `ln K`, `K` the count of values above 0; from 0 to 1, 1 at
   `q = 0`. Arguments as for the Hill number, with `K ≥ 2`. **(implemented)**
+- **Tsallis diversity of counts** ([ADR 0568](adr/0568-tsallis-diversity.md);
+  `tsallis_diversity(samples, order)`, C# `Measurements.TsallisDiversity`):
+  `pᵢ = xᵢ/S` over values above 0; `−Σ pᵢ ln pᵢ` at `q = 1`, else
+  `−(Σ pᵢ·expm1((q − 1) ln pᵢ))/(q − 1)`, sums in record order. Arguments as for the Hill
+  number. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
