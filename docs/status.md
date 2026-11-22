@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Menhinick's index in `measurements` (`menhinick_index(samples)`; a real record of
-     values at least 0, not all 0: `k/√N`, `k` the count of values above 0 and `N = Σ xᵢ`).
+   - Margalef's index in `measurements` (`margalef_index(samples)`; a real record of values
+     at least 0 with total `N > 1`: `(k − 1)/ln N`, `k` the count of values above 0).
 
 ## Built
 
@@ -3754,6 +3754,11 @@ Updated with every chunk of work. Dates are absolute.
   numerator over its largest value.
   Python 10335 passed, 2 skipped; .NET 9306 passed; conformance 6835/6835 in both. Version
   2026.11.21.17.
+- 2026-11-21: Menhinick's index (ADR 0541): `menhinick_index(samples)` in `measurements`
+  (C# `Measurements.MenhinickIndex`): the count of values above 0 over the square root of
+  the total.
+  Python 10353 passed, 2 skipped; .NET 9321 passed; conformance 6847/6847 in both. Version
+  2026.11.21.18.
 
 ## Not built
 

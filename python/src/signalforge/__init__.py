@@ -398,6 +398,7 @@ from .measurements import (
     mcintosh_evenness,
     mcnemar_statistic,
     mean_log_deviation,
+    menhinick_index,
     michael_coefficient,
     minkowski_distance,
     modified_allan_deviation,
@@ -720,7 +721,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.17"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.18"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1153,6 +1154,7 @@ __all__ = [
     "median_filter",
     "mel_filterbank",
     "mel_to_hz",
+    "menhinick_index",
     "mfcc",
     "michael_coefficient",
     "mid_side_decode",

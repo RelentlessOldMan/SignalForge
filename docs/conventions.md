@@ -1212,6 +1212,10 @@ rule for code not written yet.
   `mcintosh_evenness(samples)`, C# `Measurements.McIntoshEvenness`):
   `(N − U)/(N − N/√n)`, `N = Σᵢ xᵢ`, `U = √(Σᵢ xᵢ²)`, both sums in record order, `n` the
   record length. At least 2 values, every value at least 0, not all 0. **(implemented)**
+- **Menhinick's index** ([ADR 0541](adr/0541-menhinick-index.md);
+  `menhinick_index(samples)`, C# `Measurements.MenhinickIndex`): `k/√N`, `k` the count of
+  values above 0, `N = Σᵢ xᵢ` in record order. Records as for the Gini coefficient.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
