@@ -435,6 +435,7 @@ from .measurements import (
     octave_band_levels,
     overlap_coefficient,
     palma_ratio,
+    patil_taillie_diversity,
     pattern_difference,
     pearson_correlation,
     pearson_heron_ii,
@@ -744,7 +745,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.41"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.42"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1239,6 +1240,7 @@ __all__ = [
     "overlap_coefficient",
     "palma_ratio",
     "pan",
+    "patil_taillie_diversity",
     "pattern_difference",
     "peak_hold",
     "peak_widths",

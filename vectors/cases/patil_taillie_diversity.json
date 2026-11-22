@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "suite": "patil_taillie_diversity",
+  "description": "The Patil-Taillie diversity (conventions: the Patil-Taillie diversity; ADR 0565).",
+  "cases": [
+    {"id": "patil_taillie_diversity.simpson", "op": "patil_taillie_diversity", "args": {"samples": [1.0, 1.0, 2.0], "beta": 1.0}, "expected": 0.625, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "beta = 1: 1 - 3/8 = 5/8"},
+    {"id": "patil_taillie_diversity.even_pair", "op": "patil_taillie_diversity", "args": {"samples": [1.0, 1.0], "beta": 1.0}, "expected": 0.5, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "two equal shares, beta = 1: 1/2"},
+    {"id": "patil_taillie_diversity.richness", "op": "patil_taillie_diversity", "args": {"samples": [0.0, 3.0, 5.0], "beta": -1.0}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "beta = -1: K - 1 = 1"},
+    {"id": "patil_taillie_diversity.shannon", "op": "patil_taillie_diversity", "args": {"samples": [1.0, 1.0], "beta": 0.0}, "expected": 0.6931471805599453, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "beta = 0: ln 2"},
+    {"id": "patil_taillie_diversity.square", "op": "patil_taillie_diversity", "args": {"samples": [1.0, 1.0, 2.0], "beta": 2.0}, "expected": 0.421875, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "beta = 2: (1 - 10/64)/2 = 27/64"},
+    {"id": "patil_taillie_diversity.minus_half", "op": "patil_taillie_diversity", "args": {"samples": [1.0, 3.0], "beta": -0.5}, "expected": 0.7320508075688773, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "beta = -1/2: (1 - (1 + sqrt 3)/2)/(-1/2)"},
+    {"id": "patil_taillie_diversity.one_kind", "op": "patil_taillie_diversity", "args": {"samples": [0.0, 4.0], "beta": 1.0}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "one kind: 0"},
+    {"id": "patil_taillie_diversity.near_zero", "op": "patil_taillie_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "beta": 1e-07}, "expected": 1.1880091574197866, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "beta just above 0: the expm1 form"},
+    {"id": "patil_taillie_diversity.negative_beta", "op": "patil_taillie_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "beta": -0.9}, "expected": 2.6800004815128236, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "beta = -0.9"},
+    {"id": "patil_taillie_diversity.large", "op": "patil_taillie_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0, 0.0], "beta": 40.0}, "expected": 0.02499999999999758, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "beta = 40"},
+    {"id": "patil_taillie_diversity.random", "op": "patil_taillie_diversity", "args": {"samples": [4.696, 4.02, 2.366, 1.619, 1.888, 3.344, 2.139, 1.587, 0.598, 4.899, 3.11, 4.14, 3.671, 4.541, 2.169, 1.115, 3.115, 0.774, 2.535, 0.568, 4.823, 1.314, 4.972, 1.527, 0.269, 0.784, 0.626, 3.756, 3.95, 4.581], "beta": 0.75}, "expected": 1.2064137279488851, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "30 values from random.Random(565).uniform(0, 5), 3 places, beta = 0.75"},
+    {"id": "patil_taillie_diversity.empty", "op": "patil_taillie_diversity", "args": {"samples": [], "beta": 2.0}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "patil_taillie_diversity.negative", "op": "patil_taillie_diversity", "args": {"samples": [1.0, -0.5, 2.0], "beta": 2.0}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "patil_taillie_diversity.all_zero", "op": "patil_taillie_diversity", "args": {"samples": [0.0, 0.0, 0.0], "beta": 2.0}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "patil_taillie_diversity.beta_below", "op": "patil_taillie_diversity", "args": {"samples": [1.0, 2.0, 3.0], "beta": -1.5}, "error": "invalid_argument", "source": "beta must be at least -1"}
+  ]
+}

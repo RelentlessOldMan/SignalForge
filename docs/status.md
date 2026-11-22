@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Patil–Taillie diversity in `measurements` (`patil_taillie_diversity(samples,
-     beta)`; values as for the Hill number, `β ≥ −1`: `(1 − Σ pᵢ^{β+1})/β` over values above
-     0, the Shannon entropy at `β = 0`; Patil and Taillie 1982).
+   - The Rényi diversity of counts in `measurements` (`renyi_diversity(samples, order)`;
+     values and order as for the Hill number: `ln D_q`, the log of the Hill number, in nats,
+     computed without forming `D_q` so large values do not overflow; Rényi 1961).
 
 ## Built
 
@@ -3873,6 +3873,11 @@ Updated with every chunk of work. Dates are absolute.
   above 0.
   Python 10852 passed, 2 skipped; .NET 9711 passed; conformance 7167/7167 in both. Version
   2026.11.21.41.
+- 2026-11-21: The Patil–Taillie diversity (ADR 0565): `patil_taillie_diversity(samples,
+  beta)` in `measurements` (C# `Measurements.PatilTaillieDiversity`): `(1 − Σ pᵢ^{β+1})/β`,
+  the Shannon entropy at `β = 0`, without cancellation near 0.
+  Python 10875 passed, 2 skipped; .NET 9729 passed; conformance 7182/7182 in both. Version
+  2026.11.21.42.
 
 ## Not built
 

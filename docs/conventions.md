@@ -1324,6 +1324,11 @@ rule for code not written yet.
   `hill_evenness(samples, order)`, C# `Measurements.HillEvenness`): the Hill number of
   order `q` over `K`, the count of values above 0; from `1/K` to 1, 1 at `q = 0`. Arguments
   as for the Hill number. **(implemented)**
+- **Patil–Taillie diversity** ([ADR 0565](adr/0565-patil-taillie-diversity.md);
+  `patil_taillie_diversity(samples, beta)`, C# `Measurements.PatilTaillieDiversity`):
+  `pᵢ = xᵢ/S` over values above 0; `−Σ pᵢ ln pᵢ` at `β = 0`, else
+  `−(Σ pᵢ·expm1(β ln pᵢ))/β`, sums in record order. Records as for the Gini coefficient;
+  `beta` finite, at least −1. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
