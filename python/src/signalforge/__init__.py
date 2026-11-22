@@ -368,6 +368,7 @@ from .measurements import (
     hoeffding_d,
     hoover_index,
     hurlbert_pie,
+    hutcheson_t,
     hutcheson_variance,
     iacc,
     icc_consistency,
@@ -736,7 +737,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.33"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.34"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1098,6 +1099,7 @@ __all__ = [
     "hoeffding_d",
     "hoover_index",
     "hurlbert_pie",
+    "hutcheson_t",
     "hutcheson_variance",
     "hz_to_bark",
     "hz_to_erb_rate",

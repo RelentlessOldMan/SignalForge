@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "hutcheson_t",
+  "description": "Hutcheson's t (conventions: Hutcheson's t; ADR 0557).",
+  "cases": [
+    {"id": "hutcheson_t.even_vs_one_kind", "op": "hutcheson_t", "args": {"a": [2.0, 2.0], "b": [0.0, 4.0]}, "expected": 3.921032573874189, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "H = ln 2, V = 1/32 against 0, 0: 4 sqrt(2) ln 2"},
+    {"id": "hutcheson_t.one_kind_vs_even", "op": "hutcheson_t", "args": {"a": [4.0], "b": [2.0, 2.0]}, "expected": -3.921032573874189, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "the swap: -4 sqrt(2) ln 2"},
+    {"id": "hutcheson_t.quarters_vs_halves", "op": "hutcheson_t", "args": {"a": [1.0, 1.0, 2.0], "b": [2.0, 2.0]}, "expected": 0.9850838182658529, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "(ln 2/2)/sqrt(((ln 2)^2 + 1)/16 + 1/32)"},
+    {"id": "hutcheson_t.same", "op": "hutcheson_t", "args": {"a": [1.0, 2.0, 3.0], "b": [3.0, 2.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "the same shares: 0"},
+    {"id": "hutcheson_t.ramp_vs_mixed", "op": "hutcheson_t", "args": {"a": [1.0, 2.0, 3.0], "b": [5.0, 1.0, 1.0, 0.0, 2.0]}, "expected": -0.39449431084376313, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "N = 6 against N = 9"},
+    {"id": "hutcheson_t.large", "op": "hutcheson_t", "args": {"a": [1000.0, 2000.0, 3000.0, 4000.0], "b": [2500.0, 2500.0, 2500.0, 2400.0]}, "expected": -24.94579750372426, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "N = 10000 against N = 9900"},
+    {"id": "hutcheson_t.random", "op": "hutcheson_t", "args": {"a": [0.0, 8.0, 1.0, 8.0, 9.0, 8.0, 4.0, 6.0, 8.0, 3.0, 9.0, 2.0, 6.0, 0.0, 1.0, 2.0, 4.0, 2.0, 8.0, 1.0, 7.0, 6.0, 0.0, 8.0, 7.0, 8.0, 3.0, 2.0, 1.0, 7.0, 4.0, 9.0, 4.0, 6.0, 8.0, 5.0, 4.0, 7.0, 5.0, 5.0], "b": [0.0, 4.0, 4.0, 1.0, 1.0, 3.0, 0.0, 3.0, 0.0, 4.0, 0.0, 1.0, 3.0, 1.0, 3.0, 2.0, 2.0, 2.0, 3.0, 4.0, 4.0, 0.0, 0.0, 0.0, 2.0, 3.0, 1.0, 0.0, 3.0, 0.0]}, "expected": 5.906009976057568, "tol": {"abs": 1e-12, "rel": 1e-11}, "source": "40 then 30 whole values from random.Random(557).randint(0, 9), (0, 4)"},
+    {"id": "hutcheson_t.a_empty", "op": "hutcheson_t", "args": {"a": [], "b": [2.0, 2.0]}, "error": "invalid_argument", "source": "a needs a value"},
+    {"id": "hutcheson_t.b_negative", "op": "hutcheson_t", "args": {"a": [1.0, 2.0, 3.0], "b": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "hutcheson_t.a_all_zero", "op": "hutcheson_t", "args": {"a": [0.0, 0.0, 0.0], "b": [2.0, 2.0]}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "hutcheson_t.b_fraction", "op": "hutcheson_t", "args": {"a": [1.0, 2.0, 3.0], "b": [1.5, 2.0]}, "error": "invalid_argument", "source": "values must be whole numbers"},
+    {"id": "hutcheson_t.a_too_large", "op": "hutcheson_t", "args": {"a": [10000000.0, 1.0], "b": [2.0, 2.0]}, "error": "invalid_argument", "source": "the total must be at most 10 000 000"},
+    {"id": "hutcheson_t.both_one_kind", "op": "hutcheson_t", "args": {"a": [4.0], "b": [0.0, 3.0]}, "error": "invalid_argument", "source": "V_a + V_b = 0"}
+  ]
+}

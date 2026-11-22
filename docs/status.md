@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hutcheson's t in `measurements` (`hutcheson_t(a, b)`; two records as for Hutcheson's
-     variance: `(H_a − H_b)/√(V_a + V_b)`, the plug-in Shannon entropies over the root of
-     the summed Hutcheson variances; both variances 0 is `invalid_argument`).
+   - The jackknife Shannon entropy in `measurements` (`jackknife_entropy(samples)`; whole
+     numbers at least 0, totalling more than 1: `N·H − (N − 1)/N · Σᵢ xᵢ H₋ᵢ`, `H₋ᵢ` the
+     plug-in entropy in nats with one individual of kind `i` removed; Zahl's estimate).
 
 ## Built
 
@@ -3834,6 +3834,11 @@ Updated with every chunk of work. Dates are absolute.
   plug-in Shannon entropy.
   Python 10679 passed, 2 skipped; .NET 9574 passed; conformance 7055/7055 in both. Version
   2026.11.21.33.
+- 2026-11-21: Hutcheson's t (ADR 0557): `hutcheson_t(a, b)` in `measurements` (C#
+  `Measurements.HutchesonT`): the difference of two plug-in Shannon entropies over the
+  root of the summed Hutcheson variances.
+  Python 10694 passed, 2 skipped; .NET 9590 passed; conformance 7068/7068 in both. Version
+  2026.11.21.34.
 
 ## Not built
 

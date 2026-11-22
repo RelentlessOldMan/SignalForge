@@ -7322,6 +7322,54 @@ def hutcheson_variance(samples: ArrayLike) -> float:
     return (sq - lin * lin) / total + (k - 1) / (2.0 * total * total)
 
 
+def _hutcheson_parts(samples: ArrayLike, name: str) -> tuple[float, float]:
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError(f"{name} must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError(f"{name} must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError(f"{name} must be finite")
+    if int(x.shape[0]) < 1:
+        raise ValueError(f"{name} must not be empty")
+    if np.any(x < 0):
+        raise ValueError(f"{name} must be at least 0")
+    if np.any(x != np.floor(x)):
+        raise ValueError(f"{name} must be whole numbers")
+    vals = [float(v) for v in x]
+    total = 0.0
+    for v in vals:
+        total += v
+    if not total > 0:
+        raise ValueError(f"{name} must not all be 0")
+    if total > 10_000_000:
+        raise ValueError(f"{name} must total at most 10 000 000")
+    k = 0
+    lin = 0.0
+    sq = 0.0
+    for value in vals:
+        if value > 0:
+            k += 1
+            share = value / total
+            log = math.log(share)
+            lin += share * log
+            sq += share * log * log
+    return -lin, (sq - lin * lin) / total + (k - 1) / (2.0 * total * total)
+
+
+def hutcheson_t(a: ArrayLike, b: ArrayLike) -> float:
+    """Hutcheson's t between two records of whole numbers at least 0, not all 0: the
+    difference of their plug-in Shannon entropies over the root of the summed Hutcheson
+    variances (conventions: Hutcheson's t; ADR 0557)."""
+    h_a, v_a = _hutcheson_parts(a, "a")
+    h_b, v_b = _hutcheson_parts(b, "b")
+    spread = v_a + v_b
+    if not spread > 0:
+        raise ValueError("a and b must not both have a single kind")
+    return (h_a - h_b) / math.sqrt(spread)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

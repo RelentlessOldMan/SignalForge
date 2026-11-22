@@ -1284,6 +1284,10 @@ rule for code not written yet.
   `(Q − L·L)/N + (k − 1)/(2·N·N)`, `L = Σ pᵢ lᵢ` and `Q = Σ pᵢ lᵢ lᵢ` over the values
   above 0 in record order, `lᵢ = ln pᵢ`. Whole numbers as for the Brillouin index.
   **(implemented)**
+- **Hutcheson's t** ([ADR 0557](adr/0557-hutcheson-t.md); `hutcheson_t(a, b)`, C#
+  `Measurements.HutchesonT`): `(H_a − H_b)/√(V_a + V_b)`, `H = −L` and `V` as for
+  Hutcheson's variance; each record as for Hutcheson's variance, and `V_a + V_b > 0`.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
