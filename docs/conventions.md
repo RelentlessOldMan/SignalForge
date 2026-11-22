@@ -1187,6 +1187,10 @@ rule for code not written yet.
   `smith_wilson_evenness(samples)`, C# `Measurements.SmithWilsonEvenness`):
   `1 − (2/π)·atan(Σᵢ (ln xᵢ − m)²/n)`, `m` the mean of the `ln xᵢ`, divisor `n`; sums in
   record order. Real, finite, at least 1 value, every value above 0. **(implemented)**
+- **Bulla's evenness** ([ADR 0535](adr/0535-bulla-evenness.md);
+  `bulla_evenness(samples)`, C# `Measurements.BullaEvenness`): `(O − 1/n)/(1 − 1/n)`,
+  `O = Σᵢ min(sᵢ, 1/n)`, the rescaled value not `O`; `n` the record length with zero shares
+  counted; minima in record order. Records as for Pielou's evenness. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

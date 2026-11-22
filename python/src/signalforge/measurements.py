@@ -6522,6 +6522,36 @@ def smith_wilson_evenness(samples: ArrayLike) -> float:
     return 1.0 - 2.0 / math.pi * math.atan(acc / n)
 
 
+def bulla_evenness(samples: ArrayLike) -> float:
+    """Bulla's evenness of a record of at least 2 values at least 0, not all 0: the overlap
+    of the shares with equal shares, rescaled from 0 to 1 (conventions: Bulla's evenness;
+    ADR 0535)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 2:
+        raise ValueError("samples must have at least 2 values")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    even = 1.0 / n
+    acc = 0.0
+    for value in vals:
+        acc += min(value / total, even)
+    return (acc - even) / (1.0 - even)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

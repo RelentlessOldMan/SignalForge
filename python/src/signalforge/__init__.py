@@ -273,6 +273,7 @@ from .measurements import (
     brier_score,
     bubble_entropy,
     buishand_range,
+    bulla_evenness,
     camargo_evenness,
     canberra_distance,
     centre_time,
@@ -714,7 +715,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.11"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.12"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -868,6 +869,7 @@ __all__ = [
     "brier_score",
     "bubble_entropy",
     "buishand_range",
+    "bulla_evenness",
     "burg",
     "burg_psd",
     "butterworth_bandpass",

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Bulla's evenness in `measurements` (`bulla_evenness(samples)`; a real record of at
-     least 2 values at least 0, not all 0: `(O − 1/n)/(1 − 1/n)`, `O = Σ min(sᵢ, 1/n)` the
-     overlap of the shares with equal shares; from 0 to 1).
+   - The Hill ratio evenness in `measurements` (`hill_ratio_evenness(samples)`; a real
+     record of values at least 0, not all 0: `(1/Σ sᵢ²)/exp(−Σ sᵢ ln sᵢ)`, the Hill
+     numbers of order 2 over order 1, `0·ln 0 = 0`; above 0, at most 1).
 
 ## Built
 
@@ -3725,6 +3725,11 @@ Updated with every chunk of work. Dates are absolute.
   the arctangent of the variance of the logarithms.
   Python 10220 passed, 2 skipped; .NET 9214 passed; conformance 6761/6761 in both. Version
   2026.11.21.11.
+- 2026-11-21: Bulla's evenness (ADR 0535): `bulla_evenness(samples)` in `measurements`
+  (C# `Measurements.BullaEvenness`): the overlap of the shares with equal shares,
+  rescaled from 0 to 1.
+  Python 10239 passed, 2 skipped; .NET 9229 passed; conformance 6773/6773 in both. Version
+  2026.11.21.12.
 
 ## Not built
 
