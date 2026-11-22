@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "jackknife_entropy",
+  "description": "The jackknife Shannon entropy (conventions: the jackknife Shannon entropy; ADR 0558).",
+  "cases": [
+    {"id": "jackknife_entropy.one_kind", "op": "jackknife_entropy", "args": {"samples": [0.0, 4.0]}, "expected": 0.0, "tol": {"abs": 1e-10, "rel": 1e-11}, "source": "one kind: every H is 0"},
+    {"id": "jackknife_entropy.two_ones", "op": "jackknife_entropy", "args": {"samples": [1.0, 1.0]}, "expected": 1.3862943611198906, "tol": {"abs": 1e-10, "rel": 1e-11}, "source": "H = ln 2, each H_-i = 0: 2 ln 2"},
+    {"id": "jackknife_entropy.two_twos", "op": "jackknife_entropy", "args": {"samples": [2.0, 2.0]}, "expected": 0.8630462173553428, "tol": {"abs": 1e-10, "rel": 1e-11}, "source": "4 ln 2 - (3/4)(4 ln 3 - (8/3) ln 2) = 3 ln(4/3)"},
+    {"id": "jackknife_entropy.ramp", "op": "jackknife_entropy", "args": {"samples": [1.0, 2.0, 3.0]}, "expected": 1.286497880382312, "tol": {"abs": 1e-10, "rel": 1e-11}, "source": "N = 6"},
+    {"id": "jackknife_entropy.mixed", "op": "jackknife_entropy", "args": {"samples": [5.0, 1.0, 1.0, 0.0, 2.0]}, "expected": 1.4414167169545673, "tol": {"abs": 1e-10, "rel": 1e-11}, "source": "N = 9"},
+    {"id": "jackknife_entropy.large", "op": "jackknife_entropy", "args": {"samples": [1000.0, 2000.0, 3000.0, 4000.0]}, "expected": 1.280004258901009, "tol": {"abs": 1e-10, "rel": 1e-11}, "source": "N = 10000"},
+    {"id": "jackknife_entropy.random", "op": "jackknife_entropy", "args": {"samples": [6.0, 4.0, 8.0, 0.0, 8.0, 0.0, 2.0, 7.0, 1.0, 9.0, 3.0, 2.0, 9.0, 0.0, 2.0, 2.0, 3.0, 8.0, 9.0, 4.0, 5.0, 0.0, 4.0, 7.0, 7.0, 6.0, 7.0, 0.0, 3.0, 8.0, 1.0, 4.0, 8.0, 1.0, 0.0, 0.0, 3.0, 0.0, 1.0, 7.0]}, "expected": 3.4194892196454822, "tol": {"abs": 1e-10, "rel": 1e-11}, "source": "40 whole values from random.Random(558).randint(0, 9)"},
+    {"id": "jackknife_entropy.empty", "op": "jackknife_entropy", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "jackknife_entropy.negative", "op": "jackknife_entropy", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "jackknife_entropy.all_zero", "op": "jackknife_entropy", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "jackknife_entropy.fraction", "op": "jackknife_entropy", "args": {"samples": [1.5, 2.0]}, "error": "invalid_argument", "source": "values must be whole numbers"},
+    {"id": "jackknife_entropy.too_large", "op": "jackknife_entropy", "args": {"samples": [10000000.0, 1.0]}, "error": "invalid_argument", "source": "the total must be at most 10 000 000"},
+    {"id": "jackknife_entropy.total_one", "op": "jackknife_entropy", "args": {"samples": [0.0, 1.0]}, "error": "invalid_argument", "source": "the total must be above 1"}
+  ]
+}

@@ -7370,6 +7370,51 @@ def hutcheson_t(a: ArrayLike, b: ArrayLike) -> float:
     return (h_a - h_b) / math.sqrt(spread)
 
 
+def jackknife_entropy(samples: ArrayLike) -> float:
+    """The jackknife Shannon entropy of a record of whole numbers at least 0 totalling more
+    than 1, in nats: Zahl's jackknife over individuals of the plug-in entropy
+    (conventions: the jackknife Shannon entropy; ADR 0558)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    if np.any(x != np.floor(x)):
+        raise ValueError("samples must be whole numbers")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    if total > 10_000_000:
+        raise ValueError("samples must total at most 10 000 000")
+    if not total > 1:
+        raise ValueError("samples must total more than 1")
+    s_log = 0.0
+    for value in vals:
+        if value > 0:
+            s_log += value * math.log(value)
+    rest = total - 1.0
+    acc = 0.0
+    for value in vals:
+        if value > 0:
+            less = value - 1.0
+            drop = s_log - value * math.log(value)
+            if less > 0:
+                drop += less * math.log(less)
+            acc += value * (math.log(rest) - drop / rest)
+    return total * (math.log(total) - s_log / total) - rest / total * acc
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

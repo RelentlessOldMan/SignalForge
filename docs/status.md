@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The jackknife Shannon entropy in `measurements` (`jackknife_entropy(samples)`; whole
-     numbers at least 0, totalling more than 1: `N·H − (N − 1)/N · Σᵢ xᵢ H₋ᵢ`, `H₋ᵢ` the
-     plug-in entropy in nats with one individual of kind `i` removed; Zahl's estimate).
+   - The Grassberger entropy in `measurements` (`grassberger_entropy(samples)`; whole
+     numbers at least 0, not all 0: `ln N − (1/N) Σ xᵢ G(xᵢ)`,
+     `G(n) = ψ(n) + ½(−1)ⁿ(ψ((n + 1)/2) − ψ(n/2))`, ψ at whole and half-whole numbers from
+     finite sums; Grassberger's 2003 estimate).
 
 ## Built
 
@@ -3839,6 +3840,11 @@ Updated with every chunk of work. Dates are absolute.
   root of the summed Hutcheson variances.
   Python 10694 passed, 2 skipped; .NET 9590 passed; conformance 7068/7068 in both. Version
   2026.11.21.34.
+- 2026-11-21: The jackknife Shannon entropy (ADR 0558): `jackknife_entropy(samples)` in
+  `measurements` (C# `Measurements.JackknifeEntropy`): Zahl's jackknife over individuals
+  of the plug-in Shannon entropy, in nats.
+  Python 10716 passed, 2 skipped; .NET 9606 passed; conformance 7081/7081 in both. Version
+  2026.11.21.35.
 
 ## Not built
 

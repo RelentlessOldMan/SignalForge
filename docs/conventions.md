@@ -1288,6 +1288,12 @@ rule for code not written yet.
   `Measurements.HutchesonT`): `(H_a − H_b)/√(V_a + V_b)`, `H = −L` and `V` as for
   Hutcheson's variance; each record as for Hutcheson's variance, and `V_a + V_b > 0`.
   **(implemented)**
+- **Jackknife Shannon entropy** ([ADR 0558](adr/0558-jackknife-entropy.md);
+  `jackknife_entropy(samples)`, C# `Measurements.JackknifeEntropy`): nats;
+  `S = Σ xᵢ ln xᵢ`, `H = ln N − S/N`,
+  `H₋ᵢ = ln(N − 1) − (S − xᵢ ln xᵢ + (xᵢ − 1) ln(xᵢ − 1))/(N − 1)` (0 for the last product
+  when `xᵢ = 1`), and `N·H − (N − 1)/N · Σ xᵢ H₋ᵢ`, the sums over values above 0 in record
+  order. Whole numbers as for the Brillouin index, with `N > 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
