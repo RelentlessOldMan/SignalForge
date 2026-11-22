@@ -1315,6 +1315,11 @@ rule for code not written yet.
   `(F₁/N)·B`, `B = q Σ_{m≥0} qᵐ/(N + m)` (until a term leaves the sum unchanged) when
   `A·N ≥ 1` and `q^{1−N}(−ln A − Σ_{r<N} q^r/r)` otherwise, `q = 1 − A`. Whole numbers
   totalling more than 1 and at most 10 000. **(implemented)**
+- **Hill number** ([ADR 0563](adr/0563-hill-number.md); `hill_number(samples, order)`,
+  C# `Measurements.HillNumber`): `pᵢ = xᵢ/S` over values above 0; the count at `q = 0`,
+  `exp(−Σ pᵢ ln pᵢ)` at `q = 1`, `exp(log1p(Σ pᵢ·expm1((q − 1) ln pᵢ))/(1 − q))` when
+  `|q − 1| < 1/2`, else `exp((q ln m + ln Σ (pᵢ/m)^q)/(1 − q))`, `m = max pᵢ`; sums in record
+  order. Records as for the Gini coefficient; `order` finite, at least 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Hill number in `measurements` (`hill_number(samples, order)`; whole numbers at
-     least 0, not all 0, `order` real and at least 0: `(Σ pᵢ^q)^{1/(1−q)}` over values above
-     0, `exp(−Σ pᵢ ln pᵢ)` at `q = 1`; the effective number of kinds of order `q`).
+   - Hill evenness in `measurements` (`hill_evenness(samples, order)`; values as for the
+     Hill number: the Hill number of order `q` over the count of values above 0, from
+     `1/K` to 1; Jost 2010).
 
 ## Built
 
@@ -3863,6 +3863,11 @@ Updated with every chunk of work. Dates are absolute.
   series, the unseen through the singletons and doubletons, in nats.
   Python 10806 passed, 2 skipped; .NET 9674 passed; conformance 7137/7137 in both. Version
   2026.11.21.39.
+- 2026-11-21: The Hill number (ADR 0563): `hill_number(samples, order)` in `measurements`
+  (C# `Measurements.HillNumber`): the effective number of kinds of order `q`, with
+  cancellation-free forms near `q = 1` and for large `q`.
+  Python 10832 passed, 2 skipped; .NET 9694 passed; conformance 7153/7153 in both. Version
+  2026.11.21.40.
 
 ## Not built
 

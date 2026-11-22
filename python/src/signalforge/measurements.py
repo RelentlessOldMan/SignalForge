@@ -7614,6 +7614,52 @@ def chao_wang_jost_entropy(samples: ArrayLike) -> float:
     return acc + ones / total * rest
 
 
+def hill_number(samples: ArrayLike, order: float) -> float:
+    """The Hill number of order ``order`` of a record of values at least 0, not all 0: the
+    effective number of kinds, ``(sum p**q)**(1/(1-q))`` over the shares above 0
+    (conventions: the Hill number; ADR 0563)."""
+    q = real(order, "order")
+    if not q >= 0:
+        raise ValueError("order must be at least 0")
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    shares = [a / total for a in vals if a > 0]
+    if q == 0:
+        return float(len(shares))
+    if q == 1:
+        acc = 0.0
+        for p in shares:
+            acc += p * math.log(p)
+        return math.exp(-acc)
+    if abs(q - 1.0) < 0.5:
+        s = 0.0
+        for p in shares:
+            s += p * math.expm1((q - 1.0) * math.log(p))
+        return math.exp(math.log1p(s) / (1.0 - q))
+    m = max(shares)
+    t = 0.0
+    for p in shares:
+        t += (p / m) ** q
+    return math.exp((q * math.log(m) + math.log(t)) / (1.0 - q))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
