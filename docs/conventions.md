@@ -1261,6 +1261,11 @@ rule for code not written yet.
   `P = Σ xᵢ(xᵢ − 1)` over the rare values, `S = S_abund + S_rare/C + F₁/C · γ²`, or
   `S_abund` with no rare kinds. Whole numbers as for the Brillouin index; rare kinds not
   all singletons. **(implemented)**
+- **Rarefied richness** ([ADR 0552](adr/0552-rarefied-richness.md);
+  `rarefied_richness(samples, size)`, C# `Measurements.RarefiedRichness`):
+  `Σᵢ (1 − qᵢ)` over the values above 0, `qᵢ = Πⱼ (N − n − j)/(N − j)` for
+  `j = 0 … xᵢ − 1`, stopped once it reaches 0. Whole numbers as for the Brillouin index;
+  `size` an integer from 1 to `N`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

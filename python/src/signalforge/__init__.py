@@ -440,6 +440,7 @@ from .measurements import (
     power_stats,
     prevalence_threshold,
     quintile_share_ratio,
+    rarefied_richness,
     recurrence_quantification,
     relative_risk,
     relative_risk_reduction,
@@ -731,7 +732,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.28"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.29"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1282,6 +1283,7 @@ __all__ = [
     "quantize",
     "quintile_share_ratio",
     "rapp_amplifier",
+    "rarefied_richness",
     "read_npy",
     "read_npy_2d",
     "read_npz",

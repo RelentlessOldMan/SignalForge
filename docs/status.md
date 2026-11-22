@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The rarefied richness in `measurements` (`rarefied_richness(samples, size)`; whole
-     numbers at least 0 and a whole `size` from 1 to `N`: Hurlbert's expected count of kinds
-     in `size` individuals drawn without replacement, `Σᵢ (1 − C(N − xᵢ, n)/C(N, n))`).
+   - The Chao–Jost coverage in `measurements` (`chao_jost_coverage(samples)`; whole numbers
+     at least 0, not all 0, total `N > 1`: `1 − F₁/N · (N − 1)F₁/((N − 1)F₁ + 2F₂)`, the
+     sample coverage with the doubletons; 1 when there are no singletons).
 
 ## Built
 
@@ -3809,6 +3809,11 @@ Updated with every chunk of work. Dates are absolute.
   rare group cut off at 10.
   Python 10569 passed, 2 skipped; .NET 9490 passed; conformance 6986/6986 in both. Version
   2026.11.21.28.
+- 2026-11-21: The rarefied richness (ADR 0552): `rarefied_richness(samples, size)` in
+  `measurements` (C# `Measurements.RarefiedRichness`): Hurlbert's expected count of kinds
+  in `size` individuals drawn without replacement.
+  Python 10596 passed, 2 skipped; .NET 9509 passed; conformance 7002/7002 in both. Version
+  2026.11.21.29.
 
 ## Not built
 
