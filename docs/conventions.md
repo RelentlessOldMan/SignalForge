@@ -1400,6 +1400,12 @@ rule for code not written yet.
   `Measurements.RuzickaSimilarity`): `Σ min(x_i, y_i)/Σ max(x_i, y_i)` on the raw values,
   both records first divided by the larger of their maxima, sums in index order. Records as
   for Pianka's niche overlap. **(implemented)**
+- **Morisita's overlap of two count records**
+  ([ADR 0581](adr/0581-morisita-overlap.md); `morisita_overlap(x, y)`, C#
+  `Measurements.MorisitaOverlap`): with totals `X`, `Y` and `S = Σ n(n − 1)` of each record,
+  `2 Σ x y (X − 1)(Y − 1)/(S_x Y(Y − 1) + S_y X(X − 1))`. Counts whole, at least 0, each
+  record totalling from 2 to 10 000 000, the same length, some count above 1.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

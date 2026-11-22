@@ -428,6 +428,7 @@ from .measurements import (
     modified_allan_deviation,
     modulation_transfer,
     morisita_horn_overlap,
+    morisita_overlap,
     mountford_coefficient,
     mtie,
     multiscale_entropy,
@@ -760,7 +761,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.22.13"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.22.14"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1227,6 +1228,7 @@ __all__ = [
     "modified_allan_deviation",
     "modulation_transfer",
     "morisita_horn_overlap",
+    "morisita_overlap",
     "mountford_coefficient",
     "moving_average",
     "moving_rms",

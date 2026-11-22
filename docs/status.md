@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Morisita's overlap of two count records in `measurements` (`morisita_overlap(x, y)`:
-     `2 Σ x y/((λ_x + λ_y) X Y)` with `λ = Σ n(n − 1)/(N(N − 1))`; counts whole, at least 0,
-     each record totalling at least 2; Morisita 1959).
+   - The balanced-variation part of the Bray–Curtis dissimilarity in `measurements`
+     (`bray_curtis_balanced(x, y)`; records as for `pianka_overlap`: with `A = Σ min(x, y)`,
+     `B = Σ x − A`, `C = Σ y − A`, `min(B, C)/(A + min(B, C))`; Baselga 2013).
 
 ## Built
 
@@ -3954,6 +3954,12 @@ Updated with every chunk of work. Dates are absolute.
   `Σ min/Σ max` on the raw values, scaled first so no sum overflows.
   Python 11195 passed, 2 skipped; .NET 9985 passed; conformance 7388/7388 in both. Version
   2026.11.22.13.
+- 2026-11-22: Morisita's overlap of two count records (ADR 0581):
+  `morisita_overlap(x, y)` in `measurements` (C# `Measurements.MorisitaOverlap`):
+  `2 Σ x y/((λ_x + λ_y) X Y)` with the unbiased Simpson concentrations; can pass 1 on small
+  samples.
+  Python 11221 passed, 2 skipped; .NET 10005 passed; conformance 7403/7403 in both. Version
+  2026.11.22.14.
 
 ## Not built
 

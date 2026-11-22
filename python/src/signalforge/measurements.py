@@ -8187,6 +8187,54 @@ def ruzicka_similarity(x: ArrayLike, y: ArrayLike) -> float:
     return low / high
 
 
+def morisita_overlap(x: ArrayLike, y: ArrayLike) -> float:
+    """Morisita's overlap of the count records ``x`` and ``y``, whole numbers at least 0, each
+    totalling from 2 to 10 000 000: 2 sum(x y)/((l_x + l_y) X Y) with the unbiased Simpson
+    concentrations l, at least 0 (conventions: Morisita's overlap of two count records;
+    ADR 0581)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        if np.any(a != np.floor(a)):
+            raise ValueError(f"{name} must be whole numbers")
+        vals = [float(b) for b in a]
+        total = 0.0
+        for b in vals:
+            total += b
+        if total < 2:
+            raise ValueError(f"{name} must total at least 2")
+        if total > 10_000_000:
+            raise ValueError(f"{name} must total at most 10 000 000")
+        pair.append(vals)
+    xv, yv = pair
+    if len(xv) != len(yv):
+        raise ValueError("x and y must have the same length")
+    big_x = 0.0
+    big_y = 0.0
+    cross = 0.0
+    sx = 0.0
+    sy = 0.0
+    for a_, b_ in zip(xv, yv, strict=True):
+        big_x += a_
+        big_y += b_
+        cross += a_ * b_
+        sx += a_ * (a_ - 1.0)
+        sy += b_ * (b_ - 1.0)
+    den = sx * (big_y * (big_y - 1.0)) + sy * (big_x * (big_x - 1.0))
+    if not den > 0:
+        raise ValueError("x or y must hold a count above 1")
+    return 2.0 * cross * (big_x - 1.0) * (big_y - 1.0) / den
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

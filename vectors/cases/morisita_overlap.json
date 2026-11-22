@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "suite": "morisita_overlap",
+  "description": "Morisita's overlap of two count records (conventions: Morisita's overlap of two count records; ADR 0581).",
+  "cases": [
+    {"id": "morisita_overlap.disjoint", "op": "morisita_overlap", "args": {"x": [2.0, 0.0], "y": [0.0, 2.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "no shared kind: 0"},
+    {"id": "morisita_overlap.crossed", "op": "morisita_overlap", "args": {"x": [3.0, 1.0], "y": [1.0, 3.0]}, "expected": 0.75, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "l = 1/2 each, 2*6/(1*16) = 3/4"},
+    {"id": "morisita_overlap.identical", "op": "morisita_overlap", "args": {"x": [5.0, 5.0], "y": [5.0, 5.0]}, "expected": 1.125, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "l = 4/9 each, 2*50/((8/9)*100) = 9/8"},
+    {"id": "morisita_overlap.one_side", "op": "morisita_overlap", "args": {"x": [4.0, 0.0, 2.0], "y": [1.0, 1.0, 1.0]}, "expected": 1.4285714285714286, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "l_x = 14/30, l_y = 0: 2*6/((7/15)*18) = 10/7"},
+    {"id": "morisita_overlap.singletons", "op": "morisita_overlap", "args": {"x": [1.0, 1.0], "y": [2.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "l_x = 0, l_y = 1: 2*2/(1*4) = 1"},
+    {"id": "morisita_overlap.large", "op": "morisita_overlap", "args": {"x": [10000000.0, 0.0], "y": [10000000.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one kind each at the total limit: l = 1, 2*10^14/(2*10^14) = 1"},
+    {"id": "morisita_overlap.three", "op": "morisita_overlap", "args": {"x": [6.0, 3.0, 1.0], "y": [2.0, 2.0, 6.0]}, "expected": 0.6171428571428571, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "X = Y = 10, l_x = 36/90, l_y = 34/90: 2*24/((70/90)*100) = 108/175"},
+    {"id": "morisita_overlap.random", "op": "morisita_overlap", "args": {"x": [0.0, 0.0, 1.0, 1.0, 2.0, 0.0, 5.0, 2.0, 1.0, 2.0, 5.0, 5.0, 0.0, 1.0, 1.0, 0.0, 1.0, 5.0, 2.0, 1.0, 2.0, 0.0, 0.0, 2.0, 0.0], "y": [0.0, 5.0, 5.0, 0.0, 2.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 1.0, 5.0, 5.0, 1.0, 5.0, 0.0, 1.0, 0.0]}, "expected": 0.4071245292078688, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "x then y, 25 counts each from random.Random(581).choice([0, 0, 1, 2, 5])"},
+    {"id": "morisita_overlap.empty", "op": "morisita_overlap", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "morisita_overlap.negative", "op": "morisita_overlap", "args": {"x": [2.0, 1.0, 0.0], "y": [1.0, -1.0, 2.0]}, "error": "invalid_argument", "source": "counts must be at least 0"},
+    {"id": "morisita_overlap.fraction", "op": "morisita_overlap", "args": {"x": [2.0, 1.0, 0.0], "y": [1.5, 1.0, 1.0]}, "error": "invalid_argument", "source": "counts must be whole"},
+    {"id": "morisita_overlap.total_one", "op": "morisita_overlap", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 2.0, 3.0]}, "error": "invalid_argument", "source": "each record must total at least 2"},
+    {"id": "morisita_overlap.too_large", "op": "morisita_overlap", "args": {"x": [10000001.0, 0.0, 0.0], "y": [1.0, 2.0, 3.0]}, "error": "invalid_argument", "source": "each record must total at most 10 000 000"},
+    {"id": "morisita_overlap.all_ones", "op": "morisita_overlap", "args": {"x": [1.0, 1.0, 0.0], "y": [0.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "some count must be above 1"},
+    {"id": "morisita_overlap.lengths", "op": "morisita_overlap", "args": {"x": [2.0, 1.0, 0.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

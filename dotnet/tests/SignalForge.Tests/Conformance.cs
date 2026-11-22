@@ -510,6 +510,7 @@ public static class Conformance
             "jaccard_turnover" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.JaccardTurnover(t.Item1, t.Item2)),
             "jaccard_nestedness" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.JaccardNestedness(t.Item1, t.Item2)),
             "ruzicka_similarity" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.RuzickaSimilarity(t.Item1, t.Item2)),
+            "morisita_overlap" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.MorisitaOverlap(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
