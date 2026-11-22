@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Sheldon's evenness in `measurements` (`sheldon_evenness(samples)`; a real record of
-     values at least 0, not all 0: `exp(−Σ sᵢ ln sᵢ)/n`, the Hill number of order 1 over
-     the record length, `0·ln 0 = 0`; from `1/n` to 1).
+   - The McIntosh dominance in `measurements` (`mcintosh_dominance(samples)`; a real record
+     of values at least 0 with total `N > 1`: `(N − U)/(N − √N)`, `U = √(Σ xᵢ²)`; 0 when one
+     value holds the total).
 
 ## Built
 
@@ -3740,6 +3740,11 @@ Updated with every chunk of work. Dates are absolute.
   Hill numbers.
   Python 10276 passed, 2 skipped; .NET 9258 passed; conformance 6796/6796 in both. Version
   2026.11.21.14.
+- 2026-11-21: Sheldon's evenness (ADR 0538): `sheldon_evenness(samples)` in
+  `measurements` (C# `Measurements.SheldonEvenness`): the exponential of the Shannon
+  entropy of the shares over `n`.
+  Python 10294 passed, 2 skipped; .NET 9273 passed; conformance 6808/6808 in both. Version
+  2026.11.21.15.
 
 ## Not built
 
