@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "suite": "renyi_diversity",
+  "description": "The Renyi diversity of counts (conventions: the Renyi diversity of counts; ADR 0566).",
+  "cases": [
+    {"id": "renyi_diversity.even_pair", "op": "renyi_diversity", "args": {"samples": [1.0, 1.0], "order": 2.0}, "expected": 0.6931471805599453, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "two equal shares: ln 2 at any order"},
+    {"id": "renyi_diversity.richness", "op": "renyi_diversity", "args": {"samples": [0.0, 3.0, 5.0], "order": 0.0}, "expected": 0.6931471805599453, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0: ln K = ln 2"},
+    {"id": "renyi_diversity.inverse_simpson", "op": "renyi_diversity", "args": {"samples": [1.0, 1.0, 2.0], "order": 2.0}, "expected": 0.9808292530117262, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "shares 1/4, 1/4, 1/2: ln(8/3)"},
+    {"id": "renyi_diversity.shannon", "op": "renyi_diversity", "args": {"samples": [1.0, 1.0, 2.0], "order": 1.0}, "expected": 1.0397207708399179, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "ln 4/2 + ln 2/2 = (3/2) ln 2"},
+    {"id": "renyi_diversity.cubic", "op": "renyi_diversity", "args": {"samples": [1.0, 1.0, 2.0], "order": 3.0}, "expected": 0.9281489951828131, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "ln((10/64)^(-1/2)) = ln 8 - ln(10)/2"},
+    {"id": "renyi_diversity.half", "op": "renyi_diversity", "args": {"samples": [1.0, 3.0], "order": 0.5}, "expected": 0.6238107163648714, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "ln(1 + sqrt(3)/2)"},
+    {"id": "renyi_diversity.one_kind", "op": "renyi_diversity", "args": {"samples": [0.0, 4.0], "order": 2.0}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "one kind: 0"},
+    {"id": "renyi_diversity.near_one", "op": "renyi_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 1.000001}, "expected": 1.1880090811879114, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q just above 1: the expm1 form"},
+    {"id": "renyi_diversity.below_one", "op": "renyi_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 0.9}, "expected": 1.2046873918522771, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0.9"},
+    {"id": "renyi_diversity.edge", "op": "renyi_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 1.5}, "expected": 1.1152738263576996, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 1.5: the max form"},
+    {"id": "renyi_diversity.large", "op": "renyi_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0, 0.0], "order": 250.0}, "expected": 0.7338227997417593, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 250: near 1/max p = 6.75/3.25"},
+    {"id": "renyi_diversity.small_order", "op": "renyi_diversity", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 0.1}, "expected": 1.3636652851560302, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0.1"},
+    {"id": "renyi_diversity.random", "op": "renyi_diversity", "args": {"samples": [3.984, 2.428, 4.607, 1.544, 4.94, 4.555, 2.162, 1.985, 2.559, 3.809, 1.701, 0.492, 0.992, 3.254, 1.465, 2.285, 4.088, 0.747, 3.262, 1.896, 4.029, 1.598, 3.282, 3.097, 0.222, 0.961, 3.228, 4.278, 0.431, 1.865], "order": 2.5}, "expected": 3.1152497024269747, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "30 values from random.Random(566).uniform(0, 5), 3 places, q = 2.5"},
+    {"id": "renyi_diversity.empty", "op": "renyi_diversity", "args": {"samples": [], "order": 2.0}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "renyi_diversity.negative", "op": "renyi_diversity", "args": {"samples": [1.0, -0.5, 2.0], "order": 2.0}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "renyi_diversity.all_zero", "op": "renyi_diversity", "args": {"samples": [0.0, 0.0, 0.0], "order": 2.0}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "renyi_diversity.negative_order", "op": "renyi_diversity", "args": {"samples": [1.0, 2.0, 3.0], "order": -0.5}, "error": "invalid_argument", "source": "the order must be at least 0"}
+  ]
+}

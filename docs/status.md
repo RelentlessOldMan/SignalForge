@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Rényi diversity of counts in `measurements` (`renyi_diversity(samples, order)`;
-     values and order as for the Hill number: `ln D_q`, the log of the Hill number, in nats,
-     computed without forming `D_q` so large values do not overflow; Rényi 1961).
+   - Rényi evenness in `measurements` (`renyi_evenness(samples, order)`; values and order
+     as for the Hill number, at least two values above 0: `ln D_q / ln K`, from 0 to 1, 1 at
+     `q = 0`; Hill 1973).
 
 ## Built
 
@@ -3878,6 +3878,11 @@ Updated with every chunk of work. Dates are absolute.
   the Shannon entropy at `β = 0`, without cancellation near 0.
   Python 10875 passed, 2 skipped; .NET 9729 passed; conformance 7182/7182 in both. Version
   2026.11.21.42.
+- 2026-11-21: The Rényi diversity of counts (ADR 0566): `renyi_diversity(samples, order)` in
+  `measurements` (C# `Measurements.RenyiDiversity`): the log of the Hill number, in nats,
+  through the same forms without the outer `exp`.
+  Python 10898 passed, 2 skipped; .NET 9749 passed; conformance 7199/7199 in both. Version
+  2026.11.21.43.
 
 ## Not built
 

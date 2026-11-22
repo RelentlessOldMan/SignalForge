@@ -1329,6 +1329,11 @@ rule for code not written yet.
   `pᵢ = xᵢ/S` over values above 0; `−Σ pᵢ ln pᵢ` at `β = 0`, else
   `−(Σ pᵢ·expm1(β ln pᵢ))/β`, sums in record order. Records as for the Gini coefficient;
   `beta` finite, at least −1. **(implemented)**
+- **Rényi diversity of counts** ([ADR 0566](adr/0566-renyi-diversity.md);
+  `renyi_diversity(samples, order)`, C# `Measurements.RenyiDiversity`): nats; the Hill
+  number's forms without the outer `exp`: `ln K` at `q = 0`, `−Σ pᵢ ln pᵢ` at `q = 1`,
+  `log1p(Σ pᵢ·expm1((q − 1) ln pᵢ))/(1 − q)` when `|q − 1| < 1/2`, else
+  `(q ln m + ln Σ (pᵢ/m)^q)/(1 − q)`. Arguments as for the Hill number. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

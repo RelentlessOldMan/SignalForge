@@ -457,6 +457,7 @@ from .measurements import (
     relative_risk,
     relative_risk_reduction,
     renyi_divergence,
+    renyi_diversity,
     renyi_entropy,
     rescaled_range,
     reverberation_time,
@@ -745,7 +746,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.42"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.43"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1328,6 +1329,7 @@ __all__ = [
     "relative_risk",
     "relative_risk_reduction",
     "renyi_divergence",
+    "renyi_diversity",
     "renyi_entropy",
     "resample",
     "resample_taps",
