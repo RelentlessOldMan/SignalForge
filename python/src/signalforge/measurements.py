@@ -6902,6 +6902,53 @@ def brillouin_index(samples: ArrayLike) -> float:
     return (whole - parts) / total
 
 
+def brillouin_evenness(samples: ArrayLike) -> float:
+    """The Brillouin evenness of a record of whole numbers at least 0, at least 2 above 0:
+    the Brillouin index over its largest value for the same total and count of kinds
+    (conventions: the Brillouin evenness; ADR 0547)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    if np.any(x != np.floor(x)):
+        raise ValueError("samples must be whole numbers")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    if total > 10_000_000:
+        raise ValueError("samples must total at most 10 000 000")
+    k = 0
+    parts = 0.0
+    for value in vals:
+        if value > 0:
+            k += 1
+        for j in range(2, int(value) + 1):
+            parts += math.log(j)
+    if k < 2:
+        raise ValueError("samples must have at least 2 values above 0")
+    whole = 0.0
+    for j in range(2, int(total) + 1):
+        whole += math.log(j)
+    c, rem = divmod(int(total), k)
+    low = 0.0
+    for j in range(2, c + 1):
+        low += math.log(j)
+    high = low + math.log(c + 1)
+    return (whole - parts) / (whole - (k - rem) * low - rem * high)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

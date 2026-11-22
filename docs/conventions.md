@@ -1236,6 +1236,11 @@ rule for code not written yet.
   `brillouin_index(samples)`, C# `Measurements.BrillouinIndex`): `(ln N! − Σᵢ ln xᵢ!)/N` in
   nats, each `ln m!` the sum of `ln j`, `j = 2 … m` in order; values in record order. Whole
   numbers at least 0, not all 0, `N` at most 10 000 000. **(implemented)**
+- **Brillouin evenness** ([ADR 0547](adr/0547-brillouin-evenness.md);
+  `brillouin_evenness(samples)`, C# `Measurements.BrillouinEvenness`): the Brillouin index
+  over its value for `k − r` counts of `c = ⌊N/k⌋` and `r` of `c + 1`, as
+  `(ln N! − Σᵢ ln xᵢ!)/(ln N! − (k − r) ln c! − r ln (c + 1)!)`, the log-factorials as for
+  the index. Records as for the index, at least 2 values above 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

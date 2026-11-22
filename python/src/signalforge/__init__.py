@@ -272,6 +272,7 @@ from .measurements import (
     braun_blanquet_coefficient,
     bray_curtis,
     brier_score,
+    brillouin_evenness,
     brillouin_index,
     bubble_entropy,
     buishand_range,
@@ -726,7 +727,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.23"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.24"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -879,6 +880,7 @@ __all__ = [
     "braun_blanquet_coefficient",
     "bray_curtis",
     "brier_score",
+    "brillouin_evenness",
     "brillouin_index",
     "bubble_entropy",
     "buishand_range",

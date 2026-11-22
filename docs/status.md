@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Brillouin evenness in `measurements` (`brillouin_evenness(samples)`; whole numbers
-     as for the Brillouin index, at least 2 above 0: the index over its largest value for
-     `N` and `k`, the counts spread as evenly as whole numbers allow).
+   - Hurlbert's PIE in `measurements` (`hurlbert_pie(samples)`; a real record of values at
+     least 0 with total `N > 1`: `N/(N − 1) · (1 − Σ sᵢ²)`, the chance that two individuals
+     drawn without replacement are of different kinds).
 
 ## Built
 
@@ -3784,6 +3784,11 @@ Updated with every chunk of work. Dates are absolute.
   counts.
   Python 10457 passed, 2 skipped; .NET 9404 passed; conformance 6915/6915 in both. Version
   2026.11.21.23.
+- 2026-11-21: The Brillouin evenness (ADR 0547): `brillouin_evenness(samples)` in
+  `measurements` (C# `Measurements.BrillouinEvenness`): the Brillouin index over its value
+  for the most even whole-number counts.
+  Python 10480 passed, 2 skipped; .NET 9422 passed; conformance 6930/6930 in both. Version
+  2026.11.21.24.
 
 ## Not built
 
