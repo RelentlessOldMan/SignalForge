@@ -365,6 +365,7 @@ from .measurements import (
     hellinger_distance,
     herfindahl_index,
     higuchi_dimension,
+    hill_evenness,
     hill_number,
     hill_ratio_evenness,
     hjorth_parameters,
@@ -743,7 +744,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.40"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.41"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1102,6 +1103,7 @@ __all__ = [
     "herfindahl_index",
     "high_shelf",
     "higuchi_dimension",
+    "hill_evenness",
     "hill_number",
     "hill_ratio_evenness",
     "hjorth_parameters",

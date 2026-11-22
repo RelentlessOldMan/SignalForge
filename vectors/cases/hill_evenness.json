@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "hill_evenness",
+  "description": "Hill evenness (conventions: Hill evenness; ADR 0564).",
+  "cases": [
+    {"id": "hill_evenness.even_pair", "op": "hill_evenness", "args": {"samples": [1.0, 1.0], "order": 2.0}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "two equal shares: 1 at any order"},
+    {"id": "hill_evenness.richness", "op": "hill_evenness", "args": {"samples": [0.0, 3.0, 5.0], "order": 0.0}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0: K/K = 1"},
+    {"id": "hill_evenness.inverse_simpson", "op": "hill_evenness", "args": {"samples": [1.0, 1.0, 2.0], "order": 2.0}, "expected": 0.8888888888888888, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "D2 = 8/3 over 3 kinds: 8/9"},
+    {"id": "hill_evenness.shannon", "op": "hill_evenness", "args": {"samples": [1.0, 1.0, 2.0], "order": 1.0}, "expected": 0.9428090415820634, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "D1 = 2^(3/2) over 3 kinds"},
+    {"id": "hill_evenness.half", "op": "hill_evenness", "args": {"samples": [1.0, 3.0], "order": 0.5}, "expected": 0.9330127018922193, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "D = 1 + sqrt(3)/2 over 2 kinds"},
+    {"id": "hill_evenness.near_one", "op": "hill_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 1.000001}, "expected": 0.8201358514615081, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q just above 1"},
+    {"id": "hill_evenness.edge", "op": "hill_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 1.5}, "expected": 0.7626008364174564, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 1.5"},
+    {"id": "hill_evenness.large", "op": "hill_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0, 0.0], "order": 250.0}, "expected": 0.5207571017572428, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 250: near (6.75/3.25)/4"},
+    {"id": "hill_evenness.small_order", "op": "hill_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0, 0.0], "order": 0.1}, "expected": 0.9776250411545929, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0.1, a zero value left out of K"},
+    {"id": "hill_evenness.random", "op": "hill_evenness", "args": {"samples": [2.61, 4.347, 1.517, 0.026, 4.728, 4.69, 4.598, 1.829, 2.272, 3.022, 2.989, 4.994, 4.77, 4.42, 1.637, 0.03, 0.947, 4.793, 3.305, 2.376, 4.787, 2.456, 2.289, 4.09, 0.124, 4.557, 2.833, 3.555, 4.736, 4.887], "order": 2.5}, "expected": 0.785802648609808, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "30 values from random.Random(564).uniform(0, 5), 3 places, q = 2.5"},
+    {"id": "hill_evenness.empty", "op": "hill_evenness", "args": {"samples": [], "order": 2.0}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "hill_evenness.negative", "op": "hill_evenness", "args": {"samples": [1.0, -0.5, 2.0], "order": 2.0}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "hill_evenness.all_zero", "op": "hill_evenness", "args": {"samples": [0.0, 0.0, 0.0], "order": 2.0}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "hill_evenness.negative_order", "op": "hill_evenness", "args": {"samples": [1.0, 2.0, 3.0], "order": -0.5}, "error": "invalid_argument", "source": "the order must be at least 0"}
+  ]
+}

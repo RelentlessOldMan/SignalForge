@@ -1320,6 +1320,10 @@ rule for code not written yet.
   `exp(−Σ pᵢ ln pᵢ)` at `q = 1`, `exp(log1p(Σ pᵢ·expm1((q − 1) ln pᵢ))/(1 − q))` when
   `|q − 1| < 1/2`, else `exp((q ln m + ln Σ (pᵢ/m)^q)/(1 − q))`, `m = max pᵢ`; sums in record
   order. Records as for the Gini coefficient; `order` finite, at least 0. **(implemented)**
+- **Hill evenness** ([ADR 0564](adr/0564-hill-evenness.md);
+  `hill_evenness(samples, order)`, C# `Measurements.HillEvenness`): the Hill number of
+  order `q` over `K`, the count of values above 0; from `1/K` to 1, 1 at `q = 0`. Arguments
+  as for the Hill number. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

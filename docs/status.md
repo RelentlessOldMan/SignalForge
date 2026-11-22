@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hill evenness in `measurements` (`hill_evenness(samples, order)`; values as for the
-     Hill number: the Hill number of order `q` over the count of values above 0, from
-     `1/K` to 1; Jost 2010).
+   - The Patil–Taillie diversity in `measurements` (`patil_taillie_diversity(samples,
+     beta)`; values as for the Hill number, `β ≥ −1`: `(1 − Σ pᵢ^{β+1})/β` over values above
+     0, the Shannon entropy at `β = 0`; Patil and Taillie 1982).
 
 ## Built
 
@@ -3868,6 +3868,11 @@ Updated with every chunk of work. Dates are absolute.
   cancellation-free forms near `q = 1` and for large `q`.
   Python 10832 passed, 2 skipped; .NET 9694 passed; conformance 7153/7153 in both. Version
   2026.11.21.40.
+- 2026-11-21: Hill evenness (ADR 0564): `hill_evenness(samples, order)` in `measurements`
+  (C# `Measurements.HillEvenness`): the Hill number of order `q` over the count of values
+  above 0.
+  Python 10852 passed, 2 skipped; .NET 9711 passed; conformance 7167/7167 in both. Version
+  2026.11.21.41.
 
 ## Not built
 

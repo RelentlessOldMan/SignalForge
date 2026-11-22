@@ -7660,6 +7660,15 @@ def hill_number(samples: ArrayLike, order: float) -> float:
     return math.exp((q * math.log(m) + math.log(t)) / (1.0 - q))
 
 
+def hill_evenness(samples: ArrayLike, order: float) -> float:
+    """Hill evenness of order ``order`` of a record of values at least 0, not all 0: the
+    Hill number over the count of values above 0, from 1/K to 1 (conventions: Hill
+    evenness; ADR 0564)."""
+    d = hill_number(samples, order)
+    k = int(np.count_nonzero(np.asarray(samples, dtype=np.float64) > 0))
+    return d / k
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
