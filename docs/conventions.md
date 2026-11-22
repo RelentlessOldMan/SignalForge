@@ -1376,6 +1376,10 @@ rule for code not written yet.
   `whittaker_beta(x, y)`, C# `Measurements.WhittakerBeta`): with `a` the kinds above 0 in
   both records and `b`, `c` those above 0 in one only, `(b + c)/(2a + b + c)`. Records as
   for Pianka's niche overlap. **(implemented)**
+- **Simpson's beta of two records** ([ADR 0576](adr/0576-simpson-beta.md);
+  `simpson_beta(x, y)`, C# `Measurements.SimpsonBeta`): with `a` the kinds above 0 in both
+  records and `b`, `c` those above 0 in one only, `min(b, c)/(a + min(b, c))`. Records as
+  for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

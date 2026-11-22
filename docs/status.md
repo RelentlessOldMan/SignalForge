@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Simpson's beta (turnover) of two records in `measurements` (`simpson_beta(x, y)`;
-     records as for `pianka_overlap`: `min(b, c)/(a + min(b, c))`, `a` the kinds above 0 in
-     both, `b` and `c` those above 0 in one only; from 0 to 1; Lennon et al. 2001).
+   - The nestedness part of the Sørensen dissimilarity in `measurements`
+     (`nestedness_beta(x, y)`; records as for `pianka_overlap`: `whittaker_beta −
+     simpson_beta`, `(|b − c|/(2a + b + c))·a/(a + min(b, c))`; Baselga 2010).
 
 ## Built
 
@@ -3929,6 +3929,11 @@ Updated with every chunk of work. Dates are absolute.
   less the Sørensen similarity.
   Python 11090 passed, 2 skipped; .NET 9900 passed; conformance 7323/7323 in both. Version
   2026.11.22.8.
+- 2026-11-22: Simpson's beta of two records (ADR 0576): `simpson_beta(x, y)` in
+  `measurements` (C# `Measurements.SimpsonBeta`): turnover alone, `min(b, c)/(a + min(b, c))`
+  on presence, 0 for nested records.
+  Python 11111 passed, 2 skipped; .NET 9917 passed; conformance 7336/7336 in both. Version
+  2026.11.22.9.
 
 ## Not built
 
