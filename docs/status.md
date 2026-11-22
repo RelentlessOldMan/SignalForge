@@ -6,8 +6,8 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Margalef's index in `measurements` (`margalef_index(samples)`; a real record of values
-     at least 0 with total `N > 1`: `(k − 1)/ln N`, `k` the count of values above 0).
+   - Gleason's index in `measurements` (`gleason_index(samples)`; a real record of values at
+     least 0 with total `N > 1`: `k/ln N`, `k` the count of values above 0).
 
 ## Built
 
@@ -3759,6 +3759,11 @@ Updated with every chunk of work. Dates are absolute.
   the total.
   Python 10353 passed, 2 skipped; .NET 9321 passed; conformance 6847/6847 in both. Version
   2026.11.21.18.
+- 2026-11-21: Margalef's index (ADR 0542): `margalef_index(samples)` in `measurements`
+  (C# `Measurements.MargalefIndex`): one less than the count of values above 0 over the
+  logarithm of the total.
+  Python 10376 passed, 2 skipped; .NET 9339 passed; conformance 6862/6862 in both. Version
+  2026.11.21.19.
 
 ## Not built
 

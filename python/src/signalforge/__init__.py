@@ -390,6 +390,7 @@ from .measurements import (
     log_relative_risk_wald_z,
     lorenz_curve,
     mann_kendall,
+    margalef_index,
     markedness,
     matthews_correlation,
     maxwell_pilliner_coefficient,
@@ -721,7 +722,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.18"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.19"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1143,6 +1144,7 @@ __all__ = [
     "lpc_to_reflection",
     "lsf_to_lpc",
     "mann_kendall",
+    "margalef_index",
     "markedness",
     "matthews_correlation",
     "maxwell_pilliner_coefficient",

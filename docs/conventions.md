@@ -1216,6 +1216,10 @@ rule for code not written yet.
   `menhinick_index(samples)`, C# `Measurements.MenhinickIndex`): `k/√N`, `k` the count of
   values above 0, `N = Σᵢ xᵢ` in record order. Records as for the Gini coefficient.
   **(implemented)**
+- **Margalef's index** ([ADR 0542](adr/0542-margalef-index.md);
+  `margalef_index(samples)`, C# `Measurements.MargalefIndex`): `(k − 1)/ln N`, `k` the count
+  of values above 0, `N = Σᵢ xᵢ` in record order. Real, finite, every value at least 0,
+  `N > 1`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
