@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "whittaker_beta",
+  "description": "Whittaker's beta of two records (conventions: Whittaker's beta of two records; ADR 0575).",
+  "cases": [
+    {"id": "whittaker_beta.same", "op": "whittaker_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same kinds: 0"},
+    {"id": "whittaker_beta.disjoint", "op": "whittaker_beta", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no shared kind: 2*2/2 - 1 = 1"},
+    {"id": "whittaker_beta.half", "op": "whittaker_beta", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "2*2/3 - 1 = 1/3"},
+    {"id": "whittaker_beta.crossed", "op": "whittaker_beta", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "2*4/6 - 1 = 1/3"},
+    {"id": "whittaker_beta.nested", "op": "whittaker_beta", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "2*3/4 - 1 = 1/2"},
+    {"id": "whittaker_beta.tiny", "op": "whittaker_beta", "args": {"x": [5e-324, 0.0, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the smallest double counts as present"},
+    {"id": "whittaker_beta.both_absent", "op": "whittaker_beta", "args": {"x": [1.0, 0.0, 0.0, 2.0], "y": [3.0, 0.0, 0.0, 0.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a kind absent from both is left out: 2*2/3 - 1 = 1/3"},
+    {"id": "whittaker_beta.random", "op": "whittaker_beta", "args": {"x": [1.0, 0.0, 2.5, 0.0, 2.5, 2.5, 2.5, 1.0, 0.0, 1.0, 2.5, 0.0, 1.0, 1.0, 0.0, 2.5, 0.0, 0.0, 0.0, 1.0, 2.5, 1.0, 0.0, 2.5, 0.0], "y": [2.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 2.5, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.5, 0.0, 2.5, 0.0, 1.0, 0.0, 2.5]}, "expected": 0.5384615384615384, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x then y, 25 values each from random.Random(575).choice([0, 0, 1, 2.5])"},
+    {"id": "whittaker_beta.empty", "op": "whittaker_beta", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "whittaker_beta.negative", "op": "whittaker_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "whittaker_beta.all_zero", "op": "whittaker_beta", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "whittaker_beta.lengths", "op": "whittaker_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Whittaker's beta diversity of two records in `measurements` (`whittaker_beta(x, y)`;
-     records as for `pianka_overlap`: `2 S_∪/(S_x + S_y) − 1`, `S` the count of kinds above
-     0 in either record, in each; from 0 to 1; Whittaker 1960).
+   - Simpson's beta (turnover) of two records in `measurements` (`simpson_beta(x, y)`;
+     records as for `pianka_overlap`: `min(b, c)/(a + min(b, c))`, `a` the kinds above 0 in
+     both, `b` and `c` those above 0 in one only; from 0 to 1; Lennon et al. 2001).
 
 ## Built
 
@@ -3924,6 +3924,11 @@ Updated with every chunk of work. Dates are absolute.
   nothing cancels, scaled first so totals cannot overflow.
   Python 11070 passed, 2 skipped; .NET 9885 passed; conformance 7311/7311 in both. Version
   2026.11.22.7.
+- 2026-11-22: Whittaker's beta of two records (ADR 0575): `whittaker_beta(x, y)` in
+  `measurements` (C# `Measurements.WhittakerBeta`): `(b + c)/(2a + b + c)` on presence, one
+  less the Sørensen similarity.
+  Python 11090 passed, 2 skipped; .NET 9900 passed; conformance 7323/7323 in both. Version
+  2026.11.22.8.
 
 ## Not built
 

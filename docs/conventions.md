@@ -1372,6 +1372,10 @@ rule for code not written yet.
   in either; each term `a·log1p(b/a) + b·log1p(a/b)`, 0 when `a` or `b` is 0; the sum of
   terms over the same form on the totals, sums in record order, capped at 1. Records as for
   Pianka's niche overlap. **(implemented)**
+- **Whittaker's beta of two records** ([ADR 0575](adr/0575-whittaker-beta.md);
+  `whittaker_beta(x, y)`, C# `Measurements.WhittakerBeta`): with `a` the kinds above 0 in
+  both records and `b`, `c` those above 0 in one only, `(b + c)/(2a + b + c)`. Records as
+  for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
