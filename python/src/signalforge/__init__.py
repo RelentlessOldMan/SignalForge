@@ -476,6 +476,7 @@ from .measurements import (
     sens_slope,
     sfdr,
     shape_difference,
+    sharma_mittal_diversity,
     sheldon_evenness,
     simple_matching_coefficient,
     simpson_diversity,
@@ -749,7 +750,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.22.2"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.22.3"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1368,6 +1369,7 @@ __all__ = [
     "sens_slope",
     "sfdr",
     "shape_difference",
+    "sharma_mittal_diversity",
     "sheldon_evenness",
     "simple_matching_coefficient",
     "simpson_diversity",

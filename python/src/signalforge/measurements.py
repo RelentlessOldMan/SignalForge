@@ -7815,6 +7815,17 @@ def tsallis_evenness(samples: ArrayLike, order: float) -> float:
     return d / (-math.expm1((1.0 - q) * math.log(k)) / (q - 1.0))
 
 
+def sharma_mittal_diversity(samples: ArrayLike, order: float, degree: float) -> float:
+    """The Sharma-Mittal diversity of order ``order`` and degree ``degree`` of a record of
+    values at least 0, not all 0: the Renyi diversity at degree 1, the Tsallis diversity at
+    degree equal to order (conventions: the Sharma-Mittal diversity of counts; ADR 0570)."""
+    r = real(degree, "degree")
+    h = renyi_diversity(samples, order)
+    if r == 1:
+        return h
+    return math.expm1((1.0 - r) * h) / (1.0 - r)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

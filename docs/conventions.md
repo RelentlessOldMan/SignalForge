@@ -1348,6 +1348,11 @@ rule for code not written yet.
   diversity of counts of order `q` over its maximum, `ln K` at `q = 1`, else
   `−expm1((1 − q) ln K)/(q − 1)`, `K` the count of values above 0; from 0 to 1, 1 at
   `q = 0`. Arguments as for the Hill number, with `K ≥ 2`. **(implemented)**
+- **Sharma–Mittal diversity of counts**
+  ([ADR 0570](adr/0570-sharma-mittal-diversity.md); `sharma_mittal_diversity(samples,
+  order, degree)`, C# `Measurements.SharmaMittalDiversity`): with `R` the Rényi diversity
+  of counts of order `q`, `R` at `r = 1`, else `expm1((1 − r) R)/(1 − r)`. Arguments as for
+  the Hill number; `degree` finite. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Sharma–Mittal diversity of counts in `measurements`
-     (`sharma_mittal_diversity(samples, order, degree)`; values and order as for the Hill
-     number, `degree` finite: `((Σ pᵢ^q)^{(1−r)/(1−q)} − 1)/(1 − r)`, the Rényi diversity at
-     `r = 1`, the Tsallis diversity at `r = q`; Sharma and Mittal 1975).
+   - Pianka's niche overlap in `measurements` (`pianka_overlap(a, b)`; two records of
+     values at least 0, the same length, neither all 0: `Σ aᵢbᵢ/√(Σ aᵢ² Σ bᵢ²)` on the
+     shares, from 0 to 1; Pianka 1973).
 
 ## Built
 
@@ -3899,6 +3898,12 @@ Updated with every chunk of work. Dates are absolute.
   value for `K` equal shares.
   Python 10963 passed, 2 skipped; .NET 9803 passed; conformance 7244/7244 in both. Version
   2026.11.22.2.
+- 2026-11-22: The Sharma–Mittal diversity of counts (ADR 0570):
+  `sharma_mittal_diversity(samples, order, degree)` in `measurements` (C#
+  `Measurements.SharmaMittalDiversity`): `expm1((1 − r) R_q)/(1 − r)`, joining the Rényi
+  (`r = 1`) and Tsallis (`r = q`) diversities of counts.
+  Python 10986 passed, 2 skipped; .NET 9821 passed; conformance 7259/7259 in both. Version
+  2026.11.22.3.
 
 ## Not built
 
