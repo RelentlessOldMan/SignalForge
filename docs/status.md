@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hutcheson's variance in `measurements` (`hutcheson_variance(samples)`; whole numbers
-     at least 0, not all 0: the large-sample variance of the plug-in Shannon entropy,
-     `(Σ pᵢ ln² pᵢ − (Σ pᵢ ln pᵢ)²)/N + (k − 1)/(2N²)`).
+   - Hutcheson's t in `measurements` (`hutcheson_t(a, b)`; two records as for Hutcheson's
+     variance: `(H_a − H_b)/√(V_a + V_b)`, the plug-in Shannon entropies over the root of
+     the summed Hutcheson variances; both variances 0 is `invalid_argument`).
 
 ## Built
 
@@ -3829,6 +3829,11 @@ Updated with every chunk of work. Dates are absolute.
   nats plus the bias term `(k − 1)/(2N)`.
   Python 10658 passed, 2 skipped; .NET 9558 passed; conformance 7042/7042 in both. Version
   2026.11.21.32.
+- 2026-11-21: Hutcheson's variance (ADR 0556): `hutcheson_variance(samples)` in
+  `measurements` (C# `Measurements.HutchesonVariance`): the large-sample variance of the
+  plug-in Shannon entropy.
+  Python 10679 passed, 2 skipped; .NET 9574 passed; conformance 7055/7055 in both. Version
+  2026.11.21.33.
 
 ## Not built
 

@@ -1279,6 +1279,11 @@ rule for code not written yet.
   `miller_madow_entropy(samples)`, C# `Measurements.MillerMadowEntropy`): nats; 0 less
   `pᵢ ln pᵢ` for each value above 0, in record order, plus `(k − 1)/(2N)`. Whole numbers
   as for the Brillouin index. **(implemented)**
+- **Hutcheson's variance** ([ADR 0556](adr/0556-hutcheson-variance.md);
+  `hutcheson_variance(samples)`, C# `Measurements.HutchesonVariance`): nats²;
+  `(Q − L·L)/N + (k − 1)/(2·N·N)`, `L = Σ pᵢ lᵢ` and `Q = Σ pᵢ lᵢ lᵢ` over the values
+  above 0 in record order, `lᵢ = ln pᵢ`. Whole numbers as for the Brillouin index.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
