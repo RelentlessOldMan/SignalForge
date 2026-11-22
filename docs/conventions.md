@@ -1380,6 +1380,11 @@ rule for code not written yet.
   `simpson_beta(x, y)`, C# `Measurements.SimpsonBeta`): with `a` the kinds above 0 in both
   records and `b`, `c` those above 0 in one only, `min(b, c)/(a + min(b, c))`. Records as
   for Pianka's niche overlap. **(implemented)**
+- **Nestedness part of the Sørensen dissimilarity**
+  ([ADR 0577](adr/0577-nestedness-beta.md); `nestedness_beta(x, y)`, C#
+  `Measurements.NestednessBeta`): with `a` the kinds above 0 in both records and `b`, `c`
+  those above 0 in one only, `|b − c|·a/((2a + b + c)(a + min(b, c)))`, one division of
+  exact integers. Records as for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

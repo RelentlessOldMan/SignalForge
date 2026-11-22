@@ -430,6 +430,7 @@ from .measurements import (
     mtie,
     multiscale_entropy,
     negative_likelihood_ratio,
+    nestedness_beta,
     noise_compensated_decay,
     noise_figure_cascade,
     noise_figure_y_factor,
@@ -756,7 +757,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.22.9"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.22.10"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1234,6 +1235,7 @@ __all__ = [
     "multitaper_psd",
     "multitone",
     "negative_likelihood_ratio",
+    "nestedness_beta",
     "newman_phases",
     "noise_compensated_decay",
     "noise_figure_cascade",

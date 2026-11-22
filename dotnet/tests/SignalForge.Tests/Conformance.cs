@@ -506,6 +506,7 @@ public static class Conformance
             "horn_overlap" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.HornOverlap(t.Item1, t.Item2)),
             "whittaker_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.WhittakerBeta(t.Item1, t.Item2)),
             "simpson_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.SimpsonBeta(t.Item1, t.Item2)),
+            "nestedness_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.NestednessBeta(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

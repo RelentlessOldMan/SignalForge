@@ -8042,6 +8042,44 @@ def simpson_beta(x: ArrayLike, y: ArrayLike) -> float:
     return least / (both + least)
 
 
+def nestedness_beta(x: ArrayLike, y: ArrayLike) -> float:
+    """The nestedness part of the Sorensen dissimilarity of the records ``x`` and ``y`` of
+    values at least 0, each with a value above 0: whittaker_beta - simpson_beta, from 0 to 1
+    (conventions: nestedness part of the Sorensen dissimilarity; ADR 0577)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        pair.append([float(b) for b in a])
+    xv, yv = pair
+    if len(xv) != len(yv):
+        raise ValueError("x and y must have the same length")
+    both = 0
+    only_x = 0
+    only_y = 0
+    for a_, b_ in zip(xv, yv, strict=True):
+        if a_ > 0 and b_ > 0:
+            both += 1
+        elif a_ > 0:
+            only_x += 1
+        elif b_ > 0:
+            only_y += 1
+    least = min(only_x, only_y)
+    num = abs(only_x - only_y) * both
+    return num / ((2 * both + only_x + only_y) * (both + least))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

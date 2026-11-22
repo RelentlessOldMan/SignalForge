@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The nestedness part of the Sørensen dissimilarity in `measurements`
-     (`nestedness_beta(x, y)`; records as for `pianka_overlap`: `whittaker_beta −
-     simpson_beta`, `(|b − c|/(2a + b + c))·a/(a + min(b, c))`; Baselga 2010).
+   - The turnover part of the Jaccard dissimilarity in `measurements`
+     (`jaccard_turnover(x, y)`; records as for `pianka_overlap`:
+     `2 min(b, c)/(a + 2 min(b, c))`, from 0 to 1; Baselga 2012).
 
 ## Built
 
@@ -3934,6 +3934,11 @@ Updated with every chunk of work. Dates are absolute.
   on presence, 0 for nested records.
   Python 11111 passed, 2 skipped; .NET 9917 passed; conformance 7336/7336 in both. Version
   2026.11.22.9.
+- 2026-11-22: The nestedness part of the Sørensen dissimilarity (ADR 0577):
+  `nestedness_beta(x, y)` in `measurements` (C# `Measurements.NestednessBeta`): Whittaker's
+  beta less Simpson's beta, as one division of exact integers.
+  Python 11132 passed, 2 skipped; .NET 9934 passed; conformance 7349/7349 in both. Version
+  2026.11.22.10.
 
 ## Not built
 
