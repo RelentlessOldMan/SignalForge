@@ -1195,6 +1195,11 @@ rule for code not written yet.
   `hill_ratio_evenness(samples)`, C# `Measurements.HillRatioEvenness`): `E₂,₁ = N₂/N₁`,
   formed as `(1/Σᵢ sᵢ²)/exp(−Σᵢ sᵢ ln sᵢ)`, `0·ln 0 = 0`; both sums in one pass in record
   order. Records as for the Gini coefficient. **(implemented)**
+- **Alatalo's evenness** ([ADR 0537](adr/0537-alatalo-evenness.md);
+  `alatalo_evenness(samples)`, C# `Measurements.AlataloEvenness`): `(N₂ − 1)/(N₁ − 1)`,
+  formed as `(1/Σᵢ sᵢ² − 1)/(exp(−Σᵢ sᵢ ln sᵢ) − 1)`, `0·ln 0 = 0`; both sums in one pass in
+  record order. Real, finite, every value at least 0, at least 2 positive shares.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

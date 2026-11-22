@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "alatalo_evenness",
+  "description": "Alatalo's evenness (conventions: Alatalo's evenness; ADR 0537).",
+  "cases": [
+    {"id": "alatalo_evenness.equal", "op": "alatalo_evenness", "args": {"samples": [2.0, 2.0, 2.0, 2.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "four equal shares: (4 - 1)/(4 - 1) = 1"},
+    {"id": "alatalo_evenness.equal_with_zero", "op": "alatalo_evenness", "args": {"samples": [0.0, 2.0, 2.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "two equal shares, a zero: 1/1 = 1"},
+    {"id": "alatalo_evenness.halves", "op": "alatalo_evenness", "args": {"samples": [0.5, 0.25, 0.25, 1.0]}, "expected": 0.8077096339597857, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "shares 1/4, 1/8, 1/8, 1/2: (32/11 - 1)/(2^(7/4) - 1)"},
+    {"id": "alatalo_evenness.two", "op": "alatalo_evenness", "args": {"samples": [3.0, 1.0]}, "expected": 0.794949052073454, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "shares 3/4, 1/4: (8/5 - 1)/(4/3^(3/4) - 1)"},
+    {"id": "alatalo_evenness.ramp", "op": "alatalo_evenness", "args": {"samples": [4.0, 1.0, 3.0, 2.0]}, "expected": 0.8987787189478599, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "shares 4, 1, 3, 2 tenths"},
+    {"id": "alatalo_evenness.dominant", "op": "alatalo_evenness", "args": {"samples": [100.0, 1.0, 1.0]}, "expected": 0.34532204049360643, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "shares 100/102, 1/102, 1/102"},
+    {"id": "alatalo_evenness.random", "op": "alatalo_evenness", "args": {"samples": [7.0, 3.875, 3.5, 0.625, 7.25, 6.875, 2.125, 4.375, 5.0, 0.875, 6.625, 6.25, 7.875, 5.625, 1.0, 1.5, 4.25, 3.125, 3.625, 2.25, 4.625, 6.0, 0.125, 3.25, 6.375, 7.875, 5.125, 3.375, 3.25, 5.375]}, "expected": 0.9227921471202875, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 values k/8, k from random.Random(537).randint(0, 64)"},
+    {"id": "alatalo_evenness.empty", "op": "alatalo_evenness", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "alatalo_evenness.negative", "op": "alatalo_evenness", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "alatalo_evenness.all_zero", "op": "alatalo_evenness", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "alatalo_evenness.single", "op": "alatalo_evenness", "args": {"samples": [5.0]}, "error": "invalid_argument", "source": "at least 2 positive shares"},
+    {"id": "alatalo_evenness.one_positive", "op": "alatalo_evenness", "args": {"samples": [0.0, 3.0, 0.0]}, "error": "invalid_argument", "source": "at least 2 positive shares"}
+  ]
+}

@@ -242,6 +242,7 @@ from .measurements import (
     TwoToneIp2,
     TwoToneIp5,
     aggregated_variance,
+    alatalo_evenness,
     allan_deviation,
     am_am_pm,
     anderberg_d,
@@ -716,7 +717,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.13"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.14"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -811,6 +812,7 @@ __all__ = [
     "acpr_rrc",
     "adsr",
     "aggregated_variance",
+    "alatalo_evenness",
     "allan_deviation",
     "allpass_comb",
     "allpass_first_order",

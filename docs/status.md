@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Alatalo's evenness in `measurements` (`alatalo_evenness(samples)`; a real record of
-     values at least 0 with at least 2 above 0: `(N₂ − 1)/(N₁ − 1)`, `N₂ = 1/Σ sᵢ²` and
-     `N₁ = exp(−Σ sᵢ ln sᵢ)` the Hill numbers; above 0, at most 1).
+   - Sheldon's evenness in `measurements` (`sheldon_evenness(samples)`; a real record of
+     values at least 0, not all 0: `exp(−Σ sᵢ ln sᵢ)/n`, the Hill number of order 1 over
+     the record length, `0·ln 0 = 0`; from `1/n` to 1).
 
 ## Built
 
@@ -3735,6 +3735,11 @@ Updated with every chunk of work. Dates are absolute.
   over that of order 1.
   Python 10256 passed, 2 skipped; .NET 9243 passed; conformance 6784/6784 in both. Version
   2026.11.21.13.
+- 2026-11-21: Alatalo's evenness (ADR 0537): `alatalo_evenness(samples)` in
+  `measurements` (C# `Measurements.AlataloEvenness`): `F₂,₁ = (N₂ − 1)/(N₁ − 1)` from the
+  Hill numbers.
+  Python 10276 passed, 2 skipped; .NET 9258 passed; conformance 6796/6796 in both. Version
+  2026.11.21.14.
 
 ## Not built
 
