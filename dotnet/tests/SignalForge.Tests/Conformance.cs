@@ -483,6 +483,7 @@ public static class Conformance
             "ace_richness" => Bind(Reals(a.Get("samples")), x => Measurements.AceRichness(x)),
             "rarefied_richness" => Bind((Reals(a.Get("samples")), a.I("size")), t => Measurements.RarefiedRichness(t.Item1, t.Item2)),
             "chao_jost_coverage" => Bind(Reals(a.Get("samples")), x => Measurements.ChaoJostCoverage(x)),
+            "chao_shen_entropy" => Bind(Reals(a.Get("samples")), x => Measurements.ChaoShenEntropy(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

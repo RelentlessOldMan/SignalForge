@@ -284,6 +284,7 @@ from .measurements import (
     cepstrum_pitch,
     chao1_richness,
     chao_jost_coverage,
+    chao_shen_entropy,
     chatterjee_xi,
     chebyshev_distance,
     chi_square_divergence,
@@ -733,7 +734,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.30"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.31"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -910,6 +911,7 @@ __all__ = [
     "channel_power",
     "chao1_richness",
     "chao_jost_coverage",
+    "chao_shen_entropy",
     "chatterjee_xi",
     "chebyshev1_bandpass",
     "chebyshev1_bandstop",

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Chao–Shen entropy in `measurements` (`chao_shen_entropy(samples)`; whole numbers
-     at least 0, not all 0: `−Σ C pᵢ ln(C pᵢ)/(1 − (1 − C pᵢ)^N)`, `C = 1 − F₁/N` the
-     coverage, with `F₁ = N` taken as `N − 1`; Chao and Shen's Horvitz–Thompson estimate).
+   - The Miller–Madow entropy in `measurements` (`miller_madow_entropy(samples)`; whole
+     numbers at least 0, not all 0: the plug-in Shannon entropy in nats plus the bias term
+     `(k − 1)/(2N)`, `k` the count of values above 0).
 
 ## Built
 
@@ -3819,6 +3819,11 @@ Updated with every chunk of work. Dates are absolute.
   doubletons.
   Python 10617 passed, 2 skipped; .NET 9526 passed; conformance 7016/7016 in both. Version
   2026.11.21.30.
+- 2026-11-21: The Chao–Shen entropy (ADR 0554): `chao_shen_entropy(samples)` in
+  `measurements` (C# `Measurements.ChaoShenEntropy`): the coverage-adjusted
+  Horvitz–Thompson estimate of the Shannon entropy, in nats.
+  Python 10638 passed, 2 skipped; .NET 9542 passed; conformance 7029/7029 in both. Version
+  2026.11.21.31.
 
 ## Not built
 
