@@ -7892,6 +7892,43 @@ def czekanowski_similarity(x: ArrayLike, y: ArrayLike) -> float:
     return min(acc, 1.0)
 
 
+def morisita_horn_overlap(x: ArrayLike, y: ArrayLike) -> float:
+    """The Morisita-Horn overlap of the records ``x`` and ``y`` of values at least 0, each with
+    a value above 0: 2*sum(p*q)/(sum(p**2) + sum(q**2)) on their shares, from 0 to 1
+    (conventions: Morisita-Horn overlap; ADR 0573)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        scaled = [float(b) / top for b in a]
+        total = 0.0
+        for b in scaled:
+            total += b
+        pair.append([b / total for b in scaled])
+    xv, yv = pair
+    if len(xv) != len(yv):
+        raise ValueError("x and y must have the same length")
+    sxy = 0.0
+    sxx = 0.0
+    syy = 0.0
+    for a_, b_ in zip(xv, yv, strict=True):
+        sxy += a_ * b_
+        sxx += a_ * a_
+        syy += b_ * b_
+    return min(2.0 * sxy / (sxx + syy), 1.0)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

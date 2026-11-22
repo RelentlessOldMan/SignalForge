@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Morisita–Horn overlap in `measurements` (`morisita_horn_overlap(x, y)`; records
-     as for `pianka_overlap`: `2 Σ pᵢqᵢ/(Σ pᵢ² + Σ qᵢ²)` over the shares of each record,
-     from 0 to 1; Horn 1966).
+   - Horn's information overlap in `measurements` (`horn_overlap(x, y)`; records as for
+     `pianka_overlap`: `(Σ (xᵢ+yᵢ) ln(xᵢ+yᵢ) − Σ xᵢ ln xᵢ − Σ yᵢ ln yᵢ)/((X+Y) ln(X+Y) −
+     X ln X − Y ln Y)`, `X` and `Y` the totals, from 0 to 1; Horn 1966).
 
 ## Built
 
@@ -3914,6 +3914,11 @@ Updated with every chunk of work. Dates are absolute.
   two records, scaled first so huge totals cannot overflow.
   Python 11028 passed, 2 skipped; .NET 9853 passed; conformance 7285/7285 in both. Version
   2026.11.22.5.
+- 2026-11-22: The Morisita–Horn overlap (ADR 0573): `morisita_horn_overlap(x, y)` in
+  `measurements` (C# `Measurements.MorisitaHornOverlap`): `2 Σ pᵢqᵢ/(Σ pᵢ² + Σ qᵢ²)` over the
+  shares of two records, scaled first so nothing overflows.
+  Python 11049 passed, 2 skipped; .NET 9869 passed; conformance 7298/7298 in both. Version
+  2026.11.22.6.
 
 ## Not built
 

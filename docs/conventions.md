@@ -1362,6 +1362,11 @@ rule for code not written yet.
   `czekanowski_similarity(x, y)`, C# `Measurements.CzekanowskiSimilarity`): each record over
   its largest value, then over its total, sums in record order; `Σ min(pᵢ, qᵢ)` in record
   order, capped at 1. Records as for Pianka's niche overlap. **(implemented)**
+- **Morisita–Horn overlap** ([ADR 0573](adr/0573-morisita-horn-overlap.md);
+  `morisita_horn_overlap(x, y)`, C# `Measurements.MorisitaHornOverlap`): each record over
+  its largest value, then over its total, sums in record order; `2 Σ pᵢqᵢ/(Σ pᵢ² + Σ qᵢ²)`,
+  sums in record order, capped at 1. Records as for Pianka's niche overlap.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
