@@ -1353,6 +1353,11 @@ rule for code not written yet.
   order, degree)`, C# `Measurements.SharmaMittalDiversity`): with `R` the Rényi diversity
   of counts of order `q`, `R` at `r = 1`, else `expm1((1 − r) R)/(1 − r)`. Arguments as for
   the Hill number; `degree` finite. **(implemented)**
+- **Pianka's niche overlap** ([ADR 0571](adr/0571-pianka-overlap.md);
+  `pianka_overlap(x, y)`, C# `Measurements.PiankaOverlap`): each record over its largest
+  value, then `Σ xᵢyᵢ/√(Σ xᵢ² · Σ yᵢ²)`, sums in record order, capped at 1. Records real,
+  finite, at least 0, not empty, each with a value above 0, the same length.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Pianka's niche overlap in `measurements` (`pianka_overlap(a, b)`; two records of
-     values at least 0, the same length, neither all 0: `Σ aᵢbᵢ/√(Σ aᵢ² Σ bᵢ²)` on the
-     shares, from 0 to 1; Pianka 1973).
+   - The proportional similarity in `measurements` (`czekanowski_similarity(x, y)`;
+     records as for `pianka_overlap`: `Σ min(pᵢ, qᵢ)` over the shares of each record, from
+     0 to 1; Czekanowski 1909, Feinsinger et al. 1981).
 
 ## Built
 
@@ -3904,6 +3904,11 @@ Updated with every chunk of work. Dates are absolute.
   (`r = 1`) and Tsallis (`r = q`) diversities of counts.
   Python 10986 passed, 2 skipped; .NET 9821 passed; conformance 7259/7259 in both. Version
   2026.11.22.3.
+- 2026-11-22: Pianka's niche overlap (ADR 0571): `pianka_overlap(x, y)` in `measurements`
+  (C# `Measurements.PiankaOverlap`): `Σ pᵢqᵢ/√(Σ pᵢ² Σ qᵢ²)`, each record scaled by its largest
+  value first so huge values cannot overflow.
+  Python 11007 passed, 2 skipped; .NET 9837 passed; conformance 7272/7272 in both. Version
+  2026.11.22.4.
 
 ## Not built
 
