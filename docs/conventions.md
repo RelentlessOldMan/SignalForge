@@ -1367,6 +1367,11 @@ rule for code not written yet.
   its largest value, then over its total, sums in record order; `2 Σ pᵢqᵢ/(Σ pᵢ² + Σ qᵢ²)`,
   sums in record order, capped at 1. Records as for Pianka's niche overlap.
   **(implemented)**
+- **Horn's information overlap** ([ADR 0574](adr/0574-horn-overlap.md);
+  `horn_overlap(x, y)`, C# `Measurements.HornOverlap`): both records over the largest value
+  in either; each term `a·log1p(b/a) + b·log1p(a/b)`, 0 when `a` or `b` is 0; the sum of
+  terms over the same form on the totals, sums in record order, capped at 1. Records as for
+  Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

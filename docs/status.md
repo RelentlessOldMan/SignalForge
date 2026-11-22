@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Horn's information overlap in `measurements` (`horn_overlap(x, y)`; records as for
-     `pianka_overlap`: `(Σ (xᵢ+yᵢ) ln(xᵢ+yᵢ) − Σ xᵢ ln xᵢ − Σ yᵢ ln yᵢ)/((X+Y) ln(X+Y) −
-     X ln X − Y ln Y)`, `X` and `Y` the totals, from 0 to 1; Horn 1966).
+   - Whittaker's beta diversity of two records in `measurements` (`whittaker_beta(x, y)`;
+     records as for `pianka_overlap`: `2 S_∪/(S_x + S_y) − 1`, `S` the count of kinds above
+     0 in either record, in each; from 0 to 1; Whittaker 1960).
 
 ## Built
 
@@ -3919,6 +3919,11 @@ Updated with every chunk of work. Dates are absolute.
   shares of two records, scaled first so nothing overflows.
   Python 11049 passed, 2 skipped; .NET 9869 passed; conformance 7298/7298 in both. Version
   2026.11.22.6.
+- 2026-11-22: Horn's information overlap (ADR 0574): `horn_overlap(x, y)` in `measurements`
+  (C# `Measurements.HornOverlap`): Horn's `R₀` on the values, each term in a log1p form so
+  nothing cancels, scaled first so totals cannot overflow.
+  Python 11070 passed, 2 skipped; .NET 9885 passed; conformance 7311/7311 in both. Version
+  2026.11.22.7.
 
 ## Not built
 

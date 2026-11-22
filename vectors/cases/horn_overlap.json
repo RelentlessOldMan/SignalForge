@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "horn_overlap",
+  "description": "Horn's information overlap (conventions: Horn's information overlap; ADR 0574).",
+  "cases": [
+    {"id": "horn_overlap.same", "op": "horn_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0, 3.0]}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "identical records: 1"},
+    {"id": "horn_overlap.proportional", "op": "horn_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [2.0, 4.0, 6.0]}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "proportional records: 1"},
+    {"id": "horn_overlap.disjoint", "op": "horn_overlap", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "no shared kind: 0"},
+    {"id": "horn_overlap.half", "op": "horn_overlap", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.7259824578787191, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "2 ln 2/(3 ln 3 - 2 ln 2)"},
+    {"id": "horn_overlap.swapped", "op": "horn_overlap", "args": {"x": [1.0, 3.0], "y": [3.0, 1.0]}, "expected": 0.8112781244591328, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "2 - (3/4) log2 3"},
+    {"id": "horn_overlap.huge", "op": "horn_overlap", "args": {"x": [1e+300, 2e+300], "y": [3e+300, 1e+300]}, "expected": 0.8699942945123713, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "6 ln 2/(7 ln 7 - 3 ln 3 - 8 ln 2): totals would overflow"},
+    {"id": "horn_overlap.unequal_totals", "op": "horn_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [30.0, 20.0, 10.0]}, "expected": 0.9023349119866966, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "totals 6 and 60"},
+    {"id": "horn_overlap.tiny", "op": "horn_overlap", "args": {"x": [1e-300, 3e-301, 0.0], "y": [2e-300, 5e-300, 1e-300]}, "expected": 0.8139184338206829, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "values near the bottom of the range"},
+    {"id": "horn_overlap.random", "op": "horn_overlap", "args": {"x": [1.556, 2.743, 0.507, 1.16, 4.786, 1.889, 2.089, 4.163, 3.526, 1.348, 3.271, 3.131, 4.542, 2.023, 2.837, 1.96, 4.151, 3.301, 3.945, 3.796, 1.233, 0.921, 0.229, 3.661, 2.518], "y": [3.387, 3.411, 0.808, 2.946, 2.582, 4.586, 2.705, 1.109, 0.394, 2.066, 3.251, 2.871, 1.944, 2.587, 2.83, 1.313, 0.624, 3.179, 0.641, 1.242, 1.906, 2.288, 2.904, 4.47, 1.612]}, "expected": 0.8827834576323136, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "x then y, 25 values each from random.Random(574).uniform(0, 5), 3 places"},
+    {"id": "horn_overlap.empty", "op": "horn_overlap", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "horn_overlap.negative", "op": "horn_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "horn_overlap.all_zero", "op": "horn_overlap", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "horn_overlap.lengths", "op": "horn_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

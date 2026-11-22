@@ -373,6 +373,7 @@ from .measurements import (
     hodges_lehmann,
     hoeffding_d,
     hoover_index,
+    horn_overlap,
     hurlbert_pie,
     hutcheson_t,
     hutcheson_variance,
@@ -753,7 +754,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.22.6"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.22.7"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1120,6 +1121,7 @@ __all__ = [
     "hodges_lehmann",
     "hoeffding_d",
     "hoover_index",
+    "horn_overlap",
     "hurlbert_pie",
     "hutcheson_t",
     "hutcheson_variance",

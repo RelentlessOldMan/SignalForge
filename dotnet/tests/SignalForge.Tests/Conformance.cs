@@ -503,6 +503,7 @@ public static class Conformance
             "pianka_overlap" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.PiankaOverlap(t.Item1, t.Item2)),
             "czekanowski_similarity" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.CzekanowskiSimilarity(t.Item1, t.Item2)),
             "morisita_horn_overlap" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.MorisitaHornOverlap(t.Item1, t.Item2)),
+            "horn_overlap" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.HornOverlap(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

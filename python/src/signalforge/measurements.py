@@ -7929,6 +7929,49 @@ def morisita_horn_overlap(x: ArrayLike, y: ArrayLike) -> float:
     return min(2.0 * sxy / (sxx + syy), 1.0)
 
 
+def horn_overlap(x: ArrayLike, y: ArrayLike) -> float:
+    """Horn's information overlap of the records ``x`` and ``y`` of values at least 0, each
+    with a value above 0: the information shared by the two records over its largest value
+    for their totals, from 0 to 1 (conventions: Horn's information overlap; ADR 0574)."""
+    pair = []
+    tops = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        tops.append(top)
+        pair.append([float(b) for b in a])
+    if len(pair[0]) != len(pair[1]):
+        raise ValueError("x and y must have the same length")
+    m = max(tops)
+    xv = [a_ / m for a_ in pair[0]]
+    yv = [b_ / m for b_ in pair[1]]
+
+    def term(a_: float, b_: float) -> float:
+        if a_ == 0 or b_ == 0:
+            return 0.0
+        return a_ * math.log1p(b_ / a_) + b_ * math.log1p(a_ / b_)
+
+    num = 0.0
+    tx = 0.0
+    ty = 0.0
+    for a_, b_ in zip(xv, yv, strict=True):
+        num += term(a_, b_)
+        tx += a_
+        ty += b_
+    return min(num / term(tx, ty), 1.0)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
