@@ -65,10 +65,9 @@ add("near_one", [2.0, 0.5, 3.25, 1.0], 1.000001, "q just above 1")
 add("edge", [2.0, 0.5, 3.25, 1.0], 1.5, "q = 1.5")
 add("large", [2.0, 0.5, 3.25, 1.0, 0.0], 250.0, "q = 250: near (6.75/3.25)/4")
 add("small_order", [2.0, 0.5, 3.25, 1.0, 0.0], 0.1, "q = 0.1, a zero value left out of K")
-rng = random.Random(564)
 rng = random.Random(563)
 x = [round(rng.uniform(0, 5), 3) for _ in range(30)]
-add("random", x, 2.5, "30 values from random.Random(564).uniform(0, 5), 3 places, q = 2.5")
+add("random", x, 2.5, "30 values from random.Random(563).uniform(0, 5), 3 places, q = 2.5")
 
 
 def err(cid, why, **args):

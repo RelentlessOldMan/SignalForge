@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "suite": "renyi_evenness",
+  "description": "Renyi evenness (conventions: Renyi evenness; ADR 0567).",
+  "cases": [
+    {"id": "renyi_evenness.even_pair", "op": "renyi_evenness", "args": {"samples": [1.0, 1.0], "order": 2.0}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "two equal shares: 1 at any order"},
+    {"id": "renyi_evenness.richness", "op": "renyi_evenness", "args": {"samples": [0.0, 3.0, 5.0], "order": 0.0}, "expected": 1.0, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0: ln K/ln K = 1"},
+    {"id": "renyi_evenness.inverse_simpson", "op": "renyi_evenness", "args": {"samples": [1.0, 1.0, 2.0], "order": 2.0}, "expected": 0.8927892607143723, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "ln(8/3)/ln 3"},
+    {"id": "renyi_evenness.shannon", "op": "renyi_evenness", "args": {"samples": [1.0, 1.0, 2.0], "order": 1.0}, "expected": 0.9463946303571862, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "(3/2) ln 2/ln 3"},
+    {"id": "renyi_evenness.half", "op": "renyi_evenness", "args": {"samples": [1.0, 3.0], "order": 0.5}, "expected": 0.8999686269529917, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "ln(1 + sqrt(3)/2)/ln 2"},
+    {"id": "renyi_evenness.near_one", "op": "renyi_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 1.000001}, "expected": 0.8569674049804268, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q just above 1"},
+    {"id": "renyi_evenness.edge", "op": "renyi_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0], "order": 1.5}, "expected": 0.8045000092597561, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 1.5"},
+    {"id": "renyi_evenness.large", "op": "renyi_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0, 0.0], "order": 250.0}, "expected": 0.5293412570393455, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 250: near ln(6.75/3.25)/ln 4"},
+    {"id": "renyi_evenness.small_order", "op": "renyi_evenness", "args": {"samples": [2.0, 0.5, 3.25, 1.0, 0.0], "order": 0.1}, "expected": 0.9836765721635196, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "q = 0.1, a zero value left out of K"},
+    {"id": "renyi_evenness.random", "op": "renyi_evenness", "args": {"samples": [0.711, 2.377, 4.317, 4.18, 3.675, 1.415, 1.971, 4.036, 0.146, 0.812, 4.98, 1.624, 0.266, 4.862, 1.916, 2.832, 1.134, 0.589, 3.982, 2.129, 0.071, 3.647, 4.621, 4.634, 4.394, 4.619, 3.103, 0.949, 2.199, 0.286], "order": 2.5}, "expected": 0.8888238868817043, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "30 values from random.Random(567).uniform(0, 5), 3 places, q = 2.5"},
+    {"id": "renyi_evenness.empty", "op": "renyi_evenness", "args": {"samples": [], "order": 2.0}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "renyi_evenness.negative", "op": "renyi_evenness", "args": {"samples": [1.0, -0.5, 2.0], "order": 2.0}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "renyi_evenness.all_zero", "op": "renyi_evenness", "args": {"samples": [0.0, 0.0, 0.0], "order": 2.0}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "renyi_evenness.negative_order", "op": "renyi_evenness", "args": {"samples": [1.0, 2.0, 3.0], "order": -0.5}, "error": "invalid_argument", "source": "the order must be at least 0"},
+    {"id": "renyi_evenness.one_kind", "op": "renyi_evenness", "args": {"samples": [0.0, 4.0, 0.0], "order": 2.0}, "error": "invalid_argument", "source": "ln K is 0 with one kind"}
+  ]
+}

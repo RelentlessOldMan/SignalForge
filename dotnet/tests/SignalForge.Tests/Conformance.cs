@@ -496,6 +496,7 @@ public static class Conformance
             "hill_evenness" => Bind((Reals(a.Get("samples")), a.D("order")), t => Measurements.HillEvenness(t.Item1, t.Item2)),
             "patil_taillie_diversity" => Bind((Reals(a.Get("samples")), a.D("beta")), t => Measurements.PatilTaillieDiversity(t.Item1, t.Item2)),
             "renyi_diversity" => Bind((Reals(a.Get("samples")), a.D("order")), t => Measurements.RenyiDiversity(t.Item1, t.Item2)),
+            "renyi_evenness" => Bind((Reals(a.Get("samples")), a.D("order")), t => Measurements.RenyiEvenness(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Rényi evenness in `measurements` (`renyi_evenness(samples, order)`; values and order
-     as for the Hill number, at least two values above 0: `ln D_q / ln K`, from 0 to 1, 1 at
-     `q = 0`; Hill 1973).
+   - The Tsallis diversity of counts in `measurements` (`tsallis_diversity(samples,
+     order)`; values and order as for the Hill number: `(1 − Σ pᵢ^q)/(q − 1)` over values
+     above 0, the Shannon entropy at `q = 1`; Tsallis 1988, on abundances rather than the
+     histogram `tsallis_entropy` bins).
 
 ## Built
 
@@ -3883,6 +3884,11 @@ Updated with every chunk of work. Dates are absolute.
   through the same forms without the outer `exp`.
   Python 10898 passed, 2 skipped; .NET 9749 passed; conformance 7199/7199 in both. Version
   2026.11.21.43.
+- 2026-11-22: Rényi evenness (ADR 0567): `renyi_evenness(samples, order)` in `measurements`
+  (C# `Measurements.RenyiEvenness`): the Rényi diversity of counts over `ln K`. Also fixed the
+  Hill evenness generator, which reseeded its random case with 563 while saying 564.
+  Python 10919 passed, 2 skipped; .NET 9767 passed; conformance 7214/7214 in both. Version
+  2026.11.22.0.
 
 ## Not built
 

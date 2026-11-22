@@ -7752,6 +7752,17 @@ def renyi_diversity(samples: ArrayLike, order: float) -> float:
     return (q * math.log(m) + math.log(t)) / (1.0 - q)
 
 
+def renyi_evenness(samples: ArrayLike, order: float) -> float:
+    """Renyi evenness of order ``order`` of a record of values at least 0, at least two
+    of them above 0: the Renyi diversity of counts over ln K, from 0 to 1 (conventions:
+    Renyi evenness; ADR 0567)."""
+    h = renyi_diversity(samples, order)
+    k = int(np.count_nonzero(np.asarray(samples, dtype=np.float64) > 0))
+    if k < 2:
+        raise ValueError("samples must have at least two values above 0")
+    return h / math.log(k)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
