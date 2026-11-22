@@ -7067,6 +7067,56 @@ def fisher_alpha(samples: ArrayLike) -> float:
     return math.sqrt(lo) * math.sqrt(hi)
 
 
+def ace_richness(samples: ArrayLike) -> float:
+    """The ACE richness of a record of whole numbers at least 0: Chao and Lee's
+    abundance-based coverage estimator, kinds with counts 1 to 10 as the rare group
+    (conventions: the ACE richness; ADR 0551)."""
+    x = np.asarray(samples)
+    if x.ndim != 1:
+        raise ValueError("samples must be one-dimensional")
+    if np.iscomplexobj(x):
+        raise ValueError("samples must be real")
+    x = x.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(x)):
+        raise ValueError("samples must be finite")
+    n = int(x.shape[0])
+    if n < 1:
+        raise ValueError("samples must not be empty")
+    if np.any(x < 0):
+        raise ValueError("samples must be at least 0")
+    if np.any(x != np.floor(x)):
+        raise ValueError("samples must be whole numbers")
+    vals = [float(a) for a in x]
+    total = 0.0
+    for a in vals:
+        total += a
+    if not total > 0:
+        raise ValueError("samples must not all be 0")
+    if total > 10_000_000:
+        raise ValueError("samples must total at most 10 000 000")
+    s_abund = 0
+    s_rare = 0
+    ones = 0
+    n_rare = 0.0
+    pairs = 0.0
+    for value in vals:
+        if value > 10:
+            s_abund += 1
+        elif value > 0:
+            s_rare += 1
+            n_rare += value
+            pairs += value * (value - 1.0)
+            if value == 1:
+                ones += 1
+    if s_rare == 0:
+        return float(s_abund)
+    if ones == s_rare:
+        raise ValueError("samples must have a rare value above 1")
+    cover = 1.0 - ones / n_rare
+    gamma = max(s_rare / cover * pairs / (n_rare * (n_rare - 1.0)) - 1.0, 0.0)
+    return s_abund + s_rare / cover + ones / cover * gamma
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

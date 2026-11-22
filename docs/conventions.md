@@ -1255,6 +1255,12 @@ rule for code not written yet.
   Search: `lo` halves from 1 while `f(lo) ≥ k`, `hi` doubles from 1 while `f(hi) ≤ k`, then
   100 steps of `mid = √lo · √hi`; the value is `√lo · √hi`. Whole numbers as for the
   Brillouin index, with the total above `k`. **(implemented)**
+- **ACE richness** ([ADR 0551](adr/0551-ace-richness.md);
+  `ace_richness(samples)`, C# `Measurements.AceRichness`): rare kinds have values 1 to 10;
+  `C = 1 − F₁/N_rare`, `γ² = max(S_rare/C · P/(N_rare(N_rare − 1)) − 1, 0)` with
+  `P = Σ xᵢ(xᵢ − 1)` over the rare values, `S = S_abund + S_rare/C + F₁/C · γ²`, or
+  `S_abund` with no rare kinds. Whole numbers as for the Brillouin index; rare kinds not
+  all singletons. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

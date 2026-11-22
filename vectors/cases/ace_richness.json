@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "suite": "ace_richness",
+  "description": "The ACE richness (conventions: the ACE richness; ADR 0551).",
+  "cases": [
+    {"id": "ace_richness.abundant_only", "op": "ace_richness", "args": {"samples": [20.0, 15.0, 0.0]}, "expected": 2.0, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "no rare kinds: S_abund = 2"},
+    {"id": "ace_richness.no_singletons", "op": "ace_richness", "args": {"samples": [2.0, 3.0]}, "expected": 2.0, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "C = 1, gamma^2 = max(16/20 - 1, 0) = 0: 2"},
+    {"id": "ace_richness.one_singleton", "op": "ace_richness", "args": {"samples": [1.0, 2.0]}, "expected": 3.0, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "C = 2/3, gamma^2 = max(1 - 1, 0) = 0: 3"},
+    {"id": "ace_richness.three_singletons", "op": "ace_richness", "args": {"samples": [1.0, 1.0, 1.0, 2.0]}, "expected": 10.0, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "C = 2/5, gamma^2 = 0: 4/(2/5)"},
+    {"id": "ace_richness.mixed", "op": "ace_richness", "args": {"samples": [1.0, 1.0, 2.0, 3.0, 20.0]}, "expected": 6.786666666666667, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "C = 5/7, gamma^2 = 1/15: 1 + 28/5 + 14/75"},
+    {"id": "ace_richness.cut_off", "op": "ace_richness", "args": {"samples": [1.0, 1.0, 10.0, 0.0, 5.0]}, "expected": 6.4222222222222225, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "10 is rare: C = 15/17, gamma^2 = 5/6"},
+    {"id": "ace_richness.eleven", "op": "ace_richness", "args": {"samples": [11.0, 2.0, 1.0]}, "expected": 4.0, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "11 is abundant: 1 + 3"},
+    {"id": "ace_richness.random", "op": "ace_richness", "args": {"samples": [8.0, 10.0, 10.0, 13.0, 13.0, 3.0, 0.0, 3.0, 3.0, 5.0, 6.0, 6.0, 13.0, 12.0, 8.0, 14.0, 0.0, 2.0, 13.0, 9.0, 4.0, 12.0, 10.0, 9.0, 14.0, 5.0, 14.0, 1.0, 6.0, 0.0, 7.0, 11.0, 8.0, 2.0, 0.0, 11.0, 8.0, 14.0, 4.0, 11.0]}, "expected": 36.234037884184815, "tol": {"abs": 1e-13, "rel": 1e-12}, "source": "40 whole values from random.Random(551).randint(0, 14)"},
+    {"id": "ace_richness.empty", "op": "ace_richness", "args": {"samples": []}, "error": "invalid_argument", "source": "the record needs a value"},
+    {"id": "ace_richness.negative", "op": "ace_richness", "args": {"samples": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "ace_richness.all_zero", "op": "ace_richness", "args": {"samples": [0.0, 0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be positive"},
+    {"id": "ace_richness.fraction", "op": "ace_richness", "args": {"samples": [1.5, 2.0]}, "error": "invalid_argument", "source": "values must be whole numbers"},
+    {"id": "ace_richness.too_large", "op": "ace_richness", "args": {"samples": [10000000.0, 1.0]}, "error": "invalid_argument", "source": "the total must be at most 10 000 000"},
+    {"id": "ace_richness.all_singletons", "op": "ace_richness", "args": {"samples": [1.0, 1.0]}, "error": "invalid_argument", "source": "the rare values must not all be 1"},
+    {"id": "ace_richness.abundant_and_one", "op": "ace_richness", "args": {"samples": [30.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "the rare values must not all be 1"}
+  ]
+}

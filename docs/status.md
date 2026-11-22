@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The ACE richness in `measurements` (`ace_richness(samples)`; whole numbers at least 0:
-     Chao and Lee's abundance-based coverage estimator, the kinds with counts 1 to 10 as the
-     rare group, its coverage `1 − F₁/N_rare` and squared coefficient of variation).
+   - The rarefied richness in `measurements` (`rarefied_richness(samples, size)`; whole
+     numbers at least 0 and a whole `size` from 1 to `N`: Hurlbert's expected count of kinds
+     in `size` individuals drawn without replacement, `Σᵢ (1 − C(N − xᵢ, n)/C(N, n))`).
 
 ## Built
 
@@ -3804,6 +3804,11 @@ Updated with every chunk of work. Dates are absolute.
   geometric bisection run step for step in both languages.
   Python 10545 passed, 2 skipped; .NET 9472 passed; conformance 6971/6971 in both. Version
   2026.11.21.27.
+- 2026-11-21: The ACE richness (ADR 0551): `ace_richness(samples)` in `measurements` (C#
+  `Measurements.AceRichness`): Chao and Lee's abundance-based coverage estimator with the
+  rare group cut off at 10.
+  Python 10569 passed, 2 skipped; .NET 9490 passed; conformance 6986/6986 in both. Version
+  2026.11.21.28.
 
 ## Not built
 

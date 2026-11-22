@@ -241,6 +241,7 @@ from .measurements import (
     TwoToneImd,
     TwoToneIp2,
     TwoToneIp5,
+    ace_richness,
     aggregated_variance,
     alatalo_evenness,
     allan_deviation,
@@ -730,7 +731,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.21.27"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.21.28"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -821,6 +822,7 @@ __all__ = [
     "a_law_expand",
     "a_weighting",
     "a_weighting_sos",
+    "ace_richness",
     "acpr",
     "acpr_rrc",
     "adsr",
