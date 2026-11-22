@@ -1390,6 +1390,11 @@ rule for code not written yet.
   `Measurements.JaccardTurnover`): with `a` the kinds above 0 in both records and `b`, `c`
   those above 0 in one only, `2 min(b, c)/(a + 2 min(b, c))`. Records as for Pianka's niche
   overlap. **(implemented)**
+- **Nestedness part of the Jaccard dissimilarity**
+  ([ADR 0579](adr/0579-jaccard-nestedness.md); `jaccard_nestedness(x, y)`, C#
+  `Measurements.JaccardNestedness`): with `a` the kinds above 0 in both records and `b`, `c`
+  those above 0 in one only, `|b − c|·a/((a + b + c)(a + 2 min(b, c)))`, one division of
+  exact integers. Records as for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

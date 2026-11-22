@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The nestedness part of the Jaccard dissimilarity in `measurements`
-     (`jaccard_nestedness(x, y)`; records as for `pianka_overlap`:
-     `(b + c)/(a + b + c) − jaccard_turnover`, as
-     `|b − c|·a/((a + b + c)(a + 2 min(b, c)))`; Baselga 2012).
+   - The Ružička similarity of two records in `measurements` (`ruzicka_similarity(x, y)`;
+     records as for `pianka_overlap`: `Σ min(x, y)/Σ max(x, y)`, the quantitative Jaccard,
+     from 0 to 1; Ružička 1958).
 
 ## Built
 
@@ -3945,6 +3944,11 @@ Updated with every chunk of work. Dates are absolute.
   `2 min(b, c)/(a + 2 min(b, c))` on presence, 0 for nested records.
   Python 11153 passed, 2 skipped; .NET 9951 passed; conformance 7362/7362 in both. Version
   2026.11.22.11.
+- 2026-11-22: The nestedness part of the Jaccard dissimilarity (ADR 0579):
+  `jaccard_nestedness(x, y)` in `measurements` (C# `Measurements.JaccardNestedness`): the
+  Jaccard dissimilarity less its turnover part, as one division of exact integers.
+  Python 11174 passed, 2 skipped; .NET 9968 passed; conformance 7375/7375 in both. Version
+  2026.11.22.12.
 
 ## Not built
 

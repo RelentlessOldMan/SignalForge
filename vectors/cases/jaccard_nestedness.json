@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "jaccard_nestedness",
+  "description": "The nestedness part of the Jaccard dissimilarity (conventions: nestedness part of the Jaccard dissimilarity; ADR 0579).",
+  "cases": [
+    {"id": "jaccard_nestedness.same", "op": "jaccard_nestedness", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same kinds: 0"},
+    {"id": "jaccard_nestedness.disjoint", "op": "jaccard_nestedness", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "no shared kind: 1 - 1 = 0"},
+    {"id": "jaccard_nestedness.subset", "op": "jaccard_nestedness", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 1, c = 0: 1/2 - 0"},
+    {"id": "jaccard_nestedness.crossed", "op": "jaccard_nestedness", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "b = c: 1/2 - 1/2 = 0"},
+    {"id": "jaccard_nestedness.nested", "op": "jaccard_nestedness", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 0, c = 2: 2/3 - 0"},
+    {"id": "jaccard_nestedness.swap", "op": "jaccard_nestedness", "args": {"x": [1.0, 1.0, 1.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "b = c = 2: 0"},
+    {"id": "jaccard_nestedness.uneven", "op": "jaccard_nestedness", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.16666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 4, c = 1: 5/6 - 2/3 = 1/6"},
+    {"id": "jaccard_nestedness.tiny", "op": "jaccard_nestedness", "args": {"x": [5e-324, 1e-300, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the smallest double counts as present: a = 2, b = 1, c = 0: 1/3"},
+    {"id": "jaccard_nestedness.random", "op": "jaccard_nestedness", "args": {"x": [1.0, 2.5, 2.5, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 2.5, 0.0, 1.0, 2.5, 2.5, 0.0, 2.5, 2.5, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 2.5], "y": [1.0, 2.5, 1.0, 2.5, 0.0, 0.0, 1.0, 1.0, 2.5, 1.0, 0.0, 0.0, 0.0, 2.5, 2.5, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0]}, "expected": 0.08080808080808081, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x then y, 25 values each from random.Random(579).choice([0, 0, 1, 2.5])"},
+    {"id": "jaccard_nestedness.empty", "op": "jaccard_nestedness", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "jaccard_nestedness.negative", "op": "jaccard_nestedness", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "jaccard_nestedness.all_zero", "op": "jaccard_nestedness", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "jaccard_nestedness.lengths", "op": "jaccard_nestedness", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}
