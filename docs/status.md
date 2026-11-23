@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The abundance-gradient part of the Bray–Curtis dissimilarity in `measurements`
-     (`bray_curtis_gradient(x, y)`; records as for `pianka_overlap`: the Bray–Curtis
-     dissimilarity less `bray_curtis_balanced`, `(|B − C|/(2A + B + C))·A/(A + min(B, C))`;
-     Baselga 2013).
+   - Podani's replacement part of the Jaccard dissimilarity in `measurements`
+     (`podani_replacement(x, y)`; records as for `pianka_overlap`: `2 min(b, c)/(a + b + c)`
+     on presence, from 0 to 1; Podani and Schmera 2011).
 
 ## Built
 
@@ -3966,6 +3965,11 @@ Updated with every chunk of work. Dates are absolute.
   `min(B, C)/(A + min(B, C))` on abundances, 0 when one record dominates the other.
   Python 11242 passed, 2 skipped; .NET 10022 passed; conformance 7416/7416 in both. Version
   2026.11.23.0.
+- 2026-11-23: The abundance-gradient part of the Bray–Curtis dissimilarity (ADR 0583):
+  `bray_curtis_gradient(x, y)` in `measurements` (C# `Measurements.BrayCurtisGradient`): the
+  Bray–Curtis dissimilarity less its balanced-variation part, in product form.
+  Python 11263 passed, 2 skipped; .NET 10039 passed; conformance 7429/7429 in both. Version
+  2026.11.23.1.
 
 ## Not built
 

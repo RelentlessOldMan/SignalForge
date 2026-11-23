@@ -1411,6 +1411,11 @@ rule for code not written yet.
   `Measurements.BrayCurtisBalanced`): with both records divided by the larger of their
   maxima, `A = Σ min(x_i, y_i)`, `B = Σ (x_i − min)`, `C = Σ (y_i − min)` in index order,
   `min(B, C)/(A + min(B, C))`. Records as for Pianka's niche overlap. **(implemented)**
+- **Abundance-gradient part of the Bray–Curtis dissimilarity**
+  ([ADR 0583](adr/0583-bray-curtis-gradient.md); `bray_curtis_gradient(x, y)`, C#
+  `Measurements.BrayCurtisGradient`): with `A`, `B`, `C` as for the balanced-variation part,
+  `|B − C|·A/((2A + B + C)(A + min(B, C)))`. Records as for Pianka's niche overlap.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
