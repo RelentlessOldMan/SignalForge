@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Podani's nestedness of two presence records in `measurements`
-     (`podani_nestedness(x, y)`; records as for `pianka_overlap`: `(a + |b − c|)/(a + b + c)`
-     when `a > 0`, else 0; Podani and Schmera 2012).
+   - Harrison's beta of two presence records in `measurements`
+     (`harrison_beta(x, y)`; records as for `pianka_overlap`: `min(b, c)/(a + max(b, c))`,
+     from 0 to 1; Harrison, Ross and Lawton 1992).
 
 ## Built
 
@@ -3990,6 +3990,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.RuzickaRichnessDifference`): `|B − C|/(A + B + C)` on amounts.
   Python 11347 passed, 2 skipped; .NET 10107 passed; conformance 7481/7481 in both. Version
   2026.11.23.5.
+- 2026-11-23: Podani's nestedness of two presence records (ADR 0588):
+  `podani_nestedness(x, y)` in `measurements` (C# `Measurements.PodaniNestedness`):
+  `(a + |b − c|)/(a + b + c)` when the records share a kind, else 0.
+  Python 11368 passed, 2 skipped; .NET 10124 passed; conformance 7494/7494 in both. Version
+  2026.11.23.6.
 
 ## Not built
 
