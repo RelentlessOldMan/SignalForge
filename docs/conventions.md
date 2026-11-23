@@ -1431,6 +1431,10 @@ rule for code not written yet.
   `Measurements.RuzickaReplacement`): with `A = Σ min(xᵢ, yᵢ)`, `B = Σ xᵢ − A` and
   `C = Σ yᵢ − A`, `2 min(B, C)/(A + B + C)`. Records as for Pianka's niche overlap.
   **(implemented)**
+- **Richness-difference part of the Ružička dissimilarity**
+  ([ADR 0587](adr/0587-ruzicka-richness-difference.md); `ruzicka_richness_difference(x, y)`,
+  C# `Measurements.RuzickaRichnessDifference`): with `A`, `B`, `C` as for the replacement
+  part, `|B − C|/(A + B + C)`. Records as for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

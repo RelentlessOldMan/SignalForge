@@ -483,6 +483,7 @@ from .measurements import (
     runs_test,
     russell_rao_coefficient,
     ruzicka_replacement,
+    ruzicka_richness_difference,
     ruzicka_similarity,
     sample_entropy,
     schroeder_decay,
@@ -766,7 +767,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.4"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.5"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1383,6 +1384,7 @@ __all__ = [
     "runs_test",
     "russell_rao_coefficient",
     "ruzicka_replacement",
+    "ruzicka_richness_difference",
     "ruzicka_similarity",
     "saleh_amplifier",
     "sample_and_hold",
