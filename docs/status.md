@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The replacement part of the Ružička dissimilarity in `measurements`
-     (`ruzicka_replacement(x, y)`; records as for `pianka_overlap`: with `A = Σ min(x, y)`,
-     `B = Σ x − A`, `C = Σ y − A`, `2 min(B, C)/(A + B + C)`; Legendre 2014).
+   - The richness-difference part of the Ružička dissimilarity in `measurements`
+     (`ruzicka_richness_difference(x, y)`; records as for `pianka_overlap`: with `A`, `B`,
+     `C` as for `ruzicka_replacement`, `|B − C|/(A + B + C)`; Legendre 2014).
 
 ## Built
 
@@ -3980,6 +3980,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.PodaniRichnessDifference`): `|b − c|/(a + b + c)` on presence.
   Python 11305 passed, 2 skipped; .NET 10073 passed; conformance 7455/7455 in both. Version
   2026.11.23.3.
+- 2026-11-23: The replacement part of the Ružička dissimilarity (ADR 0586):
+  `ruzicka_replacement(x, y)` in `measurements` (C# `Measurements.RuzickaReplacement`):
+  `2 min(B, C)/(A + B + C)` on amounts, Podani's replacement on presence records.
+  Python 11326 passed, 2 skipped; .NET 10090 passed; conformance 7468/7468 in both. Version
+  2026.11.23.4.
 
 ## Not built
 

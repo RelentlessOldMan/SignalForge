@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "ruzicka_replacement",
+  "description": "The replacement part of the Ruzicka dissimilarity (conventions: replacement part of the Ruzicka dissimilarity; ADR 0586).",
+  "cases": [
+    {"id": "ruzicka_replacement.same", "op": "ruzicka_replacement", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0, 3.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "identical records: 0"},
+    {"id": "ruzicka_replacement.disjoint", "op": "ruzicka_replacement", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "A = 0, B = C = 1: 2/2 = 1"},
+    {"id": "ruzicka_replacement.double", "op": "ruzicka_replacement", "args": {"x": [1.0, 2.0, 3.0], "y": [2.0, 4.0, 6.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "A = 6, B = 0, C = 6: 0"},
+    {"id": "ruzicka_replacement.crossed", "op": "ruzicka_replacement", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.6153846153846154, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "A = 3, B = 4, C = 6: 8/13"},
+    {"id": "ruzicka_replacement.nested", "op": "ruzicka_replacement", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "A = 1, B = 0, C = 2: 0"},
+    {"id": "ruzicka_replacement.huge", "op": "ruzicka_replacement", "args": {"x": [1.5e+308, 1.5e+308, 0.0], "y": [1.5e+308, 0.0, 1.5e+308]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "sums past the largest double, A = B = C: 2/3"},
+    {"id": "ruzicka_replacement.tiny", "op": "ruzicka_replacement", "args": {"x": [1e-323, 0.0], "y": [5e-324, 5e-324]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "subnormal values, in units of 5e-324 A = B = C = 1: 2/3"},
+    {"id": "ruzicka_replacement.uneven", "op": "ruzicka_replacement", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "presence records, A = 1, B = 4, C = 1: 2/6"},
+    {"id": "ruzicka_replacement.random", "op": "ruzicka_replacement", "args": {"x": [1.0, 0.0, 1.0, 0.0, 2.5, 0.0, 0.0, 2.5, 1.0, 0.0, 0.0, 2.5, 2.5, 0.0, 0.0, 0.0, 2.5, 0.0, 2.5, 0.0, 0.0, 1.0, 2.5, 0.0, 0.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 1.0, 2.5, 0.0, 2.5, 0.0, 2.5, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0]}, "expected": 0.696969696969697, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "x then y, 25 values each from random.Random(586).choice([0, 0, 1, 2.5])"},
+    {"id": "ruzicka_replacement.empty", "op": "ruzicka_replacement", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "ruzicka_replacement.negative", "op": "ruzicka_replacement", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "ruzicka_replacement.all_zero", "op": "ruzicka_replacement", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "ruzicka_replacement.lengths", "op": "ruzicka_replacement", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}
