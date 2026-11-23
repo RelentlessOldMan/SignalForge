@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Podani's richness-difference part of the Jaccard dissimilarity in `measurements`
-     (`podani_richness_difference(x, y)`; records as for `pianka_overlap`:
-     `|b − c|/(a + b + c)` on presence, from 0 to 1; Podani and Schmera 2011).
+   - The replacement part of the Ružička dissimilarity in `measurements`
+     (`ruzicka_replacement(x, y)`; records as for `pianka_overlap`: with `A = Σ min(x, y)`,
+     `B = Σ x − A`, `C = Σ y − A`, `2 min(B, C)/(A + B + C)`; Legendre 2014).
 
 ## Built
 
@@ -3975,6 +3975,11 @@ Updated with every chunk of work. Dates are absolute.
   `2 min(b, c)/(a + b + c)` on presence, 0 for nested records.
   Python 11284 passed, 2 skipped; .NET 10056 passed; conformance 7442/7442 in both. Version
   2026.11.23.2.
+- 2026-11-23: Podani's richness-difference part of the Jaccard dissimilarity (ADR 0585):
+  `podani_richness_difference(x, y)` in `measurements` (C#
+  `Measurements.PodaniRichnessDifference`): `|b − c|/(a + b + c)` on presence.
+  Python 11305 passed, 2 skipped; .NET 10073 passed; conformance 7455/7455 in both. Version
+  2026.11.23.3.
 
 ## Not built
 

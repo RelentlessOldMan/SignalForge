@@ -456,6 +456,7 @@ from .measurements import (
     pianka_overlap,
     pielou_evenness,
     podani_replacement,
+    podani_richness_difference,
     population_attributable_fraction,
     positive_likelihood_ratio,
     power_ccdf,
@@ -764,7 +765,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.2"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.3"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1289,6 +1290,7 @@ __all__ = [
     "ping_pong_delay",
     "pitch_shift",
     "podani_replacement",
+    "podani_richness_difference",
     "polyblep_pwm",
     "polyblep_sawtooth",
     "polyblep_square",
