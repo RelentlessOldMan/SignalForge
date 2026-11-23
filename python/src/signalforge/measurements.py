@@ -8235,6 +8235,42 @@ def morisita_overlap(x: ArrayLike, y: ArrayLike) -> float:
     return 2.0 * cross * (big_x - 1.0) * (big_y - 1.0) / den
 
 
+def bray_curtis_balanced(x: ArrayLike, y: ArrayLike) -> float:
+    """The balanced-variation part of the Bray-Curtis dissimilarity of the records ``x`` and
+    ``y`` of values at least 0, each with a value above 0: min(B, C)/(A + min(B, C)), from 0
+    to 1 (conventions: balanced-variation part of the Bray-Curtis dissimilarity; ADR 0582)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        pair.append([float(b) for b in a])
+    xv, yv = pair
+    if len(xv) != len(yv):
+        raise ValueError("x and y must have the same length")
+    m = max(max(xv), max(yv))
+    shared = 0.0
+    only_x = 0.0
+    only_y = 0.0
+    for a_, b_ in zip(xv, yv, strict=True):
+        lo = min(a_, b_)
+        shared += lo / m
+        only_x += (a_ - lo) / m
+        only_y += (b_ - lo) / m
+    least = min(only_x, only_y)
+    return least / (shared + least)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

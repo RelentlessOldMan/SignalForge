@@ -273,6 +273,7 @@ from .measurements import (
     bonferroni_index,
     braun_blanquet_coefficient,
     bray_curtis,
+    bray_curtis_balanced,
     brier_score,
     brillouin_evenness,
     brillouin_index,
@@ -761,7 +762,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.22.14"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.0"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -915,6 +916,7 @@ __all__ = [
     "bonferroni_index",
     "braun_blanquet_coefficient",
     "bray_curtis",
+    "bray_curtis_balanced",
     "brier_score",
     "brillouin_evenness",
     "brillouin_index",

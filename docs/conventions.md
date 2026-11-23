@@ -1406,6 +1406,11 @@ rule for code not written yet.
   `2 Σ x y (X − 1)(Y − 1)/(S_x Y(Y − 1) + S_y X(X − 1))`. Counts whole, at least 0, each
   record totalling from 2 to 10 000 000, the same length, some count above 1.
   **(implemented)**
+- **Balanced-variation part of the Bray–Curtis dissimilarity**
+  ([ADR 0582](adr/0582-bray-curtis-balanced.md); `bray_curtis_balanced(x, y)`, C#
+  `Measurements.BrayCurtisBalanced`): with both records divided by the larger of their
+  maxima, `A = Σ min(x_i, y_i)`, `B = Σ (x_i − min)`, `C = Σ (y_i − min)` in index order,
+  `min(B, C)/(A + min(B, C))`. Records as for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

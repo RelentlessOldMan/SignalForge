@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The balanced-variation part of the Bray–Curtis dissimilarity in `measurements`
-     (`bray_curtis_balanced(x, y)`; records as for `pianka_overlap`: with `A = Σ min(x, y)`,
-     `B = Σ x − A`, `C = Σ y − A`, `min(B, C)/(A + min(B, C))`; Baselga 2013).
+   - The abundance-gradient part of the Bray–Curtis dissimilarity in `measurements`
+     (`bray_curtis_gradient(x, y)`; records as for `pianka_overlap`: the Bray–Curtis
+     dissimilarity less `bray_curtis_balanced`, `(|B − C|/(2A + B + C))·A/(A + min(B, C))`;
+     Baselga 2013).
 
 ## Built
 
@@ -3960,6 +3961,11 @@ Updated with every chunk of work. Dates are absolute.
   samples.
   Python 11221 passed, 2 skipped; .NET 10005 passed; conformance 7403/7403 in both. Version
   2026.11.22.14.
+- 2026-11-23: The balanced-variation part of the Bray–Curtis dissimilarity (ADR 0582):
+  `bray_curtis_balanced(x, y)` in `measurements` (C# `Measurements.BrayCurtisBalanced`):
+  `min(B, C)/(A + min(B, C))` on abundances, 0 when one record dominates the other.
+  Python 11242 passed, 2 skipped; .NET 10022 passed; conformance 7416/7416 in both. Version
+  2026.11.23.0.
 
 ## Not built
 
