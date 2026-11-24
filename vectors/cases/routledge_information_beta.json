@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "routledge_information_beta",
+  "description": "Routledge's information beta of two presence records (conventions: Routledge's information beta; ADR 0595).",
+  "cases": [
+    {"id": "routledge_information_beta.same", "op": "routledge_information_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the same kinds: 0"},
+    {"id": "routledge_information_beta.disjoint", "op": "routledge_information_beta", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 0.6931471805599453, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "a = 0, b = c = 1: ln 2"},
+    {"id": "routledge_information_beta.subset", "op": "routledge_information_beta", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.17441604792151594, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "a = 1, b = 1, c = 0: ln 3 - (4/3) ln 2"},
+    {"id": "routledge_information_beta.crossed", "op": "routledge_information_beta", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.23104906018664845, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "a = 2, b = c = 1: (1/3) ln 2"},
+    {"id": "routledge_information_beta.nested", "op": "routledge_information_beta", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.2157615543388357, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "a = 1, b = 0, c = 2: (3/2) ln 2 - (3/4) ln 3"},
+    {"id": "routledge_information_beta.swap", "op": "routledge_information_beta", "args": {"x": [1.0, 1.0, 1.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.4620981203732969, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "a = 1, b = c = 2: (2/3) ln 2"},
+    {"id": "routledge_information_beta.uneven", "op": "routledge_information_beta", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.40022753699670144, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "a = 1, b = 4, c = 1: ln 7 - (4/7) ln 2 - (5/7) ln 5"},
+    {"id": "routledge_information_beta.lopsided", "op": "routledge_information_beta", "args": {"x": [1.0, 0.0, 0.0, 0.0, 0.0], "y": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.5004024235381879, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "a = 0, b = 1, c = 4: ln 5 - (8/5) ln 2"},
+    {"id": "routledge_information_beta.tiny", "op": "routledge_information_beta", "args": {"x": [5e-324, 0.0, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 0.34657359027997264, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the smallest double counts as present: a = b = c = 1: (1/2) ln 2"},
+    {"id": "routledge_information_beta.random", "op": "routledge_information_beta", "args": {"x": [1.0, 1.0, 2.5, 0.0, 0.0, 2.5, 2.5, 1.0, 0.0, 2.5, 2.5, 2.5, 0.0, 0.0, 1.0, 2.5, 2.5, 0.0, 2.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0], "y": [1.0, 2.5, 2.5, 1.0, 0.0, 1.0, 2.5, 0.0, 1.0, 0.0, 2.5, 1.0, 1.0, 2.5, 2.5, 1.0, 1.0, 2.5, 2.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]}, "expected": 0.15182714651714685, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "x then y, 25 values each from random.Random(595).choice([0, 0, 1, 2.5])"},
+    {"id": "routledge_information_beta.empty", "op": "routledge_information_beta", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "routledge_information_beta.negative", "op": "routledge_information_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "routledge_information_beta.all_zero", "op": "routledge_information_beta", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "routledge_information_beta.lengths", "op": "routledge_information_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}
