@@ -1523,6 +1523,12 @@ rule for code not written yet.
   Each record is divided by its largest value before it is summed. Records as for Ivlev's
   electivity; an availability share that underflows to 0 is `invalid_argument`.
   **(implemented)**
+- **Vanderploeg and Scavia's relativized electivity**
+  ([ADR 0605](adr/0605-vanderploeg-scavia-electivity.md);
+  `vanderploeg_scavia_electivity(x, available)`, C#
+  `Measurements.VanderploegScaviaElectivity`): for each kind `(α_i − 1/n)/(α_i + 1/n)` with
+  `α` Manly's alpha and `n` the number of kinds, an array held to −1 to 1. `α` as
+  `manly_alpha` computes it, with its rules. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -9128,6 +9128,17 @@ def jacobs_selectivity(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64
     return np.array(out, dtype=np.float64)
 
 
+def vanderploeg_scavia_electivity(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64]:
+    """Vanderploeg and Scavia's relativized electivity of the record of use ``x`` against the
+    record of availability ``available``, records as for manly_alpha: (a - 1/n)/(a + 1/n)
+    for each kind with a Manly's alpha, from -1 to 1 (conventions: Vanderploeg and Scavia's
+    relativized electivity; ADR 0605)."""
+    alpha = manly_alpha(x, available)
+    e = 1.0 / alpha.size
+    out = [min(max((float(a) - e) / (float(a) + e), -1.0), 1.0) for a in alpha]
+    return np.array(out, dtype=np.float64)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

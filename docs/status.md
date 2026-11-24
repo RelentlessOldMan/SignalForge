@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Vanderploeg and Scavia's relativized electivity in `measurements`
-     (`vanderploeg_scavia_electivity(x, available)`; records as for `jacobs_selectivity`:
-     for each kind `(α_i − 1/n)/(α_i + 1/n)` with `α` Manly's alpha and `n` the number of
-     kinds, an array from −1 to 1; Vanderploeg and Scavia 1979).
+   - Savage's selection ratio in `measurements` (`savage_selection_ratio(x, available)`;
+     records as for `manly_alpha`: for each kind `p_i/r_i` on the shares of use `p` and of
+     availability `r`, an array at least 0, 1 for a kind used as it is available;
+     Savage 1931).
 
 ## Built
 
@@ -4077,6 +4077,11 @@ Updated with every chunk of work. Dates are absolute.
   for each kind, Ivlev's electivity made independent of how abundant a kind is.
   Python 11740 passed, 2 skipped; .NET 10422 passed; conformance 7723/7723 in both. Version
   2026.11.23.22.
+- 2026-11-23: Vanderploeg and Scavia's relativized electivity (ADR 0605):
+  `vanderploeg_scavia_electivity(x, available)` in `measurements` (C#
+  `Measurements.VanderploegScaviaElectivity`): `(α_i − 1/n)/(α_i + 1/n)` on Manly's alpha.
+  Python 11766 passed, 2 skipped; .NET 10442 passed; conformance 7738/7738 in both. Version
+  2026.11.23.23.
 
 ## Not built
 
