@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "lennon_gradient_beta",
+  "description": "Lennon's gradient beta of two presence records (conventions: Lennon's gradient beta; ADR 0594).",
+  "cases": [
+    {"id": "lennon_gradient_beta.same", "op": "lennon_gradient_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same kinds: 0"},
+    {"id": "lennon_gradient_beta.disjoint", "op": "lennon_gradient_beta", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 0, b = c = 1: 0"},
+    {"id": "lennon_gradient_beta.subset", "op": "lennon_gradient_beta", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 1, c = 0: 2/3"},
+    {"id": "lennon_gradient_beta.crossed", "op": "lennon_gradient_beta", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 2, b = c = 1: 0"},
+    {"id": "lennon_gradient_beta.nested", "op": "lennon_gradient_beta", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 0, c = 2: 4/4 = 1"},
+    {"id": "lennon_gradient_beta.swap", "op": "lennon_gradient_beta", "args": {"x": [1.0, 1.0, 1.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = c = 2: 0"},
+    {"id": "lennon_gradient_beta.uneven", "op": "lennon_gradient_beta", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.8571428571428571, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 4, c = 1: 6/7"},
+    {"id": "lennon_gradient_beta.lopsided", "op": "lennon_gradient_beta", "args": {"x": [1.0, 0.0, 0.0, 0.0, 0.0], "y": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 1.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 0, b = 1, c = 4: 6/5"},
+    {"id": "lennon_gradient_beta.tiny", "op": "lennon_gradient_beta", "args": {"x": [5e-324, 0.0, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the smallest double counts as present: a = b = c = 1: 0"},
+    {"id": "lennon_gradient_beta.random", "op": "lennon_gradient_beta", "args": {"x": [0.0, 2.5, 0.0, 1.0, 0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 2.5, 0.0, 0.0, 1.0, 0.0, 2.5, 2.5, 2.5, 0.0, 0.0, 2.5, 1.0, 2.5], "y": [1.0, 2.5, 2.5, 0.0, 2.5, 0.0, 1.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 2.5, 2.5, 1.0, 1.0]}, "expected": 0.08695652173913043, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x then y, 25 values each from random.Random(594).choice([0, 0, 1, 2.5])"},
+    {"id": "lennon_gradient_beta.empty", "op": "lennon_gradient_beta", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "lennon_gradient_beta.negative", "op": "lennon_gradient_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "lennon_gradient_beta.all_zero", "op": "lennon_gradient_beta", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "lennon_gradient_beta.lengths", "op": "lennon_gradient_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

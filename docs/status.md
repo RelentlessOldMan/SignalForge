@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Lennon's gradient beta of two presence records in `measurements`
-     (`lennon_gradient_beta(x, y)`; records as for `pianka_overlap`:
-     `2|b − c|/(2a + b + c)`; Lennon et al. 2001, `β-gl` in Koleff, Gaston and Lennon 2003).
+   - Routledge's information beta of two presence records in `measurements`
+     (`routledge_information_beta(x, y)`; records as for `pianka_overlap`: the information
+     form `β-I` of Routledge 1977, as listed by Koleff, Gaston and Lennon 2003).
 
 ## Built
 
@@ -4020,6 +4020,11 @@ Updated with every chunk of work. Dates are absolute.
   from richness difference, from 0 to 1/2.
   Python 11473 passed, 2 skipped; .NET 10209 passed; conformance 7559/7559 in both. Version
   2026.11.23.11.
+- 2026-11-23: Lennon's gradient beta of two presence records (ADR 0594):
+  `lennon_gradient_beta(x, y)` in `measurements` (C# `Measurements.LennonGradientBeta`):
+  `2|b − c|/(2a + b + c)`, the part of beta that comes from a gradient in richness.
+  Python 11495 passed, 2 skipped; .NET 10227 passed; conformance 7573/7573 in both. Version
+  2026.11.23.12.
 
 ## Not built
 

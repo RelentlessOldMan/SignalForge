@@ -405,6 +405,7 @@ from .measurements import (
     largest_lyapunov,
     lateral_fraction,
     lempel_ziv_complexity,
+    lennon_gradient_beta,
     ljung_box,
     loevinger_h,
     log_loss,
@@ -773,7 +774,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.11"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.12"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1190,6 +1191,7 @@ __all__ = [
     "lattice_filter",
     "lattice_synthesis",
     "lempel_ziv_complexity",
+    "lennon_gradient_beta",
     "levinson",
     "limit",
     "lin_to_db",
