@@ -1504,6 +1504,12 @@ rule for code not written yet.
   Each record is divided by its largest value before it is summed. Records as for
   Hurlbert's niche overlap; an availability share that underflows to 0 or a sum that
   overflows is `invalid_argument`. **(implemented)**
+- **Manly's alpha** ([ADR 0602](adr/0602-manly-alpha.md); `manly_alpha(x, available)`, C#
+  `Measurements.ManlyAlpha`): for each kind `(p_i/r_i)/Σ_j(p_j/r_j)` on the shares of use
+  `p = x/Σx` and of availability `r = available/Σavailable`, an array summing to 1, each held
+  at 1 from above. Each record is divided by its largest value before it is summed. Records
+  as for Hurlbert's niche breadth; an availability share that underflows to 0 or a sum of
+  ratios that overflows is `invalid_argument`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

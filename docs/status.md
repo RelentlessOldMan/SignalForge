@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Manly's alpha in `measurements` (`manly_alpha(x, available)`; records as for
-     `hurlbert_niche_breadth`: the preference for each kind, `(p_i/r_i)/Σ_j(p_j/r_j)` on the
-     shares of use `p` and of availability `r`, an array summing to 1; Manly 1972,
-     Chesson 1978).
+   - Ivlev's electivity in `measurements` (`ivlev_electivity(x, available)`; records as for
+     `manly_alpha`: for each kind `(p_i − r_i)/(p_i + r_i)` on the shares of use `p` and of
+     availability `r`, an array from −1 (avoided) to 1; Ivlev 1961).
 
 ## Built
 
@@ -4062,6 +4061,11 @@ Updated with every chunk of work. Dates are absolute.
   `1/Σ p_i²/r_i`, the breadth of use against what is available, and its standardized form.
   Python 11666 passed, 2 skipped; .NET 10364 passed; conformance 7680/7680 in both. Version
   2026.11.23.19.
+- 2026-11-23: Manly's alpha (ADR 0602): `manly_alpha(x, available)` in `measurements` (C#
+  `Measurements.ManlyAlpha`): `(p_i/r_i)/Σ_j(p_j/r_j)` for each kind, the preference for
+  each kind of resource against what is available, an array summing to 1.
+  Python 11692 passed, 2 skipped; .NET 10384 passed; conformance 7695/7695 in both. Version
+  2026.11.23.20.
 
 ## Not built
 
