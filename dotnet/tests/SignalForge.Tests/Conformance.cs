@@ -519,6 +519,7 @@ public static class Conformance
             "ruzicka_richness_difference" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.RuzickaRichnessDifference(t.Item1, t.Item2)),
             "podani_nestedness" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.PodaniNestedness(t.Item1, t.Item2)),
             "harrison_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.HarrisonBeta(t.Item1, t.Item2)),
+            "cody_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.CodyBeta(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

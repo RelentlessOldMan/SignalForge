@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "cody_beta",
+  "description": "Cody's beta of two presence records (conventions: Cody's beta; ADR 0590).",
+  "cases": [
+    {"id": "cody_beta.same", "op": "cody_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same kinds: 0"},
+    {"id": "cody_beta.disjoint", "op": "cody_beta", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one lost, one gained: 1"},
+    {"id": "cody_beta.subset", "op": "cody_beta", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "one lost: 1/2"},
+    {"id": "cody_beta.crossed", "op": "cody_beta", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "b = c = 1: 1"},
+    {"id": "cody_beta.nested", "op": "cody_beta", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "two gained: 1"},
+    {"id": "cody_beta.swap", "op": "cody_beta", "args": {"x": [1.0, 1.0, 1.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 2.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "b = c = 2: 2"},
+    {"id": "cody_beta.uneven", "op": "cody_beta", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 2.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "b = 4, c = 1: 5/2"},
+    {"id": "cody_beta.tiny", "op": "cody_beta", "args": {"x": [5e-324, 0.0, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the smallest double counts as present: b = c = 1: 1"},
+    {"id": "cody_beta.random", "op": "cody_beta", "args": {"x": [0.0, 0.0, 2.5, 2.5, 2.5, 1.0, 0.0, 2.5, 1.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.5, 0.0, 2.5, 1.0, 0.0, 0.0, 0.0, 0.0], "y": [0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 2.5, 1.0, 0.0, 1.0, 2.5, 0.0, 0.0, 2.5, 2.5, 1.0, 1.0, 2.5, 0.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 7.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x then y, 25 values each from random.Random(590).choice([0, 0, 1, 2.5])"},
+    {"id": "cody_beta.empty", "op": "cody_beta", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "cody_beta.negative", "op": "cody_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "cody_beta.all_zero", "op": "cody_beta", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "cody_beta.lengths", "op": "cody_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

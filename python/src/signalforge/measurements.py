@@ -8528,6 +8528,41 @@ def harrison_beta(x: ArrayLike, y: ArrayLike) -> float:
     return min(only_x, only_y) / (both + max(only_x, only_y))
 
 
+def cody_beta(x: ArrayLike, y: ArrayLike) -> float:
+    """Cody's beta of the records ``x`` and ``y`` of values at least 0, each with a value
+    above 0: (b + c)/2 on the kinds above 0, the mean of the kinds gained and lost, from 0 to
+    the record length (conventions: Cody's beta; ADR 0590)."""
+    pair = []
+    for name, v in (("x", x), ("y", y)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        pair.append([float(b) for b in a])
+    xv, yv = pair
+    if len(xv) != len(yv):
+        raise ValueError("x and y must have the same length")
+    only_x = 0
+    only_y = 0
+    for a_, b_ in zip(xv, yv, strict=True):
+        if a_ > 0 and b_ > 0:
+            continue
+        if a_ > 0:
+            only_x += 1
+        elif b_ > 0:
+            only_y += 1
+    return (only_x + only_y) / 2.0
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
