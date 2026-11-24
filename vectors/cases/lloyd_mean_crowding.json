@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "lloyd_mean_crowding",
+  "description": "Lloyd's mean crowding (conventions: Lloyd's mean crowding; ADR 0609).",
+  "cases": [
+    {"id": "lloyd_mean_crowding.even", "op": "lloyd_mean_crowding", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "each individual has one other: 1"},
+    {"id": "lloyd_mean_crowding.one_unit", "op": "lloyd_mean_crowding", "args": {"counts": [5.0]}, "expected": 4.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "five in one unit: four others each"},
+    {"id": "lloyd_mean_crowding.singles", "op": "lloyd_mean_crowding", "args": {"counts": [1.0, 1.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "no two share a unit: 0"},
+    {"id": "lloyd_mean_crowding.clumped", "op": "lloyd_mean_crowding", "args": {"counts": [0.0, 0.0, 6.0]}, "expected": 5.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "all six in one unit: 5"},
+    {"id": "lloyd_mean_crowding.mixed", "op": "lloyd_mean_crowding", "args": {"counts": [1.0, 2.0, 3.0]}, "expected": 1.3333333333333333, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "(0 + 2 + 6)/6 = 4/3"},
+    {"id": "lloyd_mean_crowding.uneven", "op": "lloyd_mean_crowding", "args": {"counts": [4.0, 0.0, 1.0, 0.0, 3.0]}, "expected": 2.25, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "(12 + 0 + 6)/8 = 9/4"},
+    {"id": "lloyd_mean_crowding.huge", "op": "lloyd_mean_crowding", "args": {"counts": [1e+308, 1e+308]}, "expected": 1e+308, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the sums would overflow: 1e308 - 1, which rounds to 1e308"},
+    {"id": "lloyd_mean_crowding.random", "op": "lloyd_mean_crowding", "args": {"counts": [7.0, 3.0, 1.0, 0.0, 0.0, 7.0, 7.0, 0.0, 0.0, 0.0, 1.0, 7.0, 0.0, 7.0, 0.0, 3.0, 1.0, 2.0, 1.0, 2.0, 2.0, 0.0, 0.0, 0.0, 2.0, 2.0, 0.0, 3.0, 7.0, 1.0]}, "expected": 4.242424242424242, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "30 counts from random.Random(609).choice([0, 0, 1, 2, 3, 7])"},
+    {"id": "lloyd_mean_crowding.empty", "op": "lloyd_mean_crowding", "args": {"counts": []}, "error": "invalid_argument", "source": "there must be a unit"},
+    {"id": "lloyd_mean_crowding.negative", "op": "lloyd_mean_crowding", "args": {"counts": [1.0, -1.0, 2.0]}, "error": "invalid_argument", "source": "counts must be at least 0"},
+    {"id": "lloyd_mean_crowding.all_zero", "op": "lloyd_mean_crowding", "args": {"counts": [0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be above 0"},
+    {"id": "lloyd_mean_crowding.not_whole", "op": "lloyd_mean_crowding", "args": {"counts": [1.0, 2.5]}, "error": "invalid_argument", "source": "counts must be whole numbers"}
+  ]
+}

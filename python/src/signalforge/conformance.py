@@ -90,6 +90,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "temporal_centroid": measurements.temporal_centroid,
     "hjorth_parameters": measurements.hjorth_parameters,
     "permutation_entropy": measurements.permutation_entropy,
+    "lloyd_mean_crowding": measurements.lloyd_mean_crowding,
     "sample_entropy": measurements.sample_entropy,
     "johnson_rank_preference": measurements.johnson_rank_preference,
     "strauss_selection": measurements.strauss_selection,

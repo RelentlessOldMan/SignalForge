@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Lloyd's mean crowding in `measurements` (`lloyd_mean_crowding(counts)`; counts of
-     individuals in sampling units, finite, at least 0, with a total above 0:
-     `Σ x_i (x_i − 1)/Σ x_i`, the mean number of others in an individual's unit; Lloyd 1967).
+   - Lloyd's index of patchiness in `measurements` (`lloyd_patchiness(counts)`; counts as
+     for `lloyd_mean_crowding`: the mean crowding over the mean count per unit, 1 for units
+     filled at random, above 1 for clumped; Lloyd 1967).
 
 ## Built
 
@@ -4097,6 +4097,11 @@ Updated with every chunk of work. Dates are absolute.
   each kind, negative for a preferred kind.
   Python 11837 passed, 2 skipped; .NET 10499 passed; conformance 7780/7780 in both. Version
   2026.11.23.26.
+- 2026-11-23: Lloyd's mean crowding (ADR 0609): `lloyd_mean_crowding(counts)` in
+  `measurements` (C# `Measurements.LloydMeanCrowding`): `Σ x(x − 1)/Σ x`, the mean number of
+  others in an individual's sampling unit.
+  Python 11858 passed, 2 skipped; .NET 10516 passed; conformance 7792/7792 in both. Version
+  2026.11.23.27.
 
 ## Not built
 

@@ -1547,6 +1547,11 @@ rule for code not written yet.
   kind the rank of its use less the rank of its availability, ranks from 1 for the largest,
   ties given their mean rank, taken on the values as given; negative for a preferred kind;
   the values sum to 0. Records as for Strauss' linear selection index. **(implemented)**
+- **Lloyd's mean crowding** ([ADR 0609](adr/0609-lloyd-mean-crowding.md);
+  `lloyd_mean_crowding(counts)`, C# `Measurements.LloydMeanCrowding`): `Σ x_i (x_i − 1)/Σ x_i`
+  on counts of individuals in sampling units, formed as `t · Σ(x/t)²/Σ(x/t) − 1` with `t` the
+  largest count, held at 0 from below. Counts are whole numbers at least 0 with a total above
+  0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
