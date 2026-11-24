@@ -1563,6 +1563,12 @@ rule for code not written yet.
   `((n s_2/s_1 − s_1)/(n − 1) − 1/t)/(s_1 − 1/t)` with `t` the largest count,
   `s_1 = Σ x/t` and `s_2 = Σ(x/t)²`, held to [−1, 1]. Counts as for Lloyd's mean crowding,
   with at least two units and a total above 1. **(implemented)**
+- **Morisita's index of dispersion** ([ADR 0612](adr/0612-morisita-dispersion.md);
+  `morisita_dispersion(counts)`, C# `Measurements.MorisitaDispersion`):
+  `n Σ x_i (x_i − 1)/(Σx (Σx − 1))` on counts in `n` units, formed as
+  `n (s_2 − s_1/t)/(s_1 (s_1 − 1/t))` with `t` the largest count, `s_1 = Σ x/t` and
+  `s_2 = Σ(x/t)²`, held to [0, n]. Counts as for Green's index of dispersion.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

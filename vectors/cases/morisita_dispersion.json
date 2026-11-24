@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "lloyd_mean_crowding",
+  "description": "Morisita's index of dispersion (conventions: Morisita's index of dispersion; ADR 0612).",
+  "cases": [
+    {"id": "morisita_dispersion.even", "op": "morisita_dispersion", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": 0.6, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "3 * 6/(6 * 5) = 3/5"},
+    {"id": "morisita_dispersion.clumped", "op": "morisita_dispersion", "args": {"counts": [0.0, 0.0, 6.0]}, "expected": 3.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "all in one of 3 units: 3"},
+    {"id": "morisita_dispersion.two_units", "op": "morisita_dispersion", "args": {"counts": [0.0, 3.0]}, "expected": 2.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "all in one of 2 units: 2"},
+    {"id": "morisita_dispersion.mixed", "op": "morisita_dispersion", "args": {"counts": [1.0, 2.0, 3.0]}, "expected": 0.8, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "3 * 8/(6 * 5) = 4/5"},
+    {"id": "morisita_dispersion.uneven", "op": "morisita_dispersion", "args": {"counts": [4.0, 0.0, 1.0, 0.0, 3.0]}, "expected": 1.6071428571428572, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "5 * 18/(8 * 7) = 45/28"},
+    {"id": "morisita_dispersion.singles", "op": "morisita_dispersion", "args": {"counts": [1.0, 1.0, 0.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "no two share a unit: 0"},
+    {"id": "morisita_dispersion.huge", "op": "morisita_dispersion", "args": {"counts": [1e+308, 0.0]}, "expected": 2.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "the sums would overflow: all in one of 2 units, 2"},
+    {"id": "morisita_dispersion.random", "op": "morisita_dispersion", "args": {"counts": [0.0, 0.0, 3.0, 3.0, 3.0, 3.0, 0.0, 0.0, 1.0, 1.0, 7.0, 0.0, 0.0, 0.0, 2.0, 2.0, 0.0, 2.0, 2.0, 0.0, 0.0, 0.0, 3.0, 3.0, 0.0, 2.0, 3.0, 3.0, 3.0, 1.0]}, "expected": 1.4708603145235892, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 counts from random.Random(612).choice([0, 0, 1, 2, 3, 7])"},
+    {"id": "morisita_dispersion.empty", "op": "morisita_dispersion", "args": {"counts": []}, "error": "invalid_argument", "source": "there must be a unit"},
+    {"id": "morisita_dispersion.one_unit", "op": "morisita_dispersion", "args": {"counts": [5.0]}, "error": "invalid_argument", "source": "there must be at least two units"},
+    {"id": "morisita_dispersion.total_one", "op": "morisita_dispersion", "args": {"counts": [1.0, 0.0]}, "error": "invalid_argument", "source": "the total must be above 1"},
+    {"id": "morisita_dispersion.negative", "op": "morisita_dispersion", "args": {"counts": [1.0, -1.0, 2.0]}, "error": "invalid_argument", "source": "counts must be at least 0"},
+    {"id": "morisita_dispersion.all_zero", "op": "morisita_dispersion", "args": {"counts": [0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be above 0"},
+    {"id": "morisita_dispersion.not_whole", "op": "morisita_dispersion", "args": {"counts": [1.0, 2.5]}, "error": "invalid_argument", "source": "counts must be whole numbers"}
+  ]
+}

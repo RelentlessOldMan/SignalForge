@@ -442,6 +442,7 @@ from .measurements import (
     minkowski_distance,
     modified_allan_deviation,
     modulation_transfer,
+    morisita_dispersion,
     morisita_horn_overlap,
     morisita_overlap,
     mountford_coefficient,
@@ -791,7 +792,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.29"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.30"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1272,6 +1273,7 @@ __all__ = [
     "minkowski_distance",
     "modified_allan_deviation",
     "modulation_transfer",
+    "morisita_dispersion",
     "morisita_horn_overlap",
     "morisita_overlap",
     "mountford_coefficient",

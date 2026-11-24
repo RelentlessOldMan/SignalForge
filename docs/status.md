@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Morisita's index of dispersion in `measurements` (`morisita_dispersion(counts)`;
-     counts as for `green_index`: `n Σ x_i (x_i − 1)/(Σx (Σx − 1))`, 1 for units filled at
-     random, above 1 for clumped; Morisita 1959).
+   - David and Moore's index of clumping in `measurements`
+     (`david_moore_clumping(counts)`; counts as for `lloyd_mean_crowding`, with at least
+     two units: `s²/m − 1` with `m` the mean and `s²` the sample variance, 0 for units
+     filled at random; David and Moore 1954).
 
 ## Built
 
@@ -4112,6 +4113,11 @@ Updated with every chunk of work. Dates are absolute.
   at random, 1 for all in one unit.
   Python 11905 passed, 2 skipped; .NET 10552 passed; conformance 7818/7818 in both. Version
   2026.11.23.29.
+- 2026-11-23: Morisita's index of dispersion (ADR 0612): `morisita_dispersion(counts)` in
+  `measurements` (C# `Measurements.MorisitaDispersion`): `n Σ x(x − 1)/(Σx (Σx − 1))`, about
+  1 for counts at random, `n` for all in one unit.
+  Python 11930 passed, 2 skipped; .NET 10571 passed; conformance 7832/7832 in both. Version
+  2026.11.23.30.
 
 ## Not built
 
