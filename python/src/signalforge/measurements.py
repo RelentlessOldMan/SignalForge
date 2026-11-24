@@ -9217,6 +9217,36 @@ def strauss_selection(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64]
     return np.array(out, dtype=np.float64)
 
 
+def johnson_rank_preference(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64]:
+    """Johnson's rank preference index of the record of use ``x`` against the record of
+    availability ``available``, of values at least 0, each with a value above 0 and
+    ``available`` above 0 everywhere: for each kind its rank of use less its rank of
+    availability, ranks from 1 for the largest, ties given their mean rank (conventions:
+    Johnson's rank preference index; ADR 0608)."""
+    rows = []
+    for name, v in (("x", x), ("available", available)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        if not float(np.max(a)) > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        if name == "available" and not np.all(a > 0):
+            raise ValueError("available must be above 0 everywhere")
+        rows.append(a)
+    xv, av = rows
+    if xv.size != av.size:
+        raise ValueError("x and available must have the same length")
+    t: NDArray[np.float64] = _mean_ranks(av) - _mean_ranks(xv)
+    return t + 0.0
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Johnson's rank preference index in `measurements`
-     (`johnson_rank_preference(x, available)`; records as for `strauss_selection`: for each
-     kind the rank of its use less the rank of its availability, ranks from 1 for the
-     largest, ties given their mean rank; Johnson 1980).
+   - Lloyd's mean crowding in `measurements` (`lloyd_mean_crowding(counts)`; counts of
+     individuals in sampling units, finite, at least 0, with a total above 0:
+     `Σ x_i (x_i − 1)/Σ x_i`, the mean number of others in an individual's unit; Lloyd 1967).
 
 ## Built
 
@@ -4092,6 +4091,12 @@ Updated with every chunk of work. Dates are absolute.
   to 1.
   Python 11815 passed, 2 skipped; .NET 10481 passed; conformance 7767/7767 in both. Version
   2026.11.23.25.
+- 2026-11-23: Johnson's rank preference index (ADR 0608):
+  `johnson_rank_preference(x, available)` in `measurements` (C#
+  `Measurements.JohnsonRankPreference`): the rank of use less the rank of availability for
+  each kind, negative for a preferred kind.
+  Python 11837 passed, 2 skipped; .NET 10499 passed; conformance 7780/7780 in both. Version
+  2026.11.23.26.
 
 ## Not built
 

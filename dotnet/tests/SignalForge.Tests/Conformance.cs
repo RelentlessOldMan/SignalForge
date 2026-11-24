@@ -537,6 +537,7 @@ public static class Conformance
             "vanderploeg_scavia_electivity" => Bind((Reals(a.Get("x")), Reals(a.Get("available"))), t => Measurements.VanderploegScaviaElectivity(t.Item1, t.Item2)),
             "savage_selection_ratio" => Bind((Reals(a.Get("x")), Reals(a.Get("available"))), t => Measurements.SavageSelectionRatio(t.Item1, t.Item2)),
             "strauss_selection" => Bind((Reals(a.Get("x")), Reals(a.Get("available"))), t => Measurements.StraussSelection(t.Item1, t.Item2)),
+            "johnson_rank_preference" => Bind((Reals(a.Get("x")), Reals(a.Get("available"))), t => Measurements.JohnsonRankPreference(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

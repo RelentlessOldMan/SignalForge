@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "johnson_rank_preference",
+  "description": "Johnson's rank preference index (conventions: Johnson's rank preference index; ADR 0608).",
+  "cases": [
+    {"id": "johnson_rank_preference.same_order", "op": "johnson_rank_preference", "args": {"x": [3.0, 2.0, 1.0], "available": [3.0, 2.0, 1.0]}, "expected": [0.0, 0.0, 0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "use ranked as availability: 0 for each kind"},
+    {"id": "johnson_rank_preference.reversed", "op": "johnson_rank_preference", "args": {"x": [1.0, 2.0, 3.0], "available": [3.0, 2.0, 1.0]}, "expected": [2.0, 0.0, -2.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "use ranks 3, 2, 1, availability ranks 1, 2, 3: 2, 0, -2"},
+    {"id": "johnson_rank_preference.ties", "op": "johnson_rank_preference", "args": {"x": [1.0, 1.0, 0.0], "available": [1.0, 2.0, 3.0]}, "expected": [-1.5, -0.5, 2.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "use ranks 1.5, 1.5, 3, availability ranks 3, 2, 1: -1.5, -0.5, 2"},
+    {"id": "johnson_rank_preference.one_kind", "op": "johnson_rank_preference", "args": {"x": [2.0], "available": [5.0]}, "expected": [0.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "one kind: 0"},
+    {"id": "johnson_rank_preference.tiny", "op": "johnson_rank_preference", "args": {"x": [5e-324, 0.0, 1.0], "available": [1.0, 1.0, 1.0]}, "expected": [0.0, 1.0, -1.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "the smallest double ranks above 0: use ranks 2, 3, 1, availability all 2: 0, 1, -1"},
+    {"id": "johnson_rank_preference.huge", "op": "johnson_rank_preference", "args": {"x": [1e+308, 1e+308, 1.0], "available": [1.0, 2.0, 3.0]}, "expected": [-1.5, -0.5, 2.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "use ranks 1.5, 1.5, 3, availability ranks 3, 2, 1: -1.5, -0.5, 2"},
+    {"id": "johnson_rank_preference.uneven", "op": "johnson_rank_preference", "args": {"x": [2.0, 1.0, 1.0, 0.0], "available": [1.0, 2.0, 1.0, 4.0]}, "expected": [-2.5, 0.5, -1.0, 3.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "use ranks 1, 2.5, 2.5, 4, availability ranks 3.5, 2, 3.5, 1: -2.5, 0.5, -1, 3"},
+    {"id": "johnson_rank_preference.random", "op": "johnson_rank_preference", "args": {"x": [1.0, 0.0, 2.5, 2.5, 1.0, 0.0, 1.0, 0.0, 2.5, 2.5, 0.0, 1.0, 2.5, 2.5, 2.5, 0.0, 2.5, 1.0, 0.0, 2.5, 2.5, 0.0, 2.5, 2.5, 1.0], "available": [1.0, 1.0, 2.5, 1.0, 2.5, 0.5, 2.5, 1.0, 0.5, 0.5, 2.5, 2.5, 0.5, 2.5, 1.0, 1.0, 0.5, 2.5, 1.0, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0]}, "expected": [3.0, 9.5, 2.5, -6.0, 11.5, 0.5, 11.5, 9.5, -15.0, -15.0, 18.0, 11.5, -15.0, 2.5, -6.0, 9.5, -15.0, 11.5, 9.5, -15.0, -6.0, 9.5, -15.0, -15.0, 3.0], "tol": {"abs": 0.0, "rel": 0.0}, "source": "x then available, 25 values each from random.Random(608).choice([0, 0, 1, 2.5]) with x[0] = 1, and .choice([0.5, 1, 2.5])"},
+    {"id": "johnson_rank_preference.empty", "op": "johnson_rank_preference", "args": {"x": [], "available": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "johnson_rank_preference.negative", "op": "johnson_rank_preference", "args": {"x": [1.0, -0.5, 2.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "johnson_rank_preference.all_zero", "op": "johnson_rank_preference", "args": {"x": [0.0, 0.0, 0.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a record needs a value above 0"},
+    {"id": "johnson_rank_preference.lengths", "op": "johnson_rank_preference", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"},
+    {"id": "johnson_rank_preference.unavailable", "op": "johnson_rank_preference", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "available must be above 0 everywhere"}
+  ]
+}

@@ -1542,6 +1542,11 @@ rule for code not written yet.
   an array from −1 to 1. Each record is divided by its largest value before it is summed.
   Records as for Savage's selection ratio, except that an availability share that underflows
   to 0 is allowed. **(implemented)**
+- **Johnson's rank preference index** ([ADR 0608](adr/0608-johnson-rank-preference.md);
+  `johnson_rank_preference(x, available)`, C# `Measurements.JohnsonRankPreference`): for each
+  kind the rank of its use less the rank of its availability, ranks from 1 for the largest,
+  ties given their mean rank, taken on the values as given; negative for a preferred kind;
+  the values sum to 0. Records as for Strauss' linear selection index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

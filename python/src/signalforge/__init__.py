@@ -395,6 +395,7 @@ from .measurements import (
     jacobs_selectivity,
     jeffreys_divergence,
     johnson_coefficient,
+    johnson_rank_preference,
     js_divergence,
     katz_dimension,
     kay_frequency,
@@ -787,7 +788,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.25"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.26"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1188,6 +1189,7 @@ __all__ = [
     "jacobs_selectivity",
     "jeffreys_divergence",
     "johnson_coefficient",
+    "johnson_rank_preference",
     "js_divergence",
     "kaiser_parameters",
     "karplus_strong",
