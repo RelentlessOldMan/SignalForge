@@ -530,6 +530,7 @@ public static class Conformance
             "schoener_overlap" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.SchoenerOverlap(t.Item1, t.Item2)),
             "petraitis_overlap" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.PetraitisOverlap(t.Item1, t.Item2)),
             "hurlbert_overlap" => Bind((Reals(a.Get("x")), Reals(a.Get("y")), Reals(a.Get("available"))), t => Measurements.HurlbertOverlap(t.Item1, t.Item2, t.Item3)),
+            "hurlbert_niche_breadth" => Bind((Reals(a.Get("x")), Reals(a.Get("available")), a.Flag("standardized", false)), t => Measurements.HurlbertNicheBreadth(t.Item1, t.Item2, t.Item3)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hurlbert's niche breadth in `measurements` (`hurlbert_niche_breadth(x, available)`;
-     records as for `hurlbert_overlap`: `1/Σ(p_i²/r_i)` on the shares of use `p` and of
-     availability `r`, and its standardized form `(B' − r_min)/(1 − r_min)`; Hurlbert 1978).
+   - Manly's alpha in `measurements` (`manly_alpha(x, available)`; records as for
+     `hurlbert_niche_breadth`: the preference for each kind, `(p_i/r_i)/Σ_j(p_j/r_j)` on the
+     shares of use `p` and of availability `r`, an array summing to 1; Manly 1972,
+     Chesson 1978).
 
 ## Built
 
@@ -4056,6 +4057,11 @@ Updated with every chunk of work. Dates are absolute.
   consumers' use against what is available, 1 when both use the kinds as they are available.
   Python 11632 passed, 2 skipped; .NET 10337 passed; conformance 7658/7658 in both. Version
   2026.11.23.18.
+- 2026-11-23: Hurlbert's niche breadth (ADR 0601): `hurlbert_niche_breadth(x, available,
+  standardized=False)` in `measurements` (C# `Measurements.HurlbertNicheBreadth`):
+  `1/Σ p_i²/r_i`, the breadth of use against what is available, and its standardized form.
+  Python 11666 passed, 2 skipped; .NET 10364 passed; conformance 7680/7680 in both. Version
+  2026.11.23.19.
 
 ## Not built
 

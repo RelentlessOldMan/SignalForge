@@ -8944,6 +8944,59 @@ def hurlbert_overlap(x: ArrayLike, y: ArrayLike, available: ArrayLike) -> float:
     return total
 
 
+def hurlbert_niche_breadth(
+    x: ArrayLike, available: ArrayLike, *, standardized: bool = False
+) -> float:
+    """Hurlbert's niche breadth of the record of use ``x`` against the record of
+    availability ``available``, of values at least 0, each with a value above 0 and
+    ``available`` above 0 everywhere: 1/sum(p*p/r) on their shares, from the smallest share of
+    availability to 1, or with ``standardized`` from 0 to 1 (conventions: Hurlbert's niche
+    breadth; ADR 0601)."""
+    rows = []
+    for name, v in (("x", x), ("available", available)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        if name == "available" and not np.all(a > 0):
+            raise ValueError("available must be above 0 everywhere")
+        rows.append([float(b) / top for b in a])
+    xv, av = rows
+    if len(xv) != len(av):
+        raise ValueError("x and available must have the same length")
+    if standardized and len(xv) < 2:
+        raise ValueError("the standardized form needs at least two kinds")
+    sx = 0.0
+    sa = 0.0
+    for a_, c_ in zip(xv, av, strict=True):
+        sx += a_
+        sa += c_
+    total = 0.0
+    least = 1.0
+    for a_, c_ in zip(xv, av, strict=True):
+        share = c_ / sa
+        if not share > 0:
+            raise ValueError("available is too uneven: a share underflows to 0")
+        least = min(least, share)
+        p = a_ / sx
+        total += p * p / share
+    if not math.isfinite(total):
+        raise ValueError("the sum overflows")
+    breadth = min(1.0 / total, 1.0)
+    if not standardized:
+        return breadth
+    return min(max((breadth - least) / (1.0 - least), 0.0), 1.0)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

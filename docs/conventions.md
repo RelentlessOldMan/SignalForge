@@ -1496,6 +1496,14 @@ rule for code not written yet.
   Each record is divided by its largest value before it is summed. Records as for Pianka's
   niche overlap; `available` above 0 everywhere; an availability share that underflows to 0
   or a sum that overflows is `invalid_argument`. **(implemented)**
+- **Hurlbert's niche breadth** ([ADR 0601](adr/0601-hurlbert-niche-breadth.md);
+  `hurlbert_niche_breadth(x, available, standardized=False)`, C#
+  `Measurements.HurlbertNicheBreadth`): `B' = 1/Σ p_i²/r_i` on the shares of use
+  `p = x/Σx` and of availability `r = available/Σavailable`, held at 1 from above; with
+  `standardized`, `(B' − r_min)/(1 − r_min)` held to 0 to 1, which needs at least two kinds.
+  Each record is divided by its largest value before it is summed. Records as for
+  Hurlbert's niche overlap; an availability share that underflows to 0 or a sum that
+  overflows is `invalid_argument`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
