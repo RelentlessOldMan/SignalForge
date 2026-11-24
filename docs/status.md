@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Routledge's exponential beta of two presence records in `measurements`
-     (`routledge_exponential_beta(x, y)`; records as for `pianka_overlap`: `exp(β-I) − 1`,
-     the form `β-e` of Routledge 1977, as listed by Koleff, Gaston and Lennon 2003).
+   - Routledge's overlap beta of two presence records in `measurements`
+     (`routledge_overlap_beta(x, y)`; records as for `pianka_overlap`:
+     `2bc/((a + b + c)² − 2bc)`, the form `β-R` of Routledge 1977, as listed by Koleff,
+     Gaston and Lennon 2003).
 
 ## Built
 
@@ -4031,6 +4032,11 @@ Updated with every chunk of work. Dates are absolute.
   pooled information less the records' mean, from 0 to `ln 2`.
   Python 11517 passed, 2 skipped; .NET 10245 passed; conformance 7587/7587 in both. Version
   2026.11.23.13.
+- 2026-11-23: Routledge's exponential beta of two presence records (ADR 0596):
+  `routledge_exponential_beta(x, y)` in `measurements` (C#
+  `Measurements.RoutledgeExponentialBeta`): `exp(β-I) − 1`, from 0 to 1.
+  Python 11539 passed, 2 skipped; .NET 10263 passed; conformance 7601/7601 in both. Version
+  2026.11.23.14.
 
 ## Not built
 
