@@ -546,6 +546,7 @@ from .measurements import (
     wasserstein_distance,
     weighted_permutation_entropy,
     whittaker_beta,
+    williams_beta,
     wilson_shmida_beta,
     wolfson_index,
     youden_j,
@@ -772,7 +773,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.10"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.11"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1508,6 +1509,7 @@ __all__ = [
     "welch_dof",
     "welch_psd",
     "whittaker_beta",
+    "williams_beta",
     "wilson_shmida_beta",
     "window",
     "window_stats",

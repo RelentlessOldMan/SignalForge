@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "williams_beta",
+  "description": "Williams' beta of two presence records (conventions: Williams' beta; ADR 0593).",
+  "cases": [
+    {"id": "williams_beta.same", "op": "williams_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same kinds: 0"},
+    {"id": "williams_beta.disjoint", "op": "williams_beta", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 0, b = c = 1: 1/2"},
+    {"id": "williams_beta.subset", "op": "williams_beta", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 1, c = 0: 0"},
+    {"id": "williams_beta.crossed", "op": "williams_beta", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.25, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 2, b = c = 1: 1/4"},
+    {"id": "williams_beta.nested", "op": "williams_beta", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 0, c = 2: 0"},
+    {"id": "williams_beta.swap", "op": "williams_beta", "args": {"x": [1.0, 1.0, 1.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.4, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = c = 2: 2/5"},
+    {"id": "williams_beta.uneven", "op": "williams_beta", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.16666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "a = 1, b = 4, c = 1: 1/6"},
+    {"id": "williams_beta.tiny", "op": "williams_beta", "args": {"x": [5e-324, 0.0, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the smallest double counts as present: a = b = c = 1: 1/3"},
+    {"id": "williams_beta.random", "op": "williams_beta", "args": {"x": [1.0, 1.0, 1.0, 0.0, 2.5, 2.5, 2.5, 0.0, 0.0, 0.0, 2.5, 1.0, 0.0, 0.0, 0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.5, 0.0], "y": [0.0, 0.0, 0.0, 2.5, 0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 2.5, 0.0, 2.5, 1.0, 2.5, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.5]}, "expected": 0.3684210526315789, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x then y, 25 values each from random.Random(593).choice([0, 0, 1, 2.5])"},
+    {"id": "williams_beta.empty", "op": "williams_beta", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "williams_beta.negative", "op": "williams_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "williams_beta.all_zero", "op": "williams_beta", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "williams_beta.lengths", "op": "williams_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

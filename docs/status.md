@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Williams' beta of two presence records in `measurements`
-     (`williams_beta(x, y)`; records as for `pianka_overlap`: `min(b, c)/(a + b + c)`, from 0
-     to 1/2; Williams 1996, `β-3` in Koleff, Gaston and Lennon 2003).
+   - Lennon's gradient beta of two presence records in `measurements`
+     (`lennon_gradient_beta(x, y)`; records as for `pianka_overlap`:
+     `2|b − c|/(2a + b + c)`; Lennon et al. 2001, `β-gl` in Koleff, Gaston and Lennon 2003).
 
 ## Built
 
@@ -4015,6 +4015,11 @@ Updated with every chunk of work. Dates are absolute.
   count that grows with richness and dissimilarity.
   Python 11452 passed, 2 skipped; .NET 10192 passed; conformance 7546/7546 in both. Version
   2026.11.23.10.
+- 2026-11-23: Williams' beta of two presence records (ADR 0593): `williams_beta(x, y)` in
+  `measurements` (C# `Measurements.WilliamsBeta`): `min(b, c)/(a + b + c)`, turnover apart
+  from richness difference, from 0 to 1/2.
+  Python 11473 passed, 2 skipped; .NET 10209 passed; conformance 7559/7559 in both. Version
+  2026.11.23.11.
 
 ## Not built
 
