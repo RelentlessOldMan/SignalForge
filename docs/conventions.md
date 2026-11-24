@@ -1489,6 +1489,13 @@ rule for code not written yet.
   over the kinds with `p_i > 0`, on the shares `p = x/Σx`, `q = y/Σy`; 0 when some such kind
   has `q_i = 0`; held at 1 from above; not symmetric. Each record is divided by its largest
   value before it is summed. Records as for Pianka's niche overlap. **(implemented)**
+- **Hurlbert's niche overlap** ([ADR 0600](adr/0600-hurlbert-overlap.md);
+  `hurlbert_overlap(x, y, available)`, C# `Measurements.HurlbertOverlap`): `Σ p_i q_i/r_i`
+  on the shares of use `p = x/Σx`, `q = y/Σy` and of availability `r = available/Σavailable`;
+  1 when both use the kinds as they are available, 0 when they share none, no upper bound.
+  Each record is divided by its largest value before it is summed. Records as for Pianka's
+  niche overlap; `available` above 0 everywhere; an availability share that underflows to 0
+  or a sum that overflows is `invalid_argument`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

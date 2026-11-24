@@ -8900,6 +8900,50 @@ def petraitis_overlap(x: ArrayLike, y: ArrayLike) -> float:
     return min(math.exp(total), 1.0)
 
 
+def hurlbert_overlap(x: ArrayLike, y: ArrayLike, available: ArrayLike) -> float:
+    """Hurlbert's niche overlap of the records of use ``x`` and ``y`` against the record of
+    availability ``available``, of values at least 0, each with a value above 0 and
+    ``available`` above 0 everywhere: sum(p*q/r) on their shares, 1 when both use the kinds
+    as they are available (conventions: Hurlbert's niche overlap; ADR 0600)."""
+    rows = []
+    for name, v in (("x", x), ("y", y), ("available", available)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        if name == "available" and not np.all(a > 0):
+            raise ValueError("available must be above 0 everywhere")
+        rows.append([float(b) / top for b in a])
+    xv, yv, av = rows
+    if len(xv) != len(yv) or len(xv) != len(av):
+        raise ValueError("x, y and available must have the same length")
+    sx = 0.0
+    sy = 0.0
+    sa = 0.0
+    for a_, b_, c_ in zip(xv, yv, av, strict=True):
+        sx += a_
+        sy += b_
+        sa += c_
+    total = 0.0
+    for a_, b_, c_ in zip(xv, yv, av, strict=True):
+        share = c_ / sa
+        if not share > 0:
+            raise ValueError("available is too uneven: a share underflows to 0")
+        total += (a_ / sx) * (b_ / sy) / share
+    if not math.isfinite(total):
+        raise ValueError("the overlap overflows")
+    return total
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

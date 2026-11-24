@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "suite": "hurlbert_overlap",
+  "description": "Hurlbert's niche overlap (conventions: Hurlbert's niche overlap; ADR 0600).",
+  "cases": [
+    {"id": "hurlbert_overlap.as_available", "op": "hurlbert_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0, 3.0], "available": [1.0, 2.0, 3.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "both use the kinds as they are available: sum r = 1"},
+    {"id": "hurlbert_overlap.crowded", "op": "hurlbert_overlap", "args": {"x": [1.0, 1.0, 0.0, 0.0], "y": [1.0, 1.0, 0.0, 0.0], "available": [1.0, 1.0, 1.0, 1.0]}, "expected": 2.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "halves on quarters: 2 (1/4)/(1/4) = 2"},
+    {"id": "hurlbert_overlap.disjoint", "op": "hurlbert_overlap", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0], "available": [1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "no kind in common: 0"},
+    {"id": "hurlbert_overlap.one_sided", "op": "hurlbert_overlap", "args": {"x": [1.0, 0.0], "y": [1.0, 1.0], "available": [1.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "1 (1/2)/(1/2) = 1"},
+    {"id": "hurlbert_overlap.uneven", "op": "hurlbert_overlap", "args": {"x": [2.0, 1.0, 1.0], "y": [1.0, 1.0, 2.0], "available": [1.0, 2.0, 1.0]}, "expected": 1.125, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "(1/8)/(1/4) + (1/16)/(1/2) + (1/8)/(1/4) = 9/8"},
+    {"id": "hurlbert_overlap.scarce", "op": "hurlbert_overlap", "args": {"x": [1.0, 1.0], "y": [1.0, 1.0], "available": [1.0, 3.0]}, "expected": 1.3333333333333333, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "(1/4)/(1/4) + (1/4)/(3/4) = 4/3"},
+    {"id": "hurlbert_overlap.huge", "op": "hurlbert_overlap", "args": {"x": [1e+308, 1e+308], "y": [1.0, 3.0], "available": [1e+308, 1e+308]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the sums of x and available would overflow: (1/8)/(1/2) + (3/8)/(1/2) = 1"},
+    {"id": "hurlbert_overlap.tiny", "op": "hurlbert_overlap", "args": {"x": [5e-324, 0.0, 1.0], "y": [1e-300, 1e-300, 1.0], "available": [1.0, 1.0, 1.0]}, "expected": 3.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the smallest double counts: 3 (1 + 5e-624)/((1 + 5e-324)(1 + 2e-300)), 3 to double precision"},
+    {"id": "hurlbert_overlap.random", "op": "hurlbert_overlap", "args": {"x": [1.0, 1.0, 2.5, 0.0, 0.0, 2.5, 2.5, 2.5, 2.5, 0.0, 0.0, 0.0, 2.5, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.5, 0.0, 2.5], "y": [0.0, 2.5, 2.5, 1.0, 0.0, 1.0, 0.0, 0.0, 2.5, 0.0, 0.0, 2.5, 0.0, 0.0, 2.5, 1.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 2.5, 1.0, 1.0], "available": [2.5, 2.5, 0.5, 2.5, 2.5, 1.0, 0.5, 0.5, 2.5, 0.5, 0.5, 1.0, 1.0, 2.5, 2.5, 2.5, 2.5, 0.5, 1.0, 2.5, 2.5, 0.5, 2.5, 0.5, 1.0]}, "expected": 1.7694444444444444, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "x, y then available, 25 values each from random.Random(600).choice([0, 0, 1, 2.5]), twice, and .choice([0.5, 1, 2.5])"},
+    {"id": "hurlbert_overlap.empty", "op": "hurlbert_overlap", "args": {"x": [], "y": [], "available": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "hurlbert_overlap.negative", "op": "hurlbert_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "hurlbert_overlap.all_zero", "op": "hurlbert_overlap", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "hurlbert_overlap.lengths", "op": "hurlbert_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "the records must have the same length"},
+    {"id": "hurlbert_overlap.unavailable", "op": "hurlbert_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [3.0, 1.0, 2.0], "available": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "available must be above 0 everywhere"},
+    {"id": "hurlbert_overlap.underflow", "op": "hurlbert_overlap", "args": {"x": [1.0, 2.0, 3.0], "y": [3.0, 1.0, 2.0], "available": [1e+300, 5e-324, 1.0]}, "error": "invalid_argument", "source": "the share 5e-324/1e300 underflows to 0"},
+    {"id": "hurlbert_overlap.overflow", "op": "hurlbert_overlap", "args": {"x": [1.0, 1.0, 1.0], "y": [1.0, 1.0, 1.0], "available": [1.0, 1e-310, 1.0]}, "error": "invalid_argument", "source": "(1/3)(1/3)/(1e-310/(2 + 1e-310)) is above the largest double"}
+  ]
+}

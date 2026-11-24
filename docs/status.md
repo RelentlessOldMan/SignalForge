@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hurlbert's niche overlap in `measurements` (`hurlbert_overlap(x, y, a)`; `x`, `y`
-     the use of the kinds by two consumers and `a` their availability, records as for
-     `pianka_overlap`, with `a` above 0 everywhere: `Σ p_i q_i/a_i` on the shares;
-     Hurlbert 1978).
+   - Hurlbert's niche breadth in `measurements` (`hurlbert_niche_breadth(x, available)`;
+     records as for `hurlbert_overlap`: `1/Σ(p_i²/r_i)` on the shares of use `p` and of
+     availability `r`, and its standardized form `(B' − r_min)/(1 − r_min)`; Hurlbert 1978).
 
 ## Built
 
@@ -4052,6 +4051,11 @@ Updated with every chunk of work. Dates are absolute.
   likelihood of `x` under `y`; 0 when `x` uses a kind `y` does not.
   Python 11604 passed, 2 skipped; .NET 10316 passed; conformance 7642/7642 in both. Version
   2026.11.23.17.
+- 2026-11-23: Hurlbert's niche overlap (ADR 0600): `hurlbert_overlap(x, y, available)` in
+  `measurements` (C# `Measurements.HurlbertOverlap`): `Σ p_i q_i/r_i`, the overlap of two
+  consumers' use against what is available, 1 when both use the kinds as they are available.
+  Python 11632 passed, 2 skipped; .NET 10337 passed; conformance 7658/7658 in both. Version
+  2026.11.23.18.
 
 ## Not built
 
