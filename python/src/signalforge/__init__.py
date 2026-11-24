@@ -337,6 +337,7 @@ from .measurements import (
     fager_mcgowan_coefficient,
     faith_coefficient,
     fisher_alpha,
+    fisher_dispersion,
     fisher_information,
     fleiss_kappa,
     forbes_coefficient,
@@ -794,7 +795,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.32"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.33"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1102,6 +1103,7 @@ __all__ = [
     "fir_lowpass",
     "fir_response",
     "fisher_alpha",
+    "fisher_dispersion",
     "fisher_information",
     "flanger",
     "fleiss_kappa",

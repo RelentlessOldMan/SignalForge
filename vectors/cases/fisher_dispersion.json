@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "suite": "lloyd_mean_crowding",
+  "description": "Fisher's index of dispersion statistic (conventions: Fisher's index of dispersion statistic; ADR 0615).",
+  "cases": [
+    {"id": "fisher_dispersion.even", "op": "fisher_dispersion", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "no variance: 0"},
+    {"id": "fisher_dispersion.clumped", "op": "fisher_dispersion", "args": {"counts": [0.0, 0.0, 6.0]}, "expected": 12.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 2: (4 + 4 + 16)/2 = 12"},
+    {"id": "fisher_dispersion.two_units", "op": "fisher_dispersion", "args": {"counts": [0.0, 3.0]}, "expected": 3.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 3/2: (9/4 + 9/4)/(3/2) = 3"},
+    {"id": "fisher_dispersion.mixed", "op": "fisher_dispersion", "args": {"counts": [1.0, 2.0, 3.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 2: (1 + 0 + 1)/2 = 1"},
+    {"id": "fisher_dispersion.uneven", "op": "fisher_dispersion", "args": {"counts": [4.0, 0.0, 1.0, 0.0, 3.0]}, "expected": 8.25, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 8/5: (66/5)/(8/5) = 33/4"},
+    {"id": "fisher_dispersion.singles", "op": "fisher_dispersion", "args": {"counts": [1.0, 1.0, 0.0, 0.0]}, "expected": 2.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 1/2: 1/(1/2) = 2"},
+    {"id": "fisher_dispersion.one_individual", "op": "fisher_dispersion", "args": {"counts": [1.0, 0.0]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 1/2: (1/4 + 1/4)/(1/2) = 1"},
+    {"id": "fisher_dispersion.huge", "op": "fisher_dispersion", "args": {"counts": [1e+308, 0.0]}, "expected": 1e+308, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "the sums would overflow: m t/2: (t^2/2)/(t/2) = t"},
+    {"id": "fisher_dispersion.random", "op": "fisher_dispersion", "args": {"counts": [0.0, 2.0, 0.0, 7.0, 7.0, 0.0, 0.0, 1.0, 1.0, 2.0, 0.0, 0.0, 3.0, 1.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 3.0, 1.0, 1.0, 7.0, 0.0, 2.0, 2.0, 0.0, 2.0]}, "expected": 77.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 counts from random.Random(615).choice([0, 0, 1, 2, 3, 7])"},
+    {"id": "fisher_dispersion.empty", "op": "fisher_dispersion", "args": {"counts": []}, "error": "invalid_argument", "source": "there must be a unit"},
+    {"id": "fisher_dispersion.one_unit", "op": "fisher_dispersion", "args": {"counts": [5.0]}, "error": "invalid_argument", "source": "there must be at least two units"},
+    {"id": "fisher_dispersion.negative", "op": "fisher_dispersion", "args": {"counts": [1.0, -1.0, 2.0]}, "error": "invalid_argument", "source": "counts must be at least 0"},
+    {"id": "fisher_dispersion.all_zero", "op": "fisher_dispersion", "args": {"counts": [0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be above 0"},
+    {"id": "fisher_dispersion.not_whole", "op": "fisher_dispersion", "args": {"counts": [1.0, 2.5]}, "error": "invalid_argument", "source": "counts must be whole numbers"},
+    {"id": "fisher_dispersion.overflow", "op": "fisher_dispersion", "args": {"counts": [1e+308, 0.0, 0.0]}, "error": "invalid_argument", "source": "the statistic 2e308 overflows"}
+  ]
+}

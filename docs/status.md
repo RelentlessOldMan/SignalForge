@@ -6,10 +6,12 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Fisher's index of dispersion statistic in `measurements` (`fisher_dispersion(counts)`;
-     counts as for `david_moore_clumping`: `Σ(x_i − m)²/m = (n − 1) s²/m`, chi-square with
-     `n − 1` degrees of freedom for counts drawn at random; Fisher, Thornton and Mackenzie
-     1922).
+   - The Clark–Evans aggregation index in `measurements`
+     (`clark_evans_ratio(distances, density)`; `distances` the distance from each individual
+     to its nearest neighbour, finite, at least 0, not empty, `density` the individuals per
+     unit area, finite and above 0: the mean distance over `1/(2√density)`, its mean for
+     individuals placed at random; 1 at random, below 1 clumped, up to about 2.15 for a
+     hexagonal lattice; Clark and Evans 1954).
 
 ## Built
 
@@ -4128,6 +4130,11 @@ Updated with every chunk of work. Dates are absolute.
   negative binomial counts.
   Python 11978 passed, 2 skipped; .NET 10609 passed; conformance 7860/7860 in both. Version
   2026.11.23.32.
+- 2026-11-23: Fisher's index of dispersion statistic (ADR 0615): `fisher_dispersion(counts)`
+  in `measurements` (C# `Measurements.FisherDispersion`): `Σ(x − m)²/m`, about chi-square
+  with `n − 1` degrees of freedom for counts at random.
+  Python 12004 passed, 2 skipped; .NET 10629 passed; conformance 7875/7875 in both. Version
+  2026.11.23.33.
 
 ## Not built
 
