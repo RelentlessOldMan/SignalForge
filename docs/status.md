@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Strauss' linear selection index in `measurements` (`strauss_selection(x, available)`;
-     records as for `savage_selection_ratio`: for each kind `p_i − r_i` on the shares of use
-     `p` and of availability `r`, an array from −1 to 1; Strauss 1979).
+   - Johnson's rank preference index in `measurements`
+     (`johnson_rank_preference(x, available)`; records as for `strauss_selection`: for each
+     kind the rank of its use less the rank of its availability, ranks from 1 for the
+     largest, ties given their mean rank; Johnson 1980).
 
 ## Built
 
@@ -4086,6 +4087,11 @@ Updated with every chunk of work. Dates are absolute.
   forage ratio, 1 for a kind used as it is available.
   Python 11792 passed, 2 skipped; .NET 10462 passed; conformance 7753/7753 in both. Version
   2026.11.23.24.
+- 2026-11-23: Strauss' linear selection index (ADR 0607): `strauss_selection(x, available)`
+  in `measurements` (C# `Measurements.StraussSelection`): `p_i − r_i` for each kind, from −1
+  to 1.
+  Python 11815 passed, 2 skipped; .NET 10481 passed; conformance 7767/7767 in both. Version
+  2026.11.23.25.
 
 ## Not built
 

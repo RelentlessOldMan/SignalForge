@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "strauss_selection",
+  "description": "Strauss' linear selection index (conventions: Strauss' linear selection index; ADR 0607).",
+  "cases": [
+    {"id": "strauss_selection.as_available", "op": "strauss_selection", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 2.0, 3.0]}, "expected": [0.0, 0.0, 0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "use as availability: 0 for each kind"},
+    {"id": "strauss_selection.even_use", "op": "strauss_selection", "args": {"x": [1.0, 1.0], "available": [1.0, 3.0]}, "expected": [0.25, -0.25], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "halves on 1/4, 3/4: 1/4, -1/4"},
+    {"id": "strauss_selection.one_kind_used", "op": "strauss_selection", "args": {"x": [1.0, 0.0], "available": [1.0, 3.0]}, "expected": [0.75, -0.75], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "1, 0 on 1/4, 3/4: 3/4, -3/4"},
+    {"id": "strauss_selection.uneven", "op": "strauss_selection", "args": {"x": [2.0, 1.0, 1.0], "available": [1.0, 2.0, 1.0]}, "expected": [0.25, -0.25, 0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "1/2, 1/4, 1/4 on 1/4, 1/2, 1/4: 1/4, -1/4, 0"},
+    {"id": "strauss_selection.one_kind", "op": "strauss_selection", "args": {"x": [2.0], "available": [5.0]}, "expected": [0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one kind: 0"},
+    {"id": "strauss_selection.huge", "op": "strauss_selection", "args": {"x": [1e+308, 1e+308], "available": [1.0, 3.0]}, "expected": [0.25, -0.25], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the sum of x would overflow: halves on 1/4, 3/4: 1/4, -1/4"},
+    {"id": "strauss_selection.tiny", "op": "strauss_selection", "args": {"x": [5e-324, 1.0], "available": [1.0, 1.0]}, "expected": [-0.5, 0.5], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the smallest double counts: -1/2 + 5e-324 and 1/2 to double precision"},
+    {"id": "strauss_selection.small_share", "op": "strauss_selection", "args": {"x": [1.0, 2.0, 3.0], "available": [1e+300, 5e-324, 1.0]}, "expected": [-0.8333333333333334, 0.3333333333333333, 0.5], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the availability share 5e-324/1e300 underflows; 1/6 - 1, 1/3, 1/2 to double precision"},
+    {"id": "strauss_selection.random", "op": "strauss_selection", "args": {"x": [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.5, 0.0, 2.5, 2.5, 1.0, 0.0, 0.0, 2.5, 0.0, 0.0, 2.5, 0.0, 0.0, 1.0, 1.0], "available": [0.5, 0.5, 2.5, 0.5, 0.5, 1.0, 0.5, 0.5, 0.5, 1.0, 2.5, 2.5, 0.5, 1.0, 2.5, 1.0, 2.5, 2.5, 2.5, 1.0, 2.5, 1.0, 2.5, 2.5, 1.0]}, "expected": [0.04325396825396825, -0.013888888888888888, -0.06944444444444445, 0.04325396825396825, -0.013888888888888888, -0.027777777777777776, -0.013888888888888888, -0.013888888888888888, -0.013888888888888888, -0.027777777777777776, 0.07341269841269842, -0.06944444444444445, 0.12896825396825398, 0.11507936507936507, -0.012301587301587301, -0.027777777777777776, -0.06944444444444445, 0.07341269841269842, -0.06944444444444445, -0.027777777777777776, 0.07341269841269842, -0.027777777777777776, -0.06944444444444445, -0.012301587301587301, 0.029365079365079365], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "x then available, 25 values each from random.Random(607).choice([0, 0, 1, 2.5]) with x[0] = 1, and .choice([0.5, 1, 2.5])"},
+    {"id": "strauss_selection.empty", "op": "strauss_selection", "args": {"x": [], "available": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "strauss_selection.negative", "op": "strauss_selection", "args": {"x": [1.0, -0.5, 2.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "strauss_selection.all_zero", "op": "strauss_selection", "args": {"x": [0.0, 0.0, 0.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a record needs a value above 0"},
+    {"id": "strauss_selection.lengths", "op": "strauss_selection", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"},
+    {"id": "strauss_selection.unavailable", "op": "strauss_selection", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "available must be above 0 everywhere"}
+  ]
+}

@@ -1536,6 +1536,12 @@ rule for code not written yet.
   Each record is divided by its largest value before it is summed. Records as for Manly's
   alpha; an availability share that underflows to 0 or a ratio that overflows is
   `invalid_argument`. **(implemented)**
+- **Strauss' linear selection index** ([ADR 0607](adr/0607-strauss-selection.md);
+  `strauss_selection(x, available)`, C# `Measurements.StraussSelection`): for each kind
+  `p_i − r_i` on the shares of use `p = x/Σx` and of availability `r = available/Σavailable`,
+  an array from −1 to 1. Each record is divided by its largest value before it is summed.
+  Records as for Savage's selection ratio, except that an availability share that underflows
+  to 0 is allowed. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
