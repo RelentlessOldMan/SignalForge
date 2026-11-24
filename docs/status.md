@@ -6,11 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Hopkins' statistic in `measurements`
-     (`hopkins_statistic(point_distances, individual_distances)`; the distances from random
-     points to the nearest individual and from individuals to their nearest neighbour, each
-     finite, at least 0, not empty, with a value above 0: `Σu²/(Σu² + Σw²)` on the squared
-     distances, about 1/2 at random, near 1 clumped; Hopkins and Skellam 1954).
+   - Pielou's index of non-randomness in `measurements`
+     (`pielou_nonrandomness(point_distances, density)`; `point_distances` the distances from
+     random points to the nearest individual, finite, at least 0, not empty, `density` the
+     individuals per unit area, finite and above 0: `πρ Σu²/n`, 1 at random, above 1
+     clumped; Pielou 1959).
 
 ## Built
 
@@ -4145,6 +4145,11 @@ Updated with every chunk of work. Dates are absolute.
   error, about standard normal for a random pattern.
   Python 12053 passed, 2 skipped; .NET 10665 passed; conformance 7901/7901 in both. Version
   2026.11.23.35.
+- 2026-11-23: Hopkins' statistic (ADR 0618):
+  `hopkins_statistic(point_distances, individual_distances)` in `measurements` (C#
+  `Measurements.HopkinsStatistic`): `Σu²/(Σu² + Σw²)`, about 1/2 for a random pattern.
+  Python 12076 passed, 2 skipped; .NET 10682 passed; conformance 7913/7913 in both. Version
+  2026.11.23.36.
 
 ## Not built
 

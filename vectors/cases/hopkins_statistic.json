@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "hopkins_statistic",
+  "description": "Hopkins' statistic (conventions: Hopkins' statistic; ADR 0618).",
+  "cases": [
+    {"id": "hopkins_statistic.equal", "op": "hopkins_statistic", "args": {"point_distances": [1.0, 2.0], "individual_distances": [2.0, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "the same distances: 1/2"},
+    {"id": "hopkins_statistic.clumped", "op": "hopkins_statistic", "args": {"point_distances": [3.0, 4.0], "individual_distances": [0.0, 0.0, 1.0]}, "expected": 0.9615384615384616, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "a = 25, b = 1: 25/26"},
+    {"id": "hopkins_statistic.regular", "op": "hopkins_statistic", "args": {"point_distances": [1.0], "individual_distances": [2.0, 2.0]}, "expected": 0.1111111111111111, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "a = 1, b = 8: 1/9"},
+    {"id": "hopkins_statistic.one_each", "op": "hopkins_statistic", "args": {"point_distances": [0.5], "individual_distances": [1.5]}, "expected": 0.1, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "a = 1/4, b = 9/4: 1/10"},
+    {"id": "hopkins_statistic.huge", "op": "hopkins_statistic", "args": {"point_distances": [1e+300, 1e+300], "individual_distances": [1e+300]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "the squares would overflow: 2/3"},
+    {"id": "hopkins_statistic.tiny", "op": "hopkins_statistic", "args": {"point_distances": [5e-324], "individual_distances": [5e-324, 5e-324]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "the smallest double: 1/3"},
+    {"id": "hopkins_statistic.random", "op": "hopkins_statistic", "args": {"point_distances": [0.9195023577163839, 1.7821224358931935, 0.8823209870578566, 0.6293066098184075, 0.3464814230001445, 0.13494972774533331, 0.12205130095840655, 1.498925154323871, 1.957978232599604, 0.3409297661472199, 0.5212270485234227, 1.827736022374935, 1.572430770581052, 1.4705502089576832, 1.9478180301539658, 1.2558232132245954, 0.8019655102297623, 0.25378713088453697, 1.3773417844275457, 0.8820476450232317], "individual_distances": [0.40647411416021006, 0.5047439691928105, 0.7270734877658658, 0.14214966394420392, 0.9523982937623418, 0.6576274469615089, 0.22183651090059675, 0.49098769104515405, 0.1854311442648494, 0.19996496148717213, 0.9400612385448328, 0.3414575416374078, 0.32202558853679264, 0.7898622985267459, 0.8814312137421294, 0.11333023632898276, 0.44619808157642005, 0.7226467800467357, 0.351934882614255, 0.7538183099256696]}, "expected": 0.8121222477892723, "tol": {"abs": 1e-15, "rel": 1e-14}, "source": "20 point distances from random.Random(618).uniform(0, 2), then 20 individual distances from uniform(0, 1)"},
+    {"id": "hopkins_statistic.empty_points", "op": "hopkins_statistic", "args": {"point_distances": [], "individual_distances": [1.0, 0.5]}, "error": "invalid_argument", "source": "there must be a point distance"},
+    {"id": "hopkins_statistic.empty_individuals", "op": "hopkins_statistic", "args": {"point_distances": [0.5, 1.0], "individual_distances": []}, "error": "invalid_argument", "source": "there must be an individual distance"},
+    {"id": "hopkins_statistic.negative", "op": "hopkins_statistic", "args": {"point_distances": [1.0, -0.5], "individual_distances": [1.0, 0.5]}, "error": "invalid_argument", "source": "distances must be at least 0"},
+    {"id": "hopkins_statistic.zero_points", "op": "hopkins_statistic", "args": {"point_distances": [0.0, 0.0], "individual_distances": [1.0, 0.5]}, "error": "invalid_argument", "source": "a point distance must be above 0"},
+    {"id": "hopkins_statistic.zero_individuals", "op": "hopkins_statistic", "args": {"point_distances": [0.5, 1.0], "individual_distances": [0.0]}, "error": "invalid_argument", "source": "an individual distance must be above 0"}
+  ]
+}

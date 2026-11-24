@@ -1598,6 +1598,13 @@ rule for code not written yet.
   rounded it to `0.26136/√(nρ)`), formed as `(R − 1) √(nπ/(4 − π))` with `R` the
   Clark–Evans aggregation index; a value that overflows is refused. Arguments as for the
   aggregation index. **(implemented)**
+- **Hopkins' statistic** ([ADR 0618](adr/0618-hopkins-statistic.md);
+  `hopkins_statistic(point_distances, individual_distances)`, C#
+  `Measurements.HopkinsStatistic`): `Σu²/(Σu² + Σw²)`, `u` the distances from random points
+  to the nearest individual and `w` from individuals to their nearest neighbour. Formed as
+  `a/(a + b)` with `t` the largest distance in either sample, `a = Σ(u/t)²`,
+  `b = Σ(w/t)²`; held to [0, 1]. Each sample finite, at least 0, not empty, with a value
+  above 0; the two need not be the same size. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

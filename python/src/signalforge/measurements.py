@@ -9489,6 +9489,41 @@ def clark_evans_z(distances: ArrayLike, density: float) -> float:
     return z
 
 
+def _hopkins_sample(x: ArrayLike, name: str) -> NDArray[np.float64]:
+    a = np.asarray(x)
+    if a.ndim != 1:
+        raise ValueError(f"{name} must be one-dimensional")
+    if np.iscomplexobj(a):
+        raise ValueError(f"{name} must be real")
+    a = a.astype(np.float64, copy=False)
+    if a.size < 1:
+        raise ValueError(f"{name} must not be empty")
+    if not np.all(np.isfinite(a)) or np.any(a < 0):
+        raise ValueError(f"{name} must be finite and at least 0")
+    if not np.any(a > 0):
+        raise ValueError(f"{name} must have a value above 0")
+    return a
+
+
+def hopkins_statistic(point_distances: ArrayLike, individual_distances: ArrayLike) -> float:
+    """Hopkins' statistic: the sum of the squared ``point_distances`` (from random points to
+    the nearest individual) over that sum plus the sum of the squared
+    ``individual_distances`` (from individuals to their nearest neighbour); about 1/2 at
+    random, near 1 clumped (conventions: Hopkins' statistic; ADR 0618)."""
+    u = _hopkins_sample(point_distances, "point_distances")
+    w = _hopkins_sample(individual_distances, "individual_distances")
+    top = max(float(np.max(u)), float(np.max(w)))
+    a = 0.0
+    for v in u:
+        q = float(v) / top
+        a += q * q
+    b = 0.0
+    for v in w:
+        q = float(v) / top
+        b += q * q
+    return min(max(a / (a + b), 0.0), 1.0)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
