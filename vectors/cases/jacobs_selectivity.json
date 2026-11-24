@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "jacobs_selectivity",
+  "description": "Jacobs' selectivity index (conventions: Jacobs' selectivity index; ADR 0604).",
+  "cases": [
+    {"id": "jacobs_selectivity.as_available", "op": "jacobs_selectivity", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 2.0, 3.0]}, "expected": [0.0, 0.0, 0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "use as availability: 0 for each kind"},
+    {"id": "jacobs_selectivity.even_use", "op": "jacobs_selectivity", "args": {"x": [1.0, 1.0], "available": [1.0, 3.0]}, "expected": [0.5, -0.5], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "halves on 1/4, 3/4: (1/4)/(1/2), (-1/4)/(1/2)"},
+    {"id": "jacobs_selectivity.one_kind_used", "op": "jacobs_selectivity", "args": {"x": [1.0, 0.0], "available": [1.0, 3.0]}, "expected": [1.0, -1.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "1, 0 on 1/4, 3/4: (3/4)/(3/4), (-3/4)/(3/4)"},
+    {"id": "jacobs_selectivity.uneven", "op": "jacobs_selectivity", "args": {"x": [2.0, 1.0, 1.0], "available": [1.0, 2.0, 1.0]}, "expected": [0.5, -0.5, 0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "1/2, 1/4, 1/4 on 1/4, 1/2, 1/4: 1/2, -1/2, 0"},
+    {"id": "jacobs_selectivity.one_kind", "op": "jacobs_selectivity", "args": {"x": [2.0], "available": [5.0]}, "expected": [0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one kind, p = r = 1: 0 by definition"},
+    {"id": "jacobs_selectivity.huge", "op": "jacobs_selectivity", "args": {"x": [1e+308, 1e+308], "available": [1.0, 3.0]}, "expected": [0.5, -0.5], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the sum of x would overflow: halves on 1/4, 3/4: 1/2, -1/2"},
+    {"id": "jacobs_selectivity.tiny", "op": "jacobs_selectivity", "args": {"x": [5e-324, 1.0], "available": [1.0, 1.0]}, "expected": [-1.0, 1.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the smallest double counts: -1 + 4e-323 and 1 - 4e-323, -1 and 1 to double precision"},
+    {"id": "jacobs_selectivity.random", "op": "jacobs_selectivity", "args": {"x": [1.0, 0.0, 2.5, 1.0, 1.0, 2.5, 2.5, 1.0, 0.0, 0.0, 1.0, 2.5, 1.0, 1.0, 1.0, 2.5, 0.0, 0.0, 2.5, 0.0, 2.5, 2.5, 2.5, 1.0, 0.0], "available": [1.0, 0.5, 2.5, 1.0, 0.5, 0.5, 2.5, 0.5, 1.0, 1.0, 0.5, 1.0, 1.0, 2.5, 0.5, 1.0, 2.5, 0.5, 1.0, 0.5, 1.0, 1.0, 1.0, 2.5, 2.5]}, "expected": [-0.025210084033613446, -1.0, -0.02654867256637168, -0.025210084033613446, 0.31843575418994413, 0.6713881019830028, -0.02654867256637168, 0.31843575418994413, -1.0, -1.0, 0.31843575418994413, 0.42857142857142855, -0.025210084033613446, -0.46987951807228917, 0.31843575418994413, 0.42857142857142855, -1.0, -1.0, 0.42857142857142855, -1.0, 0.42857142857142855, 0.42857142857142855, 0.42857142857142855, -0.46987951807228917, -1.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "x then available, 25 values each from random.Random(604).choice([0, 0, 1, 2.5]) with x[0] = 1, and .choice([0.5, 1, 2.5])"},
+    {"id": "jacobs_selectivity.empty", "op": "jacobs_selectivity", "args": {"x": [], "available": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "jacobs_selectivity.negative", "op": "jacobs_selectivity", "args": {"x": [1.0, -0.5, 2.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "jacobs_selectivity.all_zero", "op": "jacobs_selectivity", "args": {"x": [0.0, 0.0, 0.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a record needs a value above 0"},
+    {"id": "jacobs_selectivity.lengths", "op": "jacobs_selectivity", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"},
+    {"id": "jacobs_selectivity.unavailable", "op": "jacobs_selectivity", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "available must be above 0 everywhere"},
+    {"id": "jacobs_selectivity.underflow", "op": "jacobs_selectivity", "args": {"x": [1.0, 2.0, 3.0], "available": [1e+300, 5e-324, 1.0]}, "error": "invalid_argument", "source": "the share 5e-324/1e300 underflows to 0"}
+  ]
+}

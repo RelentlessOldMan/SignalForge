@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Jacobs' selectivity index in `measurements` (`jacobs_selectivity(x, available)`;
-     records as for `ivlev_electivity`: for each kind `(p_i − r_i)/(p_i + r_i − 2 p_i r_i)` on
-     the shares of use `p` and of availability `r`, an array from −1 to 1; Jacobs 1974).
+   - Vanderploeg and Scavia's relativized electivity in `measurements`
+     (`vanderploeg_scavia_electivity(x, available)`; records as for `jacobs_selectivity`:
+     for each kind `(α_i − 1/n)/(α_i + 1/n)` with `α` Manly's alpha and `n` the number of
+     kinds, an array from −1 to 1; Vanderploeg and Scavia 1979).
 
 ## Built
 
@@ -4071,6 +4072,11 @@ Updated with every chunk of work. Dates are absolute.
   the selection of each kind of resource against what is available, from −1 to 1.
   Python 11716 passed, 2 skipped; .NET 10403 passed; conformance 7709/7709 in both. Version
   2026.11.23.21.
+- 2026-11-23: Jacobs' selectivity index (ADR 0604): `jacobs_selectivity(x, available)` in
+  `measurements` (C# `Measurements.JacobsSelectivity`): `(p_i − r_i)/(p_i + r_i − 2 p_i r_i)`
+  for each kind, Ivlev's electivity made independent of how abundant a kind is.
+  Python 11740 passed, 2 skipped; .NET 10422 passed; conformance 7723/7723 in both. Version
+  2026.11.23.22.
 
 ## Not built
 

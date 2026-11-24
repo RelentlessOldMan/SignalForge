@@ -392,6 +392,7 @@ from .measurements import (
     jaccard_nestedness,
     jaccard_turnover,
     jackknife_entropy,
+    jacobs_selectivity,
     jeffreys_divergence,
     johnson_coefficient,
     js_divergence,
@@ -783,7 +784,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.21"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.22"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1181,6 +1182,7 @@ __all__ = [
     "jaccard_nestedness",
     "jaccard_turnover",
     "jackknife_entropy",
+    "jacobs_selectivity",
     "jeffreys_divergence",
     "johnson_coefficient",
     "js_divergence",

@@ -1516,6 +1516,13 @@ rule for code not written yet.
   `r = available/Σavailable`, an array held to −1 to 1. Each record is divided by its largest
   value before it is summed. Records as for Manly's alpha; an availability share that
   underflows to 0 is `invalid_argument`. **(implemented)**
+- **Jacobs' selectivity index** ([ADR 0604](adr/0604-jacobs-selectivity.md);
+  `jacobs_selectivity(x, available)`, C# `Measurements.JacobsSelectivity`): for each kind
+  `(p_i − r_i)/(p_i (1 − r_i) + r_i (1 − p_i))` on the shares of use `p = x/Σx` and of
+  availability `r = available/Σavailable`, 0 where `p_i = r_i`, an array held to −1 to 1.
+  Each record is divided by its largest value before it is summed. Records as for Ivlev's
+  electivity; an availability share that underflows to 0 is `invalid_argument`.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
