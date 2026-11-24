@@ -95,6 +95,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "green_index": measurements.green_index,
     "morisita_dispersion": measurements.morisita_dispersion,
     "david_moore_clumping": measurements.david_moore_clumping,
+    "cassie_index": measurements.cassie_index,
     "sample_entropy": measurements.sample_entropy,
     "johnson_rank_preference": measurements.johnson_rank_preference,
     "strauss_selection": measurements.strauss_selection,

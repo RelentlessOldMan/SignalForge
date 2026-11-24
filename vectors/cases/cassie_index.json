@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "lloyd_mean_crowding",
+  "description": "Cassie's index (conventions: Cassie's index; ADR 0614).",
+  "cases": [
+    {"id": "cassie_index.even", "op": "cassie_index", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": -0.5, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "no variance: -2/4 = -1/2"},
+    {"id": "cassie_index.clumped", "op": "cassie_index", "args": {"counts": [0.0, 0.0, 6.0]}, "expected": 2.5, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 2, s^2 12: 10/4 = 5/2"},
+    {"id": "cassie_index.two_units", "op": "cassie_index", "args": {"counts": [0.0, 3.0]}, "expected": 1.3333333333333333, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 3/2, s^2 9/2: 3/(9/4) = 4/3"},
+    {"id": "cassie_index.mixed", "op": "cassie_index", "args": {"counts": [1.0, 2.0, 3.0]}, "expected": -0.25, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 2, s^2 1: -1/4"},
+    {"id": "cassie_index.uneven", "op": "cassie_index", "args": {"counts": [4.0, 0.0, 1.0, 0.0, 3.0]}, "expected": 0.6640625, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 8/5, s^2 33/10: (17/10)/(64/25) = 85/128"},
+    {"id": "cassie_index.singles", "op": "cassie_index", "args": {"counts": [1.0, 1.0, 0.0, 0.0]}, "expected": -0.6666666666666666, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 1/2, s^2 1/3: (-1/6)/(1/4) = -2/3"},
+    {"id": "cassie_index.one_individual", "op": "cassie_index", "args": {"counts": [1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 1/2, s^2 1/2: 0"},
+    {"id": "cassie_index.huge", "op": "cassie_index", "args": {"counts": [1e+308, 0.0]}, "expected": 2.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "the sums would overflow: m t/2, s^2 t^2/2: 2 - 2/t, which rounds to 2"},
+    {"id": "cassie_index.random", "op": "cassie_index", "args": {"counts": [1.0, 0.0, 3.0, 7.0, 0.0, 0.0, 3.0, 0.0, 3.0, 0.0, 0.0, 7.0, 0.0, 0.0, 3.0, 0.0, 2.0, 2.0, 0.0, 2.0, 3.0, 1.0, 1.0, 3.0, 7.0, 2.0, 2.0, 2.0, 7.0, 1.0]}, "expected": 0.7260755678352291, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 counts from random.Random(614).choice([0, 0, 1, 2, 3, 7])"},
+    {"id": "cassie_index.empty", "op": "cassie_index", "args": {"counts": []}, "error": "invalid_argument", "source": "there must be a unit"},
+    {"id": "cassie_index.one_unit", "op": "cassie_index", "args": {"counts": [5.0]}, "error": "invalid_argument", "source": "there must be at least two units"},
+    {"id": "cassie_index.negative", "op": "cassie_index", "args": {"counts": [1.0, -1.0, 2.0]}, "error": "invalid_argument", "source": "counts must be at least 0"},
+    {"id": "cassie_index.all_zero", "op": "cassie_index", "args": {"counts": [0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be above 0"},
+    {"id": "cassie_index.not_whole", "op": "cassie_index", "args": {"counts": [1.0, 2.5]}, "error": "invalid_argument", "source": "counts must be whole numbers"}
+  ]
+}

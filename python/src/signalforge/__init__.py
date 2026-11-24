@@ -283,6 +283,7 @@ from .measurements import (
     bulla_evenness,
     camargo_evenness,
     canberra_distance,
+    cassie_index,
     centre_time,
     cepstrum_pitch,
     chao1_richness,
@@ -793,7 +794,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.31"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.32"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -965,6 +966,7 @@ __all__ = [
     "c_weighting_sos",
     "camargo_evenness",
     "canberra_distance",
+    "cassie_index",
     "centre_time",
     "cepstral_distance",
     "cepstral_lifter",

@@ -1575,6 +1575,11 @@ rule for code not written yet.
   `t (n s_2/s_1 − s_1)/(n − 1) − 1` with `t` the largest count, `s_1 = Σ x/t` and
   `s_2 = Σ(x/t)²`, held at −1 from below. Counts as for Lloyd's mean crowding, with at least
   two units. **(implemented)**
+- **Cassie's index** ([ADR 0614](adr/0614-cassie-index.md); `cassie_index(counts)`, C#
+  `Measurements.CassieIndex`): `(s² − m)/m²` with `m` the mean count and `s²` the sample
+  variance (divided by `n − 1`), formed as `(A − 1/t) · n/s_1` with `t` the largest count,
+  `s_1 = Σ x/t`, `s_2 = Σ(x/t)²` and `A = (n s_2/s_1 − s_1)/(n − 1)`. Counts as for David
+  and Moore's index of clumping. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Cassie's index in `measurements` (`cassie_index(counts)`; counts as for
-     `david_moore_clumping`: `(s² − m)/m²`, the index of clumping over the mean, 0 for
-     units filled at random, an estimate of `1/k` for negative binomial counts; Cassie 1962).
+   - Fisher's index of dispersion statistic in `measurements` (`fisher_dispersion(counts)`;
+     counts as for `david_moore_clumping`: `Σ(x_i − m)²/m = (n − 1) s²/m`, chi-square with
+     `n − 1` degrees of freedom for counts drawn at random; Fisher, Thornton and Mackenzie
+     1922).
 
 ## Built
 
@@ -4122,6 +4123,11 @@ Updated with every chunk of work. Dates are absolute.
   random.
   Python 11954 passed, 2 skipped; .NET 10590 passed; conformance 7846/7846 in both. Version
   2026.11.23.31.
+- 2026-11-23: Cassie's index (ADR 0614): `cassie_index(counts)` in `measurements` (C#
+  `Measurements.CassieIndex`): `(s² − m)/m²`, about 0 for counts at random, `1/k` for
+  negative binomial counts.
+  Python 11978 passed, 2 skipped; .NET 10609 passed; conformance 7860/7860 in both. Version
+  2026.11.23.32.
 
 ## Not built
 

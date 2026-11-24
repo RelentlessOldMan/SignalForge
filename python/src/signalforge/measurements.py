@@ -9388,6 +9388,33 @@ def david_moore_clumping(counts: ArrayLike) -> float:
     return max(top * ((n * (s2 / s1) - s1) / (n - 1)) - 1.0, -1.0)
 
 
+def cassie_index(counts: ArrayLike) -> float:
+    """Cassie's index of ``counts`` of individuals in at least two sampling units, whole
+    numbers at least 0 with a total above 0: (s^2 - m)/m^2, about 0 for counts at random
+    (conventions: Cassie's index; ADR 0614)."""
+    a = np.asarray(counts)
+    if a.ndim != 1:
+        raise ValueError("counts must be one-dimensional")
+    if np.iscomplexobj(a):
+        raise ValueError("counts must be real")
+    a = a.astype(np.float64, copy=False)
+    if a.size < 2:
+        raise ValueError("counts must have at least two units")
+    if not np.all(np.isfinite(a)) or np.any(a < 0) or np.any(a != np.floor(a)):
+        raise ValueError("counts must be finite whole numbers at least 0")
+    top = float(np.max(a))
+    if not top > 0:
+        raise ValueError("counts must have a total above 0")
+    s1 = 0.0
+    s2 = 0.0
+    for v in a:
+        u = float(v) / top
+        s1 += u
+        s2 += u * u
+    n = a.size
+    return ((n * (s2 / s1) - s1) / (n - 1) - 1.0 / top) * (n / s1)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
