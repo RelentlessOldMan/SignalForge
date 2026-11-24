@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Wilson and Shmida's beta of two presence records in `measurements`
-     (`wilson_shmida_beta(x, y)`; records as for `pianka_overlap`: kinds gained and lost over
-     twice the mean richness, `(b + c)/(2a + b + c)`; Wilson and Shmida 1984).
+   - Magurran's beta of two presence records in `measurements`
+     (`magurran_beta(x, y)`; records as for `pianka_overlap`:
+     `(2a + b + c)(1 − a/(a + b + c))`; Magurran 1988).
 
 ## Built
 
@@ -4005,6 +4005,11 @@ Updated with every chunk of work. Dates are absolute.
   and lost.
   Python 11410 passed, 2 skipped; .NET 10158 passed; conformance 7520/7520 in both. Version
   2026.11.23.8.
+- 2026-11-23: Wilson and Shmida's beta of two presence records (ADR 0591):
+  `wilson_shmida_beta(x, y)` in `measurements` (C# `Measurements.WilsonShmidaBeta`):
+  `(b + c)/(2a + b + c)`, the kinds gained and lost over twice the mean richness.
+  Python 11431 passed, 2 skipped; .NET 10175 passed; conformance 7533/7533 in both. Version
+  2026.11.23.9.
 
 ## Not built
 

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "wilson_shmida_beta",
+  "description": "Wilson and Shmida's beta of two presence records (conventions: Wilson and Shmida's beta; ADR 0591).",
+  "cases": [
+    {"id": "wilson_shmida_beta.same", "op": "wilson_shmida_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same kinds: 0"},
+    {"id": "wilson_shmida_beta.disjoint", "op": "wilson_shmida_beta", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "g + l = 2, mean richness 1: 1"},
+    {"id": "wilson_shmida_beta.subset", "op": "wilson_shmida_beta", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "g + l = 1, mean richness 3/2: 1/3"},
+    {"id": "wilson_shmida_beta.crossed", "op": "wilson_shmida_beta", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "g + l = 2, mean richness 3: 1/3"},
+    {"id": "wilson_shmida_beta.nested", "op": "wilson_shmida_beta", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "g + l = 2, mean richness 2: 1/2"},
+    {"id": "wilson_shmida_beta.swap", "op": "wilson_shmida_beta", "args": {"x": [1.0, 1.0, 1.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "g + l = 4, mean richness 3: 2/3"},
+    {"id": "wilson_shmida_beta.uneven", "op": "wilson_shmida_beta", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.7142857142857143, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "g + l = 5, mean richness 7/2: 5/7"},
+    {"id": "wilson_shmida_beta.tiny", "op": "wilson_shmida_beta", "args": {"x": [5e-324, 0.0, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the smallest double counts as present: g + l = 2, mean richness 2: 1/2"},
+    {"id": "wilson_shmida_beta.random", "op": "wilson_shmida_beta", "args": {"x": [2.5, 0.0, 2.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.5, 0.0, 1.0, 2.5, 0.0, 1.0, 0.0], "y": [0.0, 0.0, 2.5, 0.0, 1.0, 0.0, 2.5, 1.0, 2.5, 0.0, 1.0, 1.0, 2.5, 0.0, 1.0, 2.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 2.5]}, "expected": 0.4166666666666667, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x then y, 25 values each from random.Random(591).choice([0, 0, 1, 2.5])"},
+    {"id": "wilson_shmida_beta.empty", "op": "wilson_shmida_beta", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "wilson_shmida_beta.negative", "op": "wilson_shmida_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "wilson_shmida_beta.all_zero", "op": "wilson_shmida_beta", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "wilson_shmida_beta.lengths", "op": "wilson_shmida_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}
