@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Green's index of dispersion in `measurements` (`green_index(counts)`; counts as for
-     `lloyd_mean_crowding`, with a total above 1: `(s²/m − 1)/(Σx − 1)` with `m` the mean and
-     `s²` the sample variance, 0 for units filled at random, 1 for all in one unit;
-     Green 1966).
+   - Morisita's index of dispersion in `measurements` (`morisita_dispersion(counts)`;
+     counts as for `green_index`: `n Σ x_i (x_i − 1)/(Σx (Σx − 1))`, 1 for units filled at
+     random, above 1 for clumped; Morisita 1959).
 
 ## Built
 
@@ -4108,6 +4107,11 @@ Updated with every chunk of work. Dates are absolute.
   per unit, about 1 for counts at random.
   Python 11880 passed, 2 skipped; .NET 10533 passed; conformance 7804/7804 in both. Version
   2026.11.23.28.
+- 2026-11-23: Green's index of dispersion (ADR 0611): `green_index(counts)` in
+  `measurements` (C# `Measurements.GreenIndex`): `(s²/m − 1)/(Σx − 1)`, about 0 for counts
+  at random, 1 for all in one unit.
+  Python 11905 passed, 2 skipped; .NET 10552 passed; conformance 7818/7818 in both. Version
+  2026.11.23.29.
 
 ## Not built
 

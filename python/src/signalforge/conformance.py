@@ -92,6 +92,7 @@ OPS: dict[str, Callable[..., Any]] = {
     "permutation_entropy": measurements.permutation_entropy,
     "lloyd_mean_crowding": measurements.lloyd_mean_crowding,
     "lloyd_patchiness": measurements.lloyd_patchiness,
+    "green_index": measurements.green_index,
     "sample_entropy": measurements.sample_entropy,
     "johnson_rank_preference": measurements.johnson_rank_preference,
     "strauss_selection": measurements.strauss_selection,

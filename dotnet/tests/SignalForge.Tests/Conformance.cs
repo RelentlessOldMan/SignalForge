@@ -540,6 +540,7 @@ public static class Conformance
             "johnson_rank_preference" => Bind((Reals(a.Get("x")), Reals(a.Get("available"))), t => Measurements.JohnsonRankPreference(t.Item1, t.Item2)),
             "lloyd_mean_crowding" => Bind(Reals(a.Get("counts")), x => Measurements.LloydMeanCrowding(x)),
             "lloyd_patchiness" => Bind(Reals(a.Get("counts")), x => Measurements.LloydPatchiness(x)),
+            "green_index" => Bind(Reals(a.Get("counts")), x => Measurements.GreenIndex(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),
