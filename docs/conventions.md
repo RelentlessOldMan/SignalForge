@@ -1552,6 +1552,11 @@ rule for code not written yet.
   on counts of individuals in sampling units, formed as `t · Σ(x/t)²/Σ(x/t) − 1` with `t` the
   largest count, held at 0 from below. Counts are whole numbers at least 0 with a total above
   0. **(implemented)**
+- **Lloyd's index of patchiness** ([ADR 0610](adr/0610-lloyd-patchiness.md);
+  `lloyd_patchiness(counts)`, C# `Measurements.LloydPatchiness`): the mean crowding over the
+  mean count per unit, `m*/m`, formed as `(s_2/s_1 − 1/t) · n/s_1` with `t` the largest
+  count, `s_1 = Σ x/t` and `s_2 = Σ(x/t)²`, held at 0 from below. Counts as for Lloyd's mean
+  crowding. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

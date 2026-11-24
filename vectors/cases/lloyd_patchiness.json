@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "lloyd_mean_crowding",
+  "description": "Lloyd's index of patchiness (conventions: Lloyd's index of patchiness; ADR 0610).",
+  "cases": [
+    {"id": "lloyd_patchiness.even", "op": "lloyd_patchiness", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": 0.5, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean crowding 1 over mean 2: 1/2"},
+    {"id": "lloyd_patchiness.one_unit", "op": "lloyd_patchiness", "args": {"counts": [5.0]}, "expected": 0.8, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean crowding 4 over mean 5: 4/5"},
+    {"id": "lloyd_patchiness.singles", "op": "lloyd_patchiness", "args": {"counts": [1.0, 1.0, 1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "no two share a unit: 0"},
+    {"id": "lloyd_patchiness.clumped", "op": "lloyd_patchiness", "args": {"counts": [0.0, 0.0, 6.0]}, "expected": 2.5, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean crowding 5 over mean 2: 5/2"},
+    {"id": "lloyd_patchiness.mixed", "op": "lloyd_patchiness", "args": {"counts": [1.0, 2.0, 3.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean crowding 4/3 over mean 2: 2/3"},
+    {"id": "lloyd_patchiness.uneven", "op": "lloyd_patchiness", "args": {"counts": [4.0, 0.0, 1.0, 0.0, 3.0]}, "expected": 1.40625, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean crowding 9/4 over mean 8/5: 45/32"},
+    {"id": "lloyd_patchiness.huge", "op": "lloyd_patchiness", "args": {"counts": [1e+308, 1e+308]}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the sums would overflow: (t - 1)/t, 1 to double precision"},
+    {"id": "lloyd_patchiness.random", "op": "lloyd_patchiness", "args": {"counts": [2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 7.0, 3.0, 0.0, 0.0, 0.0, 0.0, 1.0, 3.0, 3.0, 1.0, 0.0, 7.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 7.0]}, "expected": 2.1925925925925926, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "30 counts from random.Random(610).choice([0, 0, 1, 2, 3, 7])"},
+    {"id": "lloyd_patchiness.empty", "op": "lloyd_patchiness", "args": {"counts": []}, "error": "invalid_argument", "source": "there must be a unit"},
+    {"id": "lloyd_patchiness.negative", "op": "lloyd_patchiness", "args": {"counts": [1.0, -1.0, 2.0]}, "error": "invalid_argument", "source": "counts must be at least 0"},
+    {"id": "lloyd_patchiness.all_zero", "op": "lloyd_patchiness", "args": {"counts": [0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be above 0"},
+    {"id": "lloyd_patchiness.not_whole", "op": "lloyd_patchiness", "args": {"counts": [1.0, 2.5]}, "error": "invalid_argument", "source": "counts must be whole numbers"}
+  ]
+}

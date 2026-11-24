@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Lloyd's index of patchiness in `measurements` (`lloyd_patchiness(counts)`; counts as
-     for `lloyd_mean_crowding`: the mean crowding over the mean count per unit, 1 for units
-     filled at random, above 1 for clumped; Lloyd 1967).
+   - Green's index of dispersion in `measurements` (`green_index(counts)`; counts as for
+     `lloyd_mean_crowding`, with a total above 1: `(s²/m − 1)/(Σx − 1)` with `m` the mean and
+     `s²` the sample variance, 0 for units filled at random, 1 for all in one unit;
+     Green 1966).
 
 ## Built
 
@@ -4102,6 +4103,11 @@ Updated with every chunk of work. Dates are absolute.
   others in an individual's sampling unit.
   Python 11858 passed, 2 skipped; .NET 10516 passed; conformance 7792/7792 in both. Version
   2026.11.23.27.
+- 2026-11-23: Lloyd's index of patchiness (ADR 0610): `lloyd_patchiness(counts)` in
+  `measurements` (C# `Measurements.LloydPatchiness`): the mean crowding over the mean count
+  per unit, about 1 for counts at random.
+  Python 11880 passed, 2 skipped; .NET 10533 passed; conformance 7804/7804 in both. Version
+  2026.11.23.28.
 
 ## Not built
 

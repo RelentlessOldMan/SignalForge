@@ -9273,6 +9273,32 @@ def lloyd_mean_crowding(counts: ArrayLike) -> float:
     return max(top * (s2 / s1) - 1.0, 0.0)
 
 
+def lloyd_patchiness(counts: ArrayLike) -> float:
+    """Lloyd's index of patchiness of ``counts`` of individuals in sampling units, whole
+    numbers at least 0 with a total above 0: the mean crowding over the mean count per unit,
+    about 1 for counts at random (conventions: Lloyd's index of patchiness; ADR 0610)."""
+    a = np.asarray(counts)
+    if a.ndim != 1:
+        raise ValueError("counts must be one-dimensional")
+    if np.iscomplexobj(a):
+        raise ValueError("counts must be real")
+    a = a.astype(np.float64, copy=False)
+    if a.size < 1:
+        raise ValueError("counts must not be empty")
+    if not np.all(np.isfinite(a)) or np.any(a < 0) or np.any(a != np.floor(a)):
+        raise ValueError("counts must be finite whole numbers at least 0")
+    top = float(np.max(a))
+    if not top > 0:
+        raise ValueError("counts must have a total above 0")
+    s1 = 0.0
+    s2 = 0.0
+    for v in a:
+        u = float(v) / top
+        s1 += u
+        s2 += u * u
+    return max((s2 / s1 - 1.0 / top) * (a.size / s1), 0.0)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

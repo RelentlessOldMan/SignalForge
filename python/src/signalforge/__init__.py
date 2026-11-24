@@ -413,6 +413,7 @@ from .measurements import (
     lennon_gradient_beta,
     ljung_box,
     lloyd_mean_crowding,
+    lloyd_patchiness,
     loevinger_h,
     log_loss,
     log_odds_ratio,
@@ -789,7 +790,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.27"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.28"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1219,6 +1220,7 @@ __all__ = [
     "linkwitz_riley",
     "ljung_box",
     "lloyd_mean_crowding",
+    "lloyd_patchiness",
     "lms_equalizer",
     "loevinger_h",
     "log_loss",
