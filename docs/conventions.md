@@ -1439,6 +1439,10 @@ rule for code not written yet.
   `podani_nestedness(x, y)`, C# `Measurements.PodaniNestedness`): with `a` the kinds above 0
   in both records and `b`, `c` those above 0 in one only, 0 when `a = 0`, else
   `(a + |b − c|)/(a + b + c)`. Records as for Pianka's niche overlap. **(implemented)**
+- **Harrison's beta** ([ADR 0589](adr/0589-harrison-beta.md); `harrison_beta(x, y)`, C#
+  `Measurements.HarrisonBeta`): with `a` the kinds above 0 in both records and `b`, `c` those
+  above 0 in one only, `min(b, c)/(a + max(b, c))`, Harrison, Ross and Lawton's `β_H2` for
+  two records. Records as for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

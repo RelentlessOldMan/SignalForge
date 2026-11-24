@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "suite": "harrison_beta",
+  "description": "Harrison's beta of two presence records (conventions: Harrison's beta; ADR 0589).",
+  "cases": [
+    {"id": "harrison_beta.same", "op": "harrison_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same kinds: 3/3 - 1 = 0"},
+    {"id": "harrison_beta.disjoint", "op": "harrison_beta", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "gamma = 2, alpha_max = 1: 1"},
+    {"id": "harrison_beta.subset", "op": "harrison_beta", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "gamma = alpha_max = 2: 0"},
+    {"id": "harrison_beta.crossed", "op": "harrison_beta", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.3333333333333333, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "gamma = 4, alpha_max = 3: 1/3"},
+    {"id": "harrison_beta.nested", "op": "harrison_beta", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "gamma = alpha_max = 3: 0"},
+    {"id": "harrison_beta.swap", "op": "harrison_beta", "args": {"x": [1.0, 1.0, 1.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.6666666666666666, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "gamma = 5, alpha_max = 3: 2/3"},
+    {"id": "harrison_beta.uneven", "op": "harrison_beta", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.2, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "gamma = 6, alpha_max = 5: 1/5"},
+    {"id": "harrison_beta.tiny", "op": "harrison_beta", "args": {"x": [5e-324, 0.0, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 0.5, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the smallest double counts as present: gamma = 3, alpha_max = 2: 1/2"},
+    {"id": "harrison_beta.random", "op": "harrison_beta", "args": {"x": [0.0, 1.0, 0.0, 1.0, 2.5, 0.0, 0.0, 2.5, 0.0, 0.0, 1.0, 0.0, 2.5, 2.5, 0.0, 0.0, 0.0, 2.5, 0.0, 0.0, 2.5, 0.0, 0.0, 1.0, 0.0], "y": [2.5, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 2.5, 2.5, 2.5, 1.0, 2.5, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.5]}, "expected": 0.4166666666666667, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x then y, 25 values each from random.Random(589).choice([0, 0, 1, 2.5])"},
+    {"id": "harrison_beta.empty", "op": "harrison_beta", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "harrison_beta.negative", "op": "harrison_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "harrison_beta.all_zero", "op": "harrison_beta", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "harrison_beta.lengths", "op": "harrison_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

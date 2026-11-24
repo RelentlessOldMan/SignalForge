@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Harrison's beta of two presence records in `measurements`
-     (`harrison_beta(x, y)`; records as for `pianka_overlap`: `min(b, c)/(a + max(b, c))`,
-     from 0 to 1; Harrison, Ross and Lawton 1992).
+   - Cody's beta of two presence records in `measurements`
+     (`cody_beta(x, y)`; records as for `pianka_overlap`: `(b + c)/2`, the mean of the kinds
+     gained and lost along a gradient; Cody 1975).
 
 ## Built
 
@@ -3995,6 +3995,11 @@ Updated with every chunk of work. Dates are absolute.
   `(a + |b − c|)/(a + b + c)` when the records share a kind, else 0.
   Python 11368 passed, 2 skipped; .NET 10124 passed; conformance 7494/7494 in both. Version
   2026.11.23.6.
+- 2026-11-23: Harrison's beta of two presence records (ADR 0589): `harrison_beta(x, y)` in
+  `measurements` (C# `Measurements.HarrisonBeta`): `min(b, c)/(a + max(b, c))`,
+  Harrison, Ross and Lawton's `β_H2` for two records.
+  Python 11389 passed, 2 skipped; .NET 10141 passed; conformance 7507/7507 in both. Version
+  2026.11.23.7.
 
 ## Not built
 
