@@ -9139,6 +9139,49 @@ def vanderploeg_scavia_electivity(x: ArrayLike, available: ArrayLike) -> NDArray
     return np.array(out, dtype=np.float64)
 
 
+def savage_selection_ratio(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64]:
+    """Savage's selection ratio of the record of use ``x`` against the record of availability
+    ``available``, of values at least 0, each with a value above 0 and ``available`` above 0
+    everywhere: p/r on their shares for each kind, 1 for a kind used as it is available
+    (conventions: Savage's selection ratio; ADR 0606)."""
+    rows = []
+    for name, v in (("x", x), ("available", available)):
+        a = np.asarray(v)
+        if a.ndim != 1:
+            raise ValueError(f"{name} must be one-dimensional")
+        if np.iscomplexobj(a):
+            raise ValueError(f"{name} must be real")
+        a = a.astype(np.float64, copy=False)
+        if a.size < 1:
+            raise ValueError(f"{name} must not be empty")
+        if not np.all(np.isfinite(a)) or np.any(a < 0):
+            raise ValueError(f"{name} must be finite and at least 0")
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a value above 0")
+        if name == "available" and not np.all(a > 0):
+            raise ValueError("available must be above 0 everywhere")
+        rows.append([float(b) / top for b in a])
+    xv, av = rows
+    if len(xv) != len(av):
+        raise ValueError("x and available must have the same length")
+    sx = 0.0
+    sa = 0.0
+    for a_, c_ in zip(xv, av, strict=True):
+        sx += a_
+        sa += c_
+    ratios = []
+    for a_, c_ in zip(xv, av, strict=True):
+        share = c_ / sa
+        if not share > 0:
+            raise ValueError("available is too uneven: a share underflows to 0")
+        w = a_ / sx / share
+        if not math.isfinite(w):
+            raise ValueError("a ratio overflows")
+        ratios.append(w)
+    return np.array(ratios, dtype=np.float64)
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

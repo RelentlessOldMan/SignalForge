@@ -500,6 +500,7 @@ from .measurements import (
     ruzicka_richness_difference,
     ruzicka_similarity,
     sample_entropy,
+    savage_selection_ratio,
     schoener_overlap,
     schroeder_decay,
     scott_pi,
@@ -785,7 +786,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.23"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.24"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1422,6 +1423,7 @@ __all__ = [
     "sample_and_hold",
     "sample_entropy",
     "saturate",
+    "savage_selection_ratio",
     "savgol_coefficients",
     "savgol_filter",
     "sawtooth",

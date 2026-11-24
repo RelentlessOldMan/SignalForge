@@ -1529,6 +1529,13 @@ rule for code not written yet.
   `Measurements.VanderploegScaviaElectivity`): for each kind `(α_i − 1/n)/(α_i + 1/n)` with
   `α` Manly's alpha and `n` the number of kinds, an array held to −1 to 1. `α` as
   `manly_alpha` computes it, with its rules. **(implemented)**
+- **Savage's selection ratio** ([ADR 0606](adr/0606-savage-selection-ratio.md);
+  `savage_selection_ratio(x, available)`, C# `Measurements.SavageSelectionRatio`): for each
+  kind `p_i/r_i` on the shares of use `p = x/Σx` and of availability
+  `r = available/Σavailable`, an array at least 0, 1 for a kind used as it is available.
+  Each record is divided by its largest value before it is summed. Records as for Manly's
+  alpha; an availability share that underflows to 0 or a ratio that overflows is
+  `invalid_argument`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

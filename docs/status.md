@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Savage's selection ratio in `measurements` (`savage_selection_ratio(x, available)`;
-     records as for `manly_alpha`: for each kind `p_i/r_i` on the shares of use `p` and of
-     availability `r`, an array at least 0, 1 for a kind used as it is available;
-     Savage 1931).
+   - Strauss' linear selection index in `measurements` (`strauss_selection(x, available)`;
+     records as for `savage_selection_ratio`: for each kind `p_i − r_i` on the shares of use
+     `p` and of availability `r`, an array from −1 to 1; Strauss 1979).
 
 ## Built
 
@@ -4082,6 +4081,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.VanderploegScaviaElectivity`): `(α_i − 1/n)/(α_i + 1/n)` on Manly's alpha.
   Python 11766 passed, 2 skipped; .NET 10442 passed; conformance 7738/7738 in both. Version
   2026.11.23.23.
+- 2026-11-23: Savage's selection ratio (ADR 0606): `savage_selection_ratio(x, available)` in
+  `measurements` (C# `Measurements.SavageSelectionRatio`): `p_i/r_i` for each kind, the
+  forage ratio, 1 for a kind used as it is available.
+  Python 11792 passed, 2 skipped; .NET 10462 passed; conformance 7753/7753 in both. Version
+  2026.11.23.24.
 
 ## Not built
 

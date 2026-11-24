@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "suite": "savage_selection_ratio",
+  "description": "Savage's selection ratio (conventions: Savage's selection ratio; ADR 0606).",
+  "cases": [
+    {"id": "savage_selection_ratio.as_available", "op": "savage_selection_ratio", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 2.0, 3.0]}, "expected": [1.0, 1.0, 1.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "use as availability: 1 for each kind"},
+    {"id": "savage_selection_ratio.even_use", "op": "savage_selection_ratio", "args": {"x": [1.0, 1.0], "available": [1.0, 3.0]}, "expected": [2.0, 0.6666666666666666], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "halves on 1/4, 3/4: 2, 2/3"},
+    {"id": "savage_selection_ratio.one_kind_used", "op": "savage_selection_ratio", "args": {"x": [1.0, 0.0], "available": [1.0, 3.0]}, "expected": [4.0, 0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "1, 0 on 1/4, 3/4: 4, 0"},
+    {"id": "savage_selection_ratio.uneven", "op": "savage_selection_ratio", "args": {"x": [2.0, 1.0, 1.0], "available": [1.0, 2.0, 1.0]}, "expected": [2.0, 0.5, 1.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "1/2, 1/4, 1/4 on 1/4, 1/2, 1/4: 2, 1/2, 1"},
+    {"id": "savage_selection_ratio.one_kind", "op": "savage_selection_ratio", "args": {"x": [2.0], "available": [5.0]}, "expected": [1.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one kind: 1"},
+    {"id": "savage_selection_ratio.huge", "op": "savage_selection_ratio", "args": {"x": [1e+308, 1e+308], "available": [1e+308, 1e+308]}, "expected": [1.0, 1.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the sums would overflow: halves on halves: 1, 1"},
+    {"id": "savage_selection_ratio.tiny", "op": "savage_selection_ratio", "args": {"x": [5e-324, 1.0], "available": [1.0, 1.0]}, "expected": [1e-323, 2.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the smallest double counts: 1e-323/(1 + 5e-324), 2/(1 + 5e-324)"},
+    {"id": "savage_selection_ratio.random", "op": "savage_selection_ratio", "args": {"x": [1.0, 1.0, 2.5, 1.0, 0.0, 2.5, 2.5, 2.5, 0.0, 0.0, 1.0, 0.0, 1.0, 2.5, 1.0, 0.0, 2.5, 0.0, 2.5, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0], "available": [2.5, 1.0, 1.0, 2.5, 2.5, 1.0, 2.5, 2.5, 0.5, 2.5, 1.0, 2.5, 0.5, 0.5, 0.5, 2.5, 1.0, 0.5, 1.0, 1.0, 0.5, 1.0, 0.5, 0.5, 1.0]}, "expected": [0.5076923076923077, 1.2692307692307692, 3.173076923076923, 0.5076923076923077, 0.0, 3.173076923076923, 1.2692307692307692, 1.2692307692307692, 0.0, 0.0, 1.2692307692307692, 0.0, 2.5384615384615383, 6.346153846153846, 2.5384615384615383, 0.0, 3.173076923076923, 0.0, 3.173076923076923, 0.0, 6.346153846153846, 0.0, 0.0, 0.0, 0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "x then available, 25 values each from random.Random(606).choice([0, 0, 1, 2.5]) with x[0] = 1, and .choice([0.5, 1, 2.5])"},
+    {"id": "savage_selection_ratio.empty", "op": "savage_selection_ratio", "args": {"x": [], "available": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "savage_selection_ratio.negative", "op": "savage_selection_ratio", "args": {"x": [1.0, -0.5, 2.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "savage_selection_ratio.all_zero", "op": "savage_selection_ratio", "args": {"x": [0.0, 0.0, 0.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a record needs a value above 0"},
+    {"id": "savage_selection_ratio.lengths", "op": "savage_selection_ratio", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"},
+    {"id": "savage_selection_ratio.unavailable", "op": "savage_selection_ratio", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "available must be above 0 everywhere"},
+    {"id": "savage_selection_ratio.underflow", "op": "savage_selection_ratio", "args": {"x": [1.0, 2.0, 3.0], "available": [1e+300, 5e-324, 1.0]}, "error": "invalid_argument", "source": "the share 5e-324/1e300 underflows to 0"},
+    {"id": "savage_selection_ratio.overflow", "op": "savage_selection_ratio", "args": {"x": [1.0, 1.0, 1.0], "available": [1.0, 1e-310, 1.0]}, "error": "invalid_argument", "source": "the ratio (1/3)/(1e-310/(2 + 1e-310)) is above the largest double"}
+  ]
+}
