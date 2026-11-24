@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "clark_evans_ratio",
+  "description": "The Clark-Evans aggregation index (conventions: the Clark-Evans aggregation index; ADR 0616).",
+  "cases": [
+    {"id": "clark_evans_ratio.random_mean", "op": "clark_evans_ratio", "args": {"distances": [0.5, 0.5], "density": 1.0}, "expected": 1.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the mean for a random pattern, 1/2: 1"},
+    {"id": "clark_evans_ratio.lattice", "op": "clark_evans_ratio", "args": {"distances": [1.0, 1.0, 1.0], "density": 1.0}, "expected": 2.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 1 at density 1: 2"},
+    {"id": "clark_evans_ratio.quarter", "op": "clark_evans_ratio", "args": {"distances": [0.25], "density": 16.0}, "expected": 2.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "2 * 1/4 * 4 = 2"},
+    {"id": "clark_evans_ratio.coincident", "op": "clark_evans_ratio", "args": {"distances": [0.0, 0.0], "density": 1.0}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "every neighbour at the same place: 0"},
+    {"id": "clark_evans_ratio.clumped", "op": "clark_evans_ratio", "args": {"distances": [0.25, 0.25, 0.625], "density": 4.0}, "expected": 1.5, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean 3/8 at density 4: 2 * 3/8 * 2 = 3/2"},
+    {"id": "clark_evans_ratio.root_two", "op": "clark_evans_ratio", "args": {"distances": [1.0], "density": 2.0}, "expected": 2.8284271247461903, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "2 * 1 * sqrt(2) = 2 sqrt(2)"},
+    {"id": "clark_evans_ratio.huge", "op": "clark_evans_ratio", "args": {"distances": [1e+308, 1e+308], "density": 0.25}, "expected": 1e+308, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the sum would overflow: 2 * 1e308 * 1/2 = 1e308"},
+    {"id": "clark_evans_ratio.tiny", "op": "clark_evans_ratio", "args": {"distances": [5e-324], "density": 1.0}, "expected": 1e-323, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the smallest double: 2 * 5e-324"},
+    {"id": "clark_evans_ratio.random", "op": "clark_evans_ratio", "args": {"distances": [0.0533716483217368, 0.8958943564052337, 1.6335189869847233, 0.35676028342545374, 1.0399904391839474, 0.26924665568424455, 0.40903015196524994, 0.5710081388119075, 0.3960551033493491, 1.2830091883896846, 0.6705568680671885, 1.2752202443310678, 1.314673939410735, 1.2379511702795496, 1.7519481962984969, 1.7631594658078322, 0.3846030177049595, 1.241470362312444, 0.6239451737629971, 0.6673301900967956, 1.4260589932872783, 1.5122425763141856, 1.1817633960728608, 0.15181429814822933, 0.38924962493227744], "density": 2.7480883251698147}, "expected": 2.9839077130122136, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "25 distances from random.Random(616).uniform(0, 2), then the density from uniform(0.5, 3)"},
+    {"id": "clark_evans_ratio.empty", "op": "clark_evans_ratio", "args": {"distances": [], "density": 1.0}, "error": "invalid_argument", "source": "there must be a distance"},
+    {"id": "clark_evans_ratio.negative", "op": "clark_evans_ratio", "args": {"distances": [1.0, -0.5], "density": 1.0}, "error": "invalid_argument", "source": "distances must be at least 0"},
+    {"id": "clark_evans_ratio.zero_density", "op": "clark_evans_ratio", "args": {"distances": [0.5, 1.0], "density": 0.0}, "error": "invalid_argument", "source": "the density must be above 0"},
+    {"id": "clark_evans_ratio.negative_density", "op": "clark_evans_ratio", "args": {"distances": [0.5, 1.0], "density": -1.0}, "error": "invalid_argument", "source": "the density must be above 0"},
+    {"id": "clark_evans_ratio.overflow", "op": "clark_evans_ratio", "args": {"distances": [1e+308], "density": 4.0}, "error": "invalid_argument", "source": "2 * 1e308 * 2 overflows"}
+  ]
+}

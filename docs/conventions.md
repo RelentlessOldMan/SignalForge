@@ -1585,6 +1585,13 @@ rule for code not written yet.
   the mean count, formed as `t (n s_2/s_1 − s_1)` with `t` the largest count, `s_1 = Σ x/t`
   and `s_2 = Σ(x/t)²`, held at 0 from below; a value that overflows is refused. Counts as
   for David and Moore's index of clumping. **(implemented)**
+- **The Clark–Evans aggregation index** ([ADR 0616](adr/0616-clark-evans-ratio.md);
+  `clark_evans_ratio(distances, density)`, C# `Measurements.ClarkEvansRatio`): the mean
+  nearest-neighbour distance over `1/(2√ρ)`, its mean for individuals placed at random with
+  `ρ` individuals per unit area: `2 r̄ √ρ`, formed as `(t (s_1/n)) (2√ρ)` with `t` the
+  largest distance and `s_1 = Σ d/t`; 0 when every distance is 0; a value that overflows is
+  refused. Distances finite, at least 0, not empty; density finite and above 0.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

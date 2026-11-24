@@ -6,12 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Clark–Evans aggregation index in `measurements`
-     (`clark_evans_ratio(distances, density)`; `distances` the distance from each individual
-     to its nearest neighbour, finite, at least 0, not empty, `density` the individuals per
-     unit area, finite and above 0: the mean distance over `1/(2√density)`, its mean for
-     individuals placed at random; 1 at random, below 1 clumped, up to about 2.15 for a
-     hexagonal lattice; Clark and Evans 1954).
+   - The Clark–Evans test statistic in `measurements`
+     (`clark_evans_z(distances, density)`; arguments as for `clark_evans_ratio`:
+     `(r̄ − r_E)/σ` with `r_E = 1/(2√ρ)` and `σ = 0.26136/√(nρ)`, the standard error of the
+     mean distance for individuals placed at random; about standard normal at random;
+     Clark and Evans 1954).
 
 ## Built
 
@@ -4135,6 +4134,12 @@ Updated with every chunk of work. Dates are absolute.
   with `n − 1` degrees of freedom for counts at random.
   Python 12004 passed, 2 skipped; .NET 10629 passed; conformance 7875/7875 in both. Version
   2026.11.23.33.
+- 2026-11-23: The Clark–Evans aggregation index (ADR 0616):
+  `clark_evans_ratio(distances, density)` in `measurements` (C#
+  `Measurements.ClarkEvansRatio`): the mean nearest-neighbour distance over `1/(2√ρ)`, 1 for
+  a random pattern.
+  Python 12031 passed, 2 skipped; .NET 10648 passed; conformance 7889/7889 in both. Version
+  2026.11.23.34.
 
 ## Not built
 

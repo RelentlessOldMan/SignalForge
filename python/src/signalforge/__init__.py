@@ -295,6 +295,7 @@ from .measurements import (
     chi_square_divergence,
     chord_distance,
     clarity,
+    clark_evans_ratio,
     cliff_delta,
     cody_beta,
     coefficient_of_variation,
@@ -795,7 +796,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.33"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.34"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -998,6 +999,7 @@ __all__ = [
     "cic_interpolate",
     "cic_taps",
     "clarity",
+    "clark_evans_ratio",
     "cliff_delta",
     "clock_drift",
     "clock_jitter",
