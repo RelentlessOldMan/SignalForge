@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Magurran's beta of two presence records in `measurements`
-     (`magurran_beta(x, y)`; records as for `pianka_overlap`:
-     `(2a + b + c)(1 − a/(a + b + c))`; Magurran 1988).
+   - Williams' beta of two presence records in `measurements`
+     (`williams_beta(x, y)`; records as for `pianka_overlap`: `min(b, c)/(a + b + c)`, from 0
+     to 1/2; Williams 1996, `β-3` in Koleff, Gaston and Lennon 2003).
 
 ## Built
 
@@ -4010,6 +4010,11 @@ Updated with every chunk of work. Dates are absolute.
   `(b + c)/(2a + b + c)`, the kinds gained and lost over twice the mean richness.
   Python 11431 passed, 2 skipped; .NET 10175 passed; conformance 7533/7533 in both. Version
   2026.11.23.9.
+- 2026-11-23: Magurran's beta of two presence records (ADR 0592): `magurran_beta(x, y)` in
+  `measurements` (C# `Measurements.MagurranBeta`): `(2a + b + c)(1 − a/(a + b + c))`, a
+  count that grows with richness and dissimilarity.
+  Python 11452 passed, 2 skipped; .NET 10192 passed; conformance 7546/7546 in both. Version
+  2026.11.23.10.
 
 ## Not built
 
