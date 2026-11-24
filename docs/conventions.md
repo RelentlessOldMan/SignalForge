@@ -1510,6 +1510,12 @@ rule for code not written yet.
   at 1 from above. Each record is divided by its largest value before it is summed. Records
   as for Hurlbert's niche breadth; an availability share that underflows to 0 or a sum of
   ratios that overflows is `invalid_argument`. **(implemented)**
+- **Ivlev's electivity** ([ADR 0603](adr/0603-ivlev-electivity.md);
+  `ivlev_electivity(x, available)`, C# `Measurements.IvlevElectivity`): for each kind
+  `(p_i − r_i)/(p_i + r_i)` on the shares of use `p = x/Σx` and of availability
+  `r = available/Σavailable`, an array held to −1 to 1. Each record is divided by its largest
+  value before it is summed. Records as for Manly's alpha; an availability share that
+  underflows to 0 is `invalid_argument`. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

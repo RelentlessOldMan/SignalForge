@@ -6,9 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Ivlev's electivity in `measurements` (`ivlev_electivity(x, available)`; records as for
-     `manly_alpha`: for each kind `(p_i − r_i)/(p_i + r_i)` on the shares of use `p` and of
-     availability `r`, an array from −1 (avoided) to 1; Ivlev 1961).
+   - Jacobs' selectivity index in `measurements` (`jacobs_selectivity(x, available)`;
+     records as for `ivlev_electivity`: for each kind `(p_i − r_i)/(p_i + r_i − 2 p_i r_i)` on
+     the shares of use `p` and of availability `r`, an array from −1 to 1; Jacobs 1974).
 
 ## Built
 
@@ -4066,6 +4066,11 @@ Updated with every chunk of work. Dates are absolute.
   each kind of resource against what is available, an array summing to 1.
   Python 11692 passed, 2 skipped; .NET 10384 passed; conformance 7695/7695 in both. Version
   2026.11.23.20.
+- 2026-11-23: Ivlev's electivity (ADR 0603): `ivlev_electivity(x, available)` in
+  `measurements` (C# `Measurements.IvlevElectivity`): `(p_i − r_i)/(p_i + r_i)` for each kind,
+  the selection of each kind of resource against what is available, from −1 to 1.
+  Python 11716 passed, 2 skipped; .NET 10403 passed; conformance 7709/7709 in both. Version
+  2026.11.23.21.
 
 ## Not built
 

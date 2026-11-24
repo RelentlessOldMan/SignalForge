@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "ivlev_electivity",
+  "description": "Ivlev's electivity (conventions: Ivlev's electivity; ADR 0603).",
+  "cases": [
+    {"id": "ivlev_electivity.as_available", "op": "ivlev_electivity", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 2.0, 3.0]}, "expected": [0.0, 0.0, 0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "use as availability: 0 for each kind"},
+    {"id": "ivlev_electivity.even_use", "op": "ivlev_electivity", "args": {"x": [1.0, 1.0], "available": [1.0, 3.0]}, "expected": [0.3333333333333333, -0.2], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "halves on 1/4, 3/4: (1/4)/(3/4), (-1/4)/(5/4)"},
+    {"id": "ivlev_electivity.one_kind_used", "op": "ivlev_electivity", "args": {"x": [1.0, 0.0], "available": [1.0, 3.0]}, "expected": [0.6, -1.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "1, 0 on 1/4, 3/4: (3/4)/(5/4), -1"},
+    {"id": "ivlev_electivity.uneven", "op": "ivlev_electivity", "args": {"x": [2.0, 1.0, 1.0], "available": [1.0, 2.0, 1.0]}, "expected": [0.3333333333333333, -0.3333333333333333, 0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "1/2, 1/4, 1/4 on 1/4, 1/2, 1/4: 1/3, -1/3, 0"},
+    {"id": "ivlev_electivity.one_kind", "op": "ivlev_electivity", "args": {"x": [2.0], "available": [5.0]}, "expected": [0.0], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "one kind: 0"},
+    {"id": "ivlev_electivity.huge", "op": "ivlev_electivity", "args": {"x": [1e+308, 1e+308], "available": [1.0, 3.0]}, "expected": [0.3333333333333333, -0.2], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the sum of x would overflow: halves on 1/4, 3/4: 1/3, -1/5"},
+    {"id": "ivlev_electivity.tiny", "op": "ivlev_electivity", "args": {"x": [5e-324, 1.0], "available": [1.0, 1.0]}, "expected": [-1.0, 0.3333333333333333], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "the smallest double counts: -1 + 2e-323 and 1/3 to double precision"},
+    {"id": "ivlev_electivity.random", "op": "ivlev_electivity", "args": {"x": [1.0, 1.0, 2.5, 0.0, 0.0, 0.0, 2.5, 0.0, 2.5, 0.0, 2.5, 0.0, 1.0, 0.0, 0.0, 0.0, 2.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.5], "available": [2.5, 1.0, 1.0, 0.5, 2.5, 0.5, 1.0, 0.5, 2.5, 1.0, 0.5, 0.5, 1.0, 2.5, 0.5, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0]}, "expected": [-0.28378378378378377, 0.16483516483516483, 0.5542521994134897, -1.0, -1.0, -1.0, 0.5542521994134897, -1.0, 0.16483516483516483, -1.0, 0.7491749174917491, -1.0, 0.16483516483516483, -1.0, -1.0, -1.0, 0.7491749174917491, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 0.16483516483516483, 0.5542521994134897], "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "x then available, 25 values each from random.Random(603).choice([0, 0, 1, 2.5]) with x[0] = 1, and .choice([0.5, 1, 2.5])"},
+    {"id": "ivlev_electivity.empty", "op": "ivlev_electivity", "args": {"x": [], "available": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "ivlev_electivity.negative", "op": "ivlev_electivity", "args": {"x": [1.0, -0.5, 2.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "ivlev_electivity.all_zero", "op": "ivlev_electivity", "args": {"x": [0.0, 0.0, 0.0], "available": [1.0, 1.0, 1.0]}, "error": "invalid_argument", "source": "a record needs a value above 0"},
+    {"id": "ivlev_electivity.lengths", "op": "ivlev_electivity", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"},
+    {"id": "ivlev_electivity.unavailable", "op": "ivlev_electivity", "args": {"x": [1.0, 2.0, 3.0], "available": [1.0, 0.0, 1.0]}, "error": "invalid_argument", "source": "available must be above 0 everywhere"},
+    {"id": "ivlev_electivity.underflow", "op": "ivlev_electivity", "args": {"x": [1.0, 2.0, 3.0], "available": [1e+300, 5e-324, 1.0]}, "error": "invalid_argument", "source": "the share 5e-324/1e300 underflows to 0"}
+  ]
+}

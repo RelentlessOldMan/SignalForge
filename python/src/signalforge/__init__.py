@@ -387,6 +387,7 @@ from .measurements import (
     icc_consistency,
     increment_entropy,
     integrated_phase_noise,
+    ivlev_electivity,
     jaccard_index,
     jaccard_nestedness,
     jaccard_turnover,
@@ -782,7 +783,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.20"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.21"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1175,6 +1176,7 @@ __all__ = [
     "iq_image_rejection_db",
     "iq_imbalance",
     "itakura_saito",
+    "ivlev_electivity",
     "jaccard_index",
     "jaccard_nestedness",
     "jaccard_turnover",
