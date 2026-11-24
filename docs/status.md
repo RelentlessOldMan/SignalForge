@@ -6,11 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - The Clark–Evans test statistic in `measurements`
-     (`clark_evans_z(distances, density)`; arguments as for `clark_evans_ratio`:
-     `(r̄ − r_E)/σ` with `r_E = 1/(2√ρ)` and `σ = 0.26136/√(nρ)`, the standard error of the
-     mean distance for individuals placed at random; about standard normal at random;
-     Clark and Evans 1954).
+   - Hopkins' statistic in `measurements`
+     (`hopkins_statistic(point_distances, individual_distances)`; the distances from random
+     points to the nearest individual and from individuals to their nearest neighbour, each
+     finite, at least 0, not empty, with a value above 0: `Σu²/(Σu² + Σw²)` on the squared
+     distances, about 1/2 at random, near 1 clumped; Hopkins and Skellam 1954).
 
 ## Built
 
@@ -4140,6 +4140,11 @@ Updated with every chunk of work. Dates are absolute.
   a random pattern.
   Python 12031 passed, 2 skipped; .NET 10648 passed; conformance 7889/7889 in both. Version
   2026.11.23.34.
+- 2026-11-23: The Clark–Evans test statistic (ADR 0617): `clark_evans_z(distances, density)`
+  in `measurements` (C# `Measurements.ClarkEvansZ`): `(r̄ − r_E)/σ` with the exact standard
+  error, about standard normal for a random pattern.
+  Python 12053 passed, 2 skipped; .NET 10665 passed; conformance 7901/7901 in both. Version
+  2026.11.23.35.
 
 ## Not built
 

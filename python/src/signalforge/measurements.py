@@ -9476,6 +9476,19 @@ def clark_evans_ratio(distances: ArrayLike, density: float) -> float:
     return r
 
 
+def clark_evans_z(distances: ArrayLike, density: float) -> float:
+    """The Clark-Evans test statistic of the nearest-neighbour ``distances`` of a pattern with
+    ``density`` individuals per unit area: (mean - 1/(2 sqrt(density)))/sigma, with sigma the
+    standard error of the mean for individuals placed at random; about standard normal at
+    random (conventions: the Clark-Evans test statistic; ADR 0617)."""
+    ratio = clark_evans_ratio(distances, density)
+    n = np.asarray(distances).size
+    z = (ratio - 1.0) * math.sqrt(n * math.pi / (4.0 - math.pi))
+    if not math.isfinite(z):
+        raise ValueError("the statistic overflows")
+    return z
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""

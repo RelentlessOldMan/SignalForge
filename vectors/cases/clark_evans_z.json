@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "suite": "clark_evans_z",
+  "description": "The Clark-Evans test statistic (conventions: the Clark-Evans test statistic; ADR 0617).",
+  "cases": [
+    {"id": "clark_evans_z.random_mean", "op": "clark_evans_z", "args": {"distances": [0.5, 0.5], "density": 1.0}, "expected": 0.0, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "the mean for a random pattern: 0"},
+    {"id": "clark_evans_z.lattice", "op": "clark_evans_z", "args": {"distances": [1.0, 1.0, 1.0], "density": 1.0}, "expected": 3.3135143124749686, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "R = 2, n = 3: sqrt(3 pi/(4 - pi))"},
+    {"id": "clark_evans_z.coincident", "op": "clark_evans_z", "args": {"distances": [0.0, 0.0], "density": 1.0}, "expected": -2.7054731069908966, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "R = 0, n = 2: -sqrt(2 pi/(4 - pi))"},
+    {"id": "clark_evans_z.quarter", "op": "clark_evans_z", "args": {"distances": [0.25], "density": 16.0}, "expected": 1.9130583802711008, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "R = 2, n = 1: sqrt(pi/(4 - pi))"},
+    {"id": "clark_evans_z.clumped", "op": "clark_evans_z", "args": {"distances": [0.25, 0.25, 0.625], "density": 4.0}, "expected": 1.6567571562374843, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "R = 3/2, n = 3: sqrt(3 pi/(4 - pi))/2"},
+    {"id": "clark_evans_z.huge", "op": "clark_evans_z", "args": {"distances": [1e+300, 1e+300], "density": 0.25}, "expected": 2.705473106990897e+300, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "R = 1e300, n = 2: (1e300 - 1) sqrt(2 pi/(4 - pi))"},
+    {"id": "clark_evans_z.random", "op": "clark_evans_z", "args": {"distances": [1.3866160284523672, 0.9077510367764037, 0.5348012346085043, 1.6359605056341846, 1.285299008677595, 0.034216782690021486, 0.882458665822766, 0.3793845994304721, 1.5350801779056078, 1.888234505704277, 1.9010539829143953, 1.8244500776710688, 1.6716278116012748, 1.2343268006743395, 1.9921268724907892, 0.8381241143613349, 1.4498873492713877, 0.2772498631740443, 0.254539873281753, 0.18394456818750027, 0.4980412559997194, 0.02026471930657925, 0.4044348785499876, 1.7211462733136769, 0.17634366700237392], "density": 0.7104048799026775}, "expected": 6.505722517826672, "tol": {"abs": 1e-13, "rel": 1e-13}, "source": "25 distances from random.Random(617).uniform(0, 2), then the density from uniform(0.5, 3)"},
+    {"id": "clark_evans_z.empty", "op": "clark_evans_z", "args": {"distances": [], "density": 1.0}, "error": "invalid_argument", "source": "there must be a distance"},
+    {"id": "clark_evans_z.negative", "op": "clark_evans_z", "args": {"distances": [1.0, -0.5], "density": 1.0}, "error": "invalid_argument", "source": "distances must be at least 0"},
+    {"id": "clark_evans_z.zero_density", "op": "clark_evans_z", "args": {"distances": [0.5, 1.0], "density": 0.0}, "error": "invalid_argument", "source": "the density must be above 0"},
+    {"id": "clark_evans_z.negative_density", "op": "clark_evans_z", "args": {"distances": [0.5, 1.0], "density": -1.0}, "error": "invalid_argument", "source": "the density must be above 0"},
+    {"id": "clark_evans_z.overflow", "op": "clark_evans_z", "args": {"distances": [1e+308, 1e+308], "density": 0.25}, "error": "invalid_argument", "source": "R = 1e308 overflows when multiplied by sqrt(2 pi/(4 - pi))"}
+  ]
+}

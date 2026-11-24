@@ -1592,6 +1592,12 @@ rule for code not written yet.
   largest distance and `s_1 = Σ d/t`; 0 when every distance is 0; a value that overflows is
   refused. Distances finite, at least 0, not empty; density finite and above 0.
   **(implemented)**
+- **The Clark–Evans test statistic** ([ADR 0617](adr/0617-clark-evans-z.md);
+  `clark_evans_z(distances, density)`, C# `Measurements.ClarkEvansZ`): `(r̄ − r_E)/σ` with
+  `r_E = 1/(2√ρ)` and the exact standard error `σ = √((4 − π)/(4πρn))` (Clark and Evans
+  rounded it to `0.26136/√(nρ)`), formed as `(R − 1) √(nπ/(4 − π))` with `R` the
+  Clark–Evans aggregation index; a value that overflows is refused. Arguments as for the
+  aggregation index. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
