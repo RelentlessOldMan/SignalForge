@@ -1484,6 +1484,11 @@ rule for code not written yet.
   shares `p = x/Σx`, `q = y/Σy`, equal to `1 − ½ Σ|p_i − q_i|`; each record is divided by its
   largest value before it is summed, and the result is held at 1 from above; from 0 to 1.
   Records as for Pianka's niche overlap. **(implemented)**
+- **Petraitis' specific overlap** ([ADR 0599](adr/0599-petraitis-overlap.md);
+  `petraitis_overlap(x, y)`, C# `Measurements.PetraitisOverlap`): `exp(Σ p_i (ln q_i − ln p_i))`
+  over the kinds with `p_i > 0`, on the shares `p = x/Σx`, `q = y/Σy`; 0 when some such kind
+  has `q_i = 0`; held at 1 from above; not symmetric. Each record is divided by its largest
+  value before it is summed. Records as for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

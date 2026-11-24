@@ -453,6 +453,7 @@ from .measurements import (
     pearson_correlation,
     pearson_heron_ii,
     permutation_entropy,
+    petraitis_overlap,
     petrosian_dimension,
     pettitt,
     phase_noise_spurs,
@@ -778,7 +779,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.16"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.17"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1294,6 +1295,7 @@ __all__ = [
     "pearson_correlation",
     "pearson_heron_ii",
     "permutation_entropy",
+    "petraitis_overlap",
     "petrosian_dimension",
     "pettitt",
     "phase_distortion",

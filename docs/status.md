@@ -6,9 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Petraitis' specific overlap in `measurements` (`petraitis_overlap(x, y)`; `x` the
-     use of a resource and `y` its availability, records as for `pianka_overlap`, with `y`
-     above 0 wherever `x` is: `exp(Σ p ln q − Σ p ln p)` on the shares; Petraitis 1979).
+   - Hurlbert's niche overlap in `measurements` (`hurlbert_overlap(x, y, a)`; `x`, `y`
+     the use of the kinds by two consumers and `a` their availability, records as for
+     `pianka_overlap`, with `a` above 0 everywhere: `Σ p_i q_i/a_i` on the shares;
+     Hurlbert 1978).
 
 ## Built
 
@@ -4046,6 +4047,11 @@ Updated with every chunk of work. Dates are absolute.
   took the place of Peirce's skill score in Next, which is `youden_j`, already built.
   Python 11582 passed, 2 skipped; .NET 10298 passed; conformance 7628/7628 in both. Version
   2026.11.23.16.
+- 2026-11-23: Petraitis' specific overlap (ADR 0599): `petraitis_overlap(x, y)` in
+  `measurements` (C# `Measurements.PetraitisOverlap`): `exp(Σ p ln(q/p))` on the shares, the
+  likelihood of `x` under `y`; 0 when `x` uses a kind `y` does not.
+  Python 11604 passed, 2 skipped; .NET 10316 passed; conformance 7642/7642 in both. Version
+  2026.11.23.17.
 
 ## Not built
 
