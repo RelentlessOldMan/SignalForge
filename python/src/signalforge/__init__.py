@@ -311,6 +311,7 @@ from .measurements import (
     cronbach_alpha,
     cross_entropy,
     czekanowski_similarity,
+    david_moore_clumping,
     decay_curvature,
     decay_time,
     definition,
@@ -792,7 +793,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.30"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.31"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1028,6 +1029,7 @@ __all__ = [
     "crossfade",
     "crossover_split",
     "czekanowski_similarity",
+    "david_moore_clumping",
     "db_bandwidth",
     "db_to_amp",
     "db_to_lin",

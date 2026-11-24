@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - David and Moore's index of clumping in `measurements`
-     (`david_moore_clumping(counts)`; counts as for `lloyd_mean_crowding`, with at least
-     two units: `s²/m − 1` with `m` the mean and `s²` the sample variance, 0 for units
-     filled at random; David and Moore 1954).
+   - Cassie's index in `measurements` (`cassie_index(counts)`; counts as for
+     `david_moore_clumping`: `(s² − m)/m²`, the index of clumping over the mean, 0 for
+     units filled at random, an estimate of `1/k` for negative binomial counts; Cassie 1962).
 
 ## Built
 
@@ -4118,6 +4117,11 @@ Updated with every chunk of work. Dates are absolute.
   1 for counts at random, `n` for all in one unit.
   Python 11930 passed, 2 skipped; .NET 10571 passed; conformance 7832/7832 in both. Version
   2026.11.23.30.
+- 2026-11-23: David and Moore's index of clumping (ADR 0613): `david_moore_clumping(counts)`
+  in `measurements` (C# `Measurements.DavidMooreClumping`): `s²/m − 1`, about 0 for counts at
+  random.
+  Python 11954 passed, 2 skipped; .NET 10590 passed; conformance 7846/7846 in both. Version
+  2026.11.23.31.
 
 ## Not built
 

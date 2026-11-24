@@ -1569,6 +1569,12 @@ rule for code not written yet.
   `n (s_2 − s_1/t)/(s_1 (s_1 − 1/t))` with `t` the largest count, `s_1 = Σ x/t` and
   `s_2 = Σ(x/t)²`, held to [0, n]. Counts as for Green's index of dispersion.
   **(implemented)**
+- **David and Moore's index of clumping** ([ADR 0613](adr/0613-david-moore-clumping.md);
+  `david_moore_clumping(counts)`, C# `Measurements.DavidMooreClumping`): `s²/m − 1` with `m`
+  the mean count and `s²` the sample variance (divided by `n − 1`), formed as
+  `t (n s_2/s_1 − s_1)/(n − 1) − 1` with `t` the largest count, `s_1 = Σ x/t` and
+  `s_2 = Σ(x/t)²`, held at −1 from below. Counts as for Lloyd's mean crowding, with at least
+  two units. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

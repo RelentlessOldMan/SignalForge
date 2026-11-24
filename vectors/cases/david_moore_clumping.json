@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "lloyd_mean_crowding",
+  "description": "David and Moore's index of clumping (conventions: David and Moore's index of clumping; ADR 0613).",
+  "cases": [
+    {"id": "david_moore_clumping.even", "op": "david_moore_clumping", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": -1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "no variance: -1"},
+    {"id": "david_moore_clumping.clumped", "op": "david_moore_clumping", "args": {"counts": [0.0, 0.0, 6.0]}, "expected": 5.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 2, s^2 12: 6 - 1 = 5"},
+    {"id": "david_moore_clumping.two_units", "op": "david_moore_clumping", "args": {"counts": [0.0, 3.0]}, "expected": 2.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 3/2, s^2 9/2: 3 - 1 = 2"},
+    {"id": "david_moore_clumping.mixed", "op": "david_moore_clumping", "args": {"counts": [1.0, 2.0, 3.0]}, "expected": -0.5, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 2, s^2 1: 1/2 - 1 = -1/2"},
+    {"id": "david_moore_clumping.uneven", "op": "david_moore_clumping", "args": {"counts": [4.0, 0.0, 1.0, 0.0, 3.0]}, "expected": 1.0625, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 8/5, s^2 33/10: 33/16 - 1 = 17/16"},
+    {"id": "david_moore_clumping.singles", "op": "david_moore_clumping", "args": {"counts": [1.0, 1.0, 0.0, 0.0]}, "expected": -0.3333333333333333, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 1/2, s^2 1/3: 2/3 - 1 = -1/3"},
+    {"id": "david_moore_clumping.one_individual", "op": "david_moore_clumping", "args": {"counts": [1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 1/2, s^2 1/2: 1 - 1 = 0"},
+    {"id": "david_moore_clumping.huge", "op": "david_moore_clumping", "args": {"counts": [1e+308, 0.0]}, "expected": 1e+308, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "the sums would overflow: m t/2, s^2 t^2/2: t - 1, which rounds to t"},
+    {"id": "david_moore_clumping.random", "op": "david_moore_clumping", "args": {"counts": [1.0, 0.0, 0.0, 3.0, 2.0, 2.0, 2.0, 0.0, 0.0, 3.0, 7.0, 3.0, 2.0, 2.0, 1.0, 0.0, 3.0, 7.0, 2.0, 3.0, 3.0, 0.0, 2.0, 3.0, 7.0, 2.0, 3.0, 7.0, 1.0, 0.0]}, "expected": 0.9664885866925692, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 counts from random.Random(613).choice([0, 0, 1, 2, 3, 7])"},
+    {"id": "david_moore_clumping.empty", "op": "david_moore_clumping", "args": {"counts": []}, "error": "invalid_argument", "source": "there must be a unit"},
+    {"id": "david_moore_clumping.one_unit", "op": "david_moore_clumping", "args": {"counts": [5.0]}, "error": "invalid_argument", "source": "there must be at least two units"},
+    {"id": "david_moore_clumping.negative", "op": "david_moore_clumping", "args": {"counts": [1.0, -1.0, 2.0]}, "error": "invalid_argument", "source": "counts must be at least 0"},
+    {"id": "david_moore_clumping.all_zero", "op": "david_moore_clumping", "args": {"counts": [0.0, 0.0]}, "error": "invalid_argument", "source": "the total must be above 0"},
+    {"id": "david_moore_clumping.not_whole", "op": "david_moore_clumping", "args": {"counts": [1.0, 2.5]}, "error": "invalid_argument", "source": "counts must be whole numbers"}
+  ]
+}
