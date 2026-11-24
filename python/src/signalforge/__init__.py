@@ -494,6 +494,7 @@ from .measurements import (
     ruzicka_richness_difference,
     ruzicka_similarity,
     sample_entropy,
+    schoener_overlap,
     schroeder_decay,
     scott_pi,
     sens_slope,
@@ -777,7 +778,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.15"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.16"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1412,6 +1413,7 @@ __all__ = [
     "savgol_filter",
     "sawtooth",
     "schmitt_trigger",
+    "schoener_overlap",
     "schroeder_decay",
     "schroeder_reverb",
     "schur",

@@ -1479,6 +1479,11 @@ rule for code not written yet.
   kinds above 0 in both records and `b`, `c` those above 0 in one only,
   `2bc/((a + b + c)² − 2bc)`, from 0 to 1. Records as for Pianka's niche overlap.
   **(implemented)**
+- **Schoener's overlap** ([ADR 0598](adr/0598-schoener-overlap.md);
+  `schoener_overlap(x, y)`, C# `Measurements.SchoenerOverlap`): `Σ min(p_i, q_i)` on the
+  shares `p = x/Σx`, `q = y/Σy`, equal to `1 − ½ Σ|p_i − q_i|`; each record is divided by its
+  largest value before it is summed, and the result is held at 1 from above; from 0 to 1.
+  Records as for Pianka's niche overlap. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

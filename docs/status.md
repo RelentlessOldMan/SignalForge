@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Peirce's skill score of a presence forecast in `measurements`
-     (`peirce_skill_score(x, y)`; `x` the forecast, `y` what was observed, records as for
-     `pianka_overlap`, with `y` also holding a 0: `(ad − bc)/((a + c)(b + d))`, the hit rate
-     less the false-alarm rate; Peirce 1884).
+   - Petraitis' specific overlap in `measurements` (`petraitis_overlap(x, y)`; `x` the
+     use of a resource and `y` its availability, records as for `pianka_overlap`, with `y`
+     above 0 wherever `x` is: `exp(Σ p ln q − Σ p ln p)` on the shares; Petraitis 1979).
 
 ## Built
 
@@ -4042,6 +4041,11 @@ Updated with every chunk of work. Dates are absolute.
   `2bc/((a + b + c)² − 2bc)`, from the pairs of kinds whose occurrences overlap; 0 to 1.
   Python 11561 passed, 2 skipped; .NET 10281 passed; conformance 7615/7615 in both. Version
   2026.11.23.15.
+- 2026-11-23: Schoener's overlap of two records (ADR 0598): `schoener_overlap(x, y)` in
+  `measurements` (C# `Measurements.SchoenerOverlap`): `Σ min(p_i, q_i)` on the shares. It
+  took the place of Peirce's skill score in Next, which is `youden_j`, already built.
+  Python 11582 passed, 2 skipped; .NET 10298 passed; conformance 7628/7628 in both. Version
+  2026.11.23.16.
 
 ## Not built
 
