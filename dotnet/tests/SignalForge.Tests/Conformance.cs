@@ -526,6 +526,7 @@ public static class Conformance
             "lennon_gradient_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.LennonGradientBeta(t.Item1, t.Item2)),
             "routledge_information_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.RoutledgeInformationBeta(t.Item1, t.Item2)),
             "routledge_exponential_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.RoutledgeExponentialBeta(t.Item1, t.Item2)),
+            "routledge_overlap_beta" => Bind((Reals(a.Get("x")), Reals(a.Get("y"))), t => Measurements.RoutledgeOverlapBeta(t.Item1, t.Item2)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

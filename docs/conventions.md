@@ -1474,6 +1474,11 @@ rule for code not written yet.
   `routledge_exponential_beta(x, y)`, C# `Measurements.RoutledgeExponentialBeta`):
   `exp(β-I) − 1`, with `β-I` Routledge's information beta, held at 0 from below; from 0 to 1.
   Records as for Pianka's niche overlap. **(implemented)**
+- **Routledge's overlap beta** ([ADR 0597](adr/0597-routledge-overlap-beta.md);
+  `routledge_overlap_beta(x, y)`, C# `Measurements.RoutledgeOverlapBeta`): with `a` the
+  kinds above 0 in both records and `b`, `c` those above 0 in one only,
+  `2bc/((a + b + c)² − 2bc)`, from 0 to 1. Records as for Pianka's niche overlap.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

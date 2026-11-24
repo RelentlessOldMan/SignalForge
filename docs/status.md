@@ -6,10 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Routledge's overlap beta of two presence records in `measurements`
-     (`routledge_overlap_beta(x, y)`; records as for `pianka_overlap`:
-     `2bc/((a + b + c)² − 2bc)`, the form `β-R` of Routledge 1977, as listed by Koleff,
-     Gaston and Lennon 2003).
+   - Peirce's skill score of a presence forecast in `measurements`
+     (`peirce_skill_score(x, y)`; `x` the forecast, `y` what was observed, records as for
+     `pianka_overlap`, with `y` also holding a 0: `(ad − bc)/((a + c)(b + d))`, the hit rate
+     less the false-alarm rate; Peirce 1884).
 
 ## Built
 
@@ -4037,6 +4037,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.RoutledgeExponentialBeta`): `exp(β-I) − 1`, from 0 to 1.
   Python 11539 passed, 2 skipped; .NET 10263 passed; conformance 7601/7601 in both. Version
   2026.11.23.14.
+- 2026-11-23: Routledge's overlap beta of two presence records (ADR 0597):
+  `routledge_overlap_beta(x, y)` in `measurements` (C# `Measurements.RoutledgeOverlapBeta`):
+  `2bc/((a + b + c)² − 2bc)`, from the pairs of kinds whose occurrences overlap; 0 to 1.
+  Python 11561 passed, 2 skipped; .NET 10281 passed; conformance 7615/7615 in both. Version
+  2026.11.23.15.
 
 ## Not built
 

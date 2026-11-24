@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "suite": "routledge_overlap_beta",
+  "description": "Routledge's overlap beta of two presence records (conventions: Routledge's overlap beta; ADR 0597).",
+  "cases": [
+    {"id": "routledge_overlap_beta.same", "op": "routledge_overlap_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [5.0, 0.5, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the same kinds: S = 3, r = 3: 0"},
+    {"id": "routledge_overlap_beta.disjoint", "op": "routledge_overlap_beta", "args": {"x": [1.0, 0.0], "y": [0.0, 1.0]}, "expected": 1.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "S = 2, r = 0: 4/2 - 1 = 1"},
+    {"id": "routledge_overlap_beta.subset", "op": "routledge_overlap_beta", "args": {"x": [1.0, 1.0], "y": [1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "S = 2, r = 1: 4/4 - 1 = 0"},
+    {"id": "routledge_overlap_beta.crossed", "op": "routledge_overlap_beta", "args": {"x": [1.0, 2.0, 0.0, 4.0], "y": [0.0, 3.0, 5.0, 1.0]}, "expected": 0.14285714285714285, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "S = 4, r = 5: 16/14 - 1 = 1/7"},
+    {"id": "routledge_overlap_beta.nested", "op": "routledge_overlap_beta", "args": {"x": [1.0, 0.0, 0.0], "y": [1.0, 1.0, 1.0]}, "expected": 0.0, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "S = 3, r = 3: 0"},
+    {"id": "routledge_overlap_beta.swap", "op": "routledge_overlap_beta", "args": {"x": [1.0, 1.0, 1.0, 0.0, 0.0], "y": [1.0, 0.0, 0.0, 1.0, 1.0]}, "expected": 0.47058823529411764, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "S = 5, r = 6: 25/17 - 1 = 8/17"},
+    {"id": "routledge_overlap_beta.uneven", "op": "routledge_overlap_beta", "args": {"x": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0], "y": [1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}, "expected": 0.2857142857142857, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "S = 6, r = 11: 36/28 - 1 = 2/7"},
+    {"id": "routledge_overlap_beta.lopsided", "op": "routledge_overlap_beta", "args": {"x": [1.0, 0.0, 0.0, 0.0, 0.0], "y": [0.0, 1.0, 1.0, 1.0, 1.0]}, "expected": 0.47058823529411764, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "S = 5, r = 6: 25/17 - 1 = 8/17"},
+    {"id": "routledge_overlap_beta.tiny", "op": "routledge_overlap_beta", "args": {"x": [5e-324, 0.0, 1.0], "y": [0.0, 1e-300, 1.0]}, "expected": 0.2857142857142857, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "the smallest double counts as present: S = 3, r = 2: 9/7 - 1 = 2/7"},
+    {"id": "routledge_overlap_beta.random", "op": "routledge_overlap_beta", "args": {"x": [0.0, 0.0, 1.0, 2.5, 0.0, 2.5, 1.0, 1.0, 2.5, 2.5, 2.5, 2.5, 0.0, 2.5, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.5, 2.5, 0.0], "y": [2.5, 0.0, 2.5, 0.0, 0.0, 2.5, 0.0, 1.0, 1.0, 0.0, 2.5, 0.0, 2.5, 0.0, 2.5, 1.0, 2.5, 1.0, 1.0, 0.0, 2.5, 1.0, 0.0, 2.5, 1.0]}, "expected": 0.21, "tol": {"abs": 1e-15, "rel": 1e-15}, "source": "x then y, 25 values each from random.Random(597).choice([0, 0, 1, 2.5])"},
+    {"id": "routledge_overlap_beta.empty", "op": "routledge_overlap_beta", "args": {"x": [], "y": []}, "error": "invalid_argument", "source": "a record needs a value"},
+    {"id": "routledge_overlap_beta.negative", "op": "routledge_overlap_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, -0.5, 2.0]}, "error": "invalid_argument", "source": "values must be at least 0"},
+    {"id": "routledge_overlap_beta.all_zero", "op": "routledge_overlap_beta", "args": {"x": [0.0, 0.0, 0.0], "y": [3.0, 1.0, 2.0]}, "error": "invalid_argument", "source": "each record needs a value above 0"},
+    {"id": "routledge_overlap_beta.lengths", "op": "routledge_overlap_beta", "args": {"x": [1.0, 2.0, 3.0], "y": [1.0, 2.0]}, "error": "invalid_argument", "source": "the records must have the same length"}
+  ]
+}

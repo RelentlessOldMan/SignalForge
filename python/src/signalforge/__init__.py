@@ -487,6 +487,7 @@ from .measurements import (
     rogot_goldberg_coefficient,
     routledge_exponential_beta,
     routledge_information_beta,
+    routledge_overlap_beta,
     runs_test,
     russell_rao_coefficient,
     ruzicka_replacement,
@@ -776,7 +777,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.14"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.23.15"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1396,6 +1397,7 @@ __all__ = [
     "rotary",
     "routledge_exponential_beta",
     "routledge_information_beta",
+    "routledge_overlap_beta",
     "rrc_taps",
     "runs_test",
     "russell_rao_coefficient",
