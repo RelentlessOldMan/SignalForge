@@ -9204,17 +9204,14 @@ def strauss_selection(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64]
             raise ValueError(f"{name} must have a value above 0")
         if name == "available" and not np.all(a > 0):
             raise ValueError("available must be above 0 everywhere")
-        rows.append([float(b) / top for b in a])
+        rows.append(a / top)
     xv, av = rows
-    if len(xv) != len(av):
+    if xv.size != av.size:
         raise ValueError("x and available must have the same length")
-    sx = 0.0
-    sa = 0.0
-    for a_, c_ in zip(xv, av, strict=True):
-        sx += a_
-        sa += c_
-    out = [a_ / sx - c_ / sa for a_, c_ in zip(xv, av, strict=True)]
-    return np.array(out, dtype=np.float64)
+    sx = _ordered_sum(xv.copy())
+    sa = _ordered_sum(av.copy())
+    out: NDArray[np.float64] = xv / sx - av / sa
+    return out
 
 
 def johnson_rank_preference(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64]:
@@ -9247,16 +9244,22 @@ def johnson_rank_preference(x: ArrayLike, available: ArrayLike) -> NDArray[np.fl
     return t + 0.0
 
 
+def _ordered_sum(t: NDArray[np.float64]) -> float:
+    """The sum of ``t`` from its first value to its last, as a loop adds them and as the C#
+    library does: ``np.cumsum`` adds in order where ``np.sum`` adds pairwise (ADR 0623). ``t``
+    is overwritten with its running sums."""
+    if t.size == 0:
+        return 0.0
+    return float(np.cumsum(t, out=t)[-1])
+
+
 def _count_pairs(a: np.ndarray, top: float) -> tuple[float, float]:
     """The sum of the counts over ``top`` and the sum of ``x (x - 1)`` over ``top`` squared,
     each in record order: ``x - 1`` is formed before scaling, so the many counts of 1 that
     make the index small add exact zeros (conventions: Lloyd's mean crowding)."""
-    s1 = 0.0
-    c = 0.0
-    for v in a:
-        x = float(v)
-        s1 += x / top
-        c += (x / top) * ((x - 1.0) / top)
+    q = a / top
+    c = _ordered_sum(q * ((a - 1.0) / top))
+    s1 = _ordered_sum(q)
     return s1, c
 
 
@@ -9306,14 +9309,10 @@ def _count_spread(a: np.ndarray, top: float) -> tuple[float, float]:
     """The sum of the counts over ``top`` and the sum of the squared deviations from their mean
     over ``top``, each in record order: two passes, so a mean large next to the spread does
     not cancel (conventions: Green's index)."""
-    s1 = 0.0
-    for v in a:
-        s1 += float(v) / top
+    s1 = _ordered_sum(a / top)
     mean = top * (s1 / a.size)
-    w = 0.0
-    for v in a:
-        e = (float(v) - mean) / top
-        w += e * e
+    e = (a - mean) / top
+    w = _ordered_sum(e * e)
     return s1, w
 
 
@@ -9465,9 +9464,7 @@ def _clark_evans_parts(distances: ArrayLike, density: float) -> tuple[float, int
     top = float(np.max(a))
     if top == 0:
         return 0.0, a.size
-    s1 = 0.0
-    for v in a:
-        s1 += float(v) / top
+    s1 = _ordered_sum(a / top)
     r = (top * (s1 / a.size)) * (2.0 * math.sqrt(rho))
     if not math.isfinite(r):
         raise ValueError("the index overflows")
@@ -9512,14 +9509,10 @@ def hopkins_statistic(point_distances: ArrayLike, individual_distances: ArrayLik
     u = _hopkins_sample(point_distances, "point_distances")
     w = _hopkins_sample(individual_distances, "individual_distances")
     top = max(float(np.max(u)), float(np.max(w)))
-    a = 0.0
-    for v in u:
-        q = float(v) / top
-        a += q * q
-    b = 0.0
-    for v in w:
-        q = float(v) / top
-        b += q * q
+    q = u / top
+    a = _ordered_sum(q * q)
+    q = w / top
+    b = _ordered_sum(q * q)
     return min(max(a / (a + b), 0.0), 1.0)
 
 
@@ -9544,10 +9537,8 @@ def pielou_nonrandomness(point_distances: ArrayLike, density: float) -> float:
     top = float(np.max(a))
     if top == 0:
         return 0.0
-    s2 = 0.0
-    for v in a:
-        u = float(v) / top
-        s2 += u * u
+    u = a / top
+    s2 = _ordered_sum(u * u)
     p = (top * math.sqrt(s2 / a.size)) * (math.sqrt(math.pi) * math.sqrt(rho))
     r = p * p
     if not math.isfinite(r):
@@ -9570,12 +9561,9 @@ def eberhardt_index(point_distances: ArrayLike) -> float:
     if not np.any(a > 0):
         raise ValueError("point_distances must have a value above 0")
     top = float(np.max(a))
-    s1 = 0.0
-    s2 = 0.0
-    for v in a:
-        u = float(v) / top
-        s1 += u
-        s2 += u * u
+    u = a / top
+    s2 = _ordered_sum(u * u)
+    s1 = _ordered_sum(u)
     n = a.size
     return min(max(n * s2 / (s1 * s1), 1.0), float(n))
 

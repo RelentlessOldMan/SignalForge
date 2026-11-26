@@ -6,8 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-   - Python loops element by element in these 14 (about 1 s per 5e5 values); vectorize while
-     keeping the summation order the vectors need, or record why not.
+   - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
+     Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
+     and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
+     one in `dsp` still loop per value. Move them to `_ordered_sum` (ADR 0623) in batches,
+     comparing results bit for bit with the old code.
    - Eberhardt's index (ADR 0620): the form in Eberhardt (1967) and Hines and Hines (1979) is
      unconfirmed (`n` against `n − 1` variance). Read either paper if it becomes available.
 2. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
@@ -4252,6 +4255,16 @@ Updated with every chunk of work. Dates are absolute.
   SignalForge's own values or already-checked dtypes. Python only.
   Python 12504 passed, 2 skipped; .NET 10729 passed; conformance 7950/7950 in both. Version
   2026.11.26.12.
+
+- 2026-11-26: review fix, in-order sums without a Python loop
+  ([ADR 0623](adr/0623-ordered-sums-without-loops.md)). The Python functions of ADRs
+  0607–0620 summed one value per loop pass to match C#'s rounding. They now use
+  `_ordered_sum`, NumPy's in-order cumulative sum, which gives the same bits. Results are
+  unchanged, compared bit for bit on 60 random inputs; on 5e5 values, the functions are
+  about 10 to 14 times faster. New `tests/test_ordered_sums.py` traces the Python lines each
+  function runs: 13 of the 14 grew with the input before the change. Python only.
+  Python 12520 passed, 2 skipped; .NET 10729 passed; conformance 7950/7950 in both. Version
+  2026.11.26.13.
 
 ## Not built
 
