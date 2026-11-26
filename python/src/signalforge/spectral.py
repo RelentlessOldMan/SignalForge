@@ -13,7 +13,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from . import _checks, units
-from ._checks import count, real
+from ._checks import count, real, real_values
 
 _COSINE_SUMS: dict[str, tuple[float, ...]] = {
     "rectangular": (1.0,),
@@ -2291,7 +2291,7 @@ def real_cepstrum(samples: ArrayLike, nfft: int | None = None) -> NDArray[np.flo
     x = np.asarray(samples)
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if x.ndim != 1 or x.shape[0] == 0:
         raise ValueError("samples must be a non-empty one-dimensional array")
     if not np.all(np.isfinite(x)):
@@ -2366,7 +2366,7 @@ def _dct_input(values: ArrayLike, what: str) -> NDArray[np.float64]:
     x = np.asarray(values)
     if np.iscomplexobj(x):
         raise ValueError(f"{what} must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, what)
     if x.ndim != 1 or x.shape[0] == 0:
         raise ValueError(f"{what} must be a non-empty one-dimensional array")
     if not np.all(np.isfinite(x)):

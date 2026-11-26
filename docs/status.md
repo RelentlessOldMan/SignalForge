@@ -6,10 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-   - Python: ints too big for a double raise `OverflowError`, and object arrays holding a
-     complex raise `TypeError`, at `astype(np.float64)`; strings, bools, datetime64 and
-     timedelta64 arrays are taken as numbers. Probably library-wide: find the shared array
-     check first.
+      - Python: `real_values` (ADR 0621) checks arrays in `measurements` and `spectral` only.
+     The other 17 `astype(np.float64)` sites (`channel`, `core`, `dsp`, `files`,
+     `modulation`, `waveforms`, and 13 in `measurements` and `spectral` outside the
+     complex-check pattern) still take bools, strings and dates. Check each one, since a
+     file reader's dtype may already be fixed.
    - Python loops element by element in these 14 (about 1 s per 5e5 values); vectorize while
      keeping the summation order the vectors need, or record why not.
    - `clark_evans_z` converts its input twice.
@@ -4216,6 +4217,15 @@ Updated with every chunk of work. Dates are absolute.
   failed on these six first).
   Python 12230 passed, 2 skipped; .NET 10728 passed; conformance 7949/7949 in both. Version
   2026.11.26.7.
+
+- 2026-11-26: review fix, Python arrays of real numbers ([ADR 0621](adr/0621-real-array-arguments.md)).
+  NumPy's `astype(np.float64)` took bools, digit strings, bytes, dates and time spans as numbers.
+  It raised `OverflowError` for huge ints and `TypeError` for object complex values. A shared
+  `_checks.real_values` now refuses all of these with `ValueError`, at the 296 array
+  conversions in `measurements` and `spectral`. New `tests/test_real_arrays.py`: 71 of its
+  72 bad cases failed before the change. Python only; C# takes `double` spans.
+  Python 12312 passed, 2 skipped; .NET 10728 passed; conformance 7949/7949 in both. Version
+  2026.11.26.8.
 
 ## Not built
 

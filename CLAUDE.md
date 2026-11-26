@@ -106,7 +106,7 @@ configs in `vectors/links/` in both languages.
 
 Measured 2026-11-13:
 
-- Python `pytest` (12232 tests): about 31–326 s.
+- Python `pytest` (12314 tests): about 31–326 s.
 - .NET `dotnet test` (incremental build + 10728 tests): about 6 s.
 - `vectors/generators/fir.py`: about 3 s; `resample.py`: well under 1 s; `equiripple.py`: about 1 s; `fsk.py`: about 0.5 s.
 - `build.ps1 -Jobs 1` (everything, incremental): about 20 s before the cross-language steps were

@@ -10,7 +10,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from . import dsp, spectral, units
-from ._checks import count, real
+from ._checks import count, real, real_values
 
 
 @dataclass(frozen=True)
@@ -287,7 +287,7 @@ def zero_crossing_rate(samples: ArrayLike) -> float:
     x = np.asarray(samples)
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if x.ndim != 1 or x.shape[0] < 2:
         raise ValueError("samples must be a one-dimensional array of at least two samples")
     if not np.all(np.isfinite(x)):
@@ -309,7 +309,7 @@ def allan_deviation(
         raise ValueError("fractional_frequency must be a one-dimensional array of at least 2")
     if np.iscomplexobj(y):
         raise ValueError("fractional_frequency must be real")
-    y = y.astype(np.float64, copy=False)
+    y = real_values(y, "fractional_frequency")
     if not np.all(np.isfinite(y)):
         raise ValueError("fractional_frequency must be finite")
     factors = [count(m, "averaging_factors") for m in averaging_factors]
@@ -341,7 +341,7 @@ def modified_allan_deviation(
         raise ValueError("fractional_frequency must be a one-dimensional array of at least 2")
     if np.iscomplexobj(y):
         raise ValueError("fractional_frequency must be real")
-    y = y.astype(np.float64, copy=False)
+    y = real_values(y, "fractional_frequency")
     if not np.all(np.isfinite(y)):
         raise ValueError("fractional_frequency must be finite")
     factors = [count(m, "averaging_factors") for m in averaging_factors]
@@ -375,7 +375,7 @@ def hadamard_deviation(
         raise ValueError("fractional_frequency must be a one-dimensional array of at least 3")
     if np.iscomplexobj(y):
         raise ValueError("fractional_frequency must be real")
-    y = y.astype(np.float64, copy=False)
+    y = real_values(y, "fractional_frequency")
     if not np.all(np.isfinite(y)):
         raise ValueError("fractional_frequency must be finite")
     factors = [count(m, "averaging_factors") for m in averaging_factors]
@@ -403,7 +403,7 @@ def higuchi_dimension(samples: ArrayLike, k_max: int) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     size = x.shape[0]
@@ -444,7 +444,7 @@ def detrended_fluctuation(samples: ArrayLike, scales: Sequence[int]) -> Detrende
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     sizes = [count(s, "scales") for s in scales]
@@ -488,7 +488,7 @@ def approximate_entropy(samples: ArrayLike, m: int, r: float) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     if x.shape[0] < k + 2:
@@ -511,7 +511,7 @@ def _at_least_three_real(samples: ArrayLike) -> NDArray[np.float64]:
         raise ValueError("samples must be a one-dimensional array of at least 3")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     return x
@@ -584,7 +584,7 @@ def mtie(time_error: ArrayLike, sample_interval: float, window_sizes: Sequence[i
         raise ValueError("time_error must be a one-dimensional array of at least 2")
     if np.iscomplexobj(x):
         raise ValueError("time_error must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "time_error")
     if not np.all(np.isfinite(x)):
         raise ValueError("time_error must be finite")
     sizes = [count(n, "window_sizes") for n in window_sizes]
@@ -610,7 +610,7 @@ def multiscale_entropy(
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     k = count(m, "m")
@@ -644,7 +644,7 @@ def fuzzy_entropy(samples: ArrayLike, m: int, r: float, n: float = 2) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     starts = x.shape[0] - k
@@ -675,7 +675,7 @@ def rescaled_range(samples: ArrayLike, scales: Sequence[int]) -> RescaledRange:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     sizes = [count(s, "scales") for s in scales]
@@ -719,7 +719,7 @@ def dispersion_entropy(samples: ArrayLike, m: int, classes: int, delay: int = 1)
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     windows = x.shape[0] - (k - 1) * tau
@@ -752,7 +752,7 @@ def svd_entropy(samples: ArrayLike, order: int, delay: int = 1) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     rows = x.shape[0] - (m - 1) * tau
@@ -781,7 +781,7 @@ def weighted_permutation_entropy(samples: ArrayLike, order: int, delay: int = 1)
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     windows = x.shape[0] - (m - 1) * tau
@@ -814,7 +814,7 @@ def increment_entropy(samples: ArrayLike, m: int, levels: int) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     words = x.shape[0] - k
@@ -843,7 +843,7 @@ def bubble_entropy(samples: ArrayLike, m: int) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     if x.shape[0] < k + 1:
@@ -869,7 +869,7 @@ def attention_entropy(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     mid, left, right = x[1:-1], x[:-2], x[2:]
@@ -908,7 +908,7 @@ def slope_entropy(samples: ArrayLike, m: int, gamma: float = 1.0, delta: float =
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     windows = x.shape[0] - k + 1
@@ -941,7 +941,7 @@ def distribution_entropy(samples: ArrayLike, m: int, bins: int = 512) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     windows = x.shape[0] - k + 1
@@ -976,13 +976,13 @@ def correlation_sum(
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     r = np.asarray(radii)
     if r.ndim != 1 or np.iscomplexobj(r):
         raise ValueError("radii must be real and one-dimensional")
-    r = r.astype(np.float64, copy=False)
+    r = real_values(r, "radii")
     if r.shape[0] < 2:
         raise ValueError("radii must have at least two entries")
     if not (np.all(np.isfinite(r)) and r[0] > 0 and np.all(np.diff(r) > 0)):
@@ -1029,7 +1029,7 @@ def recurrence_quantification(
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     windows = x.shape[0] - (k - 1) * tau
@@ -1065,7 +1065,7 @@ def fisher_information(samples: ArrayLike, order: int, delay: int = 1) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     rows = x.shape[0] - (m - 1) * tau
@@ -1095,7 +1095,7 @@ def auto_mutual_information(
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     taus = [count(t, "lags") for t in lags]
@@ -1134,7 +1134,7 @@ def renyi_entropy(samples: ArrayLike, alpha: float, bins: int = 16) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     lo, hi = float(np.min(x)), float(np.max(x))
@@ -1169,7 +1169,7 @@ def largest_lyapunov(
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     windows = x.shape[0] - (k - 1) * tau
@@ -1205,7 +1205,7 @@ def aggregated_variance(samples: ArrayLike, sizes: Sequence[int]) -> AggregatedV
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     s = [count(v, "sizes") for v in sizes]
@@ -1243,7 +1243,7 @@ def tsallis_entropy(samples: ArrayLike, q: float, bins: int = 16) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     lo, hi = float(np.min(x)), float(np.max(x))
@@ -1267,7 +1267,7 @@ def time_irreversibility(samples: ArrayLike, lag: int = 1) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     if not 1 <= tau <= x.shape[0] - 1:
@@ -1295,7 +1295,7 @@ def cosine_similarity_entropy(samples: ArrayLike, m: int, r: float, delay: int =
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     w = x.shape[0] - (dim - 1) * tau
@@ -1322,7 +1322,7 @@ def ljung_box(samples: ArrayLike, lags: int) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -1348,7 +1348,7 @@ def turning_points(samples: ArrayLike) -> TurningPoints:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -1369,7 +1369,7 @@ def runs_test(samples: ArrayLike) -> RunsTest:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     if x.shape[0] == 0:
@@ -1395,7 +1395,7 @@ def von_neumann_ratio(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     if x.shape[0] < 2:
@@ -1416,7 +1416,7 @@ def bartels_rank_test(samples: ArrayLike) -> BartelsRankTest:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -1443,7 +1443,7 @@ def mann_kendall(samples: ArrayLike) -> MannKendall:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -1469,7 +1469,7 @@ def sens_slope(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -1492,7 +1492,7 @@ def pettitt(samples: ArrayLike) -> Pettitt:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -1517,7 +1517,7 @@ def buishand_range(samples: ArrayLike) -> BuishandRange:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -1544,7 +1544,7 @@ def snht(samples: ArrayLike) -> Snht:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -1578,7 +1578,7 @@ def spearman_correlation(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1606,7 +1606,7 @@ def kendall_tau(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1638,7 +1638,7 @@ def pearson_correlation(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1672,7 +1672,7 @@ def distance_correlation(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1716,7 +1716,7 @@ def biweight_midcorrelation(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1741,7 +1741,7 @@ def hoeffding_d(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1776,7 +1776,7 @@ def blomqvist_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1810,7 +1810,7 @@ def chatterjee_xi(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1841,7 +1841,7 @@ def goodman_kruskal_gamma(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1870,7 +1870,7 @@ def somers_d(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
@@ -1901,7 +1901,7 @@ def kendall_w(ratings: ArrayLike) -> float:
     if np.iscomplexobj(a):
         raise ValueError("ratings must be real")
     try:
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, "ratings")
     except (TypeError, ValueError):
         raise ValueError("ratings must be real numbers") from None
     if not np.all(np.isfinite(a)):
@@ -1933,7 +1933,7 @@ def cronbach_alpha(scores: ArrayLike) -> float:
     if np.iscomplexobj(a):
         raise ValueError("scores must be real")
     try:
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, "scores")
     except (TypeError, ValueError):
         raise ValueError("scores must be real numbers") from None
     if not np.all(np.isfinite(a)):
@@ -1959,7 +1959,7 @@ def icc_consistency(ratings: ArrayLike) -> float:
     if np.iscomplexobj(a):
         raise ValueError("ratings must be real")
     try:
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, "ratings")
     except (TypeError, ValueError):
         raise ValueError("ratings must be real numbers") from None
     if not np.all(np.isfinite(a)):
@@ -1990,7 +1990,7 @@ def fleiss_kappa(counts: ArrayLike) -> float:
     if np.iscomplexobj(a):
         raise ValueError("counts must be real")
     try:
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, "counts")
     except (TypeError, ValueError):
         raise ValueError("counts must be real numbers") from None
     if not np.all(np.isfinite(a)):
@@ -2026,7 +2026,7 @@ def cohen_kappa(a: ArrayLike, b: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all(np.isfinite(r)):
             raise ValueError(f"{name} must be finite")
         pair.append(r)
@@ -2056,7 +2056,7 @@ def scott_pi(a: ArrayLike, b: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all(np.isfinite(r)):
             raise ValueError(f"{name} must be finite")
         pair.append(r)
@@ -2084,7 +2084,7 @@ def matthews_correlation(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -2114,7 +2114,7 @@ def f1_score(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -2140,7 +2140,7 @@ def youden_j(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -2168,7 +2168,7 @@ def jaccard_index(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -2195,7 +2195,7 @@ def fowlkes_mallows_index(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -2222,7 +2222,7 @@ def diagnostic_odds_ratio(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -2251,8 +2251,8 @@ def brier_score(outcome: ArrayLike, probability: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-    y = y.astype(np.float64, copy=False)
-    p = p.astype(np.float64, copy=False)
+    y = real_values(y, "outcome")
+    p = real_values(p, "probability")
     if y.size != p.size:
         raise ValueError("outcome and probability must be the same length")
     if y.size < 1:
@@ -2278,8 +2278,8 @@ def log_loss(outcome: ArrayLike, probability: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-    y = y.astype(np.float64, copy=False)
-    p = p.astype(np.float64, copy=False)
+    y = real_values(y, "outcome")
+    p = real_values(p, "probability")
     if y.size != p.size:
         raise ValueError("outcome and probability must be the same length")
     if y.size < 1:
@@ -2308,8 +2308,8 @@ def roc_auc(truth: ArrayLike, score: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-    t = t.astype(np.float64, copy=False)
-    s = s.astype(np.float64, copy=False)
+    t = real_values(t, "truth")
+    s = real_values(s, "score")
     if t.size != s.size:
         raise ValueError("truth and score must be the same length")
     if not np.all((t == 0) | (t == 1)):
@@ -2336,8 +2336,8 @@ def average_precision(truth: ArrayLike, score: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-    t = t.astype(np.float64, copy=False)
-    s = s.astype(np.float64, copy=False)
+    t = real_values(t, "truth")
+    s = real_values(s, "score")
     if t.size != s.size:
         raise ValueError("truth and score must be the same length")
     if not np.all((t == 0) | (t == 1)):
@@ -2378,7 +2378,7 @@ def markedness(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -2407,7 +2407,7 @@ def balanced_accuracy(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -2435,7 +2435,7 @@ def cohen_d(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 2:
             raise ValueError(f"{name} must hold at least 2 values")
         if not np.all(np.isfinite(a)):
@@ -2478,7 +2478,7 @@ def glass_delta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < least:
             raise ValueError(f"{name} must hold at least {least} values")
         if not np.all(np.isfinite(a)):
@@ -2510,7 +2510,7 @@ def cliff_delta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -2532,7 +2532,7 @@ def vargha_delaney_a(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -2557,7 +2557,7 @@ def kolmogorov_smirnov(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -2582,7 +2582,7 @@ def wasserstein_distance(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -2611,7 +2611,7 @@ def energy_distance(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -2641,7 +2641,7 @@ def cramer_von_mises(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -2669,7 +2669,7 @@ def hodges_lehmann(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -2693,7 +2693,7 @@ def kl_divergence(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -2729,7 +2729,7 @@ def js_divergence(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -2767,7 +2767,7 @@ def hellinger_distance(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -2800,7 +2800,7 @@ def bhattacharyya_distance(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -2834,7 +2834,7 @@ def total_variation_distance(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -2865,7 +2865,7 @@ def chi_square_divergence(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -2905,7 +2905,7 @@ def renyi_divergence(p: ArrayLike, q: ArrayLike, alpha: float) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -2946,7 +2946,7 @@ def jeffreys_divergence(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -2982,7 +2982,7 @@ def cross_entropy(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -3018,7 +3018,7 @@ def triangular_discrimination(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -3054,7 +3054,7 @@ def canberra_distance(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -3082,7 +3082,7 @@ def bray_curtis(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -3115,7 +3115,7 @@ def minkowski_distance(x: ArrayLike, y: ArrayLike, order: float) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -3151,7 +3151,7 @@ def chebyshev_distance(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -3180,7 +3180,7 @@ def hamming_distance(x: ArrayLike, y: ArrayLike) -> int:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)):
@@ -3203,7 +3203,7 @@ def overlap_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3236,7 +3236,7 @@ def tversky_index(truth: ArrayLike, decision: ArrayLike, alpha: float, beta: flo
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3265,7 +3265,7 @@ def simple_matching_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3288,7 +3288,7 @@ def rogers_tanimoto_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3312,7 +3312,7 @@ def russell_rao_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3335,7 +3335,7 @@ def sokal_sneath_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3362,7 +3362,7 @@ def kulczynski_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3390,7 +3390,7 @@ def ochiai_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3417,7 +3417,7 @@ def yule_q(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3447,7 +3447,7 @@ def yule_y(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3479,7 +3479,7 @@ def hamann_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3504,7 +3504,7 @@ def baroni_urbani_buser_coefficient(truth: ArrayLike, decision: ArrayLike) -> fl
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3535,7 +3535,7 @@ def sorgenfrei_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3563,7 +3563,7 @@ def forbes_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3591,7 +3591,7 @@ def mcconnaughey_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3618,7 +3618,7 @@ def dennis_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3649,7 +3649,7 @@ def fager_mcgowan_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3677,7 +3677,7 @@ def gilbert_skill_score(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3707,7 +3707,7 @@ def braun_blanquet_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3734,7 +3734,7 @@ def loevinger_h(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3766,7 +3766,7 @@ def michael_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3794,7 +3794,7 @@ def pearson_heron_ii(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3826,7 +3826,7 @@ def digby_h(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3861,7 +3861,7 @@ def cole_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3896,7 +3896,7 @@ def anderberg_d(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3927,7 +3927,7 @@ def goodman_kruskal_lambda(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3960,7 +3960,7 @@ def austin_colwell_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -3987,7 +3987,7 @@ def fossum_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4015,7 +4015,7 @@ def eyraud_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4045,7 +4045,7 @@ def stiles_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4079,7 +4079,7 @@ def mountford_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4108,7 +4108,7 @@ def tarwid_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4138,7 +4138,7 @@ def hawkins_dotson_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4169,7 +4169,7 @@ def gower_legendre_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4197,7 +4197,7 @@ def faith_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4224,7 +4224,7 @@ def consonni_todeschini_coefficient(truth: ArrayLike, decision: ArrayLike) -> fl
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4251,7 +4251,7 @@ def maxwell_pilliner_coefficient(truth: ArrayLike, decision: ArrayLike) -> float
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4282,7 +4282,7 @@ def sokal_sneath_iv(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4318,7 +4318,7 @@ def sokal_sneath_v(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4349,7 +4349,7 @@ def sokal_sneath_iii(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4378,7 +4378,7 @@ def kulczynski_i(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4406,7 +4406,7 @@ def gilbert_wells_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4434,7 +4434,7 @@ def binary_mutual_information(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4467,7 +4467,7 @@ def benini_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4497,7 +4497,7 @@ def doolittle_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4529,7 +4529,7 @@ def rogot_goldberg_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4558,7 +4558,7 @@ def baroni_urbani_buser_ii(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4588,7 +4588,7 @@ def gower_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4619,7 +4619,7 @@ def johnson_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4646,7 +4646,7 @@ def dispersion_coefficient(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4673,7 +4673,7 @@ def size_difference(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4699,7 +4699,7 @@ def shape_difference(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4725,7 +4725,7 @@ def pattern_difference(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4751,7 +4751,7 @@ def variance_dissimilarity(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4776,7 +4776,7 @@ def lance_williams_distance(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4804,7 +4804,7 @@ def chord_distance(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4833,7 +4833,7 @@ def binary_chi_square(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4864,7 +4864,7 @@ def mcnemar_statistic(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4891,7 +4891,7 @@ def log_odds_ratio(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4920,7 +4920,7 @@ def binary_g_statistic(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4953,7 +4953,7 @@ def positive_likelihood_ratio(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -4984,7 +4984,7 @@ def negative_likelihood_ratio(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5015,7 +5015,7 @@ def relative_risk(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5046,7 +5046,7 @@ def attributable_fraction(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5077,7 +5077,7 @@ def population_attributable_fraction(truth: ArrayLike, decision: ArrayLike) -> f
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5109,7 +5109,7 @@ def prevalence_threshold(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5142,7 +5142,7 @@ def frequency_bias(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5170,7 +5170,7 @@ def extreme_dependency_score(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5200,7 +5200,7 @@ def extremal_dependence_index(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5238,7 +5238,7 @@ def symmetric_extremal_dependence_index(truth: ArrayLike, decision: ArrayLike) -
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5273,7 +5273,7 @@ def tetrachoric_approximation(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5302,7 +5302,7 @@ def log_odds_ratio_standard_error(truth: ArrayLike, decision: ArrayLike) -> floa
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5332,7 +5332,7 @@ def haldane_log_odds_ratio(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5360,7 +5360,7 @@ def yule_q_standard_error(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5392,7 +5392,7 @@ def yule_y_standard_error(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5424,7 +5424,7 @@ def haldane_log_odds_ratio_standard_error(truth: ArrayLike, decision: ArrayLike)
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5452,7 +5452,7 @@ def log_odds_ratio_wald_z(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5483,7 +5483,7 @@ def log_relative_risk_standard_error(truth: ArrayLike, decision: ArrayLike) -> f
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5513,7 +5513,7 @@ def log_relative_risk_wald_z(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5546,7 +5546,7 @@ def risk_difference(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5575,7 +5575,7 @@ def risk_difference_standard_error(truth: ArrayLike, decision: ArrayLike) -> flo
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5605,7 +5605,7 @@ def risk_difference_wald_z(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5638,7 +5638,7 @@ def number_needed_to_treat(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5670,7 +5670,7 @@ def relative_risk_reduction(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5701,7 +5701,7 @@ def cohen_h(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5732,7 +5732,7 @@ def cohen_h_standard_error(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5761,7 +5761,7 @@ def cohen_h_wald_z(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5792,7 +5792,7 @@ def log_relative_risk(truth: ArrayLike, decision: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(r):
             raise ValueError(f"{name} must be real")
-        r = r.astype(np.float64, copy=False)
+        r = real_values(r, name)
         if not np.all((r == 0) | (r == 1)):
             raise ValueError(f"{name} must hold only 0 and 1")
         pair.append(r == 1)
@@ -5819,7 +5819,7 @@ def gini_coefficient(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -5844,7 +5844,7 @@ def theil_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -5869,7 +5869,7 @@ def hoover_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -5893,7 +5893,7 @@ def coefficient_of_variation(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -5914,7 +5914,7 @@ def mean_log_deviation(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -5938,7 +5938,7 @@ def atkinson_index(samples: ArrayLike, epsilon: float) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -5963,7 +5963,7 @@ def generalized_entropy_index(samples: ArrayLike, alpha: float) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -5988,7 +5988,7 @@ def lorenz_curve(samples: ArrayLike) -> NDArray[np.float64]:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
@@ -6015,7 +6015,7 @@ def palma_ratio(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6044,7 +6044,7 @@ def quintile_share_ratio(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6073,7 +6073,7 @@ def bonferroni_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6100,7 +6100,7 @@ def zenga_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6129,7 +6129,7 @@ def wolfson_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6164,7 +6164,7 @@ def herfindahl_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6194,7 +6194,7 @@ def concentration_ratio(samples: ArrayLike, k: int) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6226,7 +6226,7 @@ def hall_tideman_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6256,7 +6256,7 @@ def kwoka_dominance_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6287,7 +6287,7 @@ def hannah_kay_index(samples: ArrayLike, alpha: float) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6325,7 +6325,7 @@ def pielou_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6356,7 +6356,7 @@ def simpson_diversity(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6385,7 +6385,7 @@ def berger_parker_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6411,7 +6411,7 @@ def heip_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6441,7 +6441,7 @@ def simpson_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6471,7 +6471,7 @@ def camargo_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6502,7 +6502,7 @@ def smith_wilson_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6531,7 +6531,7 @@ def bulla_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6561,7 +6561,7 @@ def hill_ratio_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6594,7 +6594,7 @@ def alatalo_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6631,7 +6631,7 @@ def sheldon_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6662,7 +6662,7 @@ def mcintosh_dominance(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6691,7 +6691,7 @@ def mcintosh_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6719,7 +6719,7 @@ def menhinick_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6749,7 +6749,7 @@ def margalef_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6779,7 +6779,7 @@ def gleason_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6808,7 +6808,7 @@ def goods_coverage(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6838,7 +6838,7 @@ def chao1_richness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6874,7 +6874,7 @@ def brillouin_index(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6911,7 +6911,7 @@ def brillouin_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6958,7 +6958,7 @@ def hurlbert_pie(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -6988,7 +6988,7 @@ def strong_dominance(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7021,7 +7021,7 @@ def fisher_alpha(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7076,7 +7076,7 @@ def ace_richness(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7129,7 +7129,7 @@ def rarefied_richness(samples: ArrayLike, size: int) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7170,7 +7170,7 @@ def chao_jost_coverage(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7212,7 +7212,7 @@ def chao_shen_entropy(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7254,7 +7254,7 @@ def miller_madow_entropy(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7291,7 +7291,7 @@ def hutcheson_variance(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7328,7 +7328,7 @@ def _hutcheson_parts(samples: ArrayLike, name: str) -> tuple[float, float]:
         raise ValueError(f"{name} must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError(f"{name} must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, name)
     if not np.all(np.isfinite(x)):
         raise ValueError(f"{name} must be finite")
     if int(x.shape[0]) < 1:
@@ -7379,7 +7379,7 @@ def jackknife_entropy(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7424,7 +7424,7 @@ def grassberger_entropy(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7461,7 +7461,7 @@ def bonachela_entropy(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7502,7 +7502,7 @@ def zhang_entropy(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7547,7 +7547,7 @@ def chao_wang_jost_entropy(samples: ArrayLike) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7626,7 +7626,7 @@ def hill_number(samples: ArrayLike, order: float) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7681,7 +7681,7 @@ def patil_taillie_diversity(samples: ArrayLike, beta: float) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7718,7 +7718,7 @@ def renyi_diversity(samples: ArrayLike, order: float) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7775,7 +7775,7 @@ def tsallis_diversity(samples: ArrayLike, order: float) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = int(x.shape[0])
@@ -7837,7 +7837,7 @@ def pianka_overlap(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -7870,7 +7870,7 @@ def czekanowski_similarity(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -7903,7 +7903,7 @@ def morisita_horn_overlap(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -7941,7 +7941,7 @@ def horn_overlap(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -7983,7 +7983,7 @@ def whittaker_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8016,7 +8016,7 @@ def simpson_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8053,7 +8053,7 @@ def nestedness_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8091,7 +8091,7 @@ def jaccard_turnover(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8128,7 +8128,7 @@ def jaccard_nestedness(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8166,7 +8166,7 @@ def ruzicka_similarity(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8199,7 +8199,7 @@ def morisita_overlap(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8246,7 +8246,7 @@ def bray_curtis_balanced(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8283,7 +8283,7 @@ def bray_curtis_gradient(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8321,7 +8321,7 @@ def podani_replacement(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8359,7 +8359,7 @@ def podani_richness_difference(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8395,7 +8395,7 @@ def ruzicka_replacement(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8430,7 +8430,7 @@ def ruzicka_richness_difference(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8465,7 +8465,7 @@ def podani_nestedness(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8503,7 +8503,7 @@ def harrison_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8539,7 +8539,7 @@ def cody_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8574,7 +8574,7 @@ def wilson_shmida_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8610,7 +8610,7 @@ def magurran_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8647,7 +8647,7 @@ def williams_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8683,7 +8683,7 @@ def lennon_gradient_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8720,7 +8720,7 @@ def routledge_information_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8760,7 +8760,7 @@ def routledge_exponential_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8800,7 +8800,7 @@ def routledge_overlap_beta(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8838,7 +8838,7 @@ def schoener_overlap(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8872,7 +8872,7 @@ def petraitis_overlap(x: ArrayLike, y: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8912,7 +8912,7 @@ def hurlbert_overlap(x: ArrayLike, y: ArrayLike, available: ArrayLike) -> float:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -8959,7 +8959,7 @@ def hurlbert_niche_breadth(
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9009,7 +9009,7 @@ def manly_alpha(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64]:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9054,7 +9054,7 @@ def ivlev_electivity(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64]:
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9095,7 +9095,7 @@ def jacobs_selectivity(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9151,7 +9151,7 @@ def savage_selection_ratio(x: ArrayLike, available: ArrayLike) -> NDArray[np.flo
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9194,7 +9194,7 @@ def strauss_selection(x: ArrayLike, available: ArrayLike) -> NDArray[np.float64]
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9230,7 +9230,7 @@ def johnson_rank_preference(x: ArrayLike, available: ArrayLike) -> NDArray[np.fl
             raise ValueError(f"{name} must be one-dimensional")
         if np.iscomplexobj(a):
             raise ValueError(f"{name} must be real")
-        a = a.astype(np.float64, copy=False)
+        a = real_values(a, name)
         if a.size < 1:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9269,7 +9269,7 @@ def lloyd_mean_crowding(counts: ArrayLike) -> float:
         raise ValueError("counts must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("counts must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "counts")
     if a.size < 1:
         raise ValueError("counts must not be empty")
     if not np.all(np.isfinite(a)) or np.any(a < 0) or np.any(a != np.floor(a)):
@@ -9290,7 +9290,7 @@ def lloyd_patchiness(counts: ArrayLike) -> float:
         raise ValueError("counts must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("counts must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "counts")
     if a.size < 1:
         raise ValueError("counts must not be empty")
     if not np.all(np.isfinite(a)) or np.any(a < 0) or np.any(a != np.floor(a)):
@@ -9327,7 +9327,7 @@ def green_index(counts: ArrayLike) -> float:
         raise ValueError("counts must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("counts must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "counts")
     if a.size < 2:
         raise ValueError("counts must have at least two units")
     if not np.all(np.isfinite(a)) or np.any(a < 0) or np.any(a != np.floor(a)):
@@ -9353,7 +9353,7 @@ def morisita_dispersion(counts: ArrayLike) -> float:
         raise ValueError("counts must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("counts must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "counts")
     if a.size < 2:
         raise ValueError("counts must have at least two units")
     if not np.all(np.isfinite(a)) or np.any(a < 0) or np.any(a != np.floor(a)):
@@ -9378,7 +9378,7 @@ def david_moore_clumping(counts: ArrayLike) -> float:
         raise ValueError("counts must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("counts must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "counts")
     if a.size < 2:
         raise ValueError("counts must have at least two units")
     if not np.all(np.isfinite(a)) or np.any(a < 0) or np.any(a != np.floor(a)):
@@ -9400,7 +9400,7 @@ def cassie_index(counts: ArrayLike) -> float:
         raise ValueError("counts must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("counts must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "counts")
     if a.size < 2:
         raise ValueError("counts must have at least two units")
     if not np.all(np.isfinite(a)) or np.any(a < 0) or np.any(a != np.floor(a)):
@@ -9423,7 +9423,7 @@ def fisher_dispersion(counts: ArrayLike) -> float:
         raise ValueError("counts must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("counts must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "counts")
     if a.size < 2:
         raise ValueError("counts must have at least two units")
     if not np.all(np.isfinite(a)) or np.any(a < 0) or np.any(a != np.floor(a)):
@@ -9449,7 +9449,7 @@ def clark_evans_ratio(distances: ArrayLike, density: float) -> float:
         raise ValueError("distances must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("distances must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "distances")
     if a.size < 1:
         raise ValueError("distances must not be empty")
     if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9488,7 +9488,7 @@ def _hopkins_sample(x: ArrayLike, name: str) -> NDArray[np.float64]:
         raise ValueError(f"{name} must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError(f"{name} must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, name)
     if a.size < 1:
         raise ValueError(f"{name} must not be empty")
     if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9527,7 +9527,7 @@ def pielou_nonrandomness(point_distances: ArrayLike, density: float) -> float:
         raise ValueError("point_distances must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("point_distances must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "point_distances")
     if a.size < 1:
         raise ValueError("point_distances must not be empty")
     if not np.all(np.isfinite(a)) or np.any(a < 0):
@@ -9558,7 +9558,7 @@ def eberhardt_index(point_distances: ArrayLike) -> float:
         raise ValueError("point_distances must be one-dimensional")
     if np.iscomplexobj(a):
         raise ValueError("point_distances must be real")
-    a = a.astype(np.float64, copy=False)
+    a = real_values(a, "point_distances")
     if not np.all(np.isfinite(a)) or np.any(a < 0):
         raise ValueError("point_distances must be finite and at least 0")
     if not np.any(a > 0):
@@ -9588,7 +9588,7 @@ def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     starts = x.shape[0] - k
@@ -9620,7 +9620,7 @@ def permutation_entropy(samples: ArrayLike, order: int, delay: int = 1) -> float
         raise ValueError("samples must be one-dimensional")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     windows = x.shape[0] - (m - 1) * tau
@@ -9642,7 +9642,7 @@ def hjorth_parameters(samples: ArrayLike) -> HjorthParameters:
         raise ValueError("samples must be a one-dimensional array of at least 3")
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     d = np.diff(x)
@@ -9685,7 +9685,7 @@ def autocorrelation_pitch(
     x = np.asarray(samples)
     if np.iscomplexobj(x):
         raise ValueError("samples must be real")
-    x = x.astype(np.float64, copy=False)
+    x = real_values(x, "samples")
     if x.ndim != 1 or x.shape[0] < 3:
         raise ValueError("samples must be a one-dimensional array of at least three samples")
     if not np.all(np.isfinite(x)):
