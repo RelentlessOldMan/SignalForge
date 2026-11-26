@@ -6,8 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-   - `lloyd_mean_crowding` and `lloyd_patchiness` subtract 1 (or 1/t) after the division:
-     relative error 4e-11 for `[1]*10**6 + [2]`; `morisita_dispersion` subtracts inside.
    - Six generators (`lloyd_patchiness`, `green_index`, `morisita_dispersion`,
      `david_moore_clumping`, `cassie_index`, `fisher_dispersion`) write suite
      `lloyd_mean_crowding` and name the wrong file in their docstrings.
@@ -19,8 +17,7 @@ Updated with every chunk of work. Dates are absolute.
      keeping the summation order the vectors need, or record why not.
    - `clark_evans_z` converts its input twice.
    - Docs: Eberhardt's index uses the variance over `n`; the published form may use `n − 1`
-     (check Eberhardt 1967 / Hines and Hines 1979 and say which in ADR 0620). Lloyd ADRs
-     0609–0610 should say they give the definition, not the `n − 1` estimator. The Python
+     (check Eberhardt 1967 / Hines and Hines 1979 and say which in ADR 0620). The Python
      `hopkins_statistic` docstring leaves out the argument rules. Hopkins refuses all-zero
      sample sets and Strauss refuses a zero availability where the value is defined: as
      documented, but say why.
@@ -4206,6 +4203,15 @@ Updated with every chunk of work. Dates are absolute.
   Python 12226 passed, 2 skipped; .NET 10725 passed; conformance 7946/7946 in both. Version
   2026.11.26.5.
 
+- 2026-11-26: review fix, `lloyd_mean_crowding`, `lloyd_patchiness` and
+  `morisita_dispersion` (ADRs 0609, 0610, 0612) subtracted after summing, so a small index from
+  many counts of 1 lost digits (4e-12 relative for 1000 ones and a 3). Both languages now sum
+  `(x/t)((x − 1)/t)` term by term (a shared `_count_pairs` / `CountPairs`); three new vectors,
+  held to relative accuracy, failed before. ADRs 0609 and 0610 now say they give Lloyd's
+  definition, not the `n − 1` estimator.
+  Python 12229 passed, 2 skipped; .NET 10728 passed; conformance 7949/7949 in both. Version
+  2026.11.26.6.
+
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
@@ -4217,6 +4223,10 @@ packaging and publishing.
 
 ## Lessons
 
+- 2026-11-26: Never subtract two sums that agree to most digits (`n s_2/s_1 − s_1`,
+  `s_2 − s_1/t`): subtract inside each term (deviations about the mean in a second pass,
+  `x − 1` before scaling), and hold small-valued vectors to relative accuracy, since an
+  absolute tolerance hides the loss.
 - 2026-11-26: Read scalar arguments with `real()` (or `count()`), never a bare `float()`:
   `float("4")` and `float(True)` succeed, and `float(None)` raises `TypeError`, not
   `ValueError`.

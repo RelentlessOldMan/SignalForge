@@ -800,7 +800,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.26.5"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.26.6"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",

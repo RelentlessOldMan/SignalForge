@@ -1549,13 +1549,14 @@ rule for code not written yet.
   the values sum to 0. Records as for Strauss' linear selection index. **(implemented)**
 - **Lloyd's mean crowding** ([ADR 0609](adr/0609-lloyd-mean-crowding.md);
   `lloyd_mean_crowding(counts)`, C# `Measurements.LloydMeanCrowding`): `Σ x_i (x_i − 1)/Σ x_i`
-  on counts of individuals in sampling units, formed as `t · Σ(x/t)²/Σ(x/t) − 1` with `t` the
-  largest count, held at 0 from below. Counts are whole numbers at least 0 with a total above
+  on counts of individuals in sampling units, formed as `t c/s_1` with `t` the
+  largest count, `s_1 = Σ x/t` and `c = Σ (x/t)((x − 1)/t)`, `x − 1` formed before scaling
+  so counts of 1 add exact zeros; held at 0 from below. Counts are whole numbers at least 0 with a total above
   0. **(implemented)**
 - **Lloyd's index of patchiness** ([ADR 0610](adr/0610-lloyd-patchiness.md);
   `lloyd_patchiness(counts)`, C# `Measurements.LloydPatchiness`): the mean crowding over the
-  mean count per unit, `m*/m`, formed as `(s_2/s_1 − 1/t) · n/s_1` with `t` the largest
-  count, `s_1 = Σ x/t` and `s_2 = Σ(x/t)²`, held at 0 from below. Counts as for Lloyd's mean
+  mean count per unit, `m*/m`, formed as `(c/s_1) · n/s_1` with `t`, `s_1` and `c` as for
+  Lloyd's mean crowding, held at 0 from below. Counts as for Lloyd's mean
   crowding. **(implemented)**
 - **Green's index of dispersion** ([ADR 0611](adr/0611-green-index.md);
   `green_index(counts)`, C# `Measurements.GreenIndex`): `(s²/m − 1)/(Σx − 1)` with `m` the
@@ -1567,8 +1568,8 @@ rule for code not written yet.
 - **Morisita's index of dispersion** ([ADR 0612](adr/0612-morisita-dispersion.md);
   `morisita_dispersion(counts)`, C# `Measurements.MorisitaDispersion`):
   `n Σ x_i (x_i − 1)/(Σx (Σx − 1))` on counts in `n` units, formed as
-  `n (s_2 − s_1/t)/(s_1 (s_1 − 1/t))` with `t` the largest count, `s_1 = Σ x/t` and
-  `s_2 = Σ(x/t)²`, held to [0, n]. Counts as for Green's index of dispersion.
+  `n c/(s_1 (s_1 − 1/t))` with `t`, `s_1` and `c` as for Lloyd's mean
+  crowding, held to [0, n]. Counts as for Green's index of dispersion.
   **(implemented)**
 - **David and Moore's index of clumping** ([ADR 0613](adr/0613-david-moore-clumping.md);
   `david_moore_clumping(counts)`, C# `Measurements.DavidMooreClumping`): `s²/m − 1` with `m`

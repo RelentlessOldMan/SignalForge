@@ -38,12 +38,21 @@ assert add("one_unit", [5.0], "mean crowding 4 over mean 5: 4/5") == Fr(4, 5)
 assert add("singles", [1.0, 1.0, 1.0, 0.0], "no two share a unit: 0") == 0
 assert add("clumped", [0.0, 0.0, 6.0], "mean crowding 5 over mean 2: 5/2") == Fr(5, 2)
 assert add("mixed", [1.0, 2.0, 3.0], "mean crowding 4/3 over mean 2: 2/3") == Fr(2, 3)
-assert add("uneven", [4.0, 0.0, 1.0, 0.0, 3.0], "mean crowding 9/4 over mean 8/5: 45/32") == Fr(
-    45, 32
-)
+assert add(
+    "uneven", [4.0, 0.0, 1.0, 0.0, 3.0], "mean crowding 9/4 over mean 8/5: 45/32"
+) == Fr(45, 32)
 assert add(
     "huge", [1e308, 1e308], "the sums would overflow: (t - 1)/t, 1 to double precision"
 ) == 1 - 1 / Fr(1e308)
+assert add(
+    "many_singles",
+    [1.0] * 1000 + [3.0],
+    "1000 ones and a 3: sum x(x - 1) 6, total 1003, n 1001: (6/1003)/(1003/1001)",
+) == Fr(6 * 1001, 1003**2)
+cases[-1]["tol"] = {
+    "abs": 0.0,
+    "rel": 1e-13,
+}  # a small value: hold it to relative accuracy
 rng = random.Random(610)
 counts = [float(rng.choice([0, 0, 1, 2, 3, 7])) for _ in range(30)]
 add("random", counts, "30 counts from random.Random(610).choice([0, 0, 1, 2, 3, 7])")
@@ -79,7 +88,9 @@ head = json.dumps({k: v for k, v in doc.items() if k != "cases"}, indent=2)[:-2]
 text = head + ',\n  "cases": [\n' + lines + "\n  ]\n}\n"
 if "--check" in sys.argv[1:]:
     if json.loads(out.read_text(encoding="utf-8")) != json.loads(text):
-        sys.exit(f"{out} is out of date: run python vectors/generators/lloyd_patchiness.py")
+        sys.exit(
+            f"{out} is out of date: run python vectors/generators/lloyd_patchiness.py"
+        )
     print(f"{out} is up to date")
     sys.exit(0)
 out.write_text(text, encoding="utf-8", newline="\n")

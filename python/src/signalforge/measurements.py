@@ -9247,6 +9247,19 @@ def johnson_rank_preference(x: ArrayLike, available: ArrayLike) -> NDArray[np.fl
     return t + 0.0
 
 
+def _count_pairs(a: np.ndarray, top: float) -> tuple[float, float]:
+    """The sum of the counts over ``top`` and the sum of ``x (x - 1)`` over ``top`` squared,
+    each in record order: ``x - 1`` is formed before scaling, so the many counts of 1 that
+    make the index small add exact zeros (conventions: Lloyd's mean crowding)."""
+    s1 = 0.0
+    c = 0.0
+    for v in a:
+        x = float(v)
+        s1 += x / top
+        c += (x / top) * ((x - 1.0) / top)
+    return s1, c
+
+
 def lloyd_mean_crowding(counts: ArrayLike) -> float:
     """Lloyd's mean crowding of ``counts`` of individuals in sampling units, whole numbers at
     least 0 with a total above 0: sum(x (x - 1))/sum(x), the mean number of others in an
@@ -9264,13 +9277,8 @@ def lloyd_mean_crowding(counts: ArrayLike) -> float:
     top = float(np.max(a))
     if not top > 0:
         raise ValueError("counts must have a total above 0")
-    s1 = 0.0
-    s2 = 0.0
-    for v in a:
-        u = float(v) / top
-        s1 += u
-        s2 += u * u
-    return max(top * (s2 / s1) - 1.0, 0.0)
+    s1, c = _count_pairs(a, top)
+    return max(top * (c / s1), 0.0)
 
 
 def lloyd_patchiness(counts: ArrayLike) -> float:
@@ -9290,13 +9298,8 @@ def lloyd_patchiness(counts: ArrayLike) -> float:
     top = float(np.max(a))
     if not top > 0:
         raise ValueError("counts must have a total above 0")
-    s1 = 0.0
-    s2 = 0.0
-    for v in a:
-        u = float(v) / top
-        s1 += u
-        s2 += u * u
-    return max((s2 / s1 - 1.0 / top) * (a.size / s1), 0.0)
+    s1, c = _count_pairs(a, top)
+    return max((c / s1) * (a.size / s1), 0.0)
 
 
 def _count_spread(a: np.ndarray, top: float) -> tuple[float, float]:
@@ -9358,16 +9361,11 @@ def morisita_dispersion(counts: ArrayLike) -> float:
     top = float(np.max(a))
     if not top > 0:
         raise ValueError("counts must have a total above 0")
-    s1 = 0.0
-    s2 = 0.0
-    for v in a:
-        u = float(v) / top
-        s1 += u
-        s2 += u * u
+    s1, c = _count_pairs(a, top)
     if not s1 * top > 1:
         raise ValueError("counts must have a total above 1")
     n = a.size
-    d = n * (s2 - s1 / top) / (s1 * (s1 - 1.0 / top))
+    d = n * c / (s1 * (s1 - 1.0 / top))
     return min(max(d, 0.0), float(n))
 
 

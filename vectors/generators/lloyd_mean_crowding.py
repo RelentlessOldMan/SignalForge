@@ -40,9 +40,22 @@ assert add("clumped", [0.0, 0.0, 6.0], "all six in one unit: 5") == 5
 assert add("mixed", [1.0, 2.0, 3.0], "(0 + 2 + 6)/6 = 4/3") == Fr(4, 3)
 assert add("uneven", [4.0, 0.0, 1.0, 0.0, 3.0], "(12 + 0 + 6)/8 = 9/4") == Fr(9, 4)
 assert (
-    add("huge", [1e308, 1e308], "the sums would overflow: 1e308 - 1, which rounds to 1e308")
+    add(
+        "huge",
+        [1e308, 1e308],
+        "the sums would overflow: 1e308 - 1, which rounds to 1e308",
+    )
     == Fr(1e308) - 1
 )
+assert add(
+    "many_singles",
+    [1.0] * 1000 + [3.0],
+    "1000 ones and a 3: sum x(x - 1) 6, total 1003, n 1001: 6/1003",
+) == Fr(6, 1003)
+cases[-1]["tol"] = {
+    "abs": 0.0,
+    "rel": 1e-13,
+}  # a small value: hold it to relative accuracy
 rng = random.Random(609)
 counts = [float(rng.choice([0, 0, 1, 2, 3, 7])) for _ in range(30)]
 add("random", counts, "30 counts from random.Random(609).choice([0, 0, 1, 2, 3, 7])")
@@ -77,7 +90,9 @@ head = json.dumps({k: v for k, v in doc.items() if k != "cases"}, indent=2)[:-2]
 text = head + ',\n  "cases": [\n' + lines + "\n  ]\n}\n"
 if "--check" in sys.argv[1:]:
     if json.loads(out.read_text(encoding="utf-8")) != json.loads(text):
-        sys.exit(f"{out} is out of date: run python vectors/generators/lloyd_mean_crowding.py")
+        sys.exit(
+            f"{out} is out of date: run python vectors/generators/lloyd_mean_crowding.py"
+        )
     print(f"{out} is up to date")
     sys.exit(0)
 out.write_text(text, encoding="utf-8", newline="\n")

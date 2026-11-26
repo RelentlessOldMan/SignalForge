@@ -23,13 +23,7 @@ public static partial class Measurements
         }
         if (!(top > 0))
             throw new ArgumentException("counts must have a total above 0", nameof(counts));
-        double s1 = 0, s2 = 0;
-        foreach (double v in counts)
-        {
-            double u = v / top;
-            s1 += u;
-            s2 += u * u;
-        }
-        return Math.Max((s2 / s1 - 1.0 / top) * (counts.Length / s1), 0.0);
+        (double s1, double c) = CountPairs(counts, top);
+        return Math.Max((c / s1) * (counts.Length / s1), 0.0);
     }
 }
