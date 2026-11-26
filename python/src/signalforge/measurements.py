@@ -9444,6 +9444,11 @@ def clark_evans_ratio(distances: ArrayLike, density: float) -> float:
     with ``density`` individuals per unit area: the mean distance over 1/(2 sqrt(density)),
     its mean for individuals placed at random; 1 at random, below 1 clumped (conventions: the
     Clark-Evans aggregation index; ADR 0616)."""
+    return _clark_evans_parts(distances, density)[0]
+
+
+def _clark_evans_parts(distances: ArrayLike, density: float) -> tuple[float, int]:
+    """The Clark-Evans index and the number of distances, converting ``distances`` once."""
     a = np.asarray(distances)
     if a.ndim != 1:
         raise ValueError("distances must be one-dimensional")
@@ -9459,14 +9464,14 @@ def clark_evans_ratio(distances: ArrayLike, density: float) -> float:
         raise ValueError("density must be finite and above 0")
     top = float(np.max(a))
     if top == 0:
-        return 0.0
+        return 0.0, a.size
     s1 = 0.0
     for v in a:
         s1 += float(v) / top
     r = (top * (s1 / a.size)) * (2.0 * math.sqrt(rho))
     if not math.isfinite(r):
         raise ValueError("the index overflows")
-    return r
+    return r, a.size
 
 
 def clark_evans_z(distances: ArrayLike, density: float) -> float:
@@ -9474,8 +9479,7 @@ def clark_evans_z(distances: ArrayLike, density: float) -> float:
     ``density`` individuals per unit area: (mean - 1/(2 sqrt(density)))/sigma, with sigma the
     standard error of the mean for individuals placed at random; about standard normal at
     random (conventions: the Clark-Evans test statistic; ADR 0617)."""
-    ratio = clark_evans_ratio(distances, density)
-    n = np.asarray(distances).size
+    ratio, n = _clark_evans_parts(distances, density)
     z = (ratio - 1.0) * math.sqrt(n * math.pi / (4.0 - math.pi))
     if not math.isfinite(z):
         raise ValueError("the statistic overflows")

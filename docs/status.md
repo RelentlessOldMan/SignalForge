@@ -13,7 +13,6 @@ Updated with every chunk of work. Dates are absolute.
      file reader's dtype may already be fixed.
    - Python loops element by element in these 14 (about 1 s per 5e5 values); vectorize while
      keeping the summation order the vectors need, or record why not.
-   - `clark_evans_z` converts its input twice.
    - Docs: Eberhardt's index uses the variance over `n`; the published form may use `n − 1`
      (check Eberhardt 1967 / Hines and Hines 1979 and say which in ADR 0620). The Python
      `hopkins_statistic` docstring leaves out the argument rules. Hopkins refuses all-zero
@@ -4226,6 +4225,13 @@ Updated with every chunk of work. Dates are absolute.
   72 bad cases failed before the change. Python only; C# takes `double` spans.
   Python 12312 passed, 2 skipped; .NET 10728 passed; conformance 7949/7949 in both. Version
   2026.11.26.8.
+
+- 2026-11-26: review fix, Python `clark_evans_z` (ADR 0617) converted `distances` twice, once
+  for the index and again for its length, which added 22% for a list of 2e5 values. A private
+  `_clark_evans_parts` now returns both from one conversion. New test: an array-like that
+  counts its conversions. C# reads the span length and was unaffected.
+  Python 12313 passed, 2 skipped; .NET 10728 passed; conformance 7949/7949 in both. Version
+  2026.11.26.9.
 
 ## Not built
 

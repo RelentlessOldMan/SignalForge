@@ -60,3 +60,21 @@ def test_special_cases() -> None:
 def test_rejects_bad_arguments(distances: list[float], density: float) -> None:
     with pytest.raises(ValueError):
         sf.clark_evans_z(distances, density)
+
+
+class _Counted:
+    """An array-like that counts its conversions."""
+
+    def __init__(self, values: list[float]) -> None:
+        self.values = values
+        self.calls = 0
+
+    def __array__(self, dtype: object = None, copy: object = None) -> np.ndarray:
+        self.calls += 1
+        return np.array(self.values, dtype=np.float64)
+
+
+def test_clark_evans_z_converts_once() -> None:
+    x = _Counted([1.0, 2.0, 0.5])
+    sf.clark_evans_z(x, 1.0)
+    assert x.calls == 1
