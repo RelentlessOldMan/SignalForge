@@ -23,17 +23,11 @@ public static partial class Measurements
         }
         if (!(top > 0))
             throw new ArgumentException("counts must have a total above 0", nameof(counts));
-        double s1 = 0, s2 = 0;
-        foreach (double v in counts)
-        {
-            double u = v / top;
-            s1 += u;
-            s2 += u * u;
-        }
+        (double s1, double w) = CountSpread(counts, top);
         if (!(s1 * top > 1))
             throw new ArgumentException("counts must have a total above 1", nameof(counts));
         int n = counts.Length;
-        double g = ((n * (s2 / s1) - s1) / (n - 1) - 1.0 / top) / (s1 - 1.0 / top);
+        double g = ((w * (n / s1)) / (n - 1) - 1.0 / top) / (s1 - 1.0 / top);
         return Math.Min(Math.Max(g, -1.0), 1.0);
     }
 }

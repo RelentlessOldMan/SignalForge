@@ -19,6 +19,11 @@ clumped counts and −1 when the counts are all equal.
   `s_2 = Σ(x_i/t)²` added in order, the value is `t (n s_2/s_1 − s_1)/(n − 1) − 1`: equal to
   the definition. As `s_2 ≤ s_1` and `s_1 ≥ 1`, the factor of `t` is at most 1, so nothing
   in it can overflow. It is held at −1 from below.
+- **Review fix (2026-11-26).** `n s_2/s_1 − s_1` is the same as `w n/s_1` with
+  `w = Σ((x_i − m̂)/t)²` about `m̂ = t (s_1/n)`, but it subtracts two sums that agree to
+  every digit when the mean is large next to the spread (`[1e9, 1e9 + 2]` gave −1, exact −0.999999998). The value is now
+  formed with `w`, added in a second pass; an error in `m̂` changes `w` only to second
+  order. The form above is otherwise unchanged.
 - **The rules.**
   - `counts` as for `lloyd_mean_crowding` (one-dimensional, real, finite, whole numbers at
     least 0, with a total above 0), with at least two units.

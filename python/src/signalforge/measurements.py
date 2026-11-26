@@ -9299,6 +9299,21 @@ def lloyd_patchiness(counts: ArrayLike) -> float:
     return max((s2 / s1 - 1.0 / top) * (a.size / s1), 0.0)
 
 
+def _count_spread(a: np.ndarray, top: float) -> tuple[float, float]:
+    """The sum of the counts over ``top`` and the sum of the squared deviations from their mean
+    over ``top``, each in record order: two passes, so a mean large next to the spread does
+    not cancel (conventions: Green's index)."""
+    s1 = 0.0
+    for v in a:
+        s1 += float(v) / top
+    mean = top * (s1 / a.size)
+    w = 0.0
+    for v in a:
+        e = (float(v) - mean) / top
+        w += e * e
+    return s1, w
+
+
 def green_index(counts: ArrayLike) -> float:
     """Green's index of dispersion of ``counts`` of individuals in at least two sampling
     units, whole numbers at least 0 with a total above 1: (s^2/m - 1)/(sum(x) - 1), about 0
@@ -9317,16 +9332,11 @@ def green_index(counts: ArrayLike) -> float:
     top = float(np.max(a))
     if not top > 0:
         raise ValueError("counts must have a total above 0")
-    s1 = 0.0
-    s2 = 0.0
-    for v in a:
-        u = float(v) / top
-        s1 += u
-        s2 += u * u
+    s1, w = _count_spread(a, top)
     if not s1 * top > 1:
         raise ValueError("counts must have a total above 1")
     n = a.size
-    g = ((n * (s2 / s1) - s1) / (n - 1) - 1.0 / top) / (s1 - 1.0 / top)
+    g = ((w * (n / s1)) / (n - 1) - 1.0 / top) / (s1 - 1.0 / top)
     return min(max(g, -1.0), 1.0)
 
 
@@ -9378,14 +9388,9 @@ def david_moore_clumping(counts: ArrayLike) -> float:
     top = float(np.max(a))
     if not top > 0:
         raise ValueError("counts must have a total above 0")
-    s1 = 0.0
-    s2 = 0.0
-    for v in a:
-        u = float(v) / top
-        s1 += u
-        s2 += u * u
+    s1, w = _count_spread(a, top)
     n = a.size
-    return max(top * ((n * (s2 / s1) - s1) / (n - 1)) - 1.0, -1.0)
+    return max(top * ((w * (n / s1)) / (n - 1)) - 1.0, -1.0)
 
 
 def cassie_index(counts: ArrayLike) -> float:
@@ -9405,14 +9410,9 @@ def cassie_index(counts: ArrayLike) -> float:
     top = float(np.max(a))
     if not top > 0:
         raise ValueError("counts must have a total above 0")
-    s1 = 0.0
-    s2 = 0.0
-    for v in a:
-        u = float(v) / top
-        s1 += u
-        s2 += u * u
+    s1, w = _count_spread(a, top)
     n = a.size
-    return ((n * (s2 / s1) - s1) / (n - 1) - 1.0 / top) * (n / s1)
+    return ((w * (n / s1)) / (n - 1) - 1.0 / top) * (n / s1)
 
 
 def fisher_dispersion(counts: ArrayLike) -> float:
@@ -9433,14 +9433,9 @@ def fisher_dispersion(counts: ArrayLike) -> float:
     top = float(np.max(a))
     if not top > 0:
         raise ValueError("counts must have a total above 0")
-    s1 = 0.0
-    s2 = 0.0
-    for v in a:
-        u = float(v) / top
-        s1 += u
-        s2 += u * u
+    s1, w = _count_spread(a, top)
     n = a.size
-    d = top * max(n * (s2 / s1) - s1, 0.0)
+    d = top * (w * (n / s1))
     if not math.isfinite(d):
         raise ValueError("the statistic overflows")
     return d

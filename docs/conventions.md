@@ -1560,8 +1560,9 @@ rule for code not written yet.
 - **Green's index of dispersion** ([ADR 0611](adr/0611-green-index.md);
   `green_index(counts)`, C# `Measurements.GreenIndex`): `(s²/m − 1)/(Σx − 1)` with `m` the
   mean count and `s²` the sample variance (divided by `n − 1`), formed as
-  `((n s_2/s_1 − s_1)/(n − 1) − 1/t)/(s_1 − 1/t)` with `t` the largest count,
-  `s_1 = Σ x/t` and `s_2 = Σ(x/t)²`, held to [−1, 1]. Counts as for Lloyd's mean crowding,
+  `((w n/s_1)/(n − 1) − 1/t)/(s_1 − 1/t)` with `t` the largest count,
+  `s_1 = Σ x/t` and `w = Σ((x − m̂)/t)²` about `m̂ = t (s_1/n)`, a second pass so a mean
+  large next to the spread does not cancel; held to [−1, 1]. Counts as for Lloyd's mean crowding,
   with at least two units and a total above 1. **(implemented)**
 - **Morisita's index of dispersion** ([ADR 0612](adr/0612-morisita-dispersion.md);
   `morisita_dispersion(counts)`, C# `Measurements.MorisitaDispersion`):
@@ -1572,18 +1573,18 @@ rule for code not written yet.
 - **David and Moore's index of clumping** ([ADR 0613](adr/0613-david-moore-clumping.md);
   `david_moore_clumping(counts)`, C# `Measurements.DavidMooreClumping`): `s²/m − 1` with `m`
   the mean count and `s²` the sample variance (divided by `n − 1`), formed as
-  `t (n s_2/s_1 − s_1)/(n − 1) − 1` with `t` the largest count, `s_1 = Σ x/t` and
-  `s_2 = Σ(x/t)²`, held at −1 from below. Counts as for Lloyd's mean crowding, with at least
+  `t (w n/s_1)/(n − 1) − 1` with `t`, `s_1` and `w` as for Green's index, held at
+  −1 from below. Counts as for Lloyd's mean crowding, with at least
   two units. **(implemented)**
 - **Cassie's index** ([ADR 0614](adr/0614-cassie-index.md); `cassie_index(counts)`, C#
   `Measurements.CassieIndex`): `(s² − m)/m²` with `m` the mean count and `s²` the sample
   variance (divided by `n − 1`), formed as `(A − 1/t) · n/s_1` with `t` the largest count,
-  `s_1 = Σ x/t`, `s_2 = Σ(x/t)²` and `A = (n s_2/s_1 − s_1)/(n − 1)`. Counts as for David
+  `s_1` and `w` as for Green's index and
+  `A = (w n/s_1)/(n − 1)`. Counts as for David
   and Moore's index of clumping. **(implemented)**
 - **Fisher's index of dispersion statistic** ([ADR 0615](adr/0615-fisher-dispersion.md);
   `fisher_dispersion(counts)`, C# `Measurements.FisherDispersion`): `Σ(x_i − m)²/m` with `m`
-  the mean count, formed as `t (n s_2/s_1 − s_1)` with `t` the largest count, `s_1 = Σ x/t`
-  and `s_2 = Σ(x/t)²`, held at 0 from below; a value that overflows is refused. Counts as
+  the mean count, formed as `t (w n/s_1)` with `t`, `s_1` and `w` as for Green's index; a value that overflows is refused. Counts as
   for David and Moore's index of clumping. **(implemented)**
 - **The Clark–Evans aggregation index** ([ADR 0616](adr/0616-clark-evans-ratio.md);
   `clark_evans_ratio(distances, density)`, C# `Measurements.ClarkEvansRatio`): the mean

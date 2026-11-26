@@ -6,10 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-   - Variance-form cancellation: `fisher_dispersion`, `david_moore_clumping`,
-     `cassie_index`, `green_index` form `n s_2/s_1 − s_1`, which loses every digit when the
-     mean is large next to the spread (`fisher_dispersion([1e9, 1e9 + 2])` gives 0, exact
-     2e-9). Probed: confirmed. Fix with a two-pass sum about the mean.
    - `lloyd_mean_crowding` and `lloyd_patchiness` subtract 1 (or 1/t) after the division:
      relative error 4e-11 for `[1]*10**6 + [2]`; `morisita_dispersion` subtracts inside.
    - Six generators (`lloyd_patchiness`, `green_index`, `morisita_dispersion`,
@@ -4200,6 +4196,15 @@ Updated with every chunk of work. Dates are absolute.
   `sparse_large`, `subnormal_density`) failed before.
   Python 12220 passed, 2 skipped; .NET 10719 passed; conformance 7940/7940 in both. Version
   2026.11.26.4.
+
+- 2026-11-26: review fix, variance-form cancellation in `fisher_dispersion`,
+  `david_moore_clumping`, `cassie_index` and `green_index` (ADRs 0615, 0613, 0614, 0611):
+  `n s_2/s_1 − s_1` cancelled when the mean was large next to the spread
+  (`fisher_dispersion([1e9, 1e9 + 2])` gave 0, exact 2e-9; 14% off for `1e8 … 1e8 + 9`).
+  Both languages now add the squared deviations about the mean in a second pass (a shared
+  `_count_spread` / `CountSpread`); six new vectors failed before.
+  Python 12226 passed, 2 skipped; .NET 10725 passed; conformance 7946/7946 in both. Version
+  2026.11.26.5.
 
 ## Not built
 

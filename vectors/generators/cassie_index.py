@@ -47,6 +47,15 @@ assert add("one_individual", [1.0, 0.0], "m 1/2, s^2 1/2: 0") == 0
 assert add(
     "huge", [1e308, 0.0], "the sums would overflow: m t/2, s^2 t^2/2: 2 - 2/t, which rounds to 2"
 ) == 2 - 2 / Fr(1e308)
+assert (
+    add(
+        "large_mean_spread",
+        [1e9, 1e9 + 2e5],
+        "s^2 2e10, m 1e9 + 1e5: (2e10 - m)/m^2",
+    )
+    == (2 * 10**10 - (10**9 + 10**5)) / Fr(10**9 + 10**5) ** 2
+)
+cases[-1]["tol"] = {"abs": 0.0, "rel": 1e-13}  # a small value: hold it to relative accuracy
 rng = random.Random(614)
 counts = [float(rng.choice([0, 0, 1, 2, 3, 7])) for _ in range(30)]
 add("random", counts, "30 counts from random.Random(614).choice([0, 0, 1, 2, 3, 7])")

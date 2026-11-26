@@ -11,6 +11,7 @@
     {"id": "cassie_index.singles", "op": "cassie_index", "args": {"counts": [1.0, 1.0, 0.0, 0.0]}, "expected": -0.6666666666666666, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 1/2, s^2 1/3: (-1/6)/(1/4) = -2/3"},
     {"id": "cassie_index.one_individual", "op": "cassie_index", "args": {"counts": [1.0, 0.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "m 1/2, s^2 1/2: 0"},
     {"id": "cassie_index.huge", "op": "cassie_index", "args": {"counts": [1e+308, 0.0]}, "expected": 2.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "the sums would overflow: m t/2, s^2 t^2/2: 2 - 2/t, which rounds to 2"},
+    {"id": "cassie_index.large_mean_spread", "op": "cassie_index", "args": {"counts": [1000000000.0, 1000200000.0]}, "expected": 1.899610058992101e-08, "tol": {"abs": 0.0, "rel": 1e-13}, "source": "s^2 2e10, m 1e9 + 1e5: (2e10 - m)/m^2"},
     {"id": "cassie_index.random", "op": "cassie_index", "args": {"counts": [1.0, 0.0, 3.0, 7.0, 0.0, 0.0, 3.0, 0.0, 3.0, 0.0, 0.0, 7.0, 0.0, 0.0, 3.0, 0.0, 2.0, 2.0, 0.0, 2.0, 3.0, 1.0, 1.0, 3.0, 7.0, 2.0, 2.0, 2.0, 7.0, 1.0]}, "expected": 0.7260755678352291, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "30 counts from random.Random(614).choice([0, 0, 1, 2, 3, 7])"},
     {"id": "cassie_index.empty", "op": "cassie_index", "args": {"counts": []}, "error": "invalid_argument", "source": "there must be a unit"},
     {"id": "cassie_index.one_unit", "op": "cassie_index", "args": {"counts": [5.0]}, "error": "invalid_argument", "source": "there must be at least two units"},

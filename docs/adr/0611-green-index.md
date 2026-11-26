@@ -19,6 +19,11 @@ in one unit, and `−1/(Σx − 1)` when the counts are all equal.
   `s_2 = Σ(x_i/t)²` added in order, `s²/m = t (n s_2/s_1 − s_1)/(n − 1)`, so
   `G = ((n s_2/s_1 − s_1)/(n − 1) − 1/t)/(s_1 − 1/t)`: equal to the definition, and nothing
   in it can overflow. It is held to [−1, 1].
+- **Review fix (2026-11-26).** `n s_2/s_1 − s_1` is the same as `w n/s_1` with
+  `w = Σ((x_i − m̂)/t)²` about `m̂ = t (s_1/n)`, but it subtracts two sums that agree to
+  every digit when the mean is large next to the spread (`[1e9, 1e9 + 2e5]` was off by about 1e-8 relative). The value is now
+  formed with `w`, added in a second pass; an error in `m̂` changes `w` only to second
+  order. The form above is otherwise unchanged.
 - **The rules.**
   - `counts` as for `lloyd_mean_crowding` (one-dimensional, real, finite, whole numbers at
     least 0), with at least two units and a total above 1.

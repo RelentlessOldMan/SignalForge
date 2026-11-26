@@ -19,6 +19,11 @@ to even ones. It is 0 when the counts are all equal.
   `s_2 = Σ(x_i/t)²` added in order, the value is `t (n s_2/s_1 − s_1)`: equal to the
   definition. It is held at 0 from below. The factor of `t` is at most `n − 1`, so the value
   can overflow; then it is refused.
+- **Review fix (2026-11-26).** `n s_2/s_1 − s_1` is the same as `w n/s_1` with
+  `w = Σ((x_i − m̂)/t)²` about `m̂ = t (s_1/n)`, but it subtracts two sums that agree to
+  every digit when the mean is large next to the spread (`[1e9, 1e9 + 2]` gave 0, exact 2e-9). The value is now
+  formed with `w`, added in a second pass; an error in `m̂` changes `w` only to second
+  order. The form above is otherwise unchanged.
 - **The rules.**
   - `counts` as for `david_moore_clumping`: one-dimensional, real, finite, whole numbers at
     least 0, at least two units, a total above 0.

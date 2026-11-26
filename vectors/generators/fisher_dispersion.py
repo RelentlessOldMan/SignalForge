@@ -43,6 +43,12 @@ assert add("uneven", [4.0, 0.0, 1.0, 0.0, 3.0], "m 8/5: (66/5)/(8/5) = 33/4") ==
 assert add("singles", [1.0, 1.0, 0.0, 0.0], "m 1/2: 1/(1/2) = 2") == 2
 assert add("one_individual", [1.0, 0.0], "m 1/2: (1/4 + 1/4)/(1/2) = 1") == 1
 assert add("huge", [1e308, 0.0], "the sums would overflow: m t/2: (t^2/2)/(t/2) = t") == Fr(1e308)
+assert add("large_mean", [1e9, 1e9 + 2], "m 1e9 + 1: 2/(1e9 + 1)") == Fr(2, 10**9 + 1)
+assert add(
+    "large_mean_ten",
+    [1e8 + i for i in range(10)],
+    "1e8 to 1e8 + 9, m 1e8 + 9/2: (165/2)/(1e8 + 9/2)",
+) == Fr(165, 2) / (10**8 + Fr(9, 2))
 rng = random.Random(615)
 counts = [float(rng.choice([0, 0, 1, 2, 3, 7])) for _ in range(30)]
 add("random", counts, "30 counts from random.Random(615).choice([0, 0, 1, 2, 3, 7])")

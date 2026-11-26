@@ -24,15 +24,9 @@ public static partial class Measurements
         }
         if (!(top > 0))
             throw new ArgumentException("counts must have a total above 0", nameof(counts));
-        double s1 = 0, s2 = 0;
-        foreach (double v in counts)
-        {
-            double u = v / top;
-            s1 += u;
-            s2 += u * u;
-        }
+        (double s1, double w) = CountSpread(counts, top);
         int n = counts.Length;
-        double d = top * Math.Max(n * (s2 / s1) - s1, 0.0);
+        double d = top * (w * (n / s1));
         if (!double.IsFinite(d))
             throw new ArgumentException("the statistic overflows", nameof(counts));
         return d;

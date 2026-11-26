@@ -47,6 +47,17 @@ assert (
     add("huge", [1e308, 0.0], "the sums would overflow: m t/2, s^2 t^2/2: t - 1, which rounds to t")
     == Fr(1e308) - 1
 )
+assert (
+    add("large_mean", [1e9, 1e9 + 2], "s^2 2, m 1e9 + 1: 2/(1e9 + 1) - 1") == Fr(2, 10**9 + 1) - 1
+)
+assert (
+    add(
+        "large_mean_spread",
+        [1e9, 1e9 + 2e5],
+        "s^2 2e10, m 1e9 + 1e5: 2e10/(1e9 + 1e5) - 1",
+    )
+    == Fr(2 * 10**10, 10**9 + 10**5) - 1
+)
 rng = random.Random(613)
 counts = [float(rng.choice([0, 0, 1, 2, 3, 7])) for _ in range(30)]
 add("random", counts, "30 counts from random.Random(613).choice([0, 0, 1, 2, 3, 7])")
