@@ -6,10 +6,9 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Eberhardt's index in `measurements` (`eberhardt_index(point_distances)`; the
-     distances from random points to the nearest individual, finite, at least 0, at least
-     one above 0: `n Σu²/(Σu)²`, needing no density; `4/π` (about 1.27) at random, larger
-     clumped; Eberhardt 1967).
+   - The Johnson–Zimmer index in `measurements` (`johnson_zimmer_index(point_distances)`;
+     arguments as for `eberhardt_index`: `(n + 1) Σu⁴/(Σu²)²`, needing no density; about 2
+     at random, larger clumped, smaller regular; Johnson and Zimmer 1985).
 
 ## Built
 
@@ -4154,6 +4153,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.PielouNonrandomness`): `πρ Σu²/n`, 1 for a random pattern.
   Python 12100 passed, 2 skipped; .NET 10699 passed; conformance 7925/7925 in both. Version
   2026.11.26.0.
+- 2026-11-26: Eberhardt's index (ADR 0620): `eberhardt_index(point_distances)` in
+  `measurements` (C# `Measurements.EberhardtIndex`): `n Σu²/(Σu)²`, about `4/π` for a random
+  pattern, needing no density.
+  Python 12120 passed, 2 skipped; .NET 10715 passed; conformance 7936/7936 in both. Version
+  2026.11.26.2.
 
 ## Not built
 

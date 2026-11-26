@@ -328,6 +328,7 @@ from .measurements import (
     distribution_entropy,
     doolittle_coefficient,
     early_decay_time,
+    eberhardt_index,
     energy_distance,
     energy_separation,
     energy_time_curve,
@@ -799,7 +800,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.26.0"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.26.2"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1070,6 +1071,7 @@ __all__ = [
     "dpw_sawtooth",
     "duck",
     "early_decay_time",
+    "eberhardt_index",
     "elliptic_bandpass",
     "elliptic_bandstop",
     "elliptic_highpass",

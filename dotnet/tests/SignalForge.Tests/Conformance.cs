@@ -549,6 +549,7 @@ public static class Conformance
             "clark_evans_z" => Bind((Reals(a.Get("distances")), a.D("density")), t => Measurements.ClarkEvansZ(t.Item1, t.Item2)),
             "hopkins_statistic" => Bind((Reals(a.Get("point_distances")), Reals(a.Get("individual_distances"))), t => Measurements.HopkinsStatistic(t.Item1, t.Item2)),
             "pielou_nonrandomness" => Bind((Reals(a.Get("point_distances")), a.D("density")), t => Measurements.PielouNonrandomness(t.Item1, t.Item2)),
+            "eberhardt_index" => Bind(Reals(a.Get("point_distances")), x => Measurements.EberhardtIndex(x)),
             "sample_entropy" => Bind((Reals(a.Get("samples")), a.I("m"), a.D("r")), t => Measurements.SampleEntropy(t.Item1, t.Item2, t.Item3)),
             "permutation_entropy" => Bind((Reals(a.Get("samples")), a.I("order"), a.Has("delay") ? a.I("delay") : 1), t => Measurements.PermutationEntropy(t.Item1, t.Item2, t.Item3)),
             "hjorth_parameters" => Bind(Reals(a.Get("samples")), x => Measurements.HjorthParameters(x)),

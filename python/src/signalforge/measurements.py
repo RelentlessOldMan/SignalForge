@@ -9556,6 +9556,31 @@ def pielou_nonrandomness(point_distances: ArrayLike, density: float) -> float:
     return r
 
 
+def eberhardt_index(point_distances: ArrayLike) -> float:
+    """Eberhardt's index of the ``point_distances`` (from random points to the nearest
+    individual): n times the sum of squares over the square of the sum; about 4/pi at random,
+    larger clumped (conventions: Eberhardt's index; ADR 0620)."""
+    a = np.asarray(point_distances)
+    if a.ndim != 1:
+        raise ValueError("point_distances must be one-dimensional")
+    if np.iscomplexobj(a):
+        raise ValueError("point_distances must be real")
+    a = a.astype(np.float64, copy=False)
+    if not np.all(np.isfinite(a)) or np.any(a < 0):
+        raise ValueError("point_distances must be finite and at least 0")
+    if not np.any(a > 0):
+        raise ValueError("point_distances must have a value above 0")
+    top = float(np.max(a))
+    s1 = 0.0
+    s2 = 0.0
+    for v in a:
+        u = float(v) / top
+        s1 += u
+        s2 += u * u
+    n = a.size
+    return min(max(n * s2 / (s1 * s1), 1.0), float(n))
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
