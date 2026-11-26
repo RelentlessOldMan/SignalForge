@@ -25,6 +25,11 @@ the availability.
   - An availability share that underflows to 0 is not refused, as it is for the ratio
     indices: nothing divides by it, and the difference is still the value to double
     precision.
+  - **Why `available` must be above 0 everywhere (review, 2026-11-26).** A kind with no
+    availability cannot be chosen, so use above 0 there means the two records disagree.
+    Where use is 0 too, `p − r = 0` is defined, but the kind carries no information. The
+    rule matches the ratio indices (ADRs 0602–0606 and 0608), so a pair of records accepted by one
+    selection index is accepted by all of them. A caller drops such kinds before the call.
   - Otherwise `invalid_argument`.
 
 ## Consequences

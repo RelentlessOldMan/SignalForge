@@ -13,10 +13,6 @@ Updated with every chunk of work. Dates are absolute.
      file reader's dtype may already be fixed.
    - Python loops element by element in these 14 (about 1 s per 5e5 values); vectorize while
      keeping the summation order the vectors need, or record why not.
-   - Docs: the Python
-     `hopkins_statistic` docstring leaves out the argument rules. Hopkins refuses all-zero
-     sample sets and Strauss refuses a zero availability where the value is defined: as
-     documented, but say why.
    - Eberhardt's index (ADR 0620): the form in Eberhardt (1967) and Hines and Hines (1979) is
      unconfirmed (`n` against `n − 1` variance). Read either paper if it becomes available.
 2. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
@@ -4243,6 +4239,13 @@ Updated with every chunk of work. Dates are absolute.
   unconfirmed.
   Python 12314 passed, 2 skipped; .NET 10729 passed; conformance 7950/7950 in both. Version
   2026.11.26.10.
+
+- 2026-11-26: review lead, docs. The Python `hopkins_statistic` docstring now gives the
+  argument rules, as the C# one did. ADR 0618 says why each Hopkins sample needs a value above
+  0. ADR 0607 says why Strauss refuses a zero availability even where `p − r` is defined. No
+  code change.
+  Python 12314 passed, 2 skipped; .NET 10729 passed; conformance 7950/7950 in both. Version
+  2026.11.26.11.
 
 ## Not built
 

@@ -26,6 +26,11 @@ a clumped pattern and near 0 for a regular one.
   1/2 at random.
 - **The rules.**
   - Each sample one-dimensional, real, finite, at least 0, not empty, with a value above 0.
+  - **Why each sample needs a value above 0 (review, 2026-11-26).** With one sample all 0
+    the value is 0 or 1 whatever the other sample holds. That says nothing about the pattern,
+    and in practice means a sample was lost or the two were swapped. With both all 0 it is
+    0/0. A pattern where one sample really is all 0 (individuals stacked on the same spots)
+    gives the same answer either way, so refusing it loses nothing.
   - Otherwise `invalid_argument`.
 
 ## Consequences

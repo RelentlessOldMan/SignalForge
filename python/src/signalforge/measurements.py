@@ -9506,7 +9506,9 @@ def hopkins_statistic(point_distances: ArrayLike, individual_distances: ArrayLik
     """Hopkins' statistic: the sum of the squared ``point_distances`` (from random points to
     the nearest individual) over that sum plus the sum of the squared
     ``individual_distances`` (from individuals to their nearest neighbour); about 1/2 at
-    random, near 1 clumped (conventions: Hopkins' statistic; ADR 0618)."""
+    random, near 1 clumped. Each sample one-dimensional, real, finite, at least 0, not empty,
+    with a value above 0; the two need not be the same size (conventions: Hopkins' statistic;
+    ADR 0618)."""
     u = _hopkins_sample(point_distances, "point_distances")
     w = _hopkins_sample(individual_distances, "individual_distances")
     top = max(float(np.max(u)), float(np.max(w)))
