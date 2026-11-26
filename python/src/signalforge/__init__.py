@@ -476,6 +476,7 @@ from .measurements import (
     phase_noise_ssb,
     pianka_overlap,
     pielou_evenness,
+    pielou_nonrandomness,
     podani_nestedness,
     podani_replacement,
     podani_richness_difference,
@@ -798,7 +799,7 @@ from .waveforms import (
     wavetable,
 )
 
-__version__ = "2026.11.23.36"  # stamped from VERSION by build.ps1; do not edit
+__version__ = "2026.11.26.0"  # stamped from VERSION by build.ps1; do not edit
 
 __all__ = [
     "Acpr",
@@ -1341,6 +1342,7 @@ __all__ = [
     "pi_loop_gains",
     "pianka_overlap",
     "pielou_evenness",
+    "pielou_nonrandomness",
     "ping_pong_delay",
     "pitch_shift",
     "podani_nestedness",

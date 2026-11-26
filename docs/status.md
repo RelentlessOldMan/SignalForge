@@ -6,11 +6,10 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
-   - Pielou's index of non-randomness in `measurements`
-     (`pielou_nonrandomness(point_distances, density)`; `point_distances` the distances from
-     random points to the nearest individual, finite, at least 0, not empty, `density` the
-     individuals per unit area, finite and above 0: `πρ Σu²/n`, 1 at random, above 1
-     clumped; Pielou 1959).
+   - Eberhardt's index in `measurements` (`eberhardt_index(point_distances)`; the
+     distances from random points to the nearest individual, finite, at least 0, at least
+     one above 0: `n Σu²/(Σu)²`, needing no density; `4/π` (about 1.27) at random, larger
+     clumped; Eberhardt 1967).
 
 ## Built
 
@@ -4150,6 +4149,11 @@ Updated with every chunk of work. Dates are absolute.
   `Measurements.HopkinsStatistic`): `Σu²/(Σu² + Σw²)`, about 1/2 for a random pattern.
   Python 12076 passed, 2 skipped; .NET 10682 passed; conformance 7913/7913 in both. Version
   2026.11.23.36.
+- 2026-11-26: Pielou's index of non-randomness (ADR 0619):
+  `pielou_nonrandomness(point_distances, density)` in `measurements` (C#
+  `Measurements.PielouNonrandomness`): `πρ Σu²/n`, 1 for a random pattern.
+  Python 12100 passed, 2 skipped; .NET 10699 passed; conformance 7925/7925 in both. Version
+  2026.11.26.0.
 
 ## Not built
 

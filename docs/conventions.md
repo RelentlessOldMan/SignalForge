@@ -1605,6 +1605,13 @@ rule for code not written yet.
   `a/(a + b)` with `t` the largest distance in either sample, `a = Σ(u/t)²`,
   `b = Σ(w/t)²`; held to [0, 1]. Each sample finite, at least 0, not empty, with a value
   above 0; the two need not be the same size. **(implemented)**
+- **Pielou's index of non-randomness** ([ADR 0619](adr/0619-pielou-nonrandomness.md);
+  `pielou_nonrandomness(point_distances, density)`, C# `Measurements.PielouNonrandomness`):
+  `πρ Σu²/n`, `u` the distances from random points to the nearest individual and `ρ` the
+  individuals per unit area. Formed as `q² (a/n)` with `t` the largest distance,
+  `a = Σ(u/t)²` and `q = t √(πρ)`; 0 when every distance is 0; a value that overflows is
+  refused. Distances finite, at least 0, not empty; density finite and above 0.
+  **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at

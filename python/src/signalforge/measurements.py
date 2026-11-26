@@ -9524,6 +9524,38 @@ def hopkins_statistic(point_distances: ArrayLike, individual_distances: ArrayLik
     return min(max(a / (a + b), 0.0), 1.0)
 
 
+def pielou_nonrandomness(point_distances: ArrayLike, density: float) -> float:
+    """Pielou's index of non-randomness of the ``point_distances`` (from random points to the
+    nearest individual) of a pattern with ``density`` individuals per unit area:
+    pi density times the mean squared distance; 1 at random, above 1 clumped (conventions:
+    Pielou's index of non-randomness; ADR 0619)."""
+    a = np.asarray(point_distances)
+    if a.ndim != 1:
+        raise ValueError("point_distances must be one-dimensional")
+    if np.iscomplexobj(a):
+        raise ValueError("point_distances must be real")
+    a = a.astype(np.float64, copy=False)
+    if a.size < 1:
+        raise ValueError("point_distances must not be empty")
+    if not np.all(np.isfinite(a)) or np.any(a < 0):
+        raise ValueError("point_distances must be finite and at least 0")
+    rho = float(density)
+    if not math.isfinite(rho) or not rho > 0:
+        raise ValueError("density must be finite and above 0")
+    top = float(np.max(a))
+    if top == 0:
+        return 0.0
+    s2 = 0.0
+    for v in a:
+        u = float(v) / top
+        s2 += u * u
+    q = top * math.sqrt(math.pi * rho)
+    r = q * q * (s2 / a.size)
+    if not math.isfinite(r):
+        raise ValueError("the index overflows")
+    return r
+
+
 def sample_entropy(samples: ArrayLike, m: int, r: float) -> float:
     """``-ln(A/B)``, ``B`` and ``A`` the pairs of templates that stay within ``r`` (Chebyshev)
     for ``m`` and ``m + 1`` samples (conventions: Sample entropy; ADR 0326)."""
