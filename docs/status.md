@@ -13,11 +13,12 @@ Updated with every chunk of work. Dates are absolute.
      file reader's dtype may already be fixed.
    - Python loops element by element in these 14 (about 1 s per 5e5 values); vectorize while
      keeping the summation order the vectors need, or record why not.
-   - Docs: Eberhardt's index uses the variance over `n`; the published form may use `n − 1`
-     (check Eberhardt 1967 / Hines and Hines 1979 and say which in ADR 0620). The Python
+   - Docs: the Python
      `hopkins_statistic` docstring leaves out the argument rules. Hopkins refuses all-zero
      sample sets and Strauss refuses a zero availability where the value is defined: as
      documented, but say why.
+   - Eberhardt's index (ADR 0620): the form in Eberhardt (1967) and Hines and Hines (1979) is
+     unconfirmed (`n` against `n − 1` variance). Read either paper if it becomes available.
 2. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
    - The Johnson–Zimmer index in `measurements` (`johnson_zimmer_index(point_distances)`;
@@ -4233,7 +4234,18 @@ Updated with every chunk of work. Dates are absolute.
   Python 12313 passed, 2 skipped; .NET 10728 passed; conformance 7949/7949 in both. Version
   2026.11.26.9.
 
+- 2026-11-26: review lead, Eberhardt's index (ADR 0620): `n` or `n − 1` variance. Krebs
+  (2017, eq. 6.14 and Box 5.2) gives `(s/ū)² + 1` with the `n − 1` variance (1.14 for his 16
+  spruce distances, where SignalForge gives 1.130). SignalForge keeps the moment ratio
+  `n Σu²/(Σu)²`, and ADR 0620 and the conventions now give the conversion. New vector
+  `krebs_spruce`; its generator checks Krebs' sums and his 1.14. The original papers
+  (Eberhardt 1967, Hines and Hines 1979) were not available, so the original form is still
+  unconfirmed.
+  Python 12314 passed, 2 skipped; .NET 10729 passed; conformance 7950/7950 in both. Version
+  2026.11.26.10.
+
 ## Not built
+
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
 and Lomb-Scargle (multiband form), the rest of modulation (PSK/QAM

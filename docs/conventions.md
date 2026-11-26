@@ -1621,8 +1621,9 @@ rule for code not written yet.
 - **Eberhardt's index** ([ADR 0620](adr/0620-eberhardt-index.md);
   `eberhardt_index(point_distances)`, C# `Measurements.EberhardtIndex`): `n Σu²/(Σu)²`, `u`
   the distances from random points to the nearest individual. Formed as `n s_2/(s_1 s_1)`
-  with `t` the largest distance, `s_1 = Σ u/t` and `s_2 = Σ(u/t)²`; held to [1, n].
-  Distances finite, at least 0, with a value above 0. **(implemented)**
+  with `t` the largest distance, `s_1 = Σ u/t` and `s_2 = Σ(u/t)²`; held to [1, n]. This is
+  `σ²/ū² + 1` with `σ²` over `n`; Krebs' `(s/ū)² + 1` uses `s²` over `n − 1`, which is
+  `1 + (I − 1) n/(n − 1)`. Distances finite, at least 0, with a value above 0. **(implemented)**
 - **Sample entropy** ([ADR 0326](adr/0326-sample-entropy.md); `sample_entropy(samples, m, r)`,
   C# `Measurements.SampleEntropy`): `L = N − m` template starts for both lengths `m` and `m+1`;
   a pair `i < l` matches when `max_j |x[i+j] − x[l+j]| ≤ r`; `B`, `A` the matching pairs at
