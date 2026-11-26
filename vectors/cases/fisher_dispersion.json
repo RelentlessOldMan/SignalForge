@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "suite": "lloyd_mean_crowding",
+  "suite": "fisher_dispersion",
   "description": "Fisher's index of dispersion statistic (conventions: Fisher's index of dispersion statistic; ADR 0615).",
   "cases": [
     {"id": "fisher_dispersion.even", "op": "fisher_dispersion", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": 0.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "no variance: 0"},

@@ -1,10 +1,10 @@
-"""Writes vectors/cases/lloyd_mean_crowding.json, stdlib only.
+"""Writes vectors/cases/david_moore_clumping.json, stdlib only.
 
 David and Moore's index of clumping (conventions: David and Moore's index of clumping;
 ADR 0613): the mean and the sample variance from their definitions, and s^2/m - 1, with
 fractions.
 
-Run from the repo root: python vectors/generators/lloyd_mean_crowding.py [--check]
+Run from the repo root: python vectors/generators/david_moore_clumping.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write.
 """
 
@@ -83,7 +83,7 @@ err("not_whole", "counts must be whole numbers", [1.0, 2.5])
 
 doc = {
     "schema": 1,
-    "suite": "lloyd_mean_crowding",
+    "suite": "david_moore_clumping",
     "description": "David and Moore's index of clumping (conventions: David and Moore's "
     "index of clumping; ADR 0613).",
     "cases": cases,

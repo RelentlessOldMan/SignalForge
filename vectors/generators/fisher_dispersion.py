@@ -1,9 +1,9 @@
-"""Writes vectors/cases/lloyd_mean_crowding.json, stdlib only.
+"""Writes vectors/cases/fisher_dispersion.json, stdlib only.
 
 Fisher's index of dispersion statistic (conventions: Fisher's index of dispersion
 statistic; ADR 0615): the mean and sum((x - m)^2)/m from their definitions, with fractions.
 
-Run from the repo root: python vectors/generators/lloyd_mean_crowding.py [--check]
+Run from the repo root: python vectors/generators/fisher_dispersion.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write.
 """
 
@@ -75,7 +75,7 @@ err("overflow", "the statistic 2e308 overflows", [1e308, 0.0, 0.0])
 
 doc = {
     "schema": 1,
-    "suite": "lloyd_mean_crowding",
+    "suite": "fisher_dispersion",
     "description": "Fisher's index of dispersion statistic (conventions: Fisher's index of "
     "dispersion statistic; ADR 0615).",
     "cases": cases,

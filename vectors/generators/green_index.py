@@ -1,10 +1,10 @@
-"""Writes vectors/cases/lloyd_mean_crowding.json, stdlib only.
+"""Writes vectors/cases/green_index.json, stdlib only.
 
 Green's index of dispersion (conventions: Green's index of dispersion; ADR 0611): the mean
 and the sample variance from their definitions, and (s^2/m - 1)/(sum(x) - 1), with
 fractions.
 
-Run from the repo root: python vectors/generators/lloyd_mean_crowding.py [--check]
+Run from the repo root: python vectors/generators/green_index.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write.
 """
 
@@ -78,7 +78,7 @@ err("not_whole", "counts must be whole numbers", [1.0, 2.5])
 
 doc = {
     "schema": 1,
-    "suite": "lloyd_mean_crowding",
+    "suite": "green_index",
     "description": "Green's index of dispersion (conventions: Green's index of dispersion; "
     "ADR 0611).",
     "cases": cases,

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "suite": "lloyd_mean_crowding",
+  "suite": "green_index",
   "description": "Green's index of dispersion (conventions: Green's index of dispersion; ADR 0611).",
   "cases": [
     {"id": "green_index.even", "op": "green_index", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": -0.2, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "no variance: -1/(6 - 1) = -1/5"},

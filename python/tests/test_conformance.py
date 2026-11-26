@@ -1,5 +1,6 @@
 """Every case in vectors/cases must pass."""
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,15 @@ def test_ids_unique_per_file() -> None:
     for f, c in CASES:
         assert (f, c["id"]) not in seen
         seen.add((f, c["id"]))
+
+
+def test_suite_names_the_file() -> None:
+    wrong = [
+        p.name
+        for p in sorted(conformance.find_vectors_dir().glob("*.json"))
+        if json.loads(p.read_text(encoding="utf-8")).get("suite") != p.stem
+    ]
+    assert not wrong
 
 
 SELFTEST = list(conformance.iter_cases(conformance.find_vectors_dir().parent / "selftest"))

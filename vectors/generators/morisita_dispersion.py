@@ -1,9 +1,9 @@
-"""Writes vectors/cases/lloyd_mean_crowding.json, stdlib only.
+"""Writes vectors/cases/morisita_dispersion.json, stdlib only.
 
 Morisita's index of dispersion (conventions: Morisita's index of dispersion; ADR 0612):
 n sum(x (x - 1))/(sum(x) (sum(x) - 1)) with fractions, straight from the definition.
 
-Run from the repo root: python vectors/generators/lloyd_mean_crowding.py [--check]
+Run from the repo root: python vectors/generators/morisita_dispersion.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write.
 """
 
@@ -78,7 +78,7 @@ err("not_whole", "counts must be whole numbers", [1.0, 2.5])
 
 doc = {
     "schema": 1,
-    "suite": "lloyd_mean_crowding",
+    "suite": "morisita_dispersion",
     "description": "Morisita's index of dispersion (conventions: Morisita's index of "
     "dispersion; ADR 0612).",
     "cases": cases,

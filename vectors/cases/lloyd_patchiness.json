@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "suite": "lloyd_mean_crowding",
+  "suite": "lloyd_patchiness",
   "description": "Lloyd's index of patchiness (conventions: Lloyd's index of patchiness; ADR 0610).",
   "cases": [
     {"id": "lloyd_patchiness.even", "op": "lloyd_patchiness", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": 0.5, "tol": {"abs": 1e-14, "rel": 1e-14}, "source": "mean crowding 1 over mean 2: 1/2"},

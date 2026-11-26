@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "suite": "lloyd_mean_crowding",
+  "suite": "cassie_index",
   "description": "Cassie's index (conventions: Cassie's index; ADR 0614).",
   "cases": [
     {"id": "cassie_index.even", "op": "cassie_index", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": -0.5, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "no variance: -2/4 = -1/2"},

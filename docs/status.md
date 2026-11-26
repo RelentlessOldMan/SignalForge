@@ -6,9 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-   - Six generators (`lloyd_patchiness`, `green_index`, `morisita_dispersion`,
-     `david_moore_clumping`, `cassie_index`, `fisher_dispersion`) write suite
-     `lloyd_mean_crowding` and name the wrong file in their docstrings.
    - Python: ints too big for a double raise `OverflowError`, and object arrays holding a
      complex raise `TypeError`, at `astype(np.float64)`; strings, bools, datetime64 and
      timedelta64 arrays are taken as numbers. Probably library-wide: find the shared array
@@ -4211,6 +4208,14 @@ Updated with every chunk of work. Dates are absolute.
   definition, not the `n − 1` estimator.
   Python 12229 passed, 2 skipped; .NET 10728 passed; conformance 7949/7949 in both. Version
   2026.11.26.6.
+
+- 2026-11-26: review fix, six generators copied from `lloyd_mean_crowding` (`lloyd_patchiness`,
+  `green_index`, `morisita_dispersion`, `david_moore_clumping`, `cassie_index`,
+  `fisher_dispersion`) wrote its suite name and named its file in their docstrings. Fixed;
+  `test_conformance.py` now checks that every case file's `suite` is its file name (it
+  failed on these six first).
+  Python 12230 passed, 2 skipped; .NET 10728 passed; conformance 7949/7949 in both. Version
+  2026.11.26.7.
 
 ## Not built
 

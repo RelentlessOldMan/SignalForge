@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "suite": "lloyd_mean_crowding",
+  "suite": "morisita_dispersion",
   "description": "Morisita's index of dispersion (conventions: Morisita's index of dispersion; ADR 0612).",
   "cases": [
     {"id": "morisita_dispersion.even", "op": "morisita_dispersion", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": 0.6, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "3 * 6/(6 * 5) = 3/5"},

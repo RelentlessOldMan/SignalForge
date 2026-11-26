@@ -1,9 +1,9 @@
-"""Writes vectors/cases/lloyd_mean_crowding.json, stdlib only.
+"""Writes vectors/cases/lloyd_patchiness.json, stdlib only.
 
 Lloyd's index of patchiness (conventions: Lloyd's index of patchiness; ADR 0610): the mean
 crowding sum(x (x - 1))/sum(x) over the mean sum(x)/n, with fractions.
 
-Run from the repo root: python vectors/generators/lloyd_mean_crowding.py [--check]
+Run from the repo root: python vectors/generators/lloyd_patchiness.py [--check]
 With --check it writes nothing and exits 1 unless the file matches what it would write.
 """
 
@@ -77,7 +77,7 @@ err("not_whole", "counts must be whole numbers", [1.0, 2.5])
 
 doc = {
     "schema": 1,
-    "suite": "lloyd_mean_crowding",
+    "suite": "lloyd_patchiness",
     "description": "Lloyd's index of patchiness (conventions: Lloyd's index of patchiness; "
     "ADR 0610).",
     "cases": cases,

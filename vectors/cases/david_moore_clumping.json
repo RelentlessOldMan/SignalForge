@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "suite": "lloyd_mean_crowding",
+  "suite": "david_moore_clumping",
   "description": "David and Moore's index of clumping (conventions: David and Moore's index of clumping; ADR 0613).",
   "cases": [
     {"id": "david_moore_clumping.even", "op": "david_moore_clumping", "args": {"counts": [2.0, 2.0, 2.0]}, "expected": -1.0, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "no variance: -1"},
