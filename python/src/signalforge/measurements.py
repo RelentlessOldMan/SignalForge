@@ -9549,8 +9549,8 @@ def pielou_nonrandomness(point_distances: ArrayLike, density: float) -> float:
     for v in a:
         u = float(v) / top
         s2 += u * u
-    q = top * math.sqrt(math.pi * rho)
-    r = q * q * (s2 / a.size)
+    p = (top * math.sqrt(s2 / a.size)) * (math.sqrt(math.pi) * math.sqrt(rho))
+    r = p * p
     if not math.isfinite(r):
         raise ValueError("the index overflows")
     return r

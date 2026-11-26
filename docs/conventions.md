@@ -1608,9 +1608,10 @@ rule for code not written yet.
 - **Pielou's index of non-randomness** ([ADR 0619](adr/0619-pielou-nonrandomness.md);
   `pielou_nonrandomness(point_distances, density)`, C# `Measurements.PielouNonrandomness`):
   `πρ Σu²/n`, `u` the distances from random points to the nearest individual and `ρ` the
-  individuals per unit area. Formed as `q² (a/n)` with `t` the largest distance,
-  `a = Σ(u/t)²` and `q = t √(πρ)`; 0 when every distance is 0; a value that overflows is
-  refused. Distances finite, at least 0, not empty; density finite and above 0.
+  individuals per unit area. Formed as `p²` with `t` the largest distance,
+  `a = Σ(u/t)²` and `p = (t √(a/n)) (√π √ρ)`, so nothing overflows or rounds in the
+  subnormal range unless the value does; 0 when every distance is 0; a value that overflows
+  is refused. Distances finite, at least 0, not empty; density finite and above 0.
   **(implemented)**
 - **Eberhardt's index** ([ADR 0620](adr/0620-eberhardt-index.md);
   `eberhardt_index(point_distances)`, C# `Measurements.EberhardtIndex`): `n Σu²/(Σu)²`, `u`

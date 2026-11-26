@@ -34,8 +34,8 @@ public static partial class Measurements
             double u = v / top;
             s2 += u * u;
         }
-        double q = top * Math.Sqrt(Math.PI * density);
-        double r = q * q * (s2 / pointDistances.Length);
+        double p = (top * Math.Sqrt(s2 / pointDistances.Length)) * (Math.Sqrt(Math.PI) * Math.Sqrt(density));
+        double r = p * p;
         if (!double.IsFinite(r))
             throw new ArgumentException("the index overflows", nameof(pointDistances));
         return r;

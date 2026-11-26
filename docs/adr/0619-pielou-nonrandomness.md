@@ -18,8 +18,11 @@ for a clumped pattern (the points fall in empty space) and below 1 for a regular
   - C#: `Measurements.PielouNonrandomness(ReadOnlySpan<double> pointDistances,
     double density)`.
 - **The form.** With `t` the largest distance and `a = Σ(u/t)²` added in order, the value
-  is `q² (a/n)` with `q = t √(πρ)`, so the squares do not overflow before the density
-  scales them; 0 when every distance is 0. The distances and the density are taken as
+  is `p²` with `p = (t √(a/n)) (√π √ρ)`: `p` is the square root of the value, so it
+  overflows only when the value does, and `√ρ` of a subnormal density rounds once. (The
+  first form, `q² (a/n)` with `q = t √(πρ)`, refused finite values: `πρ` overflows above
+  about 5.7e307 and `q²` above 1.34e154; and `πρ` rounds for a subnormal ρ. Review fix,
+  2026-11-26.) 0 when every distance is 0. The distances and the density are taken as
   given.
 - **The rules.**
   - `point_distances` one-dimensional, real, finite, at least 0, not empty.

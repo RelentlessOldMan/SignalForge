@@ -78,6 +78,32 @@ assert near(
     add("tiny", [1e-200, 0.0], 1e300, "the square would underflow: pi * 1e-100/2"),
     PI * D(1e300) * D(1e-200) ** 2 / 2,
 )
+assert near(
+    add("dense", [1e-200], 1e308, "pi times the density would overflow: pi * 1e-92"),
+    PI * D(1e308) * D(1e-200) ** 2,
+)
+assert near(
+    add(
+        "square_near_top",
+        [1.5e154, 0.0],
+        1 / 3.141592653589793,
+        "t sqrt(pi density) squared would overflow: 1.125e308 (density 1/pi as a double)",
+    ),
+    PI * D(1 / 3.141592653589793) * D(1.5e154) ** 2 / 2,
+)
+assert near(
+    add("sparse_large", [1e154] + [0.0] * 99, 1.0, "1e308 pi/100: about 3.14e306"),
+    PI * D(1e154) ** 2 / 100,
+)
+assert near(
+    add(
+        "subnormal_density",
+        [1e200],
+        5e-324,
+        "pi times a subnormal density would round: pi 2^-1074 1e400",
+    ),
+    PI * D(5e-324) * D(1e200) ** 2,
+)
 rng = random.Random(619)
 u = [rng.uniform(0.0, 2.0) for _ in range(25)]
 density = rng.uniform(0.05, 0.5)

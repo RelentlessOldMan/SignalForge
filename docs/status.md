@@ -4,7 +4,31 @@ Updated with every chunk of work. Dates are absolute.
 
 ## Next
 
-1. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
+1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
+   first). Worst first:
+   - Variance-form cancellation: `fisher_dispersion`, `david_moore_clumping`,
+     `cassie_index`, `green_index` form `n s_2/s_1 − s_1`, which loses every digit when the
+     mean is large next to the spread (`fisher_dispersion([1e9, 1e9 + 2])` gives 0, exact
+     2e-9). Probed: confirmed. Fix with a two-pass sum about the mean.
+   - `lloyd_mean_crowding` and `lloyd_patchiness` subtract 1 (or 1/t) after the division:
+     relative error 4e-11 for `[1]*10**6 + [2]`; `morisita_dispersion` subtracts inside.
+   - Six generators (`lloyd_patchiness`, `green_index`, `morisita_dispersion`,
+     `david_moore_clumping`, `cassie_index`, `fisher_dispersion`) write suite
+     `lloyd_mean_crowding` and name the wrong file in their docstrings.
+   - Python: ints too big for a double raise `OverflowError`, and object arrays holding a
+     complex raise `TypeError`, at `astype(np.float64)`; strings, bools, datetime64 and
+     timedelta64 arrays are taken as numbers. Probably library-wide: find the shared array
+     check first.
+   - Python loops element by element in these 14 (about 1 s per 5e5 values); vectorize while
+     keeping the summation order the vectors need, or record why not.
+   - `clark_evans_z` converts its input twice.
+   - Docs: Eberhardt's index uses the variance over `n`; the published form may use `n − 1`
+     (check Eberhardt 1967 / Hines and Hines 1979 and say which in ADR 0620). Lloyd ADRs
+     0609–0610 should say they give the definition, not the `n − 1` estimator. The Python
+     `hopkins_statistic` docstring leaves out the argument rules. Hopkins refuses all-zero
+     sample sets and Strauss refuses a zero availability where the value is defined: as
+     documented, but say why.
+2. **Next slice to choose.** Grep `dsp.py`, `spectral.py`, `channel.py`, `measure.py` and
    `docs/adr/` before picking. Candidates:
    - The Johnson–Zimmer index in `measurements` (`johnson_zimmer_index(point_distances)`;
      arguments as for `eberhardt_index`: `(n + 1) Σu⁴/(Σu²)²`, needing no density; about 2
@@ -4168,6 +4192,14 @@ Updated with every chunk of work. Dates are absolute.
   unaffected).
   Python 12216 passed, 2 skipped; .NET 10715 passed; conformance 7936/7936 in both. Version
   2026.11.26.3.
+
+- 2026-11-26: review fix, Pielou's index of non-randomness (ADR 0619) refused finite values:
+  `πρ` overflowed above about 5.7e307 and `(t √(πρ))²` above 1.34e154 though the index fits,
+  and `πρ` rounded for a subnormal density (4.5% off). Now formed as `p²` with
+  `p = (t √(a/n)) (√π √ρ)` in both languages; four new vectors (`dense`, `square_near_top`,
+  `sparse_large`, `subnormal_density`) failed before.
+  Python 12220 passed, 2 skipped; .NET 10719 passed; conformance 7940/7940 in both. Version
+  2026.11.26.4.
 
 ## Not built
 
