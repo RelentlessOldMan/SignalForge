@@ -11,6 +11,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from ._checks import sample_values
+
 
 @dataclass(frozen=True, eq=False)
 class Signal:
@@ -33,8 +35,7 @@ class Signal:
         a = np.array(self.samples, copy=True)
         if a.ndim != 1:
             raise ValueError("samples must be one-dimensional")
-        if not (np.issubdtype(a.dtype, np.floating) or np.issubdtype(a.dtype, np.complexfloating)):
-            a = a.astype(np.float64)
+        a = sample_values(a, "samples")
         a.setflags(write=False)
         object.__setattr__(self, "samples", a)
         if not 0 < self.sample_rate < math.inf:

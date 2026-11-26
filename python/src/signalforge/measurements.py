@@ -10820,7 +10820,7 @@ def gcc_phat(
         a = np.asarray(v)
         if a.ndim != 1 or a.shape[0] == 0 or np.iscomplexobj(a):
             raise ValueError(f"{what} must be a non-empty one-dimensional real array")
-        a = a.astype(np.float64)
+        a = real_values(a, what)
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{what} must be finite")
         if not np.any(a != 0):
@@ -10861,7 +10861,7 @@ def energy_separation(samples: ArrayLike, sample_rate: float) -> EnergySeparatio
     x = np.asarray(samples)
     if x.ndim != 1 or x.shape[0] < 5 or np.iscomplexobj(x):
         raise ValueError("samples must be one-dimensional and real with at least five values")
-    x = x.astype(np.float64)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     px = x[2:-2] ** 2 - x[1:-3] * x[3:-1]
@@ -10946,7 +10946,7 @@ def decay_time(
     d = np.asarray(decay)
     if d.ndim != 1 or d.shape[0] == 0 or np.iscomplexobj(d):
         raise ValueError("decay must be a non-empty one-dimensional real array")
-    d = d.astype(np.float64)
+    d = real_values(d, "decay")
     if np.any(np.isnan(d) | (d == np.inf)):
         raise ValueError("decay must not hold NaN or +inf")
     fs = real(sample_rate, "sample_rate")
@@ -11059,8 +11059,8 @@ def iacc(left: ArrayLike, right: ArrayLike, sample_rate: float, *, max_lag: floa
         raise ValueError("left and right must be one-dimensional, non-empty and of equal length")
     if np.iscomplexobj(lt) or np.iscomplexobj(rt):
         raise ValueError("left and right must be real")
-    lv = lt.astype(np.float64)
-    rv = rt.astype(np.float64)
+    lv = real_values(lt, "left")
+    rv = real_values(rt, "right")
     if not (np.all(np.isfinite(lv)) and np.all(np.isfinite(rv))):
         raise ValueError("left and right must be finite")
     fs = real(sample_rate, "sample_rate")
@@ -11099,8 +11099,8 @@ def lateral_fraction(
         )
     if np.iscomplexobj(o) or np.iscomplexobj(e):
         raise ValueError("omni and figure_eight must be real")
-    ov = o.astype(np.float64)
-    ev = e.astype(np.float64)
+    ov = real_values(o, "omni")
+    ev = real_values(e, "figure_eight")
     if not (np.all(np.isfinite(ov)) and np.all(np.isfinite(ev))):
         raise ValueError("omni and figure_eight must be finite")
     fs = real(sample_rate, "sample_rate")
@@ -11138,7 +11138,7 @@ def modulation_transfer(
     f = np.asarray(frequencies)
     if f.ndim != 1 or f.shape[0] == 0 or np.iscomplexobj(f):
         raise ValueError("frequencies must be a non-empty one-dimensional real array")
-    fv = f.astype(np.float64)
+    fv = real_values(f, "frequencies")
     if not (np.all(np.isfinite(fv)) and np.all(fv >= 0)):
         raise ValueError("frequencies must be finite and non-negative")
     p = h.real * h.real + h.imag * h.imag
@@ -11239,7 +11239,7 @@ def _band_times(times: ArrayLike) -> NDArray[np.float64]:
     t = np.asarray(times)
     if t.ndim != 1 or t.shape[0] != 6 or np.iscomplexobj(t):
         raise ValueError("times must be six real reverberation times (125 Hz to 4 kHz)")
-    t = t.astype(np.float64)
+    t = real_values(t, "times")
     if not np.all(np.isfinite(t) & (t > 0)):
         raise ValueError("times must be finite and positive")
     return t

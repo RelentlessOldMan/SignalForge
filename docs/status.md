@@ -6,11 +6,6 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-      - Python: `real_values` (ADR 0621) checks arrays in `measurements` and `spectral` only.
-     The other 17 `astype(np.float64)` sites (`channel`, `core`, `dsp`, `files`,
-     `modulation`, `waveforms`, and 13 in `measurements` and `spectral` outside the
-     complex-check pattern) still take bools, strings and dates. Check each one, since a
-     file reader's dtype may already be fixed.
    - Python loops element by element in these 14 (about 1 s per 5e5 values); vectorize while
      keeping the summation order the vectors need, or record why not.
    - Eberhardt's index (ADR 0620): the form in Eberhardt (1967) and Hines and Hines (1979) is
@@ -4246,6 +4241,17 @@ Updated with every chunk of work. Dates are absolute.
   code change.
   Python 12314 passed, 2 skipped; .NET 10729 passed; conformance 7950/7950 in both. Version
   2026.11.26.11.
+
+- 2026-11-26: review fix, the rest of the Python array arguments
+  ([ADR 0622](adr/0622-sample-array-arguments.md)). 15 more real-array conversions
+  (acoustics, GCC-PHAT, energy separation, PSD and coherence intervals, MFCC, delta, analytic
+  signal) now go through `real_values`. A new `sample_values` handles arrays that may be
+  complex (`Signal`, `iq_imbalance`). Before, `Signal`, `iq_imbalance` and `analytic_signal`
+  took bools, digit strings and time spans as numbers. New `tests/test_numeric_arrays.py`:
+  all 169 of its bad cases failed before the change. The remaining `astype` calls convert
+  SignalForge's own values or already-checked dtypes. Python only.
+  Python 12504 passed, 2 skipped; .NET 10729 passed; conformance 7950/7950 in both. Version
+  2026.11.26.12.
 
 ## Not built
 

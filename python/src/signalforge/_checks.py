@@ -56,3 +56,30 @@ def real_values(a: NDArray[Any], what: str) -> NDArray[np.float64]:
         except OverflowError:  # an int too large for a float
             raise ValueError(f"{what} must be real numbers that fit in a double") from None
     return out
+
+
+def sample_values(a: NDArray[Any], what: str) -> NDArray[Any]:
+    """An array of samples, real or complex (ADR 0622): floating and complex dtypes pass as
+    they are, integer and unsigned dtypes become float64, and object arrays of
+    ``numbers.Number`` values (not bools) that fit in a double become float64, or complex128
+    when one is complex; bools, strings, bytes, dates, times and anything else are rejected."""
+    kind = a.dtype.kind
+    if kind in "fc":
+        return a
+    if kind in "iu":
+        return a.astype(np.float64)
+    if kind != "O":
+        raise ValueError(f"{what} must be numbers")
+    values = list(a.flat)
+    for v in values:
+        if isinstance(v, bool | np.bool_) or not isinstance(v, numbers.Number):
+            raise ValueError(f"{what} must be numbers")
+    is_complex = any(not isinstance(v, numbers.Real) for v in values)
+    try:
+        out = np.array(
+            [complex(v) if is_complex else float(v) for v in values],
+            dtype=np.complex128 if is_complex else np.float64,
+        )
+    except (OverflowError, TypeError):  # an int too large, or a Number with no conversion
+        raise ValueError(f"{what} must be numbers that fit in a double") from None
+    return out.reshape(a.shape)

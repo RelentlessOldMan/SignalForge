@@ -11,7 +11,7 @@ import numbers
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from ._checks import count, real
+from ._checks import count, real, sample_values
 
 
 def awgn(
@@ -390,6 +390,7 @@ def iq_imbalance(samples: ArrayLike, gain_db: float, phase: float) -> NDArray[np
     if x.ndim != 1:
         raise ValueError("samples must be one-dimensional")
     g = _imbalance_gain(gain_db, phase)
+    x = sample_values(x, "samples")
     i, q = x.real.astype(np.float64), x.imag.astype(np.float64)
     return np.asarray(
         i + 1j * (q * (g * math.cos(phase)) + i * (g * math.sin(phase))), np.complex128

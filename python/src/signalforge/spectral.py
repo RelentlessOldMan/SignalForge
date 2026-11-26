@@ -498,7 +498,7 @@ def psd_confidence_interval(
     p = np.asarray(psd)
     if p.ndim != 1 or np.iscomplexobj(p):
         raise ValueError("psd must be a one-dimensional real array")
-    p = p.astype(np.float64)
+    p = real_values(p, "psd")
     if not np.all(np.isfinite(p)) or np.any(p < 0):
         raise ValueError("psd must be finite and non-negative")
     nu = real(dof, "dof")
@@ -529,7 +529,7 @@ def coherence_confidence_interval(
     g2 = np.asarray(coherence)
     if g2.ndim != 1 or np.iscomplexobj(g2):
         raise ValueError("coherence must be a one-dimensional real array")
-    g2 = g2.astype(np.float64)
+    g2 = real_values(g2, "coherence")
     if not np.all(np.isfinite(g2)) or np.any(g2 < 0) or np.any(g2 > 1):
         raise ValueError("coherence must be finite and in [0, 1]")
     k = count(num_segments, "num_segments")
@@ -2421,13 +2421,13 @@ def mfcc(
     p = np.asarray(power_spectrum)
     if np.iscomplexobj(p) or p.ndim != 1 or p.shape[0] == 0:
         raise ValueError("power_spectrum must be a non-empty real one-dimensional array")
-    p = p.astype(np.float64)
+    p = real_values(p, "power_spectrum")
     if not np.all(np.isfinite(p)) or np.any(p < 0):
         raise ValueError("power_spectrum must be finite and non-negative")
     w = np.asarray(filterbank)
     if np.iscomplexobj(w) or w.ndim != 2 or w.shape[0] == 0 or w.shape[1] != p.shape[0]:
         raise ValueError("filterbank must have at least one row of len(power_spectrum) weights")
-    w = w.astype(np.float64)
+    w = real_values(w, "filterbank")
     if not np.all(np.isfinite(w)) or np.any(w < 0):
         raise ValueError("filterbank weights must be finite and non-negative")
     k = count(n_coefficients, "n_coefficients")
@@ -2445,7 +2445,7 @@ def delta(frames: ArrayLike, width: int = 2) -> NDArray[np.float64]:
     c = np.asarray(frames)
     if np.iscomplexobj(c) or c.ndim != 2 or c.shape[0] == 0 or c.shape[1] == 0:
         raise ValueError("frames must be a real two-dimensional array with at least one value")
-    c = c.astype(np.float64)
+    c = real_values(c, "frames")
     if not np.all(np.isfinite(c)):
         raise ValueError("frames must be finite")
     w = count(width, "width")
@@ -2971,7 +2971,7 @@ def analytic_signal(samples: ArrayLike) -> NDArray[np.complex128]:
     x = np.asarray(samples)
     if x.ndim != 1 or x.shape[0] == 0 or np.iscomplexobj(x):
         raise ValueError("samples must be a non-empty one-dimensional real array")
-    x = x.astype(np.float64)
+    x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]

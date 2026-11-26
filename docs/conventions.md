@@ -28,8 +28,9 @@ rule for code not written yet.
 - Measurements reject non-finite input where a NaN would otherwise pass through silently
   (`power_stats` samples, PSD frequencies and values). **(implemented)**
 - Python arrays of real numbers (ADR 0621) take integer, unsigned and floating dtypes, or object
-  arrays of real numbers that are not bools and fit in a double. Bool, string, bytes, date and time
-  arrays are refused. **(implemented in `measurements` and `spectral`)**
+  arrays of real numbers that are not bools and fit in a double. Bool, string, bytes, date and time arrays are refused. Arrays of samples that may be complex
+  (`Signal`, `iq_imbalance`; ADR 0622) take the same, plus complex dtypes and complex objects.
+  **(implemented)**
 - A bad argument raises `ValueError` (Python) or `ArgumentException` or a subclass (C#).
   **(implemented)**
 
