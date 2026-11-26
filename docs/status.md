@@ -4159,6 +4159,16 @@ Updated with every chunk of work. Dates are absolute.
   Python 12120 passed, 2 skipped; .NET 10715 passed; conformance 7936/7936 in both. Version
   2026.11.26.2.
 
+- 2026-11-26: review fix, scalar arguments in Python. `clark_evans_ratio`, `clark_evans_z` and
+  `pielou_nonrandomness` (`density`), `temporal_centroid` and `time_weighting` (`sample_rate`,
+  `time_constant`), `autocorrelation_pitch` and `cepstrum_pitch` (`sample_rate`,
+  `min_frequency`, `max_frequency`) read the number with a bare `float()`, so `"4"`, `b"4"` and
+  `True` were taken as numbers and `None` raised `TypeError`. They now use `real()` like the
+  rest of the library; `tests/test_scalar_arguments.py` checks each one (C# is typed, so
+  unaffected).
+  Python 12216 passed, 2 skipped; .NET 10715 passed; conformance 7936/7936 in both. Version
+  2026.11.26.3.
+
 ## Not built
 
 Everything else in the brief: IIR designs beyond Butterworth, Chebyshev I/II, elliptic, Bessel and all-pass sections (all-pass design to a delay target), FIR design beyond windowed sinc, equiripple, least squares and frequency sampling, spectral estimators beyond Welch, the spectrogram
@@ -4170,6 +4180,9 @@ packaging and publishing.
 
 ## Lessons
 
+- 2026-11-26: Read scalar arguments with `real()` (or `count()`), never a bare `float()`:
+  `float("4")` and `float(True)` succeed, and `float(None)` raises `TypeError`, not
+  `ValueError`.
 - 2026-11-19: A measure can already exist under another name: the Heidke skill score is
   `cohen_kappa` on 0/1 records, the Peirce skill score is `youden_j`, the threat score is
   `jaccard_index`. Grep `__init__.py` for the equivalent measures, not only the new name,

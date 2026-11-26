@@ -9461,7 +9461,7 @@ def clark_evans_ratio(distances: ArrayLike, density: float) -> float:
         raise ValueError("distances must not be empty")
     if not np.all(np.isfinite(a)) or np.any(a < 0):
         raise ValueError("distances must be finite and at least 0")
-    rho = float(density)
+    rho = real(density, "density")
     if not math.isfinite(rho) or not rho > 0:
         raise ValueError("density must be finite and above 0")
     top = float(np.max(a))
@@ -9539,7 +9539,7 @@ def pielou_nonrandomness(point_distances: ArrayLike, density: float) -> float:
         raise ValueError("point_distances must not be empty")
     if not np.all(np.isfinite(a)) or np.any(a < 0):
         raise ValueError("point_distances must be finite and at least 0")
-    rho = float(density)
+    rho = real(density, "density")
     if not math.isfinite(rho) or not rho > 0:
         raise ValueError("density must be finite and above 0")
     top = float(np.max(a))
@@ -9671,7 +9671,7 @@ def temporal_centroid(samples: ArrayLike, sample_rate: float) -> TemporalCentroi
     x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
-    fs = float(sample_rate)
+    fs = real(sample_rate, "sample_rate")
     if not (math.isfinite(fs) and fs > 0):
         raise ValueError("sample_rate must be finite and positive")
     p = x.real * x.real + x.imag * x.imag if np.iscomplexobj(x) else x * x
@@ -9729,7 +9729,9 @@ def _lag_range(
     sample_rate: float, min_frequency: float, max_frequency: float
 ) -> tuple[float, int, int]:
     """The sample rate and the whole lags ``ceil(fs/max)`` to ``floor(fs/min)``, not empty."""
-    fs, fmin, fmax = float(sample_rate), float(min_frequency), float(max_frequency)
+    fs = real(sample_rate, "sample_rate")
+    fmin = real(min_frequency, "min_frequency")
+    fmax = real(max_frequency, "max_frequency")
     if not (math.isfinite(fs) and fs > 0):
         raise ValueError("sample_rate must be finite and positive")
     if not (math.isfinite(fmin) and math.isfinite(fmax) and 0 < fmin <= fmax):
@@ -10666,10 +10668,10 @@ def time_weighting(
     x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
-    fs = float(sample_rate)
+    fs = real(sample_rate, "sample_rate")
     if not (math.isfinite(fs) and fs > 0):
         raise ValueError("sample_rate must be finite and positive")
-    tau = float(time_constant)
+    tau = real(time_constant, "time_constant")
     if not (math.isfinite(tau) and tau > 0):
         raise ValueError("time_constant must be finite and positive")
     p = x.real * x.real + x.imag * x.imag if np.iscomplexobj(x) else x * x
