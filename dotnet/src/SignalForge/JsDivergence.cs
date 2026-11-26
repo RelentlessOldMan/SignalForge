@@ -13,14 +13,14 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static double JsDivergence(ReadOnlySpan<double> p, ReadOnlySpan<double> q)
     {
-        double ps = DistributionSum(p, nameof(p));
-        double qs = DistributionSum(q, nameof(q));
+        double ps = DistributionSum(p, nameof(p), out double pt);
+        double qs = DistributionSum(q, nameof(q), out double qt);
         if (p.Length != q.Length)
             throw new ArgumentException("p and q must have the same length", nameof(q));
         double d = 0;
         for (int i = 0; i < p.Length; i++)
         {
-            double pi = p[i] / ps, qi = q[i] / qs;
+            double pi = p[i] / pt / ps, qi = q[i] / qt / qs;
             double mi = (pi + qi) / 2.0;
             double t = 0;
             if (pi > 0)

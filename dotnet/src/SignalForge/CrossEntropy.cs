@@ -13,8 +13,8 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static double CrossEntropy(ReadOnlySpan<double> p, ReadOnlySpan<double> q)
     {
-        double ps = DistributionSum(p, nameof(p));
-        double qs = DistributionSum(q, nameof(q));
+        double ps = DistributionSum(p, nameof(p), out double pt);
+        double qs = DistributionSum(q, nameof(q), out double qt);
         if (p.Length != q.Length)
             throw new ArgumentException("p and q must have the same length", nameof(q));
         double s = 0;
@@ -24,7 +24,7 @@ public static partial class Measurements
                 continue;
             if (q[i] == 0)
                 throw new ArgumentException("q is zero where p is not: the cross-entropy is infinite", nameof(q));
-            s += p[i] / ps * Math.Log(q[i] / qs);
+            s += p[i] / pt / ps * Math.Log(q[i] / qt / qs);
         }
         return 0.0 - s;
     }

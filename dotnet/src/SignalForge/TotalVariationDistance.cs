@@ -13,13 +13,13 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static double TotalVariationDistance(ReadOnlySpan<double> p, ReadOnlySpan<double> q)
     {
-        double ps = DistributionSum(p, nameof(p));
-        double qs = DistributionSum(q, nameof(q));
+        double ps = DistributionSum(p, nameof(p), out double pt);
+        double qs = DistributionSum(q, nameof(q), out double qt);
         if (p.Length != q.Length)
             throw new ArgumentException("p and q must have the same length", nameof(q));
         double s = 0;
         for (int i = 0; i < p.Length; i++)
-            s += Math.Abs(p[i] / ps - q[i] / qs);
+            s += Math.Abs(p[i] / pt / ps - q[i] / qt / qs);
         return Math.Min(s / 2.0, 1.0);
     }
 }

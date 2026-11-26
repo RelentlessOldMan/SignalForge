@@ -92,6 +92,20 @@ q = [rng.randint(1, 6) * 1.0 for _ in range(16)]
 assert 0.0 in p
 add("counts", p, q, 1.5, "16 counts each from random.Random(413), order 1.5")
 add("counts_low", p, q, 0.25, "the same counts, order 0.25")
+add(
+    "huge_p",
+    [1e308, 9e307, 1e300],
+    [1.0, 2.0, 3.0],
+    2.0,
+    "p sums past the largest double: the result is that of p scaled down",
+)
+add(
+    "huge_q",
+    [1.0, 2.0, 3.0],
+    [1.5e308, 1e308, 2e307],
+    2.0,
+    "q sums past the largest double: the result is that of q scaled down",
+)
 
 
 def err(cid, why, **args):

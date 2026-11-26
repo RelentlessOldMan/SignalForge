@@ -14,8 +14,8 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static double JeffreysDivergence(ReadOnlySpan<double> p, ReadOnlySpan<double> q)
     {
-        double ps = DistributionSum(p, nameof(p));
-        double qs = DistributionSum(q, nameof(q));
+        double ps = DistributionSum(p, nameof(p), out double pt);
+        double qs = DistributionSum(q, nameof(q), out double qt);
         if (p.Length != q.Length)
             throw new ArgumentException("p and q must have the same length", nameof(q));
         double s = 0;
@@ -25,7 +25,7 @@ public static partial class Measurements
                 continue;
             if (p[i] == 0 || q[i] == 0)
                 throw new ArgumentException("p and q must be zero at the same indices: the divergence is infinite", nameof(q));
-            double pi = p[i] / ps, qi = q[i] / qs;
+            double pi = p[i] / pt / ps, qi = q[i] / qt / qs;
             s += (pi - qi) * Math.Log(pi / qi);
         }
         return s;

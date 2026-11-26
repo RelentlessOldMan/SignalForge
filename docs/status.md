@@ -6,6 +6,17 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
+   - Both languages: about 25 scale-free functions sum their raw values, so a record whose
+     values are finite but whose sum overflows gives a wrong result or the wrong error. The
+     probe used `(1e308, 9e307, 1e300)` against `(1, 0.9, 1e-8)`. It found
+     `berger_parker_index`, `bonferroni_index`, `bulla_evenness`, `camargo_evenness`,
+     `coefficient_of_variation`, `gini_coefficient`, `hall_tideman_index`, `heip_evenness`,
+     `herfindahl_index`, `hill_ratio_evenness`, `hoover_index`, `kwoka_dominance_index`,
+     `mean_log_deviation`, `palma_ratio`, `pielou_evenness`, `quintile_share_ratio`,
+     `sheldon_evenness`, `simpson_diversity`, `simpson_evenness`, `strong_dominance`,
+     `theil_index`, `time_irreversibility`, `von_neumann_ratio`, `wolfson_index` and
+     `zenga_index`. Confirm each is meant to be scale-free (count-based ones such as
+     Margalef's are not), then scale as in ADR 0624, with exact `huge` vectors.
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4265,6 +4276,16 @@ Updated with every chunk of work. Dates are absolute.
   function runs: 13 of the 14 grew with the input before the change. Python only.
   Python 12520 passed, 2 skipped; .NET 10729 passed; conformance 7950/7950 in both. Version
   2026.11.26.13.
+
+- 2026-11-26: review fix, distributions divided by their largest value before they are
+  summed ([ADR 0624](adr/0624-distributions-scaled-before-summing.md)). The ten divergences
+  and distances between distributions (ADRs 0407–0416) went wrong in both languages when a
+  record's sum overflowed: wrong values, "math domain error", "share no support", or a
+  `ZeroDivisionError` in Python. Each record is now divided by its largest value first. Each
+  generator gained exact `huge_p` and `huge_q` vectors: all 20 failed in both languages
+  before the change.
+  Python 12540 passed, 2 skipped; .NET 10749 passed; conformance 7970/7970 in both. Version
+  2026.11.26.14.
 
 ## Not built
 

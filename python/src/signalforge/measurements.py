@@ -2698,12 +2698,13 @@ def kl_divergence(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):
@@ -2734,12 +2735,13 @@ def js_divergence(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):
@@ -2772,12 +2774,13 @@ def hellinger_distance(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):
@@ -2805,12 +2808,13 @@ def bhattacharyya_distance(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):
@@ -2839,12 +2843,13 @@ def total_variation_distance(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):
@@ -2870,12 +2875,13 @@ def chi_square_divergence(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):
@@ -2910,12 +2916,13 @@ def renyi_divergence(p: ArrayLike, q: ArrayLike, alpha: float) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):
@@ -2951,12 +2958,13 @@ def jeffreys_divergence(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):
@@ -2987,12 +2995,13 @@ def cross_entropy(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):
@@ -3023,12 +3032,13 @@ def triangular_discrimination(p: ArrayLike, q: ArrayLike) -> float:
             raise ValueError(f"{name} must not be empty")
         if not np.all(np.isfinite(a)) or np.any(a < 0):
             raise ValueError(f"{name} must be finite and non-negative")
-        values = a.tolist()
+        top = float(np.max(a))
+        if not top > 0:
+            raise ValueError(f"{name} must have a positive sum")
+        values = (a / top).tolist()
         total = 0.0
         for w in values:
             total += w
-        if total <= 0:
-            raise ValueError(f"{name} must have a positive sum")
         pair.append((values, total))
     (pv, ps), (qv, qs) = pair
     if len(pv) != len(qv):

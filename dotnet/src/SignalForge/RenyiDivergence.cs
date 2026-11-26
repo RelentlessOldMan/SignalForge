@@ -17,8 +17,8 @@ public static partial class Measurements
     {
         if (!double.IsFinite(alpha) || !(alpha > 0) || alpha == 1)
             throw new ArgumentOutOfRangeException(nameof(alpha), alpha, "must be finite, above 0 and not 1");
-        double ps = DistributionSum(p, nameof(p));
-        double qs = DistributionSum(q, nameof(q));
+        double ps = DistributionSum(p, nameof(p), out double pt);
+        double qs = DistributionSum(q, nameof(q), out double qt);
         if (p.Length != q.Length)
             throw new ArgumentException("p and q must have the same length", nameof(q));
         double s = 0;
@@ -32,7 +32,7 @@ public static partial class Measurements
                     throw new ArgumentException("q is zero where p is not: the divergence is infinite", nameof(q));
                 continue;
             }
-            s += Math.Pow(p[i] / ps, alpha) * Math.Pow(q[i] / qs, 1.0 - alpha);
+            s += Math.Pow(p[i] / pt / ps, alpha) * Math.Pow(q[i] / qt / qs, 1.0 - alpha);
         }
         if (s == 0)
             throw new ArgumentException("p and q share no support: the divergence is infinite", nameof(q));

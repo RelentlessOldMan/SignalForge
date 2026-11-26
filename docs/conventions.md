@@ -576,7 +576,8 @@ rule for code not written yet.
   sample at least 1, finite. **(implemented)**
 - **Kullback–Leibler divergence** ([ADR 0407](adr/0407-kl-divergence.md);
   `kl_divergence(p, q)`, C# `Measurements.KlDivergence`): `Σ Pᵢ·ln(Pᵢ/Qᵢ)` in nats, `P` and `Q`
-  each divided by its own sum taken in order; terms with `pᵢ = 0` dropped; below 0 from
+  each divided by its largest value, then by the in-order sum of those quotients, so no sum
+  overflows (ADR 0624); terms with `pᵢ = 0` dropped; below 0 from
   rounding gives 0. Equal lengths at least 1, finite, non-negative, each sum above 0; `qᵢ = 0`
   where `pᵢ > 0` is an error. **(implemented)**
 - **Jensen–Shannon divergence** ([ADR 0408](adr/0408-js-divergence.md);

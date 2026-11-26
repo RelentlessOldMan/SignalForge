@@ -13,14 +13,14 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static double HellingerDistance(ReadOnlySpan<double> p, ReadOnlySpan<double> q)
     {
-        double ps = DistributionSum(p, nameof(p));
-        double qs = DistributionSum(q, nameof(q));
+        double ps = DistributionSum(p, nameof(p), out double pt);
+        double qs = DistributionSum(q, nameof(q), out double qt);
         if (p.Length != q.Length)
             throw new ArgumentException("p and q must have the same length", nameof(q));
         double ss = 0;
         for (int i = 0; i < p.Length; i++)
         {
-            double d = Math.Sqrt(p[i] / ps) - Math.Sqrt(q[i] / qs);
+            double d = Math.Sqrt(p[i] / pt / ps) - Math.Sqrt(q[i] / qt / qs);
             ss += d * d;
         }
         return Math.Min(Math.Sqrt(ss / 2.0), 1.0);

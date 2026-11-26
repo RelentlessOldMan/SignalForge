@@ -59,6 +59,18 @@ rng = random.Random(412)
 p = [rng.randint(1, 50) * 1.0 for _ in range(16)]
 q = [rng.randint(1, 50) * 1.0 for _ in range(16)]
 add("counts", p, q, "16 counts each from random.Random(412), 1 to 50")
+add(
+    "huge_p",
+    [1e308, 9e307, 1e300],
+    [1.0, 2.0, 3.0],
+    "p sums past the largest double: the result is that of p scaled down",
+)
+add(
+    "huge_q",
+    [1.0, 2.0, 3.0],
+    [1.5e308, 1e308, 2e307],
+    "q sums past the largest double: the result is that of q scaled down",
+)
 
 
 def err(cid, why, **args):
