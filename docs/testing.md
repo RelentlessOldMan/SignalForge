@@ -45,7 +45,11 @@ Default when a case gives none: `abs = 1e-12, rel = 1e-12`. Rules of thumb:
   widened by 4 binomial standard deviations. Where a loss has no closed form (the OFDM tracking
   loops' jitter and the leakage a clock offset or phase noise causes between subcarriers), the
   test adds a fixed allowance in dB, named as an allowance in the test (0.5 dB for ADR 0065), not
-  a derived value.
+    a derived value.
+- A non-zero expected value below the case's `abs` would pass for any result near 0, including
+  the 0 an underflow gives. Such a case uses `abs = 0` and a relative tolerance only, as the
+  scale cases near 2^−1000 and the subnormal cases do. A case whose exact value is 0 keeps its
+  `abs`, since rounding moves the result off 0.
 
 ## Random signals
 

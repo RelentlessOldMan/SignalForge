@@ -134,6 +134,10 @@ err("zero_density", "the density must be above 0", density=0.0)
 err("negative_density", "the density must be above 0", density=-1.0)
 err("overflow", "pi * 1e300 * 1e10 overflows", u=[1e150, 1e150], density=1e10)
 
+for c in cases:  # below the absolute tolerance, only a relative one can fail
+    if "expected" in c and 0 < abs(c["expected"]) < TOL["abs"]:
+        c["tol"] = {"abs": 0.0, "rel": TOL["rel"]}
+
 doc = {
     "schema": 1,
     "suite": "pielou_nonrandomness",

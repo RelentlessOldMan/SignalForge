@@ -13,12 +13,9 @@ Updated with every chunk of work. Dates are absolute.
      in ADRs 0624–0634, with exact power-of-2 `huge` and `tiny` vectors. The clippers, gates,
      folders, quantizer and slew limiter have absolute thresholds, so their flags are not
      faults. Done: ADRs 0633 and 0634, and every function the measurement probes flagged.
-   - Vectors: six cases have every expected value below their own absolute tolerance, so they
-     pass for any output near 0: `clark_evans_ratio.tiny`, `decay_curvature.single`,
-     `minkowski_distance.tiny`, `pearson_heron_ii.independent`, and
-     `pielou_nonrandomness.tiny` and `.dense`. Give each a tolerance that can fail, and check
-     each then still passes in both languages. Also look for cases where only some values
-     are below the tolerance.
+   - Vectors: look for cases where some non-zero expected values, but not all, are below the
+     case's `abs`, and check whether each is a value the case means to pin (`docs/testing.md`,
+     Tolerances). Done: the cases where every expected value was below it.
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4388,6 +4385,15 @@ Updated with every chunk of work. Dates are absolute.
   tiny case even before the fix.
   Python 12663 passed, 2 skipped; .NET 10872 passed; conformance 8093/8093 in both. Version
   2026.11.26.25.
+
+- 2026-11-26: review fix, four vectors whose tolerance could not fail.
+  `clark_evans_ratio.tiny`, `minkowski_distance.tiny` and `pielou_nonrandomness.tiny` and
+  `.dense` expect values from 1e-323 to 3e-92, all below their absolute tolerance, so a result
+  of 0 (the usual underflow fault) passed them. They now use a relative tolerance only, and both
+  languages still pass. `decay_curvature.single` and `pearson_heron_ii.independent` are exact
+  zeros, so they keep theirs. The rule is in `docs/testing.md`.
+  Python 12663 passed, 2 skipped; .NET 10872 passed; conformance 8093/8093 in both. Version
+  2026.11.26.26.
 
 ## Not built
 

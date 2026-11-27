@@ -85,6 +85,10 @@ err("zero_density", "the density must be above 0", density=0.0)
 err("negative_density", "the density must be above 0", density=-1.0)
 err("overflow", "2 * 1e308 * 2 overflows", distances=[1e308], density=4.0)
 
+for c in cases:  # below the absolute tolerance, only a relative one can fail
+    if "expected" in c and 0 < abs(c["expected"]) < TOL["abs"]:
+        c["tol"] = {"abs": 0.0, "rel": TOL["rel"]}
+
 doc = {
     "schema": 1,
     "suite": "clark_evans_ratio",

@@ -99,6 +99,10 @@ err("lengths", "x and y must match", y=[1.0, 1.0])
 err("not_finite", "values must be finite", x=[1.0, "nan", 1.0])
 err("overflow", "the difference 1e308 - (-1e308) overflows", x=[1e308], y=[-1e308])
 
+for c in cases:  # below the absolute tolerance, only a relative one can fail
+    if "expected" in c and 0 < abs(c["expected"]) < TOL["abs"]:
+        c["tol"] = {"abs": 0.0, "rel": TOL["rel"]}
+
 doc = {
     "schema": 1,
     "suite": "minkowski_distance",
