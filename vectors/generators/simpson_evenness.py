@@ -48,6 +48,11 @@ assert add(
 rng = random.Random(532)
 x = [rng.randint(0, 64) / 8 for _ in range(30)]
 add("random", x, "30 values k/8, k from random.Random(532).randint(0, 64)")
+add(
+    "huge",
+    [1e308, 9e307, 1e300],
+    "values whose sum overflows a double: the result is that of the values scaled down",
+)
 
 
 def err(cid, why, **args):

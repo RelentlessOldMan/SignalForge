@@ -15,6 +15,7 @@ public static partial class Measurements
         int n = samples.Length;
         if (n < 1)
             throw new ArgumentException("samples must not be empty", nameof(samples));
+        samples = ScaledToLargest(samples);
         double total = 0;
         foreach (double v in samples)
         {

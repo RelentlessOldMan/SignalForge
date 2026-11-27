@@ -69,6 +69,12 @@ add("ramp_half", [4.0, 1.0, 3.0, 2.0], 0.5, "(sum sqrt s)^2, shares 4, 1, 3, 2 t
 rng = random.Random(527)
 x = [rng.randint(0, 64) / 8 for _ in range(30)]
 add("random", x, 1.5, "30 values k/8, k from random.Random(527).randint(0, 64); alpha 3/2")
+add(
+    "huge",
+    [1e308, 9e307, 1e300],
+    2.0,
+    "values whose sum overflows a double: the result is that of the values scaled down",
+)
 
 
 def err(cid, why, **args):

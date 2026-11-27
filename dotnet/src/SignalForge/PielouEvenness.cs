@@ -13,6 +13,7 @@ public static partial class Measurements
         int n = samples.Length;
         if (n < 2)
             throw new ArgumentException("samples must have at least 2 values", nameof(samples));
+        samples = ScaledToLargest(samples);
         double total = 0;
         foreach (double v in samples)
         {

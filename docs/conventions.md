@@ -1140,6 +1140,12 @@ rule for code not written yet.
   `n = 2j + r`, `G` the Gini coefficient. Formed as
   `2·(Sₙ − 2·(S_j + (r/2)·x₍ⱼ₎) − g/n)/(n·m)`, `g = Σₖ (2k − n + 1)·x₍ₖ₎` from `k = 0`.
   Real, finite, `n ≥ 1`, every value at least 0, median above 0. **(implemented)**
+- **Shares of a record, scaled first** ([ADR 0625](adr/0625-shares-scaled-before-summing.md)):
+  the Herfindahl index, concentration ratio, Hall–Tideman, Kwoka and Hannah–Kay indices,
+  Pielou's evenness, the Gini–Simpson and Berger–Parker indices, Heip's, Simpson's, Camargo's,
+  Bulla's, Hill ratio, Alatalo's and Sheldon's evenness, and Strong's dominance divide the
+  checked record by its largest value before forming the sum and the shares, so no sum
+  overflows. **(implemented)**
 - **Herfindahl index** ([ADR 0523](adr/0523-herfindahl-index.md);
   `herfindahl_index(samples)`, C# `Measurements.HerfindahlIndex`): `Σᵢ (xᵢ/S)²`, shares as
   fractions, `S` and the squares added in record order; from `1/n` to 1, not normalized.

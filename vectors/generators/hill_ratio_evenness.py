@@ -61,6 +61,11 @@ add("ramp", [4.0, 1.0, 3.0, 2.0], "shares 4, 1, 3, 2 tenths")
 rng = random.Random(536)
 x = [rng.randint(0, 64) / 8 for _ in range(30)]
 add("random", x, "30 values k/8, k from random.Random(536).randint(0, 64)")
+add(
+    "huge",
+    [1e308, 9e307, 1e300],
+    "values whose sum overflows a double: the result is that of the values scaled down",
+)
 
 
 def err(cid, why, **args):

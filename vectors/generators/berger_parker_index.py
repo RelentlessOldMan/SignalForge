@@ -45,6 +45,11 @@ assert add("tie", [3.0, 3.0, 2.0], "two largest of 3 tie, 3 of 8: 3/8") == Fr(3,
 rng = random.Random(530)
 x = [rng.randint(0, 64) / 8 for _ in range(30)]
 add("random", x, "30 values k/8, k from random.Random(530).randint(0, 64)")
+add(
+    "huge",
+    [1e308, 9e307, 1e300],
+    "values whose sum overflows a double: the result is that of the values scaled down",
+)
 
 
 def err(cid, why, **args):

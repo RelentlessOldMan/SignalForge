@@ -6182,6 +6182,10 @@ def herfindahl_index(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6215,6 +6219,10 @@ def concentration_ratio(samples: ArrayLike, k: int) -> float:
     kk = count(k, "k")
     if not 1 <= kk <= n:
         raise ValueError("k must be from 1 to the number of samples")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     total = 0.0
     for a in x:
         total += float(a)
@@ -6244,6 +6252,10 @@ def hall_tideman_index(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6274,6 +6286,10 @@ def kwoka_dominance_index(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6305,6 +6321,10 @@ def hannah_kay_index(samples: ArrayLike, alpha: float) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6343,6 +6363,10 @@ def pielou_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must have at least 2 values")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6374,6 +6398,10 @@ def simpson_diversity(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6403,6 +6431,10 @@ def berger_parker_index(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6429,6 +6461,10 @@ def heip_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must have at least 2 values")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6459,6 +6495,10 @@ def simpson_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6489,6 +6529,10 @@ def camargo_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6549,6 +6593,10 @@ def bulla_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must have at least 2 values")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6579,6 +6627,10 @@ def hill_ratio_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6612,6 +6664,10 @@ def alatalo_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -6649,6 +6705,10 @@ def sheldon_evenness(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:
@@ -7006,6 +7066,10 @@ def strong_dominance(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if not top > 0:
+        raise ValueError("samples must not all be 0")
+    x = x / top
     vals = [float(a) for a in x]
     total = 0.0
     for a in vals:

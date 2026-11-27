@@ -60,6 +60,11 @@ add("dominant", [100.0, 1.0, 1.0], "shares 100/102, 1/102, 1/102")
 rng = random.Random(537)
 x = [rng.randint(0, 64) / 8 for _ in range(30)]
 add("random", x, "30 values k/8, k from random.Random(537).randint(0, 64)")
+add(
+    "huge",
+    [1e308, 9e307, 1e300],
+    "values whose sum overflows a double: the result is that of the values scaled down",
+)
 
 
 def err(cid, why, **args):
