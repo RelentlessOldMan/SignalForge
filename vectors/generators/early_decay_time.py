@@ -84,6 +84,32 @@ err("empty", [], 1000.0, "empty")
 err("zero_rate", [0.99 ** n for n in range(400)], 0.0, "sample_rate must be positive")
 err("nan", [1.0, "nan", 0.5], 1000.0, "not finite")
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with the responses times 2**k: the measure is a ratio of energies,
+    unchanged by a common scale, and a power of 2 scales every value exactly, so the
+    expected value is the base case's."""
+    c = next(c for c in cases if c["id"] == "early_decay_time." + base)
+    s = 2.0**k
+
+    def times(v):
+        if isinstance(v, dict):
+            return {part: times(v[part]) for part in ("re", "im")}
+        assert all(u * s / s == u for u in v), cid
+        return [u * s for u in v]
+
+    args = {name: times(v) if name in ("impulse_response", "reference") else v
+            for name, v in c["args"].items()}
+    cases.append({**c, "id": "early_decay_time." + cid, "args": args, "source": why})
+
+
+scaled("huge", "complex", 1000,
+       "case complex times 2^1000: squares of the samples overflow a double, but the "
+       "measure is a ratio of energies, so the same value")
+scaled("tiny", "complex", -960,
+       "case complex times 2^-960: squares of the samples underflow to 0, but the "
+       "measure is a ratio of energies, so the same value")
+
+
 doc = {
     "schema": 1,
     "suite": "early_decay_time",

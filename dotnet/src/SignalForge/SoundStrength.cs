@@ -11,8 +11,11 @@ public static partial class Measurements
     /// finite, not empty, not all zero.</param>
     /// <returns>G in dB; <c>−∞</c> for a silent response.</returns>
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
-    public static double SoundStrength(ReadOnlySpan<Complex> impulseResponse, ReadOnlySpan<Complex> reference) =>
-        StrengthDb(Sum(ResponsePowers(impulseResponse)), StrengthReference(reference));
+    public static double SoundStrength(ReadOnlySpan<Complex> impulseResponse, ReadOnlySpan<Complex> reference)
+    {
+        int e = PowerOf2Exponent(Math.Max(LargestMagnitude(impulseResponse), LargestMagnitude(reference)));
+        return StrengthDb(Sum(ResponsePowers(impulseResponse, e)), StrengthReference(reference, e));
+    }
 
     /// <summary>The sound strength <c>10·log10(Σ h² / Σ h_ref²)</c> in dB against the free-field
     /// response at 10 m (conventions: Sound strength; ADR 0178).</summary>
@@ -21,10 +24,13 @@ public static partial class Measurements
     /// finite, not empty, not all zero.</param>
     /// <returns>G in dB; <c>−∞</c> for a silent response.</returns>
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
-    public static double SoundStrength(ReadOnlySpan<double> impulseResponse, ReadOnlySpan<double> reference) =>
-        StrengthDb(Sum(ResponsePowers(impulseResponse)), StrengthReference(reference));
+    public static double SoundStrength(ReadOnlySpan<double> impulseResponse, ReadOnlySpan<double> reference)
+    {
+        int e = PowerOf2Exponent(Math.Max(LargestMagnitude(impulseResponse), LargestMagnitude(reference)));
+        return StrengthDb(Sum(ResponsePowers(impulseResponse, e)), StrengthReference(reference, e));
+    }
 
-    private static double StrengthReference(ReadOnlySpan<Complex> reference)
+    private static double StrengthReference(ReadOnlySpan<Complex> reference, int exponent)
     {
         if (reference.IsEmpty)
             throw new ArgumentException("reference must not be empty", nameof(reference));
@@ -33,12 +39,13 @@ public static partial class Measurements
         {
             if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
                 throw new ArgumentException("reference must be finite", nameof(reference));
-            e += v.Real * v.Real + v.Imaginary * v.Imaginary;
+            double re = Math.ScaleB(v.Real, -exponent), im = Math.ScaleB(v.Imaginary, -exponent);
+            e += re * re + im * im;
         }
         return e > 0 ? e : throw new ArgumentException("reference must not be all zero", nameof(reference));
     }
 
-    private static double StrengthReference(ReadOnlySpan<double> reference)
+    private static double StrengthReference(ReadOnlySpan<double> reference, int exponent)
     {
         if (reference.IsEmpty)
             throw new ArgumentException("reference must not be empty", nameof(reference));
@@ -47,7 +54,8 @@ public static partial class Measurements
         {
             if (!double.IsFinite(v))
                 throw new ArgumentException("reference must be finite", nameof(reference));
-            e += v * v;
+            double u = Math.ScaleB(v, -exponent);
+            e += u * u;
         }
         return e > 0 ? e : throw new ArgumentException("reference must not be all zero", nameof(reference));
     }

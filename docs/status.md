@@ -6,13 +6,14 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-   - Both languages: scale-free functions that still overflow or underflow at extreme scales
-     (probe: multiply every argument by 1e±200 and 1e±300 and compare with the unscaled
-     result). Still failing: `energy_time_curve`, `schroeder_decay`, `noise_compensated_decay`
-     and `sound_strength` (NaN near 1e200, refused near 1e-200; confirm whether refusing is
-     right for these). Scale as in ADRs 0624–0629, with exact power-of-2 `huge` and `tiny`
-     vectors. Done: the divergences, share-based and inequality indices, correlations, effect
-     sizes and time-series tests (ADRs 0624–0629).
+   - Both languages: scale-free functions with 3 or more arguments have not been probed at
+     extreme scales. The probe (multiply the arguments by 1e±200 and 1e±300 and compare with
+     the unscaled result) covered only 1- and 2-argument functions, and so missed 7 of the 11
+     room-acoustic measures that ADR 0630 fixed. Extend it to the rest, scaling the signal
+     arguments but not rates, orders or other parameters, and fix what fails as in ADRs
+     0624–0630, with exact power-of-2 `huge` and `tiny` vectors. Done: the divergences,
+     share-based and inequality indices, correlations, effect sizes, time-series tests and
+     room-acoustic measures (ADRs 0624–0630).
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4331,6 +4332,18 @@ Updated with every chunk of work. Dates are absolute.
   power-of-2 `huge` and `tiny` vectors: all 8 failed in both languages before the change.
   Python 12590 passed, 2 skipped; .NET 10799 passed; conformance 8020/8020 in both. Version
   2026.11.26.20.
+
+- 2026-11-26: review fix, room-acoustic measures square the impulse response at a power-of-2
+  scale ([ADR 0630](adr/0630-impulse-response-powers-scaled-first.md)). The Schroeder decay,
+  reverberation and early decay times, noise-compensated decay, energy-time curve, clarity,
+  definition, centre time, MTF, stage support and sound strength gave NaN or wrong values
+  near 1e200 and refused responses near 1e-200, in both languages; refusing was wrong, since
+  a response is in arbitrary units. The samples are now scaled first by the power of 2 that
+  brings the largest real or imaginary magnitude into [1, 2), which is exact; the sound
+  strength uses one scale for both records. Nine generators gained power-of-2 `huge` and
+  `tiny` vectors, real and complex: all 36 failed in both languages before the change.
+  Python 12626 passed, 2 skipped; .NET 10835 passed; conformance 8056/8056 in both. Version
+  2026.11.26.21.
 
 ## Not built
 

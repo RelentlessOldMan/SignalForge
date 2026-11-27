@@ -1692,6 +1692,14 @@ rule for code not written yet.
   `Measurements.TeagerEnergy`): `ψ[n] = |x[n]|² − Re(x[n−1]·conj x[n+1])`, `n = 1 … N−2`, so
   `N − 2` values with no padding; real input gives `x[n]² − x[n−1]x[n+1]`. Real or complex,
   1-D, finite, at least three samples. **(implemented)**
+- **Room-acoustic energies, squared at a power-of-2 scale**
+  ([ADR 0630](adr/0630-impulse-response-powers-scaled-first.md)): every measure below that is
+  a ratio of energies (the Schroeder decay and the times read from it, the noise-compensated
+  decay, the energy-time curve, clarity, definition, centre time, the MTF, stage support and
+  the sound strength) squares the samples after scaling them by the power of 2 that brings
+  the largest real or imaginary magnitude into [1, 2), so no square overflows or underflows.
+  The scaling is exact. The sound strength uses one scale for the response and its
+  reference. **(implemented)**
 - **Energy-time curve** ([ADR 0186](adr/0186-energy-time-curve.md); `energy_time_curve(
   impulse_response)`, C# `Measurements.EnergyTimeCurve`): `10·log10(|z[n]|²/max|z|²)` dB with `z`
   the `analytic_signal` (ADR 0185); peak 0 dB, zero gives `−inf`, no smoothing. Real, 1-D,

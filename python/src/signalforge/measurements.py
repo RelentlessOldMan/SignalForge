@@ -10908,6 +10908,29 @@ def sound_exposure(samples: ArrayLike, sample_rate: float) -> float:
     return float(np.sum(p)) / fs
 
 
+def _shared_exponent(*records: NDArray[np.float64] | NDArray[np.complex128]) -> int:
+    """The exponent ``e`` with ``2**e <= top < 2**(e + 1)``, ``top`` the largest real or
+    imaginary magnitude in ``records``, when that is positive and finite; 0 otherwise
+    (ADR 0630)."""
+    top = max(
+        (float(np.max(np.abs(part))) for h in records if h.size for part in (h.real, h.imag)),
+        default=0.0,
+    )
+    return math.frexp(top)[1] - 1 if 0 < top < math.inf else 0
+
+
+def _powers(
+    h: NDArray[np.float64] | NDArray[np.complex128], e: int | None = None
+) -> NDArray[np.float64]:
+    """``|h|^2`` of ``h`` times ``2**-e``, by default for the ``e`` of ``h`` itself, so no
+    square overflows or underflows; the scaling is exact (ADR 0630)."""
+    k = -(_shared_exponent(h) if e is None else e)
+    re = np.ldexp(h.real, k)
+    im = np.ldexp(h.imag, k)
+    out: NDArray[np.float64] = re * re + im * im
+    return out
+
+
 def schroeder_decay(impulse_response: ArrayLike) -> NDArray[np.float64]:
     """The Schroeder backward-integrated energy decay ``10 log10(E[n]/E[0])``, ``E[n] =
     sum_{k >= n} |h[k]|^2`` (conventions: Reverberation time; ADR 0171)."""
@@ -10917,7 +10940,7 @@ def schroeder_decay(impulse_response: ArrayLike) -> NDArray[np.float64]:
     h = h.astype(np.complex128 if np.iscomplexobj(h) else np.float64, copy=False)
     if not np.all(np.isfinite(h)):
         raise ValueError("impulse_response must be finite")
-    p = np.asarray(h.real * h.real + h.imag * h.imag, dtype=np.float64)
+    p = _powers(h)
     energy = np.cumsum(p[::-1])[::-1]
     if not energy[0] > 0:
         raise ValueError("impulse_response must not be all zero")
@@ -11012,7 +11035,7 @@ def energy_time_curve(impulse_response: ArrayLike) -> NDArray[np.float64]:
     """The energy-time curve ``10 log10(|z|^2 / max |z|^2)`` with ``z`` the analytic signal
     (conventions: Energy-time curve; ADR 0186)."""
     z = spectral.analytic_signal(impulse_response)
-    p = np.asarray(z.real * z.real + z.imag * z.imag, dtype=np.float64)
+    p = _powers(z)
     peak = float(np.max(p))
     if not peak > 0:
         raise ValueError("impulse_response must not be all zero")
@@ -11039,7 +11062,7 @@ def noise_compensated_decay(
     m = math.floor(t * n + 0.5)
     if not 1 <= m < n:
         raise ValueError("tail * length must round to between 1 and length - 1 samples")
-    p = np.asarray(h.real * h.real + h.imag * h.imag, dtype=np.float64)
+    p = _powers(h)
     noise = math.fsum(p[n - m :].tolist()) / m
     energy = np.cumsum((p[: n - m] - noise)[::-1])[::-1]
     if not energy[0] > 0:
@@ -11137,7 +11160,7 @@ def _early_late(
     n = math.floor(t * fs + 0.5)
     if n < 1:
         raise ValueError("time * sample_rate must round to at least 1 sample")
-    p = h.real * h.real + h.imag * h.imag
+    p = _powers(h)
     early, late = float(np.sum(p[:n])), float(np.sum(p[n:]))
     if not early + late > 0:
         raise ValueError("impulse_response must not be all zero")
@@ -11174,7 +11197,7 @@ def centre_time(impulse_response: ArrayLike, sample_rate: float) -> float:
     fs = real(sample_rate, "sample_rate")
     if not (math.isfinite(fs) and fs > 0):
         raise ValueError("sample_rate must be finite and positive")
-    p = h.real * h.real + h.imag * h.imag
+    p = _powers(h)
     total = float(np.sum(p))
     if not total > 0:
         raise ValueError("impulse_response must not be all zero")
@@ -11273,7 +11296,7 @@ def modulation_transfer(
     fv = real_values(f, "frequencies")
     if not (np.all(np.isfinite(fv)) and np.all(fv >= 0)):
         raise ValueError("frequencies must be finite and non-negative")
-    p = h.real * h.real + h.imag * h.imag
+    p = _powers(h)
     total = float(np.sum(p))
     if not total > 0:
         raise ValueError("impulse_response must not be all zero")
@@ -11315,21 +11338,25 @@ def speech_transmission_index(mtf: ArrayLike) -> float:
     return float(sti)
 
 
-def _response_energy(x: ArrayLike, name: str) -> float:
+def _response_values(x: ArrayLike, name: str) -> NDArray[np.float64] | NDArray[np.complex128]:
     h = np.asarray(x)
     if h.ndim != 1 or h.shape[0] == 0:
         raise ValueError(f"{name} must be a non-empty one-dimensional array")
     h = h.astype(np.complex128 if np.iscomplexobj(h) else np.float64, copy=False)
     if not np.all(np.isfinite(h)):
         raise ValueError(f"{name} must be finite")
-    return float(np.sum(h.real * h.real + h.imag * h.imag))
+    out: NDArray[np.float64] | NDArray[np.complex128] = h
+    return out
 
 
 def sound_strength(impulse_response: ArrayLike, reference: ArrayLike) -> float:
     """The sound strength ``10 log10(sum |h|^2 / sum |h_ref|^2)`` in dB against the free-field
     response at 10 m (conventions: Sound strength; ADR 0178)."""
-    energy = _response_energy(impulse_response, "impulse_response")
-    ref = _response_energy(reference, "reference")
+    h = _response_values(impulse_response, "impulse_response")
+    r = _response_values(reference, "reference")
+    e = _shared_exponent(h, r)
+    energy = float(np.sum(_powers(h, e)))
+    ref = float(np.sum(_powers(r, e)))
     if not ref > 0:
         raise ValueError("reference must not be all zero")
     if energy == 0:
@@ -11349,7 +11376,7 @@ def stage_support(impulse_response: ArrayLike, sample_rate: float, *, late: bool
     fs = real(sample_rate, "sample_rate")
     if not (math.isfinite(fs) and fs > 0):
         raise ValueError("sample_rate must be finite and positive")
-    p = h.real * h.real + h.imag * h.imag
+    p = _powers(h)
 
     def bound(t: float) -> int:
         return math.floor(t * fs + 0.5)

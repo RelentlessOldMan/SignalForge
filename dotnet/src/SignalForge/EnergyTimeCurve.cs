@@ -10,11 +10,13 @@ public static partial class Measurements
     public static double[] EnergyTimeCurve(ReadOnlySpan<double> impulseResponse)
     {
         var z = Spectral.AnalyticSignal(impulseResponse);
+        int e = PowerOf2Exponent(LargestMagnitude(z));
         var p = new double[z.Length];
         double peak = 0;
         for (int n = 0; n < z.Length; n++)
         {
-            p[n] = z[n].Real * z[n].Real + z[n].Imaginary * z[n].Imaginary;
+            double re = Math.ScaleB(z[n].Real, -e), im = Math.ScaleB(z[n].Imaginary, -e);
+            p[n] = re * re + im * im;
             peak = Math.Max(peak, p[n]);
         }
         if (!(peak > 0))

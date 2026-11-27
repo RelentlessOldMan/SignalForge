@@ -81,7 +81,10 @@ public static partial class Measurements
         return moment / total / sampleRate;
     }
 
-    private static double[] ResponsePowers(ReadOnlySpan<Complex> impulseResponse)
+    private static double[] ResponsePowers(ReadOnlySpan<Complex> impulseResponse) =>
+        ResponsePowers(impulseResponse, PowerOf2Exponent(LargestMagnitude(impulseResponse)));
+
+    private static double[] ResponsePowers(ReadOnlySpan<Complex> impulseResponse, int exponent)
     {
         if (impulseResponse.IsEmpty)
             throw new ArgumentException("impulseResponse must not be empty", nameof(impulseResponse));
@@ -91,12 +94,16 @@ public static partial class Measurements
             Complex v = impulseResponse[n];
             if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
                 throw new ArgumentException("impulseResponse must be finite", nameof(impulseResponse));
-            p[n] = v.Real * v.Real + v.Imaginary * v.Imaginary;
+            double re = Math.ScaleB(v.Real, -exponent), im = Math.ScaleB(v.Imaginary, -exponent);
+            p[n] = re * re + im * im;
         }
         return p;
     }
 
-    private static double[] ResponsePowers(ReadOnlySpan<double> impulseResponse)
+    private static double[] ResponsePowers(ReadOnlySpan<double> impulseResponse) =>
+        ResponsePowers(impulseResponse, PowerOf2Exponent(LargestMagnitude(impulseResponse)));
+
+    private static double[] ResponsePowers(ReadOnlySpan<double> impulseResponse, int exponent)
     {
         if (impulseResponse.IsEmpty)
             throw new ArgumentException("impulseResponse must not be empty", nameof(impulseResponse));
@@ -105,7 +112,8 @@ public static partial class Measurements
         {
             if (!double.IsFinite(impulseResponse[n]))
                 throw new ArgumentException("impulseResponse must be finite", nameof(impulseResponse));
-            p[n] = impulseResponse[n] * impulseResponse[n];
+            double v = Math.ScaleB(impulseResponse[n], -exponent);
+            p[n] = v * v;
         }
         return p;
     }

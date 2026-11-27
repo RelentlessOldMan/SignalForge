@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace SignalForge;
 
 public static partial class Measurements
@@ -93,4 +95,37 @@ public static partial class Measurements
             scaled[i] = Math.ScaleB(samples[i], -e);
         return scaled;
     }
+
+    /// <summary>The largest magnitude among the values, skipping NaN (ADR 0630).</summary>
+    private static double LargestMagnitude(ReadOnlySpan<double> values)
+    {
+        double top = 0;
+        foreach (double v in values)
+        {
+            if (Math.Abs(v) > top)
+                top = Math.Abs(v);
+        }
+        return top;
+    }
+
+    /// <summary>The largest real or imaginary magnitude among the values, skipping NaN
+    /// (ADR 0630).</summary>
+    private static double LargestMagnitude(ReadOnlySpan<Complex> values)
+    {
+        double top = 0;
+        foreach (Complex v in values)
+        {
+            if (Math.Abs(v.Real) > top)
+                top = Math.Abs(v.Real);
+            if (Math.Abs(v.Imaginary) > top)
+                top = Math.Abs(v.Imaginary);
+        }
+        return top;
+    }
+
+    /// <summary>The exponent e with 2^e ≤ <paramref name="top"/> &lt; 2^(e + 1), when that is
+    /// positive and finite; 0 otherwise, so a record the caller will refuse is left unscaled
+    /// (ADR 0630).</summary>
+    private static int PowerOf2Exponent(double top) =>
+        top > 0 && !double.IsInfinity(top) ? Math.ILogB(top) : 0;
 }

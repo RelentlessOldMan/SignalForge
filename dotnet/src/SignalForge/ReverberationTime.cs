@@ -11,13 +11,15 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static double[] SchroederDecay(ReadOnlySpan<Complex> impulseResponse)
     {
+        int e = PowerOf2Exponent(LargestMagnitude(impulseResponse));
         var p = new double[impulseResponse.Length];
         for (int n = 0; n < p.Length; n++)
         {
             Complex v = impulseResponse[n];
             if (!(double.IsFinite(v.Real) && double.IsFinite(v.Imaginary)))
                 throw new ArgumentException("impulseResponse must be finite", nameof(impulseResponse));
-            p[n] = v.Real * v.Real + v.Imaginary * v.Imaginary;
+            double re = Math.ScaleB(v.Real, -e), im = Math.ScaleB(v.Imaginary, -e);
+            p[n] = re * re + im * im;
         }
         return Decay(p, nameof(impulseResponse));
     }
@@ -29,12 +31,14 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static double[] SchroederDecay(ReadOnlySpan<double> impulseResponse)
     {
+        int e = PowerOf2Exponent(LargestMagnitude(impulseResponse));
         var p = new double[impulseResponse.Length];
         for (int n = 0; n < p.Length; n++)
         {
             if (!double.IsFinite(impulseResponse[n]))
                 throw new ArgumentException("impulseResponse must be finite", nameof(impulseResponse));
-            p[n] = impulseResponse[n] * impulseResponse[n];
+            double v = Math.ScaleB(impulseResponse[n], -e);
+            p[n] = v * v;
         }
         return Decay(p, nameof(impulseResponse));
     }
