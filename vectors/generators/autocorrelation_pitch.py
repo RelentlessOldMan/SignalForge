@@ -84,6 +84,33 @@ err("zero_min", {"min_frequency": 0.0}, "min_frequency must be positive")
 err("zero_rate", {"sample_rate": 0.0}, "sample_rate must be positive")
 err("nan", {"samples": [1.0, "nan"] + [0.0] * 10}, "samples must be finite")
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with the signal arguments times 2**k: the measure is unchanged
+    by that scale, and a power of 2 scales every value exactly, so the expected value
+    is the base case's."""
+    c = next(c for c in cases if c["id"] == base)
+    s = 2.0**k
+
+    def times(v):
+        if isinstance(v, dict):
+            return {part: times(v[part]) for part in ("re", "im")}
+        assert all(u * s / s == u for u in v), cid
+        return [u * s for u in v]
+
+    args = {name: times(v) if name in ('samples',) else v
+            for name, v in c["args"].items()}
+    op = base.split(".")[0]
+    cases.append({**c, "id": f"{op}.{cid}", "args": args, "source": why})
+
+
+scaled("huge", "autocorrelation_pitch.asymmetric_peak", 1000,
+       "case asymmetric_peak times 2^1000: squares of the samples overflow a double, but "
+       "the peak lag and the voicing ratio are unchanged by a scale, so the same value")
+scaled("tiny", "autocorrelation_pitch.asymmetric_peak", -1000,
+       "case asymmetric_peak times 2^-1000: squares of the samples underflow to 0, but "
+       "the peak lag and the voicing ratio are unchanged by a scale, so the same value")
+
+
 doc = {
     "schema": 1,
     "suite": "autocorrelation_pitch",

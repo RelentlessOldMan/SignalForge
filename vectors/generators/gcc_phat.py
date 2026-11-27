@@ -63,6 +63,33 @@ err("zero_rate", [1.0], [1.0], 0.0, "sample_rate must be positive")
 err("negative_window", [1.0, 0.0], [1.0], 1.0, "max_delay must be at least 0", max_delay=-1.0)
 err("nan", [1.0, "nan"], [1.0], 1.0, "not finite")
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with the signal arguments times 2**k: the measure is unchanged
+    by that scale, and a power of 2 scales every value exactly, so the expected value
+    is the base case's."""
+    c = next(c for c in cases if c["id"] == base)
+    s = 2.0**k
+
+    def times(v):
+        if isinstance(v, dict):
+            return {part: times(v[part]) for part in ("re", "im")}
+        assert all(u * s / s == u for u in v), cid
+        return [u * s for u in v]
+
+    args = {name: times(v) if name in ('x', 'y') else v
+            for name, v in c["args"].items()}
+    op = base.split(".")[0]
+    cases.append({**c, "id": f"{op}.{cid}", "args": args, "source": why})
+
+
+scaled("huge", "gcc_phat.positive", 1000,
+       "case positive times 2^1000: squares of the samples overflow a double, but "
+       "the phase transform is unchanged by a scale, so the same value")
+scaled("tiny", "gcc_phat.positive", -1000,
+       "case positive times 2^-1000: squares of the samples underflow to 0, but "
+       "the phase transform is unchanged by a scale, so the same value")
+
+
 doc = {
     "schema": 1,
     "suite": "gcc_phat",

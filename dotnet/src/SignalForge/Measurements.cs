@@ -241,6 +241,7 @@ public static partial class Measurements
             if (!double.IsFinite(v))
                 throw new ArgumentException("samples must be finite", nameof(samples));
         }
+        samples = ScaledByPowerOf2(samples);
         var (lo, hi) = LagRange(sampleRate, minFrequency, maxFrequency);
         if (hi > samples.Length - 2)
             throw new ArgumentException("minFrequency needs a lag longer than the samples allow (at most N - 2)", nameof(minFrequency));
@@ -349,12 +350,14 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static TemporalCentroid TemporalCentroid(ReadOnlySpan<Complex> samples, double sampleRate)
     {
+        int e = PowerOf2Exponent(LargestMagnitude(samples));
         var p = new double[samples.Length];
         for (int n = 0; n < samples.Length; n++)
         {
             if (!(double.IsFinite(samples[n].Real) && double.IsFinite(samples[n].Imaginary)))
                 throw new ArgumentException("samples must be finite", nameof(samples));
-            p[n] = samples[n].Real * samples[n].Real + samples[n].Imaginary * samples[n].Imaginary;
+            double re = Math.ScaleB(samples[n].Real, -e), im = Math.ScaleB(samples[n].Imaginary, -e);
+            p[n] = re * re + im * im;
         }
         return EnergyCentroid(p, sampleRate);
     }
@@ -367,12 +370,14 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static TemporalCentroid TemporalCentroid(ReadOnlySpan<double> samples, double sampleRate)
     {
+        int e = PowerOf2Exponent(LargestMagnitude(samples));
         var p = new double[samples.Length];
         for (int n = 0; n < samples.Length; n++)
         {
             if (!double.IsFinite(samples[n]))
                 throw new ArgumentException("samples must be finite", nameof(samples));
-            p[n] = samples[n] * samples[n];
+            double v = Math.ScaleB(samples[n], -e);
+            p[n] = v * v;
         }
         return EnergyCentroid(p, sampleRate);
     }
@@ -447,7 +452,7 @@ public static partial class Measurements
     public static double PowerCcdfLevel(ReadOnlySpan<Complex> samples, double probability)
     {
         CheckProbability(probability);
-        return CcdfLevel(InstantaneousPower(samples), probability);
+        return CcdfLevel(InstantaneousPower(samples, PowerOf2Exponent(LargestMagnitude(samples))), probability);
     }
 
     /// <summary>As for complex samples, with |x|² = x².</summary>
@@ -458,7 +463,7 @@ public static partial class Measurements
     public static double PowerCcdfLevel(ReadOnlySpan<double> samples, double probability)
     {
         CheckProbability(probability);
-        return CcdfLevel(InstantaneousPower(samples), probability);
+        return CcdfLevel(InstantaneousPower(samples, PowerOf2Exponent(LargestMagnitude(samples))), probability);
     }
 
     /// <summary>A complex tone's frequency in Hz by Kay's weighted phase-difference estimator
@@ -497,7 +502,9 @@ public static partial class Measurements
             throw new ArgumentOutOfRangeException(nameof(probability), "probability must be in (0, 1)");
     }
 
-    private static (double[] P, double Mean) InstantaneousPower(ReadOnlySpan<Complex> samples)
+    /// <summary>|x|² of the samples times 2^−<paramref name="exponent"/>, and its mean; the
+    /// scaling is exact, for results that are ratios of powers (ADR 0632).</summary>
+    private static (double[] P, double Mean) InstantaneousPower(ReadOnlySpan<Complex> samples, int exponent = 0)
     {
         var p = new double[samples.Length];
         for (int i = 0; i < samples.Length; i++)
@@ -505,19 +512,22 @@ public static partial class Measurements
             Complex x = samples[i];
             if (!(double.IsFinite(x.Real) && double.IsFinite(x.Imaginary)))
                 throw new ArgumentException("samples must be finite", nameof(samples));
-            p[i] = x.Real * x.Real + x.Imaginary * x.Imaginary;
+            double re = Math.ScaleB(x.Real, -exponent), im = Math.ScaleB(x.Imaginary, -exponent);
+            p[i] = re * re + im * im;
         }
         return WithMean(p);
     }
 
-    private static (double[] P, double Mean) InstantaneousPower(ReadOnlySpan<double> samples)
+    /// <summary>As for complex samples, with |x|² = x² (ADR 0632).</summary>
+    private static (double[] P, double Mean) InstantaneousPower(ReadOnlySpan<double> samples, int exponent = 0)
     {
         var p = new double[samples.Length];
         for (int i = 0; i < samples.Length; i++)
         {
             if (!double.IsFinite(samples[i]))
                 throw new ArgumentException("samples must be finite", nameof(samples));
-            p[i] = samples[i] * samples[i];
+            double v = Math.ScaleB(samples[i], -exponent);
+            p[i] = v * v;
         }
         return WithMean(p);
     }

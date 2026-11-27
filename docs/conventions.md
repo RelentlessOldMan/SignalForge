@@ -1695,6 +1695,14 @@ rule for code not written yet.
   `Measurements.TeagerEnergy`): `ψ[n] = |x[n]|² − Re(x[n−1]·conj x[n+1])`, `n = 1 … N−2`, so
   `N − 2` values with no padding; real input gives `x[n]² − x[n−1]x[n+1]`. Real or complex,
   1-D, finite, at least three samples. **(implemented)**
+- **Signal-energy measures, scaled first**
+  ([ADR 0632](adr/0632-signal-energy-measures-scaled-first.md)): the autocorrelation pitch,
+  the temporal centroid and the power CCDF level scale their record, and GCC-PHAT and the
+  IACC each of their two signals, by the power of 2 that brings the largest real or
+  imaginary magnitude into [1, 2), when that is positive and finite, before forming any
+  square or product; the lateral energy fraction scales both channels by one such power.
+  The scaling is exact. `power_ccdf`, which returns the mean power itself, is not scaled.
+  **(implemented)**
 - **Room-acoustic energies, squared at a power-of-2 scale**
   ([ADR 0630](adr/0630-impulse-response-powers-scaled-first.md)): every measure below that is
   a ratio of energies (the Schroeder decay and the times read from it, the noise-compensated

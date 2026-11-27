@@ -68,6 +68,33 @@ err("negative_start", {"start": -0.01}, "start must be non-negative")
 err("stop_rounds_to_zero", {"stop": 0.004}, "0.004 * 100 + 0.5 = 0.9 rounds to 0 samples")
 err("zero_rate", {"sample_rate": 0.0}, "sample_rate must be positive")
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with the signal arguments times 2**k: the measure is unchanged
+    by that scale, and a power of 2 scales every value exactly, so the expected value
+    is the base case's."""
+    c = next(c for c in cases if c["id"] == base)
+    s = 2.0**k
+
+    def times(v):
+        if isinstance(v, dict):
+            return {part: times(v[part]) for part in ("re", "im")}
+        assert all(u * s / s == u for u in v), cid
+        return [u * s for u in v]
+
+    args = {name: times(v) if name in ('omni', 'figure_eight') else v
+            for name, v in c["args"].items()}
+    op = base.split(".")[0]
+    cases.append({**c, "id": f"{op}.{cid}", "args": args, "source": why})
+
+
+scaled("huge", "lateral_fraction.hand", 1000,
+       "case hand times 2^1000: squares of the samples overflow a double, but "
+       "a ratio of energies is unchanged by a scale, so the same value")
+scaled("tiny", "lateral_fraction.hand", -1000,
+       "case hand times 2^-1000: squares of the samples underflow to 0, but "
+       "a ratio of energies is unchanged by a scale, so the same value")
+
+
 doc = {
     "schema": 1,
     "suite": "lateral_fraction",

@@ -15,6 +15,8 @@
     {"id": "gcc_phat.empty", "op": "gcc_phat", "args": {"x": [], "y": [1.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "x empty"},
     {"id": "gcc_phat.zero_rate", "op": "gcc_phat", "args": {"x": [1.0], "y": [1.0], "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
     {"id": "gcc_phat.negative_window", "op": "gcc_phat", "args": {"x": [1.0, 0.0], "y": [1.0], "sample_rate": 1.0, "max_delay": -1.0}, "error": "invalid_argument", "source": "max_delay must be at least 0"},
-    {"id": "gcc_phat.nan", "op": "gcc_phat", "args": {"x": [1.0, "nan"], "y": [1.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "not finite"}
+    {"id": "gcc_phat.nan", "op": "gcc_phat", "args": {"x": [1.0, "nan"], "y": [1.0], "sample_rate": 1.0}, "error": "invalid_argument", "source": "not finite"},
+    {"id": "gcc_phat.huge", "op": "gcc_phat", "args": {"x": [0.0, 0.0, 0.0, 2.1430172143725346e+301, 0.0, 0.0, 0.0, 0.0], "y": [1.0715086071862673e+301, 0.0, 0.0], "sample_rate": 1000.0}, "expected": {"delay": 0.003, "lag": 3, "peak": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "case positive times 2^1000: squares of the samples overflow a double, but the phase transform is unchanged by a scale, so the same value"},
+    {"id": "gcc_phat.tiny", "op": "gcc_phat", "args": {"x": [0.0, 0.0, 0.0, 1.8665272370064378e-301, 0.0, 0.0, 0.0, 0.0], "y": [9.332636185032189e-302, 0.0, 0.0], "sample_rate": 1000.0}, "expected": {"delay": 0.003, "lag": 3, "peak": 1.0}, "tol": {"abs": 1e-12, "rel": 1e-12}, "source": "case positive times 2^-1000: squares of the samples underflow to 0, but the phase transform is unchanged by a scale, so the same value"}
   ]
 }

@@ -33,12 +33,17 @@ public static partial class Measurements
             throw new ArgumentOutOfRangeException(nameof(stop), stop, "stop * sampleRate must round to at least 1 sample");
         int na = sa >= omni.Length ? omni.Length : (int)sa;
         int nb = sb >= omni.Length ? omni.Length : (int)sb;
+        int e = PowerOf2Exponent(Math.Max(LargestMagnitude(omni), LargestMagnitude(figureEight)));
         double den = 0, num = 0;
         for (int n = 0; n < nb; n++)
         {
-            den += omni[n] * omni[n];
+            double o = Math.ScaleB(omni[n], -e);
+            den += o * o;
             if (n >= na)
-                num += figureEight[n] * figureEight[n];
+            {
+                double f = Math.ScaleB(figureEight[n], -e);
+                num += f * f;
+            }
         }
         if (!(den > 0))
             throw new ArgumentException("omni must have energy before stop", nameof(omni));

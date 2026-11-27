@@ -17,6 +17,8 @@
     {"id": "iacc.zero_right", "op": "iacc", "args": {"left": [1.0, 0.5], "right": [0.0, 0.0], "sample_rate": 1000.0}, "error": "invalid_argument", "source": "right must not be all zero"},
     {"id": "iacc.nan", "op": "iacc", "args": {"left": [1.0, "nan"], "right": [0.5, 1.0], "sample_rate": 1000.0}, "error": "invalid_argument", "source": "left must be finite"},
     {"id": "iacc.negative_lag", "op": "iacc", "args": {"left": [1.0, 0.5], "right": [0.5, 1.0], "sample_rate": 1000.0, "max_lag": -0.001}, "error": "invalid_argument", "source": "max_lag must be non-negative"},
-    {"id": "iacc.zero_rate", "op": "iacc", "args": {"left": [1.0, 0.5], "right": [0.5, 1.0], "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"}
+    {"id": "iacc.zero_rate", "op": "iacc", "args": {"left": [1.0, 0.5], "right": [0.5, 1.0], "sample_rate": 0.0}, "error": "invalid_argument", "source": "sample_rate must be positive"},
+    {"id": "iacc.huge", "op": "iacc", "args": {"left": [3.214525821558802e+301, 1.0715086071862673e+301, -2.1430172143725346e+301, 5.357543035931337e+300], "right": [1.0715086071862673e+301, 2.1430172143725346e+301, 0.0, -1.0715086071862673e+301], "sample_rate": 1000.0}, "expected": 0.8651809126974002, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "case mixed times 2^1000: squares of the samples overflow a double, but a normalized correlation is unchanged by a scale, so the same value"},
+    {"id": "iacc.tiny", "op": "iacc", "args": {"left": [2.7997908555096566e-301, 9.332636185032189e-302, -1.8665272370064378e-301, 4.6663180925160944e-302], "right": [9.332636185032189e-302, 1.8665272370064378e-301, 0.0, -9.332636185032189e-302], "sample_rate": 1000.0}, "expected": 0.8651809126974002, "tol": {"abs": 1e-15, "rel": 1e-13}, "source": "case mixed times 2^-1000: squares of the samples underflow to 0, but a normalized correlation is unchanged by a scale, so the same value"}
   ]
 }

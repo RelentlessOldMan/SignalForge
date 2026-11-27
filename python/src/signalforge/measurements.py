@@ -267,14 +267,22 @@ class GccPhat:
     peak: float
 
 
-def _instantaneous_power(samples: ArrayLike) -> tuple[NDArray[np.float64], float]:
+def _instantaneous_power(
+    samples: ArrayLike, scaled: bool = False
+) -> tuple[NDArray[np.float64], float]:
+    """``|x|^2`` and its mean; with ``scaled``, of ``x`` times the power of 2 that brings its
+    largest real or imaginary magnitude into [1, 2), for results that are ratios of powers
+    (ADR 0632)."""
     x = np.asarray(samples)
     if x.ndim != 1 or x.shape[0] == 0:
         raise ValueError("samples must be a non-empty one-dimensional array")
     x = x.astype(np.complex128 if np.iscomplexobj(x) else np.float64, copy=False)
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
-    p = x.real * x.real + x.imag * x.imag if np.iscomplexobj(x) else x * x
+    if scaled:
+        p = _powers(x)
+    else:
+        p = x.real * x.real + x.imag * x.imag if np.iscomplexobj(x) else x * x
     mean = float(np.mean(p))
     if not mean > 0:
         raise ValueError("the mean power must be positive")
@@ -9810,7 +9818,7 @@ def temporal_centroid(samples: ArrayLike, sample_rate: float) -> TemporalCentroi
     fs = real(sample_rate, "sample_rate")
     if not (math.isfinite(fs) and fs > 0):
         raise ValueError("sample_rate must be finite and positive")
-    p = x.real * x.real + x.imag * x.imag if np.iscomplexobj(x) else x * x
+    p = _powers(x)
     total = float(np.sum(p))
     if not total > 0:
         raise ValueError("the samples' energy must be more than 0")
@@ -9833,6 +9841,7 @@ def autocorrelation_pitch(
         raise ValueError("samples must be a one-dimensional array of at least three samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
+    x = _by_power_of_2(x)
     fs, lo, hi = _lag_range(sample_rate, min_frequency, max_frequency)
     n = x.shape[0]
     if hi > n - 2:
@@ -9907,7 +9916,7 @@ def power_ccdf_level(samples: ArrayLike, probability: float) -> float:
     q = real(probability, "probability")
     if not 0 < q < 1:
         raise ValueError("probability must be in (0, 1)")
-    p, mean = _instantaneous_power(samples)
+    p, mean = _instantaneous_power(samples, scaled=True)
     m = math.floor(q * p.size)
     t = float(np.sort(p)[p.size - 1 - m])
     return 10 * (math.log10(t) - math.log10(mean)) if t > 0 else -math.inf
@@ -10985,7 +10994,7 @@ def gcc_phat(
             raise ValueError(f"{what} must be finite")
         if not np.any(a != 0):
             raise ValueError(f"{what} must not be all zero")
-        signals.append(a)
+        signals.append(_by_power_of_2(a))
     n, m = signals[0].shape[0], signals[1].shape[0]
     lo, hi = -(m - 1), n - 1
     if max_delay is not None:
@@ -11229,6 +11238,7 @@ def iacc(left: ArrayLike, right: ArrayLike, sample_rate: float, *, max_lag: floa
     lag = real(max_lag, "max_lag")
     if not (math.isfinite(lag) and lag >= 0):
         raise ValueError("max_lag must be finite and non-negative")
+    lv, rv = _by_power_of_2(lv), _by_power_of_2(rv)
     el, er = float(np.dot(lv, lv)), float(np.dot(rv, rv))
     if not (el > 0 and er > 0):
         raise ValueError("left and right must not be all zero")
@@ -11274,6 +11284,8 @@ def lateral_fraction(
     nb = math.floor(b * fs + 0.5)
     if nb < 1:
         raise ValueError("stop * sample_rate must round to at least 1 sample")
+    k = -_shared_exponent(ov, ev)
+    ov, ev = np.ldexp(ov, k), np.ldexp(ev, k)
     den = float(np.dot(ov[:nb], ov[:nb]))
     if not den > 0:
         raise ValueError("omni must have energy before stop")

@@ -15,11 +15,16 @@ public static partial class Measurements
     {
         if (left.IsEmpty || left.Length != right.Length)
             throw new ArgumentException("left and right must be non-empty and of equal length", nameof(right));
-        double el = 0, er = 0;
         for (int n = 0; n < left.Length; n++)
         {
             if (!(double.IsFinite(left[n]) && double.IsFinite(right[n])))
                 throw new ArgumentException("left and right must be finite", nameof(left));
+        }
+        left = ScaledByPowerOf2(left);
+        right = ScaledByPowerOf2(right);
+        double el = 0, er = 0;
+        for (int n = 0; n < left.Length; n++)
+        {
             el += left[n] * left[n];
             er += right[n] * right[n];
         }

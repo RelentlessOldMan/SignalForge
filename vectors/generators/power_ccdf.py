@@ -104,6 +104,39 @@ err("power_ccdf_level", "probability_one", {"samples": REAL, "probability": 1.0}
 err("power_ccdf_level", "all_zero", {"samples": [0.0, 0.0], "probability": 0.5},
     "the mean power must be positive")
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with the signal arguments times 2**k: the measure is unchanged
+    by that scale, and a power of 2 scales every value exactly, so the expected value
+    is the base case's."""
+    c = next(c for c in cases if c["id"] == base)
+    s = 2.0**k
+
+    def times(v):
+        if isinstance(v, dict):
+            return {part: times(v[part]) for part in ("re", "im")}
+        assert all(u * s / s == u for u in v), cid
+        return [u * s for u in v]
+
+    args = {name: times(v) if name in ('samples',) else v
+            for name, v in c["args"].items()}
+    op = base.split(".")[0]
+    cases.append({**c, "id": f"{op}.{cid}", "args": args, "source": why})
+
+
+scaled("huge", "power_ccdf_level.real_second", 1000,
+       "case real_second times 2^1000: squares of the samples overflow a double, but "
+       "a level over the mean is unchanged by a scale, so the same value")
+scaled("tiny", "power_ccdf_level.real_second", -1000,
+       "case real_second times 2^-1000: squares of the samples underflow to 0, but "
+       "a level over the mean is unchanged by a scale, so the same value")
+scaled("huge_complex", "power_ccdf_level.complex_half", 1000,
+       "case complex_half times 2^1000: squares of the samples overflow a double, but "
+       "a level over the mean is unchanged by a scale, so the same value")
+scaled("tiny_complex", "power_ccdf_level.complex_half", -1000,
+       "case complex_half times 2^-1000: squares of the samples underflow to 0, but "
+       "a level over the mean is unchanged by a scale, so the same value")
+
+
 doc = {
     "schema": 1,
     "suite": "power_ccdf",

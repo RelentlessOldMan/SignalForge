@@ -26,6 +26,8 @@ public static partial class Measurements
         SignalForge.Check.PositiveFinite(sampleRate, nameof(sampleRate));
         CheckPhatInput(x, nameof(x));
         CheckPhatInput(y, nameof(y));
+        x = ScaledByPowerOf2(x);
+        y = ScaledByPowerOf2(y);
         int n = x.Length, m = y.Length;
         int lo = -(m - 1), hi = n - 1;
         if (maxDelay is double md)

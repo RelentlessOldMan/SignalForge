@@ -6,13 +6,11 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-   - Both languages: six signal-energy measures overflow or underflow at extreme scales, as
-     a probe of the 3+-argument functions found (signal arguments times 2^±664 and 2^±996,
-     rates and orders unchanged): `autocorrelation_pitch`, `iacc`, `lateral_fraction` and
-     `temporal_centroid` give NaN near 1e200 and refuse near 1e-200, `power_ccdf_level` the
-     same, and `gcc_phat` finds the wrong lag at both. Scale as in ADRs 0624–0631, with
-     exact power-of-2 `huge` and `tiny` vectors. Done: every other function the probes
-     flagged (ADRs 0624–0631).
+   - Both languages: the scale probes used real samples only, so the functions that take
+     only complex samples were never probed. `kay_frequency` gives NaN at 2^1000 and 0 at
+     2^−1000. Probe the rest with complex records (signal arguments times 2^±664 and
+     2^±996), and fix what fails as in ADRs 0624–0632, with exact power-of-2 `huge` and
+     `tiny` vectors. Done: every function the real-valued probes flagged (ADRs 0624–0632).
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4353,6 +4351,16 @@ Updated with every chunk of work. Dates are absolute.
   of the 3+-argument functions, which also found six signal-energy measures, now a lead.
   Python 12636 passed, 2 skipped; .NET 10845 passed; conformance 8066/8066 in both. Version
   2026.11.26.22.
+
+- 2026-11-26: review fix, six signal-energy measures scale their records first
+  ([ADR 0632](adr/0632-signal-energy-measures-scaled-first.md)). The autocorrelation pitch,
+  temporal centroid, power CCDF level, IACC and lateral fraction gave NaN near 1e200 and
+  refused signals near 1e-200, and GCC-PHAT found the wrong lag at both, in both languages.
+  Each now scales by an exact power of 2 first: GCC-PHAT and the IACC each signal on its
+  own, the lateral fraction both channels by one power. `power_ccdf`, whose mean power is
+  not scale-free, is a limitation. Six generators gained `huge` and `tiny` vectors.
+  Python 12652 passed, 2 skipped; .NET 10861 passed; conformance 8082/8082 in both. Version
+  2026.11.26.23.
 
 ## Not built
 
