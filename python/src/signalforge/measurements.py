@@ -722,6 +722,7 @@ def dispersion_entropy(samples: ArrayLike, m: int, classes: int, delay: int = 1)
     x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
+    x = _by_power_of_2(x)
     windows = x.shape[0] - (k - 1) * tau
     if windows < 1:
         raise ValueError("samples are too short for one pattern")
@@ -784,6 +785,7 @@ def weighted_permutation_entropy(samples: ArrayLike, order: int, delay: int = 1)
     x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
+    x = _by_power_of_2(x)
     windows = x.shape[0] - (m - 1) * tau
     if windows < 1:
         raise ValueError("samples are too short for one window")
@@ -817,6 +819,7 @@ def increment_entropy(samples: ArrayLike, m: int, levels: int) -> float:
     x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
+    x = _by_power_of_2(x)
     words = x.shape[0] - k
     if words < 1:
         raise ValueError("samples must be at least m + 1 long")
@@ -1299,6 +1302,7 @@ def cosine_similarity_entropy(samples: ArrayLike, m: int, r: float, delay: int =
     x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
+    x = _by_power_of_2(x)
     w = x.shape[0] - (dim - 1) * tau
     if w < 2:
         raise ValueError("there must be at least two embedded vectors")
@@ -1326,6 +1330,7 @@ def ljung_box(samples: ArrayLike, lags: int) -> float:
     x = real_values(x, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
+    x = _by_power_of_2(x)
     n = x.shape[0]
     if not 1 <= h <= n - 1:
         raise ValueError("lags must be from 1 to len(samples) - 1")

@@ -10,13 +10,15 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static double LjungBox(ReadOnlySpan<double> samples, int lags)
     {
-        double sum = 0;
         foreach (double v in samples)
         {
             if (!double.IsFinite(v))
                 throw new ArgumentException("samples must be finite", nameof(samples));
-            sum += v;
         }
+        samples = ScaledByPowerOf2(samples);
+        double sum = 0;
+        foreach (double v in samples)
+            sum += v;
         int n = samples.Length;
         if (lags < 1 || lags > n - 1)
             throw new ArgumentOutOfRangeException(nameof(lags), lags, "must be from 1 to samples.Length - 1");

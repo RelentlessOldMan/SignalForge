@@ -75,6 +75,25 @@ err("one_vector", "W must be at least 2", m=5)
 err("zero_vector", "an embedded vector is all zeros", samples=[1.0, 0.0, 0.0, 2.0])
 err("nan", "samples must be finite", samples=[0.0, "nan", 1.0])
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with the samples times 2**k: the measure is unchanged by a scale,
+    and a power of 2 scales every value exactly, so the expected value is the base
+    case's."""
+    c = next(c for c in cases if c["id"] == "cosine_similarity_entropy." + base)
+    s = 2.0**k
+    assert all(u * s / s == u for u in c["args"]["samples"]), cid
+    args = {**c["args"], "samples": [u * s for u in c["args"]["samples"]]}
+    cases.append({**c, "id": "cosine_similarity_entropy." + cid, "args": args, "source": why})
+
+
+scaled("huge", "delay_2", 1000,
+       "case delay_2 times 2^1000: squares of the samples overflow a double, but the "
+       "measure is unchanged by a scale, so the same value")
+scaled("tiny", "delay_2", -1000,
+       "case delay_2 times 2^-1000: squares of the samples underflow to 0, but the "
+       "measure is unchanged by a scale, so the same value")
+
+
 doc = {
     "schema": 1,
     "suite": "cosine_similarity_entropy",

@@ -13,6 +13,8 @@
     {"id": "weighted_permutation_entropy.delay_zero", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "order": 2, "delay": 0}, "error": "invalid_argument", "source": "delay must be at least 1"},
     {"id": "weighted_permutation_entropy.too_short", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0, 0.5, 2.0, 1.5], "order": 3, "delay": 3}, "error": "invalid_argument", "source": "no window fits"},
     {"id": "weighted_permutation_entropy.constant", "op": "weighted_permutation_entropy", "args": {"samples": [2.0, 2.0, 2.0, 2.0], "order": 2}, "error": "invalid_argument", "source": "no window varies"},
-    {"id": "weighted_permutation_entropy.nan", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, "nan", 1.0], "order": 2}, "error": "invalid_argument", "source": "samples must be finite"}
+    {"id": "weighted_permutation_entropy.nan", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, "nan", 1.0], "order": 2}, "error": "invalid_argument", "source": "samples must be finite"},
+    {"id": "weighted_permutation_entropy.huge", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 1.0715086071862673e+301, 0.0, 5.357543035931337e+301], "order": 2}, "expected": 0.22853814395352803, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "case weights_matter times 2^1000: squares of the samples overflow a double, but the measure is unchanged by a scale, so the same value"},
+    {"id": "weighted_permutation_entropy.tiny", "op": "weighted_permutation_entropy", "args": {"samples": [0.0, 9.332636185032189e-302, 0.0, 4.666318092516094e-301], "order": 2}, "expected": 0.22853814395352803, "tol": {"abs": 1e-14, "rel": 1e-13}, "source": "case weights_matter times 2^-1000: squares of the samples underflow to 0, but the measure is unchanged by a scale, so the same value"}
   ]
 }

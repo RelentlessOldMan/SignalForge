@@ -6,14 +6,13 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-   - Both languages: scale-free functions with 3 or more arguments have not been probed at
-     extreme scales. The probe (multiply the arguments by 1e±200 and 1e±300 and compare with
-     the unscaled result) covered only 1- and 2-argument functions, and so missed 7 of the 11
-     room-acoustic measures that ADR 0630 fixed. Extend it to the rest, scaling the signal
-     arguments but not rates, orders or other parameters, and fix what fails as in ADRs
-     0624–0630, with exact power-of-2 `huge` and `tiny` vectors. Done: the divergences,
-     share-based and inequality indices, correlations, effect sizes, time-series tests and
-     room-acoustic measures (ADRs 0624–0630).
+   - Both languages: six signal-energy measures overflow or underflow at extreme scales, as
+     a probe of the 3+-argument functions found (signal arguments times 2^±664 and 2^±996,
+     rates and orders unchanged): `autocorrelation_pitch`, `iacc`, `lateral_fraction` and
+     `temporal_centroid` give NaN near 1e200 and refuse near 1e-200, `power_ccdf_level` the
+     same, and `gcc_phat` finds the wrong lag at both. Scale as in ADRs 0624–0631, with
+     exact power-of-2 `huge` and `tiny` vectors. Done: every other function the probes
+     flagged (ADRs 0624–0631).
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4344,6 +4343,16 @@ Updated with every chunk of work. Dates are absolute.
   `tiny` vectors, real and complex: all 36 failed in both languages before the change.
   Python 12626 passed, 2 skipped; .NET 10835 passed; conformance 8056/8056 in both. Version
   2026.11.26.21.
+
+- 2026-11-26: review fix, five more scale-free statistics scale the record first
+  ([ADR 0631](adr/0631-entropies-and-ljung-box-scaled-first.md)). The dispersion, weighted
+  permutation, increment and cosine similarity entropies and the Ljung–Box statistic gave
+  NaN or wrong values near 1e200 and refused records near 1e-200, in both languages. They
+  now scale by the power of 2 that brings the largest magnitude into [1, 2), as in ADR
+  0629, which is exact. Five generators gained `huge` and `tiny` vectors. Found by a probe
+  of the 3+-argument functions, which also found six signal-energy measures, now a lead.
+  Python 12636 passed, 2 skipped; .NET 10845 passed; conformance 8066/8066 in both. Version
+  2026.11.26.22.
 
 ## Not built
 

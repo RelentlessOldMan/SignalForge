@@ -21,6 +21,7 @@ public static partial class Measurements
             if (!double.IsFinite(v))
                 throw new ArgumentException("samples must be finite", nameof(samples));
         }
+        samples = ScaledByPowerOf2(samples);
         int words = samples.Length - m;
         if (words < 1)
             throw new ArgumentException("samples must be at least m + 1 long", nameof(samples));

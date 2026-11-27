@@ -20,6 +20,7 @@ public static partial class Measurements
             if (!double.IsFinite(v))
                 throw new ArgumentException("samples must be finite", nameof(samples));
         }
+        samples = ScaledByPowerOf2(samples);
         int windows = samples.Length - ((order - 1) * delay);
         if (windows < 1)
             throw new ArgumentException("samples are too short for one window", nameof(samples));

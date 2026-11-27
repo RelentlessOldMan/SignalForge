@@ -59,6 +59,25 @@ err("lags_too_many", "lags must be at most N - 1", lags=5)
 err("constant", "samples must not all be equal", samples=[2.0, 2.0, 2.0])
 err("nan", "samples must be finite", samples=[0.0, "nan", 1.0])
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with the samples times 2**k: the measure is unchanged by a scale,
+    and a power of 2 scales every value exactly, so the expected value is the base
+    case's."""
+    c = next(c for c in cases if c["id"] == "ljung_box." + base)
+    s = 2.0**k
+    assert all(u * s / s == u for u in c["args"]["samples"]), cid
+    args = {**c["args"], "samples": [u * s for u in c["args"]["samples"]]}
+    cases.append({**c, "id": "ljung_box." + cid, "args": args, "source": why})
+
+
+scaled("huge", "ramp", 1000,
+       "case ramp times 2^1000: squares of the samples overflow a double, but the "
+       "measure is unchanged by a scale, so the same value")
+scaled("tiny", "ramp", -1000,
+       "case ramp times 2^-1000: squares of the samples underflow to 0, but the "
+       "measure is unchanged by a scale, so the same value")
+
+
 doc = {
     "schema": 1,
     "suite": "ljung_box",

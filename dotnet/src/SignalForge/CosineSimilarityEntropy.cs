@@ -24,6 +24,7 @@ public static partial class Measurements
             if (!double.IsFinite(v))
                 throw new ArgumentException("samples must be finite", nameof(samples));
         }
+        samples = ScaledByPowerOf2(samples);
         long w = samples.Length - (long)(m - 1) * delay;
         if (w < 2)
             throw new ArgumentException("there must be at least two embedded vectors", nameof(samples));

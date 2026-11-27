@@ -349,8 +349,11 @@ rule for code not written yet.
   otherwise. Real, finite, not all equal; `q` finite, `≥ 0`; `2 ≤ bins ≤ 4096`.
   **(implemented)**
 - **Scale-free time-series statistics, scaled first**
-  ([ADR 0629](adr/0629-time-series-tests-scaled-first.md)): the time irreversibility, the
-  von Neumann ratio, the Buishand range test and the SNHT scale the record by the power of 2
+    ([ADR 0629](adr/0629-time-series-tests-scaled-first.md),
+  [ADR 0631](adr/0631-entropies-and-ljung-box-scaled-first.md)): the time irreversibility,
+  the von Neumann ratio, the Buishand range test, the SNHT, the dispersion, weighted
+  permutation, increment and cosine similarity entropies and the Ljung–Box statistic scale
+  the record by the power of 2
   that brings its largest magnitude into [1, 2), when that is positive and finite, before
   forming any deviation, so no square overflows or underflows. The scaling is exact.
   **(implemented)**
