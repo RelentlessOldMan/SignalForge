@@ -1628,6 +1628,14 @@ def kendall_tau(x: ArrayLike, y: ArrayLike) -> float:
     return s / math.sqrt(float(n0 - ties[0]) * float(n0 - ties[1]))
 
 
+def _by_largest_magnitude(a: NDArray[np.float64]) -> NDArray[np.float64]:
+    """``a`` divided by its largest magnitude, when that is positive, so no square of a
+    deviation overflows or underflows (ADR 0627); ``a`` itself otherwise."""
+    top = float(np.max(np.abs(a))) if a.size else 0.0
+    out: NDArray[np.float64] = a / top if top > 0 else a
+    return out
+
+
 def pearson_correlation(x: ArrayLike, y: ArrayLike) -> float:
     """The Pearson product-moment correlation of ``x`` and ``y`` (conventions: Pearson
     correlation; ADR 0371)."""
@@ -1642,7 +1650,7 @@ def pearson_correlation(x: ArrayLike, y: ArrayLike) -> float:
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
-    a, b = pair
+    a, b = (_by_largest_magnitude(v) for v in pair)
     n = a.shape[0]
     if b.shape[0] != n:
         raise ValueError("x and y must be the same length")
@@ -1676,7 +1684,7 @@ def distance_correlation(x: ArrayLike, y: ArrayLike) -> float:
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
-    a, b = pair
+    a, b = (_by_largest_magnitude(v) for v in pair)
     n = a.shape[0]
     if b.shape[0] != n:
         raise ValueError("x and y must be the same length")
@@ -1720,7 +1728,7 @@ def biweight_midcorrelation(x: ArrayLike, y: ArrayLike) -> float:
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a)
-    a, b = pair
+    a, b = (_by_largest_magnitude(v) for v in pair)
     n = a.shape[0]
     if b.shape[0] != n:
         raise ValueError("x and y must be the same length")

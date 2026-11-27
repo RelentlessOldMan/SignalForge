@@ -6,13 +6,14 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-      - Both languages: scale-free functions that still sum their raw values, so a record whose
-     values are finite but whose sum overflows gives a wrong result or the wrong error (probe:
-     `(1e308, 9e307, 1e300)` against `(1, 0.9, 1e-8)`; for two records, scale one). Still
-     failing: `time_irreversibility`, `von_neumann_ratio`, `horn_overlap`,
-     `pearson_correlation` and `distance_correlation`. Confirm each is meant to be scale-free
-     (count-based ones such as Margalef's are not), then scale as in ADRs 0624–0626, with
-     exact `huge` vectors. The share-based and inequality indices are done (ADRs 0625–0626).
+   - Both languages: scale-free functions that still overflow or underflow at extreme scales
+     (probe: multiply every argument by 1e±200 and 1e±300 and compare with the unscaled
+     result). Still failing: `cohen_d`, `hedges_g` and `glass_delta` (0 near 1e200, refused
+     near 1e-200); `buishand_range`, `snht`, `von_neumann_ratio` and `time_irreversibility`;
+     `energy_time_curve`, `schroeder_decay`, `noise_compensated_decay` and `sound_strength`
+     (NaN near 1e200, refused near 1e-200; confirm whether refusing is right for these).
+     Scale as in ADRs 0624–0627, with exact power-of-2 `huge` and `tiny` vectors. Done: the
+     divergences, share-based and inequality indices, and correlations (ADRs 0624–0627).
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4302,6 +4303,16 @@ Updated with every chunk of work. Dates are absolute.
   generator gained an exact `huge` vector: all 13 failed in both languages before the change.
   Python 12570 passed, 2 skipped; .NET 10779 passed; conformance 8000/8000 in both. Version
   2026.11.26.16.
+
+- 2026-11-26: review fix, correlations divided by each record's largest magnitude first
+  ([ADR 0627](adr/0627-correlations-scaled-first.md)). The Pearson correlation, distance
+  correlation and biweight midcorrelation gave NaN or 0 near 1e200, and near 1e-200 a
+  `ZeroDivisionError` in Python and NaN in C#. Each record is now divided by its largest
+  magnitude first. Each generator gained power-of-2 `huge` and `tiny` vectors: all 6 failed
+  in both languages before the change. A wider probe found 11 more such functions; they are
+  in Next.
+  Python 12576 passed, 2 skipped; .NET 10785 passed; conformance 8006/8006 in both. Version
+  2026.11.26.17.
 
 ## Not built
 

@@ -59,6 +59,23 @@ add("noisy_parabola", xs, ys,
     "40 random eighths from random.Random(372), y = x^2/4 plus random eighths")
 
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with x and y times 2**k: the measure is scale-free, and a power of 2
+    scales every value exactly, so the expected value is the base case's."""
+    c = next(c for c in cases if c["id"] == "distance_correlation." + base)
+    s = 2.0**k
+    args = {name: [v * s for v in c["args"][name]] for name in ("x", "y")}
+    assert all(Fr(a) == Fr(b) * Fr(2) ** k for name in ("x", "y")
+               for a, b in zip(args[name], c["args"][name])), cid
+    cases.append({**c, "id": "distance_correlation." + cid, "args": args, "source": why})
+
+
+scaled("huge", "square", 1000, "case square times 2^1000: squares of the deviations overflow a "
+       "double, but the measure is scale-free, so the same value")
+scaled("tiny", "square", -1000, "case square times 2^-1000: squares of the deviations underflow "
+       "to 0, but the measure is scale-free, so the same value")
+
+
 def err(cid, why, **args):
     base = {"x": [0.0, 1.0, 0.5], "y": [2.0, 1.0, 3.0]}
     base.update(args)

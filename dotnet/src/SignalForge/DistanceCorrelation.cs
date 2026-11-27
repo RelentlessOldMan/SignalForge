@@ -12,6 +12,8 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range.</exception>
     public static double DistanceCorrelation(ReadOnlySpan<double> x, ReadOnlySpan<double> y)
     {
+        x = ScaledToLargestMagnitude(x);
+        y = ScaledToLargestMagnitude(y);
         int n = x.Length;
         if (y.Length != n)
             throw new ArgumentException("x and y must be the same length", nameof(y));
