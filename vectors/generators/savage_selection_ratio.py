@@ -100,6 +100,10 @@ err(
     available=[1.0, 1e-310, 1.0],
 )
 
+for c in cases:  # a value below the absolute tolerance needs a relative one, or 0 passes
+    if "expected" in c and any(0 < abs(v) < TOL["abs"] for v in c["expected"]):
+        c["tol"] = {"abs": 0.0, "rel": TOL["rel"]}
+
 doc = {
     "schema": 1,
     "suite": "savage_selection_ratio",

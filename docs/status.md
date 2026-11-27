@@ -13,9 +13,6 @@ Updated with every chunk of work. Dates are absolute.
      in ADRs 0624–0634, with exact power-of-2 `huge` and `tiny` vectors. The clippers, gates,
      folders, quantizer and slew limiter have absolute thresholds, so their flags are not
      faults. Done: ADRs 0633 and 0634, and every function the measurement probes flagged.
-   - Vectors: look for cases where some non-zero expected values, but not all, are below the
-     case's `abs`, and check whether each is a value the case means to pin (`docs/testing.md`,
-     Tolerances). Done: the cases where every expected value was below it.
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4394,6 +4391,14 @@ Updated with every chunk of work. Dates are absolute.
   zeros, so they keep theirs. The rule is in `docs/testing.md`.
   Python 12663 passed, 2 skipped; .NET 10872 passed; conformance 8093/8093 in both. Version
   2026.11.26.26.
+
+- 2026-11-26: review fix, two more vectors whose tolerance could not pin a value.
+  `manly_alpha.tiny` and `savage_selection_ratio.tiny` check that the smallest double counts,
+  but with `abs` = 1e-14 a result of 0 for it passed. They now use a relative tolerance only,
+  and both languages still pass. A scan found no other case with a non-zero expected value
+  below 1e-100 and its `abs`, and none on the default tolerance below 1e-15.
+  Python 12663 passed, 2 skipped; .NET 10872 passed; conformance 8093/8093 in both. Version
+  2026.11.26.27.
 
 ## Not built
 
