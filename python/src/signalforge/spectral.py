@@ -2975,10 +2975,26 @@ def analytic_signal(samples: ArrayLike) -> NDArray[np.complex128]:
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
     n = x.shape[0]
+    top = float(np.max(np.abs(x)))
+    e = max(math.frexp(top)[1] - 1, 0)  # scaled down only, past 2 (ADR 0633)
     twice = 2 * np.arange(n)
     w = np.where(twice < n, 2.0, np.where(twice == n, 1.0, 0.0))
     w[0] = 1.0
-    return np.asarray(np.fft.ifft(np.fft.fft(x) * w), dtype=np.complex128)
+    z = np.fft.ifft(np.fft.fft(np.ldexp(x, -e)) * w)
+    out = np.empty(n, dtype=np.complex128)
+    out.real, out.imag = np.ldexp(z.real, e), np.ldexp(z.imag, e)
+    return out
+
+
+def _each_by_power_of_2(z: NDArray[np.complex128]) -> NDArray[np.complex128]:
+    """Each value of ``z`` times the power of 2 that brings its larger real or imaginary
+    magnitude into [1, 2), zeros unchanged, so no product of two values overflows or
+    underflows; the scaling is exact and leaves every angle as it was (ADR 0633)."""
+    top = np.maximum(np.abs(z.real), np.abs(z.imag))
+    e = np.where(top > 0, np.frexp(top)[1] - 1, 0)
+    out = np.empty(z.shape, dtype=np.complex128)
+    out.real, out.imag = np.ldexp(z.real, -e), np.ldexp(z.imag, -e)
+    return out
 
 
 def frequency_shift(samples: ArrayLike, shift: float, sample_rate: float) -> NDArray[np.float64]:
@@ -3003,5 +3019,6 @@ def instantaneous_frequency(samples: ArrayLike, sample_rate: float) -> NDArray[n
     z = analytic_signal(samples)
     if z.shape[0] < 2:
         raise ValueError("samples must hold at least two values")
+    z = _each_by_power_of_2(z)
     w = z[1:] * np.conj(z[:-1])
     return np.asarray(np.arctan2(w.imag, w.real) * (fs / (2 * math.pi)), dtype=np.float64)

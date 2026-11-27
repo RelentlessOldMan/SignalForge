@@ -52,6 +52,12 @@ add("two_tones", [math.cos(a) + 0.6 * math.cos(b) for a, b in zip(t1, t2)],
     "cos(2 pi 2n/32) + 0.6 cos(2 pi 9n/32 + 0.3): z = e^{j theta1} + 0.6 e^{j theta2}; the "
     "angle of each step, which swings between and beyond 2 and 9 Hz")
 
+for word, k, how in (("huge", 1000, "overflow"), ("tiny", -1000, "underflow to 0")):
+    th = theta(16, 3, 0.4)
+    add(word, [math.cos(t) * 2.0**k for t in th], [cmath.exp(1j * t) for t in th], 1000.0,
+        f"cos_even times 2^{k}: z and the products of its samples {how}, but each step's "
+        "angle is unchanged by a scale: every step 187.5 Hz")
+
 
 def err(cid, x, fs, why):
     cases.append({"id": f"instantaneous_frequency.{cid}", "op": "instantaneous_frequency",

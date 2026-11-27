@@ -6,11 +6,14 @@ Updated with every chunk of work. Dates are absolute.
 
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
-   - Both languages: the scale probes used real samples only, so the functions that take
-     only complex samples were never probed. `kay_frequency` gives NaN at 2^1000 and 0 at
-     2^−1000. Probe the rest with complex records (signal arguments times 2^±664 and
-     2^±996), and fix what fails as in ADRs 0624–0632, with exact power-of-2 `huge` and
-     `tiny` vectors. Done: every function the real-valued probes flagged (ADRs 0624–0632).
+   - Both languages: scale probes outside the measurement module (signal arguments times
+     2^±664 and 2^±996, real and complex) flag `evm` and `dfe_least_squares` (NaN when huge,
+     refused when tiny), `moving_rms` (inf when huge), `qpsk_demap_llr` and `psk8_demap_llr`
+     (NaN when huge), and `iq_imbalance` (NaN near 1e300; check whether the result itself is
+     out of range). Fix as in ADRs 0624–0633, with exact power-of-2 `huge` and `tiny`
+     vectors. The clippers, gates, folders, quantizer and slew limiter have absolute
+     thresholds, so their flags are not faults. Done: kay_frequency, instantaneous_frequency
+     and analytic_signal (ADR 0633), and every function the measurement probes flagged.
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4361,6 +4364,16 @@ Updated with every chunk of work. Dates are absolute.
   not scale-free, is a limitation. Six generators gained `huge` and `tiny` vectors.
   Python 12652 passed, 2 skipped; .NET 10861 passed; conformance 8082/8082 in both. Version
   2026.11.26.23.
+
+- 2026-11-26: review fix, phase steps at a power-of-2 scale
+  ([ADR 0633](adr/0633-phase-steps-at-a-power-of-2-scale.md)). Kay's frequency estimator gave
+  NaN near 2^1000 and 0 near 2^−1000, the instantaneous frequency 0 near 2^−1000, and the
+  analytic signal's FFT overflowed near the top of the range, in both languages. Both
+  estimators now scale each sample by its own power of 2 before the products, so a record of
+  any dynamic range works, and the analytic signal scales large records down around its FFT.
+  Six new vectors, including one that no common scale can fix.
+  Python 12658 passed, 2 skipped; .NET 10867 passed; conformance 8088/8088 in both. Version
+  2026.11.26.24.
 
 ## Not built
 

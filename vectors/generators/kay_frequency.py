@@ -64,6 +64,12 @@ case("two_samples", [2, 2j], 1.0, 0.25, "one step of pi/2, weight 1: f = 1/4 of 
 tone("tone_fine", 64, 1000.0, 123.456, 1.0, 0.3)
 tone("tone_negative", 50, 48000.0, -7321.5, 0.01, -2.0)
 tone("tone_near_half", 33, 1.0, 0.45, 3.0, 1.0)
+tone("huge", 64, 1000.0, 123.456, 2.0**1000, 0.3)
+tone("tiny", 64, 1000.0, 123.456, 2.0**-1000, 0.3)
+B = 2.0**1000
+case("mixed_scales", [B, B * 1j, -1 / B, -1j / B], 4.0, 1.0,
+     "steps of pi/2 at fs 4 between samples 2^1000 and 2^-1000 apart in size: the first "
+     "product overflows and the last underflows, but each step's angle is pi/2, so f = 1")
 
 ONE = {"re": [1.0], "im": [0.0]}
 err("one_sample", {"samples": ONE, "sample_rate": 1.0}, "needs at least two samples")

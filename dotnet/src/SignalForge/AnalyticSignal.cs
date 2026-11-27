@@ -20,11 +20,33 @@ public static partial class Spectral
             if (!double.IsFinite(v))
                 throw new ArgumentException("samples must be finite", nameof(samples));
         }
-        Complex[] x = Fft(samples);
+        double top = 0;
+        foreach (double v in samples)
+            top = Math.Max(top, Math.Abs(v));
+        int e = top >= 2 ? Math.ILogB(top) : 0; // scaled down only, past 2 (ADR 0633)
+        double[] scaled = new double[samples.Length];
+        for (int i = 0; i < scaled.Length; i++)
+            scaled[i] = Math.ScaleB(samples[i], -e);
+        Complex[] x = Fft(scaled);
         int n = x.Length;
         for (int k = 1; k < n; k++)
             x[k] *= 2 * k < n ? 2 : 2 * k == n ? 1 : 0;
-        return Ifft(x);
+        Complex[] z = Ifft(x);
+        for (int i = 0; i < n; i++)
+            z[i] = new Complex(Math.ScaleB(z[i].Real, e), Math.ScaleB(z[i].Imaginary, e));
+        return z;
+    }
+
+    /// <summary><paramref name="z"/> times the power of 2 that brings its larger real or
+    /// imaginary magnitude into [1, 2), zero unchanged, so no product of two values overflows
+    /// or underflows; the scaling is exact and leaves the angle as it was (ADR 0633).</summary>
+    internal static Complex ByPowerOf2(Complex z)
+    {
+        double top = Math.Max(Math.Abs(z.Real), Math.Abs(z.Imaginary));
+        if (!(top > 0) || double.IsInfinity(top))
+            return z;
+        int e = Math.ILogB(top);
+        return new Complex(Math.ScaleB(z.Real, -e), Math.ScaleB(z.Imaginary, -e));
     }
 
     /// <summary>The instantaneous frequency <c>fs/(2π)·arg(z[n+1]·conj z[n])</c> in Hz, with
@@ -43,7 +65,7 @@ public static partial class Spectral
         double scale = sampleRate / (2 * Math.PI);
         for (int n = 0; n < f.Length; n++)
         {
-            Complex w = z[n + 1] * Complex.Conjugate(z[n]);
+            Complex w = ByPowerOf2(z[n + 1]) * Complex.Conjugate(ByPowerOf2(z[n]));
             f[n] = Math.Atan2(w.Imaginary, w.Real) * scale;
         }
         return f;

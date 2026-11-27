@@ -46,6 +46,12 @@ add("impulse3", [1.0, 0.0, 0.0], [1, r * 1j, -r * 1j],
     "X = 1 1 1, W = 1 2 0: z[n] = (1 + 2 e^{j 2 pi n/3})/3 = 1, j/sqrt 3, -j/sqrt 3")
 add("single", [2.5], [2.5], "N = 1: W = 1, the sample itself")
 
+x, z = tone(16, 3, 0.0, "sin")
+assert all(v * 2.0**1020 / 2.0**1020 == v for v in x)
+add("huge", [v * 2.0**1020 for v in x], [v * 2.0**1020 for v in z],
+    "sin_even times 2^1020: the bin-3 term 8 x 2^1020, doubled, overflows a double, but the "
+    "analytic signal is linear and a power of 2 scales exactly: -j e^{j theta} times 2^1020")
+
 
 def err(cid, x, why):
     cases.append({"id": f"analytic_signal.{cid}", "op": "analytic_signal",

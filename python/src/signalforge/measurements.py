@@ -9936,6 +9936,7 @@ def kay_frequency(samples: ArrayLike, sample_rate: float) -> float:
         raise ValueError("samples must be finite")
     if np.any(x == 0):
         raise ValueError("samples must be non-zero")
+    x = spectral._each_by_power_of_2(x)
     a, b = x.real[1:], x.imag[1:]
     c, d = x.real[:-1], x.imag[:-1]
     steps = np.arctan2(b * c - a * d, a * c + b * d)

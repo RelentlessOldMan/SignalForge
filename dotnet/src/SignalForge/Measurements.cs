@@ -489,7 +489,8 @@ public static partial class Measurements
         double half = total / 2.0, scale = 3.0 * total / (2.0 * ((double)total * total - 1)), sum = 0;
         for (int n = 0; n < total - 1; n++)
         {
-            double a = samples[n + 1].Real, b = samples[n + 1].Imaginary, c = samples[n].Real, d = samples[n].Imaginary;
+            Complex next = Spectral.ByPowerOf2(samples[n + 1]), here = Spectral.ByPowerOf2(samples[n]);
+            double a = next.Real, b = next.Imaginary, c = here.Real, d = here.Imaginary;
             double u = (n - (half - 1)) / half;
             sum += scale * (1 - u * u) * Math.Atan2(b * c - a * d, a * c + b * d);
         }

@@ -178,8 +178,10 @@ rule for code not written yet.
   `kay_frequency(samples, sample_rate)`, C# `Measurements.KayFrequency`): `Δ_n = atan2` of
   `z_n = x[n+1]·conj x[n]`, written `(ac + bd) + i(bc − ad)`, for `n = 0 … N − 2`; weights
   `w_n = 3N/(2(N² − 1))·(1 − ((n − (N/2 − 1))/(N/2))²)` (sum 1); `f = fs·Σ w_n Δ_n / (2π)` Hz.
-  At least two samples, all finite and non-zero; `sample_rate` finite and positive.
-  **(implemented)**
+  At least two samples, all finite and non-zero; `sample_rate` finite and positive. Each sample
+  is first multiplied by the power of 2 that brings its larger real or imaginary magnitude into
+  [1, 2), which leaves every `Δ_n` as it was and keeps `z_n` in range
+  ([ADR 0633](adr/0633-phase-steps-at-a-power-of-2-scale.md)). **(implemented)**
 - **Zero-crossing rate** ([ADR 0146](adr/0146-zero-crossing-rate.md);
   `zero_crossing_rate(samples)`, C# `Measurements.ZeroCrossingRate`): a sample is positive when
   `x ≥ 0` (so 0 and −0.0 are positive), negative otherwise; `rate = #{n : sign x[n] ≠ sign
@@ -2444,7 +2446,10 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
 - **Analytic signal** (`analytic_signal(samples)`, C# `Spectral.AnalyticSignal`,
   [ADR 0185](adr/0185-analytic-signal.md)): `z = ifft(fft(x)·W)` with `W[0] = 1`, `W[k] = 2`
   for `0 < 2k < N`, `W[N/2] = 1` for even `N`, `W[k] = 0` for `2k > N` (Marple); `Re z = x` up
-  to rounding. Input real, 1-D, finite, not empty; complex input is invalid. **(implemented)**
+  to rounding. Input real, 1-D, finite, not empty; complex input is invalid. A record whose
+  largest magnitude is 2 or more is scaled down by the power of 2 that brings it into [1, 2)
+  before the FFT, and the result scaled back, so the FFT cannot overflow where `z` does not
+  ([ADR 0633](adr/0633-phase-steps-at-a-power-of-2-scale.md)). **(implemented)**
 - **Frequency shifter** (`frequency_shift(samples, shift, sample_rate)`, C#
   `Spectral.FrequencyShift`, [ADR 0301](adr/0301-frequency-shift.md)): with
   `z = analytic_signal(x)` and `θ[n] = (2π·shift)·(n/fs)`, `y[n] = Re z[n]·cos θ[n] −
@@ -2454,7 +2459,8 @@ Decided in [ADR 0006](adr/0006-fft-windows-spectra.md). Python: `signalforge.spe
   `Spectral.InstantaneousFrequency`, [ADR 0187](adr/0187-instantaneous-frequency.md)): `f[n] =
   fs/(2π)·atan2(Im w, Re w)`, `w = z[n+1]·conj z[n]`, `z` the analytic signal; `N − 1` values in
   Hz in `(−fs/2, fs/2]`, no unwrapping; undefined where `z` is zero. Analytic-signal input rules
-  with `N ≥ 2`; `sample_rate` finite and positive. **(implemented)**
+  with `N ≥ 2`; `sample_rate` finite and positive. Each `z[n]` is scaled by a power of 2 first,
+  as for Kay's estimator (ADR 0633). **(implemented)**
 - **x dB bandwidth** (`db_bandwidth(frequencies, psd, drop_db, band=None)`,
   [ADR 0122](adr/0122-db-bandwidth.md)): over the bins (validated as for channel power, no span)
   whose centers lie in `band = (low, high)` (default: all), the peak is the largest PSD, first on
