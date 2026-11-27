@@ -16,6 +16,7 @@ public static partial class Measurements
             throw new ArgumentException("x must hold at least 1 values", nameof(x));
         if (y.Length < 2)
             throw new ArgumentException("y must hold at least 2 values", nameof(y));
+        ScaleTogether(ref x, ref y);
         double mx = GlassMean(x, nameof(x));
         double my = GlassMean(y, nameof(y));
         double ss = 0;

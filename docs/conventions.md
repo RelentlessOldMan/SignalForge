@@ -538,6 +538,10 @@ rule for code not written yet.
   the Matthews correlation; `(TP·(TN + FP) + TN·(TP + FN))/(2·(TP + FN)·(TN + FP))`, one
   division of whole numbers in `double`. Equal lengths, `N ≥ 1`; the truth holds a 1 and a 0.
   **(implemented)**
+- **Effect sizes, scaled together** ([ADR 0628](adr/0628-effect-sizes-scaled-together.md)):
+  Cohen's d, Hedges' g and Glass's delta scale both checked records by the power of 2 that
+  brings the largest magnitude in either into [1, 2), when that is positive, before forming
+  any mean or deviation, so no square overflows or underflows. The scaling is exact. **(implemented)**
 - **Cohen's d** ([ADR 0397](adr/0397-cohen-d.md); `cohen_d(x, y)`, C# `Measurements.CohenD`):
   `(x̄ − ȳ)/s`, `s` the pooled standard deviation over `n_x + n_y − 2`; positive when `x` has
   the larger mean. Each sample at least 2, finite; `s > 0`. **(implemented)**

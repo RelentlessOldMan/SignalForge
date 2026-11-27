@@ -90,6 +90,24 @@ y = [rng.gauss(10.0, 2.0) for _ in range(60)]
 add("gaussian", x, y, "40 and 60 values from random.Random(398), N(10.5, 2) and N(10, 2): m = 98")
 
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with x and y times 2**k: the measure is unchanged when both records are
+    scaled alike, and a power of 2 scales every value exactly, so the expected value is the
+    base case's."""
+    c = next(c for c in cases if c["id"] == "hedges_g." + base)
+    s = 2.0**k
+    args = {name: [v * s for v in c["args"][name]] for name in ("x", "y")}
+    assert all(v * s / s == v for name in ("x", "y")
+               for v in c["args"][name]), cid
+    cases.append({**c, "id": "hedges_g." + cid, "args": args, "source": why})
+
+
+scaled("huge", "two", 1000, "case two times 2^1000: squares of the deviations overflow a "
+       "double, but the measure is unchanged by a common scale, so the same value")
+scaled("tiny", "two", -1000, "case two times 2^-1000: squares of the deviations underflow "
+       "to 0, but the measure is unchanged by a common scale, so the same value")
+
+
 def err(cid, why, **args):
     base = {"x": [1.0, 2.0, 3.0], "y": [2.0, 4.0]}
     base.update(args)

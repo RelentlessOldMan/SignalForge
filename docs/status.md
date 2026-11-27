@@ -8,12 +8,12 @@ Updated with every chunk of work. Dates are absolute.
    first). Worst first:
    - Both languages: scale-free functions that still overflow or underflow at extreme scales
      (probe: multiply every argument by 1e±200 and 1e±300 and compare with the unscaled
-     result). Still failing: `cohen_d`, `hedges_g` and `glass_delta` (0 near 1e200, refused
-     near 1e-200); `buishand_range`, `snht`, `von_neumann_ratio` and `time_irreversibility`;
-     `energy_time_curve`, `schroeder_decay`, `noise_compensated_decay` and `sound_strength`
-     (NaN near 1e200, refused near 1e-200; confirm whether refusing is right for these).
-     Scale as in ADRs 0624–0627, with exact power-of-2 `huge` and `tiny` vectors. Done: the
-     divergences, share-based and inequality indices, and correlations (ADRs 0624–0627).
+     result). Still failing: `buishand_range`, `snht`, `von_neumann_ratio` and
+     `time_irreversibility`; `energy_time_curve`, `schroeder_decay`, `noise_compensated_decay`
+     and `sound_strength` (NaN near 1e200, refused near 1e-200; confirm whether refusing is
+     right for these). Scale as in ADRs 0624–0628, with exact power-of-2 `huge` and `tiny`
+     vectors. Done: the divergences, share-based and inequality indices, correlations and
+     effect sizes (ADRs 0624–0628).
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4313,6 +4313,16 @@ Updated with every chunk of work. Dates are absolute.
   in Next.
   Python 12576 passed, 2 skipped; .NET 10785 passed; conformance 8006/8006 in both. Version
   2026.11.26.17.
+
+- 2026-11-26: review fix, effect sizes divide both records by one common scale first
+  ([ADR 0628](adr/0628-effect-sizes-scaled-together.md)). Cohen's d, Hedges' g and Glass's
+  delta gave 0 near 1e200 and refused records near 1e-200 as having no spread, in both
+  languages. Both records are now scaled first by the power of 2 that brings the largest
+  magnitude in either into [1, 2), which is exact. Each
+  generator gained power-of-2 `huge` and `tiny` vectors: all 6 failed in both languages
+  before the change.
+  Python 12582 passed, 2 skipped; .NET 10791 passed; conformance 8012/8012 in both. Version
+  2026.11.26.19.
 
 ## Not built
 

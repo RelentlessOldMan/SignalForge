@@ -39,4 +39,36 @@ public static partial class Measurements
             scaled[i] = samples[i] / top;
         return scaled;
     }
+
+    /// <summary>Scales both records by the power of 2 that brings the largest magnitude in
+    /// either into [1, 2), when that is positive and finite, for measures that do not change
+    /// when both are scaled alike, so no square of a deviation can overflow or underflow. The
+    /// scaling is exact, so the result is the same as unscaled whenever nothing overflows.
+    /// Otherwise leaves the records unchanged for the caller's own checks to refuse (ADR
+    /// 0628).</summary>
+    private static void ScaleTogether(ref ReadOnlySpan<double> x, ref ReadOnlySpan<double> y)
+    {
+        double top = 0;
+        foreach (double v in x)
+        {
+            if (Math.Abs(v) > top)
+                top = Math.Abs(v);
+        }
+        foreach (double v in y)
+        {
+            if (Math.Abs(v) > top)
+                top = Math.Abs(v);
+        }
+        if (!(top > 0) || double.IsInfinity(top))
+            return;
+        int e = Math.ILogB(top);
+        double[] sx = new double[x.Length];
+        for (int i = 0; i < x.Length; i++)
+            sx[i] = Math.ScaleB(x[i], -e);
+        double[] sy = new double[y.Length];
+        for (int i = 0; i < y.Length; i++)
+            sy[i] = Math.ScaleB(y[i], -e);
+        x = sx;
+        y = sy;
+    }
 }

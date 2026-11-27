@@ -2449,6 +2449,10 @@ def cohen_d(x: ArrayLike, y: ArrayLike) -> float:
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a.tolist())
+    top = max(abs(v) for values in pair for v in values)
+    if top > 0:
+        e = math.frexp(top)[1] - 1
+        pair = [[math.ldexp(v, -e) for v in values] for values in pair]
     means = []
     ss = 0.0
     for values in pair:
@@ -2492,6 +2496,10 @@ def glass_delta(x: ArrayLike, y: ArrayLike) -> float:
         if not np.all(np.isfinite(a)):
             raise ValueError(f"{name} must be finite")
         pair.append(a.tolist())
+    top = max(abs(v) for values in pair for v in values)
+    if top > 0:
+        e = math.frexp(top)[1] - 1
+        pair = [[math.ldexp(v, -e) for v in values] for values in pair]
     means = []
     for values in pair:
         total = 0.0

@@ -12,6 +12,7 @@ public static partial class Measurements
     /// deviation is zero.</exception>
     public static double CohenD(ReadOnlySpan<double> x, ReadOnlySpan<double> y)
     {
+        ScaleTogether(ref x, ref y);
         double ss = 0;
         double mx = CohenDMean(x, nameof(x), ref ss);
         double my = CohenDMean(y, nameof(y), ref ss);
