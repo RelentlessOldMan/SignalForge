@@ -41,6 +41,26 @@ add("long_window", [1.0, 2.0, 3.0], 8, "window longer than the input")
 add("complex", [3.0, 0.0, -1.0, 2.0], 2, "complex samples", im=[4.0, 1.0, 1.0, -2.0])
 
 
+REL = {"abs": 0.0, "rel": 1e-13}  # values near 2^-1000: an absolute tolerance would pass anything
+MIXED = [0.5, 1.5, -1.0, 2.25, 0.0, -0.75, 1.0, 3.0, -2.0, 0.25]
+base = rms([Fr(v) ** 2 for v in MIXED], 3)
+for word, k, how in (("huge", 1000, "overflow a double"), ("tiny", -1000, "underflow to 0")):
+    assert all(v * 2.0**k / 2.0**k == v for v in MIXED)
+    cases.append({"id": f"moving_rms.{word}", "op": "moving_rms",
+                  "args": {"samples": [v * 2.0**k for v in MIXED], "length": 3},
+                  "expected": [v * 2.0**k for v in base], "tol": REL,
+                  "source": f"mixed times 2^{k}: the squares {how}, but an RMS scales with the "
+                  "samples and a power of 2 scales exactly, so mixed's values times 2^" + str(k)})
+B = 2.0**1000
+cases.append({"id": "moving_rms.wide", "op": "moving_rms",
+              "args": {"samples": [B, B, 3 / B, 4 / B], "length": 2},
+              "expected": [B * math.sqrt(0.5), B, B * math.sqrt(0.5), 5 / B * math.sqrt(0.5)],
+              "tol": REL,
+              "source": "N = 2 over 2^1000, 2^1000, 3 x 2^-1000, 4 x 2^-1000: windows "
+              "2^1000/sqrt 2, 2^1000, 2^1000/sqrt 2 (the 3 x 2^-1000 is below the last bit), and "
+              "5 x 2^-1000/sqrt 2; no one scale keeps both the first and last windows in range"})
+
+
 def err(cid, why, **args):
     cases.append({"id": f"moving_rms.{cid}", "op": "moving_rms", "args": args,
                   "error": "invalid_argument", "source": why})

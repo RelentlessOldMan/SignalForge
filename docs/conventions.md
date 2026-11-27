@@ -3469,7 +3469,10 @@ Decided in [ADR 0011](adr/0011-resampling.md). Python: `signalforge.dsp`; C#: `S
 - **Moving RMS** (`moving_rms(samples, length)`, C# `Dsp.MovingRms`,
   [ADR 0239](adr/0239-moving-rms.md)): `y[n] = sqrt((1/N) Σ_{k=n−N+1}^{n} |x[k]|²)`, `x` zero
   before 0 (from rest: always divided by `N`); summed directly, oldest first. Integer
-  `length ≥ 1`; samples finite, non-empty, real or complex; output real. **(implemented)**
+  `length ≥ 1`; samples finite, non-empty, real or complex; output real. Each window's `|x[k]|`
+  are first multiplied by the power of 2 that brings the window's largest into [1, 2), and the
+  root by its inverse, which is exact and keeps the squares in range
+  ([ADR 0634](adr/0634-moving-rms-and-evm-at-a-power-of-2-scale.md)). **(implemented)**
 - **Schroeder allpass section** (`allpass_comb(samples, delay, gain)`, C# `Dsp.AllpassComb`,
   [ADR 0240](adr/0240-allpass-comb.md)): `y[n] = −g x[n] + x[n−D] + g y[n−D]`, added left to
   right, zero before 0; `H(z) = (−g + z^−D)/(1 − g z^−D)`, `h[0] = −g`,
@@ -4120,7 +4123,10 @@ Python: `signalforge.metrics`; C#: `SignalForge.Metrics`.
 - **EVM** (`evm(measured, reference)`): with `e = measured − reference`,
   `rms = √(Σ|e|² / Σ|reference|²)`, `rms_percent = 100·rms`, `rms_db = 20·log10(rms)` (−∞ for a
   perfect match), `peak = max|e| / √(mean |reference|²)`, `peak_index` its first index, and
-  `num_symbols`. Equal non-zero lengths, finite values, reference power `> 0`. **(implemented)**
+  `num_symbols`. Equal non-zero lengths, finite values, reference power `> 0`. Both records are
+  first multiplied by the power of 2 that brings their largest real or imaginary magnitude into
+  [1, 2), so the squares stay in range; EVM is a ratio, so nothing changes
+  ([ADR 0634](adr/0634-moving-rms-and-evm-at-a-power-of-2-scale.md)). **(implemented)**
 - **QPSK BER theory** (`qpsk_ber_theory(eb_n0_db)`): Gray-coded QPSK in AWGN,
   `Pb = ½·erfc(√(Eb/N0))`, Eb/N0 linear from dB; where that overflows (above about 3080 dB) it
   is infinite and `Pb = 0`. `−∞` dB gives ½, NaN is rejected. For QPSK `Es = 2·Eb`, so

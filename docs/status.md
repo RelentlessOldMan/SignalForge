@@ -7,13 +7,18 @@ Updated with every chunk of work. Dates are absolute.
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
    - Both languages: scale probes outside the measurement module (signal arguments times
-     2^±664 and 2^±996, real and complex) flag `evm` and `dfe_least_squares` (NaN when huge,
-     refused when tiny), `moving_rms` (inf when huge), `qpsk_demap_llr` and `psk8_demap_llr`
-     (NaN when huge), and `iq_imbalance` (NaN near 1e300; check whether the result itself is
-     out of range). Fix as in ADRs 0624–0633, with exact power-of-2 `huge` and `tiny`
-     vectors. The clippers, gates, folders, quantizer and slew limiter have absolute
-     thresholds, so their flags are not faults. Done: kay_frequency, instantaneous_frequency
-     and analytic_signal (ADR 0633), and every function the measurement probes flagged.
+     2^±664 and 2^±996, real and complex) flag `dfe_least_squares` (NaN when huge, refused
+     when tiny), `qpsk_demap_llr` and `psk8_demap_llr` (NaN when huge), and `iq_imbalance`
+     (NaN near 1e300: `1j * inf` makes the real part NaN, which should be `I` exactly). Fix as
+     in ADRs 0624–0634, with exact power-of-2 `huge` and `tiny` vectors. The clippers, gates,
+     folders, quantizer and slew limiter have absolute thresholds, so their flags are not
+     faults. Done: ADRs 0633 and 0634, and every function the measurement probes flagged.
+   - Vectors: six cases have every expected value below their own absolute tolerance, so they
+     pass for any output near 0: `clark_evans_ratio.tiny`, `decay_curvature.single`,
+     `minkowski_distance.tiny`, `pearson_heron_ii.independent`, and
+     `pielou_nonrandomness.tiny` and `.dense`. Give each a tolerance that can fail, and check
+     each then still passes in both languages. Also look for cases where only some values
+     are below the tolerance.
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4374,6 +4379,15 @@ Updated with every chunk of work. Dates are absolute.
   Six new vectors, including one that no common scale can fix.
   Python 12658 passed, 2 skipped; .NET 10867 passed; conformance 8088/8088 in both. Version
   2026.11.26.24.
+
+- 2026-11-26: review fix, moving RMS and EVM at a power-of-2 scale
+  ([ADR 0634](adr/0634-moving-rms-and-evm-at-a-power-of-2-scale.md)). The moving RMS was
+  infinite near 2^1000 and 0 near 2^−1000, and EVM was NaN or refused the reference, in both
+  languages. The moving RMS now scales each window by its own power of 2, and EVM both records
+  by one. Five new vectors, with a relative tolerance only, since an absolute one passed the
+  tiny case even before the fix.
+  Python 12663 passed, 2 skipped; .NET 10872 passed; conformance 8093/8093 in both. Version
+  2026.11.26.25.
 
 ## Not built
 

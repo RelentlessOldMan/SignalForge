@@ -39,13 +39,23 @@ public static class Metrics
     {
         if (measured.Length != reference.Length || measured.IsEmpty)
             throw new ArgumentException("measured and reference must be non-empty and the same length", nameof(measured));
-        double refPower = 0, errPower = 0, peak = -1;
-        int peakIndex = 0;
+        double top = 0;
         for (int i = 0; i < measured.Length; i++)
         {
             Complex m = measured[i], r = reference[i];
             if (!double.IsFinite(m.Real) || !double.IsFinite(m.Imaginary) || !double.IsFinite(r.Real) || !double.IsFinite(r.Imaginary))
                 throw new ArgumentException("symbols must be finite", nameof(measured));
+            top = Math.Max(Math.Max(top, Math.Max(Math.Abs(m.Real), Math.Abs(m.Imaginary))),
+                Math.Max(Math.Abs(r.Real), Math.Abs(r.Imaginary)));
+        }
+        // both records at one power of 2, exactly: EVM is a ratio (ADR 0634)
+        int k = top > 0 ? -Math.ILogB(top) : 0;
+        double refPower = 0, errPower = 0, peak = -1;
+        int peakIndex = 0;
+        for (int i = 0; i < measured.Length; i++)
+        {
+            Complex m = new(Math.ScaleB(measured[i].Real, k), Math.ScaleB(measured[i].Imaginary, k));
+            Complex r = new(Math.ScaleB(reference[i].Real, k), Math.ScaleB(reference[i].Imaginary, k));
             refPower += r.Real * r.Real + r.Imaginary * r.Imaginary;
             double e = Complex.Abs(m - r);
             errPower += e * e;

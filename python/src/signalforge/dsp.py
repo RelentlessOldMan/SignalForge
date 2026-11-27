@@ -4141,13 +4141,18 @@ def moving_rms(samples: ArrayLike, length: int) -> NDArray[np.float64]:
     x = _vector(samples, "samples")
     if not np.all(np.isfinite(x)):
         raise ValueError("samples must be finite")
-    sq = [float(v) for v in np.abs(x) ** 2]
+    a = [float(v) for v in np.abs(x)]
     y = np.empty(x.size)
     for n in range(x.size):
+        # each window at the power of 2 of its largest magnitude, exactly (ADR 0634)
+        window = a[max(0, n - m + 1) : n + 1]
+        top = max(window)
+        e = math.frexp(top)[1] - 1 if top > 0 else 0
         acc = 0.0
-        for k in range(max(0, n - m + 1), n + 1):
-            acc += sq[k]
-        y[n] = math.sqrt(acc / m)
+        for v in window:
+            s = math.ldexp(v, -e)
+            acc += s * s
+        y[n] = math.ldexp(math.sqrt(acc / m), e)
     return y
 
 

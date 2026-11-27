@@ -53,6 +53,14 @@ def evm(measured: ArrayLike, reference: ArrayLike) -> Evm:
         raise ValueError("measured and reference must be non-empty 1-D arrays of the same length")
     if not (np.all(np.isfinite(m)) and np.all(np.isfinite(r))):
         raise ValueError("symbols must be finite")
+    # both records at one power of 2, exactly: EVM is a ratio (ADR 0634)
+    top = max(float(np.max(np.abs(p))) for p in (m.real, m.imag, r.real, r.imag))
+    if top > 0:
+        k = -(math.frexp(top)[1] - 1)
+        ms, rs = np.empty_like(m), np.empty_like(r)
+        ms.real, ms.imag = np.ldexp(m.real, k), np.ldexp(m.imag, k)
+        rs.real, rs.imag = np.ldexp(r.real, k), np.ldexp(r.imag, k)
+        m, r = ms, rs
     ref_power = float(np.sum(np.abs(r) ** 2))
     if not ref_power > 0:
         raise ValueError("reference power must be positive")
