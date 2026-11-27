@@ -4089,7 +4089,10 @@ multiplies the block by the power of two that brings its largest real or imagina
   `T ≥ L + M` and `T` at most the output count. For `n = 0 … T − 1` the regressor is
   `v_n = (u_0 … u_{L−1}, p_1 … p_M)`, `K = L + M` values: `u_i = x[n·sps + c − i]` (0 outside),
   `p_j = t_{n−j}` (0 for `n − j < 0`). The taps `θ = (w, b)` minimize `Σ_n |t_n − Σ_k θ_k·v_{n,k}|²`,
-  the solution of `G·θ = h` with `G[k][l] = Σ_n conj(v_{n,k})·v_{n,l}` and `h[k] = Σ_n
+  the solution of `G·θ = h`, computed on `x·2^−e_x` and `t·2^−e_t` ([ADR
+  0635](adr/0635-least-squares-taps-at-a-power-of-2-scale.md)), `2^e` the largest power of 2 at
+  most the largest real or imaginary magnitude of each record (`e = 0` for an all-zero record),
+  with `G[k][l] = Σ_n conj(v_{n,k})·v_{n,l}` and `h[k] = Σ_n
   conj(v_{n,k})·t_n`, each summed in order of `n`. The solve, on copies:
   - for `k = 0 … K − 1`: the pivot row `r` is the first `r ≥ k` with the largest `|G[r][k]|²`
     (as `re² + im²`); if that is 0 the training does not determine the taps (`invalid_argument`);
@@ -4097,7 +4100,7 @@ multiplies the block by the power of two that brings its largest real or imagina
     `G[r][l] ← G[r][l] − f·G[k][l]` for `l = k + 1 … K − 1` and `h[r] ← h[r] − f·h[k]`;
   - for `k = K − 1` down to 0: `θ_k = (h[k] − Σ_{l=k+1}^{K−1} G[k][l]·θ_l)/G[k][k]`, the sum in
     order of `l` and subtracted from `h[k]` term by term.
-  `taps` are `θ_0 … θ_{L−1}`, `feedback_taps` the rest. On a channel a finite DFE inverts exactly
+  `taps` are `θ_0 … θ_{L−1}` times `2^(e_t − e_x)`, `feedback_taps` the rest. On a channel a finite DFE inverts exactly
   (no noise), the taps are the inverse: for `x_n = a_n + h·a_{n−1}` with `L = 1`, `M = 1`, `w = 1`
   and `b = −h`. **(implemented)**
 - **QPSK phase offset** (`qpsk_phase_offset(symbols)`): `φ = arg(−Σ z⁴) / 4`, in `(−π/4, π/4]`;

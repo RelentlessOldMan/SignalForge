@@ -136,6 +136,43 @@ A = points("qpsk", 50, 13)
 add("qpsk_center_given", channel(A, H2), A[:30], 4, 2, center=1)
 add("qpsk_no_feedback", channel(A, H2), A[:25], 5, 0)
 
+
+def scaled(name, base, ks, kt, why, exact=None):
+    """Case ``base`` with the samples times 2**ks and the training times 2**kt. Solving
+    t = w x + b t_past, scaling x by 2**ks and t by 2**kt gives b unchanged and w times
+    2**(kt - ks), and powers of 2 scale every value exactly. ``exact`` replaces the base's
+    expected taps with its by-hand values."""
+    c = next(c for c in cases if c["id"] == f"{OP}.{base}")
+    expected = exact or c["expected"]
+
+    def times(v, k):
+        out = {part: [u * 2.0**k for u in v[part]] for part in ("re", "im")}
+        assert all(u * 2.0**k / 2.0**k == u for part in ("re", "im") for u in v[part]), name
+        return out
+
+    args = c["args"] | {"samples": times(c["args"]["samples"], ks),
+                        "training": times(c["args"]["training"], kt)}
+    exp = {"taps": times(expected["taps"], kt - ks), "feedback_taps": expected["feedback_taps"]}
+    rel = c["tol"]["rel"] or c["tol"]["abs"]
+    cases.append({"id": f"{OP}.{name}", "op": OP, "args": args, "expected": exp,
+                  "tol": {"abs": 0.0, "rel": rel},
+                  "source": f"{'by hand: ' if exact else ''}case {base} with the samples times "
+                  f"2^{ks} and the training times 2^{kt}: {why}, but the feedback taps are unchanged and the forward taps "
+                  f"scale by 2^{kt - ks}"})
+
+
+ECHO = {"taps": C([1]), "feedback_taps": C([-H])}  # w = 1, b = -h, by hand
+for name, base, ks, kt, why in (
+    ("huge", "echo_inverse_by_hand", 1000, 1000, "the normal equations overflow a double"),
+    ("tiny", "echo_inverse_by_hand", -1000, -1000, "the normal equations underflow to 0"),
+    ("samples_huge", "echo_inverse_by_hand", 1000, 0, "the sample products overflow a double"),
+    ("samples_tiny", "echo_inverse_by_hand", -1000, 0, "the sample products underflow to 0"),
+    ("fractional_huge", "qam16_fractional", 1000, 1000, "the normal equations overflow"),
+    ("fractional_samples_tiny", "qam16_fractional", -1000, 0,
+     "the sample products underflow to 0"),
+):
+    scaled(name, base, ks, kt, why, ECHO if base == "echo_inverse_by_hand" else None)
+
 for name, args, why in (
     ("too_little_training", {"training": C([1, 1j, -1])},
      "training needs at least num_taps + num_feedback symbols (4)"),

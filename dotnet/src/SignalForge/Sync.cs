@@ -353,7 +353,7 @@ public static class Sync
 
     /// <summary>The forward and feedback taps that minimize the squared error over the training,
     /// by Gaussian elimination on the normal equations (conventions: Synchronization, Least-squares
-    /// equalizer taps; ADR 0072).</summary>
+    /// equalizer taps; ADRs 0072 and 0635).</summary>
     /// <param name="samples">The input, at least one sample, all finite.</param>
     /// <param name="training">Known symbols for the first outputs, finite, at least
     /// <paramref name="numTaps"/> + <paramref name="numFeedback"/> and at most the output count.</param>
@@ -371,6 +371,11 @@ public static class Sync
         int kAll = numTaps + numFeedback;
         if (training.Length < kAll)
             throw new ArgumentException("needs at least numTaps + numFeedback symbols", nameof(training));
+        // Each record at its own power-of-2 scale, so no product overflows or underflows: the
+        // feedback taps do not change, and the forward taps scale by 2^(ex − et) (ADR 0635).
+        int ex = PartExponent(samples), et = PartExponent(training);
+        samples = ScaledBy(samples, -ex);
+        training = ScaledBy(training, -et);
         var g = new Complex[kAll][];
         for (int k = 0; k < kAll; k++)
             g[k] = new Complex[kAll];
@@ -424,7 +429,27 @@ public static class Sync
                 acc -= g[k][l] * th[l];
             th[k] = acc / g[k][k];
         }
-        return new DfeTaps(th[..numTaps], th[numTaps..]);
+        Complex[] w = ScaledBy(th.AsSpan(0, numTaps), et - ex);
+        return new DfeTaps(w, th[numTaps..]);
+    }
+
+    /// <summary>The exponent e with 2^e ≤ top &lt; 2^(e + 1), top the largest real or imaginary
+    /// magnitude among the finite values, when that is positive; 0 otherwise (ADR 0635).</summary>
+    private static int PartExponent(ReadOnlySpan<Complex> values)
+    {
+        double top = 0;
+        foreach (Complex z in values)
+            top = Math.Max(top, Math.Max(Math.Abs(z.Real), Math.Abs(z.Imaginary)));
+        return top > 0 ? Math.ILogB(top) : 0;
+    }
+
+    /// <summary>The values times 2^<paramref name="k"/>, part by part (ADR 0635).</summary>
+    private static Complex[] ScaledBy(ReadOnlySpan<Complex> values, int k)
+    {
+        var scaled = new Complex[values.Length];
+        for (int i = 0; i < values.Length; i++)
+            scaled[i] = new Complex(Math.ScaleB(values[i].Real, k), Math.ScaleB(values[i].Imaginary, k));
+        return scaled;
     }
 
     private static int CheckEqualizer(ReadOnlySpan<Complex> samples, ReadOnlySpan<Complex> training, int numTaps,

@@ -7,9 +7,8 @@ Updated with every chunk of work. Dates are absolute.
 1. **Review leads, ADRs 0607–0620** (review of 2026-11-26; confirm each with a probe, test
    first). Worst first:
    - Both languages: scale probes outside the measurement module (signal arguments times
-     2^±664 and 2^±996, real and complex) flag `dfe_least_squares` (NaN when huge, refused
-     when tiny), and `qpsk_demap_llr` and `psk8_demap_llr` (NaN when huge). Fix as
-     in ADRs 0624–0634, with exact power-of-2 `huge` and `tiny` vectors. The clippers, gates,
+     2^±664 and 2^±996, real and complex) flag `qpsk_demap_llr` and `psk8_demap_llr` (NaN
+     when huge). Fix as in ADRs 0624–0635, with exact power-of-2 `huge` and `tiny` vectors. The clippers, gates,
      folders, quantizer and slew limiter have absolute thresholds, so their flags are not
      faults. Done: ADRs 0633 and 0634, and every function the measurement probes flagged.
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
@@ -4405,6 +4404,14 @@ Updated with every chunk of work. Dates are absolute.
   already did. New vector `iq_imbalance.q_overflows_by_hand` (Q = 1e308 doubled).
   Python 12664 passed, 2 skipped; .NET 10873 passed; conformance 8094/8094 in both. Version
   2026.11.26.28.
+
+- 2026-11-26: review fix, least-squares equalizer taps at a power-of-2 scale (ADR 0635).
+  `dfe_least_squares` gave NaN taps when the records were near 2^1000 and refused the training
+  near 2^−1000, as the normal equations overflowed or underflowed. Each record is now scaled by
+  its own power of 2, and the forward taps are scaled back. Six new `huge`, `tiny`,
+  `samples_huge` and `samples_tiny` vectors.
+  Python 12670 passed, 2 skipped; .NET 10879 passed; conformance 8100/8100 in both. Version
+  2026.11.26.29.
 
 ## Not built
 

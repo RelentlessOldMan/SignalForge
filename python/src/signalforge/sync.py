@@ -618,13 +618,18 @@ def dfe_least_squares(
 ) -> DfeTaps:
     """The forward and feedback taps that minimize the squared error over the training, by
     Gaussian elimination on the normal equations (conventions: Synchronization, Least-squares
-    equalizer taps; ADR 0072)."""
+    equalizer taps; ADRs 0072 and 0635)."""
     xs, ts, taps, m, sps, c = _equalizer_args(
         samples, training, num_taps, num_feedback, samples_per_symbol, center
     )
     k_all = taps + m
     if len(ts) < k_all:
         raise ValueError("training needs at least num_taps + num_feedback symbols")
+    # each record at its own power-of-2 scale, so no product overflows or underflows: the
+    # feedback taps do not change, and the forward taps scale by 2**(ex - et) (ADR 0635)
+    ex, et = _part_exponent(xs), _part_exponent(ts)
+    xs = [complex(math.ldexp(z.real, -ex), math.ldexp(z.imag, -ex)) for z in xs]
+    ts = [complex(math.ldexp(z.real, -et), math.ldexp(z.imag, -et)) for z in ts]
     g = [[0j] * k_all for _ in range(k_all)]
     h = [0j] * k_all
     for n, tn in enumerate(ts):
@@ -659,7 +664,16 @@ def dfe_least_squares(
             acc -= g[k][col] * th[col]
         th[k] = acc / g[k][k]
     th_a = np.array(th, dtype=np.complex128)
-    return DfeTaps(th_a[:taps], th_a[taps:])
+    w = th_a[:taps]
+    w.real, w.imag = np.ldexp(w.real, et - ex), np.ldexp(w.imag, et - ex)
+    return DfeTaps(w, th_a[taps:])
+
+
+def _part_exponent(zs: list[complex]) -> int:
+    """The exponent ``e`` with ``2**e <= top < 2**(e + 1)``, ``top`` the largest real or
+    imaginary magnitude in ``zs``, when that is positive; 0 otherwise (ADR 0635)."""
+    top = max((max(abs(z.real), abs(z.imag)) for z in zs), default=0.0)
+    return math.frexp(top)[1] - 1 if top > 0 else 0
 
 
 def _equalize(
