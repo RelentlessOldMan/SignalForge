@@ -3809,7 +3809,8 @@ Python: `signalforge.channel`; C#: `SignalForge.Channel`.
   `y = I + j·g·(Q·cos φ + I·sin φ)`: for `x = e^{jθ}` the output is `cos θ + j·g·sin(θ + φ)`,
   so a positive `φ` advances the Q branch. Equivalently `y = μ·x + ν·x̄` with
   `μ = (1 + g·e^{jφ})/2`, `ν = (1 − g·e^{−jφ})/2`: a tone at `+f` gets an image at `−f`. `gain_db`
-  and `φ` finite, `g` finite. **(implemented)**
+  and `φ` finite, `g` finite. The I branch passes through exactly, even where the Q branch
+  overflows to ±inf. **(implemented)**
 - **Image rejection** (`iq_image_rejection_db(gain_db, phase)`): `10·log10(|μ|²/|ν|²) =
   10·log10((1 + g² + 2g·cos φ)/(1 + g² − 2g·cos φ))`, the tone-to-image power ratio of that
   imbalance; `+inf` with no imbalance (`g = 1`, `φ = 0`). **(implemented)**

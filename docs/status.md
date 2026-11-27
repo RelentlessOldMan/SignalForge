@@ -8,8 +8,7 @@ Updated with every chunk of work. Dates are absolute.
    first). Worst first:
    - Both languages: scale probes outside the measurement module (signal arguments times
      2^±664 and 2^±996, real and complex) flag `dfe_least_squares` (NaN when huge, refused
-     when tiny), `qpsk_demap_llr` and `psk8_demap_llr` (NaN when huge), and `iq_imbalance`
-     (NaN near 1e300: `1j * inf` makes the real part NaN, which should be `I` exactly). Fix as
+     when tiny), and `qpsk_demap_llr` and `psk8_demap_llr` (NaN when huge). Fix as
      in ADRs 0624–0634, with exact power-of-2 `huge` and `tiny` vectors. The clippers, gates,
      folders, quantizer and slew limiter have absolute thresholds, so their flags are not
      faults. Done: ADRs 0633 and 0634, and every function the measurement probes flagged.
@@ -4399,6 +4398,13 @@ Updated with every chunk of work. Dates are absolute.
   below 1e-100 and its `abs`, and none on the default tolerance below 1e-15.
   Python 12663 passed, 2 skipped; .NET 10872 passed; conformance 8093/8093 in both. Version
   2026.11.26.27.
+
+- 2026-11-26: review fix, `iq_imbalance` kept the I branch when the Q branch overflowed.
+  Python built the output as `I + 1j·Q′`, and `1j·inf` is `nan + inf·j`, so an overflowing Q
+  branch made the real part NaN. It now sets the real and imaginary parts directly, as C#
+  already did. New vector `iq_imbalance.q_overflows_by_hand` (Q = 1e308 doubled).
+  Python 12664 passed, 2 skipped; .NET 10873 passed; conformance 8094/8094 in both. Version
+  2026.11.26.28.
 
 ## Not built
 

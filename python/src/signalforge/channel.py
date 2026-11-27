@@ -392,9 +392,11 @@ def iq_imbalance(samples: ArrayLike, gain_db: float, phase: float) -> NDArray[np
     g = _imbalance_gain(gain_db, phase)
     x = sample_values(x, "samples")
     i, q = x.real.astype(np.float64), x.imag.astype(np.float64)
-    return np.asarray(
-        i + 1j * (q * (g * math.cos(phase)) + i * (g * math.sin(phase))), np.complex128
-    )
+    y = np.empty(i.shape, np.complex128)  # set by parts: 1j * inf would make the real part NaN
+    y.real = i
+    with np.errstate(over="ignore"):  # a Q branch past the largest double is ±inf, as in IEEE
+        y.imag = q * (g * math.cos(phase)) + i * (g * math.sin(phase))
+    return y
 
 
 def iq_image_rejection_db(gain_db: float, phase: float) -> float:
