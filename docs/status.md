@@ -8,12 +8,11 @@ Updated with every chunk of work. Dates are absolute.
    first). Worst first:
    - Both languages: scale-free functions that still overflow or underflow at extreme scales
      (probe: multiply every argument by 1e±200 and 1e±300 and compare with the unscaled
-     result). Still failing: `buishand_range`, `snht`, `von_neumann_ratio` and
-     `time_irreversibility`; `energy_time_curve`, `schroeder_decay`, `noise_compensated_decay`
+     result). Still failing: `energy_time_curve`, `schroeder_decay`, `noise_compensated_decay`
      and `sound_strength` (NaN near 1e200, refused near 1e-200; confirm whether refusing is
-     right for these). Scale as in ADRs 0624–0628, with exact power-of-2 `huge` and `tiny`
-     vectors. Done: the divergences, share-based and inequality indices, correlations and
-     effect sizes (ADRs 0624–0628).
+     right for these). Scale as in ADRs 0624–0629, with exact power-of-2 `huge` and `tiny`
+     vectors. Done: the divergences, share-based and inequality indices, correlations, effect
+     sizes and time-series tests (ADRs 0624–0629).
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4323,6 +4322,15 @@ Updated with every chunk of work. Dates are absolute.
   before the change.
   Python 12582 passed, 2 skipped; .NET 10791 passed; conformance 8012/8012 in both. Version
   2026.11.26.19.
+
+- 2026-11-26: review fix, scale-free time-series statistics scale the record by a power of 2
+  first ([ADR 0629](adr/0629-time-series-tests-scaled-first.md)). The time irreversibility,
+  von Neumann ratio, Buishand range test and SNHT gave 0 or NaN near 1e200 and refused records
+  near 1e-200 as constant, in both languages. The record is now scaled first by the power of 2
+  that brings its largest magnitude into [1, 2), which is exact. Each generator gained
+  power-of-2 `huge` and `tiny` vectors: all 8 failed in both languages before the change.
+  Python 12590 passed, 2 skipped; .NET 10799 passed; conformance 8020/8020 in both. Version
+  2026.11.26.20.
 
 ## Not built
 

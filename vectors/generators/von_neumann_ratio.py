@@ -41,6 +41,24 @@ add("noise", [rng.randint(-100, 100) / 64 for _ in range(500)],
     "500 random 64ths from random.Random(362)")
 
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with every sample times 2**k: the statistic is scale-free, and a power of
+    2 scales every value exactly, so the expected value is the base case's."""
+    c = next(c for c in cases if c["id"] == "von_neumann_ratio." + base)
+    s = 2.0**k
+    args = {**c["args"], "samples": [v * s for v in c["args"]["samples"]]}
+    assert all(v * s / s == v for v in c["args"]["samples"]), cid
+    cases.append({**c, "id": "von_neumann_ratio." + cid, "args": args, "source": why})
+
+
+scaled("huge", "ramp", 1000,
+       "case ramp times 2^1000: squares of the deviations overflow a double, but the "
+       "statistic is scale-free, so the same value")
+scaled("tiny", "ramp", -1000,
+       "case ramp times 2^-1000: squares of the deviations underflow to 0, but the "
+       "statistic is scale-free, so the same value")
+
+
 def err(cid, why, **args):
     base = {"samples": [0.0, 1.0, 0.5, 2.0, 1.5]}
     base.update(args)

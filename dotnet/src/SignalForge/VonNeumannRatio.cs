@@ -12,6 +12,7 @@ public static partial class Measurements
     {
         if (samples.Length < 2)
             throw new ArgumentException("samples must have at least 2 values", nameof(samples));
+        samples = ScaledByPowerOf2(samples);
         double sum = 0;
         foreach (double v in samples)
         {

@@ -71,4 +71,26 @@ public static partial class Measurements
         x = sx;
         y = sy;
     }
+
+    /// <summary>The samples times the power of 2 that brings their largest magnitude into
+    /// [1, 2), when that is positive and finite, for statistics that do not change when the
+    /// record is scaled, so no square of a deviation can overflow or underflow. The scaling is
+    /// exact. Otherwise the samples unchanged, for the caller's own checks to refuse (ADR
+    /// 0629).</summary>
+    private static ReadOnlySpan<double> ScaledByPowerOf2(ReadOnlySpan<double> samples)
+    {
+        double top = 0;
+        foreach (double v in samples)
+        {
+            if (Math.Abs(v) > top)
+                top = Math.Abs(v);
+        }
+        if (!(top > 0) || double.IsInfinity(top))
+            return samples;
+        int e = Math.ILogB(top);
+        double[] scaled = new double[samples.Length];
+        for (int i = 0; i < samples.Length; i++)
+            scaled[i] = Math.ScaleB(samples[i], -e);
+        return scaled;
+    }
 }

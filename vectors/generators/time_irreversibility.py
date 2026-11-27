@@ -53,6 +53,24 @@ add("skewed_walk", walk, 2, "a 300-step walk of +1/4 three times as often as -3/
     "random.Random(357), lag 2")
 
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with every sample times 2**k: the statistic is scale-free, and a power of
+    2 scales every value exactly, so the expected value is the base case's."""
+    c = next(c for c in cases if c["id"] == "time_irreversibility." + base)
+    s = 2.0**k
+    args = {**c["args"], "samples": [v * s for v in c["args"]["samples"]]}
+    assert all(v * s / s == v for v in c["args"]["samples"]), cid
+    cases.append({**c, "id": "time_irreversibility." + cid, "args": args, "source": why})
+
+
+scaled("huge", "sawtooth_by_hand", 1000,
+       "case sawtooth_by_hand times 2^1000: squares of the deviations overflow a double, but the "
+       "statistic is scale-free, so the same value")
+scaled("tiny", "sawtooth_by_hand", -1000,
+       "case sawtooth_by_hand times 2^-1000: squares of the deviations underflow to 0, but the "
+       "statistic is scale-free, so the same value")
+
+
 def err(cid, why, **args):
     base = {"samples": [0.0, 1.0, 0.5, 2.0, 1.5]}
     base.update(args)

@@ -54,6 +54,24 @@ add("shift_in_noise", shift,
     "128 random eighths from random.Random(367), raised by 3/2 from sample 40 on")
 
 
+def scaled(cid, base, k, why):
+    """Case ``base`` with every sample times 2**k: the statistic is scale-free, and a power of
+    2 scales every value exactly, so the expected value is the base case's."""
+    c = next(c for c in cases if c["id"] == "buishand_range." + base)
+    s = 2.0**k
+    args = {**c["args"], "samples": [v * s for v in c["args"]["samples"]]}
+    assert all(v * s / s == v for v in c["args"]["samples"]), cid
+    cases.append({**c, "id": "buishand_range." + cid, "args": args, "source": why})
+
+
+scaled("huge", "both_signs", 1000,
+       "case both_signs times 2^1000: squares of the deviations overflow a double, but the "
+       "statistic is scale-free, so the same value")
+scaled("tiny", "both_signs", -1000,
+       "case both_signs times 2^-1000: squares of the deviations underflow to 0, but the "
+       "statistic is scale-free, so the same value")
+
+
 def err(cid, why, **args):
     base = {"samples": [0.0, 1.0, 0.5, 2.0, 1.5]}
     base.update(args)

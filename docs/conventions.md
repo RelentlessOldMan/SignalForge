@@ -348,6 +348,12 @@ rule for code not written yet.
   information; over the occupied bins, `−Σ p ln p` at `q = 1`, `(1 − Σ p^q)/(q − 1)`
   otherwise. Real, finite, not all equal; `q` finite, `≥ 0`; `2 ≤ bins ≤ 4096`.
   **(implemented)**
+- **Scale-free time-series statistics, scaled first**
+  ([ADR 0629](adr/0629-time-series-tests-scaled-first.md)): the time irreversibility, the
+  von Neumann ratio, the Buishand range test and the SNHT scale the record by the power of 2
+  that brings its largest magnitude into [1, 2), when that is positive and finite, before
+  forming any deviation, so no square overflows or underflows. The scaling is exact.
+  **(implemented)**
 - **Time irreversibility** ([ADR 0357](adr/0357-time-irreversibility.md);
   `time_irreversibility(samples, lag=1)`, C# `Measurements.TimeIrreversibility`): with
   `Δ_t = x_{t+τ} − x_t`, `t = 0 … N − τ − 1`, and `M_k` the mean of `Δ^k`, the value is

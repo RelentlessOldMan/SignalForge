@@ -1272,6 +1272,7 @@ def time_irreversibility(samples: ArrayLike, lag: int = 1) -> float:
         raise ValueError("samples must be finite")
     if not 1 <= tau <= x.shape[0] - 1:
         raise ValueError("lag must be from 1 to len(samples) - 1")
+    x = _by_power_of_2(x)
     d = x[tau:] - x[:-tau]
     m2 = float(np.mean(d * d))
     if not m2 > 0:
@@ -1400,6 +1401,7 @@ def von_neumann_ratio(samples: ArrayLike) -> float:
         raise ValueError("samples must be finite")
     if x.shape[0] < 2:
         raise ValueError("samples must have at least 2 values")
+    x = _by_power_of_2(x)
     d = x - np.mean(x)
     den = float(np.dot(d, d))
     if not den > 0:
@@ -1523,6 +1525,7 @@ def buishand_range(samples: ArrayLike) -> BuishandRange:
     n = x.shape[0]
     if n < 2:
         raise ValueError("samples must have at least 2 values")
+    x = _by_power_of_2(x)
     d = x - float(np.sum(x)) / n
     var = float(np.dot(d, d)) / n
     if not var > 0:
@@ -1550,6 +1553,7 @@ def snht(samples: ArrayLike) -> Snht:
     n = x.shape[0]
     if n < 2:
         raise ValueError("samples must have at least 2 values")
+    x = _by_power_of_2(x)
     d = x - float(np.sum(x)) / n
     var = float(np.dot(d, d)) / n
     if not var > 0:
@@ -1633,6 +1637,17 @@ def _by_largest_magnitude(a: NDArray[np.float64]) -> NDArray[np.float64]:
     deviation overflows or underflows (ADR 0627); ``a`` itself otherwise."""
     top = float(np.max(np.abs(a))) if a.size else 0.0
     out: NDArray[np.float64] = a / top if top > 0 else a
+    return out
+
+
+def _by_power_of_2(a: NDArray[np.float64]) -> NDArray[np.float64]:
+    """``a`` times the power of 2 that brings its largest magnitude into [1, 2), when that is
+    positive and finite, so no square of a deviation overflows or underflows (ADR 0629); ``a``
+    itself otherwise. The scaling is exact."""
+    top = float(np.max(np.abs(a))) if a.size else 0.0
+    if not 0 < top < math.inf:
+        return a
+    out: NDArray[np.float64] = np.ldexp(a, -(math.frexp(top)[1] - 1))
     return out
 
 

@@ -11,6 +11,7 @@ public static partial class Measurements
     /// <exception cref="ArgumentException">An argument is out of range, or every increment is 0.</exception>
     public static double TimeIrreversibility(ReadOnlySpan<double> samples, int lag = 1)
     {
+        samples = ScaledByPowerOf2(samples);
         foreach (double v in samples)
         {
             if (!double.IsFinite(v))
