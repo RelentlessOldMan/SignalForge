@@ -79,6 +79,12 @@ assert close(got, D(157) / 1029)
 rng = random.Random(516)
 x = [rng.randint(1, 64) / 8 for _ in range(30)]
 add("random", x, 1.5, "30 values k/8, k from random.Random(516).randint(1, 64); alpha 3/2")
+add(
+    "huge",
+    [1e308, 9e307, 1e300],
+    2.0,
+    "values whose sum overflows a double: the result is that of the values scaled down",
+)
 
 
 def err(cid, why, **args):

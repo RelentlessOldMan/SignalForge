@@ -9,13 +9,10 @@ Updated with every chunk of work. Dates are absolute.
       - Both languages: scale-free functions that still sum their raw values, so a record whose
      values are finite but whose sum overflows gives a wrong result or the wrong error (probe:
      `(1e308, 9e307, 1e300)` against `(1, 0.9, 1e-8)`; for two records, scale one). Still
-     failing: `bonferroni_index`, `coefficient_of_variation`, `gini_coefficient`,
-     `hoover_index`, `lorenz_curve`, `mean_log_deviation`, `palma_ratio`,
-     `quintile_share_ratio`, `theil_index`, `wolfson_index`, `zenga_index`,
-     `time_irreversibility`, `von_neumann_ratio`, `horn_overlap`, `pearson_correlation` and
-     `distance_correlation`. Confirm each is meant to be scale-free (count-based ones such as
-     Margalef's are not), then scale as in ADRs 0624–0625, with exact `huge` vectors. The
-     share-based indices are done (ADR 0625).
+     failing: `time_irreversibility`, `von_neumann_ratio`, `horn_overlap`,
+     `pearson_correlation` and `distance_correlation`. Confirm each is meant to be scale-free
+     (count-based ones such as Margalef's are not), then scale as in ADRs 0624–0626, with
+     exact `huge` vectors. The share-based and inequality indices are done (ADRs 0625–0626).
    - Python: about 76 more in-order sums in older `measurements` functions (Kendall's W,
      Cohen's d, Glass's delta, the divergences and distances, the concentration, diversity
      and evenness indices, and others; find them with a `for v in a:` followed by `+=`) and
@@ -4295,6 +4292,16 @@ Updated with every chunk of work. Dates are absolute.
   the change. Smith and Wilson's evenness was already right.
   Python 12557 passed, 2 skipped; .NET 10766 passed; conformance 7987/7987 in both. Version
   2026.11.26.15.
+
+- 2026-11-26: review fix, inequality records divided by their largest value before they are
+  summed ([ADR 0626](adr/0626-inequality-records-scaled-first.md)). The 13 inequality
+  measures of ADRs 0510–0522 (Gini, Theil, Hoover, Atkinson, generalized entropy,
+  Bonferroni, Zenga, Wolfson, mean log deviation, coefficient of variation, Lorenz curve,
+  Palma and quintile share ratios) gave NaN, infinity or wrong values in both languages when a
+  record's sum overflowed. Each now divides the record by its largest value first. Each
+  generator gained an exact `huge` vector: all 13 failed in both languages before the change.
+  Python 12570 passed, 2 skipped; .NET 10779 passed; conformance 8000/8000 in both. Version
+  2026.11.26.16.
 
 ## Not built
 

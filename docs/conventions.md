@@ -1078,6 +1078,11 @@ rule for code not written yet.
   exposure, `ln(P/Q)` with `P = TP·(FN + TN)` and `Q = FN·(TP + FP)`, each exact integer
   converted to a double once. Records as for the Jaccard index; TP = 0 or FN = 0 is an
   error. **(implemented)**
+- **Inequality records, scaled first** ([ADR 0626](adr/0626-inequality-records-scaled-first.md)):
+  the Gini, Theil, Hoover, Atkinson, generalized entropy, Bonferroni, Zenga and Wolfson
+  indices, the mean log deviation, the coefficient of variation, the Lorenz curve, and the
+  Palma and quintile share ratios divide the checked record by its largest value, when that
+  is positive, before forming any sum, so no sum overflows. **(implemented)**
 - **Gini coefficient** ([ADR 0510](adr/0510-gini-coefficient.md);
   `gini_coefficient(samples)`, C# `Measurements.GiniCoefficient`): the population form
   `Σᵢ Σⱼ |xᵢ − xⱼ| / (2·n²·μ)` over all `n²` ordered pairs, computed on the sorted values

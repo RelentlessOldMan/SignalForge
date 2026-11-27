@@ -4,7 +4,7 @@ public static partial class Measurements
 {
     /// <summary>Divides each value by the largest one, when that is positive and finite, so no
     /// sum of the shares can overflow; otherwise returns the values unchanged for the caller's
-    /// own checks to refuse (ADR 0625).</summary>
+    /// own checks to refuse (ADRs 0625, 0626).</summary>
     private static ReadOnlySpan<double> ScaledToLargest(ReadOnlySpan<double> samples)
     {
         double top = 0;

@@ -77,6 +77,12 @@ assert close(got, 1 - 12 / (7 * D(7).sqrt()))
 rng = random.Random(515)
 x = [rng.randint(1, 64) / 8 for _ in range(30)]
 add("random", x, 1.5, "30 values k/8, k from random.Random(515).randint(1, 64); epsilon 3/2")
+add(
+    "huge",
+    [1e308, 9e307, 1e300],
+    0.5,
+    "values whose sum overflows a double: the result is that of the values scaled down",
+)
 
 
 def err(cid, why, **args):

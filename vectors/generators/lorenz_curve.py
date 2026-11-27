@@ -53,6 +53,11 @@ assert got == [0, Fr(1, 8), Fr(1, 4), Fr(1, 2), 1]
 rng = random.Random(517)
 x = [rng.randint(0, 64) / 8 for _ in range(30)]
 add("random", x, "30 values k/8, k from random.Random(517).randint(0, 64)")
+add(
+    "huge",
+    [1e308, 9e307, 1e300],
+    "values whose sum overflows a double: the result is that of the values scaled down",
+)
 
 
 def err(cid, why, **args):

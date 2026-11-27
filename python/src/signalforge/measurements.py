@@ -5837,6 +5837,9 @@ def gini_coefficient(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     total = float(np.sum(x))
     if not total > 0:
         raise ValueError("samples must not all be 0")
@@ -5862,6 +5865,9 @@ def theil_index(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     total = float(np.sum(x))
     if not total > 0:
         raise ValueError("samples must not all be 0")
@@ -5887,6 +5893,9 @@ def hoover_index(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     total = float(np.sum(x))
     if not total > 0:
         raise ValueError("samples must not all be 0")
@@ -5909,6 +5918,9 @@ def coefficient_of_variation(samples: ArrayLike) -> float:
     n = x.shape[0]
     if n < 1:
         raise ValueError("samples must not be empty")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     mean = float(np.sum(x)) / float(n)
     if not mean > 0:
         raise ValueError("samples must have a mean greater than 0")
@@ -5932,6 +5944,9 @@ def mean_log_deviation(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if not np.all(x > 0):
         raise ValueError("samples must be greater than 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     mean = float(np.sum(x)) / float(n)
     return float(np.sum(np.log(mean / x))) / float(n)
 
@@ -5956,6 +5971,9 @@ def atkinson_index(samples: ArrayLike, epsilon: float) -> float:
         raise ValueError("samples must not be empty")
     if not np.all(x > 0):
         raise ValueError("samples must be greater than 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     ratio = x / (float(np.sum(x)) / float(n))
     if e == 1:
         return 1.0 - math.exp(float(np.mean(np.log(ratio))))
@@ -5981,6 +5999,9 @@ def generalized_entropy_index(samples: ArrayLike, alpha: float) -> float:
         raise ValueError("samples must not be empty")
     if not np.all(x > 0):
         raise ValueError("samples must be greater than 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     ratio = x / (float(np.sum(x)) / float(n))
     if a == 0:
         return -float(np.mean(np.log(ratio)))
@@ -6006,6 +6027,9 @@ def lorenz_curve(samples: ArrayLike) -> NDArray[np.float64]:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     c = np.cumsum(np.sort(x))
     total = float(c[-1])
     if not total > 0:
@@ -6033,6 +6057,9 @@ def palma_ratio(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     v = np.sort(x)
     c = np.zeros(n + 1, dtype=np.float64)
     c[1:] = np.cumsum(v)
@@ -6062,6 +6089,9 @@ def quintile_share_ratio(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     v = np.sort(x)
     c = np.zeros(n + 1, dtype=np.float64)
     c[1:] = np.cumsum(v)
@@ -6091,6 +6121,9 @@ def bonferroni_index(samples: ArrayLike) -> float:
         raise ValueError("samples must have at least 2 values")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     c = np.cumsum(np.sort(x))
     total = float(c[-1])
     if not total > 0:
@@ -6118,6 +6151,9 @@ def zenga_index(samples: ArrayLike) -> float:
         raise ValueError("samples must have at least 2 values")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     c = np.cumsum(np.sort(x))
     total = float(c[-1])
     if not total > 0:
@@ -6147,6 +6183,9 @@ def wolfson_index(samples: ArrayLike) -> float:
         raise ValueError("samples must not be empty")
     if np.any(x < 0):
         raise ValueError("samples must be at least 0")
+    top = float(np.max(x))
+    if top > 0:
+        x = x / top
     v = np.sort(x)
     j, rem = divmod(n, 2)
     med = float(v[j]) if rem == 1 else (float(v[j - 1]) + float(v[j])) / 2
